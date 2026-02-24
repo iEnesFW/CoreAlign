@@ -1,0 +1,63 @@
+{
+    "auth": {
+        "login": {
+            "title": "Sign In",
+            "subtitle": "Project management and team alignment.",
+            "emailLabel": "Email Address",
+            "emailPlaceholder": "example@company.com",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "••••••••",
+            "forgotPassword": "Forgot Password",
+            "submitButton": "Sign In",
+            "noAccount": "Don't have an account?",
+            "registerLink": "Sign Up",
+            "errors": {
+                "loginFailed": "Login failed."
+            }
+        },
+        "register": {
+            "title": "Sign Up",
+            "subtitle": "Create a new account",
+            "firstNameLabel": "First Name",
+            "firstNamePlaceholder": "John",
+            "lastNameLabel": "Last Name",
+            "lastNamePlaceholder": "Doe",
+            "usernameLabel": "Username",
+            "usernamePlaceholder": "johndoe",
+            "emailLabel": "Email Address",
+            "emailPlaceholder": "example@company.com",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Confirm Password",
+            "confirmPasswordPlaceholder": "••••••••",
+            "submitButton": "Sign Up",
+            "hasAccount": "Already have an account?",
+            "loginLink": "Sign In",
+            "success": {
+                "title": "Registration Successful!",
+                "message": "A verification link has been sent to your email. Please check your inbox.",
+                "backToLogin": "Back to login"
+            },
+            "errors": {
+                "passwordMismatch": "Passwords do not match.",
+                "registerFailed": "Registration failed."
+            }
+        },
+        "forgotPassword": {
+            "title": "Forgot Password",
+            "subtitle": "Enter your email address to reset your password.",
+            "emailLabel": "Email Address",
+            "emailPlaceholder": "example@company.com",
+            "submitButton": "Send Reset Link",
+            "backToLogin": "Back to login",
+            "success": {
+                "title": "Email Sent",
+                "message": "A password reset link has been sent to your email. Please check your inbox.",
+                "backToLogin": "Back to login"
+            }
+        },
+        "common": {
+            "unexpectedError": "An unexpected error occurred."
+        }
+    }
+}

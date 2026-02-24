@@ -1,0 +1,83 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+}
+
+.header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.logoWrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.subtitle {
+    color: var(--color-text-muted);
+    font-size: 0.925rem;
+    margin: 0;
+}
+
+.fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.forgotPassword {
+    align-self: flex-end;
+    font-size: 0.875rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgotPassword:hover {
+    text-decoration: underline;
+}
+
+.submitButton {
+    width: 100%;
+    height: 48px;
+    font-size: 1rem;
+}
+
+.footer {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-top: 1rem;
+}
+
+.link {
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.link:hover {
+    color: var(--color-primary);
+}
+
+.errorBanner {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-align: center;
+}
