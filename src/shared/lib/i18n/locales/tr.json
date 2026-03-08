@@ -56,6 +56,26 @@
                 "backToLogin": "Giriş sayfasına dön"
             }
         },
+        "resetPassword": {
+            "title": "Şifreyi Sıfırla",
+            "subtitle": "Lütfen yeni şifrenizi girin.",
+            "passwordLabel": "Yeni Şifre",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Şifre Tekrar",
+            "confirmPasswordPlaceholder": "••••••••",
+            "submitButton": "Şifreyi Sıfırla",
+            "backToLogin": "Giriş sayfasına dön",
+            "success": {
+                "title": "Şifre Sıfırlama Başarılı",
+                "message": "Şifreniz başarıyla sıfırlandı. Yeni şifrenizle giriş yapabilirsiniz.",
+                "backToLogin": "Giriş Yap"
+            },
+            "errors": {
+                "invalidToken": "Geçersiz veya eksik sıfırlama token'ı.",
+                "passwordMismatch": "Şifreler eşleşmiyor.",
+                "passwordLength": "Şifre en az 8 karakter uzunluğunda olmalıdır."
+            }
+        },
         "common": {
             "unexpectedError": "Beklenmeyen bir hata oluştu."
         }

@@ -25,6 +25,7 @@ export interface SceneParams {
     trailLength: number;
     bloomStrength: number;
     bloomRadius: number;
+    bloomThreshold: number;
 }
 
 export interface Signal {

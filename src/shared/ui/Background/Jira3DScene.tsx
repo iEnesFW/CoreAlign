@@ -5,23 +5,54 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import GUI from 'lil-gui';
 import styles from './Jira3DScene.module.css';
-import { DEFAULT_PARAMS } from './scene.config';
-import { SceneParams, Signal } from './scene.types';
+import { DARK_PARAMS, LIGHT_PARAMS } from './scene.config';
+import { Signal } from './scene.types';
 import { getPathPoint, pickSignalColor } from './scene.utils';
 import { createSignalMesh, setupLines } from './scene.objects';
 import { CONSTANTS } from './scene.config';
 
-export const Jira3DScene = () => {
+interface Jira3DSceneProps {
+    theme?: 'light' | 'dark';
+}
+
+export const Jira3DScene = ({ theme = 'dark' }: Jira3DSceneProps) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const themeRef = useRef(theme);
+
+    const sceneRef = useRef<THREE.Scene | null>(null);
+    const bgMaterialRef = useRef<THREE.LineBasicMaterial | null>(null);
+    const bloomPassRef = useRef<UnrealBloomPass | null>(null);
+    const paramsRef = useRef(theme === 'light' ? { ...LIGHT_PARAMS } : { ...DARK_PARAMS });
+
+    useEffect(() => {
+        themeRef.current = theme;
+        const targetParams = theme === 'light' ? LIGHT_PARAMS : DARK_PARAMS;
+
+        Object.assign(paramsRef.current, targetParams);
+
+        if (sceneRef.current) {
+            sceneRef.current.background = new THREE.Color(targetParams.colorBg);
+            (sceneRef.current.fog as THREE.FogExp2).color.set(targetParams.colorBg);
+        }
+        if (bgMaterialRef.current) {
+            bgMaterialRef.current.color.set(targetParams.colorLine);
+            bgMaterialRef.current.opacity = targetParams.lineOpacity;
+        }
+        if (bloomPassRef.current) {
+            bloomPassRef.current.strength = targetParams.bloomStrength;
+            bloomPassRef.current.radius = targetParams.bloomRadius;
+        }
+    }, [theme]);
 
     useEffect(() => {
         if (!containerRef.current) return;
 
-        const params = { ...DEFAULT_PARAMS };
+        const params = paramsRef.current;
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(params.colorBg);
         scene.fog = new THREE.FogExp2(params.colorBg, 0.002);
+        sceneRef.current = scene;
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
         camera.position.set(0, 0, 90);
@@ -36,7 +67,6 @@ export const Jira3DScene = () => {
         renderer.domElement.style.left = '0';
         renderer.domElement.style.width = '100%';
         renderer.domElement.style.height = '100%';
-        renderer.domElement.style.zIndex = '-1';
 
         containerRef.current.appendChild(renderer.domElement);
 
@@ -60,6 +90,7 @@ export const Jira3DScene = () => {
         bloomPass.threshold = 0;
         bloomPass.strength = params.bloomStrength;
         bloomPass.radius = params.bloomRadius;
+        bloomPassRef.current = bloomPass;
 
         const composer = new EffectComposer(renderer);
         composer.addPass(renderScene);
@@ -74,10 +105,12 @@ export const Jira3DScene = () => {
             opacity: params.lineOpacity,
             depthWrite: false
         });
+        bgMaterialRef.current = bgMaterial;
 
+        const isLight = themeRef.current === 'light';
         const signalMaterial = new THREE.LineBasicMaterial({
             vertexColors: true,
-            blending: THREE.AdditiveBlending,
+            blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending,
             depthWrite: false,
             depthTest: false,
             transparent: true
@@ -213,12 +246,13 @@ export const Jira3DScene = () => {
         };
         window.addEventListener('resize', handleResize);
 
+        const currentContainer = containerRef.current;
         return () => {
             cancelAnimationFrame(frameId);
             window.removeEventListener('resize', handleResize);
             gui.destroy();
             renderer.dispose();
-            if (containerRef.current) containerRef.current.innerHTML = '';
+            if (currentContainer) currentContainer.innerHTML = '';
         };
     }, []);
 

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { Logo } from '@/shared/ui/Logo/Logo';
@@ -7,6 +8,7 @@ import styles from './LoginForm.module.css';
 import { Mail, Lock } from 'lucide-react';
 import { useLogin } from '../../hooks/useAuth';
 import { useNavigate, Link } from 'react-router-dom';
+import { generateDeviceFingerprint } from '@/shared/lib/deviceFingerprint';
 import type { LoginRequest } from '../../model/auth.types';
 import type { AxiosError } from 'axios';
 import type { ApiResponse } from '../../model/auth.types';
@@ -17,6 +19,7 @@ export const LoginForm = () => {
     const [serverError, setServerError] = useState<string | null>(null);
     const navigate = useNavigate();
     const loginMutation = useLogin();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData((prev) => ({ ...prev, email: e.target.value }));
@@ -30,7 +33,18 @@ export const LoginForm = () => {
         e.preventDefault();
         setServerError(null);
 
-        loginMutation.mutate(formData, {
+        const [captchaToken, deviceFingerprint] = await Promise.all([
+            executeRecaptcha?.('login'),
+            generateDeviceFingerprint(),
+        ]);
+
+        const enrichedData: LoginRequest = {
+            ...formData,
+            captchaToken: captchaToken ?? undefined,
+            deviceFingerprint,
+        };
+
+        loginMutation.mutate(enrichedData, {
             onSuccess: (response) => {
                 if (response.isSuccess) {
                     navigate('/dashboard');
@@ -44,7 +58,7 @@ export const LoginForm = () => {
                 setServerError(message);
             },
         });
-    }, [formData, loginMutation, navigate, t]);
+    }, [formData, loginMutation, navigate, t, executeRecaptcha]);
 
     return (
         <form className={styles.form} onSubmit={handleSubmit}>

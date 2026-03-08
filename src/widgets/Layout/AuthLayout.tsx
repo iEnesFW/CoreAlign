@@ -1,7 +1,8 @@
 import React from 'react';
 import { Jira3DScene } from '@/shared/ui/Background/Jira3DScene';
 import { Logo } from '@/shared/ui/Logo/Logo';
-import { Target, Users, BarChart2, CheckCircle2 } from 'lucide-react';
+import { Target, Users, BarChart2, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import styles from './AuthLayout.module.css';
 
 interface AuthLayoutProps {
@@ -9,16 +10,24 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
+    const { theme, toggleTheme } = useTheme();
+
     return (
         <div className={styles.container}>
-            <Jira3DScene />
+            <Jira3DScene theme={theme} />
 
-            {/* Header */}
             <header className={styles.header}>
                 <div className={styles.headerLeft}>
                     <Logo size={28} showText={true} />
                 </div>
                 <div className={styles.headerRight}>
+                    <button
+                        onClick={toggleTheme}
+                        className={styles.themeToggle}
+                        aria-label="Toggle theme"
+                    >
+                        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                    </button>
                     <div className={styles.statusBadge}>
                         <div className={styles.statusDot} />
                         <span>All Systems Operational</span>
@@ -26,14 +35,12 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
                 </div>
             </header>
 
-            {/* Main Content */}
             <div className={styles.content}>
                 <div className={styles.card}>
                     {children}
                 </div>
             </div>
 
-            {/* Footer */}
             <footer className={styles.footer}>
                 <div className={styles.features}>
                     <div className={styles.featureItem} title="Strategic Planning">
@@ -68,3 +75,4 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         </div>
     );
 };
+

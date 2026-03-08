@@ -1,0 +1,45 @@
+.layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #060913;
+    /* ERP dark body bg */
+    color: #fff;
+}
+
+.mainContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.mainArea {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1rem;
+}
+
+@media (min-width: 640px) {
+    .mainArea {
+        padding: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mainArea {
+        padding: 2rem;
+    }
+}
+
+.contentWrapper {
+    margin: 0 auto;
+    max-width: 80rem;
+    /* max-w-7xl */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}

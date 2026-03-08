@@ -56,6 +56,26 @@
                 "backToLogin": "Back to login"
             }
         },
+        "resetPassword": {
+            "title": "Reset Password",
+            "subtitle": "Enter your new password below.",
+            "passwordLabel": "New Password",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Confirm Password",
+            "confirmPasswordPlaceholder": "••••••••",
+            "submitButton": "Reset Password",
+            "backToLogin": "Back to login",
+            "success": {
+                "title": "Password Reset Successful",
+                "message": "Your password has been reset successfully. You can now login with your new password.",
+                "backToLogin": "Login Now"
+            },
+            "errors": {
+                "invalidToken": "Invalid or missing reset token.",
+                "passwordMismatch": "Passwords do not match.",
+                "passwordLength": "Password must be at least 8 characters long."
+            }
+        },
         "common": {
             "unexpectedError": "An unexpected error occurred."
         }

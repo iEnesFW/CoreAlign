@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { Logo } from '@/shared/ui/Logo/Logo';
@@ -16,6 +17,7 @@ export const ForgotPasswordForm = () => {
     const [serverError, setServerError] = useState<string | null>(null);
     const [isSent, setIsSent] = useState(false);
     const forgotPasswordMutation = useForgotPassword();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         setEmail(e.target.value);
@@ -25,7 +27,9 @@ export const ForgotPasswordForm = () => {
         e.preventDefault();
         setServerError(null);
 
-        forgotPasswordMutation.mutate({ email }, {
+        const captchaToken = await executeRecaptcha?.('forgot_password');
+
+        forgotPasswordMutation.mutate({ email, captchaToken: captchaToken ?? undefined }, {
             onSuccess: () => {
                 setIsSent(true);
             },
@@ -35,7 +39,7 @@ export const ForgotPasswordForm = () => {
                 setServerError(message);
             },
         });
-    }, [email, forgotPasswordMutation, t]);
+    }, [email, forgotPasswordMutation, t, executeRecaptcha]);
 
     if (isSent) {
         return (

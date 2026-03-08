@@ -1,4 +1,5 @@
-import React, { useRef, useMemo } from 'react';
+/* eslint-disable react-hooks/purity */
+import { useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Line, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
@@ -46,7 +47,7 @@ const NetworkField = () => {
         return temp;
     }, []);
 
-    const linesRef = useRef<any>(null);
+
 
     useFrame(() => {
         // Simple animation: move nodes slowly

@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { SceneParams } from './scene.types';
 import { CONSTANTS } from './scene.config';
-import { getPathPoint, pickSignalColor } from './scene.utils';
 
 export const setupLines = (group: THREE.Group, params: SceneParams, material: THREE.LineBasicMaterial): THREE.Line[] => {
     const lines: THREE.Line[] = [];

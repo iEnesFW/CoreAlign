@@ -1,105 +1,116 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useVerifyEmail } from '@/features/auth/hooks/useAuth';
+import axios from 'axios';
 import { AuthLayout } from '@/widgets/Layout/AuthLayout';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/shared/ui/Button/Button';
+import { Logo } from '@/shared/ui/Logo/Logo';
+import { apiClient } from '@/shared/api/apiClient';
+import styles from '@/features/auth/ui/ResetPasswordForm/ResetPasswordForm.module.css';
 
 export const VerifyEmailPage = () => {
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
     const navigate = useNavigate();
-    const mutation = useVerifyEmail();
-    const { mutate: verifyEmail, isPending, isError, isSuccess, error } = mutation;
+
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [pageErrorMessage, setPageErrorMessage] = useState<string>('');
     const hasVerified = useRef(false);
 
     useEffect(() => {
-        console.log("VerifyEmailPage mounted. Token:", token);
-        if (token && !hasVerified.current) {
-            console.log("Calling verifyEmail mutation...");
+        if (!token || hasVerified.current) return;
+
+        const verify = async () => {
             hasVerified.current = true;
-            verifyEmail({ token }, {
-                onSuccess: (data) => {
-                    console.log("Verification SUCCESS:", data);
-                    setTimeout(() => navigate('/login'), 3000);
-                },
-                onError: (err: any) => {
-                    console.error("Verification FAILED:", err);
-                    console.error("Error Response Data:", err.response?.data);
-                    console.error("Error Status:", err.response?.status);
-                },
-                onSettled: () => {
-                    console.log("Verification mutation settled (finished).");
+            setStatus('loading');
+            try {
+                const response = await apiClient.post('/auth/verify-email', { token });
+                if (response.data?.isSuccess) {
+                    setStatus('success');
+                    setTimeout(() => navigate('/login'), 4000);
+                } else {
+                    setStatus('error');
+                    setPageErrorMessage(response.data?.message || 'Doğrulama başarısız.');
                 }
-            });
-        }
-    }, [token, verifyEmail, navigate]);
+            } catch (catchErr: unknown) {
+                console.error("Direct fetch failed:", catchErr);
+                setStatus('error');
+                if (axios.isAxiosError(catchErr)) {
+                    setPageErrorMessage(
+                        catchErr.response?.data?.errors?.[0] ||
+                        catchErr.response?.data?.message ||
+                        catchErr.message ||
+                        'Token geçersiz veya süresi dolmuş.'
+                    );
+                } else if (catchErr instanceof Error) {
+                    setPageErrorMessage(catchErr.message);
+                } else {
+                    setPageErrorMessage('Token geçersiz veya süresi dolmuş.');
+                }
+            }
+        };
 
-    useEffect(() => {
-        console.log("Render State -> isPending:", isPending, "isSuccess:", isSuccess, "isError:", isError, "Error:", error);
-    }, [isPending, isSuccess, isError, error]);
+        verify();
+    }, [token, navigate]);
 
-    if (!token) {
-        return (
-            <AuthLayout>
-                <div className="flex flex-col items-center justify-center p-8 text-center">
-                    <h1 className="text-2xl font-bold mb-2 text-red-500">Hata</h1>
-                    <p className="text-muted-foreground mb-4">Geçersiz doğrulama bağlantısı.</p>
-                    <div className="text-sm">Token bulunamadı.</div>
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="mt-6 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-                    >
-                        Giriş Yap
-                    </button>
+    const renderContent = () => {
+        if (!token) {
+            return (
+                <div className={styles.successMessage}>
+                    <AlertCircle size={56} strokeWidth={1.5} className="text-red-400 mb-4" />
+                    <h2 className="text-2xl font-semibold text-white mb-2">Geçersiz Bağlantı</h2>
+                    <p className="text-gray-400 mb-6">Token bulunamadı veya link eksik kopyalanmış olabilir.</p>
+                    <Button onClick={() => navigate('/login')} className={styles.submitButton}>
+                        Giriş Sayfasına Dön
+                    </Button>
                 </div>
-            </AuthLayout>
-        );
-    }
+            );
+        }
 
-    const errorMessage = (error as any)?.response?.data?.errors?.[0] ||
-        (error as any)?.message ||
-        "Token geçersiz veya süresi dolmuş.";
+        if (status === 'loading' || status === 'idle') {
+            return (
+                <div className={styles.successMessage}>
+                    <Loader2 size={56} strokeWidth={1.5} className="text-primary animate-spin mb-4" />
+                    <h2 className="text-2xl font-semibold text-white mb-2">Hesap Doğrulanıyor</h2>
+                    <p className="text-gray-400">Lütfen bekleyin, e-posta adresiniz onaylanıyor...</p>
+                </div>
+            );
+        }
+
+        if (status === 'success') {
+            return (
+                <div className={styles.successMessage}>
+                    <CheckCircle2 size={56} strokeWidth={1.5} className="text-green-400 mb-4" />
+                    <h2 className="text-2xl font-semibold text-white mb-2">E-posta Doğrulandı!</h2>
+                    <p className="text-gray-400 mb-6">Hesabınız başarıyla aktifleştirildi. Giriş sayfasına yönlendiriliyorsunuz...</p>
+                    <Button onClick={() => navigate('/login')} className={styles.submitButton}>
+                        Hemen Giriş Yap
+                    </Button>
+                </div>
+            );
+        }
+
+        return (
+            <div className={styles.successMessage}>
+                <XCircle size={56} strokeWidth={1.5} className="text-red-400 mb-4" />
+                <h2 className="text-2xl font-semibold text-white mb-2">Doğrulama Başarısız</h2>
+                <p className="text-red-300/80 mb-6 text-sm">{pageErrorMessage}</p>
+                <Button onClick={() => navigate('/login')} className={styles.submitButton}>
+                    Giriş Sayfasına Dön
+                </Button>
+            </div>
+        );
+    };
 
     return (
         <AuthLayout>
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-                <h1 className="text-2xl font-bold mb-2">
-                    {isSuccess ? "E-posta Doğrulandı" : isError ? "Doğrulama Başarısız" : "Doğrulanıyor..."}
-                </h1>
-                <p className="text-muted-foreground mb-8">
-                    {isSuccess ?
-                        "Hesabınız başarıyla doğrulandı. Giriş sayfasına yönlendiriliyorsunuz..." :
-                        isError ? "E-posta doğrulama işlemi sırasında bir hata oluştu." :
-                            "Lütfen bekleyin, e-posta adresiniz doğrulanıyor."}
-                </p>
-
-                {isPending && (
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                )}
-
-                {isSuccess && (
-                    <div className="text-green-500">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <p className="font-medium">İşlem başarılı!</p>
+            <div className={styles.form} style={{ border: 'none', background: 'transparent', boxShadow: 'none' }}>
+                <div className={styles.header}>
+                    <div className={styles.logoWrapper}>
+                        <Logo size={42} />
                     </div>
-                )}
-
-                {isError && (
-                    <div className="text-red-500">
-                        <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <p className="mb-4 font-medium">{errorMessage}</p>
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-                        >
-                            Giriş Yap
-                        </button>
-                    </div>
-                )}
+                </div>
+                {renderContent()}
             </div>
         </AuthLayout>
     );

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { Logo } from '@/shared/ui/Logo/Logo';
@@ -18,6 +19,7 @@ export const RegisterForm = () => {
     const [serverError, setServerError] = useState<string | null>(null);
     const [isRegistered, setIsRegistered] = useState(false);
     const registerMutation = useRegister();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const handleChange = useCallback((field: keyof RegisterRequest) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -36,7 +38,14 @@ export const RegisterForm = () => {
             return;
         }
 
-        registerMutation.mutate(formData, {
+        const captchaToken = await executeRecaptcha?.('register');
+
+        const enrichedData: RegisterRequest = {
+            ...formData,
+            captchaToken: captchaToken ?? undefined,
+        };
+
+        registerMutation.mutate(enrichedData, {
             onSuccess: (response) => {
                 if (response.isSuccess) {
                     setIsRegistered(true);
@@ -50,7 +59,7 @@ export const RegisterForm = () => {
                 setServerError(message);
             },
         });
-    }, [formData, confirmPassword, registerMutation, t]);
+    }, [formData, confirmPassword, registerMutation, t, executeRecaptcha]);
 
     if (isRegistered) {
         return (
@@ -143,7 +152,7 @@ export const RegisterForm = () => {
             </div>
 
             <div className={styles.footer}>
-                {t('auth.register.hasAccount')} <Link to="/login" className={styles.link}>{t('auth.register.loginLink')}</Link>
+                {t('auth.register.haveAccountText')} <Link to="/login" className={styles.link}>{t('auth.register.loginLinkText')}</Link>
             </div>
         </form>
     );

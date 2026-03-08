@@ -5,7 +5,11 @@
     width: 100vw;
     height: 100vh;
     z-index: 0;
-    background-color: #000;
+    background-color: #080808;
+}
+
+:global(html:not(.dark)) .container {
+    background-color: #e8ecf2;
 }
 
 canvas {

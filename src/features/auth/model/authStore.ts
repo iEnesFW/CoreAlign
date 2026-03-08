@@ -3,36 +3,37 @@ import type { UserProfile } from './auth.types';
 
 interface AuthState {
     accessToken: string | null;
-    refreshToken: string | null;
     user: UserProfile | null;
     isAuthenticated: boolean;
-    setAuth: (accessToken: string, refreshToken: string, user: UserProfile) => void;
+    setAuth: (accessToken: string, user: UserProfile) => void;
     clearAuth: () => void;
-    updateUser: (user: UserProfile) => void;
+    updateUser: (user: Partial<UserProfile>) => void;
+    setAccessToken: (token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-    accessToken: localStorage.getItem('accessToken'),
-    refreshToken: localStorage.getItem('refreshToken'),
-    user: JSON.parse(localStorage.getItem('user') || 'null') as UserProfile | null,
-    isAuthenticated: !!localStorage.getItem('accessToken'),
+    accessToken: null,
+    user: JSON.parse(localStorage.getItem('user') || 'null'),
+    isAuthenticated: !!localStorage.getItem('user'),
 
-    setAuth: (accessToken, refreshToken, user) => {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+    setAuth: (accessToken, user) => {
         localStorage.setItem('user', JSON.stringify(user));
-        set({ accessToken, refreshToken, user, isAuthenticated: true });
+        set({ accessToken, user, isAuthenticated: true });
     },
 
     clearAuth: () => {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
-        set({ accessToken: null, refreshToken: null, user: null, isAuthenticated: false });
+        set({ accessToken: null, user: null, isAuthenticated: false });
     },
 
-    updateUser: (user) => {
-        localStorage.setItem('user', JSON.stringify(user));
-        set({ user });
-    },
+    updateUser: (userData) =>
+        set((state) => {
+            const updatedUser = state.user ? { ...state.user, ...userData } : null;
+            if (updatedUser) {
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+            }
+            return { user: updatedUser };
+        }),
+
+    setAccessToken: (token) => set({ accessToken: token }),
 }));

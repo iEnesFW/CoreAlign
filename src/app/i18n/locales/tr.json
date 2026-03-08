@@ -1,0 +1,147 @@
+{
+    "common": {
+        "add_new": "Yeni Ekle",
+        "edit": "Düzenle",
+        "delete": "Sil",
+        "search": "Ara",
+        "filter": "Filtrele",
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "loading": "Yükleniyor...",
+        "success": "Başarılı",
+        "error": "Hata",
+        "warning": "Uyarı",
+        "info": "Bilgi"
+    },
+    "dashboard": {
+        "title": "Gösterge Paneli",
+        "overview": "Genel Bakış",
+        "revenue_analytics": "Gelir Analitiği",
+        "total_revenue": "Toplam Gelir",
+        "active_users": "Aktif Kullanıcılar",
+        "new_orders": "Yeni Siparişler",
+        "stats": {
+            "processing_power": "İşlem Gücü",
+            "latency": "Gecikme",
+            "uptime": "Çalışma Süresi"
+        }
+    },
+    "table": {
+        "showing": "Gösteriliyor:",
+        "to": "-",
+        "of": "/",
+        "results": "sonuç"
+    },
+    "navigation": {
+        "dashboard": "Gösterge Paneli",
+        "users": "Kullanıcılar",
+        "settings": "Ayarlar",
+        "analytics": "Analitikler"
+    },
+    "auth": {
+        "sign_in": "Giriş Yap",
+        "sign_up": "Kayıt Ol",
+        "sign_out": "Çıkış Yap",
+        "profile": "Profiliniz",
+        "settings": "Ayarlar",
+        "common": {
+            "unexpectedError": "Beklenmeyen bir hata oluştu."
+        },
+        "login": {
+            "title": "Tekrar Hoşgeldiniz",
+            "subtitle": "Hesabınıza erişmek için bilgilerinizi girin.",
+            "emailLabel": "E-posta adresi",
+            "emailPlaceholder": "isim@sirket.com",
+            "passwordLabel": "Şifre",
+            "passwordPlaceholder": "••••••••",
+            "rememberMe": "Beni hatırla",
+            "forgotPassword": "Şifremi unuttum?",
+            "submitButton": "Giriş yap",
+            "noAccount": "Hesabınız yok mu?",
+            "registerLink": "Kayıt ol",
+            "success": {
+                "title": "Giriş Başarılı",
+                "message": "Başarıyla giriş yaptınız."
+            },
+            "errors": {
+                "loginFailed": "Giriş başarısız. Lütfen tekrar deneyin."
+            }
+        },
+        "register": {
+            "title": "Kayıt Ol",
+            "subtitle": "Hesap oluşturmak için bilgilerinizi girin.",
+            "firstNameLabel": "Ad",
+            "firstNamePlaceholder": "Ahmet",
+            "lastNameLabel": "Soyad",
+            "lastNamePlaceholder": "Yılmaz",
+            "usernameLabel": "Kullanıcı Adı",
+            "usernamePlaceholder": "ahmetyilmaz",
+            "emailLabel": "E-posta Adresi",
+            "emailPlaceholder": "ahmet@ornek.com",
+            "passwordLabel": "Şifre",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Şifreyi Onayla",
+            "confirmPasswordPlaceholder": "••••••••",
+            "termsText": "Şartları kabul ediyorum",
+            "termsLinkText": "Hizmet Şartları",
+            "submitButton": "Hesap oluştur",
+            "haveAccountText": "Zaten bir hesabınız var mı?",
+            "loginLinkText": "Giriş yap",
+            "success": {
+                "title": "Kayıt Başarılı",
+                "message": "Hesabınız başarıyla oluşturuldu.",
+                "backToLogin": "Giriş ekranına dön"
+            },
+            "errors": {
+                "passwordMismatch": "Şifreler eşleşmiyor",
+                "registerFailed": "Kayıt başarısız. Lütfen tekrar deneyin."
+            }
+        },
+        "forgotPassword": {
+            "title": "Şifremi Unuttum",
+            "subtitle": "Şifre sıfırlama bağlantısı almak için e-posta adresinizi girin.",
+            "emailLabel": "E-posta adresi",
+            "emailPlaceholder": "isim@sirket.com",
+            "submitButton": "Sıfırlama bağlantısı gönder",
+            "backToLogin": "Giriş ekranına dön",
+            "success": {
+                "title": "Bağlantı Gönderildi",
+                "message": "Şifre sıfırlama bağlantısı için e-postanızı kontrol edin.",
+                "backToLogin": "Giriş ekranına dön"
+            }
+        },
+        "resetPassword": {
+            "title": "Şifre Sıfırlama",
+            "subtitle": "Yeni şifrenizi aşağıya girin.",
+            "passwordLabel": "Yeni Şifre",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Yeni Şifreyi Onayla",
+            "confirmPasswordPlaceholder": "••••••••",
+            "submitButton": "Şifreyi sıfırla",
+            "backToLogin": "Giriş ekranına dön",
+            "success": {
+                "title": "Şifre Sıfırlandı",
+                "message": "Şifreniz başarıyla sıfırlandı.",
+                "backToLogin": "Giriş ekranına dön"
+            },
+            "errors": {
+                "invalidToken": "Geçersiz veya süresi dolmuş bağlantı.",
+                "passwordMismatch": "Şifreler eşleşmiyor.",
+                "passwordLength": "Şifre en az 8 karakter olmalıdır."
+            }
+        },
+        "verification": {
+            "title": "E-posta Doğrulama",
+            "subtitle": "E-posta adresiniz doğrulanıyor...",
+            "success": {
+                "title": "Doğrulama Başarılı",
+                "message": "E-posta adresiniz başarıyla doğrulandı.",
+                "loginButton": "Giriş Yap'a Git"
+            },
+            "errors": {
+                "invalidToken": "Geçersiz doğrulama bağlantısı.",
+                "verificationFailed": "Doğrulama başarısız. Lütfen tekrar deneyin."
+            }
+        }
+    }
+}

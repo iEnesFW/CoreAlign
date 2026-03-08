@@ -3,7 +3,7 @@
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background-color: var(--color-bg);
+    background-color: #060913;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -11,7 +11,7 @@
 
 .content {
     position: relative;
-    z-index: 10;
+    z-index: 30;
     width: 100%;
     max-width: 480px;
     padding: 1rem;
@@ -22,12 +22,11 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
+    border-radius: 12px;
     padding: 2.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-/* Header Styles */
 .header {
     position: absolute;
     top: 0;
@@ -39,7 +38,6 @@
     align-items: center;
     z-index: 20;
     pointer-events: none;
-    /* Allows clicks to pass through to canvas if needed, but header elements should catch clicks if interactive */
 }
 
 .headerLeft,
@@ -57,10 +55,10 @@
     padding: 0.375rem 0.75rem;
     background-color: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-full);
+    border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
-    color: var(--color-text-muted);
+    color: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(4px);
 }
 
@@ -68,11 +66,10 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: var(--color-success);
-    box-shadow: 0 0 8px var(--color-success);
+    background-color: #10b981;
+    box-shadow: 0 0 8px #10b981;
 }
 
-/* Footer Styles */
 .footer {
     position: absolute;
     bottom: 0;
@@ -98,21 +95,21 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    color: var(--color-text-muted);
+    color: rgba(255, 255, 255, 0.6);
     opacity: 0.5;
     transition: all 0.3s ease;
 }
 
 .featureItem:hover {
     opacity: 1;
-    color: var(--color-text);
+    color: #ffffff;
     transform: translateY(-2px);
 }
 
 .featureIcon {
     padding: 0.75rem;
     background-color: rgba(255, 255, 255, 0.03);
-    border-radius: var(--radius-md);
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -124,7 +121,74 @@
 
 .copyright {
     font-size: 0.75rem;
-    color: var(--color-text-muted);
+    color: rgba(255, 255, 255, 0.6);
     opacity: 0.4;
     pointer-events: auto;
+}
+
+:global(html:not(.dark)) .container {
+    background-color: #f0f2f7;
+}
+
+:global(html:not(.dark)) .card {
+    background-color: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+:global(html:not(.dark)) .statusBadge {
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #334155;
+}
+
+:global(html:not(.dark)) .featureItem {
+    color: #64748b;
+}
+
+:global(html:not(.dark)) .featureItem:hover {
+    color: #1e293b;
+}
+
+:global(html:not(.dark)) .featureIcon {
+    background-color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+:global(html:not(.dark)) .copyright {
+    color: #64748b;
+}
+
+.themeToggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.themeToggle:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+:global(html:not(.dark)) .themeToggle {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.6);
+    color: #475569;
+}
+
+:global(html:not(.dark)) .themeToggle:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #1e293b;
 }

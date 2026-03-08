@@ -1,0 +1,147 @@
+{
+    "common": {
+        "add_new": "Add New",
+        "edit": "Edit",
+        "delete": "Delete",
+        "search": "Search",
+        "filter": "Filter",
+        "save": "Save",
+        "cancel": "Cancel",
+        "loading": "Loading...",
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Information"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "overview": "Overview",
+        "revenue_analytics": "Revenue Analytics",
+        "total_revenue": "Total Revenue",
+        "active_users": "Active Users",
+        "new_orders": "New Orders",
+        "stats": {
+            "processing_power": "Processing Power",
+            "latency": "Latency",
+            "uptime": "Uptime"
+        }
+    },
+    "table": {
+        "showing": "Showing",
+        "to": "to",
+        "of": "of",
+        "results": "results"
+    },
+    "navigation": {
+        "dashboard": "Dashboard",
+        "users": "Users",
+        "settings": "Settings",
+        "analytics": "Analytics"
+    },
+    "auth": {
+        "sign_in": "Sign in",
+        "sign_up": "Sign up",
+        "sign_out": "Sign out",
+        "profile": "Your Profile",
+        "settings": "Settings",
+        "common": {
+            "unexpectedError": "An unexpected error occurred."
+        },
+        "login": {
+            "title": "Welcome back",
+            "subtitle": "Enter your details to access your account.",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "name@company.com",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "••••••••",
+            "rememberMe": "Remember me",
+            "forgotPassword": "Forgot password?",
+            "submitButton": "Sign in",
+            "noAccount": "Don't have an account?",
+            "registerLink": "Sign up",
+            "success": {
+                "title": "Login Successful",
+                "message": "You have successfully logged in."
+            },
+            "errors": {
+                "loginFailed": "Login failed. Please try again."
+            }
+        },
+        "register": {
+            "title": "Register",
+            "subtitle": "Enter your details to create an account.",
+            "firstNameLabel": "First Name",
+            "firstNamePlaceholder": "John",
+            "lastNameLabel": "Last Name",
+            "lastNamePlaceholder": "Doe",
+            "usernameLabel": "Username",
+            "usernamePlaceholder": "johndoe",
+            "emailLabel": "Email Address",
+            "emailPlaceholder": "john@example.com",
+            "passwordLabel": "Password",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Confirm Password",
+            "confirmPasswordPlaceholder": "••••••••",
+            "termsText": "I agree to the",
+            "termsLinkText": "Terms and Conditions",
+            "submitButton": "Create account",
+            "haveAccountText": "Already have an account?",
+            "loginLinkText": "Log in",
+            "success": {
+                "title": "Registration Successful",
+                "message": "Your account has been created successfully.",
+                "backToLogin": "Back to login"
+            },
+            "errors": {
+                "passwordMismatch": "Passwords do not match",
+                "registerFailed": "Registration failed. Please try again."
+            }
+        },
+        "forgotPassword": {
+            "title": "Forgot Password",
+            "subtitle": "Enter your email address to receive a password reset link.",
+            "emailLabel": "Email address",
+            "emailPlaceholder": "name@company.com",
+            "submitButton": "Send reset link",
+            "backToLogin": "Back to login",
+            "success": {
+                "title": "Reset Link Sent",
+                "message": "Check your email for the password reset link.",
+                "backToLogin": "Back to login"
+            }
+        },
+        "resetPassword": {
+            "title": "Reset Password",
+            "subtitle": "Enter your new password below.",
+            "passwordLabel": "New Password",
+            "passwordPlaceholder": "••••••••",
+            "confirmPasswordLabel": "Confirm New Password",
+            "confirmPasswordPlaceholder": "••••••••",
+            "submitButton": "Reset password",
+            "backToLogin": "Back to login",
+            "success": {
+                "title": "Password Reset",
+                "message": "Your password has been reset successfully.",
+                "backToLogin": "Back to login"
+            },
+            "errors": {
+                "invalidToken": "Invalid or expired token.",
+                "passwordMismatch": "Passwords do not match.",
+                "passwordLength": "Password must be at least 8 characters long."
+            }
+        },
+        "verification": {
+            "title": "Email Verification",
+            "subtitle": "We are verifying your email address...",
+            "success": {
+                "title": "Verification Successful",
+                "message": "Your email has been successfully verified.",
+                "loginButton": "Go to Login"
+            },
+            "errors": {
+                "invalidToken": "Invalid or expired verification token.",
+                "verificationFailed": "Verification failed. Please try again."
+            }
+        }
+    }
+}

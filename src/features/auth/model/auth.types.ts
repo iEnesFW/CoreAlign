@@ -7,7 +7,6 @@ export interface ApiResponse<T> {
 
 export interface AuthResponse {
     accessToken: string;
-    refreshToken: string;
     expiresAt: string;
     user: UserProfile;
 }
@@ -25,6 +24,9 @@ export interface UserProfile {
 export interface LoginRequest {
     email: string;
     password: string;
+    rememberMe?: boolean;
+    captchaToken?: string;
+    deviceFingerprint?: string;
 }
 
 export interface RegisterRequest {
@@ -33,10 +35,12 @@ export interface RegisterRequest {
     password: string;
     firstName?: string;
     lastName?: string;
+    captchaToken?: string;
 }
 
 export interface ForgotPasswordRequest {
     email: string;
+    captchaToken?: string;
 }
 
 export interface ResetPasswordRequest {
@@ -48,10 +52,25 @@ export interface VerifyEmailRequest {
     token: string;
 }
 
-export interface RefreshTokenRequest {
-    refreshToken: string;
+export interface ChangePasswordRequest {
+    currentPassword: string;
+    newPassword: string;
 }
 
-export interface LogoutRequest {
-    refreshToken: string;
+export interface SessionInfo {
+    id: string;
+    deviceInfo: string | null;
+    ipAddress: string | null;
+    createdAtUtc: string;
+    lastActivityAtUtc: string;
+    isCurrent: boolean;
+}
+
+export interface LoginHistoryEntry {
+    ipAddress: string | null;
+    userAgent: string | null;
+    deviceFingerprint: string | null;
+    loginResult: string;
+    failureReason: string | null;
+    attemptedAtUtc: string;
 }
