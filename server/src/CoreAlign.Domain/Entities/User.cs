@@ -3,6 +3,7 @@ namespace CoreAlign.Domain.Entities;
 public class User
 {
     public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string NormalizedEmail { get; set; } = string.Empty;
@@ -22,15 +23,17 @@ public class User
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? LastLoginAtUtc { get; set; }
 
+    public Tenant Tenant { get; set; } = null!;
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
 
     protected User() { }
 
-    public User(string username, string email, string passwordHash)
+    public User(Guid tenantId, string username, string email, string passwordHash)
     {
         Id = Guid.NewGuid();
+        TenantId = tenantId;
         Username = username;
         Email = email;
         NormalizedEmail = email.ToUpperInvariant();

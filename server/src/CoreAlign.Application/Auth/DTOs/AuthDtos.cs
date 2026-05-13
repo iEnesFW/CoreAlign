@@ -11,6 +11,9 @@ public class AuthResponseDto
 public class UserProfileDto
 {
     public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
+    public string TenantName { get; set; } = string.Empty;
+    public string TenantSlug { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? FirstName { get; set; }

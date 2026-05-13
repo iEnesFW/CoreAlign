@@ -9,35 +9,50 @@ public record LoginCommand(
     string Password,
     string? IpAddress = null,
     string? UserAgent = null
-) : IRequest<ApiResponse<AuthResponseDto>>;
+) : IRequest<AuthResponseDto>;
 
 public record RegisterCommand(
+    string OrganizationName,
     string Username,
     string Email,
     string Password,
     string? FirstName = null,
     string? LastName = null
-) : IRequest<ApiResponse<AuthResponseDto>>;
+) : IRequest<AuthResponseDto>, ITransactionalRequest;
 
 public record RefreshTokenCommand(
     string RefreshToken,
     string? IpAddress = null,
     string? DeviceInfo = null
-) : IRequest<ApiResponse<AuthResponseDto>>;
+) : IRequest<AuthResponseDto>, ITransactionalRequest;
 
 public record ForgotPasswordCommand(
     string Email
-) : IRequest<ApiResponse<bool>>;
+) : IRequest<bool>, ITransactionalRequest;
 
 public record ResetPasswordCommand(
     string Token,
     string NewPassword
-) : IRequest<ApiResponse<bool>>;
+) : IRequest<bool>, ITransactionalRequest;
 
 public record VerifyEmailCommand(
     string Token
-) : IRequest<ApiResponse<bool>>;
+) : IRequest<bool>, ITransactionalRequest;
 
 public record LogoutCommand(
     string RefreshToken
-) : IRequest<ApiResponse<bool>>;
+) : IRequest<bool>, ITransactionalRequest;
+
+public record ChangePasswordCommand(
+    Guid UserId,
+    string CurrentPassword,
+    string NewPassword
+) : IRequest<bool>, ITransactionalRequest;
+
+public record UpdateProfileCommand(
+    Guid UserId,
+    string? FirstName,
+    string? LastName,
+    string? PhoneNumber,
+    string? AvatarUrl
+) : IRequest<AuthResponseDto>, ITransactionalRequest;

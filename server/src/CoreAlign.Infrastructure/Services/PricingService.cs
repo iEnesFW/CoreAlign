@@ -1,0 +1,107 @@
+using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
+
+namespace CoreAlign.Infrastructure.Services;
+
+public class PricingService : IPricingService
+{
+    private readonly IProductRepository _products;
+    private readonly ICustomerRepository _customers;
+    private readonly IPriceListRepository _priceLists;
+    private readonly ICustomerProductPriceRepository _customerProductPrices;
+
+    public PricingService(
+        IProductRepository products,
+        ICustomerRepository customers,
+        IPriceListRepository priceLists,
+        ICustomerProductPriceRepository customerProductPrices)
+    {
+        _products = products;
+        _customers = customers;
+        _priceLists = priceLists;
+        _customerProductPrices = customerProductPrices;
+    }
+
+    public async Task<PriceResolutionResult> ResolveAsync(PriceResolutionRequest request, CancellationToken cancellationToken = default)
+    {
+        var product = await _products.GetByIdAsync(request.ProductId, cancellationToken)
+            ?? throw new InvalidOperationException("Product not found for pricing.");
+
+        var customer = await _customers.GetByIdAsync(request.CustomerId, cancellationToken)
+            ?? throw new InvalidOperationException("Customer not found for pricing.");
+
+        var currency = request.RequestedCurrency ?? customer.DefaultCurrency ?? product.Currency;
+
+        // 1) Customer-specific product price
+        var cppList = await _customerProductPrices.GetForCustomerAndProductAsync(customer.Id, product.Id, cancellationToken);
+        var matchingCpp = cppList
+            .Where(p => p.IsValid(request.AsOfUtc, request.Quantity))
+            .OrderByDescending(p => p.UpdatedAtUtc)
+            .FirstOrDefault();
+        if (matchingCpp is not null)
+        {
+            return new PriceResolutionResult(
+                UnitPrice: matchingCpp.Price,
+                Currency: matchingCpp.Currency,
+                DiscountPercent: matchingCpp.DiscountPercent ?? 0m,
+                Source: PriceSource.CustomerProductPrice,
+                SourceLabel: "Customer-specific price",
+                ReferenceListPrice: product.ListPrice == 0 ? product.Price : product.ListPrice,
+                TaxRatePercent: 0m,
+                IsTaxInclusive: product.IsPriceTaxInclusive,
+                TaxRateId: product.TaxRateId,
+                AppliedRecordId: matchingCpp.Id);
+        }
+
+        // 2) Customer's assigned price list
+        if (customer.PriceListId.HasValue)
+        {
+            var priceList = await _priceLists.GetWithItemsAsync(customer.PriceListId.Value, cancellationToken);
+            if (priceList is not null && priceList.IsCurrentlyValid(request.AsOfUtc))
+            {
+                var item = priceList.Items
+                    .Where(i => i.ProductId == product.Id && i.MatchesQuantity(request.Quantity))
+                    .OrderByDescending(i => i.UpdatedAtUtc)
+                    .FirstOrDefault();
+                if (item is not null)
+                {
+                    return new PriceResolutionResult(
+                        UnitPrice: item.Price,
+                        Currency: priceList.Currency,
+                        DiscountPercent: item.DiscountPercent ?? 0m,
+                        Source: PriceSource.PriceList,
+                        SourceLabel: $"Price list: {priceList.Name}",
+                        ReferenceListPrice: product.ListPrice == 0 ? product.Price : product.ListPrice,
+                        TaxRatePercent: 0m,
+                        IsTaxInclusive: priceList.IsTaxInclusive,
+                        TaxRateId: product.TaxRateId,
+                        AppliedRecordId: item.Id);
+                }
+            }
+        }
+
+        // 3) Product list price (default)
+        var unitPrice = product.ListPrice > 0 ? product.ListPrice : product.Price;
+        return new PriceResolutionResult(
+            UnitPrice: unitPrice,
+            Currency: currency,
+            DiscountPercent: customer.DefaultDiscountPercent,
+            Source: PriceSource.ProductListPrice,
+            SourceLabel: "Product list price",
+            ReferenceListPrice: unitPrice,
+            TaxRatePercent: 0m,
+            IsTaxInclusive: product.IsPriceTaxInclusive,
+            TaxRateId: product.TaxRateId,
+            AppliedRecordId: null);
+    }
+
+    public async Task<IReadOnlyList<PriceResolutionResult>> ResolveBatchAsync(IEnumerable<PriceResolutionRequest> requests, CancellationToken cancellationToken = default)
+    {
+        var results = new List<PriceResolutionResult>();
+        foreach (var req in requests)
+        {
+            results.Add(await ResolveAsync(req, cancellationToken));
+        }
+        return results;
+    }
+}

@@ -9,9 +9,10 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<AuthResponseDto>>
+public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto>
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITenantRepository _tenantRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly ILoginAuditLogRepository _loginAuditLogRepository;
     private readonly IUserSessionRepository _userSessionRepository;
@@ -21,6 +22,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
 
     public LoginCommandHandler(
         IUserRepository userRepository,
+        ITenantRepository tenantRepository,
         IRefreshTokenRepository refreshTokenRepository,
         ILoginAuditLogRepository loginAuditLogRepository,
         IUserSessionRepository userSessionRepository,
@@ -29,6 +31,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
+        _tenantRepository = tenantRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _loginAuditLogRepository = loginAuditLogRepository;
         _userSessionRepository = userSessionRepository;
@@ -37,7 +40,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<AuthResponseDto>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
 
@@ -47,22 +50,10 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
             throw new InvalidCredentialsException();
         }
 
-        if (!user.IsActive)
-        {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Disabled, user.Id, request.IpAddress, request.UserAgent, "Account disabled", cancellationToken);
-            throw new AccountDisabledException();
-        }
-
         if (user.IsLockedOut)
         {
             await LogLoginAttemptAsync(request.Email, LoginResultType.Locked, user.Id, request.IpAddress, request.UserAgent, "Account locked", cancellationToken);
-            throw new AccountLockedException(user.LockoutEnd!.Value);
-        }
-
-        if (!user.IsEmailConfirmed)
-        {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Unverified, user.Id, request.IpAddress, request.UserAgent, "Email not verified", cancellationToken);
-            throw new EmailNotVerifiedException();
+            throw new InvalidCredentialsException();
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
@@ -73,11 +64,26 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
             throw new InvalidCredentialsException();
         }
 
+        if (!user.IsActive)
+        {
+            await LogLoginAttemptAsync(request.Email, LoginResultType.Disabled, user.Id, request.IpAddress, request.UserAgent, "Account disabled", cancellationToken);
+            throw new AccountDisabledException();
+        }
+
+        if (!user.IsEmailConfirmed)
+        {
+            await LogLoginAttemptAsync(request.Email, LoginResultType.Unverified, user.Id, request.IpAddress, request.UserAgent, "Email not verified", cancellationToken);
+            throw new EmailNotVerifiedException();
+        }
+
         user.RecordSuccessfulLogin();
         _userRepository.Update(user);
 
+        var tenant = await _tenantRepository.GetByIdAsync(user.TenantId, cancellationToken)
+            ?? throw new UserNotFoundException();
+
         var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles);
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.TenantId, user.Email, roles);
         var rawRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenHash = _jwtTokenService.HashToken(rawRefreshToken);
 
@@ -86,8 +92,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
             refreshTokenHash,
             DateTime.UtcNow.AddDays(7),
             request.UserAgent,
-            request.IpAddress
-        );
+            request.IpAddress);
 
         await _refreshTokenRepository.AddAsync(refreshToken, cancellationToken);
 
@@ -96,21 +101,20 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
             refreshTokenHash,
             DateTime.UtcNow.AddDays(7),
             request.UserAgent,
-            request.IpAddress
-        );
+            request.IpAddress);
 
         await _userSessionRepository.AddAsync(session, cancellationToken);
         await LogLoginAttemptAsync(request.Email, LoginResultType.Success, user.Id, request.IpAddress, request.UserAgent, null, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<AuthResponseDto>.Success(new AuthResponseDto
+        return new AuthResponseDto
         {
             AccessToken = accessToken,
             RefreshToken = rawRefreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(15),
-            User = MapToUserProfile(user, roles)
-        });
+            User = MapToUserProfile(user, tenant, roles)
+        };
     }
 
     private async Task LogLoginAttemptAsync(string email, LoginResultType result, Guid? userId, string? ip, string? ua, string? reason, CancellationToken ct)
@@ -120,11 +124,14 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
         await _unitOfWork.SaveChangesAsync(ct);
     }
 
-    private static UserProfileDto MapToUserProfile(User user, List<string> roles)
+    private static UserProfileDto MapToUserProfile(User user, Tenant tenant, List<string> roles)
     {
         return new UserProfileDto
         {
             Id = user.Id,
+            TenantId = tenant.Id,
+            TenantName = tenant.Name,
+            TenantSlug = tenant.Slug,
             Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,

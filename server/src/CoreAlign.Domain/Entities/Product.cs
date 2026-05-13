@@ -1,0 +1,212 @@
+using CoreAlign.Domain.Common;
+using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Exceptions;
+
+namespace CoreAlign.Domain.Entities;
+
+public class Product : TenantEntity
+{
+    public string Sku { get; private set; } = string.Empty;
+    public string? Barcode { get; private set; }
+    public string? Mpn { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public string? ShortDescription { get; private set; }
+    public string? Description { get; private set; }
+    public string? Slug { get; private set; }
+
+    public Guid? BrandId { get; private set; }
+    public Guid? CategoryId { get; private set; }
+    public Guid? ParentProductId { get; private set; }
+    public string? VariantAttributesJson { get; private set; }
+    public string? TagsJson { get; private set; }
+
+    public string Unit { get; private set; } = "pcs";
+    public Guid? BaseUomId { get; private set; }
+    public Guid? PurchaseUomId { get; private set; }
+    public Guid? SalesUomId { get; private set; }
+
+    public decimal Price { get; private set; }
+    public decimal ListPrice { get; private set; }
+    public decimal MinSellingPrice { get; private set; }
+    public decimal StandardCost { get; private set; }
+    public decimal LastPurchaseCost { get; private set; }
+    public decimal AverageCost { get; private set; }
+    public string Currency { get; private set; } = "TRY";
+
+    public Guid? TaxRateId { get; private set; }
+    public bool IsPriceTaxInclusive { get; private set; }
+
+    public decimal StockQuantity { get; private set; }
+    public bool IsStockTracked { get; private set; } = true;
+    public bool IsLotTracked { get; private set; }
+    public bool IsSerialTracked { get; private set; }
+    public decimal MinStock { get; private set; }
+    public decimal MaxStock { get; private set; }
+    public decimal ReorderPoint { get; private set; }
+    public decimal SafetyStock { get; private set; }
+    public int LeadTimeDays { get; private set; }
+
+    public decimal? WeightKg { get; private set; }
+    public decimal? WidthCm { get; private set; }
+    public decimal? HeightCm { get; private set; }
+    public decimal? DepthCm { get; private set; }
+    public decimal? VolumeM3 { get; private set; }
+
+    public ProductStatus Status { get; private set; } = ProductStatus.Active;
+    public DateTime? LaunchDate { get; private set; }
+    public DateTime? EndOfLifeDate { get; private set; }
+    public bool IsActive => Status == ProductStatus.Active || Status == ProductStatus.New;
+
+    public Brand? Brand { get; set; }
+    public ProductCategory? Category { get; set; }
+    public TaxRate? TaxRate { get; set; }
+    public UnitOfMeasure? BaseUom { get; set; }
+    public Product? ParentProduct { get; set; }
+
+    protected Product() { }
+
+    public Product(
+        string sku,
+        string name,
+        string unit = "pcs",
+        decimal price = 0m,
+        string currency = "TRY",
+        decimal initialStock = 0m,
+        string? description = null)
+    {
+        Sku = sku;
+        Name = name;
+        Unit = unit;
+        Price = price;
+        ListPrice = price;
+        Currency = currency;
+        StockQuantity = initialStock;
+        Description = description;
+    }
+
+    public void Update(
+        string sku,
+        string? barcode,
+        string? mpn,
+        string name,
+        string? shortDescription,
+        string? description,
+        string? slug,
+        Guid? brandId,
+        Guid? categoryId,
+        Guid? parentProductId,
+        string? variantAttributesJson,
+        string? tagsJson,
+        string unit,
+        Guid? baseUomId,
+        Guid? purchaseUomId,
+        Guid? salesUomId,
+        decimal listPrice,
+        decimal price,
+        decimal minSellingPrice,
+        decimal standardCost,
+        string currency,
+        Guid? taxRateId,
+        bool isPriceTaxInclusive,
+        bool isStockTracked,
+        bool isLotTracked,
+        bool isSerialTracked,
+        decimal minStock,
+        decimal maxStock,
+        decimal reorderPoint,
+        decimal safetyStock,
+        int leadTimeDays,
+        decimal? weightKg,
+        decimal? widthCm,
+        decimal? heightCm,
+        decimal? depthCm,
+        decimal? volumeM3,
+        ProductStatus status,
+        DateTime? launchDate,
+        DateTime? endOfLifeDate)
+    {
+        if (parentProductId == Id)
+        {
+            throw new ArgumentException("A product cannot reference itself as parent.", nameof(parentProductId));
+        }
+        Sku = sku;
+        Barcode = barcode;
+        Mpn = mpn;
+        Name = name;
+        ShortDescription = shortDescription;
+        Description = description;
+        Slug = slug;
+        BrandId = brandId;
+        CategoryId = categoryId;
+        ParentProductId = parentProductId;
+        VariantAttributesJson = variantAttributesJson;
+        TagsJson = tagsJson;
+        Unit = unit;
+        BaseUomId = baseUomId;
+        PurchaseUomId = purchaseUomId;
+        SalesUomId = salesUomId;
+        ListPrice = listPrice;
+        Price = price;
+        MinSellingPrice = minSellingPrice;
+        StandardCost = standardCost;
+        Currency = currency;
+        TaxRateId = taxRateId;
+        IsPriceTaxInclusive = isPriceTaxInclusive;
+        IsStockTracked = isStockTracked;
+        IsLotTracked = isLotTracked;
+        IsSerialTracked = isSerialTracked;
+        MinStock = minStock;
+        MaxStock = maxStock;
+        ReorderPoint = reorderPoint;
+        SafetyStock = safetyStock;
+        LeadTimeDays = leadTimeDays;
+        WeightKg = weightKg;
+        WidthCm = widthCm;
+        HeightCm = heightCm;
+        DepthCm = depthCm;
+        VolumeM3 = volumeM3;
+        Status = status;
+        LaunchDate = launchDate;
+        EndOfLifeDate = endOfLifeDate;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void AdjustStock(decimal delta)
+    {
+        if (!IsStockTracked)
+        {
+            return;
+        }
+        var next = StockQuantity + delta;
+        if (next < 0m)
+        {
+            throw new InsufficientStockException(Name, StockQuantity, Math.Abs(delta));
+        }
+        StockQuantity = next;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void RecordPurchaseCost(decimal unitCost, decimal quantity)
+    {
+        if (quantity <= 0m) return;
+        LastPurchaseCost = unitCost;
+        var prevValue = AverageCost * StockQuantity;
+        var newValue = unitCost * quantity;
+        var totalQty = StockQuantity + quantity;
+        if (totalQty > 0m)
+        {
+            AverageCost = Math.Round((prevValue + newValue) / totalQty, 4);
+        }
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void ChangeStatus(ProductStatus status)
+    {
+        Status = status;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void Activate() => ChangeStatus(ProductStatus.Active);
+
+    public void Deactivate() => ChangeStatus(ProductStatus.Discontinued);
+}

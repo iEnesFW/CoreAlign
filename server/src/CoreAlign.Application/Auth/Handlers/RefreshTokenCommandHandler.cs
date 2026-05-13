@@ -8,29 +8,26 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, ApiResponse<AuthResponseDto>>
+public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IUserRepository _userRepository;
-    private readonly IUserSessionRepository _userSessionRepository;
+    private readonly ITenantRepository _tenantRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
 
     public RefreshTokenCommandHandler(
         IRefreshTokenRepository refreshTokenRepository,
-        IUserRepository userRepository,
-        IUserSessionRepository userSessionRepository,
+        ITenantRepository tenantRepository,
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork)
     {
         _refreshTokenRepository = refreshTokenRepository;
-        _userRepository = userRepository;
-        _userSessionRepository = userSessionRepository;
+        _tenantRepository = tenantRepository;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<AuthResponseDto>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
+    public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = _jwtTokenService.HashToken(request.RefreshToken);
         var existingToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
@@ -38,9 +35,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         if (existingToken is null || !existingToken.IsActive)
             throw new TokenExpiredException();
 
-        var user = await _userRepository.GetByIdAsync(existingToken.UserId, cancellationToken);
-        if (user is null)
-            throw new UserNotFoundException();
+        var user = existingToken.User;
+        var tenant = await _tenantRepository.GetByIdAsync(user.TenantId, cancellationToken)
+            ?? throw new UserNotFoundException();
 
         var newRawRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var newRefreshTokenHash = _jwtTokenService.HashToken(newRawRefreshToken);
@@ -53,17 +50,16 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
             newRefreshTokenHash,
             DateTime.UtcNow.AddDays(7),
             request.DeviceInfo,
-            request.IpAddress
-        );
+            request.IpAddress);
 
         await _refreshTokenRepository.AddAsync(newRefreshToken, cancellationToken);
 
         var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.Email, roles);
+        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.TenantId, user.Email, roles);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<AuthResponseDto>.Success(new AuthResponseDto
+        return new AuthResponseDto
         {
             AccessToken = accessToken,
             RefreshToken = newRawRefreshToken,
@@ -71,6 +67,9 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
             User = new UserProfileDto
             {
                 Id = user.Id,
+                TenantId = tenant.Id,
+                TenantName = tenant.Name,
+                TenantSlug = tenant.Slug,
                 Username = user.Username,
                 Email = user.Email,
                 FirstName = user.FirstName,
@@ -78,6 +77,6 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
                 AvatarUrl = user.AvatarUrl,
                 Roles = roles
             }
-        });
+        };
     }
 }

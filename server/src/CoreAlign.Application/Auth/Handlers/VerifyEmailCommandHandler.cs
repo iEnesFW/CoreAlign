@@ -6,7 +6,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, ApiResponse<bool>>
+public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, bool>
 {
     private readonly IEmailVerificationTokenRepository _emailVerificationTokenRepository;
     private readonly IUserRepository _userRepository;
@@ -25,7 +25,7 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Api
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<bool>> Handle(VerifyEmailCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(VerifyEmailCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = _jwtTokenService.HashToken(request.Token);
         var verificationToken = await _emailVerificationTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
@@ -46,6 +46,6 @@ public class VerifyEmailCommandHandler : IRequestHandler<VerifyEmailCommand, Api
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<bool>.Success(true);
+        return true;
     }
 }

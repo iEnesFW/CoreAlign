@@ -6,7 +6,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, ApiResponse<bool>>
+public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordCommand, bool>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
@@ -28,7 +28,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<bool>> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
 
@@ -44,6 +44,6 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             await _emailService.SendPasswordResetEmailAsync(user.Email, rawToken, cancellationToken);
         }
 
-        return ApiResponse<bool>.Success(true);
+        return true;
     }
 }

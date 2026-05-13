@@ -2,51 +2,66 @@ namespace CoreAlign.Domain.Exceptions;
 
 public abstract class DomainException : Exception
 {
-    public int StatusCode { get; }
-
-    protected DomainException(string message, int statusCode = 400) : base(message)
-    {
-        StatusCode = statusCode;
-    }
+    protected DomainException(string message) : base(message) { }
 }
 
-public class UserNotFoundException : DomainException
+public abstract class NotFoundException : DomainException
 {
-    public UserNotFoundException() : base("User not found.", 404) { }
+    protected NotFoundException(string message) : base(message) { }
 }
 
-public class InvalidCredentialsException : DomainException
+public abstract class ConflictException : DomainException
 {
-    public InvalidCredentialsException() : base("Invalid email or password.", 401) { }
+    protected ConflictException(string message) : base(message) { }
 }
 
-public class AccountLockedException : DomainException
+public abstract class ForbiddenException : DomainException
+{
+    protected ForbiddenException(string message) : base(message) { }
+}
+
+public abstract class AuthenticationException : DomainException
+{
+    protected AuthenticationException(string message) : base(message) { }
+}
+
+public class UserNotFoundException : NotFoundException
+{
+    public UserNotFoundException() : base("User not found.") { }
+}
+
+public class InvalidCredentialsException : AuthenticationException
+{
+    public InvalidCredentialsException() : base("Invalid email or password.") { }
+}
+
+public class AccountLockedException : ForbiddenException
 {
     public AccountLockedException(DateTimeOffset lockoutEnd)
-        : base($"Account is locked until {lockoutEnd:u}.", 423) { }
+        : base($"Account is locked until {lockoutEnd:u}.") { }
 }
 
-public class EmailNotVerifiedException : DomainException
+public class EmailNotVerifiedException : ForbiddenException
 {
-    public EmailNotVerifiedException() : base("Email address has not been verified.", 403) { }
+    public EmailNotVerifiedException() : base("Email address has not been verified.") { }
 }
 
 public class TokenExpiredException : DomainException
 {
-    public TokenExpiredException() : base("Token has expired or is invalid.", 400) { }
+    public TokenExpiredException() : base("Token has expired or is invalid.") { }
 }
 
-public class DuplicateEmailException : DomainException
+public class DuplicateEmailException : ConflictException
 {
-    public DuplicateEmailException() : base("An account with this email already exists.", 409) { }
+    public DuplicateEmailException() : base("An account with this email already exists.") { }
 }
 
-public class DuplicateUsernameException : DomainException
+public class DuplicateUsernameException : ConflictException
 {
-    public DuplicateUsernameException() : base("This username is already taken.", 409) { }
+    public DuplicateUsernameException() : base("This username is already taken.") { }
 }
 
-public class AccountDisabledException : DomainException
+public class AccountDisabledException : ForbiddenException
 {
-    public AccountDisabledException() : base("This account has been disabled.", 403) { }
+    public AccountDisabledException() : base("This account has been disabled.") { }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using CoreAlign.Application.Common;
 using CoreAlign.Domain.Exceptions;
@@ -7,6 +8,8 @@ namespace CoreAlign.API.Middleware;
 
 public class ExceptionHandlingMiddleware
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
@@ -30,25 +33,34 @@ public class ExceptionHandlingMiddleware
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+
         var (statusCode, errors) = exception switch
         {
-            DomainException domainEx => (domainEx.StatusCode, new List<string> { domainEx.Message }),
-            ValidationException validationEx => (400, validationEx.Errors.Select(e => e.ErrorMessage).ToList()),
-            UnauthorizedAccessException => (401, new List<string> { "Unauthorized access." }),
-            _ => (500, new List<string> { "An unexpected error occurred." })
+            NotFoundException notFoundEx => (StatusCodes.Status404NotFound, new List<string> { notFoundEx.Message }),
+            ConflictException conflictEx => (StatusCodes.Status409Conflict, new List<string> { conflictEx.Message }),
+            AuthenticationException authEx => (StatusCodes.Status401Unauthorized, new List<string> { authEx.Message }),
+            ForbiddenException forbidEx => (StatusCodes.Status403Forbidden, new List<string> { forbidEx.Message }),
+            DomainException domainEx => (StatusCodes.Status400BadRequest, new List<string> { domainEx.Message }),
+            ValidationException validationEx => (StatusCodes.Status400BadRequest, validationEx.Errors.Select(e => e.ErrorMessage).Distinct().ToList()),
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, new List<string> { "Unauthorized." }),
+            _ => (StatusCodes.Status500InternalServerError, new List<string> { "An unexpected error occurred." })
         };
 
-        if (statusCode == 500)
+        if (statusCode >= 500)
         {
-            _logger.LogError(exception, "Unhandled exception occurred");
+            _logger.LogError(exception, "Unhandled exception. TraceId: {TraceId}", traceId);
+        }
+        else if (statusCode >= 400)
+        {
+            _logger.LogWarning("Handled exception {ExceptionType}. TraceId: {TraceId}. Message: {Message}",
+                exception.GetType().Name, traceId, exception.Message);
         }
 
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        var response = ApiResponse<object>.Failure(errors, statusCode);
-
-        var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, jsonOptions));
+        var response = ApiResponse<object>.Failure(errors, statusCode, traceId);
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
     }
 }

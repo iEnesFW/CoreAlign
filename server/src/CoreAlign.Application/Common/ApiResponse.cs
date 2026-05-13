@@ -6,6 +6,7 @@ public class ApiResponse<T>
     public T? Data { get; set; }
     public List<string> Errors { get; set; } = new();
     public int StatusCode { get; set; }
+    public string? TraceId { get; set; }
 
     public static ApiResponse<T> Success(T data, int statusCode = 200)
     {
@@ -20,5 +21,10 @@ public class ApiResponse<T>
     public static ApiResponse<T> Failure(List<string> errors, int statusCode = 400)
     {
         return new ApiResponse<T> { IsSuccess = false, Errors = errors, StatusCode = statusCode };
+    }
+
+    public static ApiResponse<T> Failure(List<string> errors, int statusCode, string traceId)
+    {
+        return new ApiResponse<T> { IsSuccess = false, Errors = errors, StatusCode = statusCode, TraceId = traceId };
     }
 }

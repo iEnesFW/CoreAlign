@@ -6,7 +6,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ApiResponse<bool>>
+public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, bool>
 {
     private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
     private readonly IUserRepository _userRepository;
@@ -34,7 +34,7 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<bool>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = _jwtTokenService.HashToken(request.Token);
         var resetToken = await _passwordResetTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
@@ -58,6 +58,6 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<bool>.Success(true);
+        return true;
     }
 }

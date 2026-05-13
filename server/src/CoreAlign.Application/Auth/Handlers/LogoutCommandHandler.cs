@@ -5,7 +5,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
-public class LogoutCommandHandler : IRequestHandler<LogoutCommand, ApiResponse<bool>>
+public class LogoutCommandHandler : IRequestHandler<LogoutCommand, bool>
 {
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IJwtTokenService _jwtTokenService;
@@ -21,7 +21,7 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, ApiResponse<b
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<bool>> Handle(LogoutCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(LogoutCommand request, CancellationToken cancellationToken)
     {
         var tokenHash = _jwtTokenService.HashToken(request.RefreshToken);
         var refreshToken = await _refreshTokenRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
@@ -33,6 +33,6 @@ public class LogoutCommandHandler : IRequestHandler<LogoutCommand, ApiResponse<b
             await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        return ApiResponse<bool>.Success(true);
+        return true;
     }
 }

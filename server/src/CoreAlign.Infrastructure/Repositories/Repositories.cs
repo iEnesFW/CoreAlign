@@ -42,12 +42,14 @@ public class UserRepository : IUserRepository
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         var normalizedEmail = email.ToUpperInvariant();
-        return await _context.Users.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
+        return await _context.Users
+            .AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
     }
 
     public async Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
-        return await _context.Users.AnyAsync(u => u.Username == username, cancellationToken);
+        return await _context.Users
+            .AnyAsync(u => u.Username == username, cancellationToken);
     }
 
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
@@ -58,6 +60,36 @@ public class UserRepository : IUserRepository
     public void Update(User user)
     {
         _context.Users.Update(user);
+    }
+}
+
+public class TenantRepository : ITenantRepository
+{
+    private readonly CoreAlignDbContext _context;
+
+    public TenantRepository(CoreAlignDbContext context)
+    {
+        _context = context;
+    }
+
+    public Task<Tenant?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return _context.Tenants.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+
+    public Task<Tenant?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return _context.Tenants.FirstOrDefaultAsync(t => t.Slug == slug, cancellationToken);
+    }
+
+    public Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        return _context.Tenants.AnyAsync(t => t.Slug == slug, cancellationToken);
+    }
+
+    public async Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default)
+    {
+        await _context.Tenants.AddAsync(tenant, cancellationToken);
     }
 }
 

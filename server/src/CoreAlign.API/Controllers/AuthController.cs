@@ -1,25 +1,40 @@
 using System.Security.Claims;
+using Asp.Versioning;
+using CoreAlign.API.Common;
 using CoreAlign.Application.Auth.Commands;
+using CoreAlign.Application.Auth.DTOs;
 using CoreAlign.Application.Auth.Queries;
 using CoreAlign.Application.Common;
+using CoreAlign.Infrastructure.Options;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private const string RefreshTokenCookieName = "corealign_refresh_token";
+    private const string CookiePath = "/api/v1/auth";
 
-    public AuthController(IMediator mediator)
+    private readonly IMediator _mediator;
+    private readonly JwtOptions _jwtOptions;
+    private readonly IWebHostEnvironment _environment;
+
+    public AuthController(IMediator mediator, IOptions<JwtOptions> jwtOptions, IWebHostEnvironment environment)
     {
         _mediator = mediator;
+        _jwtOptions = jwtOptions.Value;
+        _environment = environment;
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginCommand command, CancellationToken cancellationToken)
     {
         var enrichedCommand = command with
@@ -29,55 +44,68 @@ public class AuthController : ControllerBase
         };
 
         var result = await _mediator.Send(enrichedCommand, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        AttachRefreshTokenCookie(result);
+        return result.ToOk();
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> RegisterAsync([FromBody] RegisterCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return result.ToOk();
     }
 
     [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenCommand? command, CancellationToken cancellationToken)
     {
-        var enrichedCommand = command with
+        var refreshToken = Request.Cookies[RefreshTokenCookieName] ?? command?.RefreshToken;
+        if (string.IsNullOrEmpty(refreshToken))
         {
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString()
-        };
+            return StatusCode(401, ApiResponse<object>.Failure("Refresh token missing.", 401));
+        }
+
+        var enrichedCommand = new RefreshTokenCommand(
+            refreshToken,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            Request.Headers.UserAgent.ToString());
 
         var result = await _mediator.Send(enrichedCommand, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        AttachRefreshTokenCookie(result);
+        return result.ToOk();
     }
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ForgotPasswordAsync([FromBody] ForgotPasswordCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return result.ToOk();
     }
 
     [HttpPost("reset-password")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPasswordAsync([FromBody] ResetPasswordCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return result.ToOk();
     }
 
     [HttpPost("verify-email")]
     public async Task<IActionResult> VerifyEmailAsync([FromBody] VerifyEmailCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return result.ToOk();
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> LogoutAsync([FromBody] LogoutCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> LogoutAsync(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(command, cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        var refreshToken = Request.Cookies[RefreshTokenCookieName] ?? string.Empty;
+        var result = await _mediator.Send(new LogoutCommand(refreshToken), cancellationToken);
+        ClearRefreshTokenCookie();
+        return result.ToOk();
     }
 
     [HttpGet("me")]
@@ -86,6 +114,58 @@ public class AuthController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var result = await _mediator.Send(new GetCurrentUserQuery(userId), cancellationToken);
-        return StatusCode(result.StatusCode, result);
+        return result.ToOk();
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new ChangePasswordCommand(userId, request.CurrentPassword, request.NewPassword);
+        var result = await _mediator.Send(command, cancellationToken);
+        if (result)
+        {
+            ClearRefreshTokenCookie();
+        }
+        return result.ToOk();
+    }
+
+    [HttpPut("profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var command = new UpdateProfileCommand(userId, request.FirstName, request.LastName, request.PhoneNumber, request.AvatarUrl);
+        var result = await _mediator.Send(command, cancellationToken);
+        return result.ToOk();
+    }
+
+    private void AttachRefreshTokenCookie(AuthResponseDto result)
+    {
+        if (string.IsNullOrEmpty(result.RefreshToken))
+        {
+            return;
+        }
+
+        SetRefreshTokenCookie(result.RefreshToken);
+        result.RefreshToken = string.Empty;
+    }
+
+    private void SetRefreshTokenCookie(string token)
+    {
+        Response.Cookies.Append(RefreshTokenCookieName, token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !_environment.IsDevelopment() || Request.IsHttps,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddDays(_jwtOptions.RefreshTokenExpirationDays),
+            Path = CookiePath
+        });
+    }
+
+    private void ClearRefreshTokenCookie()
+    {
+        Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions { Path = CookiePath });
     }
 }
