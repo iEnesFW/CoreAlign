@@ -1,76 +1,82 @@
-export interface ApiResponse<T> {
-    isSuccess: boolean;
-    data: T | null;
-    errors: string[];
-    statusCode: number;
-}
+export type { ApiResponse } from '@/shared/types/api';
 
 export interface AuthResponse {
-    accessToken: string;
-    expiresAt: string;
-    user: UserProfile;
+  accessToken: string;
+  expiresAt: string;
+  user: UserProfile;
 }
 
 export interface UserProfile {
-    id: string;
-    username: string;
-    email: string;
-    firstName: string | null;
-    lastName: string | null;
-    avatarUrl: string | null;
-    roles: string[];
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  tenantSlug: string;
+  username: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarUrl: string | null;
+  roles: string[];
 }
 
 export interface LoginRequest {
-    email: string;
-    password: string;
-    rememberMe?: boolean;
-    captchaToken?: string;
-    deviceFingerprint?: string;
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+  captchaToken?: string;
+  deviceFingerprint?: string;
 }
 
 export interface RegisterRequest {
-    username: string;
-    email: string;
-    password: string;
-    firstName?: string;
-    lastName?: string;
-    captchaToken?: string;
+  organizationName: string;
+  username: string;
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  captchaToken?: string;
 }
 
 export interface ForgotPasswordRequest {
-    email: string;
-    captchaToken?: string;
+  email: string;
+  captchaToken?: string;
 }
 
 export interface ResetPasswordRequest {
-    token: string;
-    newPassword: string;
+  token: string;
+  newPassword: string;
 }
 
 export interface VerifyEmailRequest {
-    token: string;
+  token: string;
 }
 
 export interface ChangePasswordRequest {
-    currentPassword: string;
-    newPassword: string;
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdateProfileRequest {
+  firstName?: string | null;
+  lastName?: string | null;
+  phoneNumber?: string | null;
+  avatarUrl?: string | null;
 }
 
 export interface SessionInfo {
-    id: string;
-    deviceInfo: string | null;
-    ipAddress: string | null;
-    createdAtUtc: string;
-    lastActivityAtUtc: string;
-    isCurrent: boolean;
+  id: string;
+  deviceInfo: string | null;
+  ipAddress: string | null;
+  createdAtUtc: string;
+  lastActivityAtUtc: string;
+  isCurrent: boolean;
 }
 
 export interface LoginHistoryEntry {
-    ipAddress: string | null;
-    userAgent: string | null;
-    deviceFingerprint: string | null;
-    loginResult: string;
-    failureReason: string | null;
-    attemptedAtUtc: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  deviceFingerprint: string | null;
+  loginResult: string;
+  failureReason: string | null;
+  attemptedAtUtc: string;
 }
