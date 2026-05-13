@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+build
+coverage
+.vite
+.husky
+server/**/bin
+server/**/obj
+server/**/Migrations
+*.min.*
+package-lock.json

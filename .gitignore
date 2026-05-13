@@ -15,6 +15,9 @@ dist-ssr
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
 .idea
 .DS_Store
 *.suo
@@ -25,3 +28,17 @@ dist-ssr
 
 # Agent
 .agent/
+
+# Backend build artifacts
+server/**/bin/
+server/**/obj/
+server/**/logs/
+
+# SQLite dev fallback databases
+server/**/*.db
+server/**/*.db-shm
+server/**/*.db-wal
+
+# Local env overrides
+.env.local
+.env.*.local
