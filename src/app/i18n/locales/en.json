@@ -1,147 +1,755 @@
 {
-    "common": {
-        "add_new": "Add New",
-        "edit": "Edit",
-        "delete": "Delete",
-        "search": "Search",
-        "filter": "Filter",
-        "save": "Save",
-        "cancel": "Cancel",
-        "loading": "Loading...",
-        "success": "Success",
-        "error": "Error",
-        "warning": "Warning",
-        "info": "Information"
+  "inventory": {
+    "summary": {
+      "totalOnHand": "Total on hand",
+      "totalReserved": "Reserved",
+      "totalAvailable": "Available",
+      "warehouses": "Warehouses",
+      "belowReorder": "Below reorder point",
+      "avgCost": "Avg. cost"
     },
-    "dashboard": {
-        "title": "Dashboard",
-        "overview": "Overview",
-        "revenue_analytics": "Revenue Analytics",
-        "total_revenue": "Total Revenue",
-        "active_users": "Active Users",
-        "new_orders": "New Orders",
-        "stats": {
-            "processing_power": "Processing Power",
-            "latency": "Latency",
-            "uptime": "Uptime"
-        }
+    "byWarehouse": {
+      "title": "Stock by warehouse",
+      "adjust": "Adjust stock",
+      "empty": "No stock records yet."
     },
-    "table": {
-        "showing": "Showing",
-        "to": "to",
-        "of": "of",
-        "results": "results"
+    "fields": {
+      "warehouse": "Warehouse",
+      "onHand": "On hand",
+      "reserved": "Reserved",
+      "available": "Available",
+      "avgCost": "Avg. cost",
+      "value": "Inventory value",
+      "lastMovement": "Last movement",
+      "lot": "Lot",
+      "bin": "Bin",
+      "reorderHint": "Reorder point: {{value}}"
     },
-    "navigation": {
-        "dashboard": "Dashboard",
-        "users": "Users",
-        "settings": "Settings",
-        "analytics": "Analytics"
+    "adjust": {
+      "title": "Adjust stock",
+      "modeAdd": "Add to stock",
+      "modeRemove": "Remove from stock",
+      "warehouse": "Warehouse",
+      "warehousePlaceholder": "Select a warehouse…",
+      "lot": "Lot (optional)",
+      "lotHint": "Pick the specific lot/batch if applicable.",
+      "noLot": "— No lot —",
+      "quantity": "Quantity",
+      "unitCost": "Unit cost",
+      "reasonCode": "Reason",
+      "reasonHint": "Helps audit and reporting.",
+      "noReason": "— No reason —",
+      "notes": "Notes",
+      "notesPlaceholder": "Why this adjustment? Reference numbers, etc.",
+      "currentOnHand": "Current on hand",
+      "delta": "Change",
+      "projectedOnHand": "After adjustment",
+      "negativeWarning": "On-hand would go below zero. Choose a smaller quantity or pick a different warehouse.",
+      "avgCostHint": "Current avg cost: {{current}} {{currency}}. New receipts blend into the moving average.",
+      "confirmAdd": "Add to stock",
+      "confirmRemove": "Remove from stock",
+      "success": "Stock adjusted",
+      "errorFallback": "Stock adjustment failed."
     },
-    "auth": {
-        "sign_in": "Sign in",
-        "sign_up": "Sign up",
-        "sign_out": "Sign out",
-        "profile": "Your Profile",
-        "settings": "Settings",
-        "common": {
-            "unexpectedError": "An unexpected error occurred."
-        },
-        "login": {
-            "title": "Welcome back",
-            "subtitle": "Enter your details to access your account.",
-            "emailLabel": "Email address",
-            "emailPlaceholder": "name@company.com",
-            "passwordLabel": "Password",
-            "passwordPlaceholder": "••••••••",
-            "rememberMe": "Remember me",
-            "forgotPassword": "Forgot password?",
-            "submitButton": "Sign in",
-            "noAccount": "Don't have an account?",
-            "registerLink": "Sign up",
-            "success": {
-                "title": "Login Successful",
-                "message": "You have successfully logged in."
-            },
-            "errors": {
-                "loginFailed": "Login failed. Please try again."
-            }
-        },
-        "register": {
-            "title": "Register",
-            "subtitle": "Enter your details to create an account.",
-            "firstNameLabel": "First Name",
-            "firstNamePlaceholder": "John",
-            "lastNameLabel": "Last Name",
-            "lastNamePlaceholder": "Doe",
-            "usernameLabel": "Username",
-            "usernamePlaceholder": "johndoe",
-            "emailLabel": "Email Address",
-            "emailPlaceholder": "john@example.com",
-            "passwordLabel": "Password",
-            "passwordPlaceholder": "••••••••",
-            "confirmPasswordLabel": "Confirm Password",
-            "confirmPasswordPlaceholder": "••••••••",
-            "termsText": "I agree to the",
-            "termsLinkText": "Terms and Conditions",
-            "submitButton": "Create account",
-            "haveAccountText": "Already have an account?",
-            "loginLinkText": "Log in",
-            "success": {
-                "title": "Registration Successful",
-                "message": "Your account has been created successfully.",
-                "backToLogin": "Back to login"
-            },
-            "errors": {
-                "passwordMismatch": "Passwords do not match",
-                "registerFailed": "Registration failed. Please try again."
-            }
-        },
-        "forgotPassword": {
-            "title": "Forgot Password",
-            "subtitle": "Enter your email address to receive a password reset link.",
-            "emailLabel": "Email address",
-            "emailPlaceholder": "name@company.com",
-            "submitButton": "Send reset link",
-            "backToLogin": "Back to login",
-            "success": {
-                "title": "Reset Link Sent",
-                "message": "Check your email for the password reset link.",
-                "backToLogin": "Back to login"
-            }
-        },
-        "resetPassword": {
-            "title": "Reset Password",
-            "subtitle": "Enter your new password below.",
-            "passwordLabel": "New Password",
-            "passwordPlaceholder": "••••••••",
-            "confirmPasswordLabel": "Confirm New Password",
-            "confirmPasswordPlaceholder": "••••••••",
-            "submitButton": "Reset password",
-            "backToLogin": "Back to login",
-            "success": {
-                "title": "Password Reset",
-                "message": "Your password has been reset successfully.",
-                "backToLogin": "Back to login"
-            },
-            "errors": {
-                "invalidToken": "Invalid or expired token.",
-                "passwordMismatch": "Passwords do not match.",
-                "passwordLength": "Password must be at least 8 characters long."
-            }
-        },
-        "verification": {
-            "title": "Email Verification",
-            "subtitle": "We are verifying your email address...",
-            "success": {
-                "title": "Verification Successful",
-                "message": "Your email has been successfully verified.",
-                "loginButton": "Go to Login"
-            },
-            "errors": {
-                "invalidToken": "Invalid or expired verification token.",
-                "verificationFailed": "Verification failed. Please try again."
-            }
-        }
+    "movements": {
+      "filterByType": "Type",
+      "allTypes": "All types",
+      "totalCount": "{{count}} movements",
+      "empty": "No movements yet.",
+      "when": "When",
+      "type": "Type",
+      "warehouse": "Warehouse",
+      "quantity": "Qty",
+      "onHandAfter": "On hand after",
+      "unitCost": "Unit cost",
+      "source": "Source",
+      "reason": "Reason / notes",
+      "type.OpeningBalance": "Opening",
+      "type.Receipt": "Receipt",
+      "type.Issue": "Issue",
+      "type.TransferIn": "Transfer in",
+      "type.TransferOut": "Transfer out",
+      "type.AdjustmentPositive": "Adjust +",
+      "type.AdjustmentNegative": "Adjust −",
+      "type.CountVariancePositive": "Count +",
+      "type.CountVarianceNegative": "Count −",
+      "type.Reservation": "Reserved",
+      "type.UnReservation": "Released"
     }
+  },
+  "Validation": {
+    "Required": "This field is required.",
+    "InvalidEmail": "Please enter a valid email address.",
+    "EmailTooLong": "Email is too long.",
+    "PasswordTooShort": "Password must be at least 8 characters.",
+    "PasswordMismatch": "Passwords do not match.",
+    "PasswordNeedsUppercase": "Password must contain at least one uppercase letter.",
+    "PasswordNeedsLowercase": "Password must contain at least one lowercase letter.",
+    "PasswordNeedsDigit": "Password must contain at least one digit.",
+    "PasswordNeedsSpecial": "Password must contain at least one special character.",
+    "UsernameTooShort": "Username must be at least 3 characters.",
+    "UsernameTooLong": "Username must not exceed 64 characters.",
+    "UsernameInvalidChars": "Username can only contain letters, numbers, dots, hyphens and underscores.",
+    "OrganizationNameTooShort": "Organization name must be at least 2 characters.",
+    "OrganizationNameTooLong": "Organization name must not exceed 150 characters.",
+    "NameTooShort": "Name must be at least 2 characters.",
+    "NameTooLong": "Name is too long.",
+    "TooLong": "Too long.",
+    "NonNegative": "Cannot be negative.",
+    "CurrencyLength": "Currency must be 3 characters.",
+    "CurrencyFormat": "Use uppercase ISO code (e.g., USD).",
+    "Positive": "Must be positive.",
+    "AtLeastOneLine": "Add at least one line.",
+    "PasswordMustDiffer": "New password must be different from the current one."
+  },
+  "profile": {
+    "title": "My Profile",
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security"
+    },
+    "fields": {
+      "firstName": "First Name",
+      "firstNamePlaceholder": "John",
+      "lastName": "Last Name",
+      "lastNamePlaceholder": "Doe",
+      "phoneNumber": "Phone",
+      "phonePlaceholder": "+1 555 010 9999",
+      "avatarUrl": "Avatar URL"
+    },
+    "security": {
+      "note": "After changing your password you will be signed out of all sessions.",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "submit": "Change password"
+    },
+    "toast": {
+      "profileUpdated": "Profile updated.",
+      "passwordChanged": "Password changed. Please sign in again."
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "subtitle": "Manage sales orders.",
+    "searchPlaceholder": "Search by number or customer...",
+    "addNew": "New order",
+    "empty": "No orders yet.",
+    "confirmDelete": "Delete order {{number}}?",
+    "status": {
+      "Draft": "Draft",
+      "Submitted": "Submitted",
+      "Approved": "Approved",
+      "Allocated": "Allocated",
+      "Picking": "Picking",
+      "Packed": "Packed",
+      "PartiallyShipped": "Partially shipped",
+      "Shipped": "Shipped",
+      "Delivered": "Delivered",
+      "Closed": "Closed",
+      "Cancelled": "Cancelled",
+      "Returned": "Returned",
+      "Confirmed": "Confirmed"
+    },
+    "shipmentStatus": {
+      "Draft": "Draft",
+      "Picked": "Picked",
+      "Packed": "Packed",
+      "Dispatched": "In transit",
+      "Delivered": "Delivered",
+      "Cancelled": "Cancelled",
+      "Returned": "Returned"
+    },
+    "actions": {
+      "submit": "Submit",
+      "approve": "Approve",
+      "allocate": "Allocate stock",
+      "cancel": "Cancel",
+      "deliver": "Mark delivered",
+      "close": "Close order",
+      "createShipment": "Create shipment",
+      "pickShipment": "Mark picked",
+      "packShipment": "Mark packed",
+      "dispatchShipment": "Dispatch",
+      "deliverShipment": "Mark delivered",
+      "cancelShipment": "Cancel shipment",
+      "generateInvoice": "Generate invoice"
+    },
+    "timeline": {
+      "title": "Status timeline",
+      "draftedAt": "Drafted",
+      "submittedAt": "Submitted",
+      "approvedAt": "Approved",
+      "cancelledAt": "Cancelled",
+      "deliveredAt": "Delivered"
+    },
+    "shipments": {
+      "title": "Shipments",
+      "empty": "No shipments yet.",
+      "carrier": "Carrier",
+      "trackingNumber": "Tracking #",
+      "trackingUrl": "Tracking URL",
+      "shippingCost": "Shipping cost",
+      "receivedBy": "Received by",
+      "createTitle": "Create shipment",
+      "selectLines": "Select lines and quantities to ship",
+      "remaining": "Remaining: {{value}}"
+    },
+    "columns": {
+      "orderNumber": "Order #",
+      "customer": "Customer",
+      "orderDate": "Date",
+      "status": "Status",
+      "total": "Total",
+      "actions": "Actions"
+    },
+    "fields": {
+      "orderNumber": "Order Number",
+      "orderDate": "Order Date",
+      "customer": "Customer",
+      "customerPlaceholder": "Select a customer",
+      "status": "Status",
+      "currency": "Currency",
+      "total": "Total",
+      "notes": "Notes",
+      "notesPlaceholder": "Internal notes",
+      "lines": "Order Lines"
+    },
+    "lines": {
+      "add": "Add line",
+      "product": "Product",
+      "productPlaceholder": "Select product",
+      "quantity": "Qty",
+      "unitPrice": "Unit Price"
+    },
+    "modal": {
+      "createTitle": "New order",
+      "editTitle": "Edit order"
+    },
+    "toast": {
+      "created": "Order created.",
+      "updated": "Order updated.",
+      "deleted": "Order deleted.",
+      "invoiceGenerated": "Invoice generated."
+    },
+    "confirmGenerateInvoice": "Generate invoice for {{number}}?",
+    "detail": {
+      "tabs": {
+        "overview": "Overview",
+        "lines": "Lines",
+        "customer": "Customer",
+        "invoices": "Invoices",
+        "notes": "Notes"
+      },
+      "metrics": {
+        "total": "Order Total",
+        "lines": "Lines",
+        "units": "units"
+      },
+      "noLines": "No lines on this order.",
+      "noNotes": "No notes on this order.",
+      "noCustomer": "Customer could not be loaded.",
+      "noInvoices": "No invoices generated from this order yet."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Issued invoices and payments.",
+    "searchPlaceholder": "Search by number or customer...",
+    "empty": "No invoices yet.",
+    "confirmMarkPaid": "Mark {{number}} as paid?",
+    "confirmCancel": "Cancel invoice {{number}}?",
+    "status": {
+      "Draft": "Draft",
+      "Issued": "Issued",
+      "Sent": "Sent",
+      "PartiallyPaid": "Partially paid",
+      "Paid": "Paid",
+      "Overdue": "Overdue",
+      "Void": "Void",
+      "Cancelled": "Cancelled"
+    },
+    "paymentStatus": {
+      "Draft": "Draft",
+      "Confirmed": "Confirmed",
+      "PartiallyApplied": "Partially applied",
+      "FullyApplied": "Fully applied",
+      "Refunded": "Refunded",
+      "Void": "Void"
+    },
+    "paymentMethod": {
+      "Cash": "Cash",
+      "BankTransfer": "Bank transfer",
+      "CreditCard": "Credit card",
+      "DebitCard": "Debit card",
+      "Check": "Check",
+      "PromissoryNote": "Promissory note",
+      "OnlineGateway": "Online gateway",
+      "Other": "Other"
+    },
+    "columns": {
+      "invoiceNumber": "Invoice #",
+      "customer": "Customer",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "status": "Status",
+      "total": "Total",
+      "actions": "Actions"
+    },
+    "fields": {
+      "product": "Product",
+      "quantity": "Qty",
+      "unitPrice": "Unit Price",
+      "lineTotal": "Line Total",
+      "total": "Total",
+      "issueDate": "Issue Date",
+      "dueDate": "Due Date",
+      "currency": "Currency",
+      "paidAt": "Paid At",
+      "cancelledAt": "Cancelled At",
+      "notes": "Notes"
+    },
+    "detail": {
+      "title": "Invoice",
+      "tabs": {
+        "overview": "Overview",
+        "lines": "Lines",
+        "activity": "Activity",
+        "notes": "Notes"
+      },
+      "metrics": {
+        "lines": "Lines"
+      },
+      "linkedOrder": "Source order",
+      "noNotes": "No notes on this invoice.",
+      "activity": {
+        "created": "Created",
+        "issued": "Issued",
+        "paid": "Paid",
+        "cancelled": "Cancelled"
+      }
+    },
+    "actions": {
+      "markPaid": "Mark as paid",
+      "cancel": "Cancel invoice",
+      "print": "Print invoice"
+    },
+    "print": {
+      "button": "Print",
+      "heading": "INVOICE",
+      "from": "Issued by",
+      "billTo": "Bill to",
+      "footer": "Thank you for your business."
+    },
+    "toast": {
+      "paid": "Invoice marked as paid.",
+      "cancelled": "Invoice cancelled."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "products": {
+    "title": "Products",
+    "subtitle": "Manage your product catalog.",
+    "searchPlaceholder": "Search by SKU, name, description...",
+    "addNew": "New product",
+    "empty": "No products yet.",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "columns": {
+      "sku": "SKU",
+      "name": "Name",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "fields": {
+      "sku": "SKU",
+      "skuPlaceholder": "PRD-001",
+      "name": "Name",
+      "namePlaceholder": "Product name",
+      "description": "Description",
+      "descriptionPlaceholder": "Internal description",
+      "unit": "Unit",
+      "unitPlaceholder": "pcs, kg, hour",
+      "price": "Price",
+      "currency": "Currency",
+      "stockQuantity": "Stock",
+      "isActive": "Active"
+    },
+    "modal": {
+      "createTitle": "New product",
+      "editTitle": "Edit product"
+    },
+    "toast": {
+      "created": "Product created.",
+      "updated": "Product updated.",
+      "deleted": "Product deleted."
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Overview",
+        "transactions": "Transactions",
+        "warehouses": "Warehouses",
+        "rules": "Rules"
+      },
+      "txnType": {
+        "Initial": "Initial",
+        "Sale": "Sale",
+        "SaleCancelled": "Sale Cancelled",
+        "Restock": "Restock",
+        "Adjustment": "Adjustment"
+      },
+      "balance": "Balance",
+      "noTransactions": "No stock transactions yet.",
+      "warehousesComingSoon": "Warehouse breakdown will land in an upcoming release.",
+      "rulesComingSoon": "Composite stock rules (BOM) are coming soon.",
+      "components": {
+        "intro": "Composite stock: list sub-products that this product consumes. When this product is sold, the listed components are decremented from stock instead.",
+        "addNew": "Add component",
+        "empty": "No components defined. This product behaves as a standalone item.",
+        "confirmDelete": "Remove component \"{{name}}\"?",
+        "toast": {
+          "added": "Component added.",
+          "updated": "Component updated.",
+          "removed": "Component removed."
+        },
+        "fields": {
+          "component": "Component",
+          "componentPlaceholder": "Select a component product...",
+          "quantity": "Quantity per parent unit",
+          "notes": "Notes"
+        }
+      }
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "common": {
+    "add_new": "Add New",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Search",
+    "filter": "Filter",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pagination": "Page {{page}} of {{totalPages}}",
+    "prev": "Previous",
+    "next": "Next",
+    "confirm": "Confirm",
+    "confirmDelete": "Delete",
+    "view": "View",
+    "back": "Back"
+  },
+  "activity": {
+    "title": "Activity Log",
+    "subtitle": "All write operations performed in your tenant.",
+    "empty": "No activity recorded yet.",
+    "columns": {
+      "time": "Time",
+      "method": "Method",
+      "path": "Path",
+      "status": "Status",
+      "duration": "Duration",
+      "user": "User",
+      "ip": "IP"
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "customers": {
+    "title": "Customers",
+    "subtitle": "Manage customer records.",
+    "detail": {
+      "subtitle": "Customer overview, orders and invoices.",
+      "tabs": {
+        "overview": "Overview",
+        "transactions": "Transactions",
+        "addresses": "Addresses",
+        "contacts": "Contacts",
+        "orders": "Orders",
+        "invoices": "Invoices",
+        "notes": "Notes",
+        "mail": "Send Mail"
+      },
+      "metrics": {
+        "orders": "Orders",
+        "invoiced": "Total Invoiced",
+        "paid": "Total Paid",
+        "outstanding": "Outstanding",
+        "invoiceCount": "invoices",
+        "balance": "Balance"
+      },
+      "txnType": {
+        "InvoiceIssued": "Invoice Issued",
+        "Payment": "Payment",
+        "Refund": "Refund",
+        "Adjustment": "Adjustment"
+      },
+      "noOrders": "No orders for this customer yet.",
+      "noInvoices": "No invoices for this customer yet.",
+      "noTransactions": "No transactions yet.",
+      "noNotes": "No notes for this customer.",
+      "mailNotice": "Outbound mail is not yet wired to an SMTP provider — this is a preview.",
+      "mailTo": "To",
+      "mailSubject": "Subject",
+      "mailBody": "Body",
+      "mailSend": "Send",
+      "mailComingSoon": "Mail \"{{subject}}\" queued (preview only).",
+      "addresses": {
+        "addNew": "Add address",
+        "empty": "No addresses yet.",
+        "primary": "Primary",
+        "confirmDelete": "Delete address \"{{label}}\"?",
+        "toast": {
+          "created": "Address added.",
+          "updated": "Address updated.",
+          "deleted": "Address deleted."
+        },
+        "fields": {
+          "label": "Label",
+          "labelPlaceholder": "Billing, Shipping...",
+          "line1": "Address Line 1",
+          "line2": "Address Line 2",
+          "city": "City",
+          "state": "State / Region",
+          "postalCode": "Postal Code",
+          "country": "Country",
+          "isPrimary": "Set as primary"
+        }
+      },
+      "contacts": {
+        "addNew": "Add contact",
+        "empty": "No contacts yet.",
+        "primary": "Primary",
+        "confirmDelete": "Delete contact \"{{name}}\"?",
+        "toast": {
+          "created": "Contact added.",
+          "updated": "Contact updated.",
+          "deleted": "Contact deleted."
+        },
+        "fields": {
+          "name": "Name",
+          "role": "Role",
+          "rolePlaceholder": "Accountant, Buyer...",
+          "email": "Email",
+          "phone": "Phone",
+          "notes": "Notes",
+          "isPrimary": "Set as primary"
+        }
+      }
+    },
+    "searchPlaceholder": "Search by name, email, phone...",
+    "addNew": "New customer",
+    "empty": "No customers yet.",
+    "confirmDelete": "Delete \"{{name}}\"?",
+    "columns": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Acme Inc.",
+      "email": "Email",
+      "emailPlaceholder": "billing@acme.com",
+      "phone": "Phone",
+      "phonePlaceholder": "+1 555 010 9999",
+      "taxNumber": "Tax Number",
+      "taxNumberPlaceholder": "Tax / VAT ID",
+      "address": "Address",
+      "addressPlaceholder": "Street, city, country",
+      "notes": "Notes",
+      "notesPlaceholder": "Internal notes",
+      "isActive": "Active"
+    },
+    "modal": {
+      "createTitle": "New customer",
+      "editTitle": "Edit customer"
+    },
+    "toast": {
+      "created": "Customer created.",
+      "updated": "Customer updated.",
+      "deleted": "Customer deleted."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your business.",
+    "stats": {
+      "customers": "Customers",
+      "products": "Products",
+      "orders": "Orders",
+      "totalSales": "Total Sales",
+      "outstandingReceivables": "Outstanding Receivables",
+      "openInvoices": "open invoices",
+      "collectedThisMonth": "Collected This Month",
+      "totalInvoices": "Active Invoices",
+      "openAndIssued": "Open or shipped"
+    },
+    "lowStock": {
+      "title": "Low Stock",
+      "empty": "All products are well stocked."
+    },
+    "recentOrders": {
+      "title": "Recent Orders",
+      "empty": "No orders yet."
+    },
+    "salesTrend": {
+      "title": "Sales (last 30 days)",
+      "empty": "No sales yet."
+    },
+    "statusChart": {
+      "title": "Orders by Status",
+      "empty": "No orders yet."
+    }
+  },
+  "table": {
+    "showing": "Showing",
+    "to": "to",
+    "of": "of",
+    "results": "results"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "settings": "Settings",
+    "analytics": "Analytics"
+  },
+  "auth": {
+    "sign_in": "Sign in",
+    "sign_up": "Sign up",
+    "sign_out": "Sign out",
+    "profile": "Your Profile",
+    "settings": "Settings",
+    "common": {
+      "unexpectedError": "An unexpected error occurred."
+    },
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Enter your details to access your account.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "name@company.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submitButton": "Sign in",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up",
+      "success": {
+        "title": "Login Successful",
+        "message": "You have successfully logged in."
+      },
+      "errors": {
+        "loginFailed": "Login failed. Please try again."
+      }
+    },
+    "register": {
+      "title": "Register",
+      "subtitle": "Enter your details to create an account.",
+      "organizationNameLabel": "Organization Name",
+      "organizationNamePlaceholder": "Acme Inc.",
+      "firstNameLabel": "First Name",
+      "firstNamePlaceholder": "John",
+      "lastNameLabel": "Last Name",
+      "lastNamePlaceholder": "Doe",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "johndoe",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "john@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Confirm Password",
+      "confirmPasswordPlaceholder": "••••••••",
+      "termsText": "I agree to the",
+      "termsLinkText": "Terms and Conditions",
+      "submitButton": "Create account",
+      "haveAccountText": "Already have an account?",
+      "loginLinkText": "Log in",
+      "success": {
+        "title": "Registration Successful",
+        "message": "Your account has been created successfully.",
+        "backToLogin": "Back to login"
+      },
+      "errors": {
+        "passwordMismatch": "Passwords do not match",
+        "registerFailed": "Registration failed. Please try again."
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email address to receive a password reset link.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "name@company.com",
+      "submitButton": "Send reset link",
+      "backToLogin": "Back to login",
+      "success": {
+        "title": "Reset Link Sent",
+        "message": "Check your email for the password reset link.",
+        "backToLogin": "Back to login"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password below.",
+      "passwordLabel": "New Password",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Confirm New Password",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submitButton": "Reset password",
+      "backToLogin": "Back to login",
+      "success": {
+        "title": "Password Reset",
+        "message": "Your password has been reset successfully.",
+        "backToLogin": "Back to login"
+      },
+      "errors": {
+        "invalidToken": "Invalid or expired token.",
+        "passwordMismatch": "Passwords do not match.",
+        "passwordLength": "Password must be at least 8 characters long."
+      }
+    },
+    "verification": {
+      "title": "Email Verification",
+      "subtitle": "We are verifying your email address...",
+      "success": {
+        "title": "Verification Successful",
+        "message": "Your email has been successfully verified.",
+        "loginButton": "Go to Login"
+      },
+      "errors": {
+        "invalidToken": "Invalid or expired verification token.",
+        "verificationFailed": "Verification failed. Please try again."
+      }
+    }
+  }
 }

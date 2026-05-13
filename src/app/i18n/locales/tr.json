@@ -1,147 +1,755 @@
 {
-    "common": {
-        "add_new": "Yeni Ekle",
-        "edit": "Düzenle",
-        "delete": "Sil",
-        "search": "Ara",
-        "filter": "Filtrele",
-        "save": "Kaydet",
-        "cancel": "İptal",
-        "loading": "Yükleniyor...",
-        "success": "Başarılı",
-        "error": "Hata",
-        "warning": "Uyarı",
-        "info": "Bilgi"
+  "inventory": {
+    "summary": {
+      "totalOnHand": "Toplam stok",
+      "totalReserved": "Rezerve",
+      "totalAvailable": "Satılabilir",
+      "warehouses": "Depo sayısı",
+      "belowReorder": "Yeniden sipariş seviyesinin altında",
+      "avgCost": "Ort. maliyet"
     },
-    "dashboard": {
-        "title": "Gösterge Paneli",
-        "overview": "Genel Bakış",
-        "revenue_analytics": "Gelir Analitiği",
-        "total_revenue": "Toplam Gelir",
-        "active_users": "Aktif Kullanıcılar",
-        "new_orders": "Yeni Siparişler",
-        "stats": {
-            "processing_power": "İşlem Gücü",
-            "latency": "Gecikme",
-            "uptime": "Çalışma Süresi"
-        }
+    "byWarehouse": {
+      "title": "Depo bazında stok",
+      "adjust": "Stok düzelt",
+      "empty": "Henüz stok kaydı yok."
     },
-    "table": {
-        "showing": "Gösteriliyor:",
-        "to": "-",
-        "of": "/",
-        "results": "sonuç"
+    "fields": {
+      "warehouse": "Depo",
+      "onHand": "Mevcut",
+      "reserved": "Rezerve",
+      "available": "Satılabilir",
+      "avgCost": "Ort. maliyet",
+      "value": "Stok değeri",
+      "lastMovement": "Son hareket",
+      "lot": "Parti",
+      "bin": "Raf",
+      "reorderHint": "Yeniden sipariş: {{value}}"
     },
-    "navigation": {
-        "dashboard": "Gösterge Paneli",
-        "users": "Kullanıcılar",
-        "settings": "Ayarlar",
-        "analytics": "Analitikler"
+    "adjust": {
+      "title": "Stok düzeltme",
+      "modeAdd": "Stok ekle",
+      "modeRemove": "Stok düş",
+      "warehouse": "Depo",
+      "warehousePlaceholder": "Bir depo seçin…",
+      "lot": "Parti (opsiyonel)",
+      "lotHint": "Geçerliyse belirli parti/seri seçin.",
+      "noLot": "— Parti yok —",
+      "quantity": "Miktar",
+      "unitCost": "Birim maliyet",
+      "reasonCode": "Sebep kodu",
+      "reasonHint": "Denetim ve raporlamada kullanılır.",
+      "noReason": "— Sebep yok —",
+      "notes": "Notlar",
+      "notesPlaceholder": "Düzeltme sebebi, referans no…",
+      "currentOnHand": "Mevcut stok",
+      "delta": "Değişim",
+      "projectedOnHand": "Düzeltme sonrası",
+      "negativeWarning": "Stok eksiye düşer. Daha düşük miktar girin veya farklı depo seçin.",
+      "avgCostHint": "Mevcut ort. maliyet: {{current}} {{currency}}. Yeni alımlar moving-average'a karışır.",
+      "confirmAdd": "Stoğa ekle",
+      "confirmRemove": "Stoktan düş",
+      "success": "Stok düzeltildi",
+      "errorFallback": "Stok düzeltme başarısız."
     },
-    "auth": {
-        "sign_in": "Giriş Yap",
-        "sign_up": "Kayıt Ol",
-        "sign_out": "Çıkış Yap",
-        "profile": "Profiliniz",
-        "settings": "Ayarlar",
-        "common": {
-            "unexpectedError": "Beklenmeyen bir hata oluştu."
-        },
-        "login": {
-            "title": "Tekrar Hoşgeldiniz",
-            "subtitle": "Hesabınıza erişmek için bilgilerinizi girin.",
-            "emailLabel": "E-posta adresi",
-            "emailPlaceholder": "isim@sirket.com",
-            "passwordLabel": "Şifre",
-            "passwordPlaceholder": "••••••••",
-            "rememberMe": "Beni hatırla",
-            "forgotPassword": "Şifremi unuttum?",
-            "submitButton": "Giriş yap",
-            "noAccount": "Hesabınız yok mu?",
-            "registerLink": "Kayıt ol",
-            "success": {
-                "title": "Giriş Başarılı",
-                "message": "Başarıyla giriş yaptınız."
-            },
-            "errors": {
-                "loginFailed": "Giriş başarısız. Lütfen tekrar deneyin."
-            }
-        },
-        "register": {
-            "title": "Kayıt Ol",
-            "subtitle": "Hesap oluşturmak için bilgilerinizi girin.",
-            "firstNameLabel": "Ad",
-            "firstNamePlaceholder": "Ahmet",
-            "lastNameLabel": "Soyad",
-            "lastNamePlaceholder": "Yılmaz",
-            "usernameLabel": "Kullanıcı Adı",
-            "usernamePlaceholder": "ahmetyilmaz",
-            "emailLabel": "E-posta Adresi",
-            "emailPlaceholder": "ahmet@ornek.com",
-            "passwordLabel": "Şifre",
-            "passwordPlaceholder": "••••••••",
-            "confirmPasswordLabel": "Şifreyi Onayla",
-            "confirmPasswordPlaceholder": "••••••••",
-            "termsText": "Şartları kabul ediyorum",
-            "termsLinkText": "Hizmet Şartları",
-            "submitButton": "Hesap oluştur",
-            "haveAccountText": "Zaten bir hesabınız var mı?",
-            "loginLinkText": "Giriş yap",
-            "success": {
-                "title": "Kayıt Başarılı",
-                "message": "Hesabınız başarıyla oluşturuldu.",
-                "backToLogin": "Giriş ekranına dön"
-            },
-            "errors": {
-                "passwordMismatch": "Şifreler eşleşmiyor",
-                "registerFailed": "Kayıt başarısız. Lütfen tekrar deneyin."
-            }
-        },
-        "forgotPassword": {
-            "title": "Şifremi Unuttum",
-            "subtitle": "Şifre sıfırlama bağlantısı almak için e-posta adresinizi girin.",
-            "emailLabel": "E-posta adresi",
-            "emailPlaceholder": "isim@sirket.com",
-            "submitButton": "Sıfırlama bağlantısı gönder",
-            "backToLogin": "Giriş ekranına dön",
-            "success": {
-                "title": "Bağlantı Gönderildi",
-                "message": "Şifre sıfırlama bağlantısı için e-postanızı kontrol edin.",
-                "backToLogin": "Giriş ekranına dön"
-            }
-        },
-        "resetPassword": {
-            "title": "Şifre Sıfırlama",
-            "subtitle": "Yeni şifrenizi aşağıya girin.",
-            "passwordLabel": "Yeni Şifre",
-            "passwordPlaceholder": "••••••••",
-            "confirmPasswordLabel": "Yeni Şifreyi Onayla",
-            "confirmPasswordPlaceholder": "••••••••",
-            "submitButton": "Şifreyi sıfırla",
-            "backToLogin": "Giriş ekranına dön",
-            "success": {
-                "title": "Şifre Sıfırlandı",
-                "message": "Şifreniz başarıyla sıfırlandı.",
-                "backToLogin": "Giriş ekranına dön"
-            },
-            "errors": {
-                "invalidToken": "Geçersiz veya süresi dolmuş bağlantı.",
-                "passwordMismatch": "Şifreler eşleşmiyor.",
-                "passwordLength": "Şifre en az 8 karakter olmalıdır."
-            }
-        },
-        "verification": {
-            "title": "E-posta Doğrulama",
-            "subtitle": "E-posta adresiniz doğrulanıyor...",
-            "success": {
-                "title": "Doğrulama Başarılı",
-                "message": "E-posta adresiniz başarıyla doğrulandı.",
-                "loginButton": "Giriş Yap'a Git"
-            },
-            "errors": {
-                "invalidToken": "Geçersiz doğrulama bağlantısı.",
-                "verificationFailed": "Doğrulama başarısız. Lütfen tekrar deneyin."
-            }
-        }
+    "movements": {
+      "filterByType": "Tür",
+      "allTypes": "Tüm türler",
+      "totalCount": "{{count}} hareket",
+      "empty": "Henüz hareket yok.",
+      "when": "Tarih/Saat",
+      "type": "Tür",
+      "warehouse": "Depo",
+      "quantity": "Miktar",
+      "onHandAfter": "Sonra mevcut",
+      "unitCost": "Birim maliyet",
+      "source": "Kaynak",
+      "reason": "Sebep / Not",
+      "type.OpeningBalance": "Açılış",
+      "type.Receipt": "Giriş",
+      "type.Issue": "Çıkış",
+      "type.TransferIn": "Transfer (gelen)",
+      "type.TransferOut": "Transfer (giden)",
+      "type.AdjustmentPositive": "Düzeltme +",
+      "type.AdjustmentNegative": "Düzeltme −",
+      "type.CountVariancePositive": "Sayım +",
+      "type.CountVarianceNegative": "Sayım −",
+      "type.Reservation": "Rezerve",
+      "type.UnReservation": "Serbest"
     }
+  },
+  "Validation": {
+    "Required": "Bu alan zorunludur.",
+    "InvalidEmail": "Geçerli bir e-posta adresi girin.",
+    "EmailTooLong": "E-posta adresi çok uzun.",
+    "PasswordTooShort": "Şifre en az 8 karakter olmalıdır.",
+    "PasswordMismatch": "Şifreler eşleşmiyor.",
+    "PasswordNeedsUppercase": "Şifre en az bir büyük harf içermelidir.",
+    "PasswordNeedsLowercase": "Şifre en az bir küçük harf içermelidir.",
+    "PasswordNeedsDigit": "Şifre en az bir rakam içermelidir.",
+    "PasswordNeedsSpecial": "Şifre en az bir özel karakter içermelidir.",
+    "UsernameTooShort": "Kullanıcı adı en az 3 karakter olmalıdır.",
+    "UsernameTooLong": "Kullanıcı adı 64 karakteri geçemez.",
+    "UsernameInvalidChars": "Kullanıcı adı yalnızca harf, rakam, nokta, tire ve alt çizgi içerebilir.",
+    "OrganizationNameTooShort": "Organizasyon adı en az 2 karakter olmalıdır.",
+    "OrganizationNameTooLong": "Organizasyon adı 150 karakteri geçemez.",
+    "NameTooShort": "Ad en az 2 karakter olmalıdır.",
+    "NameTooLong": "Ad çok uzun.",
+    "TooLong": "Çok uzun.",
+    "NonNegative": "Negatif olamaz.",
+    "CurrencyLength": "Para birimi 3 karakter olmalıdır.",
+    "CurrencyFormat": "Büyük harf ISO kodu kullanın (örn. TRY, USD).",
+    "Positive": "Pozitif olmalıdır.",
+    "AtLeastOneLine": "En az bir satır ekleyin.",
+    "PasswordMustDiffer": "Yeni şifre mevcut şifreden farklı olmalıdır."
+  },
+  "profile": {
+    "title": "Profilim",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Güvenlik"
+    },
+    "fields": {
+      "firstName": "Ad",
+      "firstNamePlaceholder": "Ahmet",
+      "lastName": "Soyad",
+      "lastNamePlaceholder": "Yılmaz",
+      "phoneNumber": "Telefon",
+      "phonePlaceholder": "+90 555 010 9999",
+      "avatarUrl": "Avatar URL"
+    },
+    "security": {
+      "note": "Şifrenizi değiştirdikten sonra tüm oturumlardan çıkarılırsınız.",
+      "currentPassword": "Mevcut Şifre",
+      "newPassword": "Yeni Şifre",
+      "confirmPassword": "Yeni Şifreyi Onayla",
+      "submit": "Şifreyi değiştir"
+    },
+    "toast": {
+      "profileUpdated": "Profil güncellendi.",
+      "passwordChanged": "Şifre değiştirildi. Lütfen tekrar giriş yapın."
+    }
+  },
+  "orders": {
+    "title": "Siparişler",
+    "subtitle": "Satış siparişlerini yönet.",
+    "searchPlaceholder": "Numara veya müşteri ara...",
+    "addNew": "Yeni sipariş",
+    "empty": "Henüz sipariş yok.",
+    "confirmDelete": "{{number}} numaralı sipariş silinsin mi?",
+    "status": {
+      "Draft": "Taslak",
+      "Submitted": "Onaya Gönderildi",
+      "Approved": "Onaylandı",
+      "Allocated": "Rezerve Edildi",
+      "Picking": "Toplama",
+      "Packed": "Paketlendi",
+      "PartiallyShipped": "Kısmi Sevk",
+      "Shipped": "Sevk Edildi",
+      "Delivered": "Teslim Edildi",
+      "Closed": "Kapatıldı",
+      "Cancelled": "İptal",
+      "Returned": "İade",
+      "Confirmed": "Onaylı"
+    },
+    "shipmentStatus": {
+      "Draft": "Taslak",
+      "Picked": "Toplandı",
+      "Packed": "Paketlendi",
+      "Dispatched": "Yolda",
+      "Delivered": "Teslim Edildi",
+      "Cancelled": "İptal",
+      "Returned": "İade"
+    },
+    "actions": {
+      "submit": "Onaya Gönder",
+      "approve": "Onayla",
+      "allocate": "Stok Rezerve Et",
+      "cancel": "İptal Et",
+      "deliver": "Teslim Edildi",
+      "close": "Siparişi Kapat",
+      "createShipment": "Sevkiyat Oluştur",
+      "pickShipment": "Toplandı",
+      "packShipment": "Paketlendi",
+      "dispatchShipment": "Sevk Et",
+      "deliverShipment": "Teslim Edildi",
+      "cancelShipment": "Sevkiyatı İptal Et",
+      "generateInvoice": "Fatura oluştur"
+    },
+    "timeline": {
+      "title": "Durum zaman çizelgesi",
+      "draftedAt": "Taslak",
+      "submittedAt": "Onaya gönderildi",
+      "approvedAt": "Onaylandı",
+      "cancelledAt": "İptal edildi",
+      "deliveredAt": "Teslim edildi"
+    },
+    "shipments": {
+      "title": "Sevkiyatlar",
+      "empty": "Henüz sevkiyat yok.",
+      "carrier": "Kargo firması",
+      "trackingNumber": "Takip no",
+      "trackingUrl": "Takip URL",
+      "shippingCost": "Kargo ücreti",
+      "receivedBy": "Teslim alan",
+      "createTitle": "Sevkiyat oluştur",
+      "selectLines": "Sevk edilecek kalem ve miktarları seçin",
+      "remaining": "Kalan: {{value}}"
+    },
+    "columns": {
+      "orderNumber": "Sipariş No",
+      "customer": "Müşteri",
+      "orderDate": "Tarih",
+      "status": "Durum",
+      "total": "Toplam",
+      "actions": "İşlemler"
+    },
+    "fields": {
+      "orderNumber": "Sipariş Numarası",
+      "orderDate": "Sipariş Tarihi",
+      "customer": "Müşteri",
+      "customerPlaceholder": "Müşteri seçin",
+      "status": "Durum",
+      "currency": "Para Birimi",
+      "total": "Toplam",
+      "notes": "Notlar",
+      "notesPlaceholder": "Dahili notlar",
+      "lines": "Sipariş Satırları"
+    },
+    "lines": {
+      "add": "Satır ekle",
+      "product": "Ürün",
+      "productPlaceholder": "Ürün seç",
+      "quantity": "Mik.",
+      "unitPrice": "Birim Fiyat"
+    },
+    "modal": {
+      "createTitle": "Yeni sipariş",
+      "editTitle": "Siparişi düzenle"
+    },
+    "toast": {
+      "created": "Sipariş oluşturuldu.",
+      "updated": "Sipariş güncellendi.",
+      "deleted": "Sipariş silindi.",
+      "invoiceGenerated": "Fatura oluşturuldu."
+    },
+    "confirmGenerateInvoice": "{{number}} için fatura oluşturulsun mu?",
+    "detail": {
+      "tabs": {
+        "overview": "Genel",
+        "lines": "Satırlar",
+        "customer": "Müşteri",
+        "invoices": "Faturalar",
+        "notes": "Notlar"
+      },
+      "metrics": {
+        "total": "Sipariş Tutarı",
+        "lines": "Satır",
+        "units": "birim"
+      },
+      "noLines": "Bu siparişte satır yok.",
+      "noNotes": "Bu sipariş için not yok.",
+      "noCustomer": "Müşteri bilgisi yüklenemedi.",
+      "noInvoices": "Bu siparişten henüz fatura oluşturulmadı."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} / {{total}}",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "invoices": {
+    "title": "Faturalar",
+    "subtitle": "Düzenlenen faturalar ve ödemeler.",
+    "searchPlaceholder": "Numara veya müşteri ara...",
+    "empty": "Henüz fatura yok.",
+    "confirmMarkPaid": "{{number}} ödenmiş olarak işaretlensin mi?",
+    "confirmCancel": "{{number}} faturası iptal edilsin mi?",
+    "status": {
+      "Draft": "Taslak",
+      "Issued": "Düzenlendi",
+      "Sent": "Gönderildi",
+      "PartiallyPaid": "Kısmi Ödenmiş",
+      "Paid": "Ödendi",
+      "Overdue": "Vadesi Geçti",
+      "Void": "İptal (Geçersiz)",
+      "Cancelled": "İptal"
+    },
+    "paymentStatus": {
+      "Draft": "Taslak",
+      "Confirmed": "Onaylı",
+      "PartiallyApplied": "Kısmi Uygulanmış",
+      "FullyApplied": "Tam Uygulanmış",
+      "Refunded": "İade Edildi",
+      "Void": "Geçersiz"
+    },
+    "paymentMethod": {
+      "Cash": "Nakit",
+      "BankTransfer": "Banka Havalesi",
+      "CreditCard": "Kredi Kartı",
+      "DebitCard": "Banka Kartı",
+      "Check": "Çek",
+      "PromissoryNote": "Senet",
+      "OnlineGateway": "Online Ödeme",
+      "Other": "Diğer"
+    },
+    "columns": {
+      "invoiceNumber": "Fatura No",
+      "customer": "Müşteri",
+      "issueDate": "Düzenleme",
+      "dueDate": "Vade",
+      "status": "Durum",
+      "total": "Toplam",
+      "actions": "İşlemler"
+    },
+    "fields": {
+      "product": "Ürün",
+      "quantity": "Mik.",
+      "unitPrice": "Birim Fiyat",
+      "lineTotal": "Satır Toplam",
+      "total": "Toplam",
+      "issueDate": "Düzenleme Tarihi",
+      "dueDate": "Vade Tarihi",
+      "currency": "Para Birimi",
+      "paidAt": "Ödendi",
+      "cancelledAt": "İptal",
+      "notes": "Notlar"
+    },
+    "detail": {
+      "title": "Fatura",
+      "tabs": {
+        "overview": "Genel",
+        "lines": "Satırlar",
+        "activity": "Hareket",
+        "notes": "Notlar"
+      },
+      "metrics": {
+        "lines": "Satır"
+      },
+      "linkedOrder": "Kaynak sipariş",
+      "noNotes": "Bu fatura için not yok.",
+      "activity": {
+        "created": "Oluşturuldu",
+        "issued": "Düzenlendi",
+        "paid": "Ödendi",
+        "cancelled": "İptal Edildi"
+      }
+    },
+    "actions": {
+      "markPaid": "Ödenmiş olarak işaretle",
+      "cancel": "Faturayı iptal et",
+      "print": "Faturayı yazdır"
+    },
+    "print": {
+      "button": "Yazdır",
+      "heading": "FATURA",
+      "from": "Düzenleyen",
+      "billTo": "Müşteri",
+      "footer": "Tercih ettiğiniz için teşekkürler."
+    },
+    "toast": {
+      "paid": "Fatura ödenmiş olarak işaretlendi.",
+      "cancelled": "Fatura iptal edildi."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} / {{total}}",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "products": {
+    "title": "Ürünler",
+    "subtitle": "Ürün kataloğunu yönet.",
+    "searchPlaceholder": "SKU, ad, açıklama ara...",
+    "addNew": "Yeni ürün",
+    "empty": "Henüz ürün yok.",
+    "confirmDelete": "\"{{name}}\" silinsin mi?",
+    "columns": {
+      "sku": "SKU",
+      "name": "Ad",
+      "price": "Fiyat",
+      "stock": "Stok",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "fields": {
+      "sku": "SKU",
+      "skuPlaceholder": "URN-001",
+      "name": "Ad",
+      "namePlaceholder": "Ürün adı",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Dahili açıklama",
+      "unit": "Birim",
+      "unitPlaceholder": "adet, kg, saat",
+      "price": "Fiyat",
+      "currency": "Para Birimi",
+      "stockQuantity": "Stok",
+      "isActive": "Aktif"
+    },
+    "modal": {
+      "createTitle": "Yeni ürün",
+      "editTitle": "Ürünü düzenle"
+    },
+    "toast": {
+      "created": "Ürün oluşturuldu.",
+      "updated": "Ürün güncellendi.",
+      "deleted": "Ürün silindi."
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Genel",
+        "transactions": "Hareketler",
+        "warehouses": "Depolar",
+        "rules": "Kurallar"
+      },
+      "txnType": {
+        "Initial": "Açılış",
+        "Sale": "Satış",
+        "SaleCancelled": "Satış İptali",
+        "Restock": "Giriş",
+        "Adjustment": "Düzeltme"
+      },
+      "balance": "Bakiye",
+      "noTransactions": "Henüz stok hareketi yok.",
+      "warehousesComingSoon": "Depo bazlı dağılım yakında eklenecek.",
+      "rulesComingSoon": "Bileşik stok kuralları (BOM) yakında eklenecek.",
+      "components": {
+        "intro": "Bileşik stok: bu ürünün içerdiği alt ürünleri tanımlayın. Bu ürün siparişe girerse, listedeki bileşenler stoktan düşülür.",
+        "addNew": "Bileşen ekle",
+        "empty": "Tanımlı bileşen yok. Bu ürün bağımsız bir kalem olarak işlem görür.",
+        "confirmDelete": "\"{{name}}\" bileşeni kaldırılsın mı?",
+        "toast": {
+          "added": "Bileşen eklendi.",
+          "updated": "Bileşen güncellendi.",
+          "removed": "Bileşen kaldırıldı."
+        },
+        "fields": {
+          "component": "Bileşen",
+          "componentPlaceholder": "Bileşen ürünü seçin...",
+          "quantity": "Birim başına miktar",
+          "notes": "Notlar"
+        }
+      }
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} / {{total}}",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "customers": {
+    "title": "Müşteriler",
+    "subtitle": "Müşteri kayıtlarını yönet.",
+    "detail": {
+      "subtitle": "Müşteri özeti, siparişler ve faturalar.",
+      "tabs": {
+        "overview": "Genel",
+        "transactions": "Hareketler",
+        "addresses": "Adresler",
+        "contacts": "Kişiler",
+        "orders": "Siparişler",
+        "invoices": "Faturalar",
+        "notes": "Notlar",
+        "mail": "Mail Gönder"
+      },
+      "metrics": {
+        "orders": "Sipariş",
+        "invoiced": "Toplam Fatura",
+        "paid": "Tahsil Edilen",
+        "outstanding": "Bakiye",
+        "invoiceCount": "fatura",
+        "balance": "Bakiye"
+      },
+      "txnType": {
+        "InvoiceIssued": "Fatura Düzenlendi",
+        "Payment": "Ödeme",
+        "Refund": "İade",
+        "Adjustment": "Düzeltme"
+      },
+      "noOrders": "Bu müşteri için henüz sipariş yok.",
+      "noInvoices": "Bu müşteri için henüz fatura yok.",
+      "noTransactions": "Henüz hareket yok.",
+      "noNotes": "Bu müşteri için not yok.",
+      "mailNotice": "Mail gönderimi henüz bir SMTP sağlayıcıya bağlı değil — önizleme amaçlıdır.",
+      "mailTo": "Alıcı",
+      "mailSubject": "Konu",
+      "mailBody": "İçerik",
+      "mailSend": "Gönder",
+      "mailComingSoon": "\"{{subject}}\" konulu mail kuyruğa alındı (önizleme).",
+      "addresses": {
+        "addNew": "Adres ekle",
+        "empty": "Henüz adres yok.",
+        "primary": "Birincil",
+        "confirmDelete": "\"{{label}}\" adresi silinsin mi?",
+        "toast": {
+          "created": "Adres eklendi.",
+          "updated": "Adres güncellendi.",
+          "deleted": "Adres silindi."
+        },
+        "fields": {
+          "label": "Etiket",
+          "labelPlaceholder": "Fatura, Sevkiyat...",
+          "line1": "Adres Satırı 1",
+          "line2": "Adres Satırı 2",
+          "city": "İl / Şehir",
+          "state": "İlçe / Bölge",
+          "postalCode": "Posta Kodu",
+          "country": "Ülke",
+          "isPrimary": "Birincil yap"
+        }
+      },
+      "contacts": {
+        "addNew": "Kişi ekle",
+        "empty": "Henüz kişi yok.",
+        "primary": "Birincil",
+        "confirmDelete": "\"{{name}}\" kişisi silinsin mi?",
+        "toast": {
+          "created": "Kişi eklendi.",
+          "updated": "Kişi güncellendi.",
+          "deleted": "Kişi silindi."
+        },
+        "fields": {
+          "name": "Ad",
+          "role": "Görev",
+          "rolePlaceholder": "Muhasebe, Satın alma...",
+          "email": "E-posta",
+          "phone": "Telefon",
+          "notes": "Notlar",
+          "isPrimary": "Birincil yap"
+        }
+      }
+    },
+    "searchPlaceholder": "İsim, e-posta, telefon ara...",
+    "addNew": "Yeni müşteri",
+    "empty": "Henüz müşteri yok.",
+    "confirmDelete": "\"{{name}}\" silinsin mi?",
+    "columns": {
+      "name": "Ad",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "fields": {
+      "name": "Ad",
+      "namePlaceholder": "Acme A.Ş.",
+      "email": "E-posta",
+      "emailPlaceholder": "muhasebe@acme.com",
+      "phone": "Telefon",
+      "phonePlaceholder": "+90 555 010 9999",
+      "taxNumber": "Vergi No",
+      "taxNumberPlaceholder": "Vergi / KDV No",
+      "address": "Adres",
+      "addressPlaceholder": "Cadde, ilçe, şehir",
+      "notes": "Notlar",
+      "notesPlaceholder": "Dahili notlar",
+      "isActive": "Aktif"
+    },
+    "modal": {
+      "createTitle": "Yeni müşteri",
+      "editTitle": "Müşteriyi düzenle"
+    },
+    "toast": {
+      "created": "Müşteri oluşturuldu.",
+      "updated": "Müşteri güncellendi.",
+      "deleted": "Müşteri silindi."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} / {{total}}",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "common": {
+    "active": "Aktif",
+    "inactive": "Pasif",
+    "add_new": "Yeni Ekle",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "search": "Ara",
+    "filter": "Filtrele",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "loading": "Yükleniyor...",
+    "success": "Başarılı",
+    "error": "Hata",
+    "warning": "Uyarı",
+    "info": "Bilgi",
+    "pagination": "Sayfa {{page}} / {{totalPages}}",
+    "prev": "Önceki",
+    "next": "Sonraki",
+    "confirm": "Onayla",
+    "confirmDelete": "Sil",
+    "view": "Görüntüle",
+    "back": "Geri"
+  },
+  "activity": {
+    "title": "Aktivite Günlüğü",
+    "subtitle": "Tenant'ınızda gerçekleşen tüm yazma işlemleri.",
+    "empty": "Henüz aktivite kaydı yok.",
+    "columns": {
+      "time": "Zaman",
+      "method": "Metot",
+      "path": "Yol",
+      "status": "Durum",
+      "duration": "Süre",
+      "user": "Kullanıcı",
+      "ip": "IP"
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} / {{total}}",
+      "previous": "Önceki",
+      "next": "Sonraki"
+    }
+  },
+  "dashboard": {
+    "title": "Gösterge Paneli",
+    "subtitle": "İşletmenize genel bakış.",
+    "stats": {
+      "customers": "Müşteriler",
+      "products": "Ürünler",
+      "orders": "Siparişler",
+      "totalSales": "Toplam Satış",
+      "outstandingReceivables": "Tahsil Edilmemiş",
+      "openInvoices": "açık fatura",
+      "collectedThisMonth": "Bu Ay Tahsilat",
+      "totalInvoices": "Aktif Faturalar",
+      "openAndIssued": "Açık veya sevk edildi"
+    },
+    "lowStock": {
+      "title": "Düşük Stok",
+      "empty": "Tüm ürünler yeterli stokta."
+    },
+    "recentOrders": {
+      "title": "Son Siparişler",
+      "empty": "Henüz sipariş yok."
+    },
+    "salesTrend": {
+      "title": "Satış (son 30 gün)",
+      "empty": "Henüz satış yok."
+    },
+    "statusChart": {
+      "title": "Duruma Göre Siparişler",
+      "empty": "Henüz sipariş yok."
+    }
+  },
+  "table": {
+    "showing": "Gösteriliyor:",
+    "to": "-",
+    "of": "/",
+    "results": "sonuç"
+  },
+  "navigation": {
+    "dashboard": "Gösterge Paneli",
+    "users": "Kullanıcılar",
+    "settings": "Ayarlar",
+    "analytics": "Analitikler"
+  },
+  "auth": {
+    "sign_in": "Giriş Yap",
+    "sign_up": "Kayıt Ol",
+    "sign_out": "Çıkış Yap",
+    "profile": "Profiliniz",
+    "settings": "Ayarlar",
+    "common": {
+      "unexpectedError": "Beklenmeyen bir hata oluştu."
+    },
+    "login": {
+      "title": "Tekrar Hoşgeldiniz",
+      "subtitle": "Hesabınıza erişmek için bilgilerinizi girin.",
+      "emailLabel": "E-posta adresi",
+      "emailPlaceholder": "isim@sirket.com",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Beni hatırla",
+      "forgotPassword": "Şifremi unuttum?",
+      "submitButton": "Giriş yap",
+      "noAccount": "Hesabınız yok mu?",
+      "registerLink": "Kayıt ol",
+      "success": {
+        "title": "Giriş Başarılı",
+        "message": "Başarıyla giriş yaptınız."
+      },
+      "errors": {
+        "loginFailed": "Giriş başarısız. Lütfen tekrar deneyin."
+      }
+    },
+    "register": {
+      "organizationNameLabel": "Organizasyon Adı",
+      "organizationNamePlaceholder": "Örn. Acme A.Ş.",
+      "title": "Kayıt Ol",
+      "subtitle": "Hesap oluşturmak için bilgilerinizi girin.",
+      "firstNameLabel": "Ad",
+      "firstNamePlaceholder": "Ahmet",
+      "lastNameLabel": "Soyad",
+      "lastNamePlaceholder": "Yılmaz",
+      "usernameLabel": "Kullanıcı Adı",
+      "usernamePlaceholder": "ahmetyilmaz",
+      "emailLabel": "E-posta Adresi",
+      "emailPlaceholder": "ahmet@ornek.com",
+      "passwordLabel": "Şifre",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "••••••••",
+      "termsText": "Şartları kabul ediyorum",
+      "termsLinkText": "Hizmet Şartları",
+      "submitButton": "Hesap oluştur",
+      "haveAccountText": "Zaten bir hesabınız var mı?",
+      "loginLinkText": "Giriş yap",
+      "success": {
+        "title": "Kayıt Başarılı",
+        "message": "Hesabınız başarıyla oluşturuldu.",
+        "backToLogin": "Giriş ekranına dön"
+      },
+      "errors": {
+        "passwordMismatch": "Şifreler eşleşmiyor",
+        "registerFailed": "Kayıt başarısız. Lütfen tekrar deneyin."
+      }
+    },
+    "forgotPassword": {
+      "title": "Şifremi Unuttum",
+      "subtitle": "Şifre sıfırlama bağlantısı almak için e-posta adresinizi girin.",
+      "emailLabel": "E-posta adresi",
+      "emailPlaceholder": "isim@sirket.com",
+      "submitButton": "Sıfırlama bağlantısı gönder",
+      "backToLogin": "Giriş ekranına dön",
+      "success": {
+        "title": "Bağlantı Gönderildi",
+        "message": "Şifre sıfırlama bağlantısı için e-postanızı kontrol edin.",
+        "backToLogin": "Giriş ekranına dön"
+      }
+    },
+    "resetPassword": {
+      "title": "Şifre Sıfırlama",
+      "subtitle": "Yeni şifrenizi aşağıya girin.",
+      "passwordLabel": "Yeni Şifre",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Yeni Şifreyi Onayla",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submitButton": "Şifreyi sıfırla",
+      "backToLogin": "Giriş ekranına dön",
+      "success": {
+        "title": "Şifre Sıfırlandı",
+        "message": "Şifreniz başarıyla sıfırlandı.",
+        "backToLogin": "Giriş ekranına dön"
+      },
+      "errors": {
+        "invalidToken": "Geçersiz veya süresi dolmuş bağlantı.",
+        "passwordMismatch": "Şifreler eşleşmiyor.",
+        "passwordLength": "Şifre en az 8 karakter olmalıdır."
+      }
+    },
+    "verification": {
+      "title": "E-posta Doğrulama",
+      "subtitle": "E-posta adresiniz doğrulanıyor...",
+      "success": {
+        "title": "Doğrulama Başarılı",
+        "message": "E-posta adresiniz başarıyla doğrulandı.",
+        "loginButton": "Giriş Yap'a Git"
+      },
+      "errors": {
+        "invalidToken": "Geçersiz doğrulama bağlantısı.",
+        "verificationFailed": "Doğrulama başarısız. Lütfen tekrar deneyin."
+      }
+    }
+  }
 }
