@@ -53,6 +53,9 @@ public static class PaymentMapper
     {
         Id = a.Id,
         PaymentId = a.PaymentId,
+        PaymentNumber = a.Payment?.PaymentNumber ?? string.Empty,
+        PaymentDate = a.Payment?.PaymentDate ?? a.AppliedAtUtc,
+        PaymentMethod = a.Payment?.Method ?? default,
         InvoiceId = a.InvoiceId,
         InvoiceNumber = a.Invoice?.InvoiceNumber ?? string.Empty,
         AppliedAmount = a.AppliedAmount,

@@ -1,17 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Building2, FileText, Mail, Phone, ShoppingCart, User } from 'lucide-react';
-import {
-  useCustomerQuery,
-  useCustomerSummaryQuery,
-} from '@/features/customers/hooks/useCustomerQueries';
+import { ArrowLeft, FileText, Receipt, ShoppingCart, User } from 'lucide-react';
+import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
+import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
 import type { OrderStatus } from '@/features/orders/model/order.types';
 import type { InvoiceStatus } from '@/features/invoices/model/invoice.types';
 
-type Tab = 'overview' | 'orders' | 'invoices';
+type Tab = 'overview' | 'ledger' | 'orders' | 'invoices';
 
 const PAGE_SIZE = 20;
 
@@ -65,9 +64,7 @@ export const CustomerDetailPage = () => {
   const [tab, setTab] = useState<Tab>('overview');
 
   const customerQuery = useCustomerQuery(id ?? null);
-  const summaryQuery = useCustomerSummaryQuery(id ?? null);
   const customer = customerQuery.data?.data;
-  const summary = summaryQuery.data?.data;
 
   return (
     <div className="space-y-4 p-4 sm:p-6">
@@ -95,6 +92,10 @@ export const CustomerDetailPage = () => {
           <User size={14} />
           {t('customers.detail.tabs.overview')}
         </TabButton>
+        <TabButton active={tab === 'ledger'} onClick={() => setTab('ledger')}>
+          <Receipt size={14} />
+          {t('payments.ledger.title', { defaultValue: 'Ledger' })}
+        </TabButton>
         <TabButton active={tab === 'orders'} onClick={() => setTab('orders')}>
           <ShoppingCart size={14} />
           {t('customers.detail.tabs.orders')}
@@ -105,63 +106,25 @@ export const CustomerDetailPage = () => {
         </TabButton>
       </div>
 
-      {tab === 'overview' && summary && (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MetricCard
-            label={t('customers.detail.metrics.orders')}
-            value={`${summary.orderCount}`}
-            sub={formatCurrency(summary.totalOrderAmount, summary.currency, i18n.language)}
-            tone="indigo"
-          />
-          <MetricCard
-            label={t('customers.detail.metrics.invoiced')}
-            value={formatCurrency(summary.totalInvoiced, summary.currency, i18n.language)}
-            sub={`${summary.invoiceCount} ${t('customers.detail.metrics.invoiceCount')}`}
-            tone="blue"
-          />
-          <MetricCard
-            label={t('customers.detail.metrics.paid')}
-            value={formatCurrency(summary.totalPaid, summary.currency, i18n.language)}
-            tone="emerald"
-          />
-          <MetricCard
-            label={t('customers.detail.metrics.outstanding')}
-            value={formatCurrency(summary.outstanding, summary.currency, i18n.language)}
-            tone={summary.outstanding > 0 ? 'amber' : 'slate'}
-          />
-        </div>
+      {tab === 'overview' && customer && (
+        <CustomerOverviewTab
+          customer={customer}
+          locale={i18n.language}
+          onEdit={() => navigate('/dashboard/customers')}
+          onCreateOrder={(cid) => navigate(`/dashboard/orders?new=1&customerId=${cid}`)}
+          onCreateInvoice={(cid) => navigate(`/dashboard/invoices?new=1&customerId=${cid}`)}
+          onRecordPayment={(cid) => navigate(`/dashboard/invoices?customerId=${cid}&payment=1`)}
+          onOpenOrder={(orderId) => navigate(`/dashboard/orders?selected=${orderId}`)}
+          onOpenInvoice={(invoiceId) => navigate(`/dashboard/invoices?selected=${invoiceId}`)}
+        />
       )}
 
-      {tab === 'overview' && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          {customer ? (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Field icon={<Mail size={14} />} label={t('customers.fields.email')}>
-                {customer.email ?? '—'}
-              </Field>
-              <Field icon={<Phone size={14} />} label={t('customers.fields.phone')}>
-                {customer.phone ?? '—'}
-              </Field>
-              <Field icon={<Building2 size={14} />} label={t('customers.fields.taxNumber')}>
-                {customer.taxNumber ?? '—'}
-              </Field>
-              {customer.notes && (
-                <div className="sm:col-span-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t('customers.fields.notes')}
-                  </div>
-                  <div className="mt-1 rounded border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
-                    {customer.notes}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="py-4 text-center text-sm text-slate-500 dark:text-slate-400">
-              {t('common.loading')}
-            </div>
-          )}
-        </div>
+      {tab === 'ledger' && customer && (
+        <CustomerLedgerTab
+          customerId={customer.id}
+          customerName={customer.name}
+          currency={customer.defaultCurrency}
+        />
       )}
 
       {tab === 'orders' && id && <OrdersTab customerId={id} locale={i18n.language} />}
@@ -188,51 +151,6 @@ const TabButton = ({ active, onClick, children }: TabButtonProps) => (
   >
     {children}
   </button>
-);
-
-type MetricTone = 'indigo' | 'blue' | 'emerald' | 'amber' | 'slate';
-
-const toneClasses: Record<MetricTone, string> = {
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  blue: 'border-blue-200 dark:border-blue-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
-  slate: 'border-slate-200 dark:border-slate-800',
-};
-
-interface MetricCardProps {
-  label: string;
-  value: string;
-  sub?: string;
-  tone: MetricTone;
-}
-
-const MetricCard = ({ label, value, sub, tone }: MetricCardProps) => (
-  <div className={`rounded-lg border bg-white p-3 dark:bg-slate-900 ${toneClasses[tone]}`}>
-    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-      {label}
-    </div>
-    <div className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100">{value}</div>
-    {sub && <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{sub}</div>}
-  </div>
-);
-
-const Field = ({
-  icon,
-  label,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <div>
-    <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-      {icon}
-      <span>{label}</span>
-    </div>
-    <div className="mt-1 text-sm text-slate-700 dark:text-slate-200">{children}</div>
-  </div>
 );
 
 const OrdersTab = ({ customerId, locale }: { customerId: string; locale: string }) => {

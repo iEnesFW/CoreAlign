@@ -59,6 +59,14 @@ public class PaymentRepository : IPaymentRepository
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<PaymentApplication>> GetApplicationsByInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default) =>
+        await _context.PaymentApplications
+            .Include(a => a.Payment)
+            .Include(a => a.Invoice)
+            .Where(a => a.InvoiceId == invoiceId)
+            .OrderByDescending(a => a.AppliedAtUtc)
+            .ToListAsync(cancellationToken);
+
     public async Task AddAsync(Payment payment, CancellationToken cancellationToken = default) =>
         await _context.Payments.AddAsync(payment, cancellationToken);
 

@@ -13,6 +13,24 @@
       "adjust": "Adjust stock",
       "empty": "No stock records yet."
     },
+    "stockItem": {
+      "title": "Stock item details",
+      "noReorderPoint": "No reorder point configured for this stock item.",
+      "reorderTitle": "Reorder planning",
+      "reorderPoint": "Reorder at",
+      "minStock": "Safety stock",
+      "suggestedQty": "Suggested replenish",
+      "lotInfo": "Lot information",
+      "lotNumber": "Lot",
+      "manufactureDate": "Manufactured",
+      "expiryDate": "Expires",
+      "daysUntilExpiry": "Days remaining",
+      "lotBlocked": "Blocked",
+      "lotExpired": "Expired",
+      "expiringInDays": "Expires in {{count}}d",
+      "movementChart": "30-day activity",
+      "recentMovements": "Recent movements"
+    },
     "fields": {
       "warehouse": "Warehouse",
       "onHand": "On hand",
@@ -213,8 +231,16 @@
       "total": "Total",
       "notes": "Notes",
       "notesPlaceholder": "Internal notes",
-      "lines": "Order Lines"
+      "lines": "Order Lines",
+      "terms": "Terms",
+      "dueDate": "Due",
+      "requestedDelivery": "Requested delivery",
+      "channel": "Channel"
     },
+    "dueToday": "Due today",
+    "dueIn": "Due in {{count}}d",
+    "overdueBy": "Overdue {{count}}d",
+    "overdue": "Overdue",
     "lines": {
       "add": "Add line",
       "product": "Product",
@@ -244,7 +270,29 @@
       "metrics": {
         "total": "Order Total",
         "lines": "Lines",
-        "units": "units"
+        "units": "units",
+        "shipped": "Shipped",
+        "invoiced": "Invoiced"
+      },
+      "billingAddress": "Billing address",
+      "shippingAddress": "Shipping address",
+      "noBillingAddress": "No billing address.",
+      "noShippingAddress": "No shipping address.",
+      "customerSnapshot": "Customer snapshot",
+      "lineProgress": "Line progress",
+      "lineProgressShipped": "Shipped",
+      "lineProgressInvoiced": "Invoiced",
+      "financial": {
+        "title": "Financial breakdown",
+        "subtotal": "Subtotal",
+        "lineDiscount": "Line discounts",
+        "headerDiscount": "Header discount ({{pct}}%)",
+        "taxable": "Taxable amount",
+        "tax": "Tax",
+        "withholding": "Withholding",
+        "shipping": "Shipping",
+        "rounding": "Rounding",
+        "total": "Total"
       },
       "noLines": "No lines on this order.",
       "noNotes": "No notes on this order.",
@@ -309,23 +357,51 @@
       "total": "Total",
       "issueDate": "Issue Date",
       "dueDate": "Due Date",
+      "postingDate": "Posting date",
+      "type": "Type",
       "currency": "Currency",
       "paidAt": "Paid At",
       "cancelledAt": "Cancelled At",
       "notes": "Notes"
     },
+    "type": {
+      "SalesInvoice": "Sales invoice",
+      "ProForma": "Pro forma",
+      "CreditNote": "Credit note",
+      "DebitNote": "Debit note",
+      "Advance": "Advance"
+    },
+    "dueSoon": "Due soon",
     "detail": {
       "title": "Invoice",
       "tabs": {
         "overview": "Overview",
         "lines": "Lines",
+        "payments": "Payments",
         "activity": "Activity",
         "notes": "Notes"
       },
       "metrics": {
-        "lines": "Lines"
+        "lines": "Lines",
+        "paid": "Paid",
+        "due": "Due",
+        "totalInvoice": "Invoice total"
       },
       "linkedOrder": "Source order",
+      "paymentProgress": "Payment progress",
+      "paymentsApplied": "Applied payments",
+      "noPayments": "No payments applied yet.",
+      "taxBreakdown": "Tax breakdown",
+      "tax": {
+        "rate": "Rate",
+        "base": "Base",
+        "amount": "Amount"
+      },
+      "eInvoice": "E-Invoice",
+      "eInvoiceUuid": "E-Invoice UUID",
+      "eInvoiceStatus": "Status",
+      "postedToLedger": "Posted to ledger",
+      "issuedAt": "Issued at",
       "noNotes": "No notes on this invoice.",
       "activity": {
         "created": "Created",
@@ -337,7 +413,8 @@
     "actions": {
       "markPaid": "Mark as paid",
       "cancel": "Cancel invoice",
-      "print": "Print invoice"
+      "print": "Print invoice",
+      "recordPayment": "Record payment"
     },
     "print": {
       "button": "Print",
@@ -457,7 +534,8 @@
     "confirm": "Confirm",
     "confirmDelete": "Delete",
     "view": "View",
-    "back": "Back"
+    "back": "Back",
+    "details": "Details"
   },
   "activity": {
     "title": "Activity Log",
@@ -499,13 +577,45 @@
         "paid": "Total Paid",
         "outstanding": "Outstanding",
         "invoiceCount": "invoices",
-        "balance": "Balance"
+        "balance": "Balance",
+        "creditLine": "Credit & Balance",
+        "creditLimit": "Credit limit",
+        "available": "Available",
+        "creditUsed": "Credit used",
+        "overdue": "Overdue",
+        "overLimit": "Over limit"
       },
       "txnType": {
         "InvoiceIssued": "Invoice Issued",
         "Payment": "Payment",
         "Refund": "Refund",
         "Adjustment": "Adjustment"
+      },
+      "snapshot": "Snapshot",
+      "primaryAddress": "Primary address",
+      "primaryContact": "Primary contact",
+      "noPrimaryAddress": "No primary address set.",
+      "noPrimaryContact": "No primary contact set.",
+      "recentActivity": "Recent activity",
+      "noRecentActivity": "No recent activity.",
+      "blockedTitle": "Customer is blocked",
+      "overdueWarning": "Overdue receivables: {{amount}}",
+      "actions": {
+        "newOrder": "New order",
+        "newInvoice": "New invoice",
+        "recordPayment": "Record payment"
+      },
+      "meta": {
+        "group": "Group",
+        "salesRep": "Sales rep",
+        "priceList": "Price list",
+        "paymentTerms": "Terms",
+        "netDays": "Net {{count}}d"
+      },
+      "activity": {
+        "Order": "Order",
+        "Invoice": "Invoice",
+        "Payment": "Payment"
       },
       "noOrders": "No orders for this customer yet.",
       "noInvoices": "No invoices for this customer yet.",
@@ -580,11 +690,23 @@
       "phonePlaceholder": "+1 555 010 9999",
       "taxNumber": "Tax Number",
       "taxNumberPlaceholder": "Tax / VAT ID",
+      "taxOffice": "Tax Office",
+      "nationalId": "National ID",
+      "type": "Type",
+      "code": "Code",
+      "legalName": "Legal name",
+      "tradeName": "Trade name",
+      "currency": "Currency",
       "address": "Address",
       "addressPlaceholder": "Street, city, country",
       "notes": "Notes",
       "notesPlaceholder": "Internal notes",
       "isActive": "Active"
+    },
+    "type": {
+      "Individual": "Individual",
+      "Business": "Business",
+      "Government": "Government"
     },
     "modal": {
       "createTitle": "New customer",

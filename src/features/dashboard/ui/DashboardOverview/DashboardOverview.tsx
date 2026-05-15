@@ -146,22 +146,28 @@ export const DashboardOverview = () => {
         >
           <ul className="divide-y divide-slate-200 dark:divide-slate-800">
             {stats?.lowStockProducts.map((product) => (
-              <li key={product.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-slate-900 dark:text-slate-100">
-                    {product.name}
-                  </div>
-                  <div className="font-mono text-[10px] text-slate-500">{product.sku}</div>
-                </div>
-                <div
-                  className={
-                    product.stockQuantity <= 0
-                      ? 'rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300'
-                      : 'rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
-                  }
+              <li key={product.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/dashboard/products?selected=${product.id}&tab=stock`)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
                 >
-                  {formatNumber(product.stockQuantity, i18n.language)} {product.unit}
-                </div>
+                  <div className="min-w-0 text-left">
+                    <div className="truncate font-medium text-slate-900 dark:text-slate-100">
+                      {product.name}
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-500">{product.sku}</div>
+                  </div>
+                  <div
+                    className={
+                      product.stockQuantity <= 0
+                        ? 'rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300'
+                        : 'rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                    }
+                  >
+                    {formatNumber(product.stockQuantity, i18n.language)} {product.unit}
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
@@ -176,18 +182,24 @@ export const DashboardOverview = () => {
         >
           <ul className="divide-y divide-slate-200 dark:divide-slate-800">
             {stats?.recentOrders.map((order) => (
-              <li key={order.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                <div className="min-w-0">
-                  <div className="truncate font-medium text-slate-900 dark:text-slate-100">
-                    {order.customerName}
+              <li key={order.id}>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/dashboard/orders?selected=${order.id}`)}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                >
+                  <div className="min-w-0 text-left">
+                    <div className="truncate font-medium text-slate-900 dark:text-slate-100">
+                      {order.customerName}
+                    </div>
+                    <div className="font-mono text-[10px] text-slate-500">
+                      {order.orderNumber} · {formatDate(order.orderDate, i18n.language)}
+                    </div>
                   </div>
-                  <div className="font-mono text-[10px] text-slate-500">
-                    {order.orderNumber} · {formatDate(order.orderDate, i18n.language)}
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {formatCurrency(order.total, i18n.language, order.currency)}
                   </div>
-                </div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {formatCurrency(order.total, i18n.language, order.currency)}
-                </div>
+                </button>
               </li>
             ))}
           </ul>

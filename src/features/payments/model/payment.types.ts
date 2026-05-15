@@ -37,6 +37,9 @@ export type LedgerSourceType =
 export interface PaymentApplicationItem {
   id: string;
   paymentId: string;
+  paymentNumber: string;
+  paymentDate: string;
+  paymentMethod: PaymentMethod;
   invoiceId: string;
   invoiceNumber: string;
   appliedAmount: number;

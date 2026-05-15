@@ -27,6 +27,14 @@ export const usePaymentsByCustomer = (customerId: string | null) =>
     staleTime: FOURTY_FIVE_SECONDS,
   });
 
+export const usePaymentsByInvoice = (invoiceId: string | null) =>
+  useQuery({
+    queryKey: ['payments', 'by-invoice', invoiceId] as const,
+    queryFn: () => paymentsApi.getByInvoice(invoiceId as string),
+    enabled: invoiceId !== null,
+    staleTime: FOURTY_FIVE_SECONDS,
+  });
+
 export const useCustomerLedger = (
   customerId: string | null,
   fromUtc?: string,

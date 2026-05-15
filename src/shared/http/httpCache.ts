@@ -20,6 +20,8 @@ export interface TtlRule {
 const TTL_RULES: readonly TtlRule[] = [
   { re: /\/customers(\/[a-f0-9-]+)?\/?(\?.*)?$/i, ttl: ONE_HOUR_MS },
   { re: /\/customers\/[a-f0-9-]+\/summary/i, ttl: ONE_HOUR_MS },
+  { re: /\/customers\/[a-f0-9-]+\/overview/i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/payments\/by-invoice\//i, ttl: THIRTY_SECONDS_MS },
   { re: /\/customers\/[a-f0-9-]+\/addresses/i, ttl: ONE_HOUR_MS },
   { re: /\/customers\/[a-f0-9-]+\/contacts/i, ttl: ONE_HOUR_MS },
   { re: /\/products(\/[a-f0-9-]+)?\/?(\?.*)?$/i, ttl: ONE_HOUR_MS },

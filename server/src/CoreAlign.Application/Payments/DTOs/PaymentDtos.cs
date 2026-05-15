@@ -6,6 +6,9 @@ public class PaymentApplicationDto
 {
     public Guid Id { get; set; }
     public Guid PaymentId { get; set; }
+    public string PaymentNumber { get; set; } = string.Empty;
+    public DateTime PaymentDate { get; set; }
+    public PaymentMethod PaymentMethod { get; set; }
     public Guid InvoiceId { get; set; }
     public string InvoiceNumber { get; set; } = string.Empty;
     public decimal AppliedAmount { get; set; }

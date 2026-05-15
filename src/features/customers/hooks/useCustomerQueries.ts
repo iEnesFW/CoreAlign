@@ -32,6 +32,13 @@ export const useCustomerSummaryQuery = (id: string | null) =>
     enabled: id !== null,
   });
 
+export const useCustomerOverviewQuery = (id: string | null) =>
+  useQuery({
+    queryKey: customerKeys.overview(id),
+    queryFn: () => customersApi.getOverview(id as string),
+    enabled: id !== null,
+  });
+
 export const useCustomerTransactionsQuery = (id: string | null) =>
   useQuery({
     queryKey: customerKeys.transactions(id),
@@ -57,6 +64,7 @@ export const useUpdateCustomer = () => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
       queryClient.invalidateQueries({ queryKey: customerKeys.detail(vars.id) });
       queryClient.invalidateQueries({ queryKey: customerKeys.summary(vars.id) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.id) });
     },
   });
 };
@@ -83,8 +91,10 @@ export const useCreateCustomerAddress = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CustomerAddressInput) => customersApi.createAddress(input),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };
 
@@ -92,8 +102,10 @@ export const useUpdateCustomerAddress = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateCustomerAddressInput) => customersApi.updateAddress(input),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };
 
@@ -102,8 +114,10 @@ export const useDeleteCustomerAddress = () => {
   return useMutation({
     mutationFn: ({ customerId, id }: { customerId: string; id: string }) =>
       customersApi.deleteAddress(customerId, id),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.addresses(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };
 
@@ -118,8 +132,10 @@ export const useCreateCustomerContact = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CustomerContactInput) => customersApi.createContact(input),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };
 
@@ -127,8 +143,10 @@ export const useUpdateCustomerContact = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateCustomerContactInput) => customersApi.updateContact(input),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };
 
@@ -137,7 +155,9 @@ export const useDeleteCustomerContact = () => {
   return useMutation({
     mutationFn: ({ customerId, id }: { customerId: string; id: string }) =>
       customersApi.deleteContact(customerId, id),
-    onSuccess: (_, vars) =>
-      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.contacts(vars.customerId) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.customerId) });
+    },
   });
 };

@@ -5,10 +5,9 @@ import {
   Contact,
   Edit2,
   FileText,
-  Mail,
   MapPin,
   NotebookPen,
-  Phone,
+  Receipt,
   ShoppingCart,
   User,
 } from 'lucide-react';
@@ -22,11 +21,10 @@ import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CustomerAddressesTab } from '@/features/customers/ui/CustomerAddressesTab';
 import { CustomerContactsTab } from '@/features/customers/ui/CustomerContactsTab';
+import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
-import { Receipt } from 'lucide-react';
 import type {
   Customer,
-  CustomerSummary,
   CustomerTransaction,
   CustomerTransactionType,
 } from '@/features/customers/model/customer.types';
@@ -35,6 +33,12 @@ interface Props {
   customerId: string | null;
   onClose: () => void;
   onEdit: (customer: Customer) => void;
+  onCreateOrder?: (customerId: string) => void;
+  onCreateInvoice?: (customerId: string) => void;
+  onRecordPayment?: (customerId: string) => void;
+  onOpenOrder?: (orderId: string) => void;
+  onOpenInvoice?: (invoiceId: string) => void;
+  onOpenPayment?: (paymentId: string) => void;
 }
 
 type Tab =
@@ -80,12 +84,22 @@ const fmtDateTime = (iso: string, locale: string) => {
   }
 };
 
-export const CustomerDetailPanel = ({ customerId, onClose, onEdit }: Props) => {
+export const CustomerDetailPanel = ({
+  customerId,
+  onClose,
+  onEdit,
+  onCreateOrder,
+  onCreateInvoice,
+  onRecordPayment,
+  onOpenOrder,
+  onOpenInvoice,
+  onOpenPayment,
+}: Props) => {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>('overview');
 
   const customerQuery = useCustomerQuery(customerId);
-  const summaryQuery = useCustomerSummaryQuery(customerId);
+  useCustomerSummaryQuery(customerId);
   const transactionsQuery = useCustomerTransactionsQuery(
     tab === 'transactions' ? customerId : null,
   );
@@ -99,7 +113,6 @@ export const CustomerDetailPanel = ({ customerId, onClose, onEdit }: Props) => {
   );
 
   const customer = customerQuery.data?.data ?? null;
-  const summary = summaryQuery.data?.data ?? null;
   const transactions = transactionsQuery.data?.data?.items ?? [];
   const orders = ordersQuery.data?.data?.items ?? [];
   const invoices = invoicesQuery.data?.data?.items ?? [];
@@ -148,13 +161,31 @@ export const CustomerDetailPanel = ({ customerId, onClose, onEdit }: Props) => {
       <PanelTabs tabs={tabs} active={tab} onSelect={setTab} />
 
       <div className="space-y-4 p-4">
-        {tab === 'overview' && (
-          <OverviewTab
-            customer={customer}
-            summary={summary}
-            locale={i18n.language}
-            onEdit={() => customer && onEdit(customer)}
-          />
+        {tab === 'overview' && customer && (
+          <>
+            <CustomerOverviewTab
+              customer={customer}
+              locale={i18n.language}
+              onEdit={() => onEdit(customer)}
+              onCreateOrder={onCreateOrder}
+              onCreateInvoice={onCreateInvoice}
+              onRecordPayment={onRecordPayment}
+              onOpenOrder={onOpenOrder}
+              onOpenInvoice={onOpenInvoice}
+              onOpenPayment={onOpenPayment}
+            />
+            <button
+              type="button"
+              onClick={() => onEdit(customer)}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Edit2 size={14} />
+              {t('common.edit')}
+            </button>
+          </>
+        )}
+        {tab === 'overview' && !customer && (
+          <div className="text-sm text-slate-500">{t('common.loading')}</div>
         )}
         {tab === 'ledger' && customer && (
           <CustomerLedgerTab
@@ -203,68 +234,6 @@ export const CustomerDetailPanel = ({ customerId, onClose, onEdit }: Props) => {
         )}
       </div>
     </DetailPanel>
-  );
-};
-
-const OverviewTab = ({
-  customer,
-  summary,
-  locale,
-  onEdit,
-}: {
-  customer: Customer | null;
-  summary: CustomerSummary | null;
-  locale: string;
-  onEdit: () => void;
-}) => {
-  const { t } = useTranslation();
-  if (!customer) {
-    return <div className="text-sm text-slate-500">{t('common.loading')}</div>;
-  }
-  return (
-    <>
-      {summary && (
-        <div className="grid grid-cols-2 gap-2">
-          <Stat
-            label={t('customers.detail.metrics.outstanding')}
-            value={fmtCurrency(summary.outstanding, summary.currency, locale)}
-            highlight={summary.outstanding > 0 ? 'amber' : 'slate'}
-          />
-          <Stat
-            label={t('customers.detail.metrics.paid')}
-            value={fmtCurrency(summary.totalPaid, summary.currency, locale)}
-            highlight="emerald"
-          />
-          <Stat
-            label={t('customers.detail.metrics.invoiced')}
-            value={fmtCurrency(summary.totalInvoiced, summary.currency, locale)}
-            highlight="blue"
-          />
-          <Stat
-            label={t('customers.detail.metrics.orders')}
-            value={String(summary.orderCount)}
-            sub={fmtCurrency(summary.totalOrderAmount, summary.currency, locale)}
-            highlight="indigo"
-          />
-        </div>
-      )}
-      <div className="space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
-        <Row icon={<Mail size={14} />} label={t('customers.fields.email')}>
-          {customer.email ?? '—'}
-        </Row>
-        <Row icon={<Phone size={14} />} label={t('customers.fields.phone')}>
-          {customer.phone ?? '—'}
-        </Row>
-      </div>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-      >
-        <Edit2 size={14} />
-        {t('common.edit')}
-      </button>
-    </>
   );
 };
 
@@ -375,49 +344,3 @@ const SimpleListTab = ({
     </ul>
   );
 };
-
-const Row = ({
-  icon,
-  label,
-  children,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  children: React.ReactNode;
-}) => (
-  <div className="flex items-center justify-between gap-2 text-sm">
-    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-      {icon}
-      <span>{label}</span>
-    </div>
-    <div className="truncate text-slate-700 dark:text-slate-200">{children}</div>
-  </div>
-);
-
-const highlightClass: Record<'indigo' | 'blue' | 'emerald' | 'amber' | 'slate', string> = {
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  blue: 'border-blue-200 dark:border-blue-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
-  slate: 'border-slate-200 dark:border-slate-800',
-};
-
-const Stat = ({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  highlight: keyof typeof highlightClass;
-}) => (
-  <div className={`rounded border bg-white p-2.5 dark:bg-slate-900 ${highlightClass[highlight]}`}>
-    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-      {label}
-    </div>
-    <div className="mt-0.5 text-base font-bold text-slate-900 dark:text-slate-100">{value}</div>
-    {sub && <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{sub}</div>}
-  </div>
-);

@@ -14,6 +14,8 @@ public record SearchPaymentsQuery(
 
 public record GetPaymentsByCustomerQuery(Guid CustomerId) : IRequest<IReadOnlyList<PaymentSummaryDto>>;
 
+public record GetPaymentsByInvoiceQuery(Guid InvoiceId) : IRequest<IReadOnlyList<PaymentApplicationDto>>;
+
 public record GetCustomerLedgerQuery(
     Guid CustomerId,
     DateTime? FromUtc = null,

@@ -3,16 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Activity,
-  Edit2,
   ExternalLink,
   FileText,
   ListOrdered,
   NotebookPen,
   ShoppingCart,
+  Truck,
   User,
 } from 'lucide-react';
 import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
-import { Truck } from 'lucide-react';
 import { useOrderQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
@@ -20,6 +19,7 @@ import type { Customer } from '@/features/customers/model/customer.types';
 import type { Order, OrderLine, OrderStatus } from '@/features/orders/model/order.types';
 import { OrderStatusTimeline } from './OrderStatusTimeline';
 import { OrderActionsBar } from './OrderActionsBar';
+import { OrderOverviewTab } from './OrderOverviewTab';
 import { ShipmentsTab } from './ShipmentsTab';
 
 interface Props {
@@ -30,22 +30,6 @@ interface Props {
 }
 
 type Tab = 'overview' | 'lines' | 'shipments' | 'customer' | 'invoices' | 'notes';
-
-const statusStyles: Record<OrderStatus, string> = {
-  Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Submitted: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Approved: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  Allocated: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  Picking: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-300',
-  Packed: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
-  PartiallyShipped: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  Shipped: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Delivered: 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300',
-  Closed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
-  Returned: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Confirmed: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-};
 
 const INVOICEABLE: OrderStatus[] = [
   'Confirmed',
@@ -122,7 +106,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
         {tab === 'overview' && order && (
           <>
             <OrderStatusTimeline order={order} locale={i18n.language} />
-            <OverviewTab
+            <OrderOverviewTab
               order={order}
               locale={i18n.language}
               onEdit={() => onEdit(order.id)}
@@ -166,72 +150,6 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
         )}
       </div>
     </DetailPanel>
-  );
-};
-
-const OverviewTab = ({
-  order,
-  locale,
-  onEdit,
-  onGenerateInvoice,
-}: {
-  order: Order;
-  locale: string;
-  onEdit: () => void;
-  onGenerateInvoice?: () => void;
-}) => {
-  const { t } = useTranslation();
-  return (
-    <>
-      <div className="grid grid-cols-2 gap-2">
-        <Stat
-          label={t('orders.detail.metrics.total')}
-          value={fmtCurrency(order.total, order.currency, locale)}
-          highlight="indigo"
-        />
-        <Stat
-          label={t('orders.detail.metrics.lines')}
-          value={String(order.lines.length)}
-          sub={`${fmtNumber(
-            order.lines.reduce((s, l) => s + l.quantity, 0),
-            locale,
-          )} ${t('orders.detail.metrics.units')}`}
-          highlight="blue"
-        />
-      </div>
-      <div className="space-y-2 rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800">
-        <Row label={t('orders.fields.status')}>
-          <span
-            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${statusStyles[order.status]}`}
-          >
-            {t(`orders.status.${order.status}` as never)}
-          </span>
-        </Row>
-        <Row label={t('orders.fields.orderDate')}>{fmtDate(order.orderDate, locale)}</Row>
-        <Row label={t('orders.fields.customer')}>{order.customerName}</Row>
-        <Row label={t('orders.fields.currency')}>{order.currency}</Row>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-        >
-          <Edit2 size={14} />
-          {t('common.edit')}
-        </button>
-        {onGenerateInvoice && (
-          <button
-            type="button"
-            onClick={onGenerateInvoice}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100 dark:border-violet-500/40 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20"
-          >
-            <FileText size={14} />
-            {t('orders.actions.generateInvoice')}
-          </button>
-        )}
-      </div>
-    </>
   );
 };
 
@@ -376,30 +294,5 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
       {label}
     </span>
     <span className="truncate text-sm text-slate-700 dark:text-slate-200">{children}</span>
-  </div>
-);
-
-const highlightClass: Record<'indigo' | 'blue', string> = {
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  blue: 'border-blue-200 dark:border-blue-500/30',
-};
-
-const Stat = ({
-  label,
-  value,
-  sub,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  highlight: keyof typeof highlightClass;
-}) => (
-  <div className={`rounded border bg-white p-2.5 dark:bg-slate-900 ${highlightClass[highlight]}`}>
-    <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-      {label}
-    </div>
-    <div className="mt-0.5 text-base font-bold text-slate-900 dark:text-slate-100">{value}</div>
-    {sub && <div className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">{sub}</div>}
   </div>
 );

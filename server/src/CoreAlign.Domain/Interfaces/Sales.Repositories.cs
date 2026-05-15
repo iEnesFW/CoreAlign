@@ -99,6 +99,7 @@ public interface IPaymentRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Payment>> GetByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<PaymentApplication>> GetApplicationsByInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default);
     Task AddAsync(Payment payment, CancellationToken cancellationToken = default);
     void Update(Payment payment);
 }

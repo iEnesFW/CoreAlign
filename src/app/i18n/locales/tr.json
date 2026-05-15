@@ -13,6 +13,24 @@
       "adjust": "Stok düzelt",
       "empty": "Henüz stok kaydı yok."
     },
+    "stockItem": {
+      "title": "Stok kalemi detayları",
+      "noReorderPoint": "Bu stok kalemi için yeniden sipariş noktası tanımlı değil.",
+      "reorderTitle": "Yeniden sipariş planı",
+      "reorderPoint": "Sipariş seviyesi",
+      "minStock": "Emniyet stoğu",
+      "suggestedQty": "Önerilen ikmal",
+      "lotInfo": "Lot bilgisi",
+      "lotNumber": "Lot",
+      "manufactureDate": "Üretim",
+      "expiryDate": "Son kullanma",
+      "daysUntilExpiry": "Kalan gün",
+      "lotBlocked": "Bloke",
+      "lotExpired": "Süresi geçti",
+      "expiringInDays": "{{count}}g içinde sona eriyor",
+      "movementChart": "30 günlük hareket",
+      "recentMovements": "Son hareketler"
+    },
     "fields": {
       "warehouse": "Depo",
       "onHand": "Mevcut",
@@ -213,8 +231,16 @@
       "total": "Toplam",
       "notes": "Notlar",
       "notesPlaceholder": "Dahili notlar",
-      "lines": "Sipariş Satırları"
+      "lines": "Sipariş Satırları",
+      "terms": "Vade",
+      "dueDate": "Vade",
+      "requestedDelivery": "Talep edilen teslim",
+      "channel": "Kanal"
     },
+    "dueToday": "Bugün vadeli",
+    "dueIn": "{{count}}g içinde vadeli",
+    "overdueBy": "{{count}}g geçmiş",
+    "overdue": "Vadesi geçti",
     "lines": {
       "add": "Satır ekle",
       "product": "Ürün",
@@ -244,7 +270,29 @@
       "metrics": {
         "total": "Sipariş Tutarı",
         "lines": "Satır",
-        "units": "birim"
+        "units": "birim",
+        "shipped": "Sevk",
+        "invoiced": "Faturalandı"
+      },
+      "billingAddress": "Fatura adresi",
+      "shippingAddress": "Sevk adresi",
+      "noBillingAddress": "Fatura adresi yok.",
+      "noShippingAddress": "Sevk adresi yok.",
+      "customerSnapshot": "Müşteri snapshot",
+      "lineProgress": "Satır ilerlemesi",
+      "lineProgressShipped": "Sevk",
+      "lineProgressInvoiced": "Faturalandı",
+      "financial": {
+        "title": "Finansal döküm",
+        "subtotal": "Ara toplam",
+        "lineDiscount": "Satır iskontoları",
+        "headerDiscount": "Başlık iskontosu ({{pct}}%)",
+        "taxable": "Vergiye tabi tutar",
+        "tax": "KDV",
+        "withholding": "Tevkifat",
+        "shipping": "Kargo",
+        "rounding": "Yuvarlama",
+        "total": "Toplam"
       },
       "noLines": "Bu siparişte satır yok.",
       "noNotes": "Bu sipariş için not yok.",
@@ -309,23 +357,51 @@
       "total": "Toplam",
       "issueDate": "Düzenleme Tarihi",
       "dueDate": "Vade Tarihi",
+      "postingDate": "Kayıt tarihi",
+      "type": "Tür",
       "currency": "Para Birimi",
       "paidAt": "Ödendi",
       "cancelledAt": "İptal",
       "notes": "Notlar"
     },
+    "type": {
+      "SalesInvoice": "Satış faturası",
+      "ProForma": "Proforma",
+      "CreditNote": "İade faturası",
+      "DebitNote": "Borç dekontu",
+      "Advance": "Avans"
+    },
+    "dueSoon": "Vade yakın",
     "detail": {
       "title": "Fatura",
       "tabs": {
         "overview": "Genel",
         "lines": "Satırlar",
+        "payments": "Ödemeler",
         "activity": "Hareket",
         "notes": "Notlar"
       },
       "metrics": {
-        "lines": "Satır"
+        "lines": "Satır",
+        "paid": "Ödenen",
+        "due": "Bakiye",
+        "totalInvoice": "Fatura toplamı"
       },
       "linkedOrder": "Kaynak sipariş",
+      "paymentProgress": "Ödeme ilerlemesi",
+      "paymentsApplied": "Uygulanan ödemeler",
+      "noPayments": "Henüz ödeme uygulanmadı.",
+      "taxBreakdown": "Vergi dökümü",
+      "tax": {
+        "rate": "Oran",
+        "base": "Matrah",
+        "amount": "Tutar"
+      },
+      "eInvoice": "E-Fatura",
+      "eInvoiceUuid": "E-Fatura UUID",
+      "eInvoiceStatus": "Durum",
+      "postedToLedger": "Muhasebeye yansıdı",
+      "issuedAt": "Düzenleme zamanı",
       "noNotes": "Bu fatura için not yok.",
       "activity": {
         "created": "Oluşturuldu",
@@ -337,7 +413,8 @@
     "actions": {
       "markPaid": "Ödenmiş olarak işaretle",
       "cancel": "Faturayı iptal et",
-      "print": "Faturayı yazdır"
+      "print": "Faturayı yazdır",
+      "recordPayment": "Ödeme al"
     },
     "print": {
       "button": "Yazdır",
@@ -457,13 +534,45 @@
         "paid": "Tahsil Edilen",
         "outstanding": "Bakiye",
         "invoiceCount": "fatura",
-        "balance": "Bakiye"
+        "balance": "Bakiye",
+        "creditLine": "Kredi & Bakiye",
+        "creditLimit": "Kredi limiti",
+        "available": "Kullanılabilir",
+        "creditUsed": "Kullanılan kredi",
+        "overdue": "Vadesi geçen",
+        "overLimit": "Limit aşımı"
       },
       "txnType": {
         "InvoiceIssued": "Fatura Düzenlendi",
         "Payment": "Ödeme",
         "Refund": "İade",
         "Adjustment": "Düzeltme"
+      },
+      "snapshot": "Özet bilgiler",
+      "primaryAddress": "Birincil adres",
+      "primaryContact": "Birincil kişi",
+      "noPrimaryAddress": "Birincil adres tanımlı değil.",
+      "noPrimaryContact": "Birincil kişi tanımlı değil.",
+      "recentActivity": "Son hareketler",
+      "noRecentActivity": "Henüz hareket yok.",
+      "blockedTitle": "Müşteri bloke edildi",
+      "overdueWarning": "Vadesi geçen alacak: {{amount}}",
+      "actions": {
+        "newOrder": "Yeni sipariş",
+        "newInvoice": "Yeni fatura",
+        "recordPayment": "Ödeme al"
+      },
+      "meta": {
+        "group": "Grup",
+        "salesRep": "Satış temsilcisi",
+        "priceList": "Fiyat listesi",
+        "paymentTerms": "Vade",
+        "netDays": "Net {{count}}g"
+      },
+      "activity": {
+        "Order": "Sipariş",
+        "Invoice": "Fatura",
+        "Payment": "Ödeme"
       },
       "noOrders": "Bu müşteri için henüz sipariş yok.",
       "noInvoices": "Bu müşteri için henüz fatura yok.",
@@ -538,11 +647,23 @@
       "phonePlaceholder": "+90 555 010 9999",
       "taxNumber": "Vergi No",
       "taxNumberPlaceholder": "Vergi / KDV No",
+      "taxOffice": "Vergi Dairesi",
+      "nationalId": "TCKN",
+      "type": "Tür",
+      "code": "Kod",
+      "legalName": "Tüzel ad",
+      "tradeName": "Ticari ad",
+      "currency": "Para birimi",
       "address": "Adres",
       "addressPlaceholder": "Cadde, ilçe, şehir",
       "notes": "Notlar",
       "notesPlaceholder": "Dahili notlar",
       "isActive": "Aktif"
+    },
+    "type": {
+      "Individual": "Bireysel",
+      "Business": "Kurumsal",
+      "Government": "Kamu"
     },
     "modal": {
       "createTitle": "Yeni müşteri",
@@ -580,7 +701,8 @@
     "confirm": "Onayla",
     "confirmDelete": "Sil",
     "view": "Görüntüle",
-    "back": "Geri"
+    "back": "Geri",
+    "details": "Detaylar"
   },
   "activity": {
     "title": "Aktivite Günlüğü",

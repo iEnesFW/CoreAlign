@@ -31,6 +31,10 @@ public class PaymentsController : ControllerBase
     public async Task<IActionResult> GetByCustomer(Guid customerId, CancellationToken ct)
         => (await _mediator.Send(new GetPaymentsByCustomerQuery(customerId), ct)).ToOk();
 
+    [HttpGet("by-invoice/{invoiceId:guid}")]
+    public async Task<IActionResult> GetByInvoice(Guid invoiceId, CancellationToken ct)
+        => (await _mediator.Send(new GetPaymentsByInvoiceQuery(invoiceId), ct)).ToOk();
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
         => (await _mediator.Send(new GetPaymentByIdQuery(id), ct)).ToOk();

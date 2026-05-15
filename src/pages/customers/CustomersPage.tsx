@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -18,6 +19,7 @@ const PAGE_SIZE = 20;
 
 export const CustomersPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [editing, setEditing] = useState<Customer | null>(null);
@@ -162,6 +164,11 @@ export const CustomersPage = () => {
           setModalOpen(true);
           setSelectedId(null);
         }}
+        onCreateOrder={(id) => navigate(`/dashboard/orders?new=1&customerId=${id}`)}
+        onCreateInvoice={(id) => navigate(`/dashboard/invoices?new=1&customerId=${id}`)}
+        onRecordPayment={(id) => navigate(`/dashboard/invoices?customerId=${id}&payment=1`)}
+        onOpenOrder={(orderId) => navigate(`/dashboard/orders?selected=${orderId}`)}
+        onOpenInvoice={(invoiceId) => navigate(`/dashboard/invoices?selected=${invoiceId}`)}
       />
     </div>
   );

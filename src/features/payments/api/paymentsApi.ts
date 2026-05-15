@@ -8,6 +8,7 @@ import type {
   CustomerAging,
   CustomerLedgerEntry,
   Payment,
+  PaymentApplicationItem,
   PaymentSummary,
 } from '../model/payment.types';
 
@@ -29,6 +30,9 @@ export const paymentsApi = {
 
   getByCustomer: (customerId: string) =>
     cachedGet<ApiResponse<PaymentSummary[]>>(apiClient, `${BASE}/by-customer/${customerId}`),
+
+  getByInvoice: (invoiceId: string) =>
+    cachedGet<ApiResponse<PaymentApplicationItem[]>>(apiClient, `${BASE}/by-invoice/${invoiceId}`),
 
   create: (input: CreatePaymentInput) =>
     apiClient.post<ApiResponse<Payment>>(BASE, input).then((r) => {

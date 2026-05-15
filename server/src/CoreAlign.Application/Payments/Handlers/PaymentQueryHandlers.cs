@@ -49,6 +49,18 @@ public class GetPaymentsByCustomerHandler : IRequestHandler<GetPaymentsByCustome
         (await _payments.GetByCustomerAsync(q.CustomerId, ct)).Select(PaymentMapper.ToSummaryDto).ToList();
 }
 
+public class GetPaymentsByInvoiceHandler : IRequestHandler<GetPaymentsByInvoiceQuery, IReadOnlyList<PaymentApplicationDto>>
+{
+    private readonly IPaymentRepository _payments;
+    public GetPaymentsByInvoiceHandler(IPaymentRepository payments) => _payments = payments;
+
+    public async Task<IReadOnlyList<PaymentApplicationDto>> Handle(GetPaymentsByInvoiceQuery q, CancellationToken ct)
+    {
+        var apps = await _payments.GetApplicationsByInvoiceAsync(q.InvoiceId, ct);
+        return apps.Select(PaymentMapper.ToApplicationDto).ToList();
+    }
+}
+
 public class GetCustomerLedgerHandler : IRequestHandler<GetCustomerLedgerQuery, PagedResult<CustomerLedgerEntryDto>>
 {
     private readonly ICustomerLedgerRepository _ledger;

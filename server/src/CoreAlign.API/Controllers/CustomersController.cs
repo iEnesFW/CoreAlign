@@ -48,6 +48,13 @@ public class CustomersController : ControllerBase
         return result.ToOk();
     }
 
+    [HttpGet("{id:guid}/overview")]
+    public async Task<IActionResult> GetCustomerOverviewAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetCustomerOverviewQuery(id), cancellationToken);
+        return result.ToOk();
+    }
+
     [HttpGet("{id:guid}/transactions")]
     public async Task<IActionResult> GetCustomerTransactionsAsync(
         Guid id,

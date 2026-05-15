@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { Edit2, Eye, Trash2 } from 'lucide-react';
+import { Edit2, Eye, PanelRightOpen, Trash2 } from 'lucide-react';
 import type { Customer } from '../model/customer.types';
 
 interface Props {
@@ -59,22 +59,12 @@ export const CustomerList = ({
               return (
                 <tr
                   key={customer.id}
-                  onClick={() => onSelect?.(customer)}
-                  onKeyDown={(e) => {
-                    if (!onSelect) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onSelect(customer);
-                    }
-                  }}
-                  tabIndex={onSelect ? 0 : -1}
-                  role={onSelect ? 'button' : undefined}
                   aria-selected={onSelect ? isSelected : undefined}
-                  className={`${onSelect ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500' : ''} ${
+                  className={
                     isSelected
                       ? 'bg-indigo-50 dark:bg-indigo-500/10'
                       : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }`}
+                  }
                 >
                   <Td className="font-medium text-slate-900 dark:text-slate-100">
                     {customer.name}
@@ -92,12 +82,24 @@ export const CustomerList = ({
                       {customer.isActive ? t('common.active') : t('common.inactive')}
                     </span>
                   </Td>
-                  <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-3 py-2 text-right">
                     <div className="inline-flex items-center gap-1">
+                      {onSelect && (
+                        <button
+                          type="button"
+                          onClick={() => onSelect(customer)}
+                          className="rounded p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+                          aria-label={t('common.details', { defaultValue: 'Details' })}
+                          title={t('common.details', { defaultValue: 'Details' })}
+                        >
+                          <PanelRightOpen size={14} />
+                        </button>
+                      )}
                       <Link
                         to={`/dashboard/customers/${customer.id}`}
                         className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                         aria-label={t('common.view')}
+                        title={t('common.view')}
                       >
                         <Eye size={14} />
                       </Link>
@@ -106,6 +108,7 @@ export const CustomerList = ({
                         onClick={() => onEdit(customer)}
                         className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                         aria-label={t('common.edit')}
+                        title={t('common.edit')}
                       >
                         <Edit2 size={14} />
                       </button>
@@ -114,6 +117,7 @@ export const CustomerList = ({
                         onClick={() => onDelete(customer)}
                         className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                         aria-label={t('common.delete')}
+                        title={t('common.delete')}
                       >
                         <Trash2 size={14} />
                       </button>

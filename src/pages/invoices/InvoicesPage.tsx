@@ -8,9 +8,11 @@ import { InvoiceDetailPanel } from '@/features/invoices/ui/InvoiceDetailPanel';
 import { InvoiceList } from '@/features/invoices/ui/InvoiceList';
 import {
   useCancelInvoice,
+  useInvoiceQuery,
   useInvoicesQuery,
   useMarkInvoicePaid,
 } from '@/features/invoices/hooks/useInvoiceQueries';
+import { PaymentCreateModal } from '@/features/payments/ui/PaymentCreateModal';
 import type { InvoiceSummary } from '@/features/invoices/model/invoice.types';
 
 const PAGE_SIZE = 20;
@@ -20,6 +22,7 @@ export const InvoicesPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [paymentForInvoiceId, setPaymentForInvoiceId] = useState<string | null>(null);
 
   const params = useMemo(
     () => ({ page, pageSize: PAGE_SIZE, search: search.trim() || undefined }),
@@ -158,7 +161,29 @@ export const InvoicesPage = () => {
           const found = invoices.find((inv) => inv.id === id);
           if (found) handleCancel(found);
         }}
+        onRecordPayment={(id) => setPaymentForInvoiceId(id)}
       />
+
+      {paymentForInvoiceId && (
+        <PaymentModalLoader
+          invoiceId={paymentForInvoiceId}
+          onClose={() => setPaymentForInvoiceId(null)}
+        />
+      )}
     </div>
+  );
+};
+
+const PaymentModalLoader = ({ invoiceId, onClose }: { invoiceId: string; onClose: () => void }) => {
+  const invoiceQuery = useInvoiceQuery(invoiceId);
+  const invoice = invoiceQuery.data?.data;
+  if (!invoice) return null;
+  return (
+    <PaymentCreateModal
+      customerId={invoice.customerId}
+      customerName={invoice.customerName}
+      currency={invoice.currency}
+      onClose={onClose}
+    />
   );
 };

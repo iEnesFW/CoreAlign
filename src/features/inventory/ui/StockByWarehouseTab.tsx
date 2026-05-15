@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Edit3, Package, RefreshCw, TrendingDown, Warehouse } from 'lucide-react';
+import {
+  AlertTriangle,
+  Edit3,
+  Eye,
+  Package,
+  RefreshCw,
+  TrendingDown,
+  Warehouse,
+} from 'lucide-react';
 import { useStockByProductQuery, useStockSummaryQuery } from '../hooks/useInventoryQueries';
 import type { StockItem } from '../model/inventory.types';
 import { AdjustStockModal } from './AdjustStockModal';
+import { StockItemDetailModal } from './StockItemDetailModal';
 
 interface Props {
   productId: string;
@@ -43,6 +52,7 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
   const stockQuery = useStockByProductQuery(productId);
   const summaryQuery = useStockSummaryQuery(productId);
   const [adjustTarget, setAdjustTarget] = useState<StockItem | null>(null);
+  const [detailTarget, setDetailTarget] = useState<StockItem | null>(null);
   const [newAdjustWarehouseId, setNewAdjustWarehouseId] = useState<string | null>(null);
 
   const items = stockQuery.data?.data ?? [];
@@ -183,14 +193,25 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
                       {fmtDateTime(it.lastMovementAtUtc, locale)}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setAdjustTarget(it)}
-                        className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                      >
-                        <Edit3 size={11} />
-                        {t('common.edit')}
-                      </button>
+                      <div className="inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setDetailTarget(it)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                          title={t('common.details')}
+                        >
+                          <Eye size={11} />
+                          {t('common.details')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdjustTarget(it)}
+                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                        >
+                          <Edit3 size={11} />
+                          {t('common.edit')}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -215,6 +236,19 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
           onClose={() => {
             setAdjustTarget(null);
             setNewAdjustWarehouseId(null);
+          }}
+        />
+      )}
+
+      {detailTarget && (
+        <StockItemDetailModal
+          open
+          stockItem={detailTarget}
+          currency={currency}
+          onClose={() => setDetailTarget(null)}
+          onAdjust={(item) => {
+            setDetailTarget(null);
+            setAdjustTarget(item);
           }}
         />
       )}

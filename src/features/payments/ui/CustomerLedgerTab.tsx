@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, ArrowDownRight, ArrowUpRight, Plus, Receipt } from 'lucide-react';
+import { AlertCircle, ArrowDownRight, ArrowUpRight, Download, Plus, Receipt } from 'lucide-react';
 import {
   useCustomerAging,
   useCustomerLedger,
   usePaymentsByCustomer,
 } from '../hooks/usePaymentQueries';
-import type { LedgerEntryType } from '../model/payment.types';
+import type { CustomerLedgerEntry, LedgerEntryType } from '../model/payment.types';
 import { PaymentCreateModal } from './PaymentCreateModal';
 
 interface Props {
@@ -43,31 +43,66 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
   const locale = i18n.language;
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [fromUtc, setFromUtc] = useState<string | undefined>(undefined);
+  const [toUtc, setToUtc] = useState<string | undefined>(undefined);
 
-  const ledgerQuery = useCustomerLedger(customerId, undefined, undefined, page, 25);
+  const ledgerQuery = useCustomerLedger(customerId, fromUtc, toUtc, page, 25);
   const agingQuery = useCustomerAging(customerId);
   const paymentsQuery = usePaymentsByCustomer(customerId);
 
-  const ledger = ledgerQuery.data?.data?.items ?? [];
+  const ledger = useMemo(
+    () => ledgerQuery.data?.data?.items ?? [],
+    [ledgerQuery.data?.data?.items],
+  );
   const ledgerTotal = ledgerQuery.data?.data?.total ?? 0;
   const totalPages = ledgerQuery.data?.data?.totalPages ?? 0;
   const aging = agingQuery.data?.data;
   const payments = paymentsQuery.data?.data ?? [];
 
+  const exportCsv = useMemo(() => buildCsvDownloader(ledger, customerName), [ledger, customerName]);
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
           {t('payments.ledger.title', { defaultValue: 'Customer ledger' })}
         </h3>
-        <button
-          type="button"
-          onClick={() => setPaymentModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
-        >
-          <Plus size={12} />
-          {t('payments.ledger.recordPayment', { defaultValue: 'Record payment' })}
-        </button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <DateInput
+            value={fromUtc?.slice(0, 10) ?? ''}
+            onChange={(v) => {
+              setPage(1);
+              setFromUtc(v ? new Date(v + 'T00:00:00Z').toISOString() : undefined);
+            }}
+            label={t('payments.ledger.from', { defaultValue: 'From' })}
+          />
+          <DateInput
+            value={toUtc?.slice(0, 10) ?? ''}
+            onChange={(v) => {
+              setPage(1);
+              setToUtc(v ? new Date(v + 'T23:59:59Z').toISOString() : undefined);
+            }}
+            label={t('payments.ledger.to', { defaultValue: 'To' })}
+          />
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={ledger.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            title={t('payments.ledger.exportCsv', { defaultValue: 'Export CSV' })}
+          >
+            <Download size={11} />
+            CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+          >
+            <Plus size={12} />
+            {t('payments.ledger.recordPayment', { defaultValue: 'Record payment' })}
+          </button>
+        </div>
       </div>
 
       {aging && aging.totalOutstanding > 0 && (
@@ -331,3 +366,70 @@ const AgingLegend = ({ label, amount, currency, locale, color }: AgingLegendProp
     </div>
   </div>
 );
+
+const DateInput = ({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+}) => (
+  <label className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
+    {label}
+    <input
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+    />
+  </label>
+);
+
+const csvEscape = (value: string | number | null | undefined): string => {
+  if (value === null || value === undefined) return '';
+  const s = String(value);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+};
+
+const buildCsvDownloader = (entries: CustomerLedgerEntry[], customerName: string) => () => {
+  if (entries.length === 0) return;
+  const headers = [
+    'OccurredAt',
+    'PostingDate',
+    'Type',
+    'Source',
+    'Reference',
+    'Description',
+    'Currency',
+    'Amount',
+    'AmountBase',
+    'RunningBalance',
+  ];
+  const rows = entries.map((e) => [
+    e.occurredAtUtc,
+    e.postingDate,
+    e.entryType,
+    e.sourceType,
+    e.sourceDocumentNumber ?? '',
+    e.description ?? '',
+    e.currency,
+    e.entryType === 'Debit' ? e.amount : -e.amount,
+    e.amountInBase,
+    e.runningBalanceAfter,
+  ]);
+  const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\r\n');
+  const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
+  const safeName = customerName.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 64) || 'customer';
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `ledger_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+};

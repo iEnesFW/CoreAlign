@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Edit2, FileText, Trash2 } from 'lucide-react';
+import { Edit2, FileText, PanelRightOpen, Trash2 } from 'lucide-react';
 import type { OrderStatus, OrderSummary } from '../model/order.types';
 
 const INVOICEABLE_STATUSES: OrderStatus[] = ['Confirmed', 'Shipped', 'Closed'];
@@ -95,22 +95,12 @@ export const OrderList = ({
               return (
                 <tr
                   key={order.id}
-                  onClick={() => onSelect?.(order)}
-                  onKeyDown={(e) => {
-                    if (!onSelect) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      onSelect(order);
-                    }
-                  }}
-                  tabIndex={onSelect ? 0 : -1}
-                  role={onSelect ? 'button' : undefined}
                   aria-selected={onSelect ? isSelected : undefined}
-                  className={`${onSelect ? 'cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500' : ''} ${
+                  className={
                     isSelected
                       ? 'bg-indigo-50 dark:bg-indigo-500/10'
                       : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }`}
+                  }
                 >
                   <Td className="font-mono text-xs">{order.orderNumber}</Td>
                   <Td className="font-medium text-slate-900 dark:text-slate-100">
@@ -125,8 +115,19 @@ export const OrderList = ({
                     </span>
                   </Td>
                   <Td>{formatTotal(order.total, order.currency, i18n.language)}</Td>
-                  <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-3 py-2 text-right">
                     <div className="inline-flex items-center gap-1">
+                      {onSelect && (
+                        <button
+                          type="button"
+                          onClick={() => onSelect(order)}
+                          className="rounded p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+                          aria-label={t('common.details', { defaultValue: 'Details' })}
+                          title={t('common.details', { defaultValue: 'Details' })}
+                        >
+                          <PanelRightOpen size={14} />
+                        </button>
+                      )}
                       {INVOICEABLE_STATUSES.includes(order.status) && (
                         <button
                           type="button"
@@ -143,6 +144,7 @@ export const OrderList = ({
                         onClick={() => onEdit(order)}
                         className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
                         aria-label={t('common.edit')}
+                        title={t('common.edit')}
                       >
                         <Edit2 size={14} />
                       </button>
@@ -151,6 +153,7 @@ export const OrderList = ({
                         onClick={() => onDelete(order)}
                         className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
                         aria-label={t('common.delete')}
+                        title={t('common.delete')}
                       >
                         <Trash2 size={14} />
                       </button>

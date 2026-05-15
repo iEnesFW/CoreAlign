@@ -9,6 +9,7 @@ import type {
   CustomerContact,
   CustomerContactInput,
   CustomerListParams,
+  CustomerOverview,
   CustomerSummary,
   CustomerTransaction,
   UpdateCustomerAddressInput,
@@ -28,6 +29,9 @@ export const customersApi = {
 
   getSummary: (id: string) =>
     cachedGet<ApiResponse<CustomerSummary>>(apiClient, `${BASE}/${id}/summary`),
+
+  getOverview: (id: string) =>
+    cachedGet<ApiResponse<CustomerOverview>>(apiClient, `${BASE}/${id}/overview`),
 
   getTransactions: (id: string, page = 1, pageSize = 50) =>
     apiClient

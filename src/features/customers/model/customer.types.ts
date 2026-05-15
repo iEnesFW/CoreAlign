@@ -109,6 +109,39 @@ export interface CustomerSummary {
   currency: string;
 }
 
+export interface CustomerActivityItem {
+  occurredAtUtc: string;
+  kind: 'Order' | 'Invoice' | 'Payment' | string;
+  sourceId: string;
+  sourceNumber: string | null;
+  status: string | null;
+  amount: number;
+  currency: string;
+  description: string | null;
+}
+
+export interface CustomerOverview {
+  customerId: string;
+  groupName: string | null;
+  salesRepName: string | null;
+  priceListName: string | null;
+  paymentTermsName: string | null;
+  paymentTermsNetDays: number | null;
+  primaryBillingAddress: CustomerAddress | null;
+  primaryShippingAddress: CustomerAddress | null;
+  primaryContact: CustomerContact | null;
+  lastOrderAtUtc: string | null;
+  lastInvoiceAtUtc: string | null;
+  lastPaymentAtUtc: string | null;
+  currentBalance: number;
+  outstanding: number;
+  creditLimit: number;
+  creditAvailable: number;
+  creditUsedPercent: number;
+  isOverCreditLimit: boolean;
+  recentActivity: CustomerActivityItem[];
+}
+
 export type CustomerTransactionType = 'InvoiceIssued' | 'Payment' | 'Refund' | 'Adjustment';
 
 export interface CustomerTransaction {
