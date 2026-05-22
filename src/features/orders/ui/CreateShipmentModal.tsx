@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Package, Truck, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { useModalClose } from '@/shared/hooks/useModalClose';
 import { useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
 import { useCreateShipment } from '../hooks/useOrderQueries';
 import type { Order } from '../model/order.types';
@@ -81,15 +82,19 @@ export const CreateShipmentModal = ({ order, onClose }: Props) => {
     .filter((s) => s.selected)
     .reduce((sum, s) => sum + (Number.isFinite(s.quantity) ? s.quantity : 0), 0);
 
+  const [dirty, setDirty] = useState(false);
+  const requestClose = useModalClose(dirty, onClose);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
+      onClick={requestClose}
       role="presentation"
     >
       <div
         className="w-full max-w-2xl rounded-lg bg-white shadow-xl dark:bg-slate-900"
         onClick={(e) => e.stopPropagation()}
+        onChange={() => setDirty(true)}
         role="dialog"
         aria-modal="true"
       >
@@ -104,7 +109,7 @@ export const CreateShipmentModal = ({ order, onClose }: Props) => {
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
             aria-label={t('common.cancel')}
           >
@@ -211,7 +216,7 @@ export const CreateShipmentModal = ({ order, onClose }: Props) => {
         <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3 dark:border-slate-800">
           <button
             type="button"
-            onClick={onClose}
+            onClick={requestClose}
             className="rounded px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             {t('common.cancel')}

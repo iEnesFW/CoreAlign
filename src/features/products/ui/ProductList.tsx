@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Edit2, PanelRightOpen, Trash2 } from 'lucide-react';
-import type { Product } from '../model/product.types';
+import { AlertTriangle, Edit2, Package, PanelRightOpen, Trash2 } from 'lucide-react';
+import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
+import { cn } from '@/shared/lib/cn';
+import type { Product, ProductStatus } from '../model/product.types';
 
 interface Props {
   products: Product[];
@@ -9,9 +11,20 @@ interface Props {
   onSelect?: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onCreate?: () => void;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
-const formatPrice = (value: number, currency: string, locale: string) => {
+const statusTone: Record<ProductStatus, string> = {
+  Active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  New: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
+  Discontinued: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  EndOfLife: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+};
+
+const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
     return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
   } catch {
@@ -26,120 +39,168 @@ export const ProductList = ({
   onSelect,
   onEdit,
   onDelete,
+  onCreate,
+  selectable,
+  selectedIds,
+  onSelectionChange,
 }: Props) => {
   const { t, i18n } = useTranslation();
-
-  if (isLoading && products.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-        {t('common.loading')}
-      </div>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-        {t('products.empty')}
-      </div>
-    );
-  }
+  const locale = i18n.language;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50">
-            <tr>
-              <Th>{t('products.columns.sku')}</Th>
-              <Th>{t('products.columns.name')}</Th>
-              <Th>{t('products.columns.price')}</Th>
-              <Th>{t('products.columns.stock')}</Th>
-              <Th>{t('products.columns.status')}</Th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {t('products.columns.actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-            {products.map((product) => {
-              const isSelected = selectedId === product.id;
-              return (
-                <tr
-                  key={product.id}
-                  aria-selected={onSelect ? isSelected : undefined}
-                  className={
-                    isSelected
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }
+    <DataTable
+      rows={products}
+      getRowId={(p) => p.id}
+      isLoading={isLoading}
+      selectedId={selectedId ?? null}
+      onRowClick={onSelect}
+      selectable={selectable}
+      selectedIds={selectedIds}
+      onSelectionChange={onSelectionChange}
+      emptyIcon={<Package size={20} />}
+      emptyTitle={t('products.empty')}
+      emptyDescription={t('products.emptyHint', {
+        defaultValue:
+          'Create your first product to enable orders, invoicing and inventory tracking.',
+      })}
+      emptyAction={
+        onCreate && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            {t('products.addNew')}
+          </button>
+        )
+      }
+      columns={[
+        {
+          key: 'product',
+          label: t('products.columns.name'),
+          sortable: true,
+          sortValue: (p) => p.name.toLowerCase(),
+          cell: (p) => (
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/15 to-teal-500/15 text-emerald-700 ring-1 ring-emerald-200/40 dark:text-emerald-300 dark:ring-emerald-500/30">
+                <Package size={14} />
+              </div>
+              <div className="min-w-0">
+                <div className="truncate font-semibold text-slate-900 dark:text-slate-100">
+                  {p.name}
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <span className="font-mono text-slate-500">{p.sku}</span>
+                  {p.barcode && <span className="font-mono text-slate-400">· {p.barcode}</span>}
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          key: 'price',
+          label: t('products.columns.price'),
+          align: 'right',
+          sortable: true,
+          sortValue: (p) => p.price,
+          hideOnMobile: true,
+          cell: (p) => (
+            <div className="text-right">
+              <div className="font-mono text-xs font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                {fmtCurrency(p.price, p.currency, locale)}
+              </div>
+              {p.listPrice > p.price && (
+                <div className="text-[9px] text-slate-400 line-through">
+                  {fmtCurrency(p.listPrice, p.currency, locale)}
+                </div>
+              )}
+            </div>
+          ),
+        },
+        {
+          key: 'stock',
+          label: t('products.columns.stock'),
+          align: 'right',
+          sortable: true,
+          sortValue: (p) => p.stockQuantity,
+          cell: (p) => {
+            const belowReorder = p.isStockTracked && p.stockQuantity <= p.reorderPoint;
+            const outOfStock = p.isStockTracked && p.stockQuantity <= 0;
+            return (
+              <div className="text-right">
+                <div
+                  className={cn(
+                    'font-mono text-xs font-semibold tabular-nums',
+                    outOfStock
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : belowReorder
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-slate-900 dark:text-slate-100',
+                  )}
                 >
-                  <Td className="font-mono text-xs">{product.sku}</Td>
-                  <Td className="font-medium text-slate-900 dark:text-slate-100">{product.name}</Td>
-                  <Td>{formatPrice(product.price, product.currency, i18n.language)}</Td>
-                  <Td>
-                    {product.stockQuantity} {product.unit}
-                  </Td>
-                  <Td>
-                    <span
-                      className={
-                        product.isActive
-                          ? 'inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-                          : 'inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-700/40 dark:text-slate-300'
-                      }
-                    >
-                      {product.isActive ? t('common.active') : t('common.inactive')}
-                    </span>
-                  </Td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="inline-flex items-center gap-1">
-                      {onSelect && (
-                        <button
-                          type="button"
-                          onClick={() => onSelect(product)}
-                          className="rounded p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
-                          aria-label={t('common.details', { defaultValue: 'Details' })}
-                          title={t('common.details', { defaultValue: 'Details' })}
-                        >
-                          <PanelRightOpen size={14} />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => onEdit(product)}
-                        className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(product)}
-                        className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-                        aria-label={t('common.delete')}
-                        title={t('common.delete')}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                  {p.stockQuantity.toLocaleString(locale)} {p.unit}
+                </div>
+                {p.isStockTracked && (
+                  <div className="text-[9px] text-slate-500 dark:text-slate-400">
+                    {t('products.reorderAt', { defaultValue: 'Reorder' })}: {p.reorderPoint}
+                  </div>
+                )}
+                {belowReorder && (
+                  <div className="mt-0.5 inline-flex items-center gap-0.5 rounded bg-amber-100 px-1 py-px text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <AlertTriangle size={8} />
+                    {outOfStock
+                      ? t('products.outOfStock', { defaultValue: 'Out' })
+                      : t('products.lowStock', { defaultValue: 'Low' })}
+                  </div>
+                )}
+              </div>
+            );
+          },
+        },
+        {
+          key: 'status',
+          label: t('products.columns.status'),
+          sortable: true,
+          sortValue: (p) => p.status,
+          cell: (p) => (
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
+                statusTone[p.status],
+              )}
+            >
+              {t(`products.statusLabel.${p.status}`, { defaultValue: p.status })}
+            </span>
+          ),
+        },
+      ]}
+      rowActionsHeader={
+        <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {t('products.columns.actions')}
+        </span>
+      }
+      rowActions={(p) => (
+        <>
+          {onSelect && (
+            <RowActionButton
+              icon={<PanelRightOpen size={14} />}
+              label={t('common.details', { defaultValue: 'Details' })}
+              onClick={() => onSelect(p)}
+            />
+          )}
+          <RowActionButton
+            icon={<Edit2 size={14} />}
+            label={t('common.edit')}
+            onClick={() => onEdit(p)}
+          />
+          <RowActionButton
+            icon={<Trash2 size={14} />}
+            label={t('common.delete')}
+            tone="danger"
+            onClick={() => onDelete(p)}
+          />
+        </>
+      )}
+    />
   );
 };
-
-const Th = ({ children }: { children: React.ReactNode }) => (
-  <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-    {children}
-  </th>
-);
-
-const Td = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <td className={`px-3 py-2 text-slate-700 dark:text-slate-200 ${className ?? ''}`}>{children}</td>
-);

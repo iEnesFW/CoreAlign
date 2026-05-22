@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
   Activity,
+  Boxes,
+  Clock,
   ExternalLink,
   FileText,
   ListOrdered,
   NotebookPen,
+  Percent,
   ShoppingCart,
   Truck,
   User,
@@ -17,6 +20,9 @@ import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries'
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import type { Customer } from '@/features/customers/model/customer.types';
 import type { Order, OrderLine, OrderStatus } from '@/features/orders/model/order.types';
+import { OrderAllocationsTab } from './OrderAllocationsTab';
+import { OrderAuditTab } from './OrderAuditTab';
+import { OrderMarginTab } from './OrderMarginTab';
 import { OrderStatusTimeline } from './OrderStatusTimeline';
 import { OrderActionsBar } from './OrderActionsBar';
 import { OrderOverviewTab } from './OrderOverviewTab';
@@ -29,7 +35,16 @@ interface Props {
   onGenerateInvoice?: (orderId: string) => void;
 }
 
-type Tab = 'overview' | 'lines' | 'shipments' | 'customer' | 'invoices' | 'notes';
+type Tab =
+  | 'overview'
+  | 'lines'
+  | 'margin'
+  | 'allocations'
+  | 'shipments'
+  | 'customer'
+  | 'invoices'
+  | 'audit'
+  | 'notes';
 
 const INVOICEABLE: OrderStatus[] = [
   'Confirmed',
@@ -75,12 +90,27 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
     { id: 'overview', label: t('orders.detail.tabs.overview'), icon: <ShoppingCart size={12} /> },
     { id: 'lines', label: t('orders.detail.tabs.lines'), icon: <ListOrdered size={12} /> },
     {
+      id: 'margin',
+      label: t('orders.detail.tabs.margin', { defaultValue: 'Margin' }),
+      icon: <Percent size={12} />,
+    },
+    {
+      id: 'allocations',
+      label: t('orders.detail.tabs.allocations', { defaultValue: 'Allocations' }),
+      icon: <Boxes size={12} />,
+    },
+    {
       id: 'shipments',
       label: t('orders.shipments.title'),
       icon: <Truck size={12} />,
     },
     { id: 'customer', label: t('orders.detail.tabs.customer'), icon: <User size={12} /> },
     { id: 'invoices', label: t('orders.detail.tabs.invoices'), icon: <FileText size={12} /> },
+    {
+      id: 'audit',
+      label: t('orders.detail.tabs.audit', { defaultValue: 'Audit' }),
+      icon: <Clock size={12} />,
+    },
     { id: 'notes', label: t('orders.detail.tabs.notes'), icon: <NotebookPen size={12} /> },
   ];
 
@@ -119,6 +149,10 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
           </>
         )}
         {tab === 'lines' && order && <LinesTab order={order} locale={i18n.language} />}
+        {tab === 'margin' && order && <OrderMarginTab order={order} locale={i18n.language} />}
+        {tab === 'allocations' && order && (
+          <OrderAllocationsTab orderId={order.id} locale={i18n.language} />
+        )}
         {tab === 'shipments' && order && (
           <ShipmentsTab
             order={order}
@@ -141,6 +175,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
             loading={invoicesQuery.isPending}
           />
         )}
+        {tab === 'audit' && order && <OrderAuditTab order={order} locale={i18n.language} />}
         {tab === 'notes' && (
           <div className="rounded border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
             {order?.notes || (

@@ -120,6 +120,54 @@ export interface CustomerActivityItem {
   description: string | null;
 }
 
+export interface MonthlyRevenuePoint {
+  year: number;
+  month: number;
+  label: string;
+  revenue: number;
+  invoiceCount: number;
+  paid: number;
+}
+
+export interface TopProduct {
+  productId: string | null;
+  productSku: string;
+  productName: string;
+  quantity: number;
+  revenue: number;
+  invoiceCount: number;
+}
+
+export interface StatusBreakdown {
+  status: string;
+  count: number;
+  total: number;
+}
+
+export interface CustomerAnalytics {
+  customerId: string;
+  currency: string;
+  orderCount: number;
+  invoiceCount: number;
+  paymentCount: number;
+  totalRevenue: number;
+  totalPaid: number;
+  lifetimeValue: number;
+  avgOrderValue: number;
+  avgInvoiceValue: number;
+  onTimePayments: number;
+  latePayments: number;
+  onTimePaymentRatio: number;
+  avgDaysToPayment: number;
+  firstOrderAtUtc: string | null;
+  lastOrderAtUtc: string | null;
+  lifetimeMonths: number;
+  monthlyRevenue: MonthlyRevenuePoint[];
+  topProducts: TopProduct[];
+  orderStatusBreakdown: StatusBreakdown[];
+  invoiceStatusBreakdown: StatusBreakdown[];
+}
+
 export interface CustomerOverview {
   customerId: string;
   groupName: string | null;

@@ -6,6 +6,7 @@ import type {
   CreateCustomerInput,
   CustomerAddress,
   CustomerAddressInput,
+  CustomerAnalytics,
   CustomerContact,
   CustomerContactInput,
   CustomerListParams,
@@ -32,6 +33,11 @@ export const customersApi = {
 
   getOverview: (id: string) =>
     cachedGet<ApiResponse<CustomerOverview>>(apiClient, `${BASE}/${id}/overview`),
+
+  getAnalytics: (id: string, monthsBack = 12) =>
+    cachedGet<ApiResponse<CustomerAnalytics>>(apiClient, `${BASE}/${id}/analytics`, {
+      params: { monthsBack },
+    }),
 
   getTransactions: (id: string, page = 1, pageSize = 50) =>
     apiClient

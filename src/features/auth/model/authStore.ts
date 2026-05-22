@@ -1,9 +1,17 @@
 import { create } from 'zustand';
 import { clearHttpCache, setCacheNamespace } from '@/shared/http/httpCache';
+import { setLoggerContext } from '@/shared/lib/logger';
 import type { UserProfile } from './auth.types';
 
 const namespaceFromUser = (user: UserProfile | null): string =>
   user ? `${user.tenantId}:${user.id}` : 'anon';
+
+const applyLoggerContext = (user: UserProfile | null): void => {
+  setLoggerContext({
+    userId: user?.id ?? null,
+    tenantId: user?.tenantId ?? null,
+  });
+};
 
 const initialUser: UserProfile | null = (() => {
   try {
@@ -13,6 +21,7 @@ const initialUser: UserProfile | null = (() => {
   }
 })();
 setCacheNamespace(namespaceFromUser(initialUser));
+applyLoggerContext(initialUser);
 
 interface AuthState {
   accessToken: string | null;
@@ -32,6 +41,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAuth: (accessToken, user) => {
     localStorage.setItem('user', JSON.stringify(user));
     setCacheNamespace(namespaceFromUser(user));
+    applyLoggerContext(user);
     set({ accessToken, user, isAuthenticated: true });
   },
 
@@ -39,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem('user');
     clearHttpCache();
     setCacheNamespace('anon');
+    applyLoggerContext(null);
     set({ accessToken: null, user: null, isAuthenticated: false });
   },
 

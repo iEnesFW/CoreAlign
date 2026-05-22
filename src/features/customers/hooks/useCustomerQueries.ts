@@ -39,6 +39,13 @@ export const useCustomerOverviewQuery = (id: string | null) =>
     enabled: id !== null,
   });
 
+export const useCustomerAnalyticsQuery = (id: string | null, monthsBack = 12) =>
+  useQuery({
+    queryKey: customerKeys.analytics(id, monthsBack),
+    queryFn: () => customersApi.getAnalytics(id as string, monthsBack),
+    enabled: id !== null,
+  });
+
 export const useCustomerTransactionsQuery = (id: string | null) =>
   useQuery({
     queryKey: customerKeys.transactions(id),

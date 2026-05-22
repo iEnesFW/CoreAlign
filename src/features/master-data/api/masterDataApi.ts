@@ -160,7 +160,14 @@ export const masterDataApi = {
   customerGroups: buildCrud<CustomerGroup, CustomerGroupInput, CustomerGroupUpdateInput>(
     'customer-groups',
   ),
-  uoms: buildCrud<UnitOfMeasure, UnitOfMeasureInput, UnitOfMeasureUpdateInput>('units-of-measure'),
+  uoms: {
+    ...buildCrud<UnitOfMeasure, UnitOfMeasureInput, UnitOfMeasureUpdateInput>('units-of-measure'),
+    seedStandard: () =>
+      apiClient.post<ApiResponse<number>>(`${BASE}/units-of-measure/seed-standard`).then((r) => {
+        invalidateHttpCache([new RegExp(`${BASE}/units-of-measure`, 'i')]);
+        return r.data;
+      }),
+  },
   taxRates: buildCrud<TaxRate, TaxRateInput, TaxRateUpdateInput>('tax-rates'),
   paymentTerms: buildCrud<PaymentTerm, PaymentTermInput, PaymentTermUpdateInput>('payment-terms'),
   priceLists: buildCrud<PriceList, PriceListInput, PriceListUpdateInput>('price-lists'),

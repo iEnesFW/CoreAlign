@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { Edit2, FileText, PanelRightOpen, Trash2 } from 'lucide-react';
+import { Edit2, FileText, Hash, PanelRightOpen, ShoppingCart, Trash2 } from 'lucide-react';
+import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
 import type { OrderStatus, OrderSummary } from '../model/order.types';
+import { OrderStatusCell } from './OrderStatusCell';
 
 const INVOICEABLE_STATUSES: OrderStatus[] = ['Confirmed', 'Shipped', 'Closed'];
 
@@ -12,9 +14,12 @@ interface Props {
   onEdit: (order: OrderSummary) => void;
   onDelete: (order: OrderSummary) => void;
   onGenerateInvoice: (order: OrderSummary) => void;
+  onCreate?: () => void;
+  onStatusTransition?: (order: OrderSummary, action: string) => void;
+  statusBusyId?: string | null;
 }
 
-const statusStyles: Record<OrderStatus, string> = {
+const statusTone: Record<OrderStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
   Submitted: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
   Approved: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
@@ -30,7 +35,7 @@ const statusStyles: Record<OrderStatus, string> = {
   Confirmed: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
 };
 
-const formatTotal = (value: number, currency: string, locale: string) => {
+const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
     return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
   } catch {
@@ -38,9 +43,25 @@ const formatTotal = (value: number, currency: string, locale: string) => {
   }
 };
 
-const formatDate = (iso: string, locale: string) => {
+const fmtDate = (iso: string, locale: string) => {
   try {
     return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(iso));
+  } catch {
+    return iso.slice(0, 10);
+  }
+};
+
+const fmtRelative = (iso: string, locale: string) => {
+  try {
+    const target = new Date(iso).getTime();
+    const diffMs = Date.now() - target;
+    const dayMs = 1000 * 60 * 60 * 24;
+    const days = Math.floor(diffMs / dayMs);
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+    if (days < 1) return rtf.format(-Math.max(0, Math.floor(diffMs / (1000 * 60 * 60))), 'hour');
+    if (days < 30) return rtf.format(-days, 'day');
+    if (days < 365) return rtf.format(-Math.floor(days / 30), 'month');
+    return rtf.format(-Math.floor(days / 365), 'year');
   } catch {
     return iso.slice(0, 10);
   }
@@ -54,127 +75,155 @@ export const OrderList = ({
   onEdit,
   onDelete,
   onGenerateInvoice,
+  onCreate,
+  onStatusTransition,
+  statusBusyId,
 }: Props) => {
   const { t, i18n } = useTranslation();
-
-  if (isLoading && orders.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-        {t('common.loading')}
-      </div>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
-        {t('orders.empty')}
-      </div>
-    );
-  }
+  const locale = i18n.language;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 dark:bg-slate-800/50">
-            <tr>
-              <Th>{t('orders.columns.orderNumber')}</Th>
-              <Th>{t('orders.columns.customer')}</Th>
-              <Th>{t('orders.columns.orderDate')}</Th>
-              <Th>{t('orders.columns.status')}</Th>
-              <Th>{t('orders.columns.total')}</Th>
-              <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {t('orders.columns.actions')}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-            {orders.map((order) => {
-              const isSelected = selectedId === order.id;
-              return (
-                <tr
-                  key={order.id}
-                  aria-selected={onSelect ? isSelected : undefined}
-                  className={
-                    isSelected
-                      ? 'bg-indigo-50 dark:bg-indigo-500/10'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                  }
-                >
-                  <Td className="font-mono text-xs">{order.orderNumber}</Td>
-                  <Td className="font-medium text-slate-900 dark:text-slate-100">
-                    {order.customerName}
-                  </Td>
-                  <Td>{formatDate(order.orderDate, i18n.language)}</Td>
-                  <Td>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[order.status]}`}
-                    >
-                      {t(`orders.status.${order.status}` as never)}
-                    </span>
-                  </Td>
-                  <Td>{formatTotal(order.total, order.currency, i18n.language)}</Td>
-                  <td className="px-3 py-2 text-right">
-                    <div className="inline-flex items-center gap-1">
-                      {onSelect && (
-                        <button
-                          type="button"
-                          onClick={() => onSelect(order)}
-                          className="rounded p-1.5 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
-                          aria-label={t('common.details', { defaultValue: 'Details' })}
-                          title={t('common.details', { defaultValue: 'Details' })}
-                        >
-                          <PanelRightOpen size={14} />
-                        </button>
-                      )}
-                      {INVOICEABLE_STATUSES.includes(order.status) && (
-                        <button
-                          type="button"
-                          onClick={() => onGenerateInvoice(order)}
-                          className="rounded p-1.5 text-slate-500 hover:bg-violet-50 hover:text-violet-600 dark:text-slate-400 dark:hover:bg-violet-500/10 dark:hover:text-violet-400"
-                          aria-label={t('orders.actions.generateInvoice')}
-                          title={t('orders.actions.generateInvoice')}
-                        >
-                          <FileText size={14} />
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => onEdit(order)}
-                        className="rounded p-1.5 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
-                        aria-label={t('common.edit')}
-                        title={t('common.edit')}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(order)}
-                        className="rounded p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-red-500/10 dark:hover:text-red-400"
-                        aria-label={t('common.delete')}
-                        title={t('common.delete')}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      rows={orders}
+      getRowId={(o) => o.id}
+      isLoading={isLoading}
+      selectedId={selectedId ?? null}
+      onRowClick={onSelect}
+      emptyIcon={<ShoppingCart size={20} />}
+      emptyTitle={t('orders.empty')}
+      emptyDescription={t('orders.emptyHint', {
+        defaultValue: 'Create your first order to begin the sales pipeline.',
+      })}
+      emptyAction={
+        onCreate && (
+          <button
+            type="button"
+            onClick={onCreate}
+            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700"
+          >
+            {t('orders.addNew')}
+          </button>
+        )
+      }
+      columns={[
+        {
+          key: 'orderNumber',
+          label: t('orders.columns.orderNumber'),
+          sortable: true,
+          sortValue: (o) => o.orderNumber,
+          cell: (o) => (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-indigo-500/15 to-purple-500/15 text-indigo-600 ring-1 ring-indigo-200/40 dark:text-indigo-300 dark:ring-indigo-500/30">
+                <Hash size={11} />
+              </span>
+              <span className="font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
+                {o.orderNumber}
+              </span>
+            </div>
+          ),
+        },
+        {
+          key: 'customer',
+          label: t('orders.columns.customer'),
+          sortable: true,
+          sortValue: (o) => o.customerName.toLowerCase(),
+          cell: (o) => (
+            <div className="min-w-0">
+              <div className="truncate font-medium text-slate-900 dark:text-slate-100">
+                {o.customerName}
+              </div>
+            </div>
+          ),
+        },
+        {
+          key: 'orderDate',
+          label: t('orders.columns.orderDate'),
+          sortable: true,
+          sortValue: (o) => o.orderDate,
+          hideOnMobile: true,
+          cell: (o) => (
+            <div className="text-[11px]">
+              <div className="text-slate-700 dark:text-slate-200">
+                {fmtDate(o.orderDate, locale)}
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                {fmtRelative(o.orderDate, locale)}
+              </div>
+            </div>
+          ),
+        },
+        {
+          key: 'status',
+          label: t('orders.columns.status'),
+          sortable: true,
+          sortValue: (o) => o.status,
+          cell: (o) =>
+            onStatusTransition ? (
+              <OrderStatusCell
+                status={o.status}
+                toneClass={statusTone[o.status]}
+                busy={statusBusyId === o.id}
+                onTransition={(action) => onStatusTransition(o, action)}
+              />
+            ) : (
+              <span
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusTone[o.status]}`}
+              >
+                {t(`orders.status.${o.status}` as never)}
+              </span>
+            ),
+        },
+        {
+          key: 'total',
+          label: t('orders.columns.total'),
+          align: 'right',
+          sortable: true,
+          sortValue: (o) => o.total,
+          cell: (o) => (
+            <span className="font-mono text-xs font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+              {fmtCurrency(o.total, o.currency, locale)}
+            </span>
+          ),
+        },
+      ]}
+      rowActionsHeader={
+        <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {t('orders.columns.actions')}
+        </span>
+      }
+      rowActions={(o) => (
+        <>
+          {onSelect && (
+            <RowActionButton
+              icon={<PanelRightOpen size={14} />}
+              label={t('common.details', { defaultValue: 'Details' })}
+              onClick={() => onSelect(o)}
+            />
+          )}
+          {INVOICEABLE_STATUSES.includes(o.status) && (
+            <button
+              type="button"
+              onClick={() => onGenerateInvoice(o)}
+              className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-violet-50 hover:text-violet-600 dark:text-slate-400 dark:hover:bg-violet-500/10 dark:hover:text-violet-300"
+              aria-label={t('orders.actions.generateInvoice')}
+              title={t('orders.actions.generateInvoice')}
+            >
+              <FileText size={14} />
+            </button>
+          )}
+          <RowActionButton
+            icon={<Edit2 size={14} />}
+            label={t('common.edit')}
+            onClick={() => onEdit(o)}
+          />
+          <RowActionButton
+            icon={<Trash2 size={14} />}
+            label={t('common.delete')}
+            tone="danger"
+            onClick={() => onDelete(o)}
+          />
+        </>
+      )}
+    />
   );
 };
-
-const Th = ({ children }: { children: React.ReactNode }) => (
-  <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-    {children}
-  </th>
-);
-
-const Td = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <td className={`px-3 py-2 text-slate-700 dark:text-slate-200 ${className ?? ''}`}>{children}</td>
-);

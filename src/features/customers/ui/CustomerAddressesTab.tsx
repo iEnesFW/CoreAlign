@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Check, MapPin, Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { AddressRegionFields } from '@/features/lookups/ui/AddressRegionFields';
 import {
   useCreateCustomerAddress,
   useCustomerAddressesQuery,
@@ -201,13 +202,18 @@ const AddressForm = ({
   const { t } = useTranslation();
   const {
     register,
+    control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<CustomerAddressFormValues>({
     resolver: zodResolver(customerAddressSchema),
     defaultValues: initial,
   });
+
+  const region = useWatch({ control, name: ['country', 'state', 'city'] });
+  const [regionCountry, regionState, regionCity] = region;
 
   useEffect(() => {
     reset(initial);
@@ -221,27 +227,16 @@ const AddressForm = ({
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/30 p-3 dark:border-indigo-500/30 dark:bg-indigo-500/5"
     >
-      <div className="grid grid-cols-2 gap-2">
-        <Field
-          label={t('customers.detail.addresses.fields.label')}
-          error={fieldError(errors.label?.message)}
-        >
-          <input
-            {...register('label')}
-            placeholder={t('customers.detail.addresses.fields.labelPlaceholder')}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </Field>
-        <Field
-          label={t('customers.detail.addresses.fields.country')}
-          error={fieldError(errors.country?.message)}
-        >
-          <input
-            {...register('country')}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </Field>
-      </div>
+      <Field
+        label={t('customers.detail.addresses.fields.label')}
+        error={fieldError(errors.label?.message)}
+      >
+        <input
+          {...register('label')}
+          placeholder={t('customers.detail.addresses.fields.labelPlaceholder')}
+          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        />
+      </Field>
       <Field
         label={t('customers.detail.addresses.fields.line1')}
         error={fieldError(errors.line1?.message)}
@@ -260,25 +255,20 @@ const AddressForm = ({
           className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </Field>
-      <div className="grid grid-cols-3 gap-2">
-        <Field
-          label={t('customers.detail.addresses.fields.city')}
-          error={fieldError(errors.city?.message)}
-        >
-          <input
-            {...register('city')}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </Field>
-        <Field
-          label={t('customers.detail.addresses.fields.state')}
-          error={fieldError(errors.state?.message)}
-        >
-          <input
-            {...register('state')}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </Field>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <AddressRegionFields
+          country={regionCountry ?? ''}
+          state={regionState ?? ''}
+          city={regionCity ?? ''}
+          onCountryChange={(v) => setValue('country', v, { shouldDirty: true })}
+          onStateChange={(v) => setValue('state', v, { shouldDirty: true })}
+          onCityChange={(v) => setValue('city', v, { shouldDirty: true })}
+          labels={{
+            country: t('customers.detail.addresses.fields.country'),
+            province: t('customers.detail.addresses.fields.state'),
+            district: t('customers.detail.addresses.fields.city'),
+          }}
+        />
         <Field
           label={t('customers.detail.addresses.fields.postalCode')}
           error={fieldError(errors.postalCode?.message)}

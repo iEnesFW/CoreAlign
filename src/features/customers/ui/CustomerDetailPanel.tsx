@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Activity,
+  BarChart3,
   Contact,
   Edit2,
   FileText,
@@ -20,6 +21,7 @@ import {
 import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CustomerAddressesTab } from '@/features/customers/ui/CustomerAddressesTab';
+import { CustomerAnalyticsTab } from '@/features/customers/ui/CustomerAnalyticsTab';
 import { CustomerContactsTab } from '@/features/customers/ui/CustomerContactsTab';
 import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
@@ -43,6 +45,7 @@ interface Props {
 
 type Tab =
   | 'overview'
+  | 'analytics'
   | 'ledger'
   | 'transactions'
   | 'addresses'
@@ -121,6 +124,11 @@ export const CustomerDetailPanel = ({
     () => [
       { id: 'overview', label: t('customers.detail.tabs.overview'), icon: <User size={12} /> },
       {
+        id: 'analytics',
+        label: t('customers.detail.tabs.analytics', { defaultValue: 'Analytics' }),
+        icon: <BarChart3 size={12} />,
+      },
+      {
         id: 'ledger',
         label: t('payments.ledger.title', { defaultValue: 'Ledger' }),
         icon: <Receipt size={12} />,
@@ -186,6 +194,9 @@ export const CustomerDetailPanel = ({
         )}
         {tab === 'overview' && !customer && (
           <div className="text-sm text-slate-500">{t('common.loading')}</div>
+        )}
+        {tab === 'analytics' && customer && (
+          <CustomerAnalyticsTab customerId={customer.id} locale={i18n.language} />
         )}
         {tab === 'ledger' && customer && (
           <CustomerLedgerTab

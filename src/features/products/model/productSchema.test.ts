@@ -5,10 +5,15 @@ const valid = {
   sku: 'PRD-001',
   name: 'Widget',
   description: '',
+  status: 'Active' as const,
   unit: 'pcs',
   price: 9.99,
   currency: 'USD',
+  isPriceTaxInclusive: false,
   stockQuantity: 100,
+  isStockTracked: true,
+  isLotTracked: false,
+  isSerialTracked: false,
   isActive: true,
 };
 

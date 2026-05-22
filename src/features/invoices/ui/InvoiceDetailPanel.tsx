@@ -1,8 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, CreditCard, FileText, ListOrdered, StickyNote } from 'lucide-react';
+import {
+  BookOpen,
+  CheckCircle2,
+  CreditCard,
+  FileText,
+  ListOrdered,
+  StickyNote,
+} from 'lucide-react';
 import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import { useInvoiceQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { InvoiceLedgerTab } from '@/features/invoices/ui/InvoiceLedgerTab';
 import { InvoiceOverviewTab } from '@/features/invoices/ui/InvoiceOverviewTab';
 import { PaymentsAppliedTab } from '@/features/invoices/ui/PaymentsAppliedTab';
 import type { Invoice } from '@/features/invoices/model/invoice.types';
@@ -15,7 +23,7 @@ interface Props {
   onRecordPayment?: (invoiceId: string) => void;
 }
 
-type Tab = 'overview' | 'lines' | 'payments' | 'activity' | 'notes';
+type Tab = 'overview' | 'lines' | 'payments' | 'ledger' | 'activity' | 'notes';
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
@@ -67,6 +75,11 @@ export const InvoiceDetailPanel = ({
       icon: <CreditCard size={12} />,
     },
     {
+      id: 'ledger',
+      label: t('invoices.detail.tabs.ledger', { defaultValue: 'Ledger & dunning' }),
+      icon: <BookOpen size={12} />,
+    },
+    {
       id: 'activity',
       label: t('invoices.detail.tabs.activity'),
       icon: <CheckCircle2 size={12} />,
@@ -110,6 +123,9 @@ export const InvoiceDetailPanel = ({
             total={invoice.total}
             onRecordPayment={onRecordPayment ? () => onRecordPayment(invoice.id) : undefined}
           />
+        )}
+        {tab === 'ledger' && invoice && (
+          <InvoiceLedgerTab invoice={invoice} locale={i18n.language} />
         )}
         {tab === 'activity' && invoice && <ActivityTab invoice={invoice} locale={i18n.language} />}
         {tab === 'notes' && (

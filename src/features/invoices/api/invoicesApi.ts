@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api/apiClient';
+import { cachedGet } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
 import type {
   GenerateInvoiceRequest,
@@ -28,4 +29,7 @@ export const invoicesApi = {
 
   cancel: (id: string) =>
     apiClient.post<ApiResponse<boolean>>(`${BASE}/${id}/cancel`).then((r) => r.data),
+
+  getCreditNotes: (id: string) =>
+    cachedGet<ApiResponse<InvoiceSummary[]>>(apiClient, `${BASE}/${id}/credit-notes`),
 };

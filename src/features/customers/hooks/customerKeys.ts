@@ -10,6 +10,8 @@ export const customerKeys = {
   summary: (id: string | null) => [...customerKeys.summaries(), id] as const,
   overviews: () => [...customerKeys.all, 'overview'] as const,
   overview: (id: string | null) => [...customerKeys.overviews(), id] as const,
+  analytics: (id: string | null, monthsBack: number) =>
+    [...customerKeys.all, 'analytics', id, monthsBack] as const,
   transactions: (id: string | null) => [...customerKeys.all, 'transactions', id] as const,
   addresses: (customerId: string | null) => [...customerKeys.all, 'addresses', customerId] as const,
   contacts: (customerId: string | null) => [...customerKeys.all, 'contacts', customerId] as const,

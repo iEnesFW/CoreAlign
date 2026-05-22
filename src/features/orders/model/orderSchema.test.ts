@@ -6,6 +6,8 @@ const valid = {
   customerId: '11111111-1111-1111-1111-111111111111',
   orderDate: '2026-05-12',
   status: 'Draft' as const,
+  type: 'Standard' as const,
+  source: 'Manual' as const,
   currency: 'USD',
   notes: '',
   lines: [{ productId: '22222222-2222-2222-2222-222222222222', quantity: 1, unitPrice: 10 }],

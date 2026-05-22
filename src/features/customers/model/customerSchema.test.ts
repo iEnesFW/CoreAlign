@@ -3,6 +3,8 @@ import { customerSchema } from './customerSchema';
 
 const minimal = {
   name: 'Acme',
+  type: 'Business' as const,
+  defaultCurrency: 'TRY',
   email: '',
   phone: '',
   taxNumber: '',

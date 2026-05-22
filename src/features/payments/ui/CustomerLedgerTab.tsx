@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowDownRight, ArrowUpRight, Download, Plus, Receipt } from 'lucide-react';
+import { downloadCsv } from '@/shared/lib/exportCsv';
 import {
   useCustomerAging,
   useCustomerLedger,
@@ -387,49 +388,21 @@ const DateInput = ({
   </label>
 );
 
-const csvEscape = (value: string | number | null | undefined): string => {
-  if (value === null || value === undefined) return '';
-  const s = String(value);
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-};
-
 const buildCsvDownloader = (entries: CustomerLedgerEntry[], customerName: string) => () => {
-  if (entries.length === 0) return;
-  const headers = [
-    'OccurredAt',
-    'PostingDate',
-    'Type',
-    'Source',
-    'Reference',
-    'Description',
-    'Currency',
-    'Amount',
-    'AmountBase',
-    'RunningBalance',
-  ];
-  const rows = entries.map((e) => [
-    e.occurredAtUtc,
-    e.postingDate,
-    e.entryType,
-    e.sourceType,
-    e.sourceDocumentNumber ?? '',
-    e.description ?? '',
-    e.currency,
-    e.entryType === 'Debit' ? e.amount : -e.amount,
-    e.amountInBase,
-    e.runningBalanceAfter,
-  ]);
-  const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(',')).join('\r\n');
-  const blob = new Blob(['﻿', csv], { type: 'text/csv;charset=utf-8' });
-  const safeName = customerName.replace(/[^a-z0-9-_]+/gi, '_').slice(0, 64) || 'customer';
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `ledger_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+  downloadCsv({
+    filename: `ledger_${customerName}`,
+    rows: entries,
+    columns: [
+      { header: 'OccurredAt', value: (e) => e.occurredAtUtc },
+      { header: 'PostingDate', value: (e) => e.postingDate },
+      { header: 'Type', value: (e) => e.entryType },
+      { header: 'Source', value: (e) => e.sourceType },
+      { header: 'Reference', value: (e) => e.sourceDocumentNumber },
+      { header: 'Description', value: (e) => e.description },
+      { header: 'Currency', value: (e) => e.currency },
+      { header: 'Amount', value: (e) => (e.entryType === 'Debit' ? e.amount : -e.amount) },
+      { header: 'AmountBase', value: (e) => e.amountInBase },
+      { header: 'RunningBalance', value: (e) => e.runningBalanceAfter },
+    ],
+  });
 };

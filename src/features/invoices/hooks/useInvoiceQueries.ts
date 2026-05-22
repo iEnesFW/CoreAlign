@@ -26,6 +26,13 @@ export const useInvoicesByOrderQuery = (orderId: string | null) =>
     enabled: orderId !== null,
   });
 
+export const useCreditNotesForInvoice = (invoiceId: string | null) =>
+  useQuery({
+    queryKey: ['invoices', 'credit-notes', invoiceId] as const,
+    queryFn: () => invoicesApi.getCreditNotes(invoiceId as string),
+    enabled: invoiceId !== null,
+  });
+
 interface GenerateArgs {
   orderId: string;
   request?: GenerateInvoiceRequest;
