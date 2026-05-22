@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Security.Claims;
+using CoreAlign.API.HostedServices;
 using CoreAlign.Domain.Entities;
-using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.API.Middleware;
 
@@ -19,8 +19,7 @@ public class ActivityLogMiddleware
 
     public async Task InvokeAsync(
         HttpContext context,
-        IActivityLogRepository activityLogRepository,
-        IUnitOfWork unitOfWork,
+        IActivityLogChannel channel,
         ILogger<ActivityLogMiddleware> logger)
     {
         if (!ShouldLog(context.Request))
@@ -45,27 +44,29 @@ public class ActivityLogMiddleware
             userId = parsedUserId;
         }
 
-        try
+        var log = new ActivityLog
         {
-            var log = new ActivityLog
-            {
-                TenantId = tenantId,
-                UserId = userId,
-                Method = context.Request.Method,
-                Path = context.Request.Path.Value ?? string.Empty,
-                StatusCode = context.Response.StatusCode,
-                DurationMs = (int)stopwatch.ElapsedMilliseconds,
-                IpAddress = context.Connection.RemoteIpAddress?.ToString(),
-                UserAgent = context.Request.Headers.UserAgent.ToString(),
-                TraceId = Activity.Current?.Id ?? context.TraceIdentifier
-            };
+            TenantId = tenantId,
+            UserId = userId,
+            Method = context.Request.Method,
+            Path = context.Request.Path.Value ?? string.Empty,
+            StatusCode = context.Response.StatusCode,
+            DurationMs = (int)stopwatch.ElapsedMilliseconds,
+            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = context.Request.Headers.UserAgent.ToString(),
+            TraceId = Activity.Current?.Id ?? context.TraceIdentifier,
+        };
 
-            await activityLogRepository.AddAsync(log, context.RequestAborted);
-            await unitOfWork.SaveChangesAsync(context.RequestAborted);
-        }
-        catch (Exception ex)
+        // Bounded channel; if full we drop the oldest entry (handled by the
+        // channel's DropOldest policy). The middleware never blocks on DB work.
+        if (!channel.TryEnqueue(log))
         {
-            logger.LogWarning(ex, "Failed to persist activity log for {Method} {Path}", context.Request.Method, context.Request.Path);
+            logger.LogWarning(
+                "ActivityLog channel rejected entry (queue full): tenant={TenantId} {Method} {Path}",
+                tenantId,
+                context.Request.Method,
+                context.Request.Path);
+            Activity.Current?.AddTag("activity_log.enqueue_failed", true);
         }
     }
 

@@ -64,6 +64,13 @@ public class InvoicesController : ControllerBase
         var result = await _mediator.Send(new CancelInvoiceCommand(id), cancellationToken);
         return result.ToOk();
     }
+
+    [HttpGet("{id:guid}/credit-notes")]
+    public async Task<IActionResult> GetCreditNotesAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetCreditNotesForInvoiceQuery(id), cancellationToken);
+        return result.ToOk();
+    }
 }
 
 public record GenerateInvoiceRequest(int DueDays = 30, string? Notes = null);

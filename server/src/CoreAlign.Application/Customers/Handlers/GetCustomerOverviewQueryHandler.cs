@@ -4,82 +4,81 @@ using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CoreAlign.Application.Customers.Handlers;
 
 public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOverviewQuery, CustomerOverviewDto>
 {
     private readonly ICustomerRepository _customers;
-    private readonly ICustomerAddressRepository _addresses;
-    private readonly ICustomerContactRepository _contacts;
-    private readonly ICustomerGroupRepository _groups;
-    private readonly IUserRepository _users;
-    private readonly IPriceListRepository _priceLists;
-    private readonly IPaymentTermRepository _paymentTerms;
-    private readonly IOrderRepository _orders;
-    private readonly IInvoiceRepository _invoices;
-    private readonly IPaymentRepository _payments;
-    private readonly ICustomerLedgerRepository _ledger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public GetCustomerOverviewQueryHandler(
         ICustomerRepository customers,
-        ICustomerAddressRepository addresses,
-        ICustomerContactRepository contacts,
-        ICustomerGroupRepository groups,
-        IUserRepository users,
-        IPriceListRepository priceLists,
-        IPaymentTermRepository paymentTerms,
-        IOrderRepository orders,
-        IInvoiceRepository invoices,
-        IPaymentRepository payments,
-        ICustomerLedgerRepository ledger)
+        IServiceScopeFactory scopeFactory)
     {
         _customers = customers;
-        _addresses = addresses;
-        _contacts = contacts;
-        _groups = groups;
-        _users = users;
-        _priceLists = priceLists;
-        _paymentTerms = paymentTerms;
-        _orders = orders;
-        _invoices = invoices;
-        _payments = payments;
-        _ledger = ledger;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<CustomerOverviewDto> Handle(GetCustomerOverviewQuery request, CancellationToken ct)
     {
         var customer = await _customers.GetByIdAsync(request.Id, ct)
             ?? throw new CustomerNotFoundException();
+        var customerId = customer.Id;
 
+        // Fan-out: 11 independent reads collapse to one wall-clock RTT. Each
+        // task opens its own DI scope so DbContext thread-safety is preserved.
         var groupTask = customer.CustomerGroupId.HasValue
-            ? _groups.GetByIdAsync(customer.CustomerGroupId.Value, ct)
+            ? RunScopedAsync<ICustomerGroupRepository, Domain.Entities.CustomerGroup?>(
+                (r, t) => r.GetByIdAsync(customer.CustomerGroupId!.Value, t), ct)
             : Task.FromResult<Domain.Entities.CustomerGroup?>(null);
         var repTask = customer.SalesRepUserId.HasValue
-            ? _users.GetByIdAsync(customer.SalesRepUserId.Value, ct)
+            ? RunScopedAsync<IUserRepository, Domain.Entities.User?>(
+                (r, t) => r.GetByIdAsync(customer.SalesRepUserId!.Value, t), ct)
             : Task.FromResult<Domain.Entities.User?>(null);
         var priceListTask = customer.PriceListId.HasValue
-            ? _priceLists.GetByIdAsync(customer.PriceListId.Value, ct)
+            ? RunScopedAsync<IPriceListRepository, Domain.Entities.PriceList?>(
+                (r, t) => r.GetByIdAsync(customer.PriceListId!.Value, t), ct)
             : Task.FromResult<Domain.Entities.PriceList?>(null);
         var termsTask = customer.PaymentTermsId.HasValue
-            ? _paymentTerms.GetByIdAsync(customer.PaymentTermsId.Value, ct)
+            ? RunScopedAsync<IPaymentTermRepository, Domain.Entities.PaymentTerm?>(
+                (r, t) => r.GetByIdAsync(customer.PaymentTermsId!.Value, t), ct)
             : Task.FromResult<Domain.Entities.PaymentTerm?>(null);
+        var addressesTask = RunScopedAsync<ICustomerAddressRepository, IReadOnlyList<Domain.Entities.CustomerAddress>>(
+            (r, t) => r.GetByCustomerAsync(customerId, t), ct);
+        var contactsTask = RunScopedAsync<ICustomerContactRepository, IReadOnlyList<Domain.Entities.CustomerContact>>(
+            (r, t) => r.GetByCustomerAsync(customerId, t), ct);
+        var invoiceTotalsTask = RunScopedAsync<ICustomerRepository, (int, decimal, decimal, decimal, string)>(
+            (r, t) => r.GetInvoiceTotalsAsync(customerId, t), ct);
+        var balanceTask = RunScopedAsync<ICustomerLedgerRepository, decimal>(
+            (r, t) => r.GetCurrentBalanceAsync(customerId, t), ct);
+        var ordersTask = RunScopedAsync<IOrderRepository, IReadOnlyList<OrderSearchRow>>(
+            async (r, t) => (await r.SearchAsync(null, customerId, 1, 5, t)).Items, ct);
+        var invoicesTask = RunScopedAsync<IInvoiceRepository, IReadOnlyList<InvoiceSearchRow>>(
+            async (r, t) => (await r.SearchAsync(null, customerId, 1, 5, t)).Items, ct);
+        var paymentsTask = RunScopedAsync<IPaymentRepository, IReadOnlyList<Domain.Entities.Payment>>(
+            (r, t) => r.GetByCustomerAsync(customerId, 5, t), ct);
 
-        var addressesTask = _addresses.GetByCustomerAsync(customer.Id, ct);
-        var contactsTask = _contacts.GetByCustomerAsync(customer.Id, ct);
+        await Task.WhenAll(
+            groupTask, repTask, priceListTask, termsTask,
+            addressesTask, contactsTask, invoiceTotalsTask, balanceTask,
+            ordersTask, invoicesTask, paymentsTask);
 
-        await Task.WhenAll(groupTask, repTask, priceListTask, termsTask, addressesTask, contactsTask);
+        var group = groupTask.Result;
+        var rep = repTask.Result;
+        var priceList = priceListTask.Result;
+        var terms = termsTask.Result;
+        var addresses = addressesTask.Result;
+        var contacts = contactsTask.Result;
 
-        var addresses = await addressesTask;
         var primaryBilling = addresses.FirstOrDefault(a => a.IsPrimary) ?? addresses.FirstOrDefault();
         var primaryShipping = addresses.FirstOrDefault(a => a.IsPrimary && !ReferenceEquals(a, primaryBilling)) ?? primaryBilling;
-
-        var contacts = await contactsTask;
         var primaryContact = contacts.FirstOrDefault(c => c.IsPrimary) ?? contacts.FirstOrDefault();
 
-        var (_, _, _, outstanding, currency) = await _customers.GetInvoiceTotalsAsync(customer.Id, ct);
+        var (_, _, _, outstanding, currency) = invoiceTotalsTask.Result;
 
-        var currentBalance = await _ledger.GetCurrentBalanceAsync(customer.Id, ct);
+        var currentBalance = balanceTask.Result;
         if (currentBalance == 0m && customer.CurrentBalance != 0m)
         {
             currentBalance = customer.CurrentBalance;
@@ -89,16 +88,16 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
         var creditAvailable = creditLimit > 0 ? Math.Max(0m, creditLimit - currentBalance) : 0m;
         var creditUsedPercent = creditLimit > 0 ? Math.Round((currentBalance / creditLimit) * 100m, 2) : 0m;
 
-        var orders = await _orders.SearchAsync(null, customer.Id, 1, 5, ct);
-        var invoices = await _invoices.SearchAsync(null, customer.Id, 1, 5, ct);
-        var payments = await _payments.GetByCustomerAsync(customer.Id, ct);
+        var orders = ordersTask.Result;
+        var invoices = invoicesTask.Result;
+        var payments = paymentsTask.Result;
 
-        var lastOrderAt = orders.Items.OrderByDescending(o => o.OrderDate).FirstOrDefault()?.OrderDate;
-        var lastInvoiceAt = invoices.Items.OrderByDescending(i => i.IssueDate).FirstOrDefault()?.IssueDate;
+        var lastOrderAt = orders.OrderByDescending(o => o.OrderDate).FirstOrDefault()?.OrderDate;
+        var lastInvoiceAt = invoices.OrderByDescending(i => i.IssueDate).FirstOrDefault()?.IssueDate;
         var lastPaymentAt = payments.OrderByDescending(p => p.PaymentDate).FirstOrDefault()?.PaymentDate;
 
-        var activity = new List<CustomerActivityItemDto>();
-        foreach (var o in orders.Items.Take(5))
+        var activity = new List<CustomerActivityItemDto>(15);
+        foreach (var o in orders.Take(5))
         {
             activity.Add(new CustomerActivityItemDto
             {
@@ -111,7 +110,7 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
                 Currency = o.Currency,
             });
         }
-        foreach (var i in invoices.Items.Take(5))
+        foreach (var i in invoices.Take(5))
         {
             activity.Add(new CustomerActivityItemDto
             {
@@ -141,11 +140,11 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
         return new CustomerOverviewDto
         {
             CustomerId = customer.Id,
-            GroupName = (await groupTask)?.Name,
-            SalesRepName = FormatUserName(await repTask),
-            PriceListName = (await priceListTask)?.Name,
-            PaymentTermsName = (await termsTask)?.Name,
-            PaymentTermsNetDays = (await termsTask)?.NetDays,
+            GroupName = group?.Name,
+            SalesRepName = FormatUserName(rep),
+            PriceListName = priceList?.Name,
+            PaymentTermsName = terms?.Name,
+            PaymentTermsNetDays = terms?.NetDays,
             PrimaryBillingAddress = primaryBilling is null ? null : MapAddress(primaryBilling),
             PrimaryShippingAddress = primaryShipping is null ? null : MapAddress(primaryShipping),
             PrimaryContact = primaryContact is null ? null : MapContact(primaryContact),
@@ -201,4 +200,14 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
         CreatedAtUtc = c.CreatedAtUtc,
         UpdatedAtUtc = c.UpdatedAtUtc,
     };
+
+    private async Task<TResult> RunScopedAsync<TService, TResult>(
+        Func<TService, CancellationToken, Task<TResult>> body,
+        CancellationToken cancellationToken)
+        where TService : notnull
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var service = scope.ServiceProvider.GetRequiredService<TService>();
+        return await body(service, cancellationToken);
+    }
 }

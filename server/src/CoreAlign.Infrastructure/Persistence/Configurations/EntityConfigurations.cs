@@ -11,10 +11,71 @@ public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Name).HasMaxLength(150).IsRequired();
         builder.Property(t => t.Slug).HasMaxLength(80).IsRequired();
+        builder.Property(t => t.LegalName).HasMaxLength(200);
+        builder.Property(t => t.TradeName).HasMaxLength(200);
+        builder.Property(t => t.TaxNumber).HasMaxLength(50);
+        builder.Property(t => t.TaxOffice).HasMaxLength(100);
+        builder.Property(t => t.NationalId).HasMaxLength(32);
+        builder.Property(t => t.MersisNumber).HasMaxLength(32);
+        builder.Property(t => t.TradeRegistryNumber).HasMaxLength(64);
+        builder.Property(t => t.Sector).HasMaxLength(100);
+        builder.Property(t => t.LogoUrl).HasMaxLength(500);
+        builder.Property(t => t.AddressLine1).HasMaxLength(200);
+        builder.Property(t => t.AddressLine2).HasMaxLength(200);
+        builder.Property(t => t.City).HasMaxLength(100);
+        builder.Property(t => t.StateProvince).HasMaxLength(100);
+        builder.Property(t => t.PostalCode).HasMaxLength(20);
+        builder.Property(t => t.Country).HasMaxLength(100);
+        builder.Property(t => t.Phone).HasMaxLength(30);
+        builder.Property(t => t.Fax).HasMaxLength(30);
+        builder.Property(t => t.Email).HasMaxLength(256);
+        builder.Property(t => t.Website).HasMaxLength(500);
+        builder.Property(t => t.DefaultCurrency).HasMaxLength(3).IsRequired();
+        builder.Property(t => t.ReportingCurrency).HasMaxLength(3);
+        builder.Property(t => t.LocaleCode).HasMaxLength(10).IsRequired();
+        builder.Property(t => t.TimeZoneId).HasMaxLength(64).IsRequired();
+        builder.Property(t => t.PrimaryColor).HasMaxLength(16);
+        builder.Property(t => t.SecondaryColor).HasMaxLength(16);
+        builder.Property(t => t.FoundedOn).HasColumnType("timestamp with time zone");
         builder.Property(t => t.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(t => t.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(t => t.Slug).IsUnique();
+    }
+}
+
+public class TenantSettingConfiguration : IEntityTypeConfiguration<TenantSetting>
+{
+    public void Configure(EntityTypeBuilder<TenantSetting> builder)
+    {
+        builder.HasKey(s => s.Id);
+        builder.Property(s => s.Category).HasMaxLength(64).IsRequired();
+        builder.Property(s => s.Key).HasMaxLength(128).IsRequired();
+        builder.Property(s => s.DataType).HasMaxLength(16).IsRequired();
+        builder.Property(s => s.Description).HasMaxLength(500);
+        builder.Property(s => s.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(s => s.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasIndex(s => new { s.TenantId, s.Category });
+        builder.HasIndex(s => new { s.TenantId, s.Category, s.Key }).IsUnique();
+    }
+}
+
+public class EmailTemplateConfiguration : IEntityTypeConfiguration<EmailTemplate>
+{
+    public void Configure(EntityTypeBuilder<EmailTemplate> builder)
+    {
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.Code).HasMaxLength(64).IsRequired();
+        builder.Property(t => t.Name).HasMaxLength(200).IsRequired();
+        builder.Property(t => t.Subject).HasMaxLength(500).IsRequired();
+        builder.Property(t => t.Body).IsRequired();
+        builder.Property(t => t.Locale).HasMaxLength(10).IsRequired();
+        builder.Property(t => t.Description).HasMaxLength(500);
+        builder.Property(t => t.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(t => t.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasIndex(t => new { t.TenantId, t.Code, t.Locale }).IsUnique();
     }
 }
 

@@ -9,7 +9,8 @@ public interface IStockItemRepository
     Task<StockItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StockItem>> GetByProductAsync(Guid productId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StockItem>> GetByWarehouseAsync(Guid warehouseId, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<StockItem>> SearchAsync(
+    /// <summary>Slim list projection — see <see cref="StockItemSearchRow"/>.</summary>
+    Task<IReadOnlyList<StockItemSearchRow>> SearchAsync(
         Guid? productId,
         Guid? warehouseId,
         bool onlyBelowReorder,
@@ -24,6 +25,26 @@ public interface IStockItemRepository
     void Update(StockItem item);
     void Remove(StockItem item);
 }
+
+public record StockItemSearchRow(
+    Guid Id,
+    Guid ProductId,
+    string ProductSku,
+    string ProductName,
+    decimal? ProductReorderPoint,
+    decimal? ProductMinStock,
+    string ProductCurrency,
+    Guid WarehouseId,
+    string WarehouseCode,
+    string WarehouseName,
+    Guid? LotId,
+    string? LotNumber,
+    DateTime? LotExpiryDate,
+    string? BinLocation,
+    decimal OnHand,
+    decimal Reserved,
+    decimal AvgCost,
+    DateTime? LastMovementAtUtc);
 
 public interface IStockMovementRepository
 {

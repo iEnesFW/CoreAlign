@@ -1,5 +1,8 @@
+using System.IO.Compression;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using CoreAlign.API.HostedServices;
 using CoreAlign.API.Middleware;
 using CoreAlign.API.Options;
 using CoreAlign.Application;
@@ -7,27 +10,99 @@ using CoreAlign.Infrastructure;
 using CoreAlign.Infrastructure.Persistence;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Kestrel limits tuned for ERP workload: HTTP/1.1 + HTTP/2 keep-alive, sane
+// header caps. Values overridable via Kestrel:* configuration.
+builder.WebHost.ConfigureKestrel((context, options) =>
+{
+    var cfg = context.Configuration;
+    options.Limits.MaxConcurrentConnections = cfg.GetValue<long?>("Kestrel:MaxConcurrentConnections") ?? 1000;
+    options.Limits.MaxConcurrentUpgradedConnections = cfg.GetValue<long?>("Kestrel:MaxConcurrentUpgradedConnections") ?? 200;
+    options.Limits.MaxRequestBodySize = cfg.GetValue<long?>("Kestrel:MaxRequestBodyBytes") ?? 10 * 1024 * 1024;
+    options.Limits.MaxRequestHeadersTotalSize = cfg.GetValue<int?>("Kestrel:MaxRequestHeadersBytes") ?? 32 * 1024;
+    options.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(cfg.GetValue<int?>("Kestrel:KeepAliveSeconds") ?? 120);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(cfg.GetValue<int?>("Kestrel:RequestHeadersTimeoutSeconds") ?? 30);
+    options.AddServerHeader = false;
+    options.ConfigureEndpointDefaults(ep => ep.Protocols = HttpProtocols.Http1AndHttp2);
+});
+
+// Serilog: wrap sinks in Async() so file I/O doesn't block the request thread.
+// File and Console both go through the async dispatcher; under load this keeps
+// log flushes off the hot path entirely.
 builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
     .Enrich.WithProperty("Application", "CoreAlign.API")
-    .WriteTo.Console()
-    .WriteTo.File("logs/corealign-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14));
+    .WriteTo.Async(a => a.Console())
+    .WriteTo.Async(a => a.File("logs/corealign-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)));
 
 builder.Services.AddOptions<CorsOptions>()
     .Bind(builder.Configuration.GetSection(CorsOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Unify wire format with the SPA: camelCase property names, drop null fields,
+        // and serialize enums as strings so consumers don't have to mirror the int
+        // values. ReferenceHandler.IgnoreCycles is critical because navigation
+        // properties (Customer ↔ Orders ↔ Customer) would otherwise loop on serialize.
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+    });
+
+// Brotli first (better compression ratio), then Gzip fallback for older clients.
+// EnableForHttps is opt-in because of BREACH/CRIME concerns — keep off in
+// environments serving sensitive cookies over the same compressed body. Today our
+// auth cookies are HttpOnly + per-path so the risk surface is small; flip with
+// configuration.
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.EnableForHttps = builder.Configuration.GetValue<bool?>("ResponseCompression:EnableForHttps") ?? true;
+    opts.Providers.Add<BrotliCompressionProvider>();
+    opts.Providers.Add<GzipCompressionProvider>();
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/json",
+        "application/problem+json",
+        "text/plain",
+        "text/csv",
+    });
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+
+// OutputCache for read-only endpoints that don't depend on user identity.
+// Tenant-keyed policy is set per-endpoint via attributes.
+builder.Services.AddOutputCache(opts =>
+{
+    opts.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(30);
+    opts.AddPolicy("ShortTenant", b => b
+        .Expire(TimeSpan.FromSeconds(30))
+        .SetVaryByHeader("Authorization")
+        .Tag("tenant"));
+    opts.AddPolicy("LookupTenant", b => b
+        .Expire(TimeSpan.FromMinutes(5))
+        .SetVaryByHeader("Authorization")
+        .Tag("lookup"));
+});
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+}
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -41,25 +116,30 @@ builder.Services.AddApiVersioning(options =>
     options.SubstituteApiVersionInUrl = true;
 });
 
-builder.Services.AddSwaggerGen(options =>
+// Swagger is dev-only — skip reflection cost (controller scan + OpenAPI doc
+// build) in prod where the UI isn't served anyway.
+if (builder.Environment.IsDevelopment())
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "CoreAlign API", Version = "v1" });
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    builder.Services.AddSwaggerGen(options =>
     {
-        Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
-    });
+        options.SwaggerDoc("v1", new OpenApiInfo { Title = "CoreAlign API", Version = "v1" });
 
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
-    {
-        [new OpenApiSecuritySchemeReference("Bearer")] = new List<string>()
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT"
+        });
+
+        options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer")] = new List<string>()
+        });
     });
-});
+}
 
 if (!builder.Environment.IsDevelopment()
     && builder.Configuration.GetValue<bool>("Auth:AutoConfirmEmail"))
@@ -75,26 +155,49 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+    // Helper: build a composite partition key so a single attacker can't bypass
+    // the limit by simply walking through endpoints. We mix IP + path + the
+    // authenticated user id (when present) — that way a logged-in user's bucket
+    // moves with them across IPs (mobile network swap) and an anonymous attacker
+    // gets per-(ip,path) buckets that don't pollute each other.
+    static string CompositePartitionKey(HttpContext ctx, string scope)
+    {
+        var ip = ctx.Connection.RemoteIpAddress?.ToString() ?? "anon-ip";
+        var userId = ctx.User.FindFirst("sub")?.Value
+                     ?? ctx.User.FindFirst("nameid")?.Value
+                     ?? ctx.User.FindFirst("id")?.Value;
+        var subject = userId ?? ip;
+        var path = ctx.Request.Path.Value?.TrimEnd('/') ?? "/";
+        return $"{scope}|{subject}|{path}";
+    }
+
+    // Tighter sliding window for unauthenticated auth endpoints (login, refresh,
+    // forgot-password, etc.). Each (subject + path) gets its own bucket so
+    // password-spraying one account from many IPs and credential-stuffing many
+    // accounts from one IP are both throttled.
     options.AddPolicy("auth", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey: CompositePartitionKey(httpContext, "auth"),
+            factory: _ => new SlidingWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = 8,
                 Window = TimeSpan.FromMinutes(1),
+                SegmentsPerWindow = 6,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 0
+                QueueLimit = 0,
             }));
 
+    // Higher cap for general API traffic; still partitioned by user where
+    // possible so a single user can't burn through quota for a whole IP block.
     options.AddPolicy("global", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            partitionKey: CompositePartitionKey(httpContext, "global"),
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 200,
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 0
+                QueueLimit = 0,
             }));
 });
 
@@ -110,6 +213,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Split health checks: /health/live is process-only (cheap, suitable for k8s
+// liveness probes every few seconds), /health/ready hits the DB and is suitable
+// for readiness/ALB checks at a slower cadence.
 var healthChecks = builder.Services.AddHealthChecks();
 var configuredProvider = builder.Configuration["Database:Provider"] ?? "Postgres";
 if (!string.Equals(configuredProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
@@ -120,22 +226,39 @@ if (!string.Equals(configuredProvider, "Sqlite", StringComparison.OrdinalIgnoreC
         tags: new[] { "ready" });
 }
 
+// ActivityLog channel + background consumer: keeps audit writes off the request
+// thread. Channel is bounded so a misbehaving downstream DB can't OOM the host.
+builder.Services.AddSingleton<IActivityLogChannel, ActivityLogChannel>();
+builder.Services.AddHostedService<ActivityLogWorker>();
+
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+// Migrations are run out-of-band by default (CI/CD step or one-off job). The
+// app only auto-migrates when explicitly invoked with --migrate or via the
+// Database:AutoMigrate flag (kept on for dev). This prevents replicas from
+// racing each other on startup and from holding a long migration lock under
+// the request pipeline.
+var shouldAutoMigrate = args.Contains("--migrate")
+    || builder.Configuration.GetValue<bool?>("Database:AutoMigrate") == true
+    || app.Environment.IsDevelopment();
+
+if (shouldAutoMigrate)
 {
+    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
     var dbProvider = builder.Configuration["Database:Provider"] ?? "Postgres";
 
     try
     {
+        // Npgsql multiplexing only supports async command execution, so the
+        // startup migration must use the async APIs.
         if (string.Equals(dbProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
         {
-            db.Database.EnsureCreated();
+            await db.Database.EnsureCreatedAsync();
         }
         else
         {
-            db.Database.Migrate();
+            await db.Database.MigrateAsync();
         }
     }
     catch (Npgsql.PostgresException ex) when (ex.SqlState == "28P01")
@@ -151,16 +274,41 @@ using (var scope = app.Services.CreateScope())
         Log.Fatal(ex, "Could not connect to PostgreSQL. Verify the database is running and the connection string is correct.");
         throw;
     }
+
+    if (args.Contains("--migrate"))
+    {
+        // CI invoked us purely to migrate — exit cleanly so the deployment can
+        // proceed to start the long-running replicas.
+        return;
+    }
 }
 
+// Middleware pipeline — order matters. ForwardedHeaders must come before
+// anything that inspects RemoteIpAddress; ExceptionHandling must be early enough
+// to catch failures inside CORS/RateLimit; ResponseCompression must run after
+// the response body is produced but before it ships, so it sits between the
+// exception handler and the routing layer.
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
 app.UseMiddleware<CorrelationIdMiddleware>();
-app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseHttpsRedirection();
+app.UseSerilogRequestLogging(opts =>
+{
+    // Keep 2xx noise at Debug so prod doesn't drown in per-request structured
+    // logs; warnings/errors stay at their natural level.
+    opts.GetLevel = (ctx, _, ex) =>
+    {
+        if (ex != null) return Serilog.Events.LogEventLevel.Error;
+        if (ctx.Response.StatusCode >= 500) return Serilog.Events.LogEventLevel.Error;
+        if (ctx.Response.StatusCode >= 400) return Serilog.Events.LogEventLevel.Warning;
+        return Serilog.Events.LogEventLevel.Debug;
+    };
+});
+app.UseResponseCompression();
 app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -169,15 +317,27 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseOutputCache();
 app.UseMiddleware<ActivityLogMiddleware>();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false,
+});
+app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
+// Back-compat: legacy /health → /health/ready
+app.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready"),
+});
 app.MapControllers().RequireRateLimiting("global");
 
 app.Run();

@@ -105,6 +105,10 @@ public class MasterDataController : ControllerBase
     public async Task<IActionResult> DeleteUom(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteUnitOfMeasureCommand(id), ct)).ToOk();
 
+    [HttpPost("units-of-measure/seed-standard")]
+    public async Task<IActionResult> SeedStandardUoms(CancellationToken ct)
+        => (await _mediator.Send(new SeedStandardUnitsOfMeasureCommand(), ct)).ToOk();
+
     // ---------- Tax Rates ----------
     [HttpGet("tax-rates")]
     public async Task<IActionResult> ListTaxRates([FromQuery] bool? isActive, [FromQuery] bool? isWithholding, CancellationToken ct)

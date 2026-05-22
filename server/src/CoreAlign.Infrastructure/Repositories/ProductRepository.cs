@@ -50,12 +50,23 @@ public class ProductRepository : IProductRepository
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{search.Trim().ToLower()}%";
-            query = query.Where(p =>
-                EF.Functions.Like(p.Name.ToLower(), pattern) ||
-                EF.Functions.Like(p.Sku.ToLower(), pattern) ||
-                (p.Barcode != null && EF.Functions.Like(p.Barcode.ToLower(), pattern)) ||
-                (p.Description != null && EF.Functions.Like(p.Description.ToLower(), pattern)));
+            var lower = $"%{search.Trim().ToLower()}%";
+            if (_context.Database.IsNpgsql())
+            {
+                query = query.Where(p =>
+                    EF.Functions.ILike(p.Name, lower) ||
+                    EF.Functions.ILike(p.Sku, lower) ||
+                    (p.Barcode != null && EF.Functions.ILike(p.Barcode, lower)) ||
+                    (p.Description != null && EF.Functions.ILike(p.Description, lower)));
+            }
+            else
+            {
+                query = query.Where(p =>
+                    EF.Functions.Like(p.Name.ToLower(), lower) ||
+                    EF.Functions.Like(p.Sku.ToLower(), lower) ||
+                    (p.Barcode != null && EF.Functions.Like(p.Barcode.ToLower(), lower)) ||
+                    (p.Description != null && EF.Functions.Like(p.Description.ToLower(), lower)));
+            }
         }
 
         if (isActive.HasValue)
@@ -69,6 +80,7 @@ public class ProductRepository : IProductRepository
 
         var items = await query
             .OrderByDescending(p => p.CreatedAtUtc)
+            .ThenBy(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

@@ -70,3 +70,39 @@ public class DeleteUnitOfMeasureHandler : IRequestHandler<DeleteUnitOfMeasureCom
         return true;
     }
 }
+
+public class SeedStandardUnitsOfMeasureHandler : IRequestHandler<SeedStandardUnitsOfMeasureCommand, int>
+{
+    private readonly IUnitOfMeasureRepository _repo;
+    private readonly IUnitOfWork _uow;
+    public SeedStandardUnitsOfMeasureHandler(IUnitOfMeasureRepository repo, IUnitOfWork uow) { _repo = repo; _uow = uow; }
+
+    public async Task<int> Handle(SeedStandardUnitsOfMeasureCommand c, CancellationToken ct)
+    {
+        var existing = await _repo.ListAsync(null, ct);
+        var byCode = existing.ToDictionary(u => u.Code, StringComparer.OrdinalIgnoreCase);
+
+        var created = 0;
+        foreach (var entry in StandardUnitsOfMeasureSeed.Entries)
+        {
+            if (byCode.ContainsKey(entry.Code)) continue;
+
+            Guid? baseUomId = null;
+            if (entry.BaseCode is not null && byCode.TryGetValue(entry.BaseCode, out var baseUom))
+            {
+                baseUomId = baseUom.Id;
+            }
+
+            var unit = new UnitOfMeasure(entry.Code, entry.Name, entry.Symbol, baseUomId, entry.ConversionFactor, entry.DecimalPlaces);
+            await _repo.AddAsync(unit, ct);
+            byCode[entry.Code] = unit;
+            created++;
+        }
+
+        if (created > 0)
+        {
+            await _uow.SaveChangesAsync(ct);
+        }
+        return created;
+    }
+}

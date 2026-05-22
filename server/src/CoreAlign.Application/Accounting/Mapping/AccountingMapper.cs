@@ -40,6 +40,73 @@ public static class AccountingMapper
         IsActive = p.IsActive,
     };
 
+    public static JournalLineDto ToDto(JournalLine l) => new()
+    {
+        Id = l.Id,
+        LineNumber = l.LineNumber,
+        AccountId = l.AccountId,
+        AccountCode = l.AccountCode,
+        AccountName = l.AccountName,
+        Debit = l.Debit,
+        Credit = l.Credit,
+        Currency = l.Currency,
+        Description = l.Description,
+        CostCenter = l.CostCenter,
+        Project = l.Project,
+        ForeignAmount = l.ForeignAmount,
+        ExchangeRate = l.ExchangeRate,
+    };
+
+    public static JournalEntryDto ToDto(JournalEntry j) => new()
+    {
+        Id = j.Id,
+        Number = j.Number,
+        EntryDate = j.EntryDate,
+        PostingDate = j.PostingDate,
+        Type = j.Type,
+        Status = j.Status,
+        Description = j.Description,
+        Reference = j.Reference,
+        TotalDebit = j.TotalDebit,
+        TotalCredit = j.TotalCredit,
+        PostedAtUtc = j.PostedAtUtc,
+        ReversedAtUtc = j.ReversedAtUtc,
+        ReversalOfId = j.ReversalOfId,
+        ReversedById = j.ReversedById,
+        Lines = j.Lines.OrderBy(l => l.LineNumber).Select(ToDto).ToList(),
+    };
+
+    public static JournalEntrySummaryDto ToDto(Domain.Interfaces.JournalEntrySearchRow r) => new()
+    {
+        Id = r.Id,
+        Number = r.Number,
+        EntryDate = r.EntryDate,
+        PostingDate = r.PostingDate,
+        Type = r.Type,
+        Status = r.Status,
+        Description = r.Description,
+        Reference = r.Reference,
+        TotalDebit = r.TotalDebit,
+        TotalCredit = r.TotalCredit,
+        LineCount = r.LineCount,
+    };
+
+    public static GLAccountDto ToDto(GLAccount a, string? parentCode = null) => new()
+    {
+        Id = a.Id,
+        Code = a.Code,
+        Name = a.Name,
+        Description = a.Description,
+        Type = a.Type,
+        NormalSide = a.NormalSide,
+        ParentId = a.ParentId,
+        ParentCode = parentCode,
+        Level = a.Level,
+        IsPostable = a.IsPostable,
+        IsActive = a.IsActive,
+        Currency = a.Currency,
+    };
+
     public static ResolvedPriceDto ToDto(PriceResolutionResult r) => new()
     {
         UnitPrice = r.UnitPrice,

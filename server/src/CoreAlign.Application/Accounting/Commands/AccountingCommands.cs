@@ -41,3 +41,71 @@ public record UpdateCustomerProductPriceCommand(
     bool IsActive) : IRequest<CustomerProductPriceDto>, ITransactionalRequest;
 
 public record DeleteCustomerProductPriceCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
+
+public record CreateGLAccountCommand(
+    string Code,
+    string Name,
+    string Type,
+    bool IsPostable,
+    Guid? ParentId,
+    string Currency = "TRY",
+    string? Description = null) : IRequest<DTOs.GLAccountDto>, ITransactionalRequest;
+
+public record UpdateGLAccountCommand(
+    Guid Id,
+    string Name,
+    string? Description,
+    bool IsPostable,
+    string Currency) : IRequest<DTOs.GLAccountDto>, ITransactionalRequest;
+
+public record SetGLAccountActiveCommand(Guid Id, bool IsActive) : IRequest<DTOs.GLAccountDto>, ITransactionalRequest;
+
+public record DeleteGLAccountCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
+
+/// <summary>
+/// Seeds the standard Turkish Tek Düzen Hesap Planı (TDHP) for the current
+/// tenant. Idempotent — accounts that already exist (by code) are skipped.
+/// </summary>
+public record SeedTurkishChartOfAccountsCommand() : IRequest<int>, ITransactionalRequest;
+
+// ---------- Journal Entries (Yevmiye Fişleri) ----------
+
+public record JournalLineInput(
+    Guid AccountId,
+    decimal Debit,
+    decimal Credit,
+    string Currency = "TRY",
+    string? Description = null,
+    string? CostCenter = null,
+    string? Project = null,
+    decimal? ForeignAmount = null,
+    decimal? ExchangeRate = null);
+
+public record CreateJournalEntryCommand(
+    DateTime EntryDate,
+    DateTime PostingDate,
+    string Type,
+    string? Description,
+    string? Reference,
+    IReadOnlyList<JournalLineInput> Lines,
+    bool PostImmediately = false) : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
+
+public record UpdateJournalEntryHeaderCommand(
+    Guid Id,
+    DateTime EntryDate,
+    DateTime PostingDate,
+    string Type,
+    string? Description,
+    string? Reference) : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
+
+public record ReplaceJournalEntryLinesCommand(
+    Guid Id,
+    IReadOnlyList<JournalLineInput> Lines) : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
+
+public record PostJournalEntryCommand(Guid Id, Guid? PostedByUserId = null)
+    : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
+
+public record ReverseJournalEntryCommand(Guid Id, DateTime? ReversalPostingDate, Guid? ReversedByUserId = null)
+    : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
+
+public record DeleteJournalEntryCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;

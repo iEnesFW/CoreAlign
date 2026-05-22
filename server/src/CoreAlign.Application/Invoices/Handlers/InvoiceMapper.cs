@@ -4,6 +4,7 @@ using CoreAlign.Application.Orders.DTOs;
 using CoreAlign.Domain.Common;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Invoices.Handlers;
 
@@ -96,6 +97,33 @@ public static class InvoiceMapper
             Total = invoice.Total,
             AmountPaid = invoice.AmountPaid,
             AmountDue = invoice.AmountDue,
+            IsOverdue = isOverdue,
+        };
+    }
+
+    public static InvoiceSummaryDto ToSummaryDto(InvoiceSearchRow row)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var isOverdue = row.Status != InvoiceStatus.Paid
+                        && row.Status != InvoiceStatus.Cancelled
+                        && row.Status != InvoiceStatus.Void
+                        && row.DueDate < nowUtc
+                        && row.AmountPaid < row.Total;
+
+        return new InvoiceSummaryDto
+        {
+            Id = row.Id,
+            InvoiceNumber = row.InvoiceNumber,
+            Type = row.Type,
+            OrderId = row.OrderId,
+            CustomerName = row.CustomerName,
+            IssueDate = row.IssueDate,
+            DueDate = row.DueDate,
+            Status = row.Status,
+            Currency = row.Currency,
+            Total = row.Total,
+            AmountPaid = row.AmountPaid,
+            AmountDue = row.Total - row.AmountPaid,
             IsOverdue = isOverdue,
         };
     }

@@ -11,6 +11,8 @@ public class GenerateInvoiceFromOrderCommandHandlerTests
 {
     private readonly IOrderRepository _orderRepository = Substitute.For<IOrderRepository>();
     private readonly IInvoiceRepository _invoiceRepository = Substitute.For<IInvoiceRepository>();
+    private readonly IDocumentSequenceRepository _sequenceRepository = Substitute.For<IDocumentSequenceRepository>();
+    private readonly IAccountingPeriodRepository _periodRepository = Substitute.For<IAccountingPeriodRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly GenerateInvoiceFromOrderCommandHandler _sut;
 
@@ -21,7 +23,18 @@ public class GenerateInvoiceFromOrderCommandHandlerTests
 
     public GenerateInvoiceFromOrderCommandHandlerTests()
     {
-        _sut = new GenerateInvoiceFromOrderCommandHandler(_orderRepository, _invoiceRepository, _unitOfWork);
+        // Default behaviour: sequence generates a stable test number; no period
+        // restrictions in effect. Individual tests can re-stub these as needed.
+        _sequenceRepository
+            .ConsumeAsync(Arg.Any<DocumentSequenceType>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns("INV-TEST-0001");
+
+        _sut = new GenerateInvoiceFromOrderCommandHandler(
+            _orderRepository,
+            _invoiceRepository,
+            _sequenceRepository,
+            _periodRepository,
+            _unitOfWork);
     }
 
     [Theory]

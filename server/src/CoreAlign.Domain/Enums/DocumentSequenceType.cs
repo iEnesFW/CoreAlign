@@ -9,5 +9,6 @@ public enum DocumentSequenceType
     CreditNoteNumber = 4,
     DebitNoteNumber = 5,
     PaymentNumber = 6,
-    ShipmentNumber = 7
+    ShipmentNumber = 7,
+    JournalNumber = 8,
 }

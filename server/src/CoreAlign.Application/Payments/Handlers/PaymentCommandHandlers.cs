@@ -67,17 +67,24 @@ public class CreatePaymentHandler : IRequestHandler<CreatePaymentCommand, Paymen
 
         if (c.AutoConfirm && c.Applications is { Count: > 0 })
         {
+            // Batch-load every targeted invoice in one round-trip — replaces the
+            // previous N×GetByIdAsync that scaled badly when applying many invoices.
+            var invoiceMap = await _invoices.GetByIdsAsync(
+                c.Applications.Select(a => a.InvoiceId),
+                ct);
             foreach (var apply in c.Applications)
             {
-                var invoice = await _invoices.GetByIdAsync(apply.InvoiceId, ct)
-                    ?? throw new InvoiceNotFoundException();
+                if (!invoiceMap.TryGetValue(apply.InvoiceId, out var invoice))
+                {
+                    throw new InvoiceNotFoundException();
+                }
                 if (invoice.CustomerId != customer.Id)
                 {
                     throw new PaymentApplicationException("Invoice does not belong to this customer.");
                 }
                 payment.Apply(apply.InvoiceId, apply.AppliedAmount, invoice.AmountDue);
                 invoice.RecordPayment(apply.AppliedAmount, DateTime.UtcNow);
-                _invoices.Update(invoice);
+                // No need to Update — entity is tracked by GetByIdsAsync.
             }
         }
 
@@ -151,16 +158,24 @@ public class ApplyPaymentHandler : IRequestHandler<ApplyPaymentCommand, PaymentD
             payment.Confirm(null);
         }
 
+        // Batch-load all target invoices once instead of N round-trips.
+        var invoiceMap = await _invoices.GetByIdsAsync(
+            c.Applications.Select(a => a.InvoiceId),
+            ct);
+
         foreach (var apply in c.Applications)
         {
-            var invoice = await _invoices.GetByIdAsync(apply.InvoiceId, ct) ?? throw new InvoiceNotFoundException();
+            if (!invoiceMap.TryGetValue(apply.InvoiceId, out var invoice))
+            {
+                throw new InvoiceNotFoundException();
+            }
             if (invoice.CustomerId != payment.CustomerId)
             {
                 throw new PaymentApplicationException("Invoice does not belong to this payment's customer.");
             }
             payment.Apply(apply.InvoiceId, apply.AppliedAmount, invoice.AmountDue);
             invoice.RecordPayment(apply.AppliedAmount, DateTime.UtcNow);
-            _invoices.Update(invoice);
+            // Tracked by GetByIdsAsync — no explicit Update needed.
         }
 
         _payments.Update(payment);
@@ -219,13 +234,18 @@ public class VoidPaymentHandler : IRequestHandler<VoidPaymentCommand, PaymentDto
     {
         var payment = await _payments.GetWithApplicationsAsync(c.Id, ct) ?? throw new PaymentNotFoundException();
 
-        foreach (var app in payment.Applications.ToList())
+        var apps = payment.Applications.ToList();
+        if (apps.Count > 0)
         {
-            var invoice = await _invoices.GetByIdAsync(app.InvoiceId, ct);
-            if (invoice is not null)
+            // One round-trip for every applied invoice — replaces N×GetByIdAsync.
+            var invoiceMap = await _invoices.GetByIdsAsync(apps.Select(a => a.InvoiceId), ct);
+            foreach (var app in apps)
             {
-                invoice.ReversePayment(app.AppliedAmount, DateTime.UtcNow);
-                _invoices.Update(invoice);
+                if (invoiceMap.TryGetValue(app.InvoiceId, out var invoice))
+                {
+                    invoice.ReversePayment(app.AppliedAmount, DateTime.UtcNow);
+                    // Tracked — no explicit Update needed.
+                }
             }
         }
 

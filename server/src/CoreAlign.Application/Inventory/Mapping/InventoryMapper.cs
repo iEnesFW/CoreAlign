@@ -1,10 +1,34 @@
 using CoreAlign.Application.Inventory.DTOs;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Inventory.Mapping;
 
 public static class InventoryMapper
 {
+    public static StockItemDto ToDto(StockItemSearchRow r) => new()
+    {
+        Id = r.Id,
+        ProductId = r.ProductId,
+        ProductSku = r.ProductSku,
+        ProductName = r.ProductName,
+        WarehouseId = r.WarehouseId,
+        WarehouseCode = r.WarehouseCode,
+        WarehouseName = r.WarehouseName,
+        LotId = r.LotId,
+        LotNumber = r.LotNumber,
+        LotExpiryDate = r.LotExpiryDate,
+        BinLocation = r.BinLocation,
+        OnHand = r.OnHand,
+        Reserved = r.Reserved,
+        AvailableToPromise = r.OnHand - r.Reserved,
+        AvgCost = r.AvgCost,
+        ReorderPoint = r.ProductReorderPoint,
+        MinStock = r.ProductMinStock,
+        Currency = r.ProductCurrency,
+        LastMovementAtUtc = r.LastMovementAtUtc,
+    };
+
     public static StockItemDto ToDto(StockItem item) => new()
     {
         Id = item.Id,

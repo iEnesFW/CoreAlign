@@ -6,6 +6,7 @@ using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace CoreAlign.Application.Auth.Handlers;
 
@@ -19,6 +20,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<LoginCommandHandler> _logger;
 
     public LoginCommandHandler(
         IUserRepository userRepository,
@@ -28,7 +30,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         IUserSessionRepository userSessionRepository,
         IPasswordHasher passwordHasher,
         IJwtTokenService jwtTokenService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<LoginCommandHandler> logger)
     {
         _userRepository = userRepository;
         _tenantRepository = tenantRepository;
@@ -38,6 +41,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
@@ -46,33 +50,35 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
 
         if (user is null)
         {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Failed, null, request.IpAddress, request.UserAgent, "User not found", cancellationToken);
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Failed, null, request, "User not found", cancellationToken);
             throw new InvalidCredentialsException();
         }
 
         if (user.IsLockedOut)
         {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Locked, user.Id, request.IpAddress, request.UserAgent, "Account locked", cancellationToken);
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Locked, user.Id, request, "Account locked", cancellationToken);
             throw new InvalidCredentialsException();
         }
 
         if (!_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
+            // Record the failed attempt against the user *and* the audit log in one
+            // commit so lockout state and audit row stay consistent.
             user.RecordFailedLogin();
             _userRepository.Update(user);
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Failed, user.Id, request.IpAddress, request.UserAgent, "Invalid password", cancellationToken);
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Failed, user.Id, request, "Invalid password", cancellationToken);
             throw new InvalidCredentialsException();
         }
 
         if (!user.IsActive)
         {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Disabled, user.Id, request.IpAddress, request.UserAgent, "Account disabled", cancellationToken);
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Disabled, user.Id, request, "Account disabled", cancellationToken);
             throw new AccountDisabledException();
         }
 
         if (!user.IsEmailConfirmed)
         {
-            await LogLoginAttemptAsync(request.Email, LoginResultType.Unverified, user.Id, request.IpAddress, request.UserAgent, "Email not verified", cancellationToken);
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Unverified, user.Id, request, "Email not verified", cancellationToken);
             throw new EmailNotVerifiedException();
         }
 
@@ -104,7 +110,19 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
             request.IpAddress);
 
         await _userSessionRepository.AddAsync(session, cancellationToken);
-        await LogLoginAttemptAsync(request.Email, LoginResultType.Success, user.Id, request.IpAddress, request.UserAgent, null, cancellationToken);
+
+        // For successful login, attach the audit log to the same change-tracking
+        // batch as the refresh token + session and commit them atomically. If the
+        // commit fails the audit log is *not* persisted — preventing a "success"
+        // audit row that has no matching session.
+        var successLog = new LoginAuditLog(
+            request.Email,
+            LoginResultType.Success,
+            user.Id,
+            request.IpAddress,
+            request.UserAgent,
+            null);
+        await _loginAuditLogRepository.AddAsync(successLog, cancellationToken);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -117,11 +135,50 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         };
     }
 
-    private async Task LogLoginAttemptAsync(string email, LoginResultType result, Guid? userId, string? ip, string? ua, string? reason, CancellationToken ct)
+    /// <summary>
+    /// Persist a failed-login audit row immediately, even though the handler is
+    /// about to throw. Keeping this in its own commit means the throw doesn't
+    /// roll back the audit trail, which is what we want for security forensics.
+    /// </summary>
+    private async Task CommitFailedAttemptAsync(
+        string email,
+        LoginResultType result,
+        Guid? userId,
+        LoginCommand request,
+        string reason,
+        CancellationToken ct)
     {
-        var log = new LoginAuditLog(email, result, userId, ip, ua, reason);
+        // Structured security event — keep email *hashed-shape* (never the raw
+        // plaintext) so log sinks like Datadog/Loki don't ingest PII for
+        // unauthenticated attempts. UserId is fine when we already resolved the
+        // account (post-lookup branches).
+        _logger.LogWarning(
+            "Login.{Result} reason={Reason} userId={UserId} ipPrefix={IpPrefix}",
+            result,
+            reason,
+            userId,
+            MaskIp(request.IpAddress));
+
+        var log = new LoginAuditLog(email, result, userId, request.IpAddress, request.UserAgent, reason);
         await _loginAuditLogRepository.AddAsync(log, ct);
         await _unitOfWork.SaveChangesAsync(ct);
+    }
+
+    /// <summary>
+    /// Mask the host bits of the IP for log records (privacy-preserving).
+    /// Keeps the /24 (IPv4) or /48 (IPv6) so geographic / abuse pattern remains
+    /// useful without exposing exact subscriber identifiers.
+    /// </summary>
+    private static string MaskIp(string? ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip)) return "-";
+        if (ip.Contains(':'))
+        {
+            var parts = ip.Split(':');
+            return parts.Length >= 3 ? $"{parts[0]}:{parts[1]}:{parts[2]}::/48" : ip;
+        }
+        var v4 = ip.Split('.');
+        return v4.Length == 4 ? $"{v4[0]}.{v4[1]}.{v4[2]}.0/24" : ip;
     }
 
     private static UserProfileDto MapToUserProfile(User user, Tenant tenant, List<string> roles)

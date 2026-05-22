@@ -278,7 +278,7 @@ public class Order : TenantEntity
         UpdatedAtUtc = CancelledAtUtc.Value;
         AddDomainEvent(new OrderStatusChangedEvent(TenantId, Id, OrderNumber, previous, OrderStatus.Cancelled, CancelledAtUtc.Value));
 
-        if (previous != OrderStatus.Draft && previous != OrderStatus.Submitted)
+        if (previous is OrderStatus.Confirmed or OrderStatus.Shipped)
         {
             var snap = Lines.Select(l => new OrderLineSnapshot(l.ProductId, l.Quantity)).ToList();
             AddDomainEvent(new OrderCancelledFromActiveEvent(TenantId, Id, OrderNumber, snap, CancelledAtUtc.Value));
@@ -336,14 +336,14 @@ public class Order : TenantEntity
         {
             OrderStatus.Draft => to is OrderStatus.Submitted or OrderStatus.Cancelled or OrderStatus.Confirmed,
             OrderStatus.Submitted => to is OrderStatus.Approved or OrderStatus.Draft or OrderStatus.Cancelled,
-            OrderStatus.Approved => to is OrderStatus.Allocated or OrderStatus.Cancelled or OrderStatus.Confirmed,
-            OrderStatus.Allocated => to is OrderStatus.Picking or OrderStatus.Cancelled or OrderStatus.Approved or OrderStatus.Confirmed,
+            OrderStatus.Approved => to is OrderStatus.Allocated or OrderStatus.Cancelled,
+            OrderStatus.Allocated => to is OrderStatus.Picking or OrderStatus.Cancelled or OrderStatus.Approved,
             OrderStatus.Picking => to is OrderStatus.Packed or OrderStatus.Cancelled,
             OrderStatus.Packed => to is OrderStatus.Shipped or OrderStatus.PartiallyShipped or OrderStatus.Cancelled,
             OrderStatus.PartiallyShipped => to is OrderStatus.Shipped or OrderStatus.Picking or OrderStatus.Delivered or OrderStatus.Closed,
             OrderStatus.Shipped => to is OrderStatus.Delivered or OrderStatus.Closed or OrderStatus.Returned or OrderStatus.Cancelled,
             OrderStatus.Delivered => to is OrderStatus.Closed or OrderStatus.Returned,
-            OrderStatus.Confirmed => to is OrderStatus.Shipped or OrderStatus.Cancelled or OrderStatus.Allocated,
+            OrderStatus.Confirmed => to is OrderStatus.Shipped or OrderStatus.Cancelled,
             OrderStatus.Closed => false,
             OrderStatus.Cancelled => false,
             OrderStatus.Returned => false,
@@ -359,8 +359,7 @@ public class Order : TenantEntity
     private static OrderStockEffect ResolveStockEffect(OrderStatus from, OrderStatus to)
     {
         if (from == OrderStatus.Draft && to == OrderStatus.Confirmed) return OrderStockEffect.Decrement;
-        if ((from is OrderStatus.Confirmed or OrderStatus.Shipped or OrderStatus.Approved or OrderStatus.Allocated)
-            && to == OrderStatus.Cancelled)
+        if ((from is OrderStatus.Confirmed or OrderStatus.Shipped) && to == OrderStatus.Cancelled)
         {
             return OrderStockEffect.Restore;
         }

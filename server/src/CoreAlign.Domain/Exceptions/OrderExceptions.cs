@@ -31,6 +31,15 @@ public class OrderImmutableException : DomainException
     }
 }
 
+public class NoWarehouseConfiguredException : DomainException
+{
+    public NoWarehouseConfiguredException()
+        : base(
+            "Stok rezervasyonu için aktif bir depo bulunamadı. Lütfen Ayarlar → Tanımlar bölümünden en az bir depo ekleyin.")
+    {
+    }
+}
+
 public class InsufficientStockException : ConflictException
 {
     public InsufficientStockException(string productName, decimal available, decimal requested)

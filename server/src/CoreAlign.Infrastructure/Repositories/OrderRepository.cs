@@ -51,21 +51,30 @@ public class OrderRepository : IOrderRepository
         return query.AnyAsync(cancellationToken);
     }
 
-    public async Task<(IReadOnlyList<Order> Items, int Total)> SearchAsync(
+    public async Task<(IReadOnlyList<OrderSearchRow> Items, int Total)> SearchAsync(
         string? search,
         Guid? customerId,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Orders.AsNoTracking().Include(o => o.Customer).AsQueryable();
+        var query = _context.Orders.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{search.Trim().ToLower()}%";
-            query = query.Where(o =>
-                EF.Functions.Like(o.OrderNumber.ToLower(), pattern) ||
-                EF.Functions.Like(o.Customer.Name.ToLower(), pattern));
+            var lower = $"%{search.Trim().ToLower()}%";
+            if (_context.Database.IsNpgsql())
+            {
+                query = query.Where(o =>
+                    EF.Functions.ILike(o.OrderNumber, lower) ||
+                    EF.Functions.ILike(o.Customer.Name, lower));
+            }
+            else
+            {
+                query = query.Where(o =>
+                    EF.Functions.Like(o.OrderNumber.ToLower(), lower) ||
+                    EF.Functions.Like(o.Customer.Name.ToLower(), lower));
+            }
         }
 
         if (customerId.HasValue)
@@ -75,10 +84,21 @@ public class OrderRepository : IOrderRepository
 
         var total = await query.CountAsync(cancellationToken);
 
+        // Project to slim row — skips OrderLines, snapshots, tax breakdown, etc.
         var items = await query
             .OrderByDescending(o => o.OrderDate)
+            .ThenBy(o => o.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(o => new OrderSearchRow(
+                o.Id,
+                o.OrderNumber,
+                o.CustomerId,
+                o.Customer != null ? o.Customer.Name : o.CustomerSnapshot != null ? o.CustomerSnapshot.LegalName : string.Empty,
+                o.OrderDate,
+                o.Status,
+                o.Currency,
+                o.Total))
             .ToListAsync(cancellationToken);
 
         return (items, total);
@@ -97,5 +117,38 @@ public class OrderRepository : IOrderRepository
     public void Remove(Order order)
     {
         _context.Orders.Remove(order);
+    }
+
+    public async Task<IReadOnlyList<StatusGroup>> GetOrderStatusBreakdownAsync(
+        Guid customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var rows = await _context.Orders
+            .AsNoTracking()
+            .Where(o => o.CustomerId == customerId)
+            .GroupBy(o => o.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count(), Total = g.Sum(o => o.Total) })
+            .ToListAsync(cancellationToken);
+        return rows.Select(r => new StatusGroup(r.Status.ToString(), r.Count, r.Total)).ToList();
+    }
+
+    public async Task<(int OrderCount, decimal OrderTotal, DateTime? FirstOrderAt, DateTime? LastOrderAt)>
+        GetOrderTotalsExtendedAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        var result = await _context.Orders
+            .AsNoTracking()
+            .Where(o => o.CustomerId == customerId)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Count = g.Count(),
+                Total = g.Sum(o => o.Total),
+                First = g.Min(o => (DateTime?)o.OrderDate),
+                Last = g.Max(o => (DateTime?)o.OrderDate),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return result is null
+            ? (0, 0m, null, null)
+            : (result.Count, result.Total, result.First, result.Last);
     }
 }

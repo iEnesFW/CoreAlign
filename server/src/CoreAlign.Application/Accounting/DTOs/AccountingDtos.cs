@@ -18,6 +18,22 @@ public class AccountingPeriodDto
     public string? Notes { get; set; }
 }
 
+public class GLAccountDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public AccountType Type { get; set; }
+    public NormalSide NormalSide { get; set; }
+    public Guid? ParentId { get; set; }
+    public string? ParentCode { get; set; }
+    public int Level { get; set; }
+    public bool IsPostable { get; set; }
+    public bool IsActive { get; set; }
+    public string Currency { get; set; } = "TRY";
+}
+
 public class CustomerProductPriceDto
 {
     public Guid Id { get; set; }

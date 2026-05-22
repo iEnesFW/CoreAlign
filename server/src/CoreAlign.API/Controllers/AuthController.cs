@@ -57,6 +57,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenCommand? command, CancellationToken cancellationToken)
     {
         var refreshToken = Request.Cookies[RefreshTokenCookieName] ?? command?.RefreshToken;

@@ -135,7 +135,9 @@ public class DispatchShipmentHandler : IRequestHandler<DispatchShipmentCommand, 
         foreach (var line in shipment.Lines)
         {
             var orderLine = order.Lines.FirstOrDefault(l => l.Id == line.OrderLineId);
-            orderLine?.RecordShipment(line.Quantity);
+            if (orderLine is null) continue;
+            orderLine.RecordShipment(line.Quantity);
+            await _allocator.ConsumeForOrderLineAsync(order.Id, orderLine.Id, line.Quantity, postedByUserId: null, ct);
         }
 
         var allLinesShipped = order.Lines.All(l => l.QuantityShipped + l.QuantityCancelled >= l.Quantity);

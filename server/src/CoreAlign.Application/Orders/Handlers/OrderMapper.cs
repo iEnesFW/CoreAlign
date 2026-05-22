@@ -1,6 +1,7 @@
 using CoreAlign.Application.Orders.DTOs;
 using CoreAlign.Domain.Common;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Orders.Handlers;
 
@@ -66,6 +67,18 @@ public static class OrderMapper
         Status = order.Status,
         Currency = order.Currency,
         Total = order.Total
+    };
+
+    public static OrderSummaryDto ToSummaryDto(OrderSearchRow row) => new()
+    {
+        Id = row.Id,
+        OrderNumber = row.OrderNumber,
+        CustomerId = row.CustomerId,
+        CustomerName = row.CustomerName,
+        OrderDate = row.OrderDate,
+        Status = row.Status,
+        Currency = row.Currency,
+        Total = row.Total,
     };
 
     public static OrderLineDto ToLineDto(OrderLine line) => new()

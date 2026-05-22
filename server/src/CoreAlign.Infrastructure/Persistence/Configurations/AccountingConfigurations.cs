@@ -26,6 +26,89 @@ public class AccountingPeriodConfiguration : IEntityTypeConfiguration<Accounting
     }
 }
 
+public class GLAccountConfiguration : IEntityTypeConfiguration<GLAccount>
+{
+    public void Configure(EntityTypeBuilder<GLAccount> builder)
+    {
+        builder.HasKey(a => a.Id);
+        builder.Property(a => a.Code).HasMaxLength(32).IsRequired();
+        builder.Property(a => a.Name).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.Description).HasMaxLength(1000);
+        builder.Property(a => a.Type).HasConversion<string>().HasMaxLength(32);
+        builder.Property(a => a.NormalSide).HasConversion<string>().HasMaxLength(8);
+        builder.Property(a => a.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(a => a.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(a => a.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        // Self-referential parent — Restrict on delete so a child can't accidentally
+        // lose its anchor in the hierarchy; the application layer enforces "no
+        // delete with children" explicitly.
+        builder.HasOne(a => a.Parent)
+            .WithMany()
+            .HasForeignKey(a => a.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(a => new { a.TenantId, a.Code }).IsUnique();
+        builder.HasIndex(a => new { a.TenantId, a.ParentId });
+        builder.HasIndex(a => new { a.TenantId, a.Type, a.IsActive });
+    }
+}
+
+public class JournalEntryConfiguration : IEntityTypeConfiguration<JournalEntry>
+{
+    public void Configure(EntityTypeBuilder<JournalEntry> builder)
+    {
+        builder.HasKey(j => j.Id);
+        builder.Property(j => j.Number).HasMaxLength(32).IsRequired();
+        builder.Property(j => j.Description).HasMaxLength(1000);
+        builder.Property(j => j.Reference).HasMaxLength(200);
+        builder.Property(j => j.Type).HasConversion<string>().HasMaxLength(16);
+        builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(16);
+        builder.Property(j => j.TotalDebit).HasColumnType("numeric(18,4)");
+        builder.Property(j => j.TotalCredit).HasColumnType("numeric(18,4)");
+        builder.Property(j => j.EntryDate).HasColumnType("timestamp with time zone");
+        builder.Property(j => j.PostingDate).HasColumnType("timestamp with time zone");
+        builder.Property(j => j.PostedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(j => j.ReversedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(j => j.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(j => j.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasMany(j => j.Lines)
+            .WithOne()
+            .HasForeignKey(l => l.JournalEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(j => new { j.TenantId, j.Number }).IsUnique();
+        builder.HasIndex(j => new { j.TenantId, j.PostingDate });
+        builder.HasIndex(j => new { j.TenantId, j.Status, j.PostingDate });
+        builder.HasIndex(j => new { j.TenantId, j.Type });
+    }
+}
+
+public class JournalLineConfiguration : IEntityTypeConfiguration<JournalLine>
+{
+    public void Configure(EntityTypeBuilder<JournalLine> builder)
+    {
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.AccountCode).HasMaxLength(32).IsRequired();
+        builder.Property(l => l.AccountName).HasMaxLength(200).IsRequired();
+        builder.Property(l => l.Description).HasMaxLength(500);
+        builder.Property(l => l.CostCenter).HasMaxLength(64);
+        builder.Property(l => l.Project).HasMaxLength(64);
+        builder.Property(l => l.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(l => l.Debit).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.Credit).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.ForeignAmount).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.ExchangeRate).HasColumnType("numeric(18,8)");
+        builder.Property(l => l.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        // Account lookup is by ID — Mizan aggregation groups on AccountId.
+        builder.HasIndex(l => new { l.TenantId, l.AccountId });
+        builder.HasIndex(l => new { l.TenantId, l.JournalEntryId, l.LineNumber }).IsUnique();
+    }
+}
+
 public class CustomerProductPriceConfiguration : IEntityTypeConfiguration<CustomerProductPrice>
 {
     public void Configure(EntityTypeBuilder<CustomerProductPrice> builder)

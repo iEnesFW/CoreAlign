@@ -13,8 +13,13 @@ public static class ApplicationServiceRegistration
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
+        // Behaviors execute in registration order — outermost first. Logging wraps
+        // everything so every request gets a structured timing log even if validation
+        // or the handler itself throws. Scoped instead of Transient: one instance per
+        // request is reused across nested mediator sends, eliminating per-handler alloc.
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
 
         return services;
     }

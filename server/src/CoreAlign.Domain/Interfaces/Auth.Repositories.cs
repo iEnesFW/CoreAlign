@@ -19,6 +19,25 @@ public interface ITenantRepository
     Task<Tenant?> GetBySlugAsync(string slug, CancellationToken cancellationToken = default);
     Task<bool> SlugExistsAsync(string slug, CancellationToken cancellationToken = default);
     Task AddAsync(Tenant tenant, CancellationToken cancellationToken = default);
+    void Update(Tenant tenant);
+}
+
+public interface ITenantSettingRepository
+{
+    Task<TenantSetting?> GetAsync(string category, string key, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TenantSetting>> ListAsync(string? category = null, CancellationToken cancellationToken = default);
+    Task UpsertAsync(string category, string key, string? value, string dataType = "string", string? description = null, bool isSensitive = false, CancellationToken cancellationToken = default);
+    Task DeleteAsync(string category, string key, CancellationToken cancellationToken = default);
+}
+
+public interface IEmailTemplateRepository
+{
+    Task<EmailTemplate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<EmailTemplate?> GetByCodeAsync(string code, string locale, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<EmailTemplate>> ListAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(EmailTemplate template, CancellationToken cancellationToken = default);
+    void Update(EmailTemplate template);
+    void Remove(EmailTemplate template);
 }
 
 public interface IRefreshTokenRepository

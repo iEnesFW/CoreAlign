@@ -16,6 +16,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
     private readonly ICustomerRepository _customerRepository;
     private readonly IProductRepository _productRepository;
     private readonly IProductComponentRepository _componentRepository;
+    private readonly IAllocationService _allocationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateOrderCommandHandler(
@@ -23,12 +24,14 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         ICustomerRepository customerRepository,
         IProductRepository productRepository,
         IProductComponentRepository componentRepository,
+        IAllocationService allocationService,
         IUnitOfWork unitOfWork)
     {
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
         _productRepository = productRepository;
         _componentRepository = componentRepository;
+        _allocationService = allocationService;
         _unitOfWork = unitOfWork;
     }
 
@@ -62,6 +65,10 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
 
         if (order.Status != request.Status)
         {
+            if (request.Status == OrderStatus.Cancelled)
+            {
+                await _allocationService.ReleaseByOrderAsync(order.Id, cancellationToken);
+            }
             order.ChangeStatus(request.Status);
         }
 

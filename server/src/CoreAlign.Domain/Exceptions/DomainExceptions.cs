@@ -65,3 +65,15 @@ public class AccountDisabledException : ForbiddenException
 {
     public AccountDisabledException() : base("This account has been disabled.") { }
 }
+
+public class MissingTenantContextException : AuthenticationException
+{
+    public MissingTenantContextException()
+        : base("Tenant context is missing or invalid for the current request.") { }
+}
+
+public class CrossTenantAccessException : ForbiddenException
+{
+    public CrossTenantAccessException()
+        : base("Resource does not belong to the current tenant.") { }
+}

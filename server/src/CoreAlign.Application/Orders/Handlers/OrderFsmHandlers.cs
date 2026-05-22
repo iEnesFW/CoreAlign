@@ -1,5 +1,6 @@
 using CoreAlign.Application.Orders.Commands;
 using CoreAlign.Application.Orders.DTOs;
+using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -67,9 +68,24 @@ public class AllocateOrderHandler : IRequestHandler<AllocateOrderCommand, OrderD
             ? await _warehouses.GetByIdAsync(c.PreferredWarehouseId.Value, ct)
             : await _warehouses.GetDefaultAsync(ct);
 
+        // No warehouse flagged as default → fall back to the first active one, and
+        // if the tenant has none at all, provision a default "Ana Depo" so the
+        // allocation flow works out of the box. Persisted before reserving so the
+        // stock-item foreign key is satisfied within this transaction.
+        if (defaultWarehouse is null && !c.PreferredWarehouseId.HasValue)
+        {
+            defaultWarehouse = (await _warehouses.ListAsync(true, ct)).FirstOrDefault();
+            if (defaultWarehouse is null)
+            {
+                defaultWarehouse = new Warehouse("MAIN", "Ana Depo", WarehouseType.Main, isDefault: true);
+                await _warehouses.AddAsync(defaultWarehouse, ct);
+                await _uow.SaveChangesAsync(ct);
+            }
+        }
+
         if (defaultWarehouse is null)
         {
-            throw new InvalidOrderStatusTransitionException("Approved", "Allocated (no default warehouse)");
+            throw new NoWarehouseConfiguredException();
         }
 
         foreach (var line in order.Lines.Where(l => l.QuantityAllocated < l.Quantity))

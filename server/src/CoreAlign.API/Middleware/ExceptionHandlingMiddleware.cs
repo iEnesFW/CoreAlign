@@ -53,14 +53,23 @@ public class ExceptionHandlingMiddleware
         }
         else if (statusCode >= 400)
         {
-            _logger.LogWarning("Handled exception {ExceptionType}. TraceId: {TraceId}. Message: {Message}",
-                exception.GetType().Name, traceId, exception.Message);
+            // Note: only log the exception *type* and trace id at warning level.
+            // Message text may contain user-supplied or schema details (FluentValidation
+            // interpolates field values into errors) — keep that out of plain warning logs.
+            _logger.LogWarning(
+                "Handled exception {ExceptionType} → {StatusCode}. TraceId: {TraceId}",
+                exception.GetType().Name,
+                statusCode,
+                traceId);
         }
 
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
         var response = ApiResponse<object>.Failure(errors, statusCode, traceId);
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, JsonOptions));
+        // Stream JSON directly to the response body — avoids the intermediate
+        // string allocation + UTF-16→UTF-8 re-encoding that the old
+        // Serialize→WriteAsync path performed.
+        await JsonSerializer.SerializeAsync(context.Response.Body, response, JsonOptions, context.RequestAborted);
     }
 }

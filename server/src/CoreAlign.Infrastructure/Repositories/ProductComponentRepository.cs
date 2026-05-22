@@ -41,25 +41,25 @@ public class ProductComponentRepository : IProductComponentRepository
         if (parentProductId == componentProductId) return true;
 
         var visited = new HashSet<Guid>();
-        var frontier = new Queue<Guid>();
-        frontier.Enqueue(componentProductId);
+        var current = new HashSet<Guid> { componentProductId };
 
-        while (frontier.Count > 0)
+        // Wave-batch traversal: instead of one query per node (depth × breadth),
+        // load every child of the current wave in a single round-trip, then move
+        // on. Total cost is O(treeDepth) queries.
+        while (current.Count > 0)
         {
-            var current = frontier.Dequeue();
-            if (!visited.Add(current)) continue;
-            if (current == parentProductId) return true;
+            if (current.Contains(parentProductId)) return true;
 
+            foreach (var id in current) visited.Add(id);
+
+            var snapshot = current;
             var children = await _context.ProductComponents
                 .AsNoTracking()
-                .Where(c => c.ParentProductId == current)
+                .Where(c => snapshot.Contains(c.ParentProductId))
                 .Select(c => c.ComponentProductId)
                 .ToListAsync(cancellationToken);
 
-            foreach (var child in children)
-            {
-                if (!visited.Contains(child)) frontier.Enqueue(child);
-            }
+            current = children.Where(c => !visited.Contains(c)).ToHashSet();
         }
 
         return false;
@@ -69,28 +69,45 @@ public class ProductComponentRepository : IProductComponentRepository
         IEnumerable<Guid> productIds,
         CancellationToken cancellationToken = default)
     {
-        var roots = productIds.Distinct().ToHashSet();
         var resolved = new Dictionary<Guid, IReadOnlyList<(Guid, decimal)>>();
-        var frontier = new Queue<Guid>(roots);
+        var current = productIds.Distinct().ToHashSet();
 
-        while (frontier.Count > 0)
+        while (current.Count > 0)
         {
-            var current = frontier.Dequeue();
-            if (resolved.ContainsKey(current)) continue;
-
+            // Single round-trip for the entire wave; replaces the old N+1 loop.
+            var snapshot = current;
             var rows = await _context.ProductComponents
                 .AsNoTracking()
-                .Where(c => c.ParentProductId == current)
-                .Select(c => new { c.ComponentProductId, c.Quantity })
+                .Where(c => snapshot.Contains(c.ParentProductId))
+                .Select(c => new { c.ParentProductId, c.ComponentProductId, c.Quantity })
                 .ToListAsync(cancellationToken);
 
-            var entries = rows.Select(r => (r.ComponentProductId, r.Quantity)).ToList();
-            resolved[current] = entries;
+            var grouped = rows
+                .GroupBy(r => r.ParentProductId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => (IReadOnlyList<(Guid, decimal)>)g
+                        .Select(r => (r.ComponentProductId, r.Quantity))
+                        .ToList());
 
-            foreach (var (childId, _) in entries)
+            var next = new HashSet<Guid>();
+            foreach (var parent in current)
             {
-                if (!resolved.ContainsKey(childId)) frontier.Enqueue(childId);
+                if (grouped.TryGetValue(parent, out var entries))
+                {
+                    resolved[parent] = entries;
+                    foreach (var (childId, _) in entries)
+                    {
+                        if (!resolved.ContainsKey(childId)) next.Add(childId);
+                    }
+                }
+                else
+                {
+                    resolved[parent] = Array.Empty<(Guid, decimal)>();
+                }
             }
+
+            current = next;
         }
 
         return resolved;

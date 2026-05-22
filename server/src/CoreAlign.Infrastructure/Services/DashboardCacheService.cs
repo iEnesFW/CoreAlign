@@ -34,6 +34,9 @@ public class DashboardCacheService : IDashboardCacheService
         var entryOptions = new MemoryCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = ttl ?? DefaultTtl,
+            // The shared IMemoryCache sets a SizeLimit, so every entry must
+            // declare a Size (1 unit each, matching LookupCacheService).
+            Size = 1,
         };
         entryOptions.RegisterPostEvictionCallback(OnEviction);
 

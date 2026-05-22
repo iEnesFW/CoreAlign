@@ -1,3 +1,4 @@
+using System.Linq;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
@@ -11,23 +12,58 @@ public class AllocationService : IAllocationService
     private readonly IStockMovementRepository _movements;
     private readonly IStockAllocationRepository _allocations;
     private readonly IWarehouseRepository _warehouses;
+    private readonly IProductRepository _products;
 
     public AllocationService(
         IStockItemRepository stockItems,
         IStockMovementRepository movements,
         IStockAllocationRepository allocations,
-        IWarehouseRepository warehouses)
+        IWarehouseRepository warehouses,
+        IProductRepository products)
     {
         _stockItems = stockItems;
         _movements = movements;
         _allocations = allocations;
         _warehouses = warehouses;
+        _products = products;
     }
 
     public async Task<AllocationResult> ReserveAsync(AllocationRequest request, CancellationToken cancellationToken = default)
     {
         var item = await _stockItems.GetOrCreateAsync(request.ProductId, request.WarehouseId, request.LotId, cancellationToken);
         var now = DateTime.UtcNow;
+
+        // Bridge: the first time a product is stocked in a warehouse, materialize
+        // its recorded on-hand (Product.StockQuantity) as an opening balance so
+        // existing stock becomes allocatable. Guarded to a fresh stock item with
+        // no stock anywhere else, so it can never double-count across warehouses.
+        if (item.OnHand == 0m && item.Reserved == 0m && item.LastMovementAtUtc is null)
+        {
+            var siblings = await _stockItems.GetByProductAsync(request.ProductId, cancellationToken);
+            var hasStockElsewhere = siblings.Any(s => s.Id != item.Id && (s.OnHand != 0m || s.Reserved != 0m));
+            if (!hasStockElsewhere)
+            {
+                var product = await _products.GetByIdAsync(request.ProductId, cancellationToken);
+                if (product is not null && product.StockQuantity > 0m)
+                {
+                    var openingCost = product.AverageCost > 0m ? product.AverageCost : product.StandardCost;
+                    item.SeedOpeningBalance(product.StockQuantity, openingCost, now);
+                    await _movements.AddAsync(new StockMovement(
+                        productId: request.ProductId,
+                        warehouseId: request.WarehouseId,
+                        type: StockMovementType.OpeningBalance,
+                        quantity: product.StockQuantity,
+                        unitCost: openingCost,
+                        onHandAfter: item.OnHand,
+                        avgCostAfter: item.AvgCost,
+                        occurredAtUtc: now,
+                        sourceDocumentType: StockSourceDocumentType.OpeningBalance,
+                        notes: "Açılış bakiyesi (ürün stoğundan otomatik)"
+                    ), cancellationToken);
+                }
+            }
+        }
+
         item.Reserve(request.Quantity, now);
 
         var allocation = new StockAllocation(
@@ -115,6 +151,13 @@ public class AllocationService : IAllocationService
         item.ConsumeReservation(consumeQty, now);
         allocation.Consume(consumeQty, now);
 
+        var product = await _products.GetByIdAsync(allocation.ProductId, cancellationToken);
+        if (product is not null && product.IsStockTracked)
+        {
+            product.AdjustStock(-consumeQty);
+            _products.Update(product);
+        }
+
         var movement = new StockMovement(
             productId: allocation.ProductId,
             warehouseId: allocation.WarehouseId,
@@ -133,6 +176,31 @@ public class AllocationService : IAllocationService
         await _movements.AddAsync(movement, cancellationToken);
         _allocations.Update(allocation);
         return movement;
+    }
+
+    public async Task<decimal> ConsumeForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default)
+    {
+        if (quantity <= 0m) return 0m;
+
+        var allocations = await _allocations.GetByOrderAsync(orderId, cancellationToken);
+        var pending = allocations
+            .Where(a => a.OrderLineId == orderLineId
+                && (a.Status == AllocationStatus.Active || a.Status == AllocationStatus.PartiallyConsumed))
+            .ToList();
+
+        var remaining = quantity;
+        var consumed = 0m;
+        foreach (var allocation in pending)
+        {
+            if (remaining <= 0m) break;
+            var take = Math.Min(remaining, allocation.Remaining);
+            if (take <= 0m) continue;
+            await ConsumeAsync(allocation.Id, take, postedByUserId, cancellationToken);
+            remaining -= take;
+            consumed += take;
+        }
+
+        return consumed;
     }
 
     public async Task<StockMovement> ApplyReceiptAsync(StockReceiptRequest request, CancellationToken cancellationToken = default)

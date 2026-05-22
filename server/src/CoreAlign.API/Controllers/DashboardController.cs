@@ -4,6 +4,7 @@ using CoreAlign.Application.Dashboard.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 
 namespace CoreAlign.API.Controllers;
 
@@ -21,6 +22,7 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [OutputCache(PolicyName = "ShortTenant")]
     public async Task<IActionResult> GetStatsAsync(CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new GetDashboardStatsQuery(), cancellationToken);

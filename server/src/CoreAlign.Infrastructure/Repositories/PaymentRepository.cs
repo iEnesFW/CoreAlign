@@ -23,22 +23,32 @@ public class PaymentRepository : IPaymentRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
-    public async Task<(IReadOnlyList<Payment> Items, int Total)> SearchAsync(
+    public async Task<(IReadOnlyList<PaymentSearchRow> Items, int Total)> SearchAsync(
         string? search,
         Guid? customerId,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Payments.AsNoTracking().Include(p => p.Customer).AsQueryable();
+        var query = _context.Payments.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = $"%{search.Trim().ToLower()}%";
-            query = query.Where(p =>
-                EF.Functions.Like(p.PaymentNumber.ToLower(), pattern) ||
-                EF.Functions.Like(p.CustomerNameSnapshot.ToLower(), pattern) ||
-                (p.ReferenceNumber != null && EF.Functions.Like(p.ReferenceNumber.ToLower(), pattern)));
+            var lower = $"%{search.Trim().ToLower()}%";
+            if (_context.Database.IsNpgsql())
+            {
+                query = query.Where(p =>
+                    EF.Functions.ILike(p.PaymentNumber, lower) ||
+                    EF.Functions.ILike(p.CustomerNameSnapshot, lower) ||
+                    (p.ReferenceNumber != null && EF.Functions.ILike(p.ReferenceNumber, lower)));
+            }
+            else
+            {
+                query = query.Where(p =>
+                    EF.Functions.Like(p.PaymentNumber.ToLower(), lower) ||
+                    EF.Functions.Like(p.CustomerNameSnapshot.ToLower(), lower) ||
+                    (p.ReferenceNumber != null && EF.Functions.Like(p.ReferenceNumber.ToLower(), lower)));
+            }
         }
 
         if (customerId.HasValue) query = query.Where(p => p.CustomerId == customerId.Value);
@@ -46,18 +56,60 @@ public class PaymentRepository : IPaymentRepository
         var total = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(p => p.PaymentDate)
+            .ThenBy(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(p => new PaymentSearchRow(
+                p.Id,
+                p.PaymentNumber,
+                p.Direction,
+                p.Status,
+                p.CustomerId,
+                p.Customer != null ? p.Customer.Name : p.CustomerNameSnapshot,
+                p.PaymentDate,
+                p.Method,
+                p.Amount,
+                p.AppliedAmount,
+                p.Currency))
             .ToListAsync(cancellationToken);
         return (items, total);
     }
 
-    public async Task<IReadOnlyList<Payment>> GetByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default) =>
-        await _context.Payments
+    public async Task<IReadOnlyList<Payment>> GetByCustomerAsync(
+        Guid customerId,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var safeLimit = Math.Clamp(limit, 1, 500);
+        return await _context.Payments
+            .AsNoTracking()
             .Include(p => p.Applications)
             .Where(p => p.CustomerId == customerId)
             .OrderByDescending(p => p.PaymentDate)
+            .Take(safeLimit)
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<PaymentSummaryAggregate> GetCustomerPaymentSummaryAsync(
+        Guid customerId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _context.Payments
+            .AsNoTracking()
+            .Where(p => p.CustomerId == customerId)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Count = g.Count(),
+                Last = g.Max(p => (DateTime?)p.PaymentDate),
+                Total = g.Sum(p => p.Amount),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return result is null
+            ? new PaymentSummaryAggregate(0, null, 0m)
+            : new PaymentSummaryAggregate(result.Count, result.Last, result.Total);
+    }
 
     public async Task<IReadOnlyList<PaymentApplication>> GetApplicationsByInvoiceAsync(Guid invoiceId, CancellationToken cancellationToken = default) =>
         await _context.PaymentApplications
@@ -104,13 +156,21 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
 
     public async Task<decimal> GetCurrentBalanceAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
-        var debit = await _context.CustomerLedgerEntries
-            .Where(e => e.CustomerId == customerId && e.EntryType == Domain.Enums.LedgerEntryType.Debit)
-            .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
-        var credit = await _context.CustomerLedgerEntries
-            .Where(e => e.CustomerId == customerId && e.EntryType == Domain.Enums.LedgerEntryType.Credit)
-            .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
-        return Math.Round(debit - credit, 4);
+        // Single round-trip: conditional sums let Postgres compute debit/credit in
+        // one scan instead of two predicate queries against the same partition.
+        var row = await _context.CustomerLedgerEntries
+            .AsNoTracking()
+            .Where(e => e.CustomerId == customerId)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null) return 0m;
+        return Math.Round(row.Debit - row.Credit, 4);
     }
 
     public async Task<decimal> GetLastRunningBalanceAsync(Guid customerId, CancellationToken cancellationToken = default)

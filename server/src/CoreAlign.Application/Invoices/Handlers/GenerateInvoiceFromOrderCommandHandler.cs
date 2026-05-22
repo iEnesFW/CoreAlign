@@ -23,9 +23,12 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
     private readonly IOrderRepository _orderRepository;
     private readonly IInvoiceRepository _invoiceRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
-    private readonly IAccountingPeriodRepository? _periodRepository;
+    private readonly IAccountingPeriodRepository _periodRepository;
     private readonly IUnitOfWork _unitOfWork;
 
+    // Single canonical constructor — DI always satisfies all dependencies.
+    // Tests pass NSubstitute mocks for every dependency, removing the need for
+    // a "lite" overload that previously hid required collaborators behind null!.
     public GenerateInvoiceFromOrderCommandHandler(
         IOrderRepository orderRepository,
         IInvoiceRepository invoiceRepository,
@@ -38,14 +41,6 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
         _sequenceRepository = sequenceRepository;
         _periodRepository = periodRepository;
         _unitOfWork = unitOfWork;
-    }
-
-    public GenerateInvoiceFromOrderCommandHandler(
-        IOrderRepository orderRepository,
-        IInvoiceRepository invoiceRepository,
-        IUnitOfWork unitOfWork)
-        : this(orderRepository, invoiceRepository, null!, null!, unitOfWork)
-    {
     }
 
     public async Task<InvoiceDto> Handle(GenerateInvoiceFromOrderCommand request, CancellationToken cancellationToken)
@@ -64,15 +59,12 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
         }
 
         var now = DateTime.UtcNow;
-        if (_periodRepository is not null)
-        {
-            var period = await _periodRepository.GetByDateAsync(now.Date, cancellationToken);
-            period?.EnsurePostingAllowed(now);
-        }
+        // Period-lock enforcement: refuse to post into a closed accounting period.
+        var period = await _periodRepository.GetByDateAsync(now.Date, cancellationToken);
+        period?.EnsurePostingAllowed(now);
 
-        var draftNumber = _sequenceRepository is null
-            ? InvoiceMapper.GenerateInvoiceNumber()
-            : await _sequenceRepository.ConsumeAsync(DocumentSequenceType.InvoiceNumber, now, cancellationToken);
+        var draftNumber = await _sequenceRepository.ConsumeAsync(
+            DocumentSequenceType.InvoiceNumber, now, cancellationToken);
 
         var invoice = new Invoice(
             draftNumber,

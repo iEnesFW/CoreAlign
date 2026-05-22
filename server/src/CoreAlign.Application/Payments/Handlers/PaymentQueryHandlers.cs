@@ -46,7 +46,7 @@ public class GetPaymentsByCustomerHandler : IRequestHandler<GetPaymentsByCustome
     public GetPaymentsByCustomerHandler(IPaymentRepository payments) => _payments = payments;
 
     public async Task<IReadOnlyList<PaymentSummaryDto>> Handle(GetPaymentsByCustomerQuery q, CancellationToken ct) =>
-        (await _payments.GetByCustomerAsync(q.CustomerId, ct)).Select(PaymentMapper.ToSummaryDto).ToList();
+        (await _payments.GetByCustomerAsync(q.CustomerId, 50, ct)).Select(PaymentMapper.ToSummaryDto).ToList();
 }
 
 public class GetPaymentsByInvoiceHandler : IRequestHandler<GetPaymentsByInvoiceQuery, IReadOnlyList<PaymentApplicationDto>>

@@ -28,6 +28,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken);
     }
 
@@ -36,6 +37,7 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
     }
 
@@ -91,6 +93,8 @@ public class TenantRepository : ITenantRepository
     {
         await _context.Tenants.AddAsync(tenant, cancellationToken);
     }
+
+    public void Update(Tenant tenant) => _context.Tenants.Update(tenant);
 }
 
 public class RefreshTokenRepository : IRefreshTokenRepository
@@ -108,12 +112,14 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             .Include(t => t.User)
             .ThenInclude(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, cancellationToken);
     }
 
     public async Task<List<RefreshToken>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.RefreshTokens
+            .AsNoTracking()
             .Where(t => t.UserId == userId && t.RevokedAtUtc == null && t.ExpiresAtUtc > DateTime.UtcNow)
             .ToListAsync(cancellationToken);
     }
@@ -130,11 +136,14 @@ public class RefreshTokenRepository : IRefreshTokenRepository
 
     public async Task RevokeAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var activeTokens = await GetActiveByUserIdAsync(userId, cancellationToken);
-        foreach (var token in activeTokens)
-        {
-            token.Revoke();
-        }
+        // Single UPDATE statement — replaces the load-then-loop-then-save pattern
+        // so bulk logout doesn't load every active token into the tracker.
+        var now = DateTime.UtcNow;
+        await _context.RefreshTokens
+            .Where(t => t.UserId == userId && t.RevokedAtUtc == null && t.ExpiresAtUtc > now)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(t => t.RevokedAtUtc, now),
+                cancellationToken);
     }
 }
 
@@ -228,7 +237,7 @@ public class SubscriptionPlanRepository : ISubscriptionPlanRepository
 
     public async Task<List<SubscriptionPlan>> GetAllActiveAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.SubscriptionPlans.Where(p => p.IsActive).ToListAsync(cancellationToken);
+        return await _context.SubscriptionPlans.AsNoTracking().Where(p => p.IsActive).ToListAsync(cancellationToken);
     }
 }
 
@@ -264,17 +273,20 @@ public class UserSessionRepository : IUserSessionRepository
     public async Task<List<UserSession>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.UserSessions
+            .AsNoTracking()
             .Where(s => s.UserId == userId && !s.IsRevoked && s.ExpiresAtUtc > DateTime.UtcNow)
             .ToListAsync(cancellationToken);
     }
 
     public async Task RevokeAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var activeSessions = await GetActiveByUserIdAsync(userId, cancellationToken);
-        foreach (var session in activeSessions)
-        {
-            session.IsRevoked = true;
-        }
+        // Single UPDATE — same rationale as RefreshTokenRepository.RevokeAllByUserIdAsync.
+        var now = DateTime.UtcNow;
+        await _context.UserSessions
+            .Where(s => s.UserId == userId && !s.IsRevoked && s.ExpiresAtUtc > now)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(s => s.IsRevoked, true),
+                cancellationToken);
     }
 }
 

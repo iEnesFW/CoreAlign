@@ -35,21 +35,40 @@ public class StockItemRepository : IStockItemRepository
             .OrderBy(s => s.Product.Name)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<StockItem>> SearchAsync(
+    public async Task<IReadOnlyList<StockItemSearchRow>> SearchAsync(
         Guid? productId, Guid? warehouseId, bool onlyBelowReorder, int page, int pageSize, CancellationToken ct = default)
     {
-        var query = _context.StockItems
-            .Include(s => s.Product)
-            .Include(s => s.Warehouse)
-            .Include(s => s.Lot)
-            .AsNoTracking();
+        var query = _context.StockItems.AsNoTracking().AsQueryable();
         if (productId.HasValue) query = query.Where(s => s.ProductId == productId.Value);
         if (warehouseId.HasValue) query = query.Where(s => s.WarehouseId == warehouseId.Value);
         if (onlyBelowReorder) query = query.Where(s => s.OnHand - s.Reserved <= s.Product.ReorderPoint);
+        // Project to slim row — pulls only the fields the list UI consumes from
+        // each related entity (Product/Warehouse/Lot) instead of materializing
+        // the full graph with its wider columns.
         return await query
             .OrderByDescending(s => s.LastMovementAtUtc)
+            .ThenBy(s => s.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(s => new StockItemSearchRow(
+                s.Id,
+                s.ProductId,
+                s.Product != null ? s.Product.Sku : string.Empty,
+                s.Product != null ? s.Product.Name : string.Empty,
+                s.Product != null ? s.Product.ReorderPoint : null,
+                s.Product != null ? s.Product.MinStock : null,
+                s.Product != null ? s.Product.Currency : "TRY",
+                s.WarehouseId,
+                s.Warehouse != null ? s.Warehouse.Code : string.Empty,
+                s.Warehouse != null ? s.Warehouse.Name : string.Empty,
+                s.LotId,
+                s.Lot != null ? s.Lot.LotNumber : null,
+                s.Lot != null ? s.Lot.ExpiryDate : null,
+                s.BinLocation,
+                s.OnHand,
+                s.Reserved,
+                s.AvgCost,
+                s.LastMovementAtUtc))
             .ToListAsync(ct);
     }
 

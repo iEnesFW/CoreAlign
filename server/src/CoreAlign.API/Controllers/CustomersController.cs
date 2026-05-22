@@ -55,6 +55,16 @@ public class CustomersController : ControllerBase
         return result.ToOk();
     }
 
+    [HttpGet("{id:guid}/analytics")]
+    public async Task<IActionResult> GetCustomerAnalyticsAsync(
+        Guid id,
+        [FromQuery] int monthsBack = 12,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetCustomerAnalyticsQuery(id, monthsBack), cancellationToken);
+        return result.ToOk();
+    }
+
     [HttpGet("{id:guid}/transactions")]
     public async Task<IActionResult> GetCustomerTransactionsAsync(
         Guid id,

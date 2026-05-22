@@ -3,6 +3,7 @@ using CoreAlign.Application.Auth.Handlers;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CoreAlign.Application.Tests.Auth;
 
@@ -30,7 +31,8 @@ public class LoginCommandHandlerTests
             _userSessionRepository,
             _passwordHasher,
             _jwtTokenService,
-            _unitOfWork);
+            _unitOfWork,
+            NullLogger<LoginCommandHandler>.Instance);
     }
 
     [Fact]

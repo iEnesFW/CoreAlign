@@ -72,6 +72,24 @@ public class CoreAlignDbContext : DbContext
 
     public DbSet<AccountingPeriod> AccountingPeriods => Set<AccountingPeriod>();
     public DbSet<CustomerProductPrice> CustomerProductPrices => Set<CustomerProductPrice>();
+    public DbSet<GLAccount> GLAccounts => Set<GLAccount>();
+    public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+    public DbSet<JournalLine> JournalLines => Set<JournalLine>();
+
+    public DbSet<Vendor> Vendors => Set<Vendor>();
+    public DbSet<VendorAddress> VendorAddresses => Set<VendorAddress>();
+    public DbSet<VendorContact> VendorContacts => Set<VendorContact>();
+    public DbSet<VendorBankAccount> VendorBankAccounts => Set<VendorBankAccount>();
+    public DbSet<VendorLedgerEntry> VendorLedgerEntries => Set<VendorLedgerEntry>();
+
+    public DbSet<TenantSetting> TenantSettingsStore => Set<TenantSetting>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
+
+    // Global reference lookups (not tenant-scoped).
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<Country> Countries => Set<Country>();
+    public DbSet<Province> Provinces => Set<Province>();
+    public DbSet<District> Districts => Set<District>();
 
     public Guid CurrentTenantIdOrEmpty => _tenantContext.CurrentTenantId ?? Guid.Empty;
 

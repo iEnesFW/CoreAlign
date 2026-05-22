@@ -1,11 +1,42 @@
 using CoreAlign.Application.Orders.DTOs;
 using CoreAlign.Application.Shipments.DTOs;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Shipments.Mapping;
 
 public static class ShipmentMapper
 {
+    public static ShipmentDto ToDto(ShipmentSearchRow r) => new()
+    {
+        Id = r.Id,
+        ShipmentNumber = r.ShipmentNumber,
+        OrderId = r.OrderId,
+        OrderNumber = null,
+        CustomerId = r.CustomerId,
+        WarehouseId = r.WarehouseId,
+        WarehouseName = r.WarehouseName,
+        Status = r.Status,
+        CreatedDate = r.CreatedDate,
+        PickedAtUtc = r.PickedAtUtc,
+        PackedAtUtc = r.PackedAtUtc,
+        DispatchedAtUtc = r.DispatchedAtUtc,
+        DeliveredAtUtc = r.DeliveredAtUtc,
+        CancelledAtUtc = r.CancelledAtUtc,
+        CarrierName = r.CarrierName,
+        TrackingNumber = r.TrackingNumber,
+        TrackingUrl = r.TrackingUrl,
+        ShippingCost = r.ShippingCost,
+        ReceivedBy = r.ReceivedBy,
+        ShippingAddressSnapshot = null,
+        Notes = r.Notes,
+        CancelReason = r.CancelReason,
+        Lines = new List<ShipmentLineDto>(),
+        CreatedAtUtc = r.CreatedAtUtc,
+        UpdatedAtUtc = r.UpdatedAtUtc,
+    };
+
+
     public static ShipmentDto ToDto(Shipment s) => new()
     {
         Id = s.Id,

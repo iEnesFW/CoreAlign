@@ -1,5 +1,6 @@
 using CoreAlign.Application.Payments.DTOs;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Payments.Mapping;
 
@@ -47,6 +48,21 @@ public static class PaymentMapper
         Amount = p.Amount,
         UnappliedAmount = p.UnappliedAmount,
         Currency = p.Currency,
+    };
+
+    public static PaymentSummaryDto ToSummaryDto(PaymentSearchRow r) => new()
+    {
+        Id = r.Id,
+        PaymentNumber = r.PaymentNumber,
+        Direction = r.Direction,
+        Status = r.Status,
+        CustomerId = r.CustomerId,
+        CustomerName = r.CustomerName,
+        PaymentDate = r.PaymentDate,
+        Method = r.Method,
+        Amount = r.Amount,
+        UnappliedAmount = Math.Max(0m, r.Amount - r.AppliedAmount),
+        Currency = r.Currency,
     };
 
     public static PaymentApplicationDto ToApplicationDto(PaymentApplication a) => new()

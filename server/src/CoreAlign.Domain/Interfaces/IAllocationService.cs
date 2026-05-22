@@ -60,6 +60,7 @@ public interface IAllocationService
     Task ReleaseAsync(Guid allocationId, CancellationToken cancellationToken = default);
     Task ReleaseByOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
     Task<StockMovement> ConsumeAsync(Guid allocationId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default);
+    Task<decimal> ConsumeForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default);
     Task<StockMovement> ApplyReceiptAsync(StockReceiptRequest request, CancellationToken cancellationToken = default);
     Task<StockMovement> ApplyIssueAsync(StockIssueRequest request, CancellationToken cancellationToken = default);
     Task<StockMovement> AdjustAsync(StockAdjustmentRequest request, CancellationToken cancellationToken = default);

@@ -10,3 +10,5 @@ public record GetInvoicesQuery(int Page = 1, int PageSize = 20, string? Search =
 public record GetInvoiceByIdQuery(Guid Id) : IRequest<InvoiceDto>;
 
 public record GetInvoicesByOrderQuery(Guid OrderId) : IRequest<List<InvoiceSummaryDto>>;
+
+public record GetCreditNotesForInvoiceQuery(Guid InvoiceId) : IRequest<List<InvoiceSummaryDto>>;

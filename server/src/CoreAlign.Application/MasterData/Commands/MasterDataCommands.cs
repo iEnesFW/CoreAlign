@@ -28,6 +28,7 @@ public record CreateUnitOfMeasureCommand(string Code, string Name, string? Symbo
 public record UpdateUnitOfMeasureCommand(Guid Id, string Code, string Name, string? Symbol, Guid? BaseUomId, decimal ConversionFactor, int DecimalPlaces, bool IsActive)
     : IRequest<UnitOfMeasureDto>, ITransactionalRequest;
 public record DeleteUnitOfMeasureCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
+public record SeedStandardUnitsOfMeasureCommand : IRequest<int>, ITransactionalRequest;
 
 public record CreateTaxRateCommand(string Code, string Name, decimal RatePercent, bool IsWithholding = false, string? CountryCode = null, string? Description = null)
     : IRequest<TaxRateDto>, ITransactionalRequest;

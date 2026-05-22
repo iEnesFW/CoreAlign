@@ -10,6 +10,26 @@ public class OrderLineInputValidator : AbstractValidator<OrderLineInput>
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.Quantity).GreaterThan(0).WithMessage("Validation.Positive");
         RuleFor(x => x.UnitPrice).GreaterThanOrEqualTo(0).WithMessage("Validation.NonNegative");
+
+        // Percent values are stored as numeric(6,3) — keep them in [0, 100].
+        RuleFor(x => x.LineDiscountPercent)
+            .InclusiveBetween(0m, 100m).WithMessage("Validation.PercentRange");
+        RuleFor(x => x.LineDiscountAmount)
+            .GreaterThanOrEqualTo(0m).WithMessage("Validation.NonNegative");
+        RuleFor(x => x.TaxRatePercent)
+            .InclusiveBetween(0m, 100m).WithMessage("Validation.PercentRange");
+        RuleFor(x => x.WithholdingRatePercent)
+            .InclusiveBetween(0m, 100m).WithMessage("Validation.PercentRange");
+        RuleFor(x => x.UomConversionFactor)
+            .GreaterThan(0m).WithMessage("Validation.Positive");
+
+        // Free-text fields must fit DB columns and avoid payload-bomb DoS.
+        RuleFor(x => x.LineNotes)
+            .MaximumLength(2000).WithMessage("Validation.TooLong")
+            .When(x => !string.IsNullOrEmpty(x.LineNotes));
+        RuleFor(x => x.UomCode)
+            .MaximumLength(16).WithMessage("Validation.TooLong")
+            .When(x => !string.IsNullOrEmpty(x.UomCode));
     }
 }
 

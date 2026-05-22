@@ -47,6 +47,147 @@ public interface IAccountingPeriodRepository
     void Update(AccountingPeriod period);
 }
 
+public interface IGLAccountRepository
+{
+    Task<GLAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<GLAccount?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<bool> CodeExistsAsync(string code, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<bool> HasChildrenAsync(Guid parentId, CancellationToken cancellationToken = default);
+    /// <summary>Flat list filtered by optional type / active / postable / parent.</summary>
+    Task<IReadOnlyList<GLAccount>> ListAsync(
+        Domain.Enums.AccountType? type,
+        bool? isActive,
+        bool? isPostable,
+        Guid? parentId,
+        CancellationToken cancellationToken = default);
+    /// <summary>Full tenant chart for tree rendering — bounded by tenant filter; no paging.</summary>
+    Task<IReadOnlyList<GLAccount>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(GLAccount account, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<GLAccount> accounts, CancellationToken cancellationToken = default);
+    void Update(GLAccount account);
+    void Remove(GLAccount account);
+}
+
+public interface IJournalEntryRepository
+{
+    Task<JournalEntry?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<JournalEntry?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> NumberExistsAsync(string number, Guid? excludeId, CancellationToken cancellationToken = default);
+
+    /// <summary>Search with paging — list view skips the lines collection.</summary>
+    Task<(IReadOnlyList<JournalEntrySearchRow> Items, int Total)> SearchAsync(
+        string? search,
+        Domain.Enums.JournalEntryType? type,
+        Domain.Enums.JournalEntryStatus? status,
+        DateTime? fromDate,
+        DateTime? toDate,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Aggregate posted lines for trial balance / mizan reporting.</summary>
+    Task<IReadOnlyList<AccountBalanceRow>> GetAccountBalancesAsync(
+        DateTime? fromDate,
+        DateTime? toDate,
+        CancellationToken cancellationToken = default);
+
+    Task AddAsync(JournalEntry entry, CancellationToken cancellationToken = default);
+    void Update(JournalEntry entry);
+    void Remove(JournalEntry entry);
+}
+
+public record JournalEntrySearchRow(
+    Guid Id,
+    string Number,
+    DateTime EntryDate,
+    DateTime PostingDate,
+    Domain.Enums.JournalEntryType Type,
+    Domain.Enums.JournalEntryStatus Status,
+    string? Description,
+    string? Reference,
+    decimal TotalDebit,
+    decimal TotalCredit,
+    int LineCount);
+
+public record AccountBalanceRow(
+    Guid AccountId,
+    string AccountCode,
+    string AccountName,
+    decimal Debit,
+    decimal Credit);
+
+public interface IVendorRepository
+{
+    Task<Vendor?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Vendor?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<bool> CodeExistsAsync(string code, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<bool> TaxNumberExistsAsync(string taxNumber, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<VendorSearchRow> Items, int Total)> SearchAsync(
+        string? search,
+        Domain.Enums.VendorStatus? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task AddAsync(Vendor vendor, CancellationToken cancellationToken = default);
+    void Update(Vendor vendor);
+    void Remove(Vendor vendor);
+}
+
+public record VendorSearchRow(
+    Guid Id,
+    string? Code,
+    string Name,
+    string? LegalName,
+    string? TaxNumber,
+    string? Email,
+    string? Phone,
+    Domain.Enums.VendorType Type,
+    Domain.Enums.VendorStatus Status,
+    string DefaultCurrency,
+    decimal CurrentBalance,
+    decimal OverdueAmount);
+
+public interface IVendorAddressRepository
+{
+    Task<VendorAddress?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VendorAddress>> GetByVendorAsync(Guid vendorId, CancellationToken cancellationToken = default);
+    Task AddAsync(VendorAddress address, CancellationToken cancellationToken = default);
+    void Update(VendorAddress address);
+    void Remove(VendorAddress address);
+}
+
+public interface IVendorContactRepository
+{
+    Task<VendorContact?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VendorContact>> GetByVendorAsync(Guid vendorId, CancellationToken cancellationToken = default);
+    Task AddAsync(VendorContact contact, CancellationToken cancellationToken = default);
+    void Update(VendorContact contact);
+    void Remove(VendorContact contact);
+}
+
+public interface IVendorBankAccountRepository
+{
+    Task<VendorBankAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VendorBankAccount>> GetByVendorAsync(Guid vendorId, CancellationToken cancellationToken = default);
+    Task AddAsync(VendorBankAccount account, CancellationToken cancellationToken = default);
+    void Update(VendorBankAccount account);
+    void Remove(VendorBankAccount account);
+}
+
+public interface IVendorLedgerRepository
+{
+    Task AddAsync(VendorLedgerEntry entry, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<VendorLedgerEntry> Items, int Total)> SearchByVendorAsync(
+        Guid vendorId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<decimal> GetCurrentBalanceAsync(Guid vendorId, CancellationToken cancellationToken = default);
+    Task<decimal> GetLastRunningBalanceAsync(Guid vendorId, CancellationToken cancellationToken = default);
+}
+
 public interface ICustomerProductPriceRepository
 {
     Task<CustomerProductPrice?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

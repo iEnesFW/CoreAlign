@@ -43,6 +43,116 @@ public class AccountingController : ControllerBase
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> LockPeriod(Guid id, [FromBody] LockPeriodCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(new LockPeriodCommand(id, cmd?.LockedByUserId), ct)).ToOk();
+
+    // ---------- Chart of Accounts (Hesap Planı) ----------
+
+    [HttpGet("gl-accounts")]
+    public async Task<IActionResult> ListGLAccounts(
+        [FromQuery] Domain.Enums.AccountType? type,
+        [FromQuery] bool? isActive,
+        [FromQuery] bool? isPostable,
+        [FromQuery] Guid? parentId,
+        CancellationToken ct)
+        => (await _mediator.Send(new ListGLAccountsQuery(type, isActive, isPostable, parentId), ct)).ToOk();
+
+    [HttpGet("gl-accounts/tree")]
+    public async Task<IActionResult> GetGLAccountTree(CancellationToken ct)
+        => (await _mediator.Send(new GetGLAccountTreeQuery(), ct)).ToOk();
+
+    [HttpGet("gl-accounts/{id:guid}")]
+    public async Task<IActionResult> GetGLAccountById(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new GetGLAccountByIdQuery(id), ct)).ToOk();
+
+    [HttpPost("gl-accounts")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> CreateGLAccount([FromBody] CreateGLAccountCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToCreated();
+
+    [HttpPut("gl-accounts/{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> UpdateGLAccount(Guid id, [FromBody] UpdateGLAccountCommand cmd, CancellationToken ct)
+    {
+        if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
+        return (await _mediator.Send(cmd, ct)).ToOk();
+    }
+
+    [HttpPost("gl-accounts/{id:guid}/active")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> SetGLAccountActive(Guid id, [FromBody] SetGLAccountActiveCommand cmd, CancellationToken ct)
+    {
+        if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
+        return (await _mediator.Send(cmd, ct)).ToOk();
+    }
+
+    [HttpDelete("gl-accounts/{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> DeleteGLAccount(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new DeleteGLAccountCommand(id), ct)).ToOk();
+
+    [HttpPost("gl-accounts/seed-turkish")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> SeedTurkishChartOfAccounts(CancellationToken ct)
+        => (await _mediator.Send(new SeedTurkishChartOfAccountsCommand(), ct)).ToOk();
+
+    // ---------- Journal Entries (Yevmiye Fişleri) ----------
+
+    [HttpGet("journal-entries")]
+    public async Task<IActionResult> SearchJournalEntries(
+        [FromQuery] string? search,
+        [FromQuery] Domain.Enums.JournalEntryType? type,
+        [FromQuery] Domain.Enums.JournalEntryStatus? status,
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken ct = default)
+        => (await _mediator.Send(
+            new SearchJournalEntriesQuery(search, type, status, fromDate, toDate, page, pageSize),
+            ct)).ToOk();
+
+    [HttpGet("journal-entries/{id:guid}")]
+    public async Task<IActionResult> GetJournalEntryById(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new GetJournalEntryByIdQuery(id), ct)).ToOk();
+
+    [HttpPost("journal-entries")]
+    public async Task<IActionResult> CreateJournalEntry([FromBody] CreateJournalEntryCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToCreated();
+
+    [HttpPut("journal-entries/{id:guid}/header")]
+    public async Task<IActionResult> UpdateJournalEntryHeader(Guid id, [FromBody] UpdateJournalEntryHeaderCommand cmd, CancellationToken ct)
+    {
+        if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
+        return (await _mediator.Send(cmd, ct)).ToOk();
+    }
+
+    [HttpPut("journal-entries/{id:guid}/lines")]
+    public async Task<IActionResult> ReplaceJournalEntryLines(Guid id, [FromBody] ReplaceJournalEntryLinesCommand cmd, CancellationToken ct)
+    {
+        if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
+        return (await _mediator.Send(cmd, ct)).ToOk();
+    }
+
+    [HttpPost("journal-entries/{id:guid}/post")]
+    public async Task<IActionResult> PostJournalEntry(Guid id, [FromBody] PostJournalEntryCommand? cmd, CancellationToken ct)
+        => (await _mediator.Send(new PostJournalEntryCommand(id, cmd?.PostedByUserId), ct)).ToOk();
+
+    [HttpPost("journal-entries/{id:guid}/reverse")]
+    public async Task<IActionResult> ReverseJournalEntry(Guid id, [FromBody] ReverseJournalEntryCommand? cmd, CancellationToken ct)
+        => (await _mediator.Send(
+            new ReverseJournalEntryCommand(id, cmd?.ReversalPostingDate, cmd?.ReversedByUserId), ct)).ToOk();
+
+    [HttpDelete("journal-entries/{id:guid}")]
+    public async Task<IActionResult> DeleteJournalEntry(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new DeleteJournalEntryCommand(id), ct)).ToOk();
+
+    // ---------- Mizan / Trial Balance ----------
+
+    [HttpGet("trial-balance")]
+    public async Task<IActionResult> GetTrialBalance(
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        CancellationToken ct)
+        => (await _mediator.Send(new GetTrialBalanceQuery(fromDate, toDate), ct)).ToOk();
 }
 
 [ApiController]
