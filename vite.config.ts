@@ -28,17 +28,21 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 600,
+    target: 'es2022',
+    sourcemap: false,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
+        // Manual chunks isolate heavy/rarely-changing vendors. We do NOT pre-chunk
+        // tree-shakable libs (lucide-react) — those win more by remaining
+        // splittable across the page graph.
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-query': ['@tanstack/react-query', 'axios'],
           'vendor-charts': ['recharts'],
-          'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei', 'lil-gui'],
-          'vendor-motion': ['framer-motion'],
+          'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei'],
           'vendor-i18n': ['i18next', 'react-i18next'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'vendor-icons': ['lucide-react'],
         },
       },
     },

@@ -7,7 +7,24 @@ import { parseError, formatError } from '@/shared/errors/errorPipeline';
 import { ApiError } from './ApiError';
 import { queueToast } from './toastQueue';
 import { acquireRefreshLock, releaseRefreshLock, waitForRefreshLock } from './refreshLock';
+import { broadcastRefresh, subscribeRefreshBroadcast } from './refreshBroadcast';
 import { shouldRetry, waitForRetry, type RetriableConfig } from './retry';
+import { setLoggerContext } from '@/shared/lib/logger';
+
+const HEADER_CORRELATION_ID = 'X-Correlation-Id';
+
+// Stable per-tab session id — reused across requests so backend logs can group
+// activity by browser session in addition to per-request correlation ids.
+const SESSION_ID = generateId();
+setLoggerContext({ sessionId: SESSION_ID });
+
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().replace(/-/g, '');
+  }
+  // Acceptable fallback for environments without WebCrypto (older Safari, jsdom).
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
 
 export type { RetriableConfig };
 
@@ -24,7 +41,37 @@ apiClient.interceptors.request.use((config) => {
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
+  // Tag every request with a correlation id so backend logs can be cross-linked
+  // with frontend telemetry. We respect the caller's id if they already set one
+  // (e.g. an automation rerunning a request) and otherwise mint a fresh one.
+  if (!config.headers[HEADER_CORRELATION_ID]) {
+    config.headers[HEADER_CORRELATION_ID] = generateId();
+  }
   return config;
+});
+
+// Capture the correlation id from successful + failing responses so the most
+// recent one is available to logger.warn/error calls without callers having to
+// thread it through manually.
+const captureCorrelation = (headers: Record<string, unknown> | undefined): void => {
+  if (!headers) return;
+  const id = (headers[HEADER_CORRELATION_ID.toLowerCase()] ?? headers[HEADER_CORRELATION_ID]) as
+    | string
+    | undefined;
+  if (typeof id === 'string' && id.length > 0) {
+    setLoggerContext({ correlationId: id });
+  }
+};
+
+// Listen for token rotations performed by another tab and apply them locally so
+// queued requests after `waitForRefreshLock` retry with the fresh token instead
+// of the stale in-memory copy. The token never touches localStorage.
+subscribeRefreshBroadcast((msg) => {
+  if (msg.type === 'token-refreshed') {
+    useAuthStore.getState().setAccessToken(msg.accessToken);
+  } else if (msg.type === 'signed-out') {
+    useAuthStore.getState().clearAuth();
+  }
 });
 
 let isRefreshing = false;
@@ -80,8 +127,12 @@ const notifyFromError = (error: AxiosError): void => {
 };
 
 apiClient.interceptors.response.use(
-  (response) => enforceApiSuccess(response),
+  (response) => {
+    captureCorrelation(response.headers as Record<string, unknown>);
+    return enforceApiSuccess(response);
+  },
   async (error: AxiosError) => {
+    captureCorrelation(error.response?.headers as Record<string, unknown> | undefined);
     const originalRequest = error.config as RetriableConfig | undefined;
 
     if (axios.isCancel(error)) return Promise.reject(error);
@@ -118,6 +169,12 @@ apiClient.interceptors.response.use(
         const response = await authApi.refreshToken();
         if (response.isSuccess && response.data) {
           useAuthStore.getState().setAuth(response.data.accessToken, response.data.user);
+          // Push the new token to other tabs so their queued retries don't 401.
+          broadcastRefresh({
+            type: 'token-refreshed',
+            accessToken: response.data.accessToken,
+            at: Date.now(),
+          });
           drainQueue(null);
           return apiClient(originalRequest);
         }
@@ -126,6 +183,7 @@ apiClient.interceptors.response.use(
         logger.warn('Token refresh failed, signing out', { url: originalRequest.url });
         drainQueue(refreshError);
         useAuthStore.getState().clearAuth();
+        broadcastRefresh({ type: 'signed-out', at: Date.now() });
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {

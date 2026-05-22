@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, Search, Sun, Moon, Bell, User, Sliders, Globe, LogOut, Command } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, Search, Sun, Moon, User, Sliders, Globe, LogOut, Command } from 'lucide-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useAuthStore } from '@/features/auth/model/authStore';
 import { useLogout } from '@/features/auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
+import { CommandPalette } from '@/shared/ui/CommandPalette/CommandPalette';
+import { NotificationCenter } from './NotificationCenter';
+import { useCommandItems } from './commandItems';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -13,12 +16,15 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
   const { t, i18n } = useTranslation();
+  const commandItems = useCommandItems(navigate);
 
   const handleLanguageToggle = () => {
     const nextLang = i18n.language === 'en' ? 'tr' : 'en';
@@ -34,6 +40,18 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Global Cmd/Ctrl+K opens the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   // Format page title from pathname
@@ -78,8 +96,11 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           </div>
           <input
             type="text"
-            className="block w-full pl-8 pr-10 py-1.5 border border-slate-200/60 dark:border-slate-700/60 rounded-[5px] leading-4 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-[#0B0F19] focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 text-xs transition-all duration-300 shadow-sm"
-            placeholder="Search anything..."
+            readOnly
+            onFocus={() => setPaletteOpen(true)}
+            onClick={() => setPaletteOpen(true)}
+            className="block w-full cursor-pointer pl-8 pr-10 py-1.5 border border-slate-200/60 dark:border-slate-700/60 rounded-[5px] leading-4 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-[#0B0F19] focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 text-xs transition-all duration-300 shadow-sm"
+            placeholder={t('common.search', { defaultValue: 'Search anything…' })}
           />
           <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
             <div className="flex items-center gap-0.5 text-slate-400 text-[10px] font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[3px] px-1 py-0.5 shadow-sm">
@@ -93,7 +114,11 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       {/* Right section: Actions & Profile */}
       <div className="flex items-center gap-1.5">
         {/* Mobile Search Icon */}
-        <button className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 md:hidden rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <button
+          onClick={() => setPaletteOpen(true)}
+          aria-label={t('common.search', { defaultValue: 'Search' })}
+          className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 md:hidden rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
           <Search size={16} />
         </button>
 
@@ -107,10 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         </button>
 
         {/* Notifications */}
-        <button className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative focus:outline-none focus:ring-1 focus:ring-indigo-500">
-          <Bell size={16} />
-          <span className="absolute top-1.5 right-1.5 block h-1.5 w-1.5 rounded-full bg-red-500 ring-1 ring-white dark:ring-[#0B0F19]" />
-        </button>
+        <NotificationCenter />
 
         {/* Profile Dropdown */}
         <div className="relative ml-1" ref={profileRef}>
@@ -185,6 +207,14 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
+
+      {paletteOpen && (
+        <CommandPalette
+          onClose={() => setPaletteOpen(false)}
+          items={commandItems}
+          placeholder={t('common.search', { defaultValue: 'Search pages and actions…' })}
+        />
+      )}
     </header>
   );
 };

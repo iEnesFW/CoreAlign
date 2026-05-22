@@ -1,0 +1,69 @@
+.ca-phone-input {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border: 1px solid rgb(226 232 240);
+  border-radius: 0.25rem;
+  background: #fff;
+  padding: 0.25rem 0.5rem;
+  /* Library CSS variables — control flag size and the gap before the caret so
+     the flag and the dropdown arrow never overlap. */
+  --PhoneInputCountryFlag-height: 1em;
+  --PhoneInputCountrySelectArrow-marginLeft: 0.5em;
+  --PhoneInputCountrySelectArrow-width: 0.35em;
+}
+
+.ca-phone-input .PhoneInputCountry {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.15rem;
+}
+
+.ca-phone-input .PhoneInputCountryIcon {
+  width: 1.4em;
+  flex-shrink: 0;
+}
+
+.ca-phone-input:focus-within {
+  border-color: rgb(99 102 241);
+  box-shadow: 0 0 0 1px rgb(99 102 241);
+}
+
+.ca-phone-input .PhoneInputInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.875rem;
+  color: rgb(15 23 42);
+  padding: 0.25rem 0;
+}
+
+.ca-phone-input .PhoneInputInput::placeholder {
+  color: rgb(148 163 184);
+}
+
+.ca-phone-input .PhoneInputCountrySelect {
+  color: rgb(15 23 42);
+}
+
+/* Dark mode (class-based) */
+.dark .ca-phone-input {
+  border-color: rgb(51 65 85);
+  background: rgb(15 23 42);
+}
+
+.dark .ca-phone-input .PhoneInputInput {
+  color: rgb(241 245 249);
+}
+
+.dark .ca-phone-input .PhoneInputCountrySelect {
+  background: rgb(15 23 42);
+  color: rgb(241 245 249);
+}
+
+.dark .ca-phone-input .PhoneInputCountrySelectArrow {
+  color: rgb(148 163 184);
+}

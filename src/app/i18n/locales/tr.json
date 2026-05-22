@@ -31,6 +31,21 @@
       "movementChart": "30 günlük hareket",
       "recentMovements": "Son hareketler"
     },
+    "velocity": {
+      "title": "Velocite & ABC sınıfı",
+      "abcClass": "Sınıf",
+      "avgDailyOut": "Günlük çıkış",
+      "avgDailyIn": "Günlük giriş",
+      "daysOfStock": "Stok ömrü (gün)",
+      "daysOfStockSub": "tükeneceği süre",
+      "netDelta": "Net Δ (90g)",
+      "activeDays": "aktif gün",
+      "windowDays": "son {{count}}g",
+      "abcA": "A — yüksek değer ve devir. Stok yokluğuna dikkat.",
+      "abcB": "B — orta seviye değer veya devir. Rutin gözden geçirme.",
+      "abcC": "C — yavaş devir. EOQ ayarı düşünülebilir.",
+      "abcD": "D — atıl. İptal veya tasfiye adayı."
+    },
     "fields": {
       "warehouse": "Depo",
       "onHand": "Mevcut",
@@ -235,7 +250,52 @@
       "terms": "Vade",
       "dueDate": "Vade",
       "requestedDelivery": "Talep edilen teslim",
-      "channel": "Kanal"
+      "channel": "Kanal",
+      "type": "Sipariş Türü",
+      "source": "Kaynak",
+      "exchangeRate": "Döviz Kuru",
+      "promisedDelivery": "Söz verilen teslim",
+      "paymentTerms": "Ödeme Vadesi",
+      "priceList": "Fiyat Listesi",
+      "billingAddress": "Fatura Adresi",
+      "shippingAddress": "Teslimat Adresi",
+      "headerDiscount": "İskonto %",
+      "shippingCost": "Kargo Ücreti",
+      "internalNotes": "Dahili Notlar",
+      "customerNotes": "Müşteri Notları"
+    },
+    "sections": {
+      "general": "Genel Bilgiler",
+      "commercial": "Ticari Koşullar",
+      "addresses": "Adresler",
+      "notes": "Notlar"
+    },
+    "type": {
+      "Standard": "Standart",
+      "Blanket": "Çerçeve",
+      "Return": "İade",
+      "Sample": "Numune",
+      "Internal": "Dahili"
+    },
+    "source": {
+      "Manual": "Manuel",
+      "Web": "Web",
+      "Api": "API",
+      "Edi": "EDI",
+      "Marketplace": "Pazaryeri",
+      "Phone": "Telefon",
+      "InStore": "Mağaza"
+    },
+    "summary": {
+      "subtotal": "Ara Toplam",
+      "lineDiscount": "Satır İskontoları",
+      "headerDiscount": "Genel İskonto",
+      "taxableTotal": "Vergilendirilebilir",
+      "tax": "KDV",
+      "withholding": "Tevkifat",
+      "shipping": "Kargo",
+      "grandTotal": "Genel Toplam",
+      "estimate": "Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır"
     },
     "dueToday": "Bugün vadeli",
     "dueIn": "{{count}}g içinde vadeli",
@@ -246,7 +306,16 @@
       "product": "Ürün",
       "productPlaceholder": "Ürün seç",
       "quantity": "Mik.",
-      "unitPrice": "Birim Fiyat"
+      "unitPrice": "Birim Fiyat",
+      "discountPercent": "İsk%",
+      "taxRate": "KDV",
+      "taxRatePlaceholder": "KDV oranı",
+      "withholding": "Tevkifat%",
+      "warehouse": "Depo",
+      "warehousePlaceholder": "Depo seç",
+      "lineNotes": "Satır notu",
+      "lineTotal": "Satır Toplamı",
+      "none": "—"
     },
     "modal": {
       "createTitle": "Yeni sipariş",
@@ -263,8 +332,11 @@
       "tabs": {
         "overview": "Genel",
         "lines": "Satırlar",
+        "margin": "Marj",
+        "allocations": "Tahsisler",
         "customer": "Müşteri",
         "invoices": "Faturalar",
+        "audit": "Hareket",
         "notes": "Notlar"
       },
       "metrics": {
@@ -303,6 +375,58 @@
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
       "next": "Sonraki"
+    },
+    "margin": {
+      "lineTitle": "Satır bazında marj",
+      "unitCost": "Birim maliyet",
+      "unitPrice": "Birim fiyat",
+      "revenue": "Ciro",
+      "cost": "Maliyet",
+      "profit": "Kar",
+      "marginPct": "Marj %",
+      "markupShort": "Mark-up",
+      "total": "Toplam",
+      "partialCost": "Kısmi maliyet",
+      "missingCostWarning": "Bazı satırlarda maliyet snapshot yok — marj sadece maliyetli satırları yansıtır.",
+      "loss": "Zarar",
+      "thin": "Düşük",
+      "healthy": "Sağlıklı"
+    },
+    "allocations": {
+      "empty": "Henüz stok tahsisi yok.",
+      "list": "Tahsisler",
+      "byWarehouse": "Depo bazında tahsis",
+      "totalAllocated": "Tahsis edildi",
+      "consumed": "Tüketildi",
+      "remaining": "Kalan",
+      "released": "Serbest",
+      "remainingLabel": "kalan",
+      "status": {
+        "Active": "Aktif",
+        "PartiallyConsumed": "Kısmen",
+        "Consumed": "Tüketildi",
+        "Released": "Serbest"
+      }
+    },
+    "audit": {
+      "title": "Hareket geçmişi",
+      "created": "Sipariş oluşturuldu",
+      "submitted": "Onaya gönderildi",
+      "approved": "Onaylandı",
+      "delivered": "Teslim edildi",
+      "cancelled": "İptal edildi",
+      "updated": "Son güncelleme",
+      "currentStatus": "Güncel Durum",
+      "lastUpdate": "Son güncelleme",
+      "deliveryDates": "Teslim taahhütleri",
+      "requestedDelivery": "Müşterinin talep tarihi",
+      "promisedDelivery": "Söz verilen tarih",
+      "actualDelivery": "Gerçek teslimat",
+      "dueDate": "Ödeme vadesi"
+    },
+    "tabs": {
+      "info": "Genel Bilgiler",
+      "lines": "Kalemler"
     }
   },
   "invoices": {
@@ -378,6 +502,7 @@
         "overview": "Genel",
         "lines": "Satırlar",
         "payments": "Ödemeler",
+        "ledger": "Muhasebe & takip",
         "activity": "Hareket",
         "notes": "Notlar"
       },
@@ -416,6 +541,45 @@
       "print": "Faturayı yazdır",
       "recordPayment": "Ödeme al"
     },
+    "ledger": {
+      "glTitle": "Muhasebe fiş önizleme",
+      "posted": "Yansıdı",
+      "notPosted": "Beklemede",
+      "account": "Hesap",
+      "description": "Açıklama",
+      "debit": "Borç",
+      "credit": "Alacak",
+      "total": "Toplam",
+      "balanced": "Dengeli",
+      "unbalanced": "Dengesiz",
+      "linkedDocs": "Bağlı belgeler",
+      "creditNote": "İade faturası",
+      "originInvoice": "Asıl fatura",
+      "dunning": {
+        "title": "Tahsilat takibi",
+        "clear": "Temiz",
+        "level1": "İlk hatırlatma",
+        "level2": "İkinci hatırlatma",
+        "level3": "Son uyarı",
+        "daysOverdue": "Vade aşımı (g)",
+        "recommended": "Önerilen aksiyon",
+        "noActionNeeded": "Aksiyon gerekmiyor",
+        "action1": "Hatırlatma maili gönder",
+        "action2": "İkinci bildirim gönder",
+        "action3": "Tahsilata aktar",
+        "guidance": "Fatura {{count}} gün gecikmiş. Hatırlatma veya tahsilata yönlendirme önerilir."
+      },
+      "reminders": {
+        "title": "Hatırlatma geçmişi",
+        "first": "Fatura gönderildi",
+        "followUp": "Takip hatırlatması",
+        "final": "Son uyarı",
+        "suggested": "Şimdi öneriliyor",
+        "escalate": "Tahsilata aktar",
+        "note": "Hatırlatma maili gönderimi SMTP entegrasyonu yapılınca aktifleşir.",
+        "sendCta": "Hatırlat"
+      }
+    },
     "print": {
       "button": "Yazdır",
       "heading": "FATURA",
@@ -434,6 +598,11 @@
     }
   },
   "products": {
+    "tabs": {
+      "general": "Genel",
+      "pricing": "Fiyat & Stok",
+      "logistics": "Lojistik & Yaşam Döngüsü"
+    },
     "title": "Ürünler",
     "subtitle": "Ürün kataloğunu yönet.",
     "searchPlaceholder": "SKU, ad, açıklama ara...",
@@ -460,7 +629,51 @@
       "price": "Fiyat",
       "currency": "Para Birimi",
       "stockQuantity": "Stok",
-      "isActive": "Aktif"
+      "isActive": "Aktif",
+      "shortDescription": "Kısa Açıklama",
+      "barcode": "Barkod",
+      "mpn": "Üretici Parça No",
+      "brand": "Marka",
+      "category": "Kategori",
+      "status": "Durum",
+      "baseUom": "Temel Birim",
+      "salesUom": "Satış Birimi",
+      "purchaseUom": "Alış Birimi",
+      "listPrice": "Liste Fiyatı",
+      "minSellingPrice": "Min. Satış Fiyatı",
+      "standardCost": "Standart Maliyet",
+      "taxRate": "Vergi Oranı",
+      "taxInclusive": "Fiyat KDV Dahil",
+      "isStockTracked": "Stok Takibi",
+      "isLotTracked": "Lot Takibi",
+      "isSerialTracked": "Seri No Takibi",
+      "minStock": "Min. Stok",
+      "maxStock": "Maks. Stok",
+      "reorderPoint": "Sipariş Noktası",
+      "safetyStock": "Emniyet Stoğu",
+      "leadTimeDays": "Tedarik Süresi (gün)",
+      "weightKg": "Ağırlık (kg)",
+      "widthCm": "Genişlik (cm)",
+      "heightCm": "Yükseklik (cm)",
+      "depthCm": "Derinlik (cm)",
+      "volumeM3": "Hacim (m³)",
+      "launchDate": "Lansman Tarihi",
+      "endOfLifeDate": "Kullanım Sonu Tarihi",
+      "none": "—"
+    },
+    "sections": {
+      "identity": "Kimlik",
+      "uom": "Birimler",
+      "pricing": "Fiyatlandırma",
+      "stock": "Stok",
+      "logistics": "Lojistik & Boyutlar",
+      "lifecycle": "Yaşam Döngüsü"
+    },
+    "status": {
+      "Active": "Aktif",
+      "New": "Yeni",
+      "Discontinued": "Üretimi Durdu",
+      "EndOfLife": "Kullanım Sonu"
     },
     "modal": {
       "createTitle": "Yeni ürün",
@@ -514,12 +727,69 @@
     }
   },
   "customers": {
+    "tabs": {
+      "general": "Genel Bilgiler",
+      "commercial": "Ticari Koşullar",
+      "notes": "Notlar"
+    },
     "title": "Müşteriler",
     "subtitle": "Müşteri kayıtlarını yönet.",
+    "eyebrow": "Satış · CRM",
+    "emptyHint": "İlk müşterinizi ekleyerek sipariş, fatura ve ödemeleri takip etmeye başlayın.",
+    "resultCountLabel": "sonuç",
+    "statusLabel": {
+      "Active": "Aktif",
+      "Blocked": "Bloke",
+      "Archived": "Arşivli"
+    },
+    "stats": {
+      "total": "Toplam müşteri",
+      "outstanding": "Açık bakiye (sayfa)",
+      "outstandingHint": "{{count}} müşteri üzerinden",
+      "overdue": "Vadesi geçen alacak",
+      "overdueHint": "{{count}} müşteri",
+      "atRisk": "Kredi riski (≥80%)",
+      "atRiskHint": "Filtrelemek için tıklayın"
+    },
+    "filter": {
+      "all": "Tümü",
+      "overdue": "Vadesi geçen",
+      "atRisk": "Kredi ≥ 80%",
+      "statusAria": "Duruma göre filtrele"
+    },
+    "analytics": {
+      "noData": "Analitik için yeterli veri yok.",
+      "lifetimeValue": "Yaşam boyu değer",
+      "totalPaid": "Toplam tahsilat",
+      "avgOrderValue": "Ort. sipariş",
+      "relationshipMonths": "Aktif ay",
+      "paymentsLabel": "ödeme",
+      "paymentBehavior": "Ödeme davranışı",
+      "onTimePayments": "Zamanında",
+      "latePayments": "Gecikmeli",
+      "avgDaysToPay": "Ort. ödeme gecikmesi",
+      "daysShort": "g",
+      "aheadOfDue": "vadeden önce",
+      "pastDue": "vade sonrası",
+      "monthlyRevenue": "Ciro trendi ({{count}} ay)",
+      "avgMonth": "Aylık ort.",
+      "peakMonth": "Zirve ay",
+      "totalPeriod": "Toplam",
+      "invoicesPeriod": "Fatura",
+      "topProducts": "Ciroya göre top ürünler",
+      "orderStatusBreakdown": "Sipariş durum dağılımı",
+      "invoiceStatusBreakdown": "Fatura durum dağılımı",
+      "tier": {
+        "excellent": "Mükemmel",
+        "fair": "Orta",
+        "poor": "Zayıf"
+      }
+    },
     "detail": {
       "subtitle": "Müşteri özeti, siparişler ve faturalar.",
       "tabs": {
         "overview": "Genel",
+        "analytics": "Analitik",
         "transactions": "Hareketler",
         "addresses": "Adresler",
         "contacts": "Kişiler",
@@ -636,7 +906,9 @@
       "email": "E-posta",
       "phone": "Telefon",
       "status": "Durum",
-      "actions": "İşlemler"
+      "actions": "İşlemler",
+      "balance": "Bakiye",
+      "creditUsage": "Kredi"
     },
     "fields": {
       "name": "Ad",
@@ -680,7 +952,23 @@
       "next": "Sonraki"
     }
   },
+  "errorState": {
+    "title": "Bir şeyler ters gitti",
+    "description": "Veriler yüklenemedi. Lütfen tekrar deneyin.",
+    "retry": "Tekrar Dene"
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "empty": "Her şey güncel",
+    "viewAll": "Tüm aktiviteyi gör"
+  },
   "common": {
+    "unsaved": {
+      "title": "Kaydedilmemiş değişiklikler",
+      "message": "Kaydedilmemiş değişiklikleriniz var. Çıkmak istediğinize emin misiniz?",
+      "discard": "Değişiklikleri at",
+      "keep": "Düzenlemeye devam et"
+    },
     "active": "Aktif",
     "inactive": "Pasif",
     "add_new": "Yeni Ekle",
@@ -721,6 +1009,46 @@
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
       "next": "Sonraki"
+    }
+  },
+  "reports": {
+    "title": "Raporlar",
+    "subtitle": "Tenant geneli satış, müşteri ve yaşlandırma analizi.",
+    "bucket": {
+      "day": "Gün",
+      "week": "Hafta",
+      "month": "Ay"
+    },
+    "kpi": {
+      "revenue": "Ciro",
+      "collected": "Tahsil edildi",
+      "collectionRate": "tahsilat oranı",
+      "invoices": "Fatura",
+      "activeCustomers": "Aktif müşteri"
+    },
+    "salesTrend": {
+      "title": "Satış trendi",
+      "empty": "Bu dönemde satış yok."
+    },
+    "aging": {
+      "title": "Yaşlandırma özeti",
+      "empty": "Açık alacak yok.",
+      "byCustomer": "Bakiyeli müşteriler"
+    },
+    "topCustomers": {
+      "title": "En çok ciro yapan müşteriler",
+      "empty": "Bu dönemde müşteri aktivitesi yok.",
+      "orders": "Sipariş",
+      "outstanding": "Bakiye"
+    },
+    "topProducts": {
+      "title": "En çok satan ürünler",
+      "empty": "Bu dönemde ürün satışı yok.",
+      "product": "Ürün",
+      "sku": "SKU",
+      "quantity": "Satılan",
+      "revenue": "Ciro",
+      "invoiceCount": "Fatura"
     }
   },
   "dashboard": {

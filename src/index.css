@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -76,4 +76,196 @@ body {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* Animations */
+@keyframes ca-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ca-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ca-slide-in-right {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes ca-slide-in-from-right-full {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes ca-zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes ca-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes ca-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+@keyframes ca-bg-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-fade-in {
+  animation: ca-fade-in 0.25s ease-out both;
+}
+.animate-fade-up {
+  animation: ca-fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-slide-in {
+  animation: ca-slide-in-right 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-drawer-in {
+  animation: ca-slide-in-from-right-full 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-zoom-in {
+  animation: ca-zoom-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-pulse-soft {
+  animation: ca-pulse-soft 1.6s ease-in-out infinite;
+}
+
+.ca-stagger > * {
+  animation: ca-fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ca-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.ca-stagger > *:nth-child(2) {
+  animation-delay: 35ms;
+}
+.ca-stagger > *:nth-child(3) {
+  animation-delay: 70ms;
+}
+.ca-stagger > *:nth-child(4) {
+  animation-delay: 105ms;
+}
+.ca-stagger > *:nth-child(5) {
+  animation-delay: 140ms;
+}
+.ca-stagger > *:nth-child(6) {
+  animation-delay: 175ms;
+}
+.ca-stagger > *:nth-child(7) {
+  animation-delay: 210ms;
+}
+.ca-stagger > *:nth-child(8) {
+  animation-delay: 245ms;
+}
+.ca-stagger > *:nth-child(n + 9) {
+  animation-delay: 280ms;
+}
+
+.ca-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.12) 0%,
+    rgba(148, 163, 184, 0.22) 50%,
+    rgba(148, 163, 184, 0.12) 100%
+  );
+  background-size: 800px 100%;
+  animation: ca-shimmer 1.4s linear infinite;
+}
+.dark .ca-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(51, 65, 85, 0.3) 0%,
+    rgba(71, 85, 105, 0.45) 50%,
+    rgba(51, 65, 85, 0.3) 100%
+  );
+  background-size: 800px 100%;
+}
+
+/* Hero surface used by PageHeader */
+.ca-hero-bg {
+  background:
+    radial-gradient(1200px 400px at -10% -20%, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(900px 360px at 110% 120%, rgba(168, 85, 247, 0.16), transparent 60%),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.92));
+}
+.dark .ca-hero-bg {
+  background:
+    radial-gradient(1200px 400px at -10% -20%, rgba(99, 102, 241, 0.22), transparent 60%),
+    radial-gradient(900px 360px at 110% 120%, rgba(168, 85, 247, 0.2), transparent 60%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.94));
+}
+
+.ca-grid-mask {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse at top, black 30%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at top, black 30%, transparent 70%);
+}
+
+/* Subtle glass card */
+.ca-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.dark .ca-glass {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-fade-up,
+  .animate-slide-in,
+  .animate-drawer-in,
+  .animate-zoom-in,
+  .animate-pulse-soft,
+  .ca-stagger > *,
+  .ca-skeleton {
+    animation: none !important;
+  }
 }

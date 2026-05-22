@@ -21,6 +21,9 @@ const TTL_RULES: readonly TtlRule[] = [
   { re: /\/customers(\/[a-f0-9-]+)?\/?(\?.*)?$/i, ttl: ONE_HOUR_MS },
   { re: /\/customers\/[a-f0-9-]+\/summary/i, ttl: ONE_HOUR_MS },
   { re: /\/customers\/[a-f0-9-]+\/overview/i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/customers\/[a-f0-9-]+\/analytics/i, ttl: THIRTY_SECONDS_MS * 2 },
+  { re: /\/invoices\/[a-f0-9-]+\/credit-notes/i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/reports\//i, ttl: THIRTY_SECONDS_MS * 2 },
   { re: /\/payments\/by-invoice\//i, ttl: THIRTY_SECONDS_MS },
   { re: /\/customers\/[a-f0-9-]+\/addresses/i, ttl: ONE_HOUR_MS },
   { re: /\/customers\/[a-f0-9-]+\/contacts/i, ttl: ONE_HOUR_MS },
@@ -53,9 +56,32 @@ const matchTtl = (url: string): number => {
 let namespace = 'anon';
 const memCache = new Map<string, CacheEntry<unknown>>();
 const nextRevalidateAt = new Map<string, number>();
-const inflight = new Map<string, Promise<unknown>>();
+const inflight = new Map<string, { promise: Promise<unknown>; startedAt: number }>();
 
-const STORAGE_PREFIX = 'corealign:v1:httpcache:';
+// Bump CACHE_VERSION whenever the shape of cached responses changes in an
+// incompatible way; persisted entries with older versions are ignored.
+const CACHE_VERSION = 'v2';
+const STORAGE_PREFIX = `corealign:${CACHE_VERSION}:httpcache:`;
+// Drop inflight entries older than this — protects against requests that hang
+// (network stalled, server frozen) so we don't permanently dedupe to a dead promise.
+const INFLIGHT_TIMEOUT_MS = 30_000;
+
+const sanitizeNamespace = (ns: string): string => {
+  // Strip characters that could break key parsing (we use ':' as separator).
+  return (ns || 'anon').replace(/[:\s]/g, '_').slice(0, 64);
+};
+
+const sortKeysDeep = (value: unknown): unknown => {
+  if (value === null || typeof value !== 'object') return value;
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  const obj = value as Record<string, unknown>;
+  return Object.keys(obj)
+    .sort()
+    .reduce<Record<string, unknown>>((acc, k) => {
+      acc[k] = sortKeysDeep(obj[k]);
+      return acc;
+    }, {});
+};
 
 const SENSITIVE_KEYS = new Set([
   'password',
@@ -81,7 +107,9 @@ const sanitize = (value: unknown): unknown => {
 };
 
 const buildKey = (url: string, params?: unknown): string => {
-  const suffix = params ? `?${JSON.stringify(params)}` : '';
+  // Stable key independent of object property order:
+  //   ?foo=1&bar=2  and  ?bar=2&foo=1 → same cache entry.
+  const suffix = params ? `?${JSON.stringify(sortKeysDeep(params))}` : '';
   return `${STORAGE_PREFIX}${namespace}:${url}${suffix}`;
 };
 
@@ -118,8 +146,34 @@ const removePersistent = (key: string): void => {
 };
 
 export const setCacheNamespace = (ns: string): void => {
-  namespace = ns;
+  namespace = sanitizeNamespace(ns);
 };
+
+// On module init, sweep persisted entries whose key uses an older cache version
+// — this keeps localStorage clean after a CACHE_VERSION bump and prevents stale
+// payloads from surfacing under the new contract.
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const STALE_PREFIX_RE = /^corealign:(?!v\d+:httpcache:).*httpcache:/;
+    const stale: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (!k) continue;
+      if (
+        k.startsWith('corealign:') &&
+        k.includes(':httpcache:') &&
+        !k.startsWith(STORAGE_PREFIX)
+      ) {
+        stale.push(k);
+      } else if (STALE_PREFIX_RE.test(k)) {
+        stale.push(k);
+      }
+    }
+    stale.forEach((k) => window.localStorage.removeItem(k));
+  }
+} catch {
+  /* localStorage unavailable — no-op */
+}
 
 export const clearHttpCache = (): void => {
   memCache.clear();
@@ -138,8 +192,22 @@ export const clearHttpCache = (): void => {
 };
 
 export const invalidateHttpCache = (patterns: readonly RegExp[]): void => {
-  memCache.clear();
-  nextRevalidateAt.clear();
+  // Selectively drop in-memory entries that match any pattern instead of
+  // blowing away the whole map — keeps unrelated cached responses warm so the
+  // user doesn't pay full network cost on the next unrelated request.
+  const memKeysToRemove: string[] = [];
+  memCache.forEach((_, key) => {
+    // Mem key format: "namespace:url"
+    const urlPart = key.split(':').slice(1).join(':');
+    if (patterns.some((p) => p.test(urlPart))) {
+      memKeysToRemove.push(key);
+    }
+  });
+  memKeysToRemove.forEach((k) => {
+    memCache.delete(k);
+    nextRevalidateAt.delete(k);
+  });
+
   try {
     const toRemove: string[] = [];
     for (let i = 0; i < window.localStorage.length; i++) {
@@ -193,8 +261,15 @@ export const cachedGet = async <T>(
     return memEntry.data;
   }
 
-  const existing = inflight.get(key) as Promise<T> | undefined;
-  if (existing) return existing;
+  const existing = inflight.get(key);
+  if (existing) {
+    // If the dedup target has been hanging for too long, evict it so the new
+    // caller can issue a fresh request instead of inheriting a dead promise.
+    if (now - existing.startedAt < INFLIGHT_TIMEOUT_MS) {
+      return existing.promise as Promise<T>;
+    }
+    inflight.delete(key);
+  }
 
   const requestConfig: AxiosRequestConfig = {
     ...config,
@@ -232,6 +307,6 @@ export const cachedGet = async <T>(
       inflight.delete(key);
     });
 
-  inflight.set(key, promise);
+  inflight.set(key, { promise, startedAt: now });
   return promise;
 };

@@ -31,6 +31,21 @@
       "movementChart": "30-day activity",
       "recentMovements": "Recent movements"
     },
+    "velocity": {
+      "title": "Velocity & ABC class",
+      "abcClass": "Class",
+      "avgDailyOut": "Avg/day out",
+      "avgDailyIn": "Avg/day in",
+      "daysOfStock": "Days of stock",
+      "daysOfStockSub": "until depletion",
+      "netDelta": "Net Δ (90d)",
+      "activeDays": "active days",
+      "windowDays": "last {{count}}d",
+      "abcA": "A — high value & high velocity. Watch stockouts.",
+      "abcB": "B — moderate value or velocity. Routine review.",
+      "abcC": "C — slow mover. Consider EOQ adjustment.",
+      "abcD": "D — dormant. Candidate for discontinuation or clearance."
+    },
     "fields": {
       "warehouse": "Warehouse",
       "onHand": "On hand",
@@ -235,7 +250,52 @@
       "terms": "Terms",
       "dueDate": "Due",
       "requestedDelivery": "Requested delivery",
-      "channel": "Channel"
+      "channel": "Channel",
+      "type": "Order Type",
+      "source": "Source",
+      "exchangeRate": "Exchange Rate",
+      "promisedDelivery": "Promised delivery",
+      "paymentTerms": "Payment Terms",
+      "priceList": "Price List",
+      "billingAddress": "Billing Address",
+      "shippingAddress": "Shipping Address",
+      "headerDiscount": "Discount %",
+      "shippingCost": "Shipping Cost",
+      "internalNotes": "Internal Notes",
+      "customerNotes": "Customer Notes"
+    },
+    "sections": {
+      "general": "General",
+      "commercial": "Commercial Terms",
+      "addresses": "Addresses",
+      "notes": "Notes"
+    },
+    "type": {
+      "Standard": "Standard",
+      "Blanket": "Blanket",
+      "Return": "Return",
+      "Sample": "Sample",
+      "Internal": "Internal"
+    },
+    "source": {
+      "Manual": "Manual",
+      "Web": "Web",
+      "Api": "API",
+      "Edi": "EDI",
+      "Marketplace": "Marketplace",
+      "Phone": "Phone",
+      "InStore": "In-Store"
+    },
+    "summary": {
+      "subtotal": "Subtotal",
+      "lineDiscount": "Line Discounts",
+      "headerDiscount": "Order Discount",
+      "taxableTotal": "Taxable",
+      "tax": "Tax",
+      "withholding": "Withholding",
+      "shipping": "Shipping",
+      "grandTotal": "Grand Total",
+      "estimate": "Estimated — final amounts are calculated on save"
     },
     "dueToday": "Due today",
     "dueIn": "Due in {{count}}d",
@@ -246,7 +306,16 @@
       "product": "Product",
       "productPlaceholder": "Select product",
       "quantity": "Qty",
-      "unitPrice": "Unit Price"
+      "unitPrice": "Unit Price",
+      "discountPercent": "Disc%",
+      "taxRate": "Tax",
+      "taxRatePlaceholder": "Tax rate",
+      "withholding": "WHT%",
+      "warehouse": "Warehouse",
+      "warehousePlaceholder": "Select warehouse",
+      "lineNotes": "Line note",
+      "lineTotal": "Line Total",
+      "none": "—"
     },
     "modal": {
       "createTitle": "New order",
@@ -263,8 +332,11 @@
       "tabs": {
         "overview": "Overview",
         "lines": "Lines",
+        "margin": "Margin",
+        "allocations": "Allocations",
         "customer": "Customer",
         "invoices": "Invoices",
+        "audit": "Audit",
         "notes": "Notes"
       },
       "metrics": {
@@ -303,6 +375,58 @@
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
       "next": "Next"
+    },
+    "margin": {
+      "lineTitle": "Line-level margin",
+      "unitCost": "Unit cost",
+      "unitPrice": "Unit price",
+      "revenue": "Revenue",
+      "cost": "Cost",
+      "profit": "Profit",
+      "marginPct": "Margin %",
+      "markupShort": "Markup",
+      "total": "Total",
+      "partialCost": "Partial cost data",
+      "missingCostWarning": "Some lines have no captured cost — margins shown reflect only lines with cost snapshots.",
+      "loss": "Loss",
+      "thin": "Thin",
+      "healthy": "Healthy"
+    },
+    "allocations": {
+      "empty": "No stock allocations yet.",
+      "list": "Allocations",
+      "byWarehouse": "Allocated by warehouse",
+      "totalAllocated": "Allocated",
+      "consumed": "Consumed",
+      "remaining": "Remaining",
+      "released": "Released",
+      "remainingLabel": "remaining",
+      "status": {
+        "Active": "Active",
+        "PartiallyConsumed": "Partial",
+        "Consumed": "Consumed",
+        "Released": "Released"
+      }
+    },
+    "audit": {
+      "title": "Audit timeline",
+      "created": "Order created",
+      "submitted": "Submitted for approval",
+      "approved": "Approved",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "updated": "Last updated",
+      "currentStatus": "Current Status",
+      "lastUpdate": "Last update",
+      "deliveryDates": "Delivery commitments",
+      "requestedDelivery": "Requested by customer",
+      "promisedDelivery": "Promised to customer",
+      "actualDelivery": "Actual delivery",
+      "dueDate": "Payment due"
+    },
+    "tabs": {
+      "info": "General",
+      "lines": "Line Items"
     }
   },
   "invoices": {
@@ -378,6 +502,7 @@
         "overview": "Overview",
         "lines": "Lines",
         "payments": "Payments",
+        "ledger": "Ledger & dunning",
         "activity": "Activity",
         "notes": "Notes"
       },
@@ -416,6 +541,45 @@
       "print": "Print invoice",
       "recordPayment": "Record payment"
     },
+    "ledger": {
+      "glTitle": "GL posting preview",
+      "posted": "Posted",
+      "notPosted": "Pending",
+      "account": "Account",
+      "description": "Description",
+      "debit": "Debit",
+      "credit": "Credit",
+      "total": "Total",
+      "balanced": "Balanced",
+      "unbalanced": "Out of balance",
+      "linkedDocs": "Linked documents",
+      "creditNote": "Credit note",
+      "originInvoice": "Original invoice",
+      "dunning": {
+        "title": "Collection status",
+        "clear": "Clear",
+        "level1": "Friendly reminder",
+        "level2": "Second notice",
+        "level3": "Final notice",
+        "daysOverdue": "Days overdue",
+        "recommended": "Recommended action",
+        "noActionNeeded": "No action needed",
+        "action1": "Send reminder email",
+        "action2": "Send second notice",
+        "action3": "Escalate to collections",
+        "guidance": "Invoice is past due by {{count}} days. Consider issuing a reminder or escalating to collections."
+      },
+      "reminders": {
+        "title": "Reminder history",
+        "first": "Invoice sent",
+        "followUp": "Follow-up reminder",
+        "final": "Final notice",
+        "suggested": "Suggested now",
+        "escalate": "Escalate to collections",
+        "note": "Outbound reminders are queued — connect SMTP to enable sending.",
+        "sendCta": "Send reminder"
+      }
+    },
     "print": {
       "button": "Print",
       "heading": "INVOICE",
@@ -434,6 +598,11 @@
     }
   },
   "products": {
+    "tabs": {
+      "general": "General",
+      "pricing": "Pricing & Stock",
+      "logistics": "Logistics & Lifecycle"
+    },
     "title": "Products",
     "subtitle": "Manage your product catalog.",
     "searchPlaceholder": "Search by SKU, name, description...",
@@ -460,7 +629,51 @@
       "price": "Price",
       "currency": "Currency",
       "stockQuantity": "Stock",
-      "isActive": "Active"
+      "isActive": "Active",
+      "shortDescription": "Short Description",
+      "barcode": "Barcode",
+      "mpn": "MPN",
+      "brand": "Brand",
+      "category": "Category",
+      "status": "Status",
+      "baseUom": "Base Unit",
+      "salesUom": "Sales Unit",
+      "purchaseUom": "Purchase Unit",
+      "listPrice": "List Price",
+      "minSellingPrice": "Min. Selling Price",
+      "standardCost": "Standard Cost",
+      "taxRate": "Tax Rate",
+      "taxInclusive": "Price Tax-Inclusive",
+      "isStockTracked": "Track Stock",
+      "isLotTracked": "Track Lots",
+      "isSerialTracked": "Track Serials",
+      "minStock": "Min. Stock",
+      "maxStock": "Max. Stock",
+      "reorderPoint": "Reorder Point",
+      "safetyStock": "Safety Stock",
+      "leadTimeDays": "Lead Time (days)",
+      "weightKg": "Weight (kg)",
+      "widthCm": "Width (cm)",
+      "heightCm": "Height (cm)",
+      "depthCm": "Depth (cm)",
+      "volumeM3": "Volume (m³)",
+      "launchDate": "Launch Date",
+      "endOfLifeDate": "End-of-Life Date",
+      "none": "—"
+    },
+    "sections": {
+      "identity": "Identity",
+      "uom": "Units",
+      "pricing": "Pricing",
+      "stock": "Stock",
+      "logistics": "Logistics & Dimensions",
+      "lifecycle": "Lifecycle"
+    },
+    "status": {
+      "Active": "Active",
+      "New": "New",
+      "Discontinued": "Discontinued",
+      "EndOfLife": "End of Life"
     },
     "modal": {
       "createTitle": "New product",
@@ -513,7 +726,23 @@
       "next": "Next"
     }
   },
+  "errorState": {
+    "title": "Something went wrong",
+    "description": "The data could not be loaded. Please try again.",
+    "retry": "Retry"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "You’re all caught up",
+    "viewAll": "View all activity"
+  },
   "common": {
+    "unsaved": {
+      "title": "Unsaved changes",
+      "message": "You have unsaved changes. Are you sure you want to leave?",
+      "discard": "Discard changes",
+      "keep": "Keep editing"
+    },
     "add_new": "Add New",
     "edit": "Edit",
     "delete": "Delete",
@@ -557,12 +786,69 @@
     }
   },
   "customers": {
+    "tabs": {
+      "general": "General",
+      "commercial": "Commercial Terms",
+      "notes": "Notes"
+    },
     "title": "Customers",
     "subtitle": "Manage customer records.",
+    "eyebrow": "Sales · CRM",
+    "emptyHint": "Add your first customer to start tracking orders, invoices and payments.",
+    "resultCountLabel": "results",
+    "statusLabel": {
+      "Active": "Active",
+      "Blocked": "Blocked",
+      "Archived": "Archived"
+    },
+    "stats": {
+      "total": "Total customers",
+      "outstanding": "Outstanding (page)",
+      "outstandingHint": "Across {{count}} customers",
+      "overdue": "Overdue receivables",
+      "overdueHint": "{{count}} customers",
+      "atRisk": "Credit at risk (≥80%)",
+      "atRiskHint": "Tap to filter"
+    },
+    "filter": {
+      "all": "All",
+      "overdue": "Has overdue",
+      "atRisk": "Credit ≥ 80%",
+      "statusAria": "Filter by status"
+    },
+    "analytics": {
+      "noData": "Not enough data for analytics yet.",
+      "lifetimeValue": "Lifetime value",
+      "totalPaid": "Total paid",
+      "avgOrderValue": "Avg. order",
+      "relationshipMonths": "Months active",
+      "paymentsLabel": "payments",
+      "paymentBehavior": "Payment behavior",
+      "onTimePayments": "On-time",
+      "latePayments": "Late",
+      "avgDaysToPay": "Avg. days to pay",
+      "daysShort": "d",
+      "aheadOfDue": "ahead of due",
+      "pastDue": "past due",
+      "monthlyRevenue": "Revenue trend ({{count}} months)",
+      "avgMonth": "Avg/mo",
+      "peakMonth": "Peak month",
+      "totalPeriod": "Total",
+      "invoicesPeriod": "Invoices",
+      "topProducts": "Top products by revenue",
+      "orderStatusBreakdown": "Orders by status",
+      "invoiceStatusBreakdown": "Invoices by status",
+      "tier": {
+        "excellent": "Excellent",
+        "fair": "Fair",
+        "poor": "Poor"
+      }
+    },
     "detail": {
       "subtitle": "Customer overview, orders and invoices.",
       "tabs": {
         "overview": "Overview",
+        "analytics": "Analytics",
         "transactions": "Transactions",
         "addresses": "Addresses",
         "contacts": "Contacts",
@@ -679,7 +965,9 @@
       "email": "Email",
       "phone": "Phone",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "balance": "Balance",
+      "creditUsage": "Credit"
     },
     "fields": {
       "name": "Name",
@@ -721,6 +1009,46 @@
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
       "next": "Next"
+    }
+  },
+  "reports": {
+    "title": "Reports",
+    "subtitle": "Sales, customer and aging analytics across the tenant.",
+    "bucket": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "collected": "Collected",
+      "collectionRate": "collection rate",
+      "invoices": "Invoices",
+      "activeCustomers": "Active customers"
+    },
+    "salesTrend": {
+      "title": "Sales trend",
+      "empty": "No sales recorded in this period."
+    },
+    "aging": {
+      "title": "Aging summary",
+      "empty": "No outstanding receivables.",
+      "byCustomer": "Top customers by outstanding"
+    },
+    "topCustomers": {
+      "title": "Top customers",
+      "empty": "No customer activity in this period.",
+      "orders": "Orders",
+      "outstanding": "Outstanding"
+    },
+    "topProducts": {
+      "title": "Top products",
+      "empty": "No product sales in this period.",
+      "product": "Product",
+      "sku": "SKU",
+      "quantity": "Qty sold",
+      "revenue": "Revenue",
+      "invoiceCount": "Invoices"
     }
   },
   "dashboard": {

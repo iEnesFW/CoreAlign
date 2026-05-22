@@ -80,7 +80,7 @@ export const ConfirmDialogProvider = ({ children }: { children: React.ReactNode 
               <button
                 type="button"
                 onClick={() => close(false)}
-                className="rounded p-1 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-800"
+                className="rounded p-1 text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label={t('common.cancel')}
               >
                 <X size={16} />

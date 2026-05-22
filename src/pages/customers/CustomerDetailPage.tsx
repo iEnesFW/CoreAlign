@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText, Receipt, ShoppingCart, User } from 'lucide-react';
+import { ArrowLeft, BarChart3, FileText, Receipt, ShoppingCart, User } from 'lucide-react';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { CustomerAnalyticsTab } from '@/features/customers/ui/CustomerAnalyticsTab';
 import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
 import type { OrderStatus } from '@/features/orders/model/order.types';
 import type { InvoiceStatus } from '@/features/invoices/model/invoice.types';
 
-type Tab = 'overview' | 'ledger' | 'orders' | 'invoices';
+type Tab = 'overview' | 'analytics' | 'ledger' | 'orders' | 'invoices';
 
 const PAGE_SIZE = 20;
 
@@ -92,6 +93,10 @@ export const CustomerDetailPage = () => {
           <User size={14} />
           {t('customers.detail.tabs.overview')}
         </TabButton>
+        <TabButton active={tab === 'analytics'} onClick={() => setTab('analytics')}>
+          <BarChart3 size={14} />
+          {t('customers.detail.tabs.analytics', { defaultValue: 'Analytics' })}
+        </TabButton>
         <TabButton active={tab === 'ledger'} onClick={() => setTab('ledger')}>
           <Receipt size={14} />
           {t('payments.ledger.title', { defaultValue: 'Ledger' })}
@@ -116,6 +121,14 @@ export const CustomerDetailPage = () => {
           onRecordPayment={(cid) => navigate(`/dashboard/invoices?customerId=${cid}&payment=1`)}
           onOpenOrder={(orderId) => navigate(`/dashboard/orders?selected=${orderId}`)}
           onOpenInvoice={(invoiceId) => navigate(`/dashboard/invoices?selected=${invoiceId}`)}
+        />
+      )}
+
+      {tab === 'analytics' && customer && (
+        <CustomerAnalyticsTab
+          customerId={customer.id}
+          locale={i18n.language}
+          onOpenProduct={(productId) => navigate(`/dashboard/products?selected=${productId}`)}
         />
       )}
 

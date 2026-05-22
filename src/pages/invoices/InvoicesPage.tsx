@@ -1,10 +1,28 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import {
+  AlertTriangle,
+  CalendarClock,
+  CircleDollarSign,
+  Coins,
+  Download,
+  FileText,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { downloadCsv } from '@/shared/lib/exportCsv';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { StatStrip, type StatStripItem } from '@/shared/ui/StatStrip/StatStrip';
+import { DataToolbar } from '@/shared/ui/DataToolbar/DataToolbar';
+import { FilterChip } from '@/shared/ui/FilterChip/FilterChip';
+import { SegmentedControl } from '@/shared/ui/SegmentedControl/SegmentedControl';
+import { CollapsibleSection } from '@/shared/ui/CollapsibleSection/CollapsibleSection';
+import { QueryError } from '@/shared/ui/QueryError/QueryError';
+import { Pagination } from '@/shared/ui/Pagination/Pagination';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { InvoiceDetailPanel } from '@/features/invoices/ui/InvoiceDetailPanel';
+import { InvoiceInlineCard } from '@/features/invoices/ui/InvoiceInlineCard';
 import { InvoiceList } from '@/features/invoices/ui/InvoiceList';
 import {
   useCancelInvoice,
@@ -13,20 +31,67 @@ import {
   useMarkInvoicePaid,
 } from '@/features/invoices/hooks/useInvoiceQueries';
 import { PaymentCreateModal } from '@/features/payments/ui/PaymentCreateModal';
-import type { InvoiceSummary } from '@/features/invoices/model/invoice.types';
+import type { InvoiceStatus, InvoiceSummary } from '@/features/invoices/model/invoice.types';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
+
+type StatusBucket = 'all' | 'open' | 'overdue' | 'paid' | 'cancelled';
+
+const matchesBucket = (
+  status: InvoiceStatus,
+  isOverdue: boolean,
+  bucket: StatusBucket,
+): boolean => {
+  switch (bucket) {
+    case 'all':
+      return true;
+    case 'overdue':
+      return isOverdue || status === 'Overdue';
+    case 'open':
+      return ['Issued', 'Sent', 'PartiallyPaid'].includes(status) && !isOverdue;
+    case 'paid':
+      return status === 'Paid';
+    case 'cancelled':
+      return status === 'Cancelled' || status === 'Void';
+  }
+};
+
+const daysFromNow = (iso: string) =>
+  Math.round((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+const exportInvoicesCsv = (rows: InvoiceSummary[]) =>
+  downloadCsv({
+    filename: 'invoices',
+    rows,
+    columns: [
+      { header: 'InvoiceNumber', value: (i) => i.invoiceNumber },
+      { header: 'Customer', value: (i) => i.customerName },
+      { header: 'IssueDate', value: (i) => i.issueDate },
+      { header: 'DueDate', value: (i) => i.dueDate },
+      { header: 'Status', value: (i) => i.status },
+      { header: 'Currency', value: (i) => i.currency },
+      { header: 'Total', value: (i) => i.total },
+      { header: 'AmountPaid', value: (i) => i.amountPaid },
+      { header: 'AmountDue', value: (i) => i.amountDue },
+    ],
+  });
 
 export const InvoicesPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search, 300);
+  const [statusBucket, setStatusBucket] = useState<StatusBucket>('all');
+  const [hasDueSoonOnly, setHasDueSoonOnly] = useState(false);
   const [viewingId, setViewingId] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [paymentForInvoiceId, setPaymentForInvoiceId] = useState<string | null>(null);
 
   const params = useMemo(
-    () => ({ page, pageSize: PAGE_SIZE, search: search.trim() || undefined }),
-    [page, search],
+    () => ({ page, pageSize, search: debouncedSearch.trim() || undefined }),
+    [page, pageSize, debouncedSearch],
   );
 
   const invoicesQuery = useInvoicesQuery(params);
@@ -35,9 +100,58 @@ export const InvoicesPage = () => {
   const confirm = useConfirm();
 
   const result = invoicesQuery.data?.data;
-  const invoices = result?.items ?? [];
+  const invoices = useMemo(() => result?.items ?? [], [result?.items]);
   const total = result?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const stats = useMemo(() => {
+    const buckets: Record<StatusBucket, number> = {
+      all: invoices.length,
+      open: 0,
+      overdue: 0,
+      paid: 0,
+      cancelled: 0,
+    };
+    let outstandingTotal = 0;
+    let dueSoonCount = 0;
+    let paidTotal = 0;
+    let overdueTotal = 0;
+    invoices.forEach((i) => {
+      (['open', 'overdue', 'paid', 'cancelled'] as StatusBucket[]).forEach((b) => {
+        if (matchesBucket(i.status, i.isOverdue, b)) buckets[b] += 1;
+      });
+      outstandingTotal += i.amountDue;
+      paidTotal += i.amountPaid;
+      if (i.isOverdue || i.status === 'Overdue') {
+        overdueTotal += i.amountDue;
+      }
+      const days = daysFromNow(i.dueDate);
+      if (i.amountDue > 0 && days >= 0 && days <= 7 && !i.isOverdue) {
+        dueSoonCount += 1;
+      }
+    });
+    return { buckets, outstandingTotal, paidTotal, overdueTotal, dueSoonCount };
+  }, [invoices]);
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((i) => {
+      if (!matchesBucket(i.status, i.isOverdue, statusBucket)) return false;
+      if (hasDueSoonOnly) {
+        const days = daysFromNow(i.dueDate);
+        if (!(i.amountDue > 0 && days >= 0 && days <= 7 && !i.isOverdue)) return false;
+      }
+      return true;
+    });
+  }, [invoices, statusBucket, hasDueSoonOnly]);
+
+  const hasActiveFilters =
+    statusBucket !== 'all' || hasDueSoonOnly || debouncedSearch.trim() !== '';
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusBucket('all');
+    setHasDueSoonOnly(false);
+    setPage(1);
+  };
 
   const handleMarkPaid = async (invoice: InvoiceSummary) => {
     const confirmed = await confirm({
@@ -46,7 +160,6 @@ export const InvoicesPage = () => {
       confirmLabel: t('common.confirm'),
     });
     if (!confirmed) return;
-
     markPaidMutation.mutate(invoice.id, {
       onSuccess: (response) => {
         if (response.isSuccess) {
@@ -67,7 +180,6 @@ export const InvoicesPage = () => {
       tone: 'danger',
     });
     if (!confirmed) return;
-
     cancelMutation.mutate(invoice.id, {
       onSuccess: (response) => {
         if (response.isSuccess) {
@@ -80,79 +192,201 @@ export const InvoicesPage = () => {
     });
   };
 
+  const fmtCurrency = (value: number, currency = 'TRY') => {
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 0,
+      }).format(value);
+    } catch {
+      return `${value.toFixed(0)} ${currency}`;
+    }
+  };
+
+  const statItems: StatStripItem[] = [
+    {
+      id: 'total',
+      label: t('invoices.stats.total', { defaultValue: 'Invoices (page)' }),
+      value: invoices.length,
+      format: (v) => Math.round(v).toLocaleString(locale),
+      icon: <FileText size={14} />,
+      sub: t('invoices.stats.totalHint', {
+        defaultValue: '{{count}} of {{all}}',
+        count: invoices.length,
+        all: total,
+      }),
+      tone: 'sky',
+    },
+    {
+      id: 'outstanding',
+      label: t('invoices.stats.outstanding', { defaultValue: 'Outstanding' }),
+      value: stats.outstandingTotal,
+      format: (v) => fmtCurrency(v),
+      icon: <CircleDollarSign size={14} />,
+      sub: `${stats.buckets.open + stats.buckets.overdue} ${t('invoices.stats.openInvoices', { defaultValue: 'open' })}`,
+      tone: 'amber',
+    },
+    {
+      id: 'collected',
+      label: t('invoices.stats.collected', { defaultValue: 'Collected (page)' }),
+      value: stats.paidTotal,
+      format: (v) => fmtCurrency(v),
+      icon: <Coins size={14} />,
+      sub: `${stats.buckets.paid} ${t('invoices.status.Paid').toLowerCase()}`,
+      tone: 'emerald',
+    },
+    {
+      id: 'overdue',
+      label: t('invoices.stats.overdue', { defaultValue: 'Overdue' }),
+      value: stats.overdueTotal,
+      format: (v) => fmtCurrency(v),
+      icon: <AlertTriangle size={14} />,
+      sub: `${stats.buckets.overdue} ${t('invoices.stats.overdueHint', { defaultValue: 'invoices past due' })}`,
+      tone: stats.overdueTotal > 0 ? 'rose' : 'slate',
+      onClick: () => setStatusBucket('overdue'),
+    },
+  ];
+
   return (
     <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {t('invoices.title')}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('invoices.subtitle')}</p>
-        </div>
-
-        <div className="relative">
-          <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            placeholder={t('invoices.searchPlaceholder')}
-            className="w-56 rounded border border-slate-200 bg-white py-1.5 pl-7 pr-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </div>
-      </div>
-
-      <InvoiceList
-        invoices={invoices}
-        isLoading={invoicesQuery.isPending}
-        selectedId={viewingId}
-        onView={(invoice) => setViewingId(invoice.id)}
-        onMarkPaid={handleMarkPaid}
-        onCancel={handleCancel}
+      <PageHeader
+        icon={<FileText size={20} />}
+        eyebrow={t('invoices.eyebrow', { defaultValue: 'Finance · AR' })}
+        title={t('invoices.title')}
+        subtitle={t('invoices.subtitle')}
+        crumbs={[
+          { label: t('navigation.dashboard', { defaultValue: 'Dashboard' }), to: '/dashboard' },
+          { label: t('invoices.title') },
+        ]}
+        tone="sky"
+        actions={
+          <button
+            type="button"
+            onClick={() => exportInvoicesCsv(filteredInvoices)}
+            disabled={filteredInvoices.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Download size={13} />
+            {t('common.exportCsv', { defaultValue: 'Export CSV' })}
+          </button>
+        }
       />
 
-      {total > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-          <div>
-            {t('invoices.pagination.summary', {
-              from: (page - 1) * PAGE_SIZE + 1,
-              to: Math.min(page * PAGE_SIZE, total),
-              total,
-              defaultValue: `${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} / ${total}`,
-            })}
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              aria-label={t('invoices.pagination.previous')}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="px-2">
-              {page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="rounded border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              aria-label={t('invoices.pagination.next')}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
+      <CollapsibleSection storageKey="invoices.stats" label="Özet kartları">
+        <StatStrip items={statItems} />
+      </CollapsibleSection>
+
+      <DataToolbar
+        search={{
+          value: search,
+          onChange: (v) => {
+            setPage(1);
+            setSearch(v);
+          },
+          placeholder: t('invoices.searchPlaceholder'),
+        }}
+        viewMode={
+          <SegmentedControl
+            value={statusBucket}
+            onChange={(v) => {
+              setPage(1);
+              setStatusBucket(v);
+            }}
+            options={[
+              {
+                value: 'all',
+                label: t('invoices.filter.all', { defaultValue: 'All' }),
+                count: stats.buckets.all,
+              },
+              {
+                value: 'open',
+                label: t('invoices.filter.open', { defaultValue: 'Open' }),
+                count: stats.buckets.open,
+              },
+              {
+                value: 'overdue',
+                label: t('invoices.filter.overdue', { defaultValue: 'Overdue' }),
+                count: stats.buckets.overdue,
+                icon: <AlertTriangle size={11} />,
+              },
+              {
+                value: 'paid',
+                label: t('invoices.filter.paid', { defaultValue: 'Paid' }),
+                count: stats.buckets.paid,
+              },
+              {
+                value: 'cancelled',
+                label: t('invoices.filter.cancelled', { defaultValue: 'Cancelled' }),
+                count: stats.buckets.cancelled,
+              },
+            ]}
+          />
+        }
+        filters={
+          <FilterChip
+            label={t('invoices.filter.dueSoon', { defaultValue: 'Due in ≤7d' })}
+            icon={<CalendarClock size={10} />}
+            active={hasDueSoonOnly}
+            count={stats.dueSoonCount}
+            tone="amber"
+            onClick={() => {
+              setPage(1);
+              setHasDueSoonOnly((v) => !v);
+            }}
+          />
+        }
+        resultCount={{
+          count: filteredInvoices.length,
+          label: t('invoices.resultCountLabel', { defaultValue: 'invoices' }),
+        }}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
+      />
+
+      {invoicesQuery.isError ? (
+        <QueryError onRetry={() => invoicesQuery.refetch()} isRetrying={invoicesQuery.isFetching} />
+      ) : (
+        <InvoiceList
+          invoices={filteredInvoices}
+          isLoading={invoicesQuery.isPending}
+          selectedId={viewingId}
+          onView={(invoice) => {
+            setViewingId((curr) => (curr === invoice.id ? null : invoice.id));
+            setPanelOpen(false);
+          }}
+          onMarkPaid={handleMarkPaid}
+          onCancel={handleCancel}
+        />
+      )}
+
+      {viewingId && !panelOpen && (
+        <InvoiceInlineCard
+          invoiceId={viewingId}
+          onClose={() => setViewingId(null)}
+          onOpenPanel={() => setPanelOpen(true)}
+        />
+      )}
+
+      {!invoicesQuery.isError && total > 0 && (
+        <div className="rounded-xl border border-slate-200/70 bg-white/60 px-3 py-2 dark:border-slate-800/70 dark:bg-slate-900/40">
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            pageSizeOptions={[10, 25, 50, 100]}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
+          />
         </div>
       )}
 
       <InvoiceDetailPanel
-        invoiceId={viewingId}
-        onClose={() => setViewingId(null)}
+        invoiceId={panelOpen ? viewingId : null}
+        onClose={() => setPanelOpen(false)}
         onMarkPaid={(id) => {
           const found = invoices.find((inv) => inv.id === id);
           if (found) handleMarkPaid(found);

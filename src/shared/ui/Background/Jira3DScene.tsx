@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import GUI from 'lil-gui';
 import styles from './Jira3DScene.module.css';
 import { DARK_PARAMS, LIGHT_PARAMS } from './scene.config';
 import type { Signal } from './scene.types';
@@ -159,47 +158,67 @@ export const Jira3DScene = ({ theme = 'dark' }: Jira3DSceneProps) => {
 
     rebuildAll();
 
-    const gui = new GUI({ title: 'Settings' });
-    gui.domElement.style.position = 'absolute';
-    gui.domElement.style.bottom = '10px';
-    gui.domElement.style.right = '10px';
-    gui.hide();
-    containerRef.current.appendChild(gui.domElement);
+    // lil-gui is a dev-only tweakable panel — strip it (and its bundle weight)
+    // from prod builds by gating on the build-time DEV flag. The closure
+    // captures the runtime object so tree-shaking can drop the dynamic import
+    // in production.
+    let gui: { destroy: () => void } | null = null;
+    if (import.meta.env.DEV) {
+      void import('lil-gui').then(({ default: GUI }) => {
+        if (!containerRef.current) return;
+        const dev = new GUI({ title: 'Settings' });
+        dev.domElement.style.position = 'absolute';
+        dev.domElement.style.bottom = '10px';
+        dev.domElement.style.right = '10px';
+        dev.hide();
+        containerRef.current.appendChild(dev.domElement);
 
-    const folderColors = gui.addFolder('Colors');
-    folderColors
-      .addColor(params, 'colorBg')
-      .name('Background')
-      .onChange((v: string) => {
-        scene.background = new THREE.Color(v);
-        (scene.fog as THREE.FogExp2).color.set(v);
-      });
-    folderColors
-      .addColor(params, 'colorLine')
-      .name('Lines')
-      .onChange((v: string) => {
-        bgMaterial.color.set(v);
-      });
+        const folderColors = dev.addFolder('Colors');
+        folderColors
+          .addColor(params, 'colorBg')
+          .name('Background')
+          .onChange((v: string) => {
+            scene.background = new THREE.Color(v);
+            (scene.fog as THREE.FogExp2).color.set(v);
+          });
+        folderColors
+          .addColor(params, 'colorLine')
+          .name('Lines')
+          .onChange((v: string) => {
+            bgMaterial.color.set(v);
+          });
 
-    const folderGeneral = gui.addFolder('General');
-    folderGeneral
-      .add(params, 'globalRotation', -180, 180)
-      .name('Rotation')
-      .onChange(updateGroupPositions);
-    folderGeneral
-      .add(params, 'positionX', -200, 200)
-      .name('Position X')
-      .onChange(updateGroupPositions);
-    folderGeneral
-      .add(params, 'positionY', -100, 100)
-      .name('Position Y')
-      .onChange(updateGroupPositions);
-    folderGeneral.add(params, 'lineCount', 10, 300, 1).name('Lines').onFinishChange(rebuildAll);
+        const folderGeneral = dev.addFolder('General');
+        folderGeneral
+          .add(params, 'globalRotation', -180, 180)
+          .name('Rotation')
+          .onChange(updateGroupPositions);
+        folderGeneral
+          .add(params, 'positionX', -200, 200)
+          .name('Position X')
+          .onChange(updateGroupPositions);
+        folderGeneral
+          .add(params, 'positionY', -100, 100)
+          .name('Position Y')
+          .onChange(updateGroupPositions);
+        folderGeneral.add(params, 'lineCount', 10, 300, 1).name('Lines').onFinishChange(rebuildAll);
+
+        gui = dev;
+      });
+    }
 
     const timer = new THREE.Timer();
     let frameId = 0;
+    let paused = typeof document !== 'undefined' && document.hidden;
 
     const animate = () => {
+      // Stop scheduling new frames while the tab is hidden — the scene is
+      // off-screen anyway and the RAF loop was burning battery on background
+      // tabs. visibilitychange below re-arms when the tab returns.
+      if (paused) {
+        frameId = 0;
+        return;
+      }
       frameId = requestAnimationFrame(animate);
       timer.update();
       const time = timer.getElapsed();
@@ -266,11 +285,22 @@ export const Jira3DScene = ({ theme = 'dark' }: Jira3DSceneProps) => {
     };
     window.addEventListener('resize', handleResize);
 
+    const handleVisibilityChange = () => {
+      const isHidden = document.hidden;
+      if (isHidden === paused) return;
+      paused = isHidden;
+      if (!paused && frameId === 0) {
+        animate();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     const currentContainer = containerRef.current;
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', handleResize);
-      gui.destroy();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      gui?.destroy();
       renderer.dispose();
       if (currentContainer) currentContainer.innerHTML = '';
     };

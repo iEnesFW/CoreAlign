@@ -1,21 +1,22 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { routePreloaders } from '@/app/router/routePrefetch';
 import {
   LayoutDashboard,
   Users,
   X,
   Package,
+  Boxes,
   ShoppingCart,
   ChevronDown,
   PanelLeftClose,
   PanelLeftOpen,
   Box,
   CreditCard,
-  Briefcase,
-  MessageSquare,
-  Shield,
   FileText,
   Activity,
+  BarChart3,
+  Settings,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -33,6 +34,10 @@ type NavItem = {
   section?: string;
 };
 
+// Only routes that are actually wired in App.tsx appear here. New modules are
+// added when their routes ship; never advertise a link before the page exists
+// — clicking a dead link erodes user trust and bypasses the SPA's protected
+// boundary.
 const navigation: NavItem[] = [
   { section: 'OVERVIEW' },
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -40,71 +45,55 @@ const navigation: NavItem[] = [
   { section: 'SALES & CRM' },
   { name: 'Customers', href: '/dashboard/customers', icon: Users },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-  {
-    name: 'Receipts',
-    icon: FileText,
-    children: [
-      { name: 'Receipt List', href: '/dashboard/receipts' },
-      { name: 'Create Receipt', href: '/dashboard/receipts/new' },
-    ],
-  },
+  { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
+
+  { section: 'PURCHASING' },
+  { name: 'Vendors', href: '/dashboard/vendors', icon: Box },
 
   { section: 'INVENTORY' },
   { name: 'Products', href: '/dashboard/products', icon: Package },
+  { name: 'Stock', href: '/dashboard/inventory', icon: Boxes },
+
+  { section: 'ACCOUNTING' },
+  {
+    name: 'Accounting',
+    icon: CreditCard,
+    children: [
+      { name: 'Chart of Accounts', href: '/dashboard/accounting/chart-of-accounts' },
+      { name: 'Journal Entries', href: '/dashboard/accounting/journal-entries' },
+      { name: 'Trial Balance (Mizan)', href: '/dashboard/accounting/trial-balance' },
+      { name: 'Balance Sheet (Bilanço)', href: '/dashboard/accounting/balance-sheet' },
+      { name: 'Income Statement (Gelir Tablosu)', href: '/dashboard/accounting/income-statement' },
+      { name: 'Accounting Periods', href: '/dashboard/accounting/periods' },
+    ],
+  },
+
+  { section: 'ANALYTICS' },
+  { name: 'Reports', href: '/dashboard/reports', icon: BarChart3 },
 
   { section: 'SYSTEM' },
   { name: 'Activity Log', href: '/dashboard/activity', icon: Activity },
-
-  { section: 'FINANCE' },
-  { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
-  {
-    name: 'Check & Bonds',
-    icon: CreditCard,
-    children: [
-      { name: 'Check List', href: '/dashboard/checks-bonds' },
-      { name: 'Bond List', href: '/dashboard/checks-bonds/bonds' },
-    ],
-  },
-  { name: 'Expenses', href: '/dashboard/expenses', icon: CreditCard },
-
-  { section: 'HR MANAGEMENT' },
-  {
-    name: 'Human Resources',
-    icon: Briefcase,
-    children: [
-      { name: 'Employee Mgt.', href: '/dashboard/employees' },
-      { name: 'Payroll', href: '/dashboard/payroll' },
-      { name: 'Leave Requests', href: '/dashboard/leaves' },
-    ],
-  },
-
-  { section: 'SYSTEM & SUPPORT' },
-  {
-    name: 'Support',
-    icon: MessageSquare,
-    children: [
-      { name: 'Complaints & Suggestions', href: '/dashboard/complaints' },
-      { name: 'Support Tickets', href: '/dashboard/tickets' },
-    ],
-  },
-  {
-    name: 'Administration',
-    icon: Shield,
-    children: [
-      { name: 'Admin Panel', href: '/dashboard/admin' },
-      { name: 'Role Management', href: '/dashboard/roles' },
-      { name: 'System Settings', href: '/dashboard/settings' },
-    ],
-  },
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({
+const SidebarComponent: React.FC<SidebarProps> = ({
   isOpen,
   setIsOpen,
   isCollapsed,
   setIsCollapsed,
 }) => {
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Customers', 'Orders']);
+
+  const prefetch = useCallback((href: string) => {
+    const loader = routePreloaders[href];
+    if (loader) {
+      try {
+        loader();
+      } catch {
+        /* prefetch failures are non-critical */
+      }
+    }
+  }, []);
 
   const toggleMenu = (name: string) => {
     setExpandedMenus((prev) =>
@@ -216,6 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <NavLink
                           key={child.name}
                           to={child.href}
+                          onMouseEnter={() => prefetch(child.href)}
+                          onFocus={() => prefetch(child.href)}
                           className={({ isActive }) =>
                             `block px-2 py-1.5 rounded-[5px] text-[11px] font-medium transition-all duration-200 relative truncate ${
                               isActive
@@ -238,6 +229,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <NavLink
                 key={item.name}
                 to={item.href!}
+                onMouseEnter={() => prefetch(item.href!)}
+                onFocus={() => prefetch(item.href!)}
                 className={({ isActive }) =>
                   `flex items-center gap-2 px-2 py-1.5 rounded-[5px] transition-all duration-200 group ${
                     isActive
@@ -278,3 +271,5 @@ export const Sidebar: React.FC<SidebarProps> = ({
     </>
   );
 };
+
+export const Sidebar = React.memo(SidebarComponent);
