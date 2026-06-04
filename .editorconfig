@@ -1,0 +1,157 @@
+root = true
+
+[*.cs]
+
+dotnet_diagnostic.S2259.severity = warning
+dotnet_diagnostic.S3923.severity = warning
+dotnet_diagnostic.S2583.severity = warning
+dotnet_diagnostic.S1854.severity = warning
+dotnet_diagnostic.S2589.severity = warning
+dotnet_diagnostic.S2068.severity = warning
+dotnet_diagnostic.S4790.severity = warning
+dotnet_diagnostic.S5547.severity = warning
+dotnet_diagnostic.S2255.severity = warning
+dotnet_diagnostic.S5443.severity = warning
+dotnet_diagnostic.S2245.severity = warning
+dotnet_diagnostic.S3928.severity = warning
+dotnet_diagnostic.CA2208.severity = warning
+dotnet_diagnostic.S3376.severity = warning
+dotnet_diagnostic.CA1068.severity = warning
+dotnet_diagnostic.CA5350.severity = warning
+dotnet_diagnostic.CA5351.severity = warning
+dotnet_diagnostic.CA2100.severity = warning
+
+dotnet_diagnostic.S3776.severity = suggestion
+dotnet_diagnostic.S1541.severity = suggestion
+dotnet_diagnostic.S107.severity = suggestion
+dotnet_diagnostic.S138.severity = suggestion
+dotnet_diagnostic.S6608.severity = suggestion
+dotnet_diagnostic.S6602.severity = suggestion
+dotnet_diagnostic.S927.severity = suggestion
+dotnet_diagnostic.S1066.severity = suggestion
+dotnet_diagnostic.S1172.severity = suggestion
+dotnet_diagnostic.S3267.severity = suggestion
+dotnet_diagnostic.S4487.severity = suggestion
+dotnet_diagnostic.S4581.severity = suggestion
+dotnet_diagnostic.S6667.severity = suggestion
+dotnet_diagnostic.S108.severity = suggestion
+dotnet_diagnostic.S2365.severity = suggestion
+dotnet_diagnostic.S127.severity = suggestion
+
+dotnet_diagnostic.CA1716.severity = suggestion
+dotnet_diagnostic.CA1512.severity = suggestion
+dotnet_diagnostic.CA1510.severity = suggestion
+dotnet_diagnostic.CA1720.severity = suggestion
+dotnet_diagnostic.CA1305.severity = suggestion
+dotnet_diagnostic.CA1859.severity = suggestion
+dotnet_diagnostic.CA1725.severity = suggestion
+dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+dotnet_diagnostic.CA1869.severity = suggestion
+dotnet_diagnostic.CA1826.severity = suggestion
+dotnet_diagnostic.CA1861.severity = suggestion
+dotnet_diagnostic.CA1870.severity = suggestion
+dotnet_diagnostic.CA1000.severity = suggestion
+dotnet_diagnostic.CA1711.severity = suggestion
+dotnet_diagnostic.CA1304.severity = suggestion
+dotnet_diagnostic.CA1311.severity = suggestion
+dotnet_diagnostic.CA1845.severity = suggestion
+dotnet_diagnostic.CA1822.severity = suggestion
+dotnet_diagnostic.CA1707.severity = suggestion
+dotnet_diagnostic.CA2263.severity = suggestion
+dotnet_diagnostic.S1075.severity = suggestion
+dotnet_diagnostic.S1905.severity = suggestion
+dotnet_diagnostic.S3626.severity = suggestion
+dotnet_diagnostic.S6964.severity = suggestion
+dotnet_diagnostic.S3260.severity = suggestion
+dotnet_diagnostic.CA1852.severity = suggestion
+dotnet_diagnostic.S2325.severity = suggestion
+dotnet_diagnostic.S6966.severity = suggestion
+dotnet_diagnostic.S6960.severity = suggestion
+dotnet_diagnostic.S2139.severity = suggestion
+dotnet_diagnostic.S6562.severity = suggestion
+dotnet_diagnostic.S1503.severity = suggestion
+dotnet_diagnostic.CA1806.severity = suggestion
+dotnet_diagnostic.S3878.severity = suggestion
+dotnet_diagnostic.CA1001.severity = suggestion
+dotnet_diagnostic.S3604.severity = suggestion
+dotnet_diagnostic.S3241.severity = suggestion
+dotnet_diagnostic.S2925.severity = suggestion
+
+dotnet_diagnostic.IDE0008.severity = suggestion
+dotnet_diagnostic.IDE0011.severity = suggestion
+dotnet_diagnostic.IDE0058.severity = silent
+dotnet_diagnostic.IDE0079.severity = suggestion
+
+dotnet_diagnostic.S1135.severity = suggestion
+dotnet_diagnostic.S125.severity = suggestion
+dotnet_diagnostic.S1186.severity = suggestion
+dotnet_diagnostic.S1481.severity = suggestion
+dotnet_diagnostic.S101.severity = suggestion
+dotnet_diagnostic.S1117.severity = suggestion
+dotnet_diagnostic.S1144.severity = suggestion
+dotnet_diagnostic.S3358.severity = suggestion
+dotnet_diagnostic.S4144.severity = suggestion
+
+dotnet_diagnostic.S100.severity = silent
+dotnet_diagnostic.S1133.severity = silent
+dotnet_diagnostic.S1199.severity = silent
+dotnet_diagnostic.S2696.severity = silent
+dotnet_diagnostic.S4136.severity = silent
+
+[*.{tests,test}.cs]
+dotnet_diagnostic.S107.severity = silent
+dotnet_diagnostic.S138.severity = silent
+dotnet_diagnostic.S6608.severity = silent
+
+[server/tests/**.cs]
+dotnet_diagnostic.CA5350.severity = silent
+dotnet_diagnostic.CA5351.severity = silent
+dotnet_diagnostic.CA1806.severity = silent
+
+[server/src/CoreAlign.Application/Collaboration/**.cs]
+dotnet_diagnostic.S3928.severity = silent
+dotnet_diagnostic.CA2208.severity = silent
+
+[server/src/CoreAlign.Application/CustomerPortal/**.cs]
+dotnet_diagnostic.S3928.severity = silent
+dotnet_diagnostic.CA2208.severity = silent
+
+[server/src/CoreAlign.Application/Billing/**.cs]
+dotnet_diagnostic.S3928.severity = silent
+dotnet_diagnostic.CA2208.severity = silent
+
+[server/src/CoreAlign.Application/GlassEnclosure/**.cs]
+dotnet_diagnostic.S1854.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Payments/**.cs]
+dotnet_diagnostic.CA5350.severity = silent
+dotnet_diagnostic.CA5351.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Providers/Payment/**.cs]
+dotnet_diagnostic.CA5350.severity = silent
+dotnet_diagnostic.CA5351.severity = silent
+dotnet_diagnostic.CA1068.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Providers/EFatura/**.cs]
+dotnet_diagnostic.CA5350.severity = silent
+dotnet_diagnostic.CA5351.severity = silent
+dotnet_diagnostic.S2139.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Services/HibpPwnedPasswordsService.cs]
+dotnet_diagnostic.CA5350.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Persistence/DesignTimeDbContextFactory.cs]
+dotnet_diagnostic.S2068.severity = silent
+
+[server/src/CoreAlign.API/HostedServices/DemoDataSeeder.cs]
+dotnet_diagnostic.S2068.severity = silent
+
+[server/src/CoreAlign.API/Program.cs]
+dotnet_diagnostic.S2068.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Persistence/SoftDeleteQueryFilter.cs]
+dotnet_diagnostic.S3011.severity = silent
+
+[server/src/CoreAlign.Infrastructure/Warranty/**.cs]
+dotnet_diagnostic.S6562.severity = silent
