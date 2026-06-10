@@ -5,6 +5,7 @@ using CoreAlign.Application.Payments.DTOs;
 using CoreAlign.Application.Payments.Mapping;
 using CoreAlign.Application.Payments.Queries;
 using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
 
@@ -17,8 +18,9 @@ public class GetPaymentByIdHandler : IRequestHandler<GetPaymentByIdQuery, Paymen
 
     public async Task<PaymentDto?> Handle(GetPaymentByIdQuery q, CancellationToken ct)
     {
-        var p = await _payments.GetWithApplicationsAsync(q.Id, ct);
-        return p is null ? null : PaymentMapper.ToDto(p);
+        var p = await _payments.GetWithApplicationsAsync(q.Id, ct)
+            ?? throw new PaymentNotFoundException();
+        return PaymentMapper.ToDto(p);
     }
 }
 
