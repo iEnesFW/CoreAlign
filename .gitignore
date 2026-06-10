@@ -18,6 +18,7 @@ dist-ssr
 !.vscode/launch.json
 !.vscode/tasks.json
 !.vscode/settings.json
+.vs/
 .idea
 .DS_Store
 *.suo
@@ -42,3 +43,12 @@ server/**/*.db-wal
 # Local env overrides
 .env.local
 .env.*.local
+
+# Playwright e2e
+e2e/.auth/
+playwright-report/
+test-results/
+e2e/playwright-report/
+e2e/test-results/
+blob-report/
+.playwright/
