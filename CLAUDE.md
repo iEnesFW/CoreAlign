@@ -167,7 +167,7 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 - **Tablo:** `snake_case`, **çoğul** (`users`, `customer_ledger_entries`).
 - **Sütun:** `snake_case`. `*AtUtc` → `*_at_utc`. **PK:** `id` (Guid). **FK:** `<entity>_id`.
 - **Timestamp:** her tabloda `created_at_utc`, `updated_at_utc` (`timestamptz`); soft-delete varsa `deleted_at_utc` veya `is_deleted`.
-- **Index/constraint adı:** EF default + global snake*case dönüşümü; prefix'ler `ix*`, `pk*`, `fk*`, `ux*`, `ck*`. Configuration'da elle `ToTable(...)`veya`HasDatabaseName(...)`yazılmaz —`ApplySnakeCaseNaming()` convention üretir. Entity sınıfı PascalCase kalır.
+- **Index/constraint adı:** EF default convention global `snake_case` üretir; prefix örnekleri `ix`, `pk`, `fk`, `ux`, `ck`. Configuration'da elle isim verilmez (`ToTable`, `HasDatabaseName` çağrılmaz); `ApplySnakeCaseNaming()` halleder. Entity sınıfı PascalCase kalır.
 
 ### 4.2 Migrations & Governance
 
