@@ -181,6 +181,7 @@ public interface IVendorBankAccountRepository
 public interface IVendorLedgerRepository
 {
     Task AddAsync(VendorLedgerEntry entry, CancellationToken cancellationToken = default);
+    Task AcquireAppendLockAsync(Guid vendorId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<VendorLedgerEntry> Items, int Total)> SearchByVendorAsync(
         Guid vendorId,
         DateTime? fromUtc,

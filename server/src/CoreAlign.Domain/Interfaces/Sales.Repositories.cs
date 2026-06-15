@@ -419,6 +419,7 @@ public record PaymentSummaryAggregate(int Count, DateTime? LastPaymentAt, decima
 public interface ICustomerLedgerRepository
 {
     Task AddAsync(CustomerLedgerEntry entry, CancellationToken cancellationToken = default);
+    Task AcquireAppendLockAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<CustomerLedgerEntry> Items, int Total)> SearchByCustomerAsync(
         Guid customerId,
         DateTime? fromUtc,

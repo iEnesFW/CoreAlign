@@ -207,6 +207,13 @@ public class DocumentSequenceRepository : IDocumentSequenceRepository
 
     public async Task<string> ConsumeAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default)
     {
+        if (_context.Database.IsNpgsql())
+        {
+            var lockKey = $"docseq:{_context.CurrentTenantIdOrEmpty}:{(int)type}";
+            await _context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))", cancellationToken);
+        }
+
         var sequence = await _context.DocumentSequences.FirstOrDefaultAsync(d => d.Type == type, cancellationToken)
             ?? throw new InvalidOperationException($"Document sequence '{type}' is not seeded for current tenant.");
 

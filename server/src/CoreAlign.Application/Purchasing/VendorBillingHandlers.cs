@@ -64,6 +64,7 @@ internal static class VendorLedgerPoster
         string? description,
         CancellationToken ct)
     {
+        await ledger.AcquireAppendLockAsync(vendorId, ct);
         var last = await ledger.GetLastRunningBalanceAsync(vendorId, ct);
         var signed = entryType == LedgerEntryType.Credit ? Math.Abs(amount) : -Math.Abs(amount);
         var balance = Math.Round(last + signed, 4);
@@ -138,7 +139,7 @@ public class PostVendorBillHandler : IRequestHandler<PostVendorBillCommand, Vend
             JournalSourceType.VendorBill, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
             JournalEntryType.Mahsup, $"Tedarikçi faturası {bill.BillNumber}",
             VendorGLLines.Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.PurchaseOrderId is not null, reverse: false),
-            bill.Currency), ct);
+            bill.Currency, bill.ExchangeRate), ct);
         _bills.Update(bill);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);

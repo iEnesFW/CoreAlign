@@ -174,6 +174,14 @@ public class VendorLedgerRepository : IVendorLedgerRepository
     public async Task AddAsync(VendorLedgerEntry entry, CancellationToken ct = default) =>
         await _context.VendorLedgerEntries.AddAsync(entry, ct);
 
+    public async Task AcquireAppendLockAsync(Guid vendorId, CancellationToken cancellationToken = default)
+    {
+        if (!_context.Database.IsNpgsql()) return;
+        var key = $"ledger:vendor:{vendorId}";
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<VendorLedgerEntry> Items, int Total)> SearchByVendorAsync(
         Guid vendorId,
         DateTime? fromUtc,

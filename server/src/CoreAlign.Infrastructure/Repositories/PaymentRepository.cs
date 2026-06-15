@@ -133,6 +133,14 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
     public async Task AddAsync(CustomerLedgerEntry entry, CancellationToken cancellationToken = default) =>
         await _context.CustomerLedgerEntries.AddAsync(entry, cancellationToken);
 
+    public async Task AcquireAppendLockAsync(Guid customerId, CancellationToken cancellationToken = default)
+    {
+        if (!_context.Database.IsNpgsql()) return;
+        var key = $"ledger:customer:{customerId}";
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<CustomerLedgerEntry> Items, int Total)> SearchByCustomerAsync(
         Guid customerId,
         DateTime? fromUtc,

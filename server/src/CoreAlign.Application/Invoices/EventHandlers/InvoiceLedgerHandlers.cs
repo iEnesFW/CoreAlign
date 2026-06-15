@@ -23,6 +23,7 @@ internal static class LedgerPostingHelpers
         string? description,
         CancellationToken cancellationToken)
     {
+        await ledger.AcquireAppendLockAsync(customerId, cancellationToken);
         var lastBalance = await ledger.GetLastRunningBalanceAsync(customerId, cancellationToken);
         var signed = entryType == LedgerEntryType.Debit ? Math.Abs(amount) : -Math.Abs(amount);
         var entry = new CustomerLedgerEntry(
