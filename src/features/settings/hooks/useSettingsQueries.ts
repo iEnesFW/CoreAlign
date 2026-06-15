@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { settingsApi } from '../api/settingsApi';
 import type {
+  ConfigureDocumentSequenceRequest,
   CreateEmailTemplateRequest,
   SettingUpsertItem,
   UpdateCompanyProfileRequest,
@@ -100,5 +101,23 @@ export const useDeleteEmailTemplate = () => {
   return useMutation({
     mutationFn: (id: string) => settingsApi.deleteEmailTemplate(id),
     onSuccess: () => invalidate(qc),
+  });
+};
+
+const DOCUMENT_SEQUENCES_KEY = ['settings', 'document-sequences'] as const;
+
+export const useDocumentSequencesQuery = () =>
+  useQuery({
+    queryKey: DOCUMENT_SEQUENCES_KEY,
+    queryFn: () => settingsApi.getDocumentSequences(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+export const useConfigureDocumentSequence = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (request: ConfigureDocumentSequenceRequest) =>
+      settingsApi.configureDocumentSequence(request),
+    onSuccess: () => qc.invalidateQueries({ queryKey: DOCUMENT_SEQUENCES_KEY }),
   });
 };

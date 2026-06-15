@@ -33,6 +33,16 @@ public class JournalEntryNotFoundException : NotFoundException
     public JournalEntryNotFoundException(Guid id) : base($"Journal entry {id} not found.") { }
 }
 
+public class AccountingPeriodNotFoundException : NotFoundException
+{
+    public AccountingPeriodNotFoundException(Guid id) : base($"Accounting period {id} not found.") { }
+}
+
+public class CustomerProductPriceNotFoundException : NotFoundException
+{
+    public CustomerProductPriceNotFoundException(Guid id) : base($"Customer product price {id} not found.") { }
+}
+
 public class JournalEntryNotBalancedException : DomainException
 {
     public JournalEntryNotBalancedException(decimal totalDebit, decimal totalCredit)

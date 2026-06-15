@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 
 export interface CommandItem {
@@ -65,7 +66,7 @@ export const CommandPalette = ({ onClose, items, placeholder }: Props) => {
     }
   };
 
-  return (
+  const content = (
     <div
       className="fixed inset-0 z-[60] flex items-start justify-center bg-black/40 p-4 pt-[12vh]"
       onClick={onClose}
@@ -126,4 +127,7 @@ export const CommandPalette = ({ onClose, items, placeholder }: Props) => {
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(content, document.body);
 };

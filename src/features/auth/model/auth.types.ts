@@ -17,6 +17,7 @@ export interface UserProfile {
   lastName: string | null;
   avatarUrl: string | null;
   roles: string[];
+  preferredLocale?: string | null;
 }
 
 export interface LoginRequest {

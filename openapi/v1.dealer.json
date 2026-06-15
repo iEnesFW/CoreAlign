@@ -1,0 +1,1556 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "CoreAlign API",
+    "description": "Multi-tenant Turkish SaaS ERP HTTP API.",
+    "contact": {
+      "name": "CoreAlign Engineering",
+      "url": "https://corealign.app/contact",
+      "email": "engineering@corealign.app"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://corealign.app/license"
+    },
+    "version": "1.0.0+b8342793f98cab31c3ba3012944bdd05abd7369e"
+  },
+  "paths": {
+    "/api/v1/dealer-accounts": {
+      "get": {
+        "tags": ["DealerAccounts"],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerAccounts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CreateDealerAccountCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CreateDealerAccountCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CreateDealerAccountCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-accounts/{id}": {
+      "put": {
+        "tags": ["DealerAccounts"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerAccountCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerAccountCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerAccountCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-customer-links": {
+      "get": {
+        "tags": ["DealerCustomerLinks"],
+        "parameters": [
+          {
+            "name": "dealerAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerCustomerLinks"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.LinkDealerToCustomerCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.LinkDealerToCustomerCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.LinkDealerToCustomerCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-customer-links/{id}": {
+      "delete": {
+        "tags": ["DealerCustomerLinks"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "reason",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/dashboard": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/customers": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "approvalStatus",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerPortal"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.DealerPortal.CreateDealerOrderCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.DealerPortal.CreateDealerOrderCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.DealerPortal.CreateDealerOrderCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/revisions": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRequestRevisionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRequestRevisionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRequestRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/revisions/{revisionId}/approve": {
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/revisions/{revisionId}/reject": {
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRejectRevisionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRejectRevisionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.DealerRejectRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/revisions/{revisionId}/cancel": {
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/cancel": {
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.CancelDealerOrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.CancelDealerOrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.CancelDealerOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/catalog/products": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{orderId}/comments": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostDealerOrderCommentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostDealerOrderCommentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostDealerOrderCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/orders/{id}/pdf": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/invoices": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fromUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/invoices/{id}": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/invoices/{id}/pdf": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/commissions": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/CoreAlign.Domain.Enums.DealerCommissionStatus"
+            }
+          },
+          {
+            "name": "fromUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/commissions/summary": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/commissions/statement/pdf": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "fromUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "toUtc",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/profile": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-portal/customers/{id}/credit": {
+      "get": {
+        "tags": ["DealerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-users": {
+      "get": {
+        "tags": ["DealerUsers"],
+        "parameters": [
+          {
+            "name": "dealerAccountId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["DealerUsers"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.InviteDealerUserCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.InviteDealerUserCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.InviteDealerUserCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/dealer-users/{id}/status": {
+      "put": {
+        "tags": ["DealerUsers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerUserStatusCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerUserStatusCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.UpdateDealerUserStatusCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "tags": ["Notifications"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "tags": ["Notifications"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CoreAlign.API.Controllers.CancelDealerOrderRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.DealerRejectRevisionRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.DealerRequestRevisionRequest": {
+        "type": "object",
+        "properties": {
+          "proposedLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreAlign.Application.Orders.Revisions.RevisionLineInput"
+            }
+          },
+          "requestNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.PostDealerOrderCommentRequest": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.CreateDealerAccountCommand": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "primaryCustomerId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "legalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currentUserRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.DealerPortal.CreateDealerOrderCommand": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreAlign.Application.B2B.DealerPortal.DealerOrderLineInput"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "billingAddressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.DealerPortal.DealerOrderLineInput": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "lineNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.InviteDealerUserCommand": {
+        "type": "object",
+        "properties": {
+          "dealerAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "$ref": "#/components/schemas/CoreAlign.Domain.Enums.DealerMembershipRole"
+          },
+          "currentUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currentUserRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.LinkDealerToCustomerCommand": {
+        "type": "object",
+        "properties": {
+          "dealerAccountId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currentUserRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.UpdateDealerAccountCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string",
+            "nullable": true
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currentUserRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.UpdateDealerUserStatusCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CoreAlign.Domain.Enums.MembershipStatus"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "currentUserRoles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.Orders.Revisions.RevisionLineInput": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lineDiscountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "isTaxInclusive": {
+            "type": "boolean"
+          },
+          "withholdingRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Domain.Enums.DealerCommissionStatus": {
+        "enum": ["Accrued", "Paid", "Cancelled"],
+        "type": "string"
+      },
+      "CoreAlign.Domain.Enums.DealerMembershipRole": {
+        "enum": ["DealerOwner", "DealerStaff"],
+        "type": "string"
+      },
+      "CoreAlign.Domain.Enums.MembershipStatus": {
+        "enum": ["Active", "Suspended", "Archived"],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [{}],
+  "tags": [
+    {
+      "name": "Accounting"
+    },
+    {
+      "name": "Activity"
+    },
+    {
+      "name": "Audit"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Billing"
+    },
+    {
+      "name": "CatalogLinker"
+    },
+    {
+      "name": "Comments"
+    },
+    {
+      "name": "Consents"
+    },
+    {
+      "name": "CustomerLedger"
+    },
+    {
+      "name": "CustomerPortal"
+    },
+    {
+      "name": "Customers"
+    },
+    {
+      "name": "CustomerUsers"
+    },
+    {
+      "name": "Dashboard"
+    },
+    {
+      "name": "DealerAccounts"
+    },
+    {
+      "name": "DealerCustomerLinks"
+    },
+    {
+      "name": "DealerPortal"
+    },
+    {
+      "name": "DealerUsers"
+    },
+    {
+      "name": "DiscountRules"
+    },
+    {
+      "name": "Documents"
+    },
+    {
+      "name": "Feedback"
+    },
+    {
+      "name": "GlassEnclosureBomLinker"
+    },
+    {
+      "name": "GlassEnclosureCatalog"
+    },
+    {
+      "name": "GlassEnclosureProjects"
+    },
+    {
+      "name": "GlassFieldSurveys"
+    },
+    {
+      "name": "GlassShare"
+    },
+    {
+      "name": "GlassWorkOrderRevisions"
+    },
+    {
+      "name": "Imports"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Lookups"
+    },
+    {
+      "name": "MasterData"
+    },
+    {
+      "name": "Modules"
+    },
+    {
+      "name": "Notifications"
+    },
+    {
+      "name": "Orders"
+    },
+    {
+      "name": "OrderTemplates"
+    },
+    {
+      "name": "Payments"
+    },
+    {
+      "name": "PriceListItems"
+    },
+    {
+      "name": "Pricing"
+    },
+    {
+      "name": "Privacy"
+    },
+    {
+      "name": "Products"
+    },
+    {
+      "name": "PurchaseOrders"
+    },
+    {
+      "name": "Quotes"
+    },
+    {
+      "name": "Reports"
+    },
+    {
+      "name": "Returns"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Shipments"
+    },
+    {
+      "name": "Stock"
+    },
+    {
+      "name": "Tags"
+    },
+    {
+      "name": "TaxDeclarations"
+    },
+    {
+      "name": "TaxRules"
+    },
+    {
+      "name": "TenantProviderConfigs"
+    },
+    {
+      "name": "Tenants"
+    },
+    {
+      "name": "TenantUxSettings"
+    },
+    {
+      "name": "UserPreferences"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "VendorBills"
+    },
+    {
+      "name": "VendorPayments"
+    },
+    {
+      "name": "Vendors"
+    }
+  ]
+}

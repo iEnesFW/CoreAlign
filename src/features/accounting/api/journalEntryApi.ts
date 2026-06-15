@@ -59,4 +59,9 @@ export const journalEntryApi = {
     apiClient
       .get<ApiResponse<TrialBalanceReport>>('/accounting/trial-balance', { params })
       .then((r) => r.data),
+
+  bySource: (sourceDocumentId: string) =>
+    apiClient
+      .get<ApiResponse<JournalEntry[]>>(`${BASE}/by-source/${sourceDocumentId}`)
+      .then((r) => r.data),
 };

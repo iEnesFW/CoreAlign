@@ -41,6 +41,7 @@ public static class ProductMapper
         MaxStock = product.MaxStock,
         ReorderPoint = product.ReorderPoint,
         SafetyStock = product.SafetyStock,
+        ProcurementType = product.ProcurementType,
         LeadTimeDays = product.LeadTimeDays,
         WeightKg = product.WeightKg,
         WidthCm = product.WidthCm,

@@ -1,4 +1,5 @@
 using System.Text;
+using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Entities;
 
@@ -52,6 +53,17 @@ public class Tenant
     // ---------- Branding ----------
     public string? PrimaryColor { get; set; }
     public string? SecondaryColor { get; set; }
+
+    // ---------- Lifecycle / Admin profile ----------
+    public bool IsArchived { get; set; }
+    public DateTime? ArchivedAtUtc { get; set; }
+    public Guid? ArchivedByUserId { get; set; }
+
+    public UxComplexityMode? DefaultUxComplexityMode { get; set; }
+    public string? RequireTwoFactorForRoles { get; set; }
+
+    public string? DpoContactEmail { get; set; }
+    public string? DpoContactName { get; set; }
 
     public ICollection<User> Users { get; set; } = new List<User>();
 
@@ -127,6 +139,37 @@ public class Tenant
         PrimaryColor = primaryColor?.Trim();
         SecondaryColor = secondaryColor?.Trim();
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void Archive(Guid? archivedByUserId, DateTime nowUtc)
+    {
+        if (IsArchived) return;
+        IsArchived = true;
+        ArchivedAtUtc = nowUtc;
+        ArchivedByUserId = archivedByUserId;
+        IsActive = false;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void RestoreFromArchive(DateTime nowUtc)
+    {
+        if (!IsArchived) return;
+        IsArchived = false;
+        ArchivedAtUtc = null;
+        ArchivedByUserId = null;
+        IsActive = true;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void UpdateAdminProfile(string name, string slug, string? dpoContactName, string? dpoContactEmail, DateTime nowUtc)
+    {
+        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Tenant name is required.", nameof(name));
+        if (string.IsNullOrWhiteSpace(slug)) throw new ArgumentException("Tenant slug is required.", nameof(slug));
+        Name = name.Trim();
+        Slug = slug.Trim();
+        DpoContactName = string.IsNullOrWhiteSpace(dpoContactName) ? null : dpoContactName.Trim();
+        DpoContactEmail = string.IsNullOrWhiteSpace(dpoContactEmail) ? null : dpoContactEmail.Trim();
+        UpdatedAtUtc = nowUtc;
     }
 
     public static string GenerateSlug(string input)

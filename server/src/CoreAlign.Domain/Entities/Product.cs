@@ -52,6 +52,24 @@ public class Product : TenantEntity
     public decimal? DepthCm { get; private set; }
     public decimal? VolumeM3 { get; private set; }
 
+    public decimal? MinOrderQuantity { get; private set; }
+
+    public ProcurementType ProcurementType { get; private set; } = ProcurementType.Buy;
+    public LotSizingPolicy LotSizingPolicy { get; private set; } = LotSizingPolicy.MinMax;
+    public decimal FixedOrderQuantity { get; private set; }
+    public decimal OrderMultiple { get; private set; }
+    public decimal EoqAnnualDemand { get; private set; }
+    public decimal OrderingCost { get; private set; }
+    public decimal HoldingCostRate { get; private set; }
+    public decimal ServiceLevelTarget { get; private set; }
+
+    public AbcClass AbcClass { get; private set; } = AbcClass.Unclassified;
+
+    public Guid? WorkCenterId { get; private set; }
+    public decimal RunTimeMinutesPerUnit { get; private set; }
+
+    public Guid? PreferredSupplierId { get; private set; }
+
     public ProductStatus Status { get; private set; } = ProductStatus.Active;
     public DateTime? LaunchDate { get; private set; }
     public DateTime? EndOfLifeDate { get; private set; }
@@ -186,20 +204,6 @@ public class Product : TenantEntity
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
-    public void RecordPurchaseCost(decimal unitCost, decimal quantity)
-    {
-        if (quantity <= 0m) return;
-        LastPurchaseCost = unitCost;
-        var prevValue = AverageCost * StockQuantity;
-        var newValue = unitCost * quantity;
-        var totalQty = StockQuantity + quantity;
-        if (totalQty > 0m)
-        {
-            AverageCost = Math.Round((prevValue + newValue) / totalQty, 4);
-        }
-        UpdatedAtUtc = DateTime.UtcNow;
-    }
-
     public void ChangeStatus(ProductStatus status)
     {
         Status = status;
@@ -209,4 +213,87 @@ public class Product : TenantEntity
     public void Activate() => ChangeStatus(ProductStatus.Active);
 
     public void Deactivate() => ChangeStatus(ProductStatus.Discontinued);
+
+    public void SetMinOrderQuantity(decimal? value)
+    {
+        if (value is < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Minimum order quantity cannot be negative.");
+        }
+        MinOrderQuantity = value;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetPreferredSupplier(Guid? vendorId)
+    {
+        PreferredSupplierId = vendorId;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetProcurementType(ProcurementType procurementType)
+    {
+        ProcurementType = procurementType;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetAbcClass(AbcClass abcClass)
+    {
+        AbcClass = abcClass;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetRouting(Guid? workCenterId, decimal runTimeMinutesPerUnit)
+    {
+        if (runTimeMinutesPerUnit < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(runTimeMinutesPerUnit), "Run time minutes per unit cannot be negative.");
+        }
+        WorkCenterId = workCenterId;
+        RunTimeMinutesPerUnit = runTimeMinutesPerUnit;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetPlanningPolicy(
+        LotSizingPolicy lotSizingPolicy,
+        decimal fixedOrderQuantity,
+        decimal orderMultiple,
+        decimal eoqAnnualDemand,
+        decimal orderingCost,
+        decimal holdingCostRate,
+        decimal serviceLevelTarget)
+    {
+        if (fixedOrderQuantity < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(fixedOrderQuantity), "Fixed order quantity cannot be negative.");
+        }
+        if (orderMultiple < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(orderMultiple), "Order multiple cannot be negative.");
+        }
+        if (eoqAnnualDemand < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(eoqAnnualDemand), "Annual demand cannot be negative.");
+        }
+        if (orderingCost < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(orderingCost), "Ordering cost cannot be negative.");
+        }
+        if (holdingCostRate < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(holdingCostRate), "Holding cost rate cannot be negative.");
+        }
+        if (serviceLevelTarget is < 0m or >= 1m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(serviceLevelTarget), "Service level target must be within [0, 1).");
+        }
+
+        LotSizingPolicy = lotSizingPolicy;
+        FixedOrderQuantity = fixedOrderQuantity;
+        OrderMultiple = orderMultiple;
+        EoqAnnualDemand = eoqAnnualDemand;
+        OrderingCost = orderingCost;
+        HoldingCostRate = holdingCostRate;
+        ServiceLevelTarget = serviceLevelTarget;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
 }

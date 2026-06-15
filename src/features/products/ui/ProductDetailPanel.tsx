@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Boxes, Edit2, Package } from 'lucide-react';
+import { Activity, Boxes, Clock, Edit2, Package } from 'lucide-react';
 import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import {
   useProductQuery,
@@ -9,6 +9,7 @@ import {
 import { ProductComponentsTab } from '@/features/products/ui/ProductComponentsTab';
 import { StockByWarehouseTab } from '@/features/inventory/ui/StockByWarehouseTab';
 import { StockMovementsTab } from '@/features/inventory/ui/StockMovementsTab';
+import { AuditTimeline } from '@/widgets/AuditTimeline';
 import type {
   Product,
   StockTransaction,
@@ -21,7 +22,7 @@ interface Props {
   onEdit: (product: Product) => void;
 }
 
-type Tab = 'overview' | 'transactions' | 'warehouses' | 'movements' | 'rules';
+type Tab = 'overview' | 'transactions' | 'warehouses' | 'movements' | 'rules' | 'audit';
 
 const txnStyles: Record<StockTransactionType, string> = {
   Initial: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
@@ -79,6 +80,11 @@ export const ProductDetailPanel = ({ productId, onClose, onEdit }: Props) => {
       icon: <Activity size={12} />,
     },
     { id: 'rules', label: t('products.detail.tabs.rules'), icon: <Edit2 size={12} /> },
+    {
+      id: 'audit',
+      label: t('Common.AuditTab.Title', { defaultValue: 'Audit' }),
+      icon: <Clock size={12} />,
+    },
   ];
 
   return (
@@ -112,6 +118,9 @@ export const ProductDetailPanel = ({ productId, onClose, onEdit }: Props) => {
         )}
         {tab === 'movements' && product && <StockMovementsTab productId={product.id} />}
         {tab === 'rules' && productId && <ProductComponentsTab productId={productId} />}
+        {tab === 'audit' && productId && (
+          <AuditTimeline entityType="Product" entityId={productId} />
+        )}
       </div>
     </DetailPanel>
   );

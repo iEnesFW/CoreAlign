@@ -19,6 +19,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
     private readonly IUserSessionRepository _userSessionRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IUserMembershipService _userMembershipService;
+    private readonly ITwoFactorChallengeRepository _twoFactorChallengeRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<LoginCommandHandler> _logger;
 
@@ -32,6 +34,24 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         IJwtTokenService jwtTokenService,
         IUnitOfWork unitOfWork,
         ILogger<LoginCommandHandler> logger)
+        : this(userRepository, tenantRepository, refreshTokenRepository, loginAuditLogRepository,
+               userSessionRepository, passwordHasher, jwtTokenService,
+               null!, null!, unitOfWork, logger)
+    {
+    }
+
+    public LoginCommandHandler(
+        IUserRepository userRepository,
+        ITenantRepository tenantRepository,
+        IRefreshTokenRepository refreshTokenRepository,
+        ILoginAuditLogRepository loginAuditLogRepository,
+        IUserSessionRepository userSessionRepository,
+        IPasswordHasher passwordHasher,
+        IJwtTokenService jwtTokenService,
+        IUserMembershipService userMembershipService,
+        ITwoFactorChallengeRepository twoFactorChallengeRepository,
+        IUnitOfWork unitOfWork,
+        ILogger<LoginCommandHandler> logger)
     {
         _userRepository = userRepository;
         _tenantRepository = tenantRepository;
@@ -40,6 +60,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         _userSessionRepository = userSessionRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenService = jwtTokenService;
+        _userMembershipService = userMembershipService;
+        _twoFactorChallengeRepository = twoFactorChallengeRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -82,13 +104,49 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
             throw new EmailNotVerifiedException();
         }
 
-        user.RecordSuccessfulLogin();
-        _userRepository.Update(user);
-
         var tenant = await _tenantRepository.GetByIdAsync(user.TenantId, cancellationToken)
             ?? throw new UserNotFoundException();
 
         var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+
+        if (!user.IsTwoFactorEnabled && !string.IsNullOrWhiteSpace(tenant.RequireTwoFactorForRoles))
+        {
+            var requiredRoles = tenant.RequireTwoFactorForRoles
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (requiredRoles.Any(r => roles.Contains(r, StringComparer.OrdinalIgnoreCase)))
+            {
+                throw new TwoFactorRequiredException();
+            }
+        }
+
+        if (user.IsTwoFactorEnabled)
+        {
+            var challengeRaw = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
+            var challengeHash = _jwtTokenService.HashToken(challengeRaw);
+            var challenge = new TwoFactorChallenge(
+                user.TenantId,
+                user.Id,
+                challengeHash,
+                DateTime.UtcNow.AddMinutes(5),
+                request.IpAddress,
+                request.UserAgent);
+            await _twoFactorChallengeRepository.AddAsync(challenge, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return new AuthResponseDto
+            {
+                AccessToken = string.Empty,
+                RefreshToken = string.Empty,
+                ExpiresAt = challenge.ExpiresAtUtc,
+                RequiresTwoFactor = true,
+                TwoFactorChallengeToken = challengeRaw,
+                User = null
+            };
+        }
+
+        user.RecordSuccessfulLogin();
+        _userRepository.Update(user);
+
         var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.TenantId, user.Email, roles);
         var rawRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenHash = _jwtTokenService.HashToken(rawRefreshToken);
@@ -194,7 +252,8 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
             FirstName = user.FirstName,
             LastName = user.LastName,
             AvatarUrl = user.AvatarUrl,
-            Roles = roles
+            Roles = roles,
+            PreferredLocale = user.PreferredLocale
         };
     }
 }

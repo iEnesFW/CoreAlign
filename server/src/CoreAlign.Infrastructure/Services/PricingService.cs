@@ -1,4 +1,5 @@
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Entities.Pricing;
 using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Infrastructure.Services;
@@ -9,17 +10,33 @@ public class PricingService : IPricingService
     private readonly ICustomerRepository _customers;
     private readonly IPriceListRepository _priceLists;
     private readonly ICustomerProductPriceRepository _customerProductPrices;
+    private readonly IPricingDiscountRuleRepository? _discountRules;
+    private readonly ITaxRuleRepository? _taxRules;
+    private readonly ITaxRateRepository? _taxRates;
 
     public PricingService(
         IProductRepository products,
         ICustomerRepository customers,
         IPriceListRepository priceLists,
         ICustomerProductPriceRepository customerProductPrices)
+        : this(products, customers, priceLists, customerProductPrices, null, null, null) { }
+
+    public PricingService(
+        IProductRepository products,
+        ICustomerRepository customers,
+        IPriceListRepository priceLists,
+        ICustomerProductPriceRepository customerProductPrices,
+        IPricingDiscountRuleRepository? discountRules,
+        ITaxRuleRepository? taxRules,
+        ITaxRateRepository? taxRates)
     {
         _products = products;
         _customers = customers;
         _priceLists = priceLists;
         _customerProductPrices = customerProductPrices;
+        _discountRules = discountRules;
+        _taxRules = taxRules;
+        _taxRates = taxRates;
     }
 
     public async Task<PriceResolutionResult> ResolveAsync(PriceResolutionRequest request, CancellationToken cancellationToken = default)
@@ -103,5 +120,82 @@ public class PricingService : IPricingService
             results.Add(await ResolveAsync(req, cancellationToken));
         }
         return results;
+    }
+
+    public async Task<decimal?> ResolveMinQuantityAsync(Guid productId, Guid customerId, CancellationToken cancellationToken = default)
+    {
+        // Customer-specific override wins when it has an explicit MinOrderQuantityOverride.
+        var cppList = await _customerProductPrices.GetForCustomerAndProductAsync(customerId, productId, cancellationToken);
+        var override_ = cppList
+            .Where(p => p.IsCurrentlyValid(DateTime.UtcNow) && p.MinOrderQuantityOverride.HasValue)
+            .OrderByDescending(p => p.UpdatedAtUtc)
+            .FirstOrDefault();
+        if (override_ is not null) return override_.MinOrderQuantityOverride;
+
+        // Fall back to the product-level minimum.
+        var product = await _products.GetByIdAsync(productId, cancellationToken);
+        return product?.MinOrderQuantity;
+    }
+
+    public async Task<TaxResolutionResult> ResolveTaxAsync(TaxResolutionContext context, CancellationToken cancellationToken = default)
+    {
+        if (_taxRules is not null)
+        {
+            var rules = await _taxRules.ListActiveAtAsync(context.AsOfUtc, cancellationToken);
+            var matched = rules
+                .Where(r => r.MatchesContext(context.CustomerRegionCode, context.ProductClass, context.ProductCategoryId, context.ProductId, context.AsOfUtc))
+                .OrderByDescending(r => r.Priority)
+                .ThenByDescending(r => r.UpdatedAtUtc)
+                .FirstOrDefault();
+            if (matched is not null)
+            {
+                if (matched.RatePercent <= 0m && matched.FallbackTaxRateId.HasValue && _taxRates is not null)
+                {
+                    var fallback = await _taxRates.GetByIdAsync(matched.FallbackTaxRateId.Value, cancellationToken);
+                    if (fallback is not null)
+                    {
+                        return new TaxResolutionResult(fallback.RatePercent, matched.Id, matched.FallbackTaxRateId, $"TaxRule:{matched.Code}");
+                    }
+                }
+                return new TaxResolutionResult(matched.RatePercent, matched.Id, matched.FallbackTaxRateId, $"TaxRule:{matched.Code}");
+            }
+        }
+
+        var product = await _products.GetByIdAsync(context.ProductId, cancellationToken);
+        if (product?.TaxRateId is Guid trid && _taxRates is not null)
+        {
+            var rate = await _taxRates.GetByIdAsync(trid, cancellationToken);
+            if (rate is not null)
+            {
+                return new TaxResolutionResult(rate.RatePercent, null, trid, $"TaxRate:{rate.Code}");
+            }
+        }
+
+        return new TaxResolutionResult(0m, null, null, "None");
+    }
+
+    public async Task<DiscountResolutionResult> ResolveDiscountAsync(DiscountResolutionContext context, CancellationToken cancellationToken = default)
+    {
+        if (_discountRules is null)
+        {
+            return new DiscountResolutionResult(0m, 0m, null, null);
+        }
+
+        var rules = await _discountRules.ListActiveAtAsync(context.AsOfUtc, cancellationToken);
+        var match = rules
+            .Where(r => r.MatchesContext(context.CustomerGroupId, context.ProductCategoryId, context.ProductId, context.Quantity, context.AsOfUtc))
+            .OrderByDescending(r => r.Priority)
+            .ThenByDescending(r => r.UpdatedAtUtc)
+            .FirstOrDefault();
+        if (match is null)
+        {
+            return new DiscountResolutionResult(0m, 0m, null, null);
+        }
+
+        var amount = match.ApplyTo(context.LineSubtotal);
+        var percent = match.ValueType == DiscountValueType.Percent
+            ? match.Value
+            : (context.LineSubtotal > 0m ? Math.Round(amount * 100m / context.LineSubtotal, 4) : 0m);
+        return new DiscountResolutionResult(amount, percent, match.Id, match.Code);
     }
 }

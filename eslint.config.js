@@ -8,7 +8,16 @@ import prettierConfig from 'eslint-config-prettier';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules', 'server', 'coverage', '.vite', '.husky']),
+  globalIgnores([
+    'dist',
+    'node_modules',
+    'server',
+    'coverage',
+    '.vite',
+    '.husky',
+    'openapi',
+    '**/EMCM.Client.ts',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

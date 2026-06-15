@@ -1,6 +1,7 @@
 import { apiClient } from '@/shared/api/apiClient';
 import { cachedGet, invalidateHttpCache } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
+import type { Tag } from '@/features/tags/model/tag.types';
 import type {
   Customer,
   CreateCustomerInput,
@@ -113,4 +114,67 @@ export const customersApi = {
       invalidateHttpCache(CUSTOMERS_INVALIDATION);
       return r.data;
     }),
+
+  downloadStatement: (
+    customerId: string,
+    params: { from?: string | null; to?: string | null; format: 'pdf' | 'xlsx' },
+  ) =>
+    apiClient.get<Blob>(`${BASE}/${customerId}/statement`, {
+      params: {
+        from: params.from ?? undefined,
+        to: params.to ?? undefined,
+        format: params.format,
+      },
+      responseType: 'blob',
+    }),
+
+  listTags: (customerId: string) =>
+    cachedGet<ApiResponse<Tag[]>>(apiClient, `${BASE}/${customerId}/tags`),
+
+  attachTag: (customerId: string, tagId: string) =>
+    apiClient.post<void>(`${BASE}/${customerId}/tags/${tagId}`).then((r) => {
+      invalidateHttpCache(CUSTOMERS_INVALIDATION);
+      return r.data;
+    }),
+
+  detachTag: (customerId: string, tagId: string) =>
+    apiClient.delete<void>(`${BASE}/${customerId}/tags/${tagId}`).then((r) => {
+      invalidateHttpCache(CUSTOMERS_INVALIDATION);
+      return r.data;
+    }),
+
+  merge: (input: MergeCustomersInput) =>
+    apiClient.post<ApiResponse<MergeCustomersResult>>(`${BASE}/merge`, input).then((r) => {
+      invalidateHttpCache(CUSTOMERS_INVALIDATION);
+      return r.data;
+    }),
 };
+
+export interface MergeCustomersInput {
+  operationId: string;
+  sourceCustomerId: string;
+  targetCustomerId: string;
+  sourceUpdatedAtUtc: string;
+  targetUpdatedAtUtc: string;
+  notes?: string | null;
+}
+
+export interface MergeCustomersResult {
+  operationId: string;
+  sourceCustomerId: string;
+  targetCustomerId: string;
+  executedAtUtc: string;
+  ordersMoved: number;
+  invoicesMoved: number;
+  paymentsMoved: number;
+  addressesMoved: number;
+  contactsMoved: number;
+  commentsMoved: number;
+  ledgerEntriesMoved: number;
+  transactionsMoved: number;
+  tagLinksMoved: number;
+  dealerLinksMoved: number;
+  customerUsersMoved: number;
+  otherRecordsMoved: number;
+  replayedFromIdempotency: boolean;
+}

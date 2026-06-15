@@ -6,6 +6,7 @@ import type {
   CreateLotInput,
   IssueStockInput,
   Lot,
+  ProduceInput,
   ReceiveStockInput,
   StockAllocation,
   StockItem,
@@ -14,6 +15,8 @@ import type {
   StockReasonCategory,
   StockReasonCode,
   StockSummary,
+  StockTransferResult,
+  TransferStockInput,
   UpdateLotInput,
 } from '../model/inventory.types';
 
@@ -88,6 +91,18 @@ export const inventoryApi = {
 
   updateLot: (input: UpdateLotInput) =>
     apiClient.put<ApiResponse<Lot>>(`${BASE}/lots/${input.id}`, input).then((r) => {
+      invalidateHttpCache(INVALIDATION_PATTERNS);
+      return r.data;
+    }),
+
+  produce: (input: ProduceInput) =>
+    apiClient.post<ApiResponse<boolean>>(`${BASE}/produce`, input).then((r) => {
+      invalidateHttpCache(INVALIDATION_PATTERNS);
+      return r.data;
+    }),
+
+  transfer: (input: TransferStockInput) =>
+    apiClient.post<ApiResponse<StockTransferResult>>(`${BASE}/transfer`, input).then((r) => {
       invalidateHttpCache(INVALIDATION_PATTERNS);
       return r.data;
     }),

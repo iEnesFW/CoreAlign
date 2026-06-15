@@ -16,6 +16,8 @@ public class UnitOfWork : IUnitOfWork
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         => _context.SaveChangesAsync(cancellationToken);
 
+    public void ClearChangeTracker() => _context.ChangeTracker.Clear();
+
     public async Task<IUnitOfWorkTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_context.Database.CurrentTransaction is not null)

@@ -50,6 +50,15 @@ public class DocumentSequence : TenantEntity
         return $"{Prefix}-{CurrentYear:D4}-{number.ToString($"D{PadLength}")}";
     }
 
+    public void UpdateConfig(string prefix, int padLength, string? format, long? nextNumber)
+    {
+        if (!string.IsNullOrWhiteSpace(prefix)) Prefix = prefix.Trim();
+        if (padLength >= 1) PadLength = padLength;
+        Format = string.IsNullOrWhiteSpace(format) ? null : format.Trim();
+        if (nextNumber.HasValue && nextNumber.Value >= 1) NextNumber = nextNumber.Value;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void ResetForYear(int year, long startNumber = 1)
     {
         CurrentYear = year;

@@ -53,6 +53,49 @@ public class OrderCancellationStockEffectTests
     }
 
     [Fact]
+    public void Confirmed_order_is_cancellable()
+    {
+        var order = BuildOrder();
+        order.ChangeStatus(OrderStatus.Confirmed);
+
+        order.IsCancellable.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Cancelling_confirmed_order_via_cancel_restores_stock()
+    {
+        var order = BuildOrder();
+        order.ChangeStatus(OrderStatus.Confirmed);
+        order.ClearDomainEvents();
+
+        order.Cancel("customer changed mind");
+
+        order.Status.Should().Be(OrderStatus.Cancelled);
+        order.DomainEvents.OfType<OrderCancelledFromActiveEvent>().Should().ContainSingle();
+    }
+
+    [Fact]
+    public void Cancelling_confirmed_order_excludes_service_lines_from_restore_snapshot()
+    {
+        var order = new Order("ORD-1", CustomerId, DateTime.UtcNow, "USD") { Id = Guid.NewGuid(), TenantId = TenantId };
+        var stockLine = new OrderLine(ProductId, "SKU-A", "Widget", 10m, 5m) { Id = Guid.NewGuid(), TenantId = TenantId };
+        var serviceLine = new OrderLine(Guid.Empty, "SERVICE", "Installation labor", 1m, 100m, isService: true)
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId
+        };
+        order.ReplaceLines(new[] { stockLine, serviceLine });
+        order.ChangeStatus(OrderStatus.Confirmed);
+        order.ClearDomainEvents();
+
+        order.Cancel("test");
+
+        var restore = order.DomainEvents.OfType<OrderCancelledFromActiveEvent>().Single();
+        restore.Lines.Should().ContainSingle();
+        restore.Lines.Single().ProductId.Should().Be(ProductId);
+    }
+
+    [Fact]
     public void ChangeStatus_allocated_to_cancelled_yields_no_stock_effect()
     {
         var order = BuildOrder();

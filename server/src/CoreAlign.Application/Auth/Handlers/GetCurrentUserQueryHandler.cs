@@ -40,7 +40,8 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, U
             FirstName = user.FirstName,
             LastName = user.LastName,
             AvatarUrl = user.AvatarUrl,
-            Roles = roles
+            Roles = roles,
+            PreferredLocale = user.PreferredLocale
         };
     }
 }

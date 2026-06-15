@@ -3,6 +3,7 @@ using CoreAlign.Application.Accounting.DTOs;
 using CoreAlign.Application.Accounting.Mapping;
 using CoreAlign.Application.Accounting.Queries;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
 
@@ -34,7 +35,7 @@ public class ClosePeriodHandler : IRequestHandler<ClosePeriodCommand, Accounting
 
     public async Task<AccountingPeriodDto> Handle(ClosePeriodCommand c, CancellationToken ct)
     {
-        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new KeyNotFoundException("Period not found");
+        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new AccountingPeriodNotFoundException(c.Id);
         period.Close(c.ClosedByUserId ?? Guid.Empty, c.Notes);
         _periods.Update(period);
         await _uow.SaveChangesAsync(ct);
@@ -50,7 +51,7 @@ public class ReopenPeriodHandler : IRequestHandler<ReopenPeriodCommand, Accounti
 
     public async Task<AccountingPeriodDto> Handle(ReopenPeriodCommand c, CancellationToken ct)
     {
-        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new KeyNotFoundException("Period not found");
+        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new AccountingPeriodNotFoundException(c.Id);
         period.Reopen(c.ReopenedByUserId ?? Guid.Empty);
         _periods.Update(period);
         await _uow.SaveChangesAsync(ct);
@@ -66,7 +67,7 @@ public class LockPeriodHandler : IRequestHandler<LockPeriodCommand, AccountingPe
 
     public async Task<AccountingPeriodDto> Handle(LockPeriodCommand c, CancellationToken ct)
     {
-        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new KeyNotFoundException("Period not found");
+        var period = await _periods.GetByIdAsync(c.Id, ct) ?? throw new AccountingPeriodNotFoundException(c.Id);
         period.Lock(c.LockedByUserId ?? Guid.Empty);
         _periods.Update(period);
         await _uow.SaveChangesAsync(ct);
@@ -80,8 +81,9 @@ public class GetAccountingPeriodByIdHandler : IRequestHandler<GetAccountingPerio
     public GetAccountingPeriodByIdHandler(IAccountingPeriodRepository periods) => _periods = periods;
     public async Task<AccountingPeriodDto?> Handle(GetAccountingPeriodByIdQuery q, CancellationToken ct)
     {
-        var p = await _periods.GetByIdAsync(q.Id, ct);
-        return p is null ? null : AccountingMapper.ToDto(p);
+        var p = await _periods.GetByIdAsync(q.Id, ct)
+            ?? throw new AccountingPeriodNotFoundException(q.Id);
+        return AccountingMapper.ToDto(p);
     }
 }
 
@@ -119,7 +121,7 @@ public class UpdateCustomerProductPriceHandler : IRequestHandler<UpdateCustomerP
 
     public async Task<CustomerProductPriceDto> Handle(UpdateCustomerProductPriceCommand c, CancellationToken ct)
     {
-        var entity = await _repo.GetByIdAsync(c.Id, ct) ?? throw new KeyNotFoundException("CustomerProductPrice not found");
+        var entity = await _repo.GetByIdAsync(c.Id, ct) ?? throw new CustomerProductPriceNotFoundException(c.Id);
         entity.Update(c.Price, c.Currency, c.DiscountPercent, c.MinQuantity, c.MaxQuantity, c.ValidFromUtc, c.ValidUntilUtc, c.Notes, c.IsActive);
         _repo.Update(entity);
         await _uow.SaveChangesAsync(ct);

@@ -1,3 +1,4 @@
+using CoreAlign.Application.Common.Validation;
 using CoreAlign.Application.Customers.Commands;
 using FluentValidation;
 
@@ -19,6 +20,16 @@ public class CreateCustomerAddressCommandValidator : AbstractValidator<CreateCus
         RuleFor(x => x.State).MaximumLength(100).WithMessage("Validation.TooLong");
         RuleFor(x => x.PostalCode).MaximumLength(32).WithMessage("Validation.TooLong");
         RuleFor(x => x.Country).MaximumLength(100).WithMessage("Validation.TooLong");
+
+        RuleFor(x => x.PostalCode)
+            .Must((cmd, postal) => CountryAddressRules.IsValidPostalCode(cmd.Country, postal))
+            .When(x => CountryAddressRules.IsKnown(x.Country) && !string.IsNullOrWhiteSpace(x.PostalCode))
+            .WithMessage("Validation.PostalCodeInvalidForCountry");
+
+        RuleFor(x => x.State)
+            .NotEmpty()
+            .When(x => CountryAddressRules.RequiresState(x.Country))
+            .WithMessage("Validation.StateRequiredForCountry");
     }
 }
 
@@ -39,5 +50,15 @@ public class UpdateCustomerAddressCommandValidator : AbstractValidator<UpdateCus
         RuleFor(x => x.State).MaximumLength(100).WithMessage("Validation.TooLong");
         RuleFor(x => x.PostalCode).MaximumLength(32).WithMessage("Validation.TooLong");
         RuleFor(x => x.Country).MaximumLength(100).WithMessage("Validation.TooLong");
+
+        RuleFor(x => x.PostalCode)
+            .Must((cmd, postal) => CountryAddressRules.IsValidPostalCode(cmd.Country, postal))
+            .When(x => CountryAddressRules.IsKnown(x.Country) && !string.IsNullOrWhiteSpace(x.PostalCode))
+            .WithMessage("Validation.PostalCodeInvalidForCountry");
+
+        RuleFor(x => x.State)
+            .NotEmpty()
+            .When(x => CountryAddressRules.RequiresState(x.Country))
+            .WithMessage("Validation.StateRequiredForCountry");
     }
 }

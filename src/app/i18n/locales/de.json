@@ -1,0 +1,3753 @@
+{
+  "inventory": {
+    "summary": {
+      "totalOnHand": "Gesamtbestand",
+      "totalReserved": "Reserviert",
+      "totalAvailable": "Verfügbar",
+      "warehouses": "Lager",
+      "belowReorder": "Unter Meldebestand",
+      "avgCost": "Ø Kosten"
+    },
+    "byWarehouse": {
+      "title": "Bestand je Lager",
+      "adjust": "Bestand anpassen",
+      "empty": "Noch keine Bestandsdaten vorhanden."
+    },
+    "stockItem": {
+      "title": "Lagerartikel-Details",
+      "noReorderPoint": "Für diesen Lagerartikel ist kein Meldebestand konfiguriert.",
+      "reorderTitle": "Wiederbeschaffungsplanung",
+      "reorderPoint": "Meldebestand",
+      "minStock": "Sicherheitsbestand",
+      "suggestedQty": "Empfohlene Nachbestellung",
+      "lotInfo": "Chargeninformationen",
+      "lotNumber": "Charge",
+      "manufactureDate": "Hergestellt",
+      "expiryDate": "Verfällt",
+      "daysUntilExpiry": "Verbleibende Tage",
+      "lotBlocked": "Gesperrt",
+      "lotExpired": "Abgelaufen",
+      "expiringInDays": "Verfällt in {{count}}T",
+      "movementChart": "30-Tage-Aktivität",
+      "recentMovements": "Letzte Bewegungen"
+    },
+    "velocity": {
+      "title": "Umschlagshäufigkeit & ABC-Klasse",
+      "abcClass": "Klasse",
+      "avgDailyOut": "Ø/Tag Ausgang",
+      "avgDailyIn": "Ø/Tag Eingang",
+      "daysOfStock": "Reichweite (Tage)",
+      "daysOfStockSub": "bis Aufbrauch",
+      "netDelta": "Netto Δ (90T)",
+      "activeDays": "aktive Tage",
+      "windowDays": "letzte {{count}}T",
+      "abcA": "A — hoher Wert & hoher Umschlag. Auf Fehlbestände achten.",
+      "abcB": "B — mittlerer Wert oder Umschlag. Regelmäßige Prüfung.",
+      "abcC": "C — geringer Umschlag. EOQ-Anpassung prüfen.",
+      "abcD": "D — ruhend. Kandidat für Auslauf oder Räumung."
+    },
+    "fields": {
+      "warehouse": "Lager",
+      "onHand": "Bestand",
+      "reserved": "Reserviert",
+      "available": "Verfügbar",
+      "avgCost": "Ø Kosten",
+      "value": "Bestandswert",
+      "lastMovement": "Letzte Bewegung",
+      "lot": "Charge",
+      "bin": "Lagerplatz",
+      "reorderHint": "Meldebestand: {{value}}",
+      "product": "Produkt"
+    },
+    "adjust": {
+      "title": "Bestand anpassen",
+      "modeAdd": "Bestand hinzufügen",
+      "modeRemove": "Bestand entnehmen",
+      "warehouse": "Lager",
+      "warehousePlaceholder": "Lager auswählen…",
+      "lot": "Charge (optional)",
+      "lotHint": "Geben Sie die spezifische Charge an, falls zutreffend.",
+      "noLot": "— Keine Charge —",
+      "quantity": "Menge",
+      "unitCost": "Stückkosten",
+      "reasonCode": "Grund",
+      "reasonHint": "Erleichtert Prüfung und Reporting.",
+      "noReason": "— Kein Grund —",
+      "notes": "Notizen",
+      "notesPlaceholder": "Warum diese Anpassung? Referenznummern usw.",
+      "currentOnHand": "Aktueller Bestand",
+      "delta": "Änderung",
+      "projectedOnHand": "Nach Anpassung",
+      "negativeWarning": "Der Bestand würde unter null fallen. Wählen Sie eine kleinere Menge oder ein anderes Lager.",
+      "avgCostHint": "Aktuelle Ø-Kosten: {{current}} {{currency}}. Neue Zugänge fließen in den gleitenden Durchschnitt ein.",
+      "confirmAdd": "Bestand hinzufügen",
+      "confirmRemove": "Bestand entnehmen",
+      "success": "Bestand angepasst",
+      "errorFallback": "Bestandsanpassung fehlgeschlagen."
+    },
+    "movements": {
+      "filterByType": "Typ",
+      "allTypes": "Alle Typen",
+      "totalCount": "{{count}} Bewegungen",
+      "empty": "Noch keine Bewegungen vorhanden.",
+      "when": "Wann",
+      "type": "Typ",
+      "warehouse": "Lager",
+      "quantity": "Menge",
+      "onHandAfter": "Bestand danach",
+      "unitCost": "Stückkosten",
+      "source": "Quelle",
+      "reason": "Grund / Notizen",
+      "type.OpeningBalance": "Eröffnung",
+      "type.Receipt": "Wareneingang",
+      "type.Issue": "Warenausgang",
+      "type.TransferIn": "Umlagerung ein",
+      "type.TransferOut": "Umlagerung aus",
+      "type.AdjustmentPositive": "Korrektur +",
+      "type.AdjustmentNegative": "Korrektur −",
+      "type.CountVariancePositive": "Zählung +",
+      "type.CountVarianceNegative": "Zählung −",
+      "type.Reservation": "Reserviert",
+      "type.UnReservation": "Freigegeben"
+    },
+    "production": {
+      "invalid": "Geben Sie Produkt, Lager und eine gültige Menge ein.",
+      "noBom": "Für dieses Produkt liegt keine Stückliste (BOM) vor.",
+      "done": "Produktionsbuchung verarbeitet.",
+      "title": "Produktionsbeleg",
+      "product": "Zu produzierendes Produkt",
+      "warehouse": "Lager",
+      "quantity": "Produktionsmenge",
+      "notes": "Notizen",
+      "components": "Zu verbrauchende Komponenten (Stückliste)",
+      "component": "Komponente",
+      "perUnit": "Je Einheit",
+      "required": "Benötigt",
+      "selectProduct": "Wählen Sie zuerst ein Produkt.",
+      "produce": "Produzieren",
+      "action": "Produktion"
+    },
+    "voucher": {
+      "selectWarehouse": "Auswählen…",
+      "warehouseRequired": "Wählen Sie ein Lager.",
+      "toWarehouseRequired": "Wählen Sie ein abweichendes Ziellager.",
+      "linesRequired": "Fügen Sie mindestens eine gültige Position hinzu.",
+      "posted": "{{count}} Positionen verarbeitet.",
+      "partial": "{{ok}} Positionen verarbeitet, {{failed}} fehlgeschlagen.",
+      "fromWarehouse": "Quelllager",
+      "warehouse": "Lager",
+      "toWarehouse": "Ziellager",
+      "reference": "Belegnummer / Referenz",
+      "notes": "Notizen",
+      "product": "Produkt",
+      "counted": "Gezählt",
+      "quantity": "Menge",
+      "unitCost": "Stückkosten",
+      "onHand": "Bestand",
+      "addLine": "Position hinzufügen",
+      "post": "Beleg buchen"
+    },
+    "status": {
+      "warehouse": "Lager",
+      "allWarehouses": "Alle Lager",
+      "belowReorderOnly": "Nur unter Meldebestand",
+      "totalCount": "{{count}} Datensätze",
+      "empty": "Keine Bestandsdaten gefunden."
+    },
+    "warehouse": {
+      "created": "Lager angelegt.",
+      "updated": "Lager aktualisiert.",
+      "new": "Neues Lager",
+      "edit": "Lager bearbeiten",
+      "code": "Code",
+      "type": "Typ",
+      "name": "Name",
+      "address": "Adresse",
+      "city": "Stadt",
+      "country": "Land",
+      "phone": "Telefon",
+      "isDefault": "Standardlager",
+      "isActive": "Aktiv",
+      "deleteTitle": "Lager löschen",
+      "deleteConfirm": "{{name}} löschen?",
+      "deleted": "Lager gelöscht.",
+      "count": "{{count}} Lager",
+      "empty": "Noch keine Lager angelegt.",
+      "location": "Standort",
+      "status": "Status"
+    },
+    "page": {
+      "title": "Lagerverwaltung",
+      "subtitle": "Bestände, Mengen und alle Lager- und Warenbewegungen je Lager — alles auf einen Blick."
+    }
+  },
+  "Validation": {
+    "Required": "Dieses Feld ist erforderlich.",
+    "InvalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+    "EmailTooLong": "E-Mail-Adresse ist zu lang.",
+    "PasswordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    "PasswordMismatch": "Die Passwörter stimmen nicht überein.",
+    "PasswordNeedsUppercase": "Das Passwort muss mindestens einen Großbuchstaben enthalten.",
+    "PasswordNeedsLowercase": "Das Passwort muss mindestens einen Kleinbuchstaben enthalten.",
+    "PasswordNeedsDigit": "Das Passwort muss mindestens eine Ziffer enthalten.",
+    "PasswordNeedsSpecial": "Das Passwort muss mindestens ein Sonderzeichen enthalten.",
+    "UsernameTooShort": "Der Benutzername muss mindestens 3 Zeichen lang sein.",
+    "UsernameTooLong": "Der Benutzername darf 64 Zeichen nicht überschreiten.",
+    "UsernameInvalidChars": "Der Benutzername darf nur Buchstaben, Zahlen, Punkte, Bindestriche und Unterstriche enthalten.",
+    "OrganizationNameTooShort": "Der Organisationsname muss mindestens 2 Zeichen lang sein.",
+    "OrganizationNameTooLong": "Der Organisationsname darf 150 Zeichen nicht überschreiten.",
+    "NameTooShort": "Der Name muss mindestens 2 Zeichen lang sein.",
+    "NameTooLong": "Der Name ist zu lang.",
+    "TooLong": "Zu lang.",
+    "NonNegative": "Darf nicht negativ sein.",
+    "CurrencyLength": "Die Währung muss 3 Zeichen lang sein.",
+    "CurrencyFormat": "Verwenden Sie den ISO-Code in Großbuchstaben (z. B. EUR).",
+    "Positive": "Muss positiv sein.",
+    "AtLeastOneLine": "Fügen Sie mindestens eine Position hinzu.",
+    "PasswordMustDiffer": "Das neue Passwort muss sich vom aktuellen unterscheiden."
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sicherheit"
+    },
+    "fields": {
+      "firstName": "Vorname",
+      "firstNamePlaceholder": "Max",
+      "lastName": "Nachname",
+      "lastNamePlaceholder": "Mustermann",
+      "phoneNumber": "Telefon",
+      "phonePlaceholder": "+49 30 1234567",
+      "avatarUrl": "Avatar-URL"
+    },
+    "security": {
+      "note": "Nach der Passwortänderung werden Sie aus allen Sitzungen abgemeldet.",
+      "currentPassword": "Aktuelles Passwort",
+      "newPassword": "Neues Passwort",
+      "confirmPassword": "Neues Passwort bestätigen",
+      "submit": "Passwort ändern"
+    },
+    "toast": {
+      "profileUpdated": "Profil aktualisiert.",
+      "passwordChanged": "Passwort geändert. Bitte erneut anmelden."
+    }
+  },
+  "orders": {
+    "title": "Aufträge",
+    "subtitle": "Verkaufsaufträge verwalten.",
+    "searchPlaceholder": "Suche nach Nummer oder Kunde...",
+    "addNew": "Neuer Auftrag",
+    "empty": "Noch keine Aufträge vorhanden.",
+    "confirmDelete": "Auftrag {{number}} löschen?",
+    "status": {
+      "Draft": "Entwurf",
+      "Submitted": "Eingereicht",
+      "Approved": "Freigegeben",
+      "Allocated": "Zugewiesen",
+      "Picking": "Kommissionierung",
+      "Packed": "Verpackt",
+      "PartiallyShipped": "Teilweise versendet",
+      "Shipped": "Versendet",
+      "Delivered": "Geliefert",
+      "Closed": "Abgeschlossen",
+      "Cancelled": "Storniert",
+      "Returned": "Retourniert",
+      "Confirmed": "Bestätigt",
+      "changeHint": "Status ändern"
+    },
+    "shipmentStatus": {
+      "Draft": "Entwurf",
+      "Picked": "Kommissioniert",
+      "Packed": "Verpackt",
+      "Dispatched": "Unterwegs",
+      "Delivered": "Geliefert",
+      "Cancelled": "Storniert",
+      "Returned": "Retourniert"
+    },
+    "actions": {
+      "submit": "Einreichen",
+      "approve": "Freigeben",
+      "allocate": "Bestand zuweisen",
+      "cancel": "Stornieren",
+      "deliver": "Als geliefert markieren",
+      "close": "Auftrag abschließen",
+      "createShipment": "Lieferung anlegen",
+      "pickShipment": "Als kommissioniert markieren",
+      "packShipment": "Als verpackt markieren",
+      "dispatchShipment": "Versenden",
+      "deliverShipment": "Als geliefert markieren",
+      "cancelShipment": "Lieferung stornieren",
+      "generateInvoice": "Rechnung erzeugen",
+      "scrap": "Ausschuss erfassen"
+    },
+    "timeline": {
+      "title": "Statusverlauf",
+      "draftedAt": "Entwurf erstellt",
+      "submittedAt": "Eingereicht",
+      "approvedAt": "Freigegeben",
+      "cancelledAt": "Storniert",
+      "deliveredAt": "Geliefert"
+    },
+    "shipments": {
+      "title": "Lieferungen",
+      "empty": "Noch keine Lieferungen vorhanden.",
+      "carrier": "Spediteur",
+      "trackingNumber": "Sendungs-Nr.",
+      "trackingUrl": "Tracking-URL",
+      "shippingCost": "Versandkosten",
+      "receivedBy": "Empfangen von",
+      "createTitle": "Lieferung anlegen",
+      "selectLines": "Positionen und Mengen zum Versand auswählen",
+      "remaining": "Verbleibend: {{value}}"
+    },
+    "columns": {
+      "orderNumber": "Auftrags-Nr.",
+      "customer": "Kunde",
+      "orderDate": "Datum",
+      "status": "Status",
+      "total": "Gesamt",
+      "actions": "Aktionen"
+    },
+    "fields": {
+      "orderNumber": "Auftragsnummer",
+      "orderDate": "Auftragsdatum",
+      "customer": "Kunde",
+      "customerPlaceholder": "Kunden auswählen",
+      "status": "Status",
+      "currency": "Währung",
+      "total": "Gesamt",
+      "notes": "Notizen",
+      "notesPlaceholder": "Interne Notizen",
+      "lines": "Auftragspositionen",
+      "terms": "Konditionen",
+      "dueDate": "Fällig",
+      "requestedDelivery": "Wunschliefertermin",
+      "channel": "Vertriebskanal",
+      "type": "Auftragsart",
+      "source": "Quelle",
+      "exchangeRate": "Wechselkurs",
+      "promisedDelivery": "Zugesagter Liefertermin",
+      "paymentTerms": "Zahlungsbedingungen",
+      "priceList": "Preisliste",
+      "billingAddress": "Rechnungsadresse",
+      "shippingAddress": "Lieferadresse",
+      "headerDiscount": "Rabatt %",
+      "shippingCost": "Versandkosten",
+      "internalNotes": "Interne Notizen",
+      "customerNotes": "Kundennotizen",
+      "roundingAdjustment": "Rundung / Betragskorrektur"
+    },
+    "sections": {
+      "general": "Allgemein",
+      "commercial": "Kommerzielle Bedingungen",
+      "addresses": "Adressen",
+      "notes": "Notizen"
+    },
+    "type": {
+      "Standard": "Standard",
+      "Blanket": "Rahmenauftrag",
+      "Return": "Retoure",
+      "Sample": "Muster",
+      "Internal": "Intern"
+    },
+    "source": {
+      "Manual": "Manuell",
+      "Web": "Web",
+      "Api": "API",
+      "Edi": "EDI",
+      "Marketplace": "Marktplatz",
+      "Phone": "Telefon",
+      "InStore": "Vor Ort"
+    },
+    "summary": {
+      "subtotal": "Zwischensumme",
+      "lineDiscount": "Positionsrabatte",
+      "headerDiscount": "Auftragsrabatt",
+      "taxableTotal": "Steuerpflichtig",
+      "tax": "Umsatzsteuer",
+      "withholding": "Quellensteuer",
+      "shipping": "Versand",
+      "grandTotal": "Gesamtsumme",
+      "estimate": "Schätzung — endgültige Beträge werden beim Speichern berechnet",
+      "rounding": "Rundung"
+    },
+    "dueToday": "Heute fällig",
+    "dueIn": "Fällig in {{count}}T",
+    "overdueBy": "Überfällig {{count}}T",
+    "overdue": "Überfällig",
+    "lines": {
+      "add": "Position hinzufügen",
+      "product": "Produkt",
+      "productPlaceholder": "Produkt auswählen",
+      "quantity": "Menge",
+      "unitPrice": "Stückpreis",
+      "discountPercent": "Rabatt%",
+      "taxRate": "USt",
+      "taxRatePlaceholder": "Steuersatz",
+      "withholding": "QSt%",
+      "warehouse": "Lager",
+      "warehousePlaceholder": "Lager auswählen",
+      "lineNotes": "Positionsnotiz",
+      "lineTotal": "Positionssumme",
+      "none": "—"
+    },
+    "modal": {
+      "createTitle": "Neuer Auftrag",
+      "editTitle": "Auftrag bearbeiten"
+    },
+    "toast": {
+      "created": "Auftrag erstellt.",
+      "updated": "Auftrag aktualisiert.",
+      "deleted": "Auftrag gelöscht.",
+      "invoiceGenerated": "Rechnung erzeugt."
+    },
+    "confirmGenerateInvoice": "Rechnung für {{number}} erzeugen?",
+    "detail": {
+      "tabs": {
+        "overview": "Übersicht",
+        "lines": "Positionen",
+        "margin": "Marge",
+        "allocations": "Zuweisungen",
+        "customer": "Kunde",
+        "invoices": "Rechnungen",
+        "audit": "Prüfprotokoll",
+        "notes": "Notizen"
+      },
+      "metrics": {
+        "total": "Auftragssumme",
+        "lines": "Positionen",
+        "units": "Einheiten",
+        "shipped": "Versendet",
+        "invoiced": "Berechnet"
+      },
+      "billingAddress": "Rechnungsadresse",
+      "shippingAddress": "Lieferadresse",
+      "noBillingAddress": "Keine Rechnungsadresse.",
+      "noShippingAddress": "Keine Lieferadresse.",
+      "customerSnapshot": "Kunden-Übersicht",
+      "lineProgress": "Positionsfortschritt",
+      "lineProgressShipped": "Versendet",
+      "lineProgressInvoiced": "Berechnet",
+      "financial": {
+        "title": "Finanzielle Aufstellung",
+        "subtotal": "Zwischensumme",
+        "lineDiscount": "Positionsrabatte",
+        "headerDiscount": "Belegrabatt ({{pct}}%)",
+        "taxable": "Steuerpflichtiger Betrag",
+        "tax": "Umsatzsteuer",
+        "withholding": "Quellensteuer",
+        "shipping": "Versand",
+        "rounding": "Rundung",
+        "total": "Gesamt"
+      },
+      "noLines": "Keine Positionen in diesem Auftrag.",
+      "noNotes": "Keine Notizen zu diesem Auftrag.",
+      "noCustomer": "Kunde konnte nicht geladen werden.",
+      "noInvoices": "Aus diesem Auftrag wurden noch keine Rechnungen erzeugt."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    },
+    "margin": {
+      "lineTitle": "Marge je Position",
+      "unitCost": "Stückkosten",
+      "unitPrice": "Stückpreis",
+      "revenue": "Umsatz",
+      "cost": "Kosten",
+      "profit": "Gewinn",
+      "marginPct": "Marge %",
+      "markupShort": "Aufschlag",
+      "total": "Gesamt",
+      "partialCost": "Unvollständige Kostendaten",
+      "missingCostWarning": "Einige Positionen haben keine erfassten Kosten — angezeigte Margen berücksichtigen nur Positionen mit Kosten-Snapshots.",
+      "loss": "Verlust",
+      "thin": "Knapp",
+      "healthy": "Gesund"
+    },
+    "allocations": {
+      "empty": "Noch keine Bestandszuweisungen.",
+      "list": "Zuweisungen",
+      "byWarehouse": "Zugewiesen je Lager",
+      "totalAllocated": "Zugewiesen",
+      "consumed": "Verbraucht",
+      "remaining": "Verbleibend",
+      "released": "Freigegeben",
+      "remainingLabel": "verbleibend",
+      "status": {
+        "Active": "Aktiv",
+        "PartiallyConsumed": "Teilweise",
+        "Consumed": "Verbraucht",
+        "Released": "Freigegeben"
+      }
+    },
+    "audit": {
+      "title": "Prüfprotokoll",
+      "created": "Auftrag angelegt",
+      "submitted": "Zur Freigabe eingereicht",
+      "approved": "Freigegeben",
+      "delivered": "Geliefert",
+      "cancelled": "Storniert",
+      "updated": "Zuletzt aktualisiert",
+      "currentStatus": "Aktueller Status",
+      "lastUpdate": "Letzte Aktualisierung",
+      "deliveryDates": "Lieferzusagen",
+      "requestedDelivery": "Vom Kunden gewünscht",
+      "promisedDelivery": "Dem Kunden zugesagt",
+      "actualDelivery": "Tatsächliche Lieferung",
+      "dueDate": "Zahlung fällig"
+    },
+    "tabs": {
+      "info": "Allgemein",
+      "lines": "Positionen"
+    },
+    "emptyHint": "Legen Sie Ihren ersten Auftrag an, um die Vertriebskette zu starten.",
+    "scrap": {
+      "invalid": "Geben Sie Position, Lager und eine gültige Menge ein.",
+      "exceeds": "Ausschussmenge darf die verbleibende Menge nicht überschreiten ({{max}}).",
+      "done": "Ausschuss erfasst.",
+      "title": "Ausschuss erfassen",
+      "noLines": "Keine Positionen für die Ausschusserfassung verfügbar.",
+      "line": "Position",
+      "remaining": "Verbleibend",
+      "quantity": "Ausschussmenge",
+      "max": "Maximum",
+      "warehouse": "Lager",
+      "selectWarehouse": "Auswählen…",
+      "notes": "Ausschussgrund / Notizen",
+      "notesPlaceholder": "Z. B. Produktionsfehler, Beschädigung…",
+      "submit": "Ausschuss speichern"
+    },
+    "stats": {
+      "total": "Aufträge (Seite)",
+      "totalHint": "{{count}} von {{all}}",
+      "pageVolume": "Seitenvolumen",
+      "avg": "Ø",
+      "open": "Offene Pipeline",
+      "drafts": "Offene Entwürfe",
+      "draftsHint": "Einreichen oder verwerfen"
+    },
+    "eyebrow": "Vertrieb · Fulfillment",
+    "filter": {
+      "all": "Alle",
+      "open": "Offen",
+      "fulfilled": "Erfüllt",
+      "closed": "Abgeschlossen",
+      "cancelled": "Storniert",
+      "draftsOnly": "Nur Entwürfe",
+      "highValue": "Hoher Wert (≥1,5× Ø)"
+    },
+    "resultCountLabel": "Aufträge"
+  },
+  "invoices": {
+    "title": "Rechnungen",
+    "subtitle": "Ausgestellte Rechnungen und Zahlungen.",
+    "searchPlaceholder": "Suche nach Nummer oder Kunde...",
+    "empty": "Noch keine Rechnungen vorhanden.",
+    "confirmMarkPaid": "{{number}} als bezahlt markieren?",
+    "confirmCancel": "Rechnung {{number}} stornieren?",
+    "status": {
+      "Draft": "Entwurf",
+      "Issued": "Ausgestellt",
+      "Sent": "Versendet",
+      "PartiallyPaid": "Teilweise bezahlt",
+      "Paid": "Bezahlt",
+      "Overdue": "Überfällig",
+      "Void": "Ungültig",
+      "Cancelled": "Storniert",
+      "changeHint": "Status ändern"
+    },
+    "paymentStatus": {
+      "Draft": "Entwurf",
+      "Confirmed": "Bestätigt",
+      "PartiallyApplied": "Teilweise zugeordnet",
+      "FullyApplied": "Vollständig zugeordnet",
+      "Refunded": "Erstattet",
+      "Void": "Ungültig"
+    },
+    "paymentMethod": {
+      "Cash": "Bar",
+      "BankTransfer": "Überweisung",
+      "CreditCard": "Kreditkarte",
+      "DebitCard": "EC-Karte",
+      "Check": "Scheck",
+      "PromissoryNote": "Schuldschein",
+      "OnlineGateway": "Online-Zahlung",
+      "Other": "Sonstiges"
+    },
+    "columns": {
+      "invoiceNumber": "Rechnungs-Nr.",
+      "customer": "Kunde",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fälligkeitsdatum",
+      "status": "Status",
+      "total": "Gesamt",
+      "actions": "Aktionen"
+    },
+    "fields": {
+      "product": "Produkt",
+      "quantity": "Menge",
+      "unitPrice": "Stückpreis",
+      "lineTotal": "Positionssumme",
+      "total": "Gesamt",
+      "issueDate": "Rechnungsdatum",
+      "dueDate": "Fälligkeitsdatum",
+      "postingDate": "Buchungsdatum",
+      "type": "Typ",
+      "currency": "Währung",
+      "paidAt": "Bezahlt am",
+      "cancelledAt": "Storniert am",
+      "notes": "Notizen"
+    },
+    "type": {
+      "SalesInvoice": "Ausgangsrechnung",
+      "ProForma": "Proformarechnung",
+      "CreditNote": "Gutschrift",
+      "DebitNote": "Lastschrift",
+      "Advance": "Anzahlung"
+    },
+    "dueSoon": "Bald fällig",
+    "detail": {
+      "title": "Rechnung",
+      "tabs": {
+        "overview": "Übersicht",
+        "lines": "Positionen",
+        "payments": "Zahlungen",
+        "ledger": "Buchhaltung & Mahnwesen",
+        "activity": "Aktivität",
+        "notes": "Notizen"
+      },
+      "metrics": {
+        "lines": "Positionen",
+        "paid": "Bezahlt",
+        "due": "Offen",
+        "totalInvoice": "Rechnungssumme"
+      },
+      "linkedOrder": "Ursprungsauftrag",
+      "paymentProgress": "Zahlungsfortschritt",
+      "paymentsApplied": "Zugeordnete Zahlungen",
+      "noPayments": "Noch keine Zahlungen zugeordnet.",
+      "taxBreakdown": "Steueraufstellung",
+      "tax": {
+        "rate": "Satz",
+        "base": "Basis",
+        "amount": "Betrag"
+      },
+      "eInvoice": "E-Rechnung",
+      "eInvoiceUuid": "E-Rechnungs-UUID",
+      "eInvoiceStatus": "Status",
+      "postedToLedger": "In Buchhaltung gebucht",
+      "issuedAt": "Ausgestellt am",
+      "noNotes": "Keine Notizen zu dieser Rechnung.",
+      "activity": {
+        "created": "Erstellt",
+        "issued": "Ausgestellt",
+        "paid": "Bezahlt",
+        "cancelled": "Storniert"
+      }
+    },
+    "actions": {
+      "markPaid": "Als bezahlt markieren",
+      "cancel": "Rechnung stornieren",
+      "print": "Rechnung drucken",
+      "recordPayment": "Zahlung erfassen"
+    },
+    "ledger": {
+      "glTitle": "Buchungsvorschau Hauptbuch",
+      "posted": "Gebucht",
+      "notPosted": "Ausstehend",
+      "account": "Konto",
+      "description": "Bezeichnung",
+      "debit": "Soll",
+      "credit": "Haben",
+      "total": "Gesamt",
+      "balanced": "Ausgeglichen",
+      "unbalanced": "Nicht ausgeglichen",
+      "linkedDocs": "Verknüpfte Belege",
+      "creditNote": "Gutschrift",
+      "originInvoice": "Ursprungsrechnung",
+      "dunning": {
+        "title": "Mahnstatus",
+        "clear": "Unauffällig",
+        "level1": "Zahlungserinnerung",
+        "level2": "Zweite Mahnung",
+        "level3": "Letzte Mahnung",
+        "daysOverdue": "Tage überfällig",
+        "recommended": "Empfohlene Maßnahme",
+        "noActionNeeded": "Keine Maßnahme erforderlich",
+        "action1": "Zahlungserinnerung senden",
+        "action2": "Zweite Mahnung senden",
+        "action3": "An Inkasso übergeben",
+        "guidance": "Die Rechnung ist seit {{count}} Tagen überfällig. Erwägen Sie eine Mahnung oder die Übergabe an das Inkasso."
+      },
+      "reminders": {
+        "title": "Mahnhistorie",
+        "first": "Rechnung versendet",
+        "followUp": "Erinnerung",
+        "final": "Letzte Mahnung",
+        "suggested": "Jetzt empfohlen",
+        "escalate": "An Inkasso eskalieren",
+        "note": "Ausgehende Mahnungen sind eingereiht — verbinden Sie SMTP, um den Versand zu aktivieren.",
+        "sendCta": "Mahnung senden"
+      }
+    },
+    "print": {
+      "button": "Drucken",
+      "heading": "RECHNUNG",
+      "from": "Ausgestellt von",
+      "billTo": "Rechnung an",
+      "footer": "Vielen Dank für Ihren Auftrag."
+    },
+    "toast": {
+      "paid": "Rechnung als bezahlt markiert.",
+      "cancelled": "Rechnung storniert."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    },
+    "emptyHint": "Erzeugen Sie Rechnungen aus Aufträgen oder legen Sie manuell neue an.",
+    "stats": {
+      "total": "Rechnungen (Seite)",
+      "totalHint": "{{count}} von {{all}}",
+      "outstanding": "Ausstehend",
+      "openInvoices": "offen",
+      "collected": "Eingenommen (Seite)",
+      "overdue": "Überfällig",
+      "overdueHint": "überfällige Rechnungen"
+    },
+    "eyebrow": "Finanzen · Debitoren",
+    "filter": {
+      "all": "Alle",
+      "open": "Offen",
+      "overdue": "Überfällig",
+      "paid": "Bezahlt",
+      "cancelled": "Storniert",
+      "dueSoon": "Fällig in ≤7T"
+    },
+    "resultCountLabel": "Rechnungen"
+  },
+  "products": {
+    "tabs": {
+      "general": "Allgemein",
+      "pricing": "Preise & Bestand",
+      "logistics": "Logistik & Lebenszyklus"
+    },
+    "title": "Produkte",
+    "subtitle": "Verwalten Sie Ihren Produktkatalog.",
+    "searchPlaceholder": "Suche nach SKU, Name, Beschreibung...",
+    "addNew": "Neues Produkt",
+    "empty": "Noch keine Produkte vorhanden.",
+    "confirmDelete": "\"{{name}}\" löschen?",
+    "columns": {
+      "sku": "SKU",
+      "name": "Name",
+      "price": "Preis",
+      "stock": "Bestand",
+      "status": "Status",
+      "actions": "Aktionen"
+    },
+    "fields": {
+      "sku": "SKU",
+      "skuPlaceholder": "PRD-001",
+      "name": "Name",
+      "namePlaceholder": "Produktname",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Interne Beschreibung",
+      "unit": "Einheit",
+      "unitPlaceholder": "Stk, kg, Stunde",
+      "price": "Preis",
+      "currency": "Währung",
+      "stockQuantity": "Bestand",
+      "isActive": "Aktiv",
+      "shortDescription": "Kurzbeschreibung",
+      "barcode": "Barcode",
+      "mpn": "Herstellernummer",
+      "brand": "Marke",
+      "category": "Kategorie",
+      "status": "Status",
+      "baseUom": "Basiseinheit",
+      "salesUom": "Verkaufseinheit",
+      "purchaseUom": "Einkaufseinheit",
+      "listPrice": "Listenpreis",
+      "minSellingPrice": "Min. Verkaufspreis",
+      "standardCost": "Standardkosten",
+      "taxRate": "Steuersatz",
+      "taxInclusive": "Preis inkl. Steuer",
+      "isStockTracked": "Bestand verfolgen",
+      "isLotTracked": "Chargen verfolgen",
+      "isSerialTracked": "Seriennummern verfolgen",
+      "minStock": "Mindestbestand",
+      "maxStock": "Höchstbestand",
+      "reorderPoint": "Meldebestand",
+      "safetyStock": "Sicherheitsbestand",
+      "leadTimeDays": "Lieferzeit (Tage)",
+      "weightKg": "Gewicht (kg)",
+      "widthCm": "Breite (cm)",
+      "heightCm": "Höhe (cm)",
+      "depthCm": "Tiefe (cm)",
+      "volumeM3": "Volumen (m³)",
+      "launchDate": "Markteinführung",
+      "endOfLifeDate": "Auslaufdatum",
+      "none": "—"
+    },
+    "sections": {
+      "identity": "Identifikation",
+      "uom": "Einheiten",
+      "pricing": "Preise",
+      "stock": "Bestand",
+      "logistics": "Logistik & Abmessungen",
+      "lifecycle": "Lebenszyklus"
+    },
+    "status": {
+      "Active": "Aktiv",
+      "New": "Neu",
+      "Discontinued": "Ausgelaufen",
+      "EndOfLife": "Lebenszyklusende"
+    },
+    "modal": {
+      "createTitle": "Neues Produkt",
+      "editTitle": "Produkt bearbeiten"
+    },
+    "toast": {
+      "created": "Produkt angelegt.",
+      "updated": "Produkt aktualisiert.",
+      "deleted": "Produkt gelöscht."
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Übersicht",
+        "transactions": "Buchungen",
+        "warehouses": "Lager",
+        "rules": "Regeln",
+        "movements": "Bewegungen"
+      },
+      "txnType": {
+        "Initial": "Anfangsbestand",
+        "Sale": "Verkauf",
+        "SaleCancelled": "Verkauf storniert",
+        "Restock": "Wiederbeschaffung",
+        "Adjustment": "Korrektur"
+      },
+      "balance": "Saldo",
+      "noTransactions": "Noch keine Bestandsbuchungen vorhanden.",
+      "warehousesComingSoon": "Die Lageraufschlüsselung folgt in einer kommenden Version.",
+      "rulesComingSoon": "Stücklistenregeln (BOM) folgen in Kürze.",
+      "components": {
+        "intro": "Stücklistenartikel: Listen Sie Unterprodukte auf, die dieses Produkt verbraucht. Beim Verkauf werden die aufgeführten Komponenten anstelle des Hauptprodukts vom Bestand abgezogen.",
+        "addNew": "Komponente hinzufügen",
+        "empty": "Keine Komponenten definiert. Dieses Produkt verhält sich wie ein eigenständiger Artikel.",
+        "confirmDelete": "Komponente \"{{name}}\" entfernen?",
+        "toast": {
+          "added": "Komponente hinzugefügt.",
+          "updated": "Komponente aktualisiert.",
+          "removed": "Komponente entfernt."
+        },
+        "fields": {
+          "component": "Komponente",
+          "componentPlaceholder": "Komponentenprodukt auswählen...",
+          "quantity": "Menge je Übereinheit",
+          "notes": "Notizen"
+        }
+      }
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    },
+    "emptyHint": "Legen Sie Ihr erstes Produkt an, um Aufträge, Rechnungen und Bestandsführung zu ermöglichen.",
+    "reorderAt": "Meldebestand",
+    "outOfStock": "Nicht vorrätig",
+    "lowStock": "Niedriger Bestand",
+    "stats": {
+      "total": "Produkte (Seite)",
+      "totalHint": "{{count}} von {{all}}",
+      "inventoryValue": "Bestandswert",
+      "inventoryHint": "Zu Ø-Kosten",
+      "lowStock": "Niedriger Bestand",
+      "lowStockHint": "Tippen zum Filtern",
+      "outOfStock": "Nicht vorrätig",
+      "outOfStockHint": "Nachbestellung erforderlich"
+    },
+    "eyebrow": "Lager · Katalog",
+    "filter": {
+      "all": "Alle",
+      "tracked": "Bestandsgeführt",
+      "lowStock": "Niedriger Bestand",
+      "outOfStock": "Nicht vorrätig"
+    },
+    "statusLabel": {
+      "Active": "Aktiv",
+      "New": "Neu",
+      "Discontinued": "Ausgelaufen",
+      "EndOfLife": "EoL"
+    },
+    "resultCountLabel": "Produkte"
+  },
+  "errorState": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Die Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "retry": "Erneut versuchen"
+  },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "empty": "Alles erledigt",
+    "viewAll": "Alle Aktivitäten anzeigen"
+  },
+  "collab": {
+    "comments": {
+      "tab": "Kommentare",
+      "title": "Kommentare",
+      "open": "Kommentare öffnen",
+      "count_one": "{{count}} Kommentar",
+      "count_other": "{{count}} Kommentare",
+      "empty": "Noch keine Kommentare. Starten Sie die Unterhaltung.",
+      "placeholder": "Kommentar schreiben…",
+      "replyPlaceholder": "Antwort schreiben…",
+      "submit": "Senden",
+      "reply": "Antworten",
+      "edited": "bearbeitet",
+      "deleted": "Kommentar gelöscht",
+      "shortcutHint": "Strg/⌘ + Enter zum Senden"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "empty": "Alles erledigt",
+      "markAllRead": "Alle als gelesen markieren"
+    },
+    "entity": {
+      "order": "Auftrag",
+      "vendorBill": "Eingangsrechnung",
+      "shipment": "Lieferung",
+      "subscriptionOrder": "Abonnement"
+    }
+  },
+  "common": {
+    "unsaved": {
+      "title": "Ungespeicherte Änderungen",
+      "message": "Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?",
+      "discard": "Änderungen verwerfen",
+      "keep": "Weiter bearbeiten"
+    },
+    "add_new": "Neu hinzufügen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "search": "Suchen",
+    "filter": "Filter",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "loading": "Wird geladen...",
+    "success": "Erfolg",
+    "error": "Fehler",
+    "warning": "Warnung",
+    "info": "Information",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "pagination": "Seite {{page}} von {{totalPages}}",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "confirm": "Bestätigen",
+    "confirmDelete": "Löschen",
+    "view": "Ansehen",
+    "back": "Zurück",
+    "details": "Details",
+    "close": "Schließen",
+    "saving": "Wird übermittelt…",
+    "created": "Erstellt.",
+    "updated": "Aktualisiert.",
+    "deleted": "Gelöscht.",
+    "new": "Neu",
+    "deactivate": "Deaktivieren",
+    "activate": "Aktivieren",
+    "exportCsv": "CSV exportieren",
+    "export": "Exportieren",
+    "unknown": "Unbekannt"
+  },
+  "activity": {
+    "title": "Aktivitätsprotokoll",
+    "subtitle": "Alle Schreibvorgänge in Ihrem Mandanten.",
+    "empty": "Noch keine Aktivität erfasst.",
+    "columns": {
+      "time": "Zeit",
+      "method": "Methode",
+      "path": "Pfad",
+      "status": "Status",
+      "duration": "Dauer",
+      "user": "Benutzer",
+      "ip": "IP"
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "customers": {
+    "tabs": {
+      "general": "Allgemein",
+      "commercial": "Kommerzielle Bedingungen",
+      "notes": "Notizen"
+    },
+    "title": "Kunden",
+    "subtitle": "Kundendaten verwalten.",
+    "eyebrow": "Vertrieb · CRM",
+    "emptyHint": "Legen Sie Ihren ersten Kunden an, um Aufträge, Rechnungen und Zahlungen zu verfolgen.",
+    "resultCountLabel": "Ergebnisse",
+    "statusLabel": {
+      "Active": "Aktiv",
+      "Blocked": "Gesperrt",
+      "Archived": "Archiviert"
+    },
+    "stats": {
+      "total": "Kunden gesamt",
+      "outstanding": "Ausstehend (Seite)",
+      "outstandingHint": "Über {{count}} Kunden",
+      "overdue": "Überfällige Forderungen",
+      "overdueHint": "{{count}} Kunden",
+      "atRisk": "Kreditrisiko (≥80%)",
+      "atRiskHint": "Tippen zum Filtern"
+    },
+    "filter": {
+      "all": "Alle",
+      "overdue": "Mit Überfälligkeit",
+      "atRisk": "Kreditlimit ≥ 80%",
+      "statusAria": "Nach Status filtern"
+    },
+    "analytics": {
+      "noData": "Noch nicht genügend Daten für die Analyse.",
+      "lifetimeValue": "Customer Lifetime Value",
+      "totalPaid": "Insgesamt bezahlt",
+      "avgOrderValue": "Ø Auftrag",
+      "relationshipMonths": "Aktive Monate",
+      "paymentsLabel": "Zahlungen",
+      "paymentBehavior": "Zahlungsverhalten",
+      "onTimePayments": "Pünktlich",
+      "latePayments": "Verspätet",
+      "avgDaysToPay": "Ø Tage bis Zahlung",
+      "daysShort": "T",
+      "aheadOfDue": "vor Fälligkeit",
+      "pastDue": "nach Fälligkeit",
+      "monthlyRevenue": "Umsatzverlauf ({{count}} Monate)",
+      "avgMonth": "Ø/Monat",
+      "peakMonth": "Spitzenmonat",
+      "totalPeriod": "Gesamt",
+      "invoicesPeriod": "Rechnungen",
+      "topProducts": "Top-Produkte nach Umsatz",
+      "orderStatusBreakdown": "Aufträge nach Status",
+      "invoiceStatusBreakdown": "Rechnungen nach Status",
+      "tier": {
+        "excellent": "Ausgezeichnet",
+        "fair": "Mittelmäßig",
+        "poor": "Schlecht"
+      }
+    },
+    "detail": {
+      "subtitle": "Kundenübersicht, Aufträge und Rechnungen.",
+      "tabs": {
+        "overview": "Übersicht",
+        "analytics": "Analyse",
+        "transactions": "Buchungen",
+        "addresses": "Adressen",
+        "contacts": "Ansprechpartner",
+        "orders": "Aufträge",
+        "invoices": "Rechnungen",
+        "notes": "Notizen",
+        "mail": "E-Mail senden"
+      },
+      "metrics": {
+        "orders": "Aufträge",
+        "invoiced": "Rechnungsbetrag gesamt",
+        "paid": "Bezahlt gesamt",
+        "outstanding": "Ausstehend",
+        "invoiceCount": "Rechnungen",
+        "balance": "Saldo",
+        "creditLine": "Kreditlimit & Saldo",
+        "creditLimit": "Kreditlimit",
+        "available": "Verfügbar",
+        "creditUsed": "Kredit genutzt",
+        "overdue": "Überfällig",
+        "overLimit": "Über Limit"
+      },
+      "txnType": {
+        "InvoiceIssued": "Rechnung ausgestellt",
+        "Payment": "Zahlung",
+        "Refund": "Erstattung",
+        "Adjustment": "Korrektur"
+      },
+      "snapshot": "Übersicht",
+      "primaryAddress": "Hauptadresse",
+      "primaryContact": "Hauptansprechpartner",
+      "noPrimaryAddress": "Keine Hauptadresse festgelegt.",
+      "noPrimaryContact": "Kein Hauptansprechpartner festgelegt.",
+      "recentActivity": "Letzte Aktivität",
+      "noRecentActivity": "Keine aktuelle Aktivität.",
+      "blockedTitle": "Kunde ist gesperrt",
+      "overdueWarning": "Überfällige Forderungen: {{amount}}",
+      "actions": {
+        "newOrder": "Neuer Auftrag",
+        "newInvoice": "Neue Rechnung",
+        "recordPayment": "Zahlung erfassen"
+      },
+      "meta": {
+        "group": "Gruppe",
+        "salesRep": "Vertriebsmitarbeiter",
+        "priceList": "Preisliste",
+        "paymentTerms": "Konditionen",
+        "netDays": "Netto {{count}}T"
+      },
+      "activity": {
+        "Order": "Auftrag",
+        "Invoice": "Rechnung",
+        "Payment": "Zahlung"
+      },
+      "noOrders": "Noch keine Aufträge für diesen Kunden.",
+      "noInvoices": "Noch keine Rechnungen für diesen Kunden.",
+      "noTransactions": "Noch keine Buchungen.",
+      "noNotes": "Keine Notizen für diesen Kunden.",
+      "mailNotice": "Ausgehende E-Mails sind noch nicht an einen SMTP-Anbieter angebunden — dies ist eine Vorschau.",
+      "mailTo": "An",
+      "mailSubject": "Betreff",
+      "mailBody": "Nachricht",
+      "mailSend": "Senden",
+      "mailComingSoon": "E-Mail \"{{subject}}\" eingereiht (nur Vorschau).",
+      "addresses": {
+        "addNew": "Adresse hinzufügen",
+        "empty": "Noch keine Adressen.",
+        "primary": "Hauptadresse",
+        "confirmDelete": "Adresse \"{{label}}\" löschen?",
+        "toast": {
+          "created": "Adresse hinzugefügt.",
+          "updated": "Adresse aktualisiert.",
+          "deleted": "Adresse gelöscht."
+        },
+        "fields": {
+          "label": "Bezeichnung",
+          "labelPlaceholder": "Rechnung, Lieferung...",
+          "line1": "Adresszeile 1",
+          "line2": "Adresszeile 2",
+          "city": "Stadt",
+          "state": "Bundesland / Region",
+          "postalCode": "Postleitzahl",
+          "country": "Land",
+          "isPrimary": "Als Hauptadresse festlegen"
+        }
+      },
+      "contacts": {
+        "addNew": "Ansprechpartner hinzufügen",
+        "empty": "Noch keine Ansprechpartner.",
+        "primary": "Hauptansprechpartner",
+        "confirmDelete": "Ansprechpartner \"{{name}}\" löschen?",
+        "toast": {
+          "created": "Ansprechpartner hinzugefügt.",
+          "updated": "Ansprechpartner aktualisiert.",
+          "deleted": "Ansprechpartner gelöscht."
+        },
+        "fields": {
+          "name": "Name",
+          "role": "Funktion",
+          "rolePlaceholder": "Buchhalter, Einkäufer...",
+          "email": "E-Mail",
+          "phone": "Telefon",
+          "notes": "Notizen",
+          "isPrimary": "Als Hauptansprechpartner festlegen"
+        }
+      }
+    },
+    "searchPlaceholder": "Suche nach Name, E-Mail, Telefon...",
+    "addNew": "Neuer Kunde",
+    "empty": "Noch keine Kunden vorhanden.",
+    "confirmDelete": "\"{{name}}\" löschen?",
+    "columns": {
+      "name": "Name",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "status": "Status",
+      "actions": "Aktionen",
+      "balance": "Saldo",
+      "creditUsage": "Kredit"
+    },
+    "fields": {
+      "name": "Name",
+      "namePlaceholder": "Mustermann GmbH",
+      "email": "E-Mail",
+      "emailPlaceholder": "buchhaltung@beispiel.de",
+      "phone": "Telefon",
+      "phonePlaceholder": "+49 30 1234567",
+      "taxNumber": "Steuernummer",
+      "taxNumberPlaceholder": "USt-IdNr. / Steuernummer",
+      "taxOffice": "Finanzamt",
+      "nationalId": "Personalausweisnr.",
+      "type": "Typ",
+      "code": "Code",
+      "legalName": "Firmenname",
+      "tradeName": "Handelsname",
+      "currency": "Währung",
+      "address": "Adresse",
+      "addressPlaceholder": "Straße, Stadt, Land",
+      "notes": "Notizen",
+      "notesPlaceholder": "Interne Notizen",
+      "isActive": "Aktiv"
+    },
+    "type": {
+      "Individual": "Privatperson",
+      "Business": "Unternehmen",
+      "Government": "Behörde"
+    },
+    "modal": {
+      "createTitle": "Neuer Kunde",
+      "editTitle": "Kunde bearbeiten"
+    },
+    "toast": {
+      "created": "Kunde angelegt.",
+      "updated": "Kunde aktualisiert.",
+      "deleted": "Kunde gelöscht."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} von {{total}}",
+      "previous": "Zurück",
+      "next": "Weiter"
+    }
+  },
+  "tags": {
+    "label": "Tags",
+    "manageTitle": "Kunden-Tags",
+    "selectPlaceholder": "Tags auswählen…",
+    "searchOrCreate": "Suchen oder erstellen…",
+    "createNamed": "\"{{name}}\" erstellen",
+    "empty": "Noch keine Tags.",
+    "preview": "Tag",
+    "deleteConfirm": "Tag \"{{name}}\" löschen?",
+    "fields": {
+      "name": "Name",
+      "color": "Farbe"
+    }
+  },
+  "reports": {
+    "title": "Berichte",
+    "subtitle": "Umsatz-, Kunden- und Fälligkeitsanalysen über den gesamten Mandanten.",
+    "bucket": {
+      "day": "Tag",
+      "week": "Woche",
+      "month": "Monat"
+    },
+    "kpi": {
+      "revenue": "Umsatz",
+      "collected": "Eingenommen",
+      "collectionRate": "Einzugsquote",
+      "invoices": "Rechnungen",
+      "activeCustomers": "Aktive Kunden"
+    },
+    "salesTrend": {
+      "title": "Umsatzverlauf",
+      "empty": "In diesem Zeitraum kein Umsatz erfasst."
+    },
+    "aging": {
+      "title": "Fälligkeitsanalyse",
+      "empty": "Keine offenen Forderungen.",
+      "byCustomer": "Top-Kunden nach offenem Betrag"
+    },
+    "topCustomers": {
+      "title": "Top-Kunden",
+      "empty": "Keine Kundenaktivität in diesem Zeitraum.",
+      "orders": "Aufträge",
+      "outstanding": "Ausstehend"
+    },
+    "topProducts": {
+      "title": "Top-Produkte",
+      "empty": "In diesem Zeitraum kein Produktumsatz.",
+      "product": "Produkt",
+      "sku": "SKU",
+      "quantity": "Verkaufte Menge",
+      "revenue": "Umsatz",
+      "invoiceCount": "Rechnungen"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Überblick über Ihr Unternehmen.",
+    "stats": {
+      "customers": "Kunden",
+      "products": "Produkte",
+      "orders": "Aufträge",
+      "totalSales": "Gesamtumsatz",
+      "outstandingReceivables": "Offene Forderungen",
+      "openInvoices": "offene Rechnungen",
+      "collectedThisMonth": "Eingenommen diesen Monat",
+      "totalInvoices": "Aktive Rechnungen",
+      "openAndIssued": "Offen oder versendet"
+    },
+    "lowStock": {
+      "title": "Niedriger Bestand",
+      "empty": "Alle Produkte sind ausreichend bevorratet."
+    },
+    "recentOrders": {
+      "title": "Aktuelle Aufträge",
+      "empty": "Noch keine Aufträge."
+    },
+    "salesTrend": {
+      "title": "Umsatz (letzte 30 Tage)",
+      "empty": "Noch kein Umsatz."
+    },
+    "statusChart": {
+      "title": "Aufträge nach Status",
+      "empty": "Noch keine Aufträge."
+    }
+  },
+  "table": {
+    "showing": "Zeige",
+    "to": "bis",
+    "of": "von",
+    "results": "Ergebnisse"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "users": "Benutzer",
+    "settings": "Einstellungen",
+    "analytics": "Analyse"
+  },
+  "auth": {
+    "sign_in": "Anmelden",
+    "sign_up": "Registrieren",
+    "sign_out": "Abmelden",
+    "profile": "Ihr Profil",
+    "settings": "Einstellungen",
+    "common": {
+      "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten."
+    },
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Geben Sie Ihre Zugangsdaten ein, um auf Ihr Konto zuzugreifen.",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "name@unternehmen.de",
+      "passwordLabel": "Passwort",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "submitButton": "Anmelden",
+      "noAccount": "Noch kein Konto?",
+      "registerLink": "Registrieren",
+      "success": {
+        "title": "Anmeldung erfolgreich",
+        "message": "Sie haben sich erfolgreich angemeldet."
+      },
+      "errors": {
+        "loginFailed": "Anmeldung fehlgeschlagen. Bitte erneut versuchen."
+      }
+    },
+    "register": {
+      "title": "Registrierung",
+      "subtitle": "Geben Sie Ihre Daten ein, um ein Konto zu erstellen.",
+      "organizationNameLabel": "Organisationsname",
+      "organizationNamePlaceholder": "Mustermann GmbH",
+      "firstNameLabel": "Vorname",
+      "firstNamePlaceholder": "Max",
+      "lastNameLabel": "Nachname",
+      "lastNamePlaceholder": "Mustermann",
+      "usernameLabel": "Benutzername",
+      "usernamePlaceholder": "maxmustermann",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "max@beispiel.de",
+      "passwordLabel": "Passwort",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Passwort bestätigen",
+      "confirmPasswordPlaceholder": "••••••••",
+      "termsText": "Ich stimme den",
+      "termsLinkText": "Allgemeinen Geschäftsbedingungen",
+      "submitButton": "Konto erstellen",
+      "haveAccountText": "Bereits ein Konto?",
+      "loginLinkText": "Anmelden",
+      "success": {
+        "title": "Registrierung erfolgreich",
+        "message": "Ihr Konto wurde erfolgreich erstellt.",
+        "backToLogin": "Zurück zur Anmeldung"
+      },
+      "errors": {
+        "passwordMismatch": "Die Passwörter stimmen nicht überein",
+        "registerFailed": "Registrierung fehlgeschlagen. Bitte erneut versuchen."
+      }
+    },
+    "forgotPassword": {
+      "title": "Passwort vergessen",
+      "subtitle": "Geben Sie Ihre E-Mail-Adresse ein, um einen Link zum Zurücksetzen des Passworts zu erhalten.",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "name@unternehmen.de",
+      "submitButton": "Link senden",
+      "backToLogin": "Zurück zur Anmeldung",
+      "success": {
+        "title": "Link versendet",
+        "message": "Prüfen Sie Ihren Posteingang auf den Link zum Zurücksetzen des Passworts.",
+        "backToLogin": "Zurück zur Anmeldung"
+      }
+    },
+    "resetPassword": {
+      "title": "Passwort zurücksetzen",
+      "subtitle": "Geben Sie unten Ihr neues Passwort ein.",
+      "passwordLabel": "Neues Passwort",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Neues Passwort bestätigen",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submitButton": "Passwort zurücksetzen",
+      "backToLogin": "Zurück zur Anmeldung",
+      "success": {
+        "title": "Passwort zurückgesetzt",
+        "message": "Ihr Passwort wurde erfolgreich zurückgesetzt.",
+        "backToLogin": "Zurück zur Anmeldung"
+      },
+      "errors": {
+        "invalidToken": "Ungültiger oder abgelaufener Token.",
+        "passwordMismatch": "Die Passwörter stimmen nicht überein.",
+        "passwordLength": "Das Passwort muss mindestens 8 Zeichen lang sein."
+      }
+    },
+    "verification": {
+      "title": "E-Mail-Verifizierung",
+      "subtitle": "Wir verifizieren Ihre E-Mail-Adresse...",
+      "success": {
+        "title": "Verifizierung erfolgreich",
+        "message": "Ihre E-Mail-Adresse wurde erfolgreich verifiziert.",
+        "loginButton": "Zur Anmeldung"
+      },
+      "errors": {
+        "invalidToken": "Ungültiger oder abgelaufener Verifizierungstoken.",
+        "verificationFailed": "Verifizierung fehlgeschlagen. Bitte erneut versuchen."
+      }
+    }
+  },
+  "accounting": {
+    "coa": {
+      "created": "Konto angelegt.",
+      "updated": "Konto aktualisiert.",
+      "newAccount": "Neues Konto",
+      "editAccount": "Konto bearbeiten",
+      "seedConfirm": "Der türkische Einheitskontenrahmen (TDHP) wird hinzugefügt. Fortfahren?",
+      "seedDone": "{{count}} Konto/Konten hinzugefügt.",
+      "deleteConfirm": "{{code}} - {{name}} löschen?",
+      "title": "Kontenplan",
+      "subtitle": "Hierarchische Ansicht des Einheitskontenrahmens (TDHP). Buchungen können nur auf bebuchbaren Endkonten erfasst werden.",
+      "searchPlaceholder": "Suche nach Code oder Name…",
+      "seedTurkish": "TDHP laden",
+      "create": "Neues Konto",
+      "empty": "Noch keine Konten angelegt. Starten Sie mit dem Laden des TDHP.",
+      "noResults": "Keine passenden Konten gefunden."
+    },
+    "journal": {
+      "posted": "Buchungssatz gespeichert und gebucht.",
+      "draftSaved": "Buchungsentwurf gespeichert."
+    },
+    "periods": {
+      "created": "Buchungsperiode angelegt.",
+      "confirmClose": "Periode {{code}} abschließen?",
+      "closed": "Periode abgeschlossen.",
+      "reopened": "Periode wieder geöffnet.",
+      "confirmLock": "Periode {{code}} sperren? Dies kann nicht rückgängig gemacht werden.",
+      "locked": "Periode gesperrt.",
+      "title": "Buchungsperioden",
+      "subtitle": "Periode abschließen, um Buchungen zu verhindern; sperren, um sie endgültig zu machen.",
+      "closedAt": "Abgeschlossen",
+      "create": "Periode eröffnen",
+      "close": "Abschließen",
+      "reopen": "Wieder öffnen",
+      "lock": "Sperren",
+      "lockedHint": "Endgültig — kann nicht wieder geöffnet werden"
+    }
+  },
+  "gl": {
+    "entriesTitle": "Buchungssätze",
+    "loadError": "Buchungssätze konnten nicht geladen werden.",
+    "noEntries": "Für diesen Beleg wurden noch keine Buchungen erzeugt (möglicherweise eingereiht oder Kontenzuordnung fehlt).",
+    "account": "Konto",
+    "debit": "Soll",
+    "credit": "Haben",
+    "total": "Gesamt"
+  },
+  "payments": {
+    "ledger": {
+      "title": "Konto",
+      "from": "Von",
+      "to": "Bis",
+      "exportCsv": "CSV exportieren",
+      "recordPayment": "Zahlung erfassen",
+      "entries": "Buchungseinträge",
+      "empty": "Noch keine Buchungseinträge.",
+      "description": "Bezeichnung",
+      "debit": "Soll",
+      "credit": "Haben",
+      "balance": "Saldo"
+    },
+    "aging": {
+      "current": "Laufend",
+      "title": "Fälligkeitsanalyse",
+      "overdueWarning": "{{amount}} sind seit mehr als 90 Tagen überfällig."
+    },
+    "list": {
+      "title": "Aktuelle Zahlungen",
+      "unapplied": "Nicht zugeordnet"
+    },
+    "create": {
+      "amountRequired": "Der Betrag muss positiv sein.",
+      "overAllocated": "Der zugeordnete Betrag übersteigt den Zahlbetrag.",
+      "success": "Zahlung erfasst.",
+      "title": "Zahlung erfassen",
+      "paymentDate": "Zahlungsdatum",
+      "amount": "Betrag",
+      "method": "Zahlungsart",
+      "reference": "Referenz / TX-Nr.",
+      "bankAccount": "Bankkonto",
+      "checkNumber": "Scheck-Nr.",
+      "checkDueDate": "Scheckfälligkeit",
+      "applyToInvoices": "Auf offene Rechnungen anwenden",
+      "autoApply": "Automatisch zuordnen (FIFO)",
+      "noOpenInvoices": "Keine offenen Rechnungen zur Zuordnung.",
+      "amountDue": "Offen",
+      "notes": "Notizen",
+      "allocated": "Zugeordnet",
+      "unapplied": "Verbleibt nicht zugeordnet",
+      "confirm": "Zahlung erfassen"
+    }
+  },
+  "feedback": {
+    "form": {
+      "required": "Titel und Beschreibung sind erforderlich.",
+      "sent": "Ihr Feedback ist eingegangen. Vielen Dank!",
+      "title": "Feedback / Fehler melden",
+      "type": "Typ",
+      "priority": "Priorität",
+      "module": "Zugehöriges Modul",
+      "modulePlaceholder": "Auswählen (optional)",
+      "titleField": "Titel",
+      "titlePlaceholder": "Ein kurzer, aussagekräftiger Titel",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Was haben Sie erwartet und was ist stattdessen passiert?",
+      "steps": "Schritte zur Reproduktion",
+      "stepsPlaceholder": "1) … 2) … 3) …",
+      "pageUrl": "Seite / Ort",
+      "submit": "Absenden"
+    },
+    "statusUpdated": "Status aktualisiert.",
+    "page": {
+      "title": "Feedback & Fehlerberichte",
+      "subtitle": "Melden Sie einen Fehler, schlagen Sie ein Feature vor oder stellen Sie eine Frage. Alle Einreichungen werden hier verfolgt.",
+      "new": "Neue Einreichung"
+    },
+    "filter": {
+      "allTypes": "Alle Typen",
+      "allStatuses": "Alle Status"
+    },
+    "count": "{{count}} Einreichung(en)",
+    "empty": "Noch keine Einreichungen. Legen Sie Ihre erste an.",
+    "adminResponse": "Antwort des Administrators",
+    "status": "Status",
+    "responsePlaceholder": "Antwort (optional)",
+    "apply": "Anwenden"
+  },
+  "masterData": {
+    "deleteConfirm": "Diesen Datensatz löschen?",
+    "empty": "Noch keine Datensätze."
+  },
+  "po": {
+    "form": {
+      "vendorRequired": "Bitte wählen Sie einen Lieferanten aus.",
+      "linesRequired": "Fügen Sie mindestens eine gültige Position hinzu.",
+      "updated": "Bestellung aktualisiert.",
+      "created": "Bestellung erstellt.",
+      "editTitle": "Bestellung",
+      "newTitle": "Neue Bestellung",
+      "vendor": "Lieferant",
+      "selectVendor": "Auswählen…",
+      "warehouse": "Empfangslager",
+      "selectWarehouse": "Auswählen…",
+      "currency": "Währung",
+      "orderDate": "Bestelldatum",
+      "expectedDate": "Erwartete Lieferung",
+      "product": "Produkt",
+      "qty": "Menge",
+      "unitCost": "Stückkosten",
+      "tax": "USt %",
+      "addLine": "Position hinzufügen",
+      "subtotal": "Zwischensumme",
+      "taxTotal": "USt",
+      "total": "Gesamt",
+      "notes": "Notizen"
+    },
+    "receive": {
+      "nothing": "Geben Sie eine zu empfangende Menge ein.",
+      "over": "Es kann nicht mehr als die verbleibende Menge empfangen werden.",
+      "warehouseRequired": "Bitte wählen Sie ein Lager aus.",
+      "done": "Wareneingang gebucht; Bestand aktualisiert.",
+      "title": "Wareneingang",
+      "allReceived": "Alle Positionen wurden empfangen.",
+      "warehouse": "Empfangslager",
+      "selectWarehouse": "Auswählen…",
+      "product": "Produkt",
+      "remaining": "Verbleibend",
+      "qty": "Empfangene Menge",
+      "notes": "Notizen / Lieferschein-Nr.",
+      "submit": "Wareneingang buchen"
+    },
+    "cancelTitle": "Bestellung stornieren",
+    "cancelConfirm": "{{po}} stornieren?",
+    "actionDone": "Aktion abgeschlossen.",
+    "deleteTitle": "Bestellung löschen",
+    "deleteConfirm": "{{po}} löschen?",
+    "deleted": "Bestellung gelöscht.",
+    "page": {
+      "title": "Bestellungen",
+      "subtitle": "Bestellungen an Lieferanten anlegen, freigeben und verfolgen.",
+      "new": "Neue Bestellung"
+    },
+    "filter": {
+      "all": "Alle",
+      "allStatuses": "Alle Status",
+      "statusAria": "Nach Status filtern",
+      "vendor": "Lieferant",
+      "allVendors": "Alle Lieferanten"
+    },
+    "status": {
+      "Draft": "Entwurf",
+      "Submitted": "Eingereicht",
+      "Approved": "Freigegeben",
+      "PartiallyReceived": "Teilweise empfangen",
+      "Received": "Empfangen",
+      "Closed": "Abgeschlossen",
+      "Cancelled": "Storniert"
+    },
+    "count": "{{count}} Bestellungen",
+    "resultCountLabel": "Bestellungen",
+    "empty": "Keine Bestellungen gefunden.",
+    "cols": {
+      "number": "Nr.",
+      "vendor": "Lieferant",
+      "date": "Datum",
+      "status": "Status",
+      "total": "Betrag"
+    },
+    "actions": {
+      "submit": "Einreichen",
+      "approve": "Freigeben",
+      "receive": "Wareneingang",
+      "close": "Abschließen",
+      "cancel": "Stornieren"
+    }
+  },
+  "ap": {
+    "bill": {
+      "invalid": "Geben Sie Lieferant, Belegnummer und Betrag ein.",
+      "created": "Eingangsrechnung angelegt.",
+      "newTitle": "Neue Eingangsrechnung",
+      "vendor": "Lieferant",
+      "selectVendor": "Auswählen…",
+      "number": "Beleg-Nr.",
+      "currency": "Währung",
+      "date": "Belegdatum",
+      "due": "Fälligkeitsdatum",
+      "subtotal": "Zwischensumme",
+      "tax": "USt-Betrag",
+      "total": "Gesamt",
+      "notes": "Notizen"
+    },
+    "pay": {
+      "invalid": "Geben Sie einen gültigen Betrag ein (darf den verbleibenden Saldo nicht überschreiten).",
+      "done": "Zahlung erfasst.",
+      "title": "Lieferantenzahlung",
+      "due": "Verbleibender Saldo",
+      "amount": "Betrag",
+      "date": "Datum",
+      "method": "Zahlungsart",
+      "bankTransfer": "Überweisung / EFT",
+      "cash": "Bar",
+      "check": "Scheck",
+      "card": "Karte",
+      "notes": "Notizen",
+      "submit": "Zahlung leisten"
+    },
+    "cancelTitle": "Rechnung stornieren",
+    "cancelConfirm": "{{n}} stornieren?",
+    "actionDone": "Aktion abgeschlossen.",
+    "page": {
+      "title": "Eingangsrechnungen",
+      "subtitle": "Eingangsrechnungen bearbeiten und bezahlen; das Lieferantenkonto wird automatisch aktualisiert.",
+      "new": "Neue Rechnung"
+    },
+    "tab": {
+      "bills": "Rechnungen",
+      "payments": "Zahlungen"
+    },
+    "filter": {
+      "allVendors": "Alle Lieferanten",
+      "allStatuses": "Alle Status"
+    },
+    "count": "{{count}} Rechnungen",
+    "paymentCount": "{{count}} Zahlungen",
+    "empty": "Keine Eingangsrechnungen gefunden.",
+    "cols": {
+      "number": "Beleg-Nr.",
+      "vendor": "Lieferant",
+      "date": "Datum",
+      "total": "Betrag",
+      "due": "Offener Saldo",
+      "status": "Status"
+    },
+    "actions": {
+      "glEntry": "Buchung",
+      "post": "Ins Hauptbuch buchen",
+      "pay": "Bezahlen",
+      "cancel": "Stornieren"
+    },
+    "payments": {
+      "empty": "Keine Lieferantenzahlungen gefunden."
+    },
+    "payCols": {
+      "number": "Zahlungs-Nr.",
+      "method": "Zahlungsart",
+      "amount": "Betrag"
+    },
+    "glEntryTitle": "Buchung · {{n}}"
+  },
+  "numbering": {
+    "document": "Beleg",
+    "prefix": "Präfix",
+    "pad": "Stellen",
+    "format": "Format",
+    "next": "Nächste",
+    "preview": "Vorschau",
+    "prefixRequired": "Präfix ist erforderlich.",
+    "saved": "Nummerierung gespeichert.",
+    "notConfigured": "noch nicht konfiguriert"
+  },
+  "users": {
+    "deactivateTitle": "Benutzer deaktivieren",
+    "activateTitle": "Benutzer aktivieren",
+    "deactivateConfirm": "{{user}} kann sich nicht mehr anmelden. Fortfahren?",
+    "activateConfirm": "{{user}} kann sich wieder anmelden.",
+    "statusUpdated": "Benutzerstatus aktualisiert.",
+    "count": "{{count}} Benutzer",
+    "invite": "Benutzer hinzufügen",
+    "user": "Benutzer",
+    "roles": "Rollen",
+    "lastLogin": "Letzte Anmeldung",
+    "status": "Status",
+    "editRoles": "Rollen bearbeiten",
+    "empty": "Keine Benutzer gefunden.",
+    "invited": "Benutzer angelegt.",
+    "rolesUpdated": "Rollen aktualisiert.",
+    "inviteInvalid": "Benutzername, E-Mail und ein Passwort mit mindestens 8 Zeichen sind erforderlich.",
+    "username": "Benutzername",
+    "email": "E-Mail",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "tempPassword": "Temporäres Passwort",
+    "tempPasswordHint": "Mindestens 8 Zeichen. Der Benutzer muss es bei der ersten Anmeldung ändern.",
+    "create": "Erstellen"
+  },
+  "apAging": {
+    "title": "Kreditoren-Fälligkeitsanalyse",
+    "subtitle": "Offene Verbindlichkeiten nach Fälligkeitsklassen.",
+    "toBills": "Eingangsrechnungen →",
+    "vendor": "Lieferant",
+    "total": "Gesamt",
+    "error": "Bericht konnte nicht geladen werden.",
+    "empty": "Keine offenen Verbindlichkeiten.",
+    "grandTotal": "Gesamtsumme"
+  },
+  "billing": {
+    "eyebrow": "Abrechnung",
+    "title": "Abrechnung",
+    "crumbs": {
+      "billing": "Abrechnung",
+      "orders": "Bestellungen"
+    },
+    "home": {
+      "title": "Meine Abonnements",
+      "subtitle": "Aktive Module, anstehende Abläufe und aktuelle Käufe verfolgen.",
+      "browse": "Module durchsuchen",
+      "activeCount": "Aktive Module",
+      "activeHint": "{{count}} Modul(e) hinterlegt",
+      "expiringSoon": "Läuft ab in {{days}}T",
+      "nextExpiry": "Nächstes: {{date}}",
+      "noExpiring": "Nichts läuft demnächst ab.",
+      "recentOrders": "Aktuelle Bestellungen",
+      "lastOrder": "Letzte Bestellung {{number}}",
+      "noOrders": "Noch keine Abonnementbestellungen.",
+      "expiringSoonTitle": "Bald fällige Verlängerungen",
+      "renew": "Verlängern",
+      "recentOrdersTitle": "Neueste Bestellungen",
+      "viewAll": "Alle anzeigen"
+    },
+    "activeBanner": {
+      "title_one": "{{count}} aktives Modul",
+      "title_other": "{{count}} aktive Module",
+      "empty": "Keine aktiven Module. Wählen Sie eines aus dem Katalog."
+    },
+    "modules": {
+      "title": "Module",
+      "subtitle": "Abonnieren Sie weitere Funktionen für Ihr Team.",
+      "activeUntil": "Aktiv bis {{date}}",
+      "daysLeft_one": "{{count}} Tag verbleibend",
+      "daysLeft_other": "{{count}} Tage verbleibend",
+      "notSubscribed": "Noch nicht abonniert",
+      "coreAlwaysOn": "Kernmodul — immer aktiv",
+      "coreLabel": "Core",
+      "coreNoPurchase": "Für alle enthalten",
+      "durationDays_one": "{{count}} Tag",
+      "durationDays_other": "{{count}} Tage",
+      "addToCart": "In den Warenkorb",
+      "renew": "Tarif verlängern",
+      "inCart": "Hinzugefügt",
+      "uncategorized": "Weitere Module",
+      "emptyTitle": "Keine Module verfügbar",
+      "emptyDescription": "Derzeit sind keine erwerbbaren Module verfügbar.",
+      "renewalHint": "Verlängerung: {{duration}} werden zur bestehenden Laufzeit hinzugefügt — kein Zeitverlust."
+    },
+    "cart": {
+      "title": "Warenkorb",
+      "empty": "Ihr Warenkorb ist leer. Wählen Sie ein Modul, um zu starten.",
+      "total": "Gesamt",
+      "buy": "Kaufen",
+      "adminOnly": "Nur Mandanten-Administratoren können einen Kauf abschließen.",
+      "openButton_one": "Warenkorb ({{count}})",
+      "openButton_other": "Warenkorb ({{count}})",
+      "remove": "Entfernen"
+    },
+    "order": {
+      "title": "Bestellung {{number}}",
+      "subtitle": "Details und Zahlungsstatus der Abonnementbestellung.",
+      "backToList": "Zurück zur Liste",
+      "createdAt": "Erstellt {{value}}",
+      "totalLabel": "Gesamt",
+      "itemsTitle": "Positionen",
+      "paymentTitle": "Zahlung",
+      "gateway": "Gateway",
+      "intentId": "Intent-ID",
+      "reference": "Referenz",
+      "paidAt": "Bezahlt",
+      "completedAt": "Abgeschlossen",
+      "attempts": "Zahlungsversuche",
+      "payNowTitle": "Zahlung erforderlich",
+      "payNowDescription": "Diese Bestellung wartet auf Zahlung. Wechseln Sie zur (Mock-)Zahlungsseite, um sie abzuschließen.",
+      "payNow": "Zur Mock-Zahlung",
+      "paidTitle": "Zahlung bestätigt",
+      "paidDescription": "Zahlung am {{value}} eingegangen. Ihre Module sind jetzt aktiv.",
+      "cancelled": "Diese Bestellung wurde storniert.",
+      "col": {
+        "orderNumber": "Bestell-Nr.",
+        "createdAt": "Erstellt",
+        "status": "Status",
+        "itemsCount": "Positionen",
+        "total": "Gesamt",
+        "module": "Modul",
+        "plan": "Tarif",
+        "duration": "Laufzeit",
+        "unitPrice": "Stückpreis"
+      },
+      "status": {
+        "Draft": "Entwurf",
+        "PendingPayment": "Zahlung ausstehend",
+        "Paid": "Bezahlt",
+        "Failed": "Fehlgeschlagen",
+        "Cancelled": "Storniert",
+        "Expired": "Abgelaufen"
+      }
+    },
+    "orders": {
+      "title": "Abonnementbestellungen",
+      "subtitle": "Alle Bestellungen für Modul-Abonnements.",
+      "statusFilter": "Nach Status filtern",
+      "count": "Bestellung(en)",
+      "bucket": {
+        "all": "Alle"
+      },
+      "emptyTitle": "Noch keine Bestellungen",
+      "emptyDescription": "Beim Kauf eines Moduls erscheint die Bestellung hier.",
+      "view": "Details anzeigen"
+    },
+    "cancel": {
+      "action": "Bestellung stornieren",
+      "confirmTitle": "Bestellung stornieren?",
+      "confirmMessage": "Bestellung {{number}} wird storniert. Dies kann nicht rückgängig gemacht werden.",
+      "confirm": "Ja, stornieren"
+    },
+    "mock": {
+      "eyebrow": "Entwicklung",
+      "title": "Mock-Zahlung",
+      "subtitle": "Simulieren Sie das Zahlungsergebnis für diese Abonnementbestellung.",
+      "banner": "DEV / MOCK-ZAHLUNG",
+      "bannerDescription": "Diese Seite existiert nur in der Entwicklung. Produktive Zahlungen werden vom echten Gateway abgewickelt.",
+      "orderLabel": "Bestellung",
+      "missingOrder": "Keine Bestell-ID angegeben. Öffnen Sie diese Seite aus einer Bestellung mit Status \"Zahlung ausstehend\".",
+      "adminOnly": "Nur Mandanten-Administratoren können ein Zahlungsergebnis simulieren.",
+      "approve": "Genehmigen",
+      "cancel": "Stornieren",
+      "fail": "Fehler simulieren"
+    },
+    "checkout": {
+      "title": "Kasse",
+      "payNow": "Jetzt bezahlen"
+    },
+    "gateway": {
+      "title": "Zahlungsmethode",
+      "mockLabel": "Mock (Entwicklung)",
+      "iyzicoLabel": "Iyzico (echte Zahlung)",
+      "requiresInfo": "Rechnungsdaten erforderlich",
+      "devOnly": "Nur Sandbox / Entwicklung",
+      "empty": "Es ist kein Zahlungs-Gateway konfiguriert. Wenden Sie sich an Ihren Administrator.",
+      "pickerRequired": "Bitte wählen Sie eine Zahlungsmethode."
+    },
+    "billingInfo": {
+      "title": "Rechnungsdaten",
+      "name": "Vorname",
+      "surname": "Nachname",
+      "email": "E-Mail",
+      "gsm": "Mobiltelefon",
+      "identity": "Identifikation / TC-Kimlik-Nummer",
+      "address": "Adresse",
+      "city": "Stadt",
+      "country": "Land",
+      "zip": "Postleitzahl",
+      "privacy": "Verschlüsselt übertragen. Wir speichern Ihre Kartennummer nicht.",
+      "errors": {
+        "nameRequired": "Vorname ist erforderlich.",
+        "surnameRequired": "Nachname ist erforderlich.",
+        "emailInvalid": "Geben Sie eine gültige E-Mail-Adresse ein.",
+        "gsmInvalid": "Geben Sie eine gültige Mobiltelefonnummer ein (10-15 Ziffern, optional mit +).",
+        "identityInvalid": "Geben Sie eine gültige Identifikationsnummer ein (5-32 alphanumerische Zeichen).",
+        "addressRequired": "Adresse ist erforderlich.",
+        "cityRequired": "Stadt ist erforderlich.",
+        "countryInvalid": "Land ist erforderlich (mind. 2 Zeichen).",
+        "zipRequired": "Postleitzahl ist erforderlich.",
+        "formInvalid": "Bitte vervollständigen Sie das Rechnungsformular."
+      }
+    },
+    "toast": {
+      "created": "Bestellung erstellt.",
+      "approved": "Zahlung genehmigt.",
+      "cancelled": "Bestellung storniert.",
+      "failed": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    },
+    "errors": {
+      "catalogTitle": "Module konnten nicht geladen werden",
+      "catalogDescription": "Der Modulkatalog konnte nicht geladen werden. Bitte erneut versuchen.",
+      "activeTitle": "Aktive Module konnten nicht geladen werden",
+      "orderTitle": "Bestellung konnte nicht geladen werden",
+      "orderDescription": "Diese Abonnementbestellung konnte nicht geladen werden.",
+      "ordersTitle": "Bestellungen konnten nicht geladen werden"
+    }
+  },
+  "error": {
+    "NetworkError": "Netzwerkfehler.",
+    "DefaultError": "Anfrage fehlgeschlagen."
+  },
+  "GlassEnclosure": {
+    "Title": "Glasfassade",
+    "Subtitle": "Profilsysteme, Verglasung, Beschläge, Rabatte und Werkstatteinstellungen verwalten.",
+    "Tab": {
+      "ProfileSystems": "Profilsysteme",
+      "GlassTypes": "Glasarten",
+      "Colors": "Farben",
+      "HardwareItems": "Beschläge",
+      "HardwareKits": "Beschlagsätze",
+      "DiscountRules": "Rabattregeln",
+      "NotificationTemplates": "Benachrichtigungsvorlagen",
+      "WindZones": "Windzonen",
+      "ClimateZones": "Klimazonen",
+      "Settings": "Einstellungen"
+    },
+    "Field": {
+      "Code": "Code",
+      "Name": "Name",
+      "Brand": "Marke",
+      "SystemType": "Systemtyp",
+      "MaxPanel": "Max. Panel",
+      "ItemCount": "Positionen",
+      "Thickness": "Dicke",
+      "Structure": "Aufbau",
+      "UValue": "U-Wert",
+      "SoundDb": "Schallschutz",
+      "PricePerM2": "Preis (m²)",
+      "Category": "Kategorie",
+      "Unit": "Einheit",
+      "UnitPrice": "Stückpreis",
+      "MaxLoad": "Max. Last",
+      "System": "System",
+      "Active": "Aktiv",
+      "Scope": "Geltungsbereich",
+      "DiscountKind": "Rabattart",
+      "DiscountValue": "Rabattwert",
+      "Coupon": "Gutschein",
+      "Event": "Ereignis",
+      "Channel": "Kanal",
+      "Locale": "Sprache",
+      "Subject": "Betreff",
+      "Region": "Region",
+      "BasePressure": "Basisdruck",
+      "HeightFactor": "Höhenfaktor",
+      "Coastal": "Küstennah",
+      "WinterTemp": "Wintertemperatur",
+      "Humidity": "Luftfeuchtigkeit",
+      "Corrosion": "Korrosion",
+      "Recommendations": "Empfehlungen",
+      "StockBarLength": "Stangenlänge",
+      "JumboGlass": "Jumboglas",
+      "SawKerf": "Sägeschnittfuge",
+      "GlassKerf": "Glasschnittfuge",
+      "GuillotineRequired": "Guillotine erforderlich",
+      "WastePercent": "Verschnitt %",
+      "LaborCost": "Lohnkosten",
+      "MarginPercent": "Marge %",
+      "ToleranceTop": "Toleranz oben",
+      "ToleranceSide": "Toleranz seitlich",
+      "TransportPerKm": "Transport / km",
+      "TransportPerKg": "Transport / kg",
+      "ScaffoldingFromFloor": "Gerüst ab Etage",
+      "ScaffoldingRate": "Gerüstpreis",
+      "CraneFromFloor": "Kran ab Etage",
+      "CraneRate": "Kranpreis",
+      "WorkshopCapacity": "Werkstattkapazität",
+      "DefaultLocale": "Standardsprache",
+      "DefaultCurrency": "Standardwährung",
+      "DataRetention": "Datenaufbewahrung",
+      "QuoteTokenTtl": "Angebots-Token-TTL",
+      "OnboardingComplete": "Onboarding abgeschlossen",
+      "Label": "Bezeichnung",
+      "Length": "Länge",
+      "Height": "Höhe",
+      "Width": "Breite",
+      "OriginX": "X",
+      "OriginY": "Y",
+      "Rotation": "Drehung",
+      "ProfileSystem": "Profilsystem",
+      "Color": "Farbe",
+      "TopDrip": "Tropfkante oben",
+      "BottomThreshold": "Schwelle unten",
+      "OpeningType": "Öffnungsart",
+      "GlassType": "Glasart",
+      "HasHandle": "Griff",
+      "HasLock": "Schloss",
+      "HasBrushSeal": "Bürstendichtung",
+      "Floor": "Etage",
+      "BuildingHeight": "Gebäudehöhe (m)",
+      "City": "Stadt",
+      "Currency": "Währung"
+    },
+    "System": {
+      "Folding": "Falt",
+      "Sliding": "Schiebe",
+      "HeatInsulatedSliding": "Wärmegedämmte Schiebeanlage",
+      "Guillotine": "Guillotine",
+      "Hinged": "Dreh",
+      "Fixed": "Fest"
+    },
+    "GlassStructure": {
+      "Tempered": "ESG",
+      "Laminated": "VSG",
+      "DoubleGlazed": "Zweifachverglasung",
+      "TripleGlazed": "Dreifachverglasung",
+      "LowE": "Low-E"
+    },
+    "HardwareCategory": {
+      "Hinge": "Scharnier",
+      "Roller": "Laufrolle",
+      "Lock": "Schloss",
+      "Handle": "Griff",
+      "Gasket": "Dichtung",
+      "Brush": "Bürste",
+      "Bumper": "Anschlagpuffer",
+      "WallBracket": "Wandhalter",
+      "Chain": "Kette",
+      "DripCap": "Tropfkante",
+      "CornerPost": "Eckpfosten",
+      "Other": "Sonstiges"
+    },
+    "Finish": {
+      "Anodized": "Eloxiert",
+      "PowderCoated": "Pulverbeschichtet",
+      "WoodLook": "Holzoptik",
+      "Raw": "Roh"
+    },
+    "DiscountScope": {
+      "CustomerGroup": "Kundengruppe",
+      "Coupon": "Gutschein",
+      "Volume": "Volumen",
+      "DateRange": "Zeitraum",
+      "Manual": "Manuell"
+    },
+    "DiscountKind": {
+      "Percent": "Prozent",
+      "FixedAmount": "Festbetrag"
+    },
+    "Settings": {
+      "Core": "Kern",
+      "Field": "Vor-Ort-Vermessung",
+      "Installation": "Montage",
+      "Locale": "Sprache & Kommunikation",
+      "Onboarding": "Onboarding"
+    },
+    "Recommend": {
+      "DoubleGlazing": "Doppelverglasung empfohlen",
+      "CorrosionCoating": "Korrosionsbeständige Beschichtung",
+      "SeismicSmaller": "Kleinere Paneele"
+    },
+    "Projects": {
+      "Title": "Glasfassaden-Projekte",
+      "Subtitle": "Kundenprojekte und 3D-Designs.",
+      "New": "Neues Projekt",
+      "ProjectName": "Projektname",
+      "Customer": "Kunde",
+      "CustomerId": "Kunden-ID",
+      "Status": "Status",
+      "Panels": "Paneele",
+      "Area": "Fläche",
+      "GrandTotal": "Gesamt",
+      "Updated": "Aktualisiert",
+      "SearchPlaceholder": "Suche nach Code oder Name…",
+      "Empty": "Noch keine Projekte.",
+      "Created": "Projekt angelegt"
+    },
+    "Status": {
+      "All": "Alle",
+      "Draft": "Entwurf",
+      "Surveyed": "Vermessen",
+      "Quoted": "Angeboten",
+      "Confirmed": "Bestätigt",
+      "InProduction": "In Produktion",
+      "Ready": "Bereit",
+      "InTransit": "Unterwegs",
+      "Installed": "Montiert",
+      "Defective": "Mangelhaft",
+      "Cancelled": "Storniert"
+    },
+    "Designer": {
+      "Shell": {
+        "PersonaOverride": {
+          "TriggerAria": "Bildschirm-Persona-Modus",
+          "TriggerTitle": "Bildschirmspezifischer Persona-Modus",
+          "MenuTitle": "Auf diesem Bildschirm",
+          "Default": "Standard verwenden",
+          "DefaultHelp": "Globalem Persona-Modus folgen",
+          "Simple": "Einfach",
+          "SimpleHelp": "Geführt, weniger Panels",
+          "Pro": "Profi",
+          "ProHelp": "Volle Steuerung, dichte Infos"
+        },
+        "Tab": {
+          "Runs": {
+            "Simple": "Fassaden",
+            "Pro": "Läufe"
+          },
+          "Canvas": {
+            "Simple": "Zeichnung",
+            "Pro": "Canvas"
+          },
+          "Inspector": {
+            "Simple": "Details",
+            "Pro": "Inspektor"
+          },
+          "BOM": {
+            "Simple": "Materialien",
+            "Pro": "Stückliste"
+          }
+        },
+        "Panel": {
+          "Runs": {
+            "AddSimple": "Fassade hinzufügen",
+            "AddPro": "Lauf hinzufügen"
+          },
+          "Inspector": {
+            "Title": {
+              "Simple": "Details bearbeiten",
+              "Pro": "Inspektor"
+            }
+          },
+          "BOM": {
+            "Title": {
+              "Simple": "Materialliste",
+              "Pro": "Stückliste"
+            }
+          }
+        },
+        "Toolbar": {
+          "ZoomIn": "Vergrößern",
+          "ZoomOut": "Verkleinern",
+          "FitScreen": "Anpassen",
+          "Grid": "Raster"
+        },
+        "Back": "Zurück",
+        "Close": "Schließen",
+        "CloseDrawer": "Schließen",
+        "OpenInspector": "Details",
+        "SideRail": "Navigation",
+        "Collapse": "Einklappen",
+        "Expand": "Ausklappen"
+      },
+      "NewRun": "Neuer Lauf",
+      "Save": "Speichern",
+      "SaveSuccess": "Szene gespeichert",
+      "Validate": "Prüfen",
+      "ValidationDone": "Prüfung abgeschlossen",
+      "Annotations": "Bemaßungen",
+      "Presentation": "Präsentation",
+      "Quality": "Qualität",
+      "Inspector": "Prüfer",
+      "RunInspector": "Lauf-Prüfer",
+      "PanelInspector": "Panel-Prüfer",
+      "PanelCount": "Panelanzahl",
+      "Rebalance": "Neu verteilen",
+      "TechnicalSummary": "Technische Zusammenfassung",
+      "TotalArea": "Gesamtfläche",
+      "TotalWeight": "Gesamtgewicht",
+      "WeightedU": "Gewichteter U-Wert",
+      "AvgSoundDb": "Ø Schallschutz",
+      "MaxThickness": "Max. Dicke",
+      "NoSelection": "Wählen Sie einen Lauf oder ein Panel in der 3D-Szene.",
+      "DefaultRunLabel": "Lauf",
+      "RunAdded": "Lauf hinzugefügt",
+      "ConnectionInspector": "Eckverbindung",
+      "ViewSplit": "Geteilt",
+      "ViewPlan": "Grundriss (2D)",
+      "View3D": "3D",
+      "LiveCost": "Live-Kosten",
+      "LivePreview": "Vorschau",
+      "NoCostYet": "Fügen Sie Läufe und Paneele hinzu, um Kosten anzuzeigen.",
+      "LiveCostDisclaimer": "Schätzung im Browser. Der Serverbericht ist maßgeblich.",
+      "ViewCutting": "Zuschnitt",
+      "ViewEngineering": "Statik",
+      "ViewQuote": "Angebot",
+      "ViewSurvey": "Vor-Ort-Vermessung",
+      "Greenhouse": {
+        "PitchParam": {
+          "SectionTitle": "Satteldach-Parameter",
+          "RoofPitch": "Dachneigung",
+          "RidgeHeight": "Firsthöhe",
+          "EaveHeight": "Traufhöhe",
+          "PitchOutOfRange": "Die Dachneigung muss zwischen {{min}}° und {{max}}° liegen.",
+          "RidgeMustExceedEave": "Die Firsthöhe muss größer als die Traufhöhe sein.",
+          "RidgeRequired": "Firsthöhe ist für Satteldächer erforderlich.",
+          "EaveRequired": "Traufhöhe ist für Satteldächer erforderlich.",
+          "PitchRequired": "Dachneigung ist für Satteldächer erforderlich."
+        }
+      }
+    },
+    "Survey": {
+      "Title": "Vor-Ort-Vermessung",
+      "Subtitle": "Erfassen Sie Maße und Beobachtungen vor Ort; wenden Sie nach Freigabe Toleranzen auf Läufe an.",
+      "New": "Neue Vermessung",
+      "Created": "Vermessung angelegt",
+      "Saved": "Entwurf gespeichert",
+      "Submitted": "Zur Freigabe eingereicht",
+      "Approved": "Vermessung freigegeben",
+      "Rejected": "Vermessung abgelehnt",
+      "RejectPrompt": "Begründung (optional)",
+      "PhotoUploaded": "Foto hochgeladen",
+      "PhotoTypeError": "Nur Bilddateien sind erlaubt (JPG, PNG, WebP, HEIC).",
+      "PhotoSizeError": "Die Datei muss kleiner als 25 MB sein.",
+      "GpsUnavailable": "Standort nicht verfügbar; Vermessung ohne GPS-Koordinaten angelegt.",
+      "AppliedBadge": "Angewendet: {{date}}",
+      "NoActive": "Noch keine aktive Vermessung. Starten Sie eine mit 'Neue Vermessung'.",
+      "Slope": "Neigung / Lotabweichung",
+      "SlopeTop": "Oben",
+      "SlopeBottom": "Unten",
+      "SlopeLeft": "Links",
+      "SlopeRight": "Rechts",
+      "SlopeHint": "Positive Werte bedeuten Abweichung nach außen, negative nach innen.",
+      "Measurements": "Manuelle Messungen",
+      "AddMeasurement": "Messung hinzufügen",
+      "MeasureLabel": "Bezeichnung (z. B. Oberkante Länge)",
+      "MeasureValue": "Wert (mm)",
+      "NoMeasurements": "Noch keine manuellen Messungen.",
+      "Obstacles": "Hindernisse",
+      "AddObstacle": "Hindernis hinzufügen",
+      "NoObstacles": "Keine Hindernisse erfasst.",
+      "ObstaclePlaceholder": "Beschreibung",
+      "ObstacleKind": {
+        "pipe": "Rohr",
+        "radiator": "Heizkörper",
+        "window": "Fenster",
+        "door": "Tür",
+        "other": "Sonstiges"
+      },
+      "Photos": "Fotos",
+      "UploadPhoto": "Foto hochladen",
+      "NoPhotos": "Noch keine Fotos.",
+      "Notes": "Notizen",
+      "NotesPlaceholder": "Vor-Ort beobachtete Details…",
+      "SaveDraft": "Entwurf speichern",
+      "Submit": "Einreichen",
+      "ApproveAndApply": "Freigeben & Anwenden",
+      "ApproveOnly": "Nur freigeben",
+      "Reject": "Ablehnen",
+      "AppliedInfo": "{{runs}} Läufe aktualisiert · {{mm}} mm Neigungstoleranz angewendet",
+      "Status": {
+        "InProgress": "In Bearbeitung",
+        "Submitted": "Eingereicht",
+        "Approved": "Freigegeben",
+        "Rejected": "Abgelehnt"
+      }
+    },
+    "Quote": {
+      "Title": "Angebotszusammenfassung",
+      "ValidUntil": "Gültig bis",
+      "Recompute": "Neu berechnen",
+      "Recomputed": "Stückliste neu berechnet",
+      "ExportCsv": "CSV exportieren",
+      "NoBom": "Stückliste noch nicht berechnet. Klicken Sie auf Neu berechnen.",
+      "Panels": "Paneele",
+      "Area": "Fläche",
+      "Weight": "Gewicht",
+      "Lines": "Positionen",
+      "Description": "Bezeichnung",
+      "Qty": "Menge",
+      "Unit": "Einheit",
+      "UnitCost": "Stückkosten",
+      "LineCost": "Positionssumme",
+      "Totals": "Summen",
+      "SourceNote": "Diese Zusammenfassung wird aus der Projektstückliste abgeleitet — passen Sie das Design an, um Positionen zu ändern.",
+      "Group": {
+        "ProfileCut": "Profil",
+        "GlassPiece": "Glas",
+        "HardwarePiece": "Beschlag",
+        "Labor": "Lohn",
+        "Transport": "Transport",
+        "Installation": "Montage / Gerüst",
+        "Other": "Sonstiges"
+      }
+    },
+    "Commerce": {
+      "ShareLinks": "Freigabelinks",
+      "CreateShareLink": "Link erstellen",
+      "ShareLinkCreated": "Link erstellt",
+      "NoShareLinks": "Noch keine Freigaben. Erzeugen Sie einen Link für den Kunden.",
+      "Accepted": "Angenommen",
+      "Rejected": "Abgelehnt",
+      "Pending": "Ausstehend",
+      "Views": "Aufrufe",
+      "CopyUrl": "URL kopieren",
+      "OrderConversion": "Auftrag",
+      "ConvertToOrder": "In Auftrag umwandeln",
+      "OrderConverted": "Projekt in Auftrag umgewandelt",
+      "ConvertHint": "Berechnen Sie zuerst die Stückliste und stellen Sie sicher, dass das Projekt angeboten/bestätigt ist.",
+      "Production": "Produktion",
+      "RequestedStart": "Gewünschter Start",
+      "ReleaseToProduction": "Für Produktion freigeben",
+      "Released": "Für Produktion freigegeben",
+      "ReleaseHint": "Erst in Auftrag umwandeln und Status Bestätigt sicherstellen."
+    },
+    "Notifications": {
+      "Title": "Benachrichtigungsverlauf",
+      "None": "Noch keine Benachrichtigungen versendet."
+    },
+    "WorkOrder": {
+      "None": "Noch keine Werkaufträge.",
+      "Updated": "Werkauftrag aktualisiert",
+      "DefectRecorded": "Mangel erfasst",
+      "Defect": "Mangel erfassen",
+      "DefectSubmit": "Mangel einreichen",
+      "DefectPlaceholder": "Mangelbeschreibung...",
+      "BlockedByRevision": "Werkauftrag durch ausstehende Revision angehalten",
+      "DefectiveExitRequiresRevision": "Verlassen des Status Mangelhaft erfordert eine neue Stücklisten-Revision",
+      "Revision": {
+        "Title": "Revisionen",
+        "PendingApproval": "Genehmigung ausstehend",
+        "Approved": "Genehmigt",
+        "Rejected": "Abgelehnt",
+        "Blocked": "Blockiert",
+        "SilentSnapshot": "Stiller Snapshot",
+        "Number": "Rev.",
+        "DeltaPercent": "Delta",
+        "Approve": "Genehmigen",
+        "Reject": "Ablehnen",
+        "OverrideReason": "Begründung für Override",
+        "OverrideReasonPlaceholder": "Optionaler Override-Hinweis",
+        "RejectionReason": "Ablehnungsgrund",
+        "RejectionReasonPlaceholder": "Begründung erforderlich",
+        "Approved.Toast": "Revision genehmigt",
+        "Rejected.Toast": "Revision abgelehnt",
+        "Empty": "Noch keine Revisionen erfasst.",
+        "Banner.Simple": "Dieser Werkauftrag wartet auf eine Genehmigung",
+        "Banner.Pro": "Ausstehende blockierende Revision",
+        "Banner.Action": "Überprüfen",
+        "CreatedAt": "Erstellt am"
+      },
+      "Status": {
+        "Pending": "Ausstehend",
+        "Cutting": "Zuschnitt",
+        "Assembling": "Montage",
+        "Ready": "Bereit",
+        "InTransit": "Unterwegs",
+        "Installed": "Montiert",
+        "Defective": "Mangelhaft"
+      }
+    },
+    "Share": {
+      "Title": "Glasfassaden-Angebot",
+      "GrandTotal": "Gesamt",
+      "Customer": "Kunde",
+      "Status": "Status",
+      "Version": "Version",
+      "ValidUntil": "Gültig bis",
+      "Decide": "Entscheiden",
+      "Accept": "Design annehmen",
+      "Reject": "Ablehnen",
+      "RejectReason": "Begründung (optional)",
+      "RejectReasonPlaceholder": "Ihre Änderungswünsche…",
+      "Signature": "Unterschrift",
+      "ClearSignature": "Löschen",
+      "Accepted": "Angebot angenommen",
+      "Rejected": "Angebot abgelehnt",
+      "NotFound": "Ungültiger oder abgelaufener Freigabelink.",
+      "Footer": "Sichere Freigabe für Ihre Unterschrift und Genehmigung."
+    },
+    "Cutting": {
+      "Title": "Zuschnittbericht",
+      "Profile1D": "Profil-Zuschnitt (1D)",
+      "Glass2D": "Glas-Zuschnitt (2D)",
+      "StockBar": "Stange",
+      "Bars": "Stangen",
+      "Cuts": "Schnitte",
+      "Utilization": "Auslastung",
+      "Waste": "Verschnitt",
+      "Jumbo": "Jumboscheibe",
+      "Sheets": "Scheiben",
+      "Regenerate": "Neu erzeugen",
+      "Generated": "Zuschnittplan erzeugt",
+      "NoReport": "Noch kein Zuschnittplan. Klicken Sie auf Neu erzeugen.",
+      "ExportCsv": "CSV exportieren",
+      "ExportDxf": "DXF exportieren",
+      "UnplacedWarning": "{{count}} Glasstück(e) nicht platziert",
+      "Nesting": {
+        "Title": "Erweiterte 2D-Verschachtelung",
+        "Algorithm": "Algorithmus",
+        "Heuristic": "Heuristik",
+        "Utilization": "Auslastung",
+        "Waste": "Verschnitt",
+        "SheetsUsed": "Verwendete Scheiben",
+        "UnplacedPanels": "{{count}} nicht platzierte Scheibe(n)",
+        "OptimizeAdvanced": "Erweiterte 2D-Verschachtelung",
+        "Optimizing": "Optimierung läuft...",
+        "Run": "Ausführen",
+        "GuillotineOnly": "Nur Guillotineschnitt",
+        "AllowRotation": "Drehung erlauben",
+        "OptimizeSuccess": "2D-Verschachtelung optimiert.",
+        "OptimizeError": "Optimierung fehlgeschlagen.",
+        "PrintExport": "Drucken / PDF",
+        "NoReport": "Noch kein Verschachtelungsbericht."
+      }
+    },
+    "Engineering": {
+      "Title": "Statikbericht",
+      "WindLoad": "Windlast",
+      "Thermal": "Wärmeschutz",
+      "Acoustic": "Schallschutz",
+      "AppliedPressure": "Angewandter Druck",
+      "HeightFactor": "Höhenfaktor",
+      "WeightedU": "Gewichteter U-Wert",
+      "WeightedDb": "Gewichtetes dB",
+      "EnergySavings": "Geschätzte Energieeinsparung",
+      "DbReduction": "Schallreduktion",
+      "Runs": "Läufe",
+      "Panels": "Paneele",
+      "TotalArea": "Gesamtfläche",
+      "TotalWeight": "Gesamtgewicht",
+      "Overall": "Gesamt",
+      "Disclaimer": "Berechnungen sind Näherungen nach TS 498. Für tragende Einsatzzwecke ist die Freigabe eines Statikers erforderlich.",
+      "WindZoneMissing": "Windzone nicht zugewiesen. Im Projektkopf festlegen.",
+      "NoSummary": "Speichern Sie das Projekt, um die Statikzusammenfassung zu sehen."
+    },
+    "Plan2D": {
+      "Select": "Auswählen",
+      "Draw": "Zeichnen",
+      "Fit": "Anpassen",
+      "ZoomIn": "Vergrößern",
+      "ZoomOut": "Verkleinern",
+      "DrawHint": "Vom Start- zum Endpunkt ziehen"
+    },
+    "Connection": {
+      "JointAngle": "Verbindungswinkel",
+      "MitreCut": "Gehrungsschnitt",
+      "SuggestedMitre": "Empfohlen {{value}}°",
+      "UseCornerPost": "Eckpfosten verwenden",
+      "CornerProfile": "Eckprofil",
+      "NoCornerProfile": "— Keines —",
+      "Added": "Verbindung hinzugefügt"
+    },
+    "Cost": {
+      "Materials": "Profil",
+      "Glass": "Glas",
+      "Hardware": "Beschlag",
+      "Waste": "Verschnitt",
+      "Labor": "Lohn",
+      "Scaffolding": "Gerüst",
+      "Crane": "Kran",
+      "Transport": "Transport",
+      "BaseCost": "Basiskosten",
+      "Margin": "Marge",
+      "Tax": "Steuer",
+      "GrandTotal": "Kundengesamtbetrag"
+    },
+    "Quality": {
+      "low": "Niedrig",
+      "medium": "Mittel",
+      "high": "Hoch",
+      "ultra": "Ultra"
+    },
+    "Opening": {
+      "Fixed": "Fest",
+      "SlidingLeft": "Schieben ← Links",
+      "SlidingRight": "Schieben → Rechts",
+      "Folding": "Falt",
+      "Hinged": "Dreh",
+      "Guillotine": "Guillotine"
+    },
+    "Validation": {
+      "AllGood": "Alle Prüfungen bestanden.",
+      "PanelTooWide": "Panel überschreitet maximale Systembreite",
+      "RunTooTall": "Lauf überschreitet maximale Systemhöhe",
+      "GlassThicknessMismatch": "Glasdicke nicht mit System kompatibel",
+      "GlassAreaExceedsMax": "Glasfläche überschreitet Maximum",
+      "WeightExceeds": "Panelgewicht überschreitet Systemkapazität",
+      "WindLoadFail": "Glas für Windlast unzureichend",
+      "SystemOpeningMismatch": "System unterstützt diese Öffnungsart nicht",
+      "SeismicTooLarge": "Panel zu groß für Erdbebenzone",
+      "ConnectionAngleInvalid": "Gehrungswinkel außerhalb des empfohlenen Bereichs",
+      "SystemNotFound": "Profilsystem nicht gefunden",
+      "GlassNotFound": "Glasart nicht gefunden"
+    },
+    "NewProjectWizard": {
+      "Title": "Neues Glasfassaden-Projekt",
+      "TitleSimple": "Neues Glasfassaden-Projekt",
+      "TitlePro": "Neues Projekt",
+      "CloseAria": "Schließen",
+      "Back": "Zurück",
+      "Next": "Weiter",
+      "Step": {
+        "Category": "Anlagentyp",
+        "Template": "Vorlage",
+        "Meta": "Projektinformation",
+        "QuickDimensions": "Schnellmaße"
+      },
+      "Action": {
+        "Next": "Weiter",
+        "Back": "Zurück",
+        "Skip": "Überspringen",
+        "Finish": "Fertigstellen",
+        "EmptyStart": "Leer starten"
+      },
+      "Header": {
+        "Simple": "Schritt {{step}} / {{total}}",
+        "Pro": "Schritt {{step}}/{{total}}"
+      },
+      "Banner": {
+        "PersonaSimple": "Schritt-für-Schritt geführter Modus",
+        "PersonaPro": "Vollständige professionelle Kontrolle"
+      },
+      "Indicator": {
+        "Step1": {
+          "Label": "Kategorie",
+          "Subtitle": "Anlagentyp"
+        },
+        "Step2": {
+          "Label": "Vorlage",
+          "Subtitle": "Systemvorlage oder leer"
+        },
+        "Step3": {
+          "Label": "Projektinformation",
+          "Subtitle": "Kunde und Adresse"
+        },
+        "Step4": {
+          "Label": "Maße",
+          "Subtitle": "Schnelle Maßeingabe"
+        }
+      },
+      "Preset": {
+        "Balcony": {
+          "Title": "Balkonverglasung",
+          "Description": "Schließen eines Glasbalkons",
+          "Subtitle": "TPH-Modell | Inline-Geometrie | Guillotine/Schiebesystem",
+          "DescriptionSimple": "Schließen eines Glasbalkons",
+          "DescriptionPro": "TPH-Modell | Inline-Geometrie | Guillotine/Schiebesystem"
+        },
+        "Greenhouse": {
+          "Title": "Gewächshaus",
+          "Description": "Gewächshaus / Wintergarten",
+          "Subtitle": "Parametrisches Walmdach | Glasdach",
+          "DescriptionSimple": "Gewächshaus und Wintergarten",
+          "DescriptionPro": "Parametrisches Walmdach | Glasdach | First/Traufkontrolle"
+        },
+        "ShowerCabin": {
+          "Title": "Duschkabine",
+          "Description": "Eck- oder Nischenduschkabine",
+          "Subtitle": "8/10 mm gehärtet | Eckhalter",
+          "DescriptionSimple": "Eck- oder Nischenduschkabine",
+          "DescriptionPro": "8/10 mm gehärtet | Eckhalter | Punkthalter"
+        },
+        "Balustrade": {
+          "Title": "Geländer",
+          "Description": "Glasgeländer und Treppenbrüstung",
+          "Subtitle": "12-19 mm Strukturglas | TRSB",
+          "DescriptionSimple": "Glasgeländer, Treppen und Balkonkante",
+          "DescriptionPro": "12-19 mm Strukturglas | TRSB | Profil/Klemmoptionen"
+        },
+        "FramelessDoor": {
+          "Title": "Rahmenlose Tür",
+          "Description": "Rahmenlose Glastür",
+          "Subtitle": "Punkthalter | 10-12 mm gehärtet",
+          "DescriptionSimple": "Rahmenlose Glastür und Eingangstrennwände",
+          "DescriptionPro": "Punkthalter | 10-12 mm gehärtet | Bodenfeder-Option"
+        },
+        "CurtainWall": {
+          "Title": "Vorhangfassade",
+          "Description": "Gebäudefassade mit Kassettensystem",
+          "Subtitle": "Kassettensystem | 1.5x3 m Panel | Aluminiumprofil",
+          "DescriptionSimple": "Vorhangfassade für Büro- und Geschäftsgebäude",
+          "DescriptionPro": "Kassettensystem | mehrseitiges Polygon | 4-12 Paneele"
+        },
+        "SpiderFacade": {
+          "Title": "Spinnenfassade",
+          "Description": "Punktgehaltene strukturelle Glasfassade",
+          "Subtitle": "4-Punkt-Halterung | min. 12 mm Strukturglas",
+          "DescriptionSimple": "Strukturglasfassade für Lobby und Eingänge",
+          "DescriptionPro": "Spinnenbeschlag | 3-4 Punkte pro Panel | Strukturglas"
+        },
+        "FreeForm": {
+          "Title": "Freiform",
+          "Description": "Benutzerdefiniertes Polygon",
+          "Subtitle": "Leerer Start | Polygon-Eckpunkte >= 3",
+          "DescriptionSimple": "Eigenes Design mit leerem Polygon-Starter",
+          "DescriptionPro": "Benutzerdefiniertes Polygon | freie Geometrie | selbsttragend"
+        }
+      },
+      "Step1": {
+        "Title": "Welche Anlage wird entworfen?",
+        "HintSimple": "Wählen Sie die nächstliegende Option, wir kümmern uns um den Rest.",
+        "HintPro": "Die Kategoriewahl bestimmt Geometrie und Montagetopologie."
+      },
+      "Step2": {
+        "Title": "Mit einer fertigen Vorlage starten",
+        "HintSimple": "Häufig verwendete Layouts. Sie können auch leer starten.",
+        "HintPro": "Systemvorlagen liefern Lauf- und Panel-Voreinstellungen.",
+        "StartBlank": "Leer starten",
+        "StartBlankHint": "Ohne Vorlage, von Grund auf.",
+        "EmptyHint": "Keine Vorlage für diese Kategorie. Fahren Sie mit \"Leer starten\" fort.",
+        "EmptyMessage": "Keine Vorlagen für diese Kategorie gefunden."
+      },
+      "Template": {
+        "EmptyMessage": "Keine Vorlagen verfügbar.",
+        "RunCount_one": "{{count}} Lauf",
+        "RunCount_other": "{{count}} Läufe",
+        "RunCount": "{{count}} Lauf",
+        "PanelCount_one": "{{count}} Panel",
+        "PanelCount_other": "{{count}} Panels",
+        "PanelCount": "{{count}} Panel",
+        "EstimatedArea": "{{min}}–{{max}} m²"
+      },
+      "Step3": {
+        "Title": "Projektdetails",
+        "Hint": "Projektname und Kunde sind erforderlich, weitere Felder optional.",
+        "ProjectName": "Projektname *",
+        "ProjectNamePlaceholder": "z. B. Yildiz-Wohnung Balkon",
+        "NameError": "Projektname muss {{min}}-{{max}} Zeichen lang sein.",
+        "Customer": "Kunde *",
+        "CustomerSearchPlaceholder": "Kunde suchen...",
+        "ChangeCustomer": "Ändern",
+        "CreateNewCustomer": "Neuen Kunden anlegen",
+        "Address": "Bauadresse",
+        "AddressPlaceholder": "Straße, Nr., Gebäude, Stadtteil/Stadt",
+        "Notes": "Notizen",
+        "NotesPlaceholder": "Interne Notizen, Montagebedingungen usw."
+      },
+      "Meta": {
+        "Name": "Projektname",
+        "NamePlaceholder": "z. B. Yildiz-Wohnung Balkon",
+        "NameError": "3-120 Zeichen",
+        "Customer": "Kunde",
+        "CustomerPlaceholder": "Kunde suchen...",
+        "CustomerNew": "Neuer Kunde",
+        "Address": "Bauadresse",
+        "AddressPlaceholder": "Straße, Nr., Gebäude, Stadtteil/Stadt",
+        "Notes": "Notizen",
+        "NotesPlaceholder": "Interne Notizen, Montagebedingungen usw."
+      },
+      "Step4": {
+        "TitleSimple": "Schnellmaß eintragen, später feinjustieren",
+        "TitlePro": "Lauf-Maße und Panel-Anzahl",
+        "HintSimple": "Vor Ort mit Laser messen und hier eintragen. Oder später messen.",
+        "HintPro": "Näherungswerte — finale Maße bei der Vor-Ort-Vermessung.",
+        "RunCount": "Anzahl Läufe",
+        "RunLabel": "Lauf {{index}}",
+        "WidthMm": "Breite (mm)",
+        "HeightMm": "Höhe (mm)",
+        "PanelCount": "Panel-Anzahl",
+        "LaserHint": "Lasermesser-Integration folgt.",
+        "SkipSimple": "Überspringen und später messen",
+        "SkipPro": "Ohne Maße erstellen",
+        "Create": "Projekt anlegen"
+      },
+      "Dimensions": {
+        "RunNumber": "Lauf {{index}}",
+        "Width": "Breite (mm)",
+        "Height": "Höhe (mm)",
+        "PanelCount": "Panel-Anzahl",
+        "Skip": "Später messen",
+        "Submit": "Projekt anlegen"
+      },
+      "Validation": {
+        "CustomerRequired": "Kunde ist erforderlich.",
+        "ProjectNameRequired": "Projektname ist erforderlich."
+      },
+      "Create": {
+        "Loading": "Projekt wird erstellt...",
+        "Success": "Projekt erfolgreich erstellt.",
+        "Error": "Projekt konnte nicht erstellt werden."
+      }
+    },
+    "FieldExt": {}
+  },
+  "Common": {
+    "Yes": "Ja",
+    "No": "Nein",
+    "Day": "Tag",
+    "Days": "Tage",
+    "Loading": "Wird geladen…",
+    "Delete": "Löschen",
+    "Disabled": "Deaktiviert",
+    "Enabled": "Aktiviert",
+    "Create": "Erstellen",
+    "Cancel": "Abbrechen",
+    "Save": "Speichern",
+    "Undo": "Rückgängig",
+    "Redo": "Wiederherstellen",
+    "Previous": "Zurück",
+    "Next": "Weiter",
+    "PageOf": "{{current}}/{{total}}",
+    "Refresh": "Aktualisieren",
+    "All": "Alle",
+    "Offline": {
+      "Banner": "Sie sind offline. Änderungen werden synchronisiert, sobald die Verbindung wiederhergestellt ist.",
+      "Queued": "{{count}} Änderungen ausstehend",
+      "Synced": "{{count}} Änderungen synchronisiert",
+      "Error": "{{count}} Änderungen konnten nicht synchronisiert werden",
+      "SyncNow": "Jetzt synchronisieren"
+    }
+  },
+  "Privacy": {
+    "Title": "Datenschutz & DSGVO",
+    "Subtitle": "Verwalten Sie Ihre persönlichen Datenrechte: Daten herunterladen oder Konto löschen.",
+    "Export": {
+      "Title": "Meine Daten exportieren",
+      "Description": "Laden Sie alle Ihre personenbezogenen Daten — Konto, Projekte und Aktivitätshistorie — im JSON-Format herunter.",
+      "Button": "Datenpaket herunterladen",
+      "Preparing": "Wird vorbereitet…",
+      "Success": "Datenpaket bereit"
+    },
+    "Erase": {
+      "Title": "Konto löschen",
+      "Description": "Beantragen Sie die Anonymisierung Ihres Kontos gemäß den Datenschutzrechten. Dieser Vorgang ist unwiderruflich; Finanzunterlagen werden für die gesetzliche Aufbewahrungsfrist gespeichert, persönliche Identifikationsdaten werden jedoch gelöscht.",
+      "ConfirmPrompt": "Geben Sie Ihren Benutzernamen zur Bestätigung ein",
+      "Button": "Konto löschen",
+      "Processing": "Wird verarbeitet…",
+      "Success": "Löschanfrage erhalten",
+      "MismatchError": "Benutzername stimmt nicht überein"
+    },
+    "Consent": {
+      "Marketing": "Marketing-Mitteilungen",
+      "Analytics": "Anonyme Nutzungsanalyse",
+      "Updated": "Einstellung aktualisiert"
+    },
+    "ExportIncludes": "Der Export umfasst Profil, Kunden-/Händler-Mitgliedschaften, Bestellverlauf und jüngste Aktivitäten.",
+    "Result": {
+      "AccountAnonymized": "Konto anonymisiert. Finanzunterlagen werden für die gesetzliche Aufbewahrungsfrist gespeichert.",
+      "CustomerAnonymized": "Kundendatensatz anonymisiert. Finanzielle Snapshots werden für die gesetzliche Aufbewahrungsfrist gespeichert."
+    },
+    "Admin": {
+      "Actions": "Aktionen",
+      "AllStatuses": "Alle Status",
+      "Empty": "Keine Anfragen gefunden",
+      "Notes": "Notizen",
+      "Process": "Verarbeiten",
+      "ProcessSuccess": "Anfrage verarbeitet",
+      "Reject": "Ablehnen",
+      "RejectSuccess": "Anfrage abgelehnt",
+      "RejectionPrompt": "Ablehnungsgrund eingeben",
+      "Status": "Status",
+      "StatusFilter": "Statusfilter",
+      "SubmittedAt": "Eingereicht am",
+      "Subtitle": "Verwalten Sie DSGVO/KVKK-Datensubjektsanfragen",
+      "Tab": {
+        "Audit": "Audit",
+        "AuditPlaceholder": "Auditprotokolle in Kürze",
+        "Policies": "Aufbewahrungsrichtlinien",
+        "Requests": "Anfragen"
+      },
+      "Title": "Datenschutzverwaltung",
+      "Type": "Typ"
+    },
+    "DataSubjectRequestNotFound": "Datensubjekt-Anfrage nicht gefunden",
+    "EmailRequired": "E-Mail ist erforderlich",
+    "Portal": {
+      "LastSubmitted": "Letzte eingereichte Anfrage-ID",
+      "Subtitle": "Üben Sie Ihre Rechte nach DSGVO / KVKK Art. 11 aus",
+      "Title": "Datenschutzanfragen"
+    },
+    "Request": {
+      "Email": "E-Mail-Adresse",
+      "Notes": "Notizen (optional)",
+      "Submit": "Anfrage senden",
+      "SubmittedSuccess": "Anfrage erfolgreich gesendet",
+      "Submitting": "Wird gesendet...",
+      "Type": "Anfragetyp",
+      "TypeOption": {
+        "Access": "Auskunftsrecht",
+        "Erasure": "Recht auf Löschung",
+        "Export": "Datenexport",
+        "Objection": "Widerspruchsrecht",
+        "Portability": "Datenübertragbarkeit",
+        "Rectification": "Recht auf Berichtigung",
+        "Restriction": "Verarbeitung einschränken"
+      }
+    },
+    "RequestAlreadyClosed": "Anfrage ist bereits geschlossen",
+    "RequestTypeMismatch": "Anfragetyp-Konflikt",
+    "RetentionExpiry": "Aufbewahrungsfrist abgelaufen",
+    "RetentionPolicyNotFound": "Aufbewahrungsrichtlinie nicht gefunden",
+    "Retention": {
+      "Action": "Aktion",
+      "ActionOption": {
+        "Anonymize": "Anonymisieren",
+        "Archive": "Archivieren",
+        "Delete": "Löschen"
+      },
+      "AddButton": "Richtlinie hinzufügen",
+      "AddPolicy": "Aufbewahrungsrichtlinie hinzufügen",
+      "CreateSuccess": "Aufbewahrungsrichtlinie erstellt",
+      "Days": "Tage",
+      "Empty": "Noch keine Richtlinien definiert",
+      "Enabled": "Aktiviert",
+      "EntityType": "Datentyp",
+      "ExistingPolicies": "Bestehende Richtlinien",
+      "LastRun": "Letzte Ausführung",
+      "UpdateSuccess": "Aufbewahrungsrichtlinie aktualisiert"
+    },
+    "Status": {
+      "Completed": "Abgeschlossen",
+      "InProgress": "In Bearbeitung",
+      "Rejected": "Abgelehnt",
+      "Submitted": "Eingereicht"
+    },
+    "TenantRequired": "Mandant ist erforderlich",
+    "VerificationEmailSent": "Bestätigungs-E-Mail gesendet"
+  },
+  "Persona": {
+    "Mode": {
+      "Pro": "Profi",
+      "Simple": "Einfach",
+      "Updated": "Modus auf {{mode}} gesetzt"
+    }
+  },
+  "Admin": {
+    "Providers": {
+      "Title": "Provider Integrations",
+      "Eyebrow": "Administration",
+      "Description": "Configure third-party integrations for your tenant.",
+      "CategoryTabs": "Provider category tabs",
+      "Empty": "No providers registered in this category.",
+      "LoadFailed": "Failed to load providers.",
+      "Default": "Default",
+      "Sandbox": "Sandbox",
+      "Prod": "Production",
+      "LastChecked": "Last checked",
+      "Category": {
+        "EFatura": "E-Invoice",
+        "Payment": "Payment",
+        "LaserMeter": "Laser Meter",
+        "Other": "Other"
+      },
+      "Status": {
+        "Healthy": "Healthy",
+        "Degraded": "Degraded",
+        "Unhealthy": "Unhealthy",
+        "Unknown": "Unknown",
+        "NotConfigured": "Not configured"
+      },
+      "Action": {
+        "Configure": "Configure",
+        "CheckHealth": "Check health",
+        "RunTestSuite": "Run test suite",
+        "WebhookHistory": "Webhooks",
+        "SetDefault": "Set as default",
+        "Enable": "Enabled",
+        "Disable": "Disabled"
+      },
+      "Form": {
+        "Title": "Configure {{name}}",
+        "DisplayName": "Display name",
+        "ApiKey": "API key",
+        "SecretKey": "Secret key",
+        "WebhookSecret": "Webhook secret",
+        "Endpoint": "Endpoint URL",
+        "IsSandbox": "Sandbox mode",
+        "IsEnabled": "Enabled",
+        "IsEnabledHint": "Enables routing through this provider.",
+        "SandboxHint": "Test environment. No real charges or filings.",
+        "ProdHint": "Production environment. Real charges and filings will be made.",
+        "SecretsHint": "Leave blank to keep existing values. Secrets are encrypted at rest."
+      },
+      "TestSuite": {
+        "Title": "Test suite — {{name}}",
+        "Running": "Running test suite…",
+        "Success": "Passed",
+        "Failed": "Failed",
+        "Outcome": "Outcome",
+        "NoResult": "No test result available.",
+        "StepX": "Step {{n}}"
+      },
+      "Webhook": {
+        "Title": "Webhook history — {{name}}",
+        "ReceivedAt": "Received",
+        "EventType": "Event",
+        "Status": "Status",
+        "Retries": "Retries",
+        "Error": "Error",
+        "Actions": "Actions",
+        "Replay": "Replay",
+        "Empty": "No webhook events match the current filters.",
+        "From": "From",
+        "To": "To",
+        "AllStatuses": "All statuses",
+        "Reset": "Reset filters",
+        "PageInfo": "Page {{page}} of {{totalPages}} ({{total}} events)",
+        "StatusValue": {
+          "Received": "Received",
+          "Processed": "Processed",
+          "Failed": "Failed",
+          "Retrying": "Retrying",
+          "Discarded": "Discarded",
+          "Pending": "Pending"
+        }
+      },
+      "Toast": {
+        "Saved": "Provider configuration saved.",
+        "SaveFailed": "Provider configuration could not be saved.",
+        "Enabled": "Provider enabled.",
+        "Disabled": "Provider disabled.",
+        "DefaultSet": "Default provider updated.",
+        "HealthOk": "Provider is healthy.",
+        "HealthFailed": "Health check failed.",
+        "WebhookReplayed": "Webhook replayed.",
+        "WebhookReplayFailed": "Failed to replay webhook."
+      }
+    }
+  },
+  "Fx": {
+    "LatestRates": {
+      "Title": "Aktuelle Wechselkurse",
+      "LastUpdated": "Zuletzt aktualisiert",
+      "Loading": "Kurs wird geladen...",
+      "Unavailable": "Kurs nicht verfügbar"
+    },
+    "Currency": {
+      "Buying": "Ankauf",
+      "Selling": "Verkauf"
+    },
+    "Source": {
+      "TCMB": "TCMB (Zentralbank der Türkei)"
+    }
+  },
+  "Marketplace": {
+    "List": {
+      "Eyebrow": "Community",
+      "Title": "Vorlagen-Marktplatz",
+      "Subtitle": "Community-Vorlagen durchsuchen und in den Arbeitsbereich installieren.",
+      "SubmitButton": "Vorlage einreichen",
+      "LoadFailed": "Vorlagen konnten nicht geladen werden",
+      "EmptyTitle": "Keine Vorlagen mit diesen Filtern",
+      "EmptyDescription": "Andere Kategorie oder niedrigere Mindestbewertung versuchen."
+    },
+    "Filters": {
+      "Category": "Kategorie",
+      "AllCategories": "Alle Kategorien",
+      "Sort": "Sortieren",
+      "MinRating": "Mindestbewertung",
+      "AnyRating": "Alle",
+      "Sort.Popularity": "Beliebtheit",
+      "Sort.Newest": "Neueste",
+      "Sort.Rating": "Beste Bewertung",
+      "Sort.Alphabetical": "Alphabetisch"
+    },
+    "Card": { "NoPreview": "Keine Vorschau" },
+    "Detail": {
+      "Back": "Zurück zum Marktplatz",
+      "Install": "Vorlage installieren",
+      "Installing": "Installiere...",
+      "Installed": "Vorlage installiert",
+      "InstallFailed": "Installation fehlgeschlagen",
+      "LoadFailed": "Vorlage konnte nicht geladen werden",
+      "MissingId": "Vorlagen-ID fehlt",
+      "NoPreview": "Keine Vorschau verfügbar",
+      "NoDescription": "Keine Beschreibung.",
+      "Specs": "Spezifikationen",
+      "Subtype": "Untertyp",
+      "GeometryMode": "Geometrie",
+      "Mounting": "Montage",
+      "Connector": "Verbinder",
+      "RunPresets": "Lauf-Voreinstellungen",
+      "Downloads": "Downloads",
+      "PublishedAt": "Veröffentlicht"
+    },
+    "Reviews": {
+      "Title": "Bewertungen",
+      "Empty": "Noch keine Bewertungen.",
+      "Loading": "Bewertungen werden geladen...",
+      "User": "Benutzer",
+      "LeaveReview": "Bewertung abgeben",
+      "CommentPlaceholder": "Erfahrung teilen...",
+      "Submit": "Senden",
+      "Submitting": "Senden...",
+      "Submitted": "Bewertung gesendet",
+      "SubmitFailed": "Senden fehlgeschlagen",
+      "SelectRating": "Bitte Bewertung wählen"
+    },
+    "Submit": {
+      "Title": "Vorlage einreichen",
+      "Subtitle": "Private Vorlage nach Genehmigung mit der Community teilen.",
+      "TenantTemplateId": "Vorlagen-ID",
+      "TenantTemplateIdRequired": "Vorlagen-ID ist erforderlich",
+      "Submit": "Senden",
+      "Submitting": "Senden...",
+      "Submitted": "Einreichung zur Prüfung gesendet",
+      "Failed": "Einreichung fehlgeschlagen",
+      "Cancel": "Abbrechen"
+    },
+    "MySubmissions": {
+      "Eyebrow": "Marktplatz",
+      "Title": "Meine Einreichungen",
+      "Subtitle": "Verfolgen Sie Ihre Einreichungen an den Marktplatz.",
+      "New": "Weitere einreichen",
+      "LoadFailed": "Einreichungen konnten nicht geladen werden",
+      "EmptyTitle": "Noch keine Einreichungen",
+      "EmptyDescription": "Reichen Sie Ihre eigene Vorlage ein, um mit der Community zu teilen.",
+      "Code": "Code",
+      "Name": "Name",
+      "Status": "Status",
+      "SubmittedAt": "Eingereicht",
+      "PublishedAt": "Veröffentlicht",
+      "Downloads": "Downloads"
+    },
+    "Admin": {
+      "Eyebrow": "Plattform-Admin",
+      "Title": "Marktplatz-Prüfungswarteschlange",
+      "Subtitle": "Community-Einreichungen vor Veröffentlichung genehmigen oder ablehnen.",
+      "LoadFailed": "Ausstehende Einreichungen konnten nicht geladen werden",
+      "EmptyTitle": "Warteschlange ist leer",
+      "EmptyDescription": "Keine ausstehenden Einreichungen.",
+      "Code": "Code",
+      "Name": "Name",
+      "SubmittedAt": "Eingereicht",
+      "Actions": "Aktionen",
+      "Publish": "Veröffentlichen",
+      "Published": "Vorlage veröffentlicht",
+      "PublishFailed": "Veröffentlichung fehlgeschlagen",
+      "Reject": "Ablehnen",
+      "Rejected": "Einreichung abgelehnt",
+      "RejectFailed": "Ablehnung fehlgeschlagen",
+      "Rejecting": "Ablehnen...",
+      "RejectTitle": "Einreichung ablehnen",
+      "RejectReason": "Ablehnungsgrund",
+      "RejectReasonRequired": "Ablehnungsgrund ist erforderlich",
+      "ConfirmReject": "Ablehnen",
+      "Cancel": "Abbrechen"
+    }
+  },
+  "Warranty": {
+    "Title": "Garantieverträge",
+    "Subtitle": "Garantieabdeckung, Ablaufdaten und Verlängerungen verfolgen.",
+    "Empty": "Keine Garantieverträge für die aktuellen Filter.",
+    "StartDate": "Beginn",
+    "EndDate": "Ende",
+    "MonthsShort": "Mon",
+    "Status": {
+      "Active": "Aktiv",
+      "Expired": "Abgelaufen",
+      "Cancelled": "Storniert",
+      "Suspended": "Ausgesetzt"
+    },
+    "CoverageType": {
+      "ManufacturerDefect": "Herstellerfehler",
+      "Installation": "Installation",
+      "FullService": "Vollservice",
+      "Limited": "Eingeschränkt"
+    },
+    "Action": {
+      "Create": "Garantie anlegen",
+      "Extend": "Verlängern",
+      "Cancel": "Stornieren",
+      "Suspend": "Aussetzen",
+      "Resume": "Fortsetzen",
+      "MonthsToAdd": "Monate",
+      "ReasonOptional": "Grund (optional)",
+      "ReasonRequired": "Grund",
+      "ExtendedToast": "Garantie verlängert.",
+      "CancelledToast": "Garantie storniert.",
+      "CancelReasonRequired": "Stornierungsgrund ist erforderlich."
+    },
+    "Alerts": {
+      "BadgeAria": "Bald ablaufende Garantien",
+      "ExpiringCount": "{{count}} laufen bald ab"
+    },
+    "ServiceTicket": {
+      "Title": "Serviceanfragen",
+      "Subtitle": "Kundenmeldungen und geplante Wartung.",
+      "Empty": "Keine Tickets für die aktuellen Filter.",
+      "OpenNew": "Serviceanfrage öffnen",
+      "Description": "Beschreibung",
+      "ReportedAt": "Gemeldet",
+      "Type": {
+        "Label": "Typ",
+        "PreventiveMaintenance": "Vorbeugende Wartung",
+        "WarrantyClaim": "Garantieanspruch",
+        "OutOfWarrantyRepair": "Reparatur außerhalb der Garantie",
+        "Inspection": "Inspektion"
+      },
+      "Status": {
+        "Label": "Status",
+        "Open": "Offen",
+        "Assigned": "Zugewiesen",
+        "InProgress": "In Bearbeitung",
+        "Resolved": "Gelöst",
+        "Cancelled": "Storniert"
+      },
+      "Priority": {
+        "Label": "Priorität",
+        "Low": "Niedrig",
+        "Normal": "Normal",
+        "High": "Hoch",
+        "Urgent": "Dringend"
+      },
+      "Action": {
+        "Submit": "Ticket einreichen",
+        "Assign": "Zuweisen",
+        "Resolve": "Lösen",
+        "Cancel": "Stornieren"
+      },
+      "Validation": {
+        "Required": "Titel und Beschreibung sind erforderlich."
+      },
+      "Toast": {
+        "Created": "Serviceanfrage erstellt.",
+        "Assigned": "Serviceanfrage zugewiesen.",
+        "Resolved": "Serviceanfrage gelöst."
+      }
+    },
+    "Maintenance": {
+      "Title": "Wartungspläne",
+      "Empty": "Keine Wartung geplant.",
+      "Type": {
+        "PreventiveAnnual": "Jährliche Wartung",
+        "SemiAnnual": "Halbjährlich",
+        "Quarterly": "Quartalsweise",
+        "Custom": "Benutzerdefiniert"
+      },
+      "NextDue": "Nächster Termin",
+      "LastCompleted": "Zuletzt abgeschlossen",
+      "Action": {
+        "Schedule": "Wartung planen",
+        "Complete": "Als abgeschlossen markieren"
+      }
+    }
+  },
+  "InstallationAcceptance": {
+    "Title": "Installations-Abnahme",
+    "OpenForm": "Formular öffnen",
+    "OpenPunchListItems": "Offene Mängelpunkte",
+    "Status": {
+      "Draft": "Entwurf",
+      "InProgress": "In Bearbeitung",
+      "SignedByCustomer": "Vom Kunden unterzeichnet",
+      "Accepted": "Akzeptiert",
+      "Rejected": "Abgelehnt"
+    },
+    "Action": {
+      "Start": "Abnahme starten",
+      "UpdateChecklist": "Checkliste aktualisieren",
+      "UploadPhoto": "Foto hochladen",
+      "CaptureSignature": "Unterschrift erfassen",
+      "Accept": "Akzeptieren",
+      "Reject": "Ablehnen",
+      "RejectReasonPrompt": "Ablehnungsgrund"
+    },
+    "Checklist": {
+      "Category": {
+        "Mechanical": "Mechanik",
+        "Glass": "Glas",
+        "Seal": "Dichtung",
+        "Dimension": "Maße",
+        "Hardware": "Beschläge"
+      },
+      "Result": {
+        "Pass": "OK",
+        "Fail": "Nicht OK",
+        "NA": "N/V"
+      },
+      "Item": {
+        "Mechanical.FrameRigidity": "Rahmensteifigkeit akzeptabel",
+        "Mechanical.AnchorBolts": "Ankerschrauben fest",
+        "Mechanical.Levelness": "Horizontale/vertikale Nivellierung <2mm/m",
+        "Mechanical.ScrewFastenings": "Schraubverbindungen vollständig",
+        "Glass.NoChips": "Glasscheiben unbeschädigt",
+        "Glass.PanelAlignment": "Scheibenausrichtung",
+        "Glass.EdgePolish": "Glaskanten poliert",
+        "Glass.StampVisible": "CE-Kennzeichnung sichtbar",
+        "Seal.SiliconeApplied": "Silikon aufgetragen",
+        "Seal.NoGaps": "Dichtung ohne Lücken",
+        "Seal.WaterTest": "Wasserdichtigkeit geprüft",
+        "Dimension.WidthTolerance": "Breitentoleranz ±2mm",
+        "Dimension.HeightTolerance": "Höhentoleranz ±2mm",
+        "Dimension.Diagonal": "Diagonalengleichheit",
+        "Hardware.HandlesOperational": "Griffe funktionsfähig",
+        "Hardware.LocksOperational": "Schlösser funktionsfähig",
+        "Hardware.HingesLubricated": "Scharniere geschmiert",
+        "Hardware.HingeAlignment": "Scharnierausrichtung"
+      },
+      "NotesPlaceholder": "Notizen..."
+    },
+    "PunchList": {
+      "Title": "Mängelliste",
+      "Empty": "Keine offenen Punkte.",
+      "Add": "Hinzufügen",
+      "Resolve": "Erledigt",
+      "DescriptionPlaceholder": "Beschreibung",
+      "Severity": {
+        "Minor": "Gering",
+        "Moderate": "Mittel",
+        "Critical": "Kritisch"
+      },
+      "Status": {
+        "Open": "Offen",
+        "InProgress": "In Bearbeitung",
+        "Resolved": "Erledigt",
+        "Deferred": "Verschoben"
+      }
+    },
+    "PhotoCapture": {
+      "TakePhoto": "Foto aufnehmen",
+      "PickFromGallery": "Aus Galerie wählen",
+      "Counter": "{{count}} Foto(s)"
+    },
+    "SignaturePad": {
+      "CustomerNamePlaceholder": "Name des Kundenvertreters",
+      "Instructions": "Bitte unterschreiben Sie im Feld unten.",
+      "Clear": "Löschen",
+      "Save": "Unterschrift speichern"
+    }
+  },
+  "Mrp": {
+    "Dashboard": {
+      "Title": "MRP-Dashboard",
+      "Subtitle": "Materialbedarfsplanung und Nachbestellvorschläge.",
+      "TotalTracked": "Verfolgte Produkte",
+      "ReorderCandidates": "Nachbestellkandidaten",
+      "PendingRequisitions": "Offene Anforderungen",
+      "OpenPurchaseOrders": "Offene Bestellungen",
+      "ViewRequisitions": "Anforderungen verwalten"
+    },
+    "Suggestions": {
+      "Title": "Nachbestellvorschläge",
+      "Empty": "Keine Produkte unter dem Meldebestand.",
+      "Sku": "SKU",
+      "Product": "Produkt",
+      "OnHand": "Bestand",
+      "OnOrder": "Bestellt",
+      "Available": "Verfügbar",
+      "ReorderPoint": "Meldebestand",
+      "Suggested": "Vorschlag",
+      "DaysUntilStockOut": "Tage bis Stockout"
+    },
+    "Projection": {
+      "Title": "Bestandsprojektion",
+      "Subtitle": "Projizierter Bestand für die nächsten {{days}} Tage.",
+      "NoData": "Keine Projektionsdaten verfügbar.",
+      "ReorderPoint": "Meldebestand",
+      "ShouldReorder": "Nachbestellung empfohlen",
+      "OnHand": "Bestand",
+      "Reserved": "Reserviert",
+      "OnOrder": "Bestellt",
+      "Suggested": "Vorschlag"
+    },
+    "Forecast": {
+      "Title": "Bedarfsprognose",
+      "Window": "Zeitraum",
+      "AverageDaily": "Tagesdurchschnitt",
+      "TotalDemand": "Gesamtbedarf",
+      "Peak": "Spitzentag"
+    },
+    "Requisition": {
+      "PageTitle": "Bestellanforderungen",
+      "PageSubtitle": "Anforderungen prüfen, freigeben und in Bestellungen umwandeln.",
+      "NewRequisition": "Neue Anforderung",
+      "Empty": "Keine Anforderungen entsprechen den Filtern.",
+      "Notes": "Notizen",
+      "Lines": "Positionen",
+      "LineCount": "Positionen",
+      "AddLine": "Position hinzufügen",
+      "RemoveLine": "Position entfernen",
+      "ProductId": "Produkt-ID",
+      "Quantity": "Menge",
+      "UnitCost": "Stückkosten",
+      "EstimatedTotal": "Geschätzte Summe",
+      "Status": {
+        "Draft": "Entwurf",
+        "Submitted": "Eingereicht",
+        "Approved": "Freigegeben",
+        "Rejected": "Abgelehnt",
+        "Converted": "Umgewandelt",
+        "Cancelled": "Storniert"
+      },
+      "Reason": {
+        "Label": "Grund",
+        "MRPSuggestion": "MRP-Vorschlag",
+        "Manual": "Manuell",
+        "EmergencyOrder": "Eilbestellung",
+        "StockOut": "Stockout"
+      }
+    },
+    "Action": {
+      "Submit": "Einreichen",
+      "Approve": "Freigeben",
+      "Reject": "Ablehnen",
+      "Convert": "In Bestellung",
+      "Cancel": "Stornieren",
+      "Generate": "MRP starten"
+    }
+  },
+  "Onboarding": {
+    "Action": {
+      "Next": "Weiter",
+      "Previous": "Zurück",
+      "Skip": "Überspringen",
+      "Finish": "Fertig",
+      "Restart": "Neu starten"
+    },
+    "WelcomeBanner": {
+      "Title": "Willkommen!",
+      "Description": "Eine kurze Tour zeigt die wichtigsten Bildschirme.",
+      "StartButton": "Tour starten"
+    },
+    "Settings": {
+      "Title": "Onboarding-Tour",
+      "Description": "Geführte Touren neu starten oder Status anzeigen.",
+      "ResetAll": "Alle Touren zurücksetzen",
+      "ResetOne": "Zurücksetzen",
+      "StatusPending": "Ausstehend",
+      "StatusCompleted": "Abgeschlossen",
+      "StatusSkipped": "Übersprungen"
+    },
+    "TourName": {
+      "Dashboard": "Übersicht",
+      "Designer": "Designer",
+      "Mrp": "Produktionsplanung",
+      "Installation": "Feldabnahme"
+    },
+    "Tour": {
+      "Dashboard": {
+        "Step1": {
+          "Title": "Glasprojekte",
+          "Content": "Projekte werden hier verwaltet. Klicken Sie, um ein neues Glasprojekt zu starten."
+        },
+        "Step2": {
+          "Title": "Neuer Projekt-Assistent",
+          "Content": "Vier Schritte: Kategorie → Vorlage → Info → Maße."
+        },
+        "Step3": {
+          "Title": "Persona-Modus",
+          "Content": "Wechseln Sie zwischen Einfach (große Tasten) und Pro (technisch detailliert)."
+        },
+        "Step4": {
+          "Title": "Produktion & Einkauf",
+          "Content": "Produktionsplanung, Bedarfe und Bestandsprognosen."
+        }
+      },
+      "Designer": {
+        "Step1": {
+          "Title": "Designer-Leinwand",
+          "Content": "Entwerfen Sie hier Ihren Glasraum. Läufe hinzufügen, Panels teilen, Beschläge wählen."
+        },
+        "Step2": {
+          "Title": "Läufe",
+          "Content": "Fügen Sie Fassadenläufe aus dem linken Bereich hinzu."
+        },
+        "Step3": {
+          "Title": "Inspektor",
+          "Content": "Details des ausgewählten Teils rechts. Glas, Farbe und Beschläge ändern."
+        },
+        "Step4": {
+          "Title": "Stückliste & Kosten",
+          "Content": "Stückliste und Kosten werden automatisch berechnet."
+        }
+      },
+      "Mrp": {
+        "Step1": {
+          "Title": "MRP-Übersicht",
+          "Content": "Übersicht: kritische Artikel, offene Bedarfe, Bestände."
+        },
+        "Step2": {
+          "Title": "Vorschläge erzeugen",
+          "Content": "Bedarfsvorschläge aus Aufträgen und Beständen generieren."
+        },
+        "Step3": {
+          "Title": "Vorschläge",
+          "Content": "Vorschläge prüfen und in Bestellanforderungen umwandeln."
+        },
+        "Step4": {
+          "Title": "Anforderungen",
+          "Content": "Alle Anforderungen ansehen, genehmigen oder stornieren."
+        }
+      },
+      "Installation": {
+        "Step1": {
+          "Title": "Checkliste",
+          "Content": "Abnahme-Checkliste. Jedes Element als Bestanden/Nicht bestanden/N/A markieren."
+        },
+        "Step2": {
+          "Title": "Foto aufnehmen",
+          "Content": "Fotos vom Einbauort hochladen."
+        },
+        "Step3": {
+          "Title": "Mängelliste",
+          "Content": "Fehlende oder fehlerhafte Teile zur Mängelliste hinzufügen."
+        },
+        "Step4": {
+          "Title": "Kundenunterschrift",
+          "Content": "Kundenunterschrift auf dem Tablet erfassen. Formular wird danach gesperrt."
+        }
+      }
+    }
+  },
+  "Notifications": {
+    "Title": "Benachrichtigungen",
+    "SeeAll": "Alle anzeigen",
+    "UnreadOnly": "Nur ungelesen",
+    "AllStatuses": "Alle Status",
+    "MarkRead": "Als gelesen markieren",
+    "TableSubject": "Betreff",
+    "TableCategory": "Kategorie",
+    "TableChannel": "Kanal",
+    "TableStatus": "Status",
+    "TableCreatedAt": "Erstellt",
+    "Bell": {
+      "Unread": "Ungelesene Benachrichtigungen",
+      "Empty": "Keine neuen Benachrichtigungen"
+    },
+    "Channel": {
+      "InApp": "In-App",
+      "Email": "E-Mail",
+      "Sms": "SMS",
+      "Push": "Push",
+      "WhatsApp": "WhatsApp"
+    },
+    "Status": {
+      "Pending": "Ausstehend",
+      "Queued": "In Warteschlange",
+      "Sending": "Wird gesendet",
+      "Sent": "Gesendet",
+      "Delivered": "Zugestellt",
+      "Failed": "Fehlgeschlagen",
+      "Bounced": "Zurückgewiesen",
+      "Read": "Gelesen"
+    },
+    "Category": {
+      "Warranty": "Garantie",
+      "Installation": "Montage",
+      "Payment": "Zahlung",
+      "Mrp": "MRP",
+      "ServiceTicket": "Service-Ticket"
+    },
+    "Preferences": {
+      "Title": "Benachrichtigungseinstellungen",
+      "ChannelMatrix": "Kategorie / Kanal"
+    },
+    "Settings": {
+      "Title": "Benachrichtigungseinstellungen",
+      "Description": "Wählen Sie, welche Kategorien Sie über welchen Kanal erhalten."
+    },
+    "Template": {
+      "Subject": {
+        "Warranty.Activated": "Ihre Garantie ist aktiv",
+        "Warranty.Expiring": "Ihre Garantie läuft bald ab",
+        "Payment.Succeeded": "Zahlung erhalten",
+        "Payment.Failed": "Zahlung fehlgeschlagen",
+        "Installation.Accepted": "Installation akzeptiert",
+        "Mrp.SuggestionsCreated": "Neue MRP-Vorschläge",
+        "ServiceTicket.Resolved": "Ihr Ticket wurde gelöst"
+      }
+    }
+  },
+  "Whitelabel": {
+    "page": {
+      "title": "White-Label-Anpassung",
+      "subtitle": "Personalisieren Sie Ihren CoreAlign-Arbeitsbereich mit Markenfarben, Logo, Login-Seite und E-Mail-Absenderidentität."
+    },
+    "fields": {
+      "logo": "Logo",
+      "favicon": "Favicon",
+      "loginBackground": "Login-Hintergrund",
+      "primaryColor": "Primärfarbe",
+      "accentColor": "Akzentfarbe",
+      "brandName": "Markenname",
+      "emailFromName": "Absendername",
+      "emailFromAddress": "Absenderadresse",
+      "customSubdomain": "Benutzerdefinierte Subdomain",
+      "customSubdomainHint": "Wird als tenant.corealign.com verwendet.",
+      "customDomain": "Eigene Domain",
+      "customDomainHint": "Erfordert DNS-Verifizierung (CNAME).",
+      "loginHeading": "Login-Seitenüberschrift (Markdown)"
+    },
+    "upload": {
+      "empty": "Kein Bild",
+      "choose": "Datei auswählen",
+      "uploading": "Wird hochgeladen…",
+      "acceptImage": "PNG, JPG, SVG oder WebP, bis zu 2 MB.",
+      "acceptFavicon": "PNG, SVG oder ICO empfohlen.",
+      "tooLarge": "Datei überschreitet {{max}} KB."
+    },
+    "save": {
+      "submit": "Änderungen speichern",
+      "saving": "Wird gespeichert…",
+      "success": "Theme gespeichert.",
+      "error": "Theme konnte nicht gespeichert werden."
+    },
+    "preview": {
+      "title": "E-Mail-Vorschau",
+      "defaultBrand": "Ihre Marke",
+      "empty": "(Inhaltsvorschau)",
+      "sampleBody": "Hallo,\n\nDies ist eine Beispiel-Benachrichtigung mit Ihrem Mandantendesign."
+    },
+    "subdomain": {
+      "available": "Subdomain ist verfügbar.",
+      "unavailable": "Subdomain ist bereits vergeben.",
+      "checking": "Wird geprüft…"
+    }
+  },
+  "CustomerPortal": {
+    "Common": {
+      "PortalTitle": "Kundenportal",
+      "OpenMenu": "Menu offnen",
+      "CloseMenu": "Menu schliessen",
+      "Notifications": "Benachrichtigungen",
+      "Logout": "Abmelden",
+      "Loading": "Wird geladen...",
+      "NoData": "Noch keine Daten",
+      "ViewAll": "Alle anzeigen",
+      "Back": "Zuruck",
+      "LoadError": "Daten konnten nicht geladen werden.",
+      "Cancel": "Abbrechen",
+      "Submitting": "Wird gesendet...",
+      "Previous": "Zuruck",
+      "Next": "Weiter"
+    },
+    "Nav": {
+      "Dashboard": "Ubersicht",
+      "Projects": "Projekte",
+      "Warranty": "Garantie",
+      "ServiceTickets": "Servicetickets",
+      "Invoices": "Rechnungen",
+      "Payments": "Zahlungen",
+      "Profile": "Profil"
+    },
+    "Dashboard": {
+      "Welcome": "Willkommen, {{name}}",
+      "Subtitle": "Schneller Uberblick uber Ihre Projekte, Garantien und Rechnungen.",
+      "WarrantiesActive": "Active warranties",
+      "OpenTickets": "Service tickets",
+      "Invoices": "Invoices",
+      "RecentPayments": "Recent payments",
+      "RecentTicketsTitle": "Recent service tickets",
+      "RecentInvoicesTitle": "Recent invoices"
+    },
+    "Warranty": {
+      "ListTitle": "My warranties",
+      "Empty": "You have no active warranty contracts.",
+      "CoverageLabel": "Coverage",
+      "Period": "Period",
+      "Months": "Warranty months",
+      "StartDate": "Start date",
+      "EndDate": "End date",
+      "Notes": "Notes",
+      "Status": {
+        "Active": "Active",
+        "Expired": "Expired",
+        "Cancelled": "Cancelled",
+        "Suspended": "Suspended"
+      },
+      "CoverageType": {
+        "ManufacturerDefect": "Manufacturer defect",
+        "Installation": "Installation",
+        "FullService": "Full service",
+        "Limited": "Limited"
+      }
+    },
+    "ServiceTicket": {
+      "ListTitle": "Service tickets",
+      "New": "New ticket",
+      "NewTitle": "Open a new service ticket",
+      "Empty": "You have no service tickets.",
+      "FieldTitle": "Title",
+      "FieldType": "Type",
+      "FieldPriority": "Priority",
+      "FieldDescription": "Describe the issue",
+      "Submit": "Submit ticket",
+      "Description": "Description",
+      "Resolution": "Resolution",
+      "Status": {
+        "Open": "Open",
+        "Assigned": "Assigned",
+        "InProgress": "In progress",
+        "Resolved": "Resolved",
+        "Cancelled": "Cancelled"
+      },
+      "Priority": {
+        "Low": "Low",
+        "Normal": "Normal",
+        "High": "High",
+        "Urgent": "Urgent"
+      },
+      "Type": {
+        "PreventiveMaintenance": "Preventive maintenance",
+        "WarrantyClaim": "Warranty claim",
+        "OutOfWarrantyRepair": "Out-of-warranty repair",
+        "Inspection": "Inspection"
+      }
+    },
+    "Invoice": {
+      "ListTitle": "Invoices",
+      "Empty": "You have no invoices.",
+      "IssueDate": "Issue date",
+      "DueDate": "Due date",
+      "Total": "Total",
+      "Paid": "Paid",
+      "Due": "Outstanding",
+      "Download": "Download PDF",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Issued": "Issued",
+        "Sent": "Sent",
+        "PartiallyPaid": "Partially paid",
+        "Paid": "Paid",
+        "Overdue": "Overdue",
+        "Void": "Void",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Payment": {
+      "ListTitle": "Payments",
+      "New": "Pay an invoice",
+      "Empty": "No payments yet.",
+      "InitiateTitle": "Pay an invoice online",
+      "FieldInvoiceId": "Invoice ID",
+      "InvoiceIdHint": "Paste the invoice ID you want to pay. You can find it from the invoice detail page.",
+      "InvoiceIdRequired": "Invoice ID is required.",
+      "InitiateError": "Could not start the payment. Please try again.",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Confirmed": "Confirmed",
+        "PartiallyApplied": "Partially applied",
+        "FullyApplied": "Fully applied",
+        "Refunded": "Refunded",
+        "Void": "Void"
+      },
+      "Method": {
+        "Cash": "Cash",
+        "BankTransfer": "Bank transfer",
+        "CreditCard": "Credit card",
+        "DebitCard": "Debit card",
+        "Check": "Check",
+        "PromissoryNote": "Promissory note",
+        "OnlineGateway": "Online",
+        "Other": "Other"
+      }
+    },
+    "Project": {
+      "ListTitle": "My projects",
+      "Empty": "No projects yet.",
+      "Code": "Code",
+      "Total": "Grand total",
+      "Panels": "Panels",
+      "SiteCity": "Site city",
+      "SiteDistrict": "Site district",
+      "LastUpdated": "Last updated",
+      "ValidUntil": "Quote valid until",
+      "ReadOnlyNotice": "Project details are read-only in the customer portal.",
+      "Status": {
+        "Draft": "Draft",
+        "InDesign": "In design",
+        "AwaitingApproval": "Awaiting approval",
+        "Approved": "Approved",
+        "InProduction": "In production",
+        "Shipped": "Shipped",
+        "Installed": "Installed",
+        "Closed": "Closed",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Profile": {
+      "Title": "Profile",
+      "Name": "Name",
+      "Email": "Email",
+      "Username": "Username",
+      "Tenant": "Account",
+      "NotificationPrefsTitle": "Notification preferences",
+      "NotificationPrefsHint": "Choose how we contact you about your warranties, tickets and invoices."
+    }
+  },
+  "BI": {
+    "Common": {
+      "Loading": "Wird geladen..."
+    },
+    "Dashboard": {
+      "Title": "KPI-Dashboard",
+      "Empty": "Noch keine Widgets — fugen Sie Ihr erstes Widget hinzu.",
+      "RemoveWidget": "Widget entfernen"
+    },
+    "Reports": {
+      "Title": "Gespeicherte Berichte",
+      "Create": "Neuer Bericht",
+      "Name": "Name",
+      "DataSource": "Datenquelle",
+      "Visibility": "Sichtbarkeit",
+      "LastRun": "Letzte Ausfuhrung",
+      "Actions": "Aktionen",
+      "Open": "Offnen",
+      "Delete": "Loschen",
+      "Empty": "Noch keine gespeicherten Berichte."
+    },
+    "Builder": {
+      "Title": "Berichtersteller",
+      "DataSource": "Datenquelle",
+      "GroupBy": "Gruppieren nach",
+      "Aggregation": "Aggregation",
+      "MeasureField": "Messfeld",
+      "FromDate": "Von",
+      "ToDate": "Bis",
+      "Filters": "Filter",
+      "AddFilter": "Filter hinzufugen",
+      "Field": "Feld",
+      "Value": "Wert",
+      "ReportName": "Berichtsname",
+      "Public": "Fur alle Mandantenbenutzer sichtbar",
+      "Preview": "Vorschau",
+      "PreviewResult": "Vorschau",
+      "PreviewFailed": "Vorschau fehlgeschlagen",
+      "Save": "Speichern",
+      "Saved": "Bericht gespeichert",
+      "SaveFailed": "Bericht konnte nicht gespeichert werden",
+      "NameRequired": "Name ist erforderlich"
+    },
+    "Export": {
+      "Button": "Exportieren",
+      "Success": "Export heruntergeladen",
+      "Failed": "Export fehlgeschlagen"
+    }
+  }
+}

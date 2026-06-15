@@ -38,6 +38,27 @@ public class Customer : TenantEntity
     public string? Notes { get; private set; }
     public bool IsActive => Status == CustomerStatus.Active;
 
+    public bool IsAnonymized { get; private set; }
+    public DateTime? AnonymizedAtUtc { get; private set; }
+
+    public void Anonymize(string redactedDisplayName)
+    {
+        if (IsAnonymized) return;
+        Name = string.IsNullOrWhiteSpace(redactedDisplayName) ? "[REDACTED]" : redactedDisplayName;
+        LegalName = null;
+        TradeName = null;
+        NationalId = null;
+        TaxNumber = null;
+        TaxOffice = null;
+        Email = null;
+        Phone = null;
+        Website = null;
+        Notes = null;
+        IsAnonymized = true;
+        AnonymizedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = AnonymizedAtUtc.Value;
+    }
+
     public PaymentTerm? PaymentTerms { get; set; }
     public PriceList? PriceList { get; set; }
     public CustomerGroup? CustomerGroup { get; set; }

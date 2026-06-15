@@ -11,9 +11,10 @@ import {
   useIssueStock,
   useReceiveStock,
   useStockItemsQuery,
+  useTransferStock,
 } from '../hooks/useInventoryQueries';
 
-export type StockVoucherType = 'receive' | 'issue' | 'count';
+export type StockVoucherType = 'receive' | 'issue' | 'count' | 'transfer';
 
 interface Props {
   type: StockVoucherType;
@@ -31,6 +32,7 @@ const TITLES: Record<StockVoucherType, string> = {
   receive: 'Stok Giriş Fişi',
   issue: 'Stok Çıkış Fişi',
   count: 'Stok Sayım Fişi',
+  transfer: 'Stok Transfer Fişi',
 };
 
 const newLine = (): VoucherLine => ({
@@ -47,8 +49,12 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
   const receiveMutation = useReceiveStock();
   const issueMutation = useIssueStock();
   const adjustMutation = useAdjustStock();
+  const transferMutation = useTransferStock();
+
+  const isTransfer = type === 'transfer';
 
   const [warehouseId, setWarehouseId] = useState('');
+  const [toWarehouseId, setToWarehouseId] = useState('');
   const [reference, setReference] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<VoucherLine[]>([newLine()]);
@@ -85,6 +91,14 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
       toast.error(t('inventory.voucher.warehouseRequired', { defaultValue: 'Depo seçiniz.' }));
       return;
     }
+    if (isTransfer && (!toWarehouseId || toWarehouseId === warehouseId)) {
+      toast.error(
+        t('inventory.voucher.toWarehouseRequired', {
+          defaultValue: 'Farklı bir hedef depo seçin.',
+        }),
+      );
+      return;
+    }
     const validLines = lines.filter((l) => l.productId && Number(l.quantity) > 0);
     if (validLines.length === 0) {
       toast.error(
@@ -115,6 +129,15 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
             quantity: qty,
             reference: reference.trim() || null,
             notes: notes.trim() || null,
+          });
+        }
+        if (type === 'transfer') {
+          return transferMutation.mutateAsync({
+            productId: l.productId,
+            fromWarehouseId: warehouseId,
+            toWarehouseId,
+            quantity: qty,
+            reference: reference.trim() || null,
           });
         }
         const delta = qty - (onHandByProduct.get(l.productId) ?? 0);
@@ -173,9 +196,17 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('inventory.voucher.warehouse', { defaultValue: 'Depo' })} *
+                  {isTransfer
+                    ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
+                    : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })}{' '}
+                  *
                 </label>
                 <select
+                  aria-label={
+                    isTransfer
+                      ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
+                      : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })
+                  }
                   value={warehouseId}
                   onChange={(e) => setWarehouseId(e.target.value)}
                   className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
@@ -190,6 +221,30 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
                   ))}
                 </select>
               </div>
+              {isTransfer && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })} *
+                  </label>
+                  <select
+                    aria-label={t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })}
+                    value={toWarehouseId}
+                    onChange={(e) => setToWarehouseId(e.target.value)}
+                    className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  >
+                    <option value="">
+                      {t('inventory.voucher.selectWarehouse', { defaultValue: 'Seçiniz…' })}
+                    </option>
+                    {warehouses
+                      .filter((w) => w.id !== warehouseId)
+                      .map((w) => (
+                        <option key={w.id} value={w.id}>
+                          {w.name} ({w.code})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
                   {t('inventory.voucher.reference', { defaultValue: 'Belge No / Referans' })}

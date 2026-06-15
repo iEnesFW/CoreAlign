@@ -43,7 +43,8 @@ public class JournalLine : TenantEntity
         decimal? exchangeRate = null)
     {
         if (lineNumber < 1) throw new ArgumentOutOfRangeException(nameof(lineNumber));
-        if (debit < 0 || credit < 0) throw new ArgumentOutOfRangeException("Debit/Credit must be ≥ 0.");
+        if (debit < 0) throw new ArgumentOutOfRangeException(nameof(debit), "Debit must be >= 0.");
+        if (credit < 0) throw new ArgumentOutOfRangeException(nameof(credit), "Credit must be >= 0.");
         if (debit > 0 && credit > 0) throw new JournalLineSidesException();
         if (debit == 0 && credit == 0) throw new JournalLineSidesException();
         if (string.IsNullOrWhiteSpace(accountCode)) throw new ArgumentException("Account code is required.");

@@ -24,7 +24,7 @@ public class MarkInvoiceAsPaidCommandHandler : IRequestHandler<MarkInvoiceAsPaid
         var invoice = await _invoiceRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new InvoiceNotFoundException();
 
-        if (invoice.Status is InvoiceStatus.Paid or InvoiceStatus.Cancelled)
+        if (invoice.IsFinalized)
         {
             throw new InvoiceStatusTransitionException(invoice.Status.ToString(), "mark as paid");
         }

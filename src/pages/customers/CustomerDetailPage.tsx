@@ -1,17 +1,30 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, BarChart3, FileText, Receipt, ShoppingCart, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart3,
+  Clock,
+  FileText,
+  GitMerge,
+  Receipt,
+  ShoppingCart,
+  User,
+} from 'lucide-react';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CustomerAnalyticsTab } from '@/features/customers/ui/CustomerAnalyticsTab';
 import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
+import { AuditTimeline } from '@/widgets/AuditTimeline';
+import { CustomerStatementButton } from './components/CustomerStatementButton';
+import { CustomerTagsEditor } from './components/CustomerTagsEditor';
+import { MergeCustomersModal } from './components/MergeCustomersModal';
 import type { OrderStatus } from '@/features/orders/model/order.types';
 import type { InvoiceStatus } from '@/features/invoices/model/invoice.types';
 
-type Tab = 'overview' | 'analytics' | 'ledger' | 'orders' | 'invoices';
+type Tab = 'overview' | 'analytics' | 'ledger' | 'orders' | 'invoices' | 'audit';
 
 const PAGE_SIZE = 20;
 
@@ -63,30 +76,56 @@ export const CustomerDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [tab, setTab] = useState<Tab>('overview');
+  const [mergeOpen, setMergeOpen] = useState(false);
 
   const customerQuery = useCustomerQuery(id ?? null);
   const customer = customerQuery.data?.data;
 
   return (
     <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => navigate('/dashboard/customers')}
-          className="rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-          aria-label={t('common.back')}
-        >
-          <ArrowLeft size={16} />
-        </button>
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {customer?.name ?? t('common.loading')}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('customers.detail.subtitle')}
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/customers')}
+            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            aria-label={t('common.back')}
+          >
+            <ArrowLeft size={16} />
+          </button>
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+              {customer?.name ?? t('common.loading')}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t('customers.detail.subtitle')}
+            </p>
+          </div>
         </div>
+        {customer && (
+          <div className="flex flex-wrap items-center gap-2">
+            <CustomerStatementButton customerId={customer.id} customerName={customer.name} />
+            <button
+              type="button"
+              onClick={() => setMergeOpen(true)}
+              className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <GitMerge size={14} />
+              {t('customers.merge.title')}
+            </button>
+          </div>
+        )}
       </div>
+
+      {customer && <CustomerTagsEditor customerId={customer.id} />}
+
+      {customer && (
+        <MergeCustomersModal
+          open={mergeOpen}
+          onClose={() => setMergeOpen(false)}
+          initialSource={customer}
+        />
+      )}
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
@@ -108,6 +147,10 @@ export const CustomerDetailPage = () => {
         <TabButton active={tab === 'invoices'} onClick={() => setTab('invoices')}>
           <FileText size={14} />
           {t('customers.detail.tabs.invoices')}
+        </TabButton>
+        <TabButton active={tab === 'audit'} onClick={() => setTab('audit')}>
+          <Clock size={14} />
+          {t('Common.AuditTab.Title', { defaultValue: 'Audit' })}
         </TabButton>
       </div>
 
@@ -142,6 +185,7 @@ export const CustomerDetailPage = () => {
 
       {tab === 'orders' && id && <OrdersTab customerId={id} locale={i18n.language} />}
       {tab === 'invoices' && id && <InvoicesTab customerId={id} locale={i18n.language} />}
+      {tab === 'audit' && id && <AuditTimeline entityType="Customer" entityId={id} />}
     </div>
   );
 };

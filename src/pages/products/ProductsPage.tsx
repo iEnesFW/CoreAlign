@@ -446,6 +446,10 @@ export const ProductsPage = () => {
           isLoading={productsQuery.isPending}
           selectedId={selectedId}
           onSelect={(p) => setSelectedId((curr) => (curr === p.id ? null : p.id))}
+          onOpenDetails={(p) => {
+            setSelectedId(p.id);
+            setPanelOpen(true);
+          }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onCreate={handleCreate}

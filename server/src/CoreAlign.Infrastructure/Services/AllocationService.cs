@@ -1,4 +1,5 @@
 using System.Linq;
+using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
@@ -13,56 +14,29 @@ public class AllocationService : IAllocationService
     private readonly IStockAllocationRepository _allocations;
     private readonly IWarehouseRepository _warehouses;
     private readonly IProductRepository _products;
+    private readonly IStockOpeningBalanceBridge _openingBalance;
 
     public AllocationService(
         IStockItemRepository stockItems,
         IStockMovementRepository movements,
         IStockAllocationRepository allocations,
         IWarehouseRepository warehouses,
-        IProductRepository products)
+        IProductRepository products,
+        IStockOpeningBalanceBridge openingBalance)
     {
         _stockItems = stockItems;
         _movements = movements;
         _allocations = allocations;
         _warehouses = warehouses;
         _products = products;
+        _openingBalance = openingBalance;
     }
 
     public async Task<AllocationResult> ReserveAsync(AllocationRequest request, CancellationToken cancellationToken = default)
     {
         var item = await _stockItems.GetOrCreateAsync(request.ProductId, request.WarehouseId, request.LotId, cancellationToken);
+        await _openingBalance.EnsureMaterializedAsync(item, cancellationToken);
         var now = DateTime.UtcNow;
-
-        // Bridge: the first time a product is stocked in a warehouse, materialize
-        // its recorded on-hand (Product.StockQuantity) as an opening balance so
-        // existing stock becomes allocatable. Guarded to a fresh stock item with
-        // no stock anywhere else, so it can never double-count across warehouses.
-        if (item.OnHand == 0m && item.Reserved == 0m && item.LastMovementAtUtc is null)
-        {
-            var siblings = await _stockItems.GetByProductAsync(request.ProductId, cancellationToken);
-            var hasStockElsewhere = siblings.Any(s => s.Id != item.Id && (s.OnHand != 0m || s.Reserved != 0m));
-            if (!hasStockElsewhere)
-            {
-                var product = await _products.GetByIdAsync(request.ProductId, cancellationToken);
-                if (product is not null && product.StockQuantity > 0m)
-                {
-                    var openingCost = product.AverageCost > 0m ? product.AverageCost : product.StandardCost;
-                    item.SeedOpeningBalance(product.StockQuantity, openingCost, now);
-                    await _movements.AddAsync(new StockMovement(
-                        productId: request.ProductId,
-                        warehouseId: request.WarehouseId,
-                        type: StockMovementType.OpeningBalance,
-                        quantity: product.StockQuantity,
-                        unitCost: openingCost,
-                        onHandAfter: item.OnHand,
-                        avgCostAfter: item.AvgCost,
-                        occurredAtUtc: now,
-                        sourceDocumentType: StockSourceDocumentType.OpeningBalance,
-                        notes: "Açılış bakiyesi (ürün stoğundan otomatik)"
-                    ), cancellationToken);
-                }
-            }
-        }
 
         item.Reserve(request.Quantity, now);
 
@@ -178,9 +152,9 @@ public class AllocationService : IAllocationService
         return movement;
     }
 
-    public async Task<decimal> ConsumeForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default)
+    public async Task<OrderLineConsumption> ConsumeForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default)
     {
-        if (quantity <= 0m) return 0m;
+        if (quantity <= 0m) return new OrderLineConsumption(0m, 0m);
 
         var allocations = await _allocations.GetByOrderAsync(orderId, cancellationToken);
         var pending = allocations
@@ -190,17 +164,19 @@ public class AllocationService : IAllocationService
 
         var remaining = quantity;
         var consumed = 0m;
+        var cost = 0m;
         foreach (var allocation in pending)
         {
             if (remaining <= 0m) break;
             var take = Math.Min(remaining, allocation.Remaining);
             if (take <= 0m) continue;
-            await ConsumeAsync(allocation.Id, take, postedByUserId, cancellationToken);
+            var movement = await ConsumeAsync(allocation.Id, take, postedByUserId, cancellationToken);
             remaining -= take;
             consumed += take;
+            cost += movement.TotalCost;
         }
 
-        return consumed;
+        return new OrderLineConsumption(consumed, cost);
     }
 
     public async Task<StockMovement> ApplyReceiptAsync(StockReceiptRequest request, CancellationToken cancellationToken = default)
@@ -212,11 +188,12 @@ public class AllocationService : IAllocationService
         var item = await _stockItems.GetOrCreateAsync(request.ProductId, request.WarehouseId, request.LotId, cancellationToken);
         var now = DateTime.UtcNow;
         item.ApplyReceipt(request.Quantity, request.UnitCost, now);
+        await SyncProductStockAsync(request.ProductId, request.Quantity, cancellationToken);
 
         var movement = new StockMovement(
             productId: request.ProductId,
             warehouseId: request.WarehouseId,
-            type: StockMovementType.Receipt,
+            type: request.MovementType,
             quantity: request.Quantity,
             unitCost: request.UnitCost,
             onHandAfter: item.OnHand,
@@ -245,11 +222,12 @@ public class AllocationService : IAllocationService
             ?? throw new StockMovementValidationException("No stock available at this warehouse to issue.");
         var now = DateTime.UtcNow;
         item.ApplyIssue(request.Quantity, now);
+        await SyncProductStockAsync(request.ProductId, -request.Quantity, cancellationToken);
 
         var movement = new StockMovement(
             productId: request.ProductId,
             warehouseId: request.WarehouseId,
-            type: StockMovementType.Issue,
+            type: request.MovementType,
             quantity: request.Quantity,
             unitCost: item.AvgCost,
             onHandAfter: item.OnHand,
@@ -268,6 +246,21 @@ public class AllocationService : IAllocationService
         return movement;
     }
 
+    // Keeps the product-level rollup (Product.StockQuantity) in lockstep with the
+    // warehouse-level ledger (StockItem.OnHand) for direct stock movements. The
+    // order-confirm availability guard reads Product.StockQuantity, so a receipt
+    // that only raised StockItem.OnHand would otherwise be invisible (false
+    // InsufficientStock) and an issue that only drained StockItem.OnHand would
+    // leave a phantom sellable balance (over-sell). Mirrors ConsumeAsync.
+    private async Task SyncProductStockAsync(Guid productId, decimal delta, CancellationToken cancellationToken)
+    {
+        if (delta == 0m) return;
+        var product = await _products.GetByIdAsync(productId, cancellationToken);
+        if (product is null || !product.IsStockTracked) return;
+        product.AdjustStock(delta);
+        _products.Update(product);
+    }
+
     public async Task<StockMovement> AdjustAsync(StockAdjustmentRequest request, CancellationToken cancellationToken = default)
     {
         if (request.Delta == 0m)
@@ -277,11 +270,16 @@ public class AllocationService : IAllocationService
         var item = await _stockItems.GetOrCreateAsync(request.ProductId, request.WarehouseId, request.LotId, cancellationToken);
         var now = DateTime.UtcNow;
         item.ApplyAdjustment(request.Delta, request.UnitCost, now);
+        await SyncProductStockAsync(request.ProductId, request.Delta, cancellationToken);
+
+        var movementType = request.Delta > 0
+            ? request.PositiveMovementType ?? StockMovementType.AdjustmentPositive
+            : request.NegativeMovementType ?? StockMovementType.AdjustmentNegative;
 
         var movement = new StockMovement(
             productId: request.ProductId,
             warehouseId: request.WarehouseId,
-            type: request.Delta > 0 ? StockMovementType.AdjustmentPositive : StockMovementType.AdjustmentNegative,
+            type: movementType,
             quantity: Math.Abs(request.Delta),
             unitCost: request.UnitCost ?? item.AvgCost,
             onHandAfter: item.OnHand,
@@ -295,5 +293,77 @@ public class AllocationService : IAllocationService
             notes: request.Notes);
         await _movements.AddAsync(movement, cancellationToken);
         return movement;
+    }
+
+    public async Task<StockTransferResult> ApplyTransferAsync(
+        Guid productId,
+        Guid fromWarehouseId,
+        Guid toWarehouseId,
+        decimal quantity,
+        string? reference = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (fromWarehouseId == toWarehouseId)
+        {
+            throw new StockMovementValidationException("Transfer source and destination warehouses must differ.");
+        }
+        if (quantity <= 0m)
+        {
+            throw new StockMovementValidationException("Transfer quantity must be positive.");
+        }
+
+        var source = await _stockItems.GetAsync(productId, fromWarehouseId, null, cancellationToken)
+            ?? throw new StockMovementValidationException("No stock available at the source warehouse to transfer.");
+        var unitCost = source.AvgCost;
+        var sourceDocumentId = Guid.NewGuid();
+
+        // Leg 1: issue at the source as TransferOut. Reuses the no-oversell guard, so
+        // insufficient source stock throws before any movement is written (no partial
+        // transfer). SyncProductStockAsync mirrors -quantity onto Product.StockQuantity.
+        var transferOut = await ApplyIssueAsync(new StockIssueRequest(
+            ProductId: productId,
+            WarehouseId: fromWarehouseId,
+            Quantity: quantity,
+            SourceDocumentType: StockSourceDocumentType.Transfer,
+            SourceDocumentId: sourceDocumentId,
+            SourceLineId: null,
+            SourceReference: reference,
+            LotId: null,
+            SerialNumber: null,
+            ReasonCodeId: null,
+            Notes: "Inter-warehouse transfer (out)",
+            MovementType: StockMovementType.TransferOut), cancellationToken);
+
+        // Leg 2: receive at the destination as TransferIn, valued at the SOURCE unit
+        // cost so total inventory value is unchanged. The destination AvgCost recomputes
+        // as the weighted average of its existing stock + the incoming at source cost.
+        // SyncProductStockAsync mirrors +quantity onto Product.StockQuantity, netting the
+        // leg-1 -quantity back to zero on that global scalar.
+        var transferIn = await ApplyReceiptAsync(new StockReceiptRequest(
+            ProductId: productId,
+            WarehouseId: toWarehouseId,
+            Quantity: quantity,
+            UnitCost: unitCost,
+            SourceDocumentType: StockSourceDocumentType.Transfer,
+            SourceDocumentId: sourceDocumentId,
+            SourceLineId: null,
+            SourceReference: reference,
+            LotId: null,
+            SerialNumber: null,
+            ReasonCodeId: null,
+            Notes: "Inter-warehouse transfer (in)",
+            MovementType: StockMovementType.TransferIn), cancellationToken);
+
+        return new StockTransferResult(
+            ProductId: productId,
+            FromWarehouseId: fromWarehouseId,
+            ToWarehouseId: toWarehouseId,
+            Quantity: quantity,
+            UnitCost: unitCost,
+            FromOnHandAfter: transferOut.OnHandAfter,
+            ToOnHandAfter: transferIn.OnHandAfter,
+            SourceDocumentId: sourceDocumentId,
+            TransferOut: transferOut,
+            TransferIn: transferIn);
     }
 }

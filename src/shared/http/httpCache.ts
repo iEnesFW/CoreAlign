@@ -44,6 +44,9 @@ const TTL_RULES: readonly TtlRule[] = [
   { re: /\/pricing\/resolve/i, ttl: THIRTY_SECONDS_MS },
   { re: /\/pricing\/customer-product-prices/i, ttl: ONE_HOUR_MS },
   { re: /\/accounting\/periods/i, ttl: ONE_HOUR_MS },
+  { re: /\/mrp\/plan\//i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/mrp\/action-messages/i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/mrp\/pegging\//i, ttl: THIRTY_SECONDS_MS },
 ];
 
 const matchTtl = (url: string): number => {

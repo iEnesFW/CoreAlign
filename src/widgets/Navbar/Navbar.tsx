@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, Sun, Moon, User, Sliders, Globe, LogOut, Command } from 'lucide-react';
+import { Menu, Search, Sun, Moon, User, Sliders, LogOut, Command } from 'lucide-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useAuthStore } from '@/features/auth/model/authStore';
 import { useLogout } from '@/features/auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { CommandPalette } from '@/shared/ui/CommandPalette/CommandPalette';
-import { NotificationCenter } from './NotificationCenter';
+import { NotificationBell } from '@/features/collaboration/ui/NotificationBell';
 import { useCommandItems } from './commandItems';
+import { LanguageSwitcher } from '@/widgets/LanguageSwitcher';
+import { FxRateBadge } from '@/features/fx/ui/FxRateBadge';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -23,13 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const commandItems = useCommandItems(navigate);
-
-  const handleLanguageToggle = () => {
-    const nextLang = i18n.language === 'en' ? 'tr' : 'en';
-    i18n.changeLanguage(nextLang);
-  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -113,6 +110,11 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
 
       {/* Right section: Actions & Profile */}
       <div className="flex items-center gap-1.5">
+        {/* Live FX Rate */}
+        <div className="hidden lg:inline-flex">
+          <FxRateBadge currencyCode="USD" />
+        </div>
+
         {/* Mobile Search Icon */}
         <button
           onClick={() => setPaletteOpen(true)}
@@ -132,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         </button>
 
         {/* Notifications */}
-        <NotificationCenter />
+        <NotificationBell />
 
         {/* Profile Dropdown */}
         <div className="relative ml-1" ref={profileRef}>
@@ -180,18 +182,9 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
                   <Sliders className="mr-2 h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
                   {t('activity.title')}
                 </Link>
-                <button
-                  onClick={handleLanguageToggle}
-                  className="group flex w-full items-center justify-between px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 rounded-[5px] hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <Globe className="mr-2 h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
-                    Language
-                  </div>
-                  <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded-[3px] uppercase">
-                    {i18n.language}
-                  </span>
-                </button>
+                <div className="px-2 py-1">
+                  <LanguageSwitcher variant="inline" />
+                </div>
               </div>
 
               <div className="px-1 py-1">

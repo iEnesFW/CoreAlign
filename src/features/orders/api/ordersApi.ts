@@ -9,6 +9,7 @@ import type {
   Order,
   OrderListParams,
   OrderSummary,
+  RecordOrderScrapInput,
   Shipment,
   UpdateOrderInput,
 } from '../model/order.types';
@@ -136,4 +137,10 @@ export const ordersApi = {
         invalidateHttpCache(INVALIDATION);
         return r.data;
       }),
+
+  recordScrap: (input: RecordOrderScrapInput) =>
+    apiClient.post<ApiResponse<Order>>(`${BASE}/${input.id}/scrap`, input).then((r) => {
+      invalidateHttpCache(INVALIDATION);
+      return r.data;
+    }),
 };

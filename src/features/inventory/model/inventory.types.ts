@@ -197,3 +197,33 @@ export interface UpdateLotInput {
   isBlocked: boolean;
   blockReason?: string | null;
 }
+
+export interface ProduceInput {
+  productId: string;
+  warehouseId: string;
+  quantity: number;
+  notes?: string | null;
+}
+
+export interface TransferStockInput {
+  productId: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  quantity: number;
+  operationId?: string | null;
+  reference?: string | null;
+}
+
+export interface StockTransferResult {
+  productId: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  quantity: number;
+  unitCost: number;
+  fromOnHandAfter: number;
+  toOnHandAfter: number;
+  sourceDocumentId: string;
+  movementsCreated: number;
+  transferOut: StockMovement;
+  transferIn: StockMovement;
+}

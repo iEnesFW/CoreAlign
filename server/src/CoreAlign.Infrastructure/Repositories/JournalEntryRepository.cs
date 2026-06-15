@@ -26,6 +26,14 @@ public class JournalEntryRepository : IJournalEntryRepository
         return query.AnyAsync(cancellationToken);
     }
 
+    public Task<bool> ExistsForSourceAsync(JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default)
+    {
+        if (sourceDocumentId == Guid.Empty) return Task.FromResult(false);
+        return _context.JournalEntries
+            .AsNoTracking()
+            .AnyAsync(j => j.SourceType == sourceType && j.SourceDocumentId == sourceDocumentId, cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<JournalEntrySearchRow> Items, int Total)> SearchAsync(
         string? search,
         JournalEntryType? type,
@@ -58,8 +66,16 @@ public class JournalEntryRepository : IJournalEntryRepository
         }
         if (type.HasValue) query = query.Where(j => j.Type == type.Value);
         if (status.HasValue) query = query.Where(j => j.Status == status.Value);
-        if (fromDate.HasValue) query = query.Where(j => j.PostingDate >= fromDate.Value);
-        if (toDate.HasValue) query = query.Where(j => j.PostingDate <= toDate.Value);
+        if (fromDate.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(fromDate.Value, DateTimeKind.Utc);
+            query = query.Where(j => j.PostingDate >= fromUtc);
+        }
+        if (toDate.HasValue)
+        {
+            var toUtc = DateTime.SpecifyKind(toDate.Value, DateTimeKind.Utc);
+            query = query.Where(j => j.PostingDate <= toUtc);
+        }
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query
@@ -89,6 +105,9 @@ public class JournalEntryRepository : IJournalEntryRepository
         DateTime? toDate,
         CancellationToken cancellationToken = default)
     {
+        var fromUtc = fromDate.HasValue ? DateTime.SpecifyKind(fromDate.Value, DateTimeKind.Utc) : (DateTime?)null;
+        var toUtc = toDate.HasValue ? DateTime.SpecifyKind(toDate.Value, DateTimeKind.Utc) : (DateTime?)null;
+
         // Posted entries only — Draft entries don't appear in the trial balance.
         // Reversed entries stay in the totals because their reversal is itself
         // a posted entry that nets them out automatically.
@@ -96,10 +115,16 @@ public class JournalEntryRepository : IJournalEntryRepository
             .Where(l => _context.JournalEntries
                 .Any(j => j.Id == l.JournalEntryId
                     && j.Status == JournalEntryStatus.Posted
-                    && (!fromDate.HasValue || j.PostingDate >= fromDate.Value)
-                    && (!toDate.HasValue || j.PostingDate <= toDate.Value)));
+                    && (!fromUtc.HasValue || j.PostingDate >= fromUtc.Value)
+                    && (!toUtc.HasValue || j.PostingDate <= toUtc.Value)));
 
-        return await query
+        // EF Core 10: subquery (Any) + GroupBy aggregate kombinasyonu translate edilemiyor.
+        // Flat fetch + in-memory group (trial balance icin acceptable, journal lines fazla buyuk degil).
+        var flat = await query
+            .Select(l => new { l.AccountId, l.AccountCode, l.AccountName, l.Debit, l.Credit })
+            .ToListAsync(cancellationToken);
+
+        return flat
             .GroupBy(l => new { l.AccountId, l.AccountCode, l.AccountName })
             .Select(g => new AccountBalanceRow(
                 g.Key.AccountId,
@@ -108,7 +133,7 @@ public class JournalEntryRepository : IJournalEntryRepository
                 g.Sum(l => l.Debit),
                 g.Sum(l => l.Credit)))
             .OrderBy(r => r.AccountCode)
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public async Task AddAsync(JournalEntry entry, CancellationToken cancellationToken = default) =>

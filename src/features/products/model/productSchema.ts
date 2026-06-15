@@ -49,6 +49,7 @@ export const productSchema = z.object({
   reorderPoint: optionalNumeric,
   safetyStock: optionalNumeric,
   leadTimeDays: optionalNumeric,
+  procurementType: z.enum(['Buy', 'Make']),
   weightKg: optionalNumeric,
   widthCm: optionalNumeric,
   heightCm: optionalNumeric,

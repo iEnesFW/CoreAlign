@@ -1,10 +1,93 @@
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Entities.Sales;
+using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Interfaces;
+
+public interface IQuoteRepository
+{
+    Task<Quote?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Quote?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> QuoteNumberExistsAsync(string quoteNumber, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task AcquireConversionLockAsync(Guid quoteId, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<QuoteSearchRow> Items, int Total)> SearchAsync(
+        string? search,
+        Guid? customerId,
+        QuoteStatus? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Quote>> GetExpirableSentQuotesAsync(DateTime nowUtc, CancellationToken cancellationToken = default);
+    Task AddAsync(Quote quote, CancellationToken cancellationToken = default);
+    void Update(Quote quote);
+    void Remove(Quote quote);
+}
+
+public record QuoteSearchRow(
+    Guid Id,
+    string QuoteNumber,
+    Guid? CustomerId,
+    string CustomerName,
+    DateTime QuoteDate,
+    DateTime ValidUntilUtc,
+    QuoteStatus Status,
+    string Currency,
+    decimal Total,
+    Guid? ConvertedOrderId);
+
+public interface IReturnRequestRepository
+{
+    Task<ReturnRequest?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<ReturnRequest?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> ReturnNumberExistsAsync(string returnNumber, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<ReturnRequestSearchRow> Items, int Total)> SearchAsync(
+        string? search,
+        Guid? customerId,
+        Guid? orderId,
+        ReturnRequestStatus? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ReturnRequest>> GetByOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
+    Task AddAsync(ReturnRequest entity, CancellationToken cancellationToken = default);
+    void Update(ReturnRequest entity);
+}
+
+public record ReturnRequestSearchRow(
+    Guid Id,
+    string ReturnNumber,
+    ReturnRequestStatus Status,
+    string? Reason,
+    Guid OrderId,
+    string OrderNumber,
+    Guid CustomerId,
+    string CustomerName,
+    string Currency,
+    decimal LineTotal,
+    DateTime RequestedAtUtc,
+    DateTime? ReceivedAtUtc,
+    Guid? CreditNoteId);
+
+public interface IOrderTemplateRepository
+{
+    Task<OrderTemplate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<OrderTemplate?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<OrderTemplate> Items, int Total)> SearchAsync(
+        Guid? customerId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<OrderTemplate>> GetDueAsync(DateTime nowUtc, int max, CancellationToken cancellationToken = default);
+    Task AddAsync(OrderTemplate template, CancellationToken cancellationToken = default);
+    void Update(OrderTemplate template);
+    void Remove(OrderTemplate template);
+}
 
 public interface IProductRepository
 {
     Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<string, Product>> GetBySkusAsync(IEnumerable<string> skus, CancellationToken cancellationToken = default);
     Task<bool> SkuExistsAsync(string sku, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<Dictionary<Guid, Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
@@ -13,6 +96,13 @@ public interface IProductRepository
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
+        string? search,
+        bool? isActive,
+        int page,
+        int pageSize,
+        IReadOnlyCollection<Guid>? restrictToIds,
+        CancellationToken cancellationToken);
     Task AddAsync(Product product, CancellationToken cancellationToken = default);
     void Update(Product product);
     void Remove(Product product);
@@ -41,6 +131,8 @@ public interface IOrderRepository
     Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Order?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Order?> GetWithLinesAndShipmentsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Order?> GetWithLinesAndRevisionsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Order?> GetByGlassProjectIdAsync(Guid glassProjectId, CancellationToken cancellationToken = default);
     Task<bool> OrderNumberExistsAsync(string orderNumber, Guid? excludeId, CancellationToken cancellationToken = default);
     /// <summary>Slim list projection — see <see cref="OrderSearchRow"/>.</summary>
     Task<(IReadOnlyList<OrderSearchRow> Items, int Total)> SearchAsync(
@@ -48,6 +140,23 @@ public interface IOrderRepository
         Guid? customerId,
         int page,
         int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<OrderSearchRow> Items, int Total)> SearchByDealerAsync(
+        Guid dealerAccountId,
+        string? status,
+        string? approvalStatus,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<OrderSearchRow> Items, int Total)> SearchPendingApprovalsForCustomerAsync(
+        Guid customerId,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task<int> CountDealerOrdersByStatusesSinceAsync(
+        Guid dealerAccountId,
+        IReadOnlyCollection<Domain.Enums.OrderStatus> statuses,
+        DateTime sinceUtc,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StatusGroup>> GetOrderStatusBreakdownAsync(
         Guid customerId,
@@ -149,6 +258,20 @@ public interface IInvoiceRepository
         IEnumerable<Guid> ids,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Scoped search variant for B2B/dealer portals — only returns invoices whose
+    /// CustomerId is in the supplied set. Used to enforce per-dealer customer scoping
+    /// without leaking other customers' invoices.
+    /// </summary>
+    Task<(IReadOnlyList<InvoiceSearchRow> Items, int Total)> SearchForCustomersAsync(
+        IReadOnlyCollection<Guid> customerIds,
+        Domain.Enums.InvoiceStatus? status,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
     Task AddAsync(Invoice invoice, CancellationToken cancellationToken = default);
     void Update(Invoice invoice);
 }
@@ -174,7 +297,9 @@ public record OrderSearchRow(
     DateTime OrderDate,
     Domain.Enums.OrderStatus Status,
     string Currency,
-    decimal Total);
+    decimal Total,
+    string? DealerApprovalStatus = null,
+    Guid? OriginDealerAccountId = null);
 
 public record InvoiceSearchRow(
     Guid Id,
@@ -303,4 +428,6 @@ public interface ICustomerLedgerRepository
         CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentBalanceAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<decimal> GetLastRunningBalanceAsync(Guid customerId, CancellationToken cancellationToken = default);
+    Task<decimal> GetBalanceAsOfAsync(Guid customerId, DateTime? cutoffUtc, CancellationToken cancellationToken = default);
+    Task<int> CountByCustomerAsync(Guid customerId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken = default);
 }

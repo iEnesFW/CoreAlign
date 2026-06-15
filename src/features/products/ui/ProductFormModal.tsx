@@ -23,7 +23,7 @@ import {
 } from '@/features/master-data/hooks/useMasterData';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
 import { productSchema, type ProductFormValues } from '../model/productSchema';
-import type { ProductStatus, Product } from '../model/product.types';
+import type { ProcurementType, ProductStatus, Product } from '../model/product.types';
 import { useCreateProduct, useUpdateProduct } from '../hooks/useProductQueries';
 
 type ProductIdField =
@@ -67,6 +67,7 @@ const PRODUCT_FIELD_TAB: Record<string, ProductTab> = {
   reorderPoint: 'pricing',
   safetyStock: 'pricing',
   leadTimeDays: 'pricing',
+  procurementType: 'pricing',
   weightKg: 'logistics',
   widthCm: 'logistics',
   heightCm: 'logistics',
@@ -84,6 +85,7 @@ interface Props {
 }
 
 const PRODUCT_STATUSES: ProductStatus[] = ['Active', 'New', 'Discontinued', 'EndOfLife'];
+const PROCUREMENT_TYPES: ProcurementType[] = ['Buy', 'Make'];
 
 const fieldCls =
   'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
@@ -125,6 +127,7 @@ const emptyValues: ProductFormValues = {
   reorderPoint: '',
   safetyStock: '',
   leadTimeDays: '',
+  procurementType: 'Buy',
   weightKg: '',
   widthCm: '',
   heightCm: '',
@@ -206,6 +209,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
         reorderPoint: str(product.reorderPoint),
         safetyStock: str(product.safetyStock),
         leadTimeDays: str(product.leadTimeDays),
+        procurementType: product.procurementType ?? 'Buy',
         weightKg: str(product.weightKg),
         widthCm: str(product.widthCm),
         heightCm: str(product.heightCm),
@@ -239,6 +243,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
         currency: values.currency.toUpperCase(),
         taxRateId: values.taxRateId || null,
         status: values.status,
+        procurementType: values.procurementType,
         launchDate: values.launchDate || null,
         endOfLifeDate: values.endOfLifeDate || null,
       };
@@ -663,6 +668,49 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                   {...register('leadTimeDays')}
                 />
               </div>
+            </section>
+
+            {/* Procurement (make vs buy) */}
+            <section className={sectionCls}>
+              <h3 className={sectionTitleCls}>{t('products.sections.procurement')}</h3>
+              <Controller
+                name="procurementType"
+                control={control}
+                render={({ field }) => (
+                  <div
+                    role="radiogroup"
+                    aria-label={t('products.fields.procurementType')}
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                  >
+                    {PROCUREMENT_TYPES.map((pt) => {
+                      const selected = field.value === pt;
+                      return (
+                        <button
+                          key={pt}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => field.onChange(pt)}
+                          className={`flex flex-col gap-1 rounded-lg border p-3 text-left transition ${
+                            selected
+                              ? pt === 'Make'
+                                ? 'border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10'
+                                : 'border-sky-500 bg-sky-50 dark:border-sky-500 dark:bg-sky-500/10'
+                              : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'
+                          }`}
+                        >
+                          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {t(`products.procurementType.${pt}`)}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {t(`products.procurementTypeHint.${pt}`)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              />
             </section>
           </div>
 

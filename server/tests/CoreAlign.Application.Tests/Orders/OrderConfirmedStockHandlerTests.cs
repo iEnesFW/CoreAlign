@@ -1,5 +1,8 @@
+using CoreAlign.Application.Common.Outbox;
+using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Orders.EventHandlers;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Events;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -14,6 +17,8 @@ public class OrderConfirmedStockHandlerTests
     private readonly IWarehouseRepository _warehouseRepository = Substitute.For<IWarehouseRepository>();
     private readonly IStockItemRepository _stockItemRepository = Substitute.For<IStockItemRepository>();
     private readonly IStockMovementRepository _stockMovementRepository = Substitute.For<IStockMovementRepository>();
+    private readonly IGLPostingOutbox _glOutbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IStockOpeningBalanceBridge _openingBalanceBridge = Substitute.For<IStockOpeningBalanceBridge>();
     private readonly OrderConfirmedStockHandler _sut;
 
     private static readonly Guid TenantId = Guid.NewGuid();
@@ -31,7 +36,9 @@ public class OrderConfirmedStockHandlerTests
             _stockTransactionRepository,
             _warehouseRepository,
             _stockItemRepository,
-            _stockMovementRepository);
+            _stockMovementRepository,
+            _glOutbox,
+            _openingBalanceBridge);
     }
 
     [Fact]
@@ -83,5 +90,137 @@ public class OrderConfirmedStockHandlerTests
 
         await act.Should().ThrowAsync<InsufficientStockException>();
         product.StockQuantity.Should().Be(3m);
+    }
+
+    [Fact]
+    public async Task Rejects_confirm_when_default_warehouse_atp_insufficient_even_if_global_sufficient()
+    {
+        // Global rollup is plentiful (100) but split across warehouses; the default
+        // warehouse the issue draws from holds only 30. Per-warehouse ATP must reject
+        // rather than backorder the default warehouse into negative on-hand.
+        var warehouseId = Guid.NewGuid();
+        _warehouseRepository.GetDefaultAsync(Arg.Any<CancellationToken>())
+            .Returns(new Warehouse("WH-DEF", "Default", isDefault: true) { Id = warehouseId, TenantId = TenantId });
+
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "USD", initialStock: 100)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [product.Id] = product });
+
+        var item = new StockItem(ProductId, warehouseId);
+        item.SeedOpeningBalance(30m, 10m, DateTime.UtcNow);
+        _stockItemRepository.GetOrCreateAsync(ProductId, warehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 50m) }, DateTime.UtcNow);
+
+        Func<Task> act = () => _sut.Handle(ev, default);
+
+        await act.Should().ThrowAsync<InsufficientStockException>();
+        product.StockQuantity.Should().Be(100m);
+        item.OnHand.Should().Be(30m);
+    }
+
+    [Fact]
+    public async Task Rejects_confirm_when_reserved_eats_into_availability()
+    {
+        // OnHand 60 but 20 reserved by other orders -> ATP 40 < 50. The gate counts
+        // AvailableToPromise (OnHand - Reserved), not raw OnHand.
+        var warehouseId = Guid.NewGuid();
+        _warehouseRepository.GetDefaultAsync(Arg.Any<CancellationToken>())
+            .Returns(new Warehouse("WH-DEF", "Default", isDefault: true) { Id = warehouseId, TenantId = TenantId });
+
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "USD", initialStock: 60)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [product.Id] = product });
+
+        var item = new StockItem(ProductId, warehouseId);
+        item.SeedOpeningBalance(60m, 10m, DateTime.UtcNow);
+        item.Reserve(20m, DateTime.UtcNow);
+        _stockItemRepository.GetOrCreateAsync(ProductId, warehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 50m) }, DateTime.UtcNow);
+
+        Func<Task> act = () => _sut.Handle(ev, default);
+
+        await act.Should().ThrowAsync<InsufficientStockException>();
+        item.OnHand.Should().Be(60m);
+    }
+
+    [Fact]
+    public async Task Issues_from_default_warehouse_without_going_negative_when_atp_sufficient()
+    {
+        var warehouseId = Guid.NewGuid();
+        _warehouseRepository.GetDefaultAsync(Arg.Any<CancellationToken>())
+            .Returns(new Warehouse("WH-DEF", "Default", isDefault: true) { Id = warehouseId, TenantId = TenantId });
+
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "USD", initialStock: 100)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [product.Id] = product });
+
+        var item = new StockItem(ProductId, warehouseId);
+        item.SeedOpeningBalance(100m, 10m, DateTime.UtcNow);
+        _stockItemRepository.GetOrCreateAsync(ProductId, warehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 50m) }, DateTime.UtcNow);
+
+        await _sut.Handle(ev, default);
+
+        item.OnHand.Should().Be(50m);
+        product.StockQuantity.Should().Be(50m);
+        await _stockMovementRepository.Received(1).AddAsync(
+            Arg.Is<StockMovement>(m => m.Quantity == 50m && m.Type == StockMovementType.Issue),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Confirm_succeeds_after_bridge_materializes_global_stock_into_fresh_warehouse_item()
+    {
+        // Product carries global stock but the default-warehouse StockItem is fresh
+        // (OnHand 0). The handler must invoke the opening-balance bridge BEFORE the
+        // ATP gate, so the seeded balance makes the confirm succeed instead of being
+        // wrongly rejected as 0-available.
+        var warehouseId = Guid.NewGuid();
+        _warehouseRepository.GetDefaultAsync(Arg.Any<CancellationToken>())
+            .Returns(new Warehouse("WH-DEF", "Default", isDefault: true) { Id = warehouseId, TenantId = TenantId });
+
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "USD", initialStock: 100)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [product.Id] = product });
+
+        var item = new StockItem(ProductId, warehouseId);
+        _stockItemRepository.GetOrCreateAsync(ProductId, warehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
+        _openingBalanceBridge
+            .When(b => b.EnsureMaterializedAsync(item, Arg.Any<CancellationToken>()))
+            .Do(_ => item.SeedOpeningBalance(100m, 10m, DateTime.UtcNow));
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 40m) }, DateTime.UtcNow);
+
+        await _sut.Handle(ev, default);
+
+        item.OnHand.Should().Be(60m);
+        await _openingBalanceBridge.Received(1).EnsureMaterializedAsync(item, Arg.Any<CancellationToken>());
     }
 }

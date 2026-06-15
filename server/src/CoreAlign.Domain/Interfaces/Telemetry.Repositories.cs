@@ -14,8 +14,22 @@ public interface IDashboardStatsRepository
     Task<(decimal Outstanding, decimal CollectedThisMonth, int OpenCount)> GetInvoiceStatsAsync(CancellationToken cancellationToken = default);
 }
 
+public record ActivityLogQueryFilter(
+    Guid? UserId = null,
+    string? Method = null,
+    string? PathContains = null,
+    int? StatusCode = null,
+    DateTime? FromUtc = null,
+    DateTime? ToUtc = null,
+    string? StatusBucket = null,
+    string? EntityType = null,
+    Guid? EntityId = null,
+    string? Search = null);
+
 public interface IActivityLogRepository
 {
     Task AddAsync(ActivityLog log, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<ActivityLog> Items, int Total)> GetRecentAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<ActivityLog> Items, int Total)> SearchAsync(ActivityLogQueryFilter filter, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<ActivityLog>> StreamAsync(ActivityLogQueryFilter filter, int max, CancellationToken cancellationToken = default);
 }

@@ -11,5 +11,7 @@ public class ActivityLog : TenantEntity
     public int DurationMs { get; set; }
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
+    public string? IpAddressHash { get; set; }
+    public string? UserAgentHash { get; set; }
     public string? TraceId { get; set; }
 }

@@ -20,6 +20,10 @@ public interface IStockItemRepository
     Task<int> CountAsync(Guid? productId, Guid? warehouseId, bool onlyBelowReorder, CancellationToken cancellationToken = default);
     Task<decimal> SumOnHandAsync(Guid productId, CancellationToken cancellationToken = default);
     Task<decimal> SumReservedAsync(Guid productId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<Guid, (decimal OnHand, decimal Reserved)>> SumOnHandAndReservedByProductsAsync(
+        IEnumerable<Guid> productIds,
+        Guid? warehouseId,
+        CancellationToken cancellationToken = default);
     Task<StockItem> GetOrCreateAsync(Guid productId, Guid warehouseId, Guid? lotId, CancellationToken cancellationToken = default);
     Task AddAsync(StockItem item, CancellationToken cancellationToken = default);
     void Update(StockItem item);
@@ -79,6 +83,22 @@ public interface IStockReasonCodeRepository
     Task AddAsync(StockReasonCode reason, CancellationToken cancellationToken = default);
     void Update(StockReasonCode reason);
     void Remove(StockReasonCode reason);
+}
+
+public interface IStockCountRepository
+{
+    Task<StockCount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<StockCount?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<bool> CountNumberExistsAsync(string countNumber, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<StockCount> Items, int Total)> SearchAsync(
+        Guid? warehouseId,
+        StockCountStatus? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task AddAsync(StockCount stockCount, CancellationToken cancellationToken = default);
+    void Update(StockCount stockCount);
+    void Remove(StockCount stockCount);
 }
 
 public interface ILotRepository

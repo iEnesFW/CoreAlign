@@ -1,4 +1,6 @@
+using System.Text.Json;
 using CoreAlign.Domain.Common;
+using CoreAlign.Domain.Entities.Sales;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Events;
 using CoreAlign.Domain.Exceptions;
@@ -10,6 +12,20 @@ public enum OrderStockEffect
     None,
     Decrement,
     Restore
+}
+
+public static class OrderOriginPersona
+{
+    public const string Customer = "Customer";
+    public const string Dealer = "Dealer";
+    public const string Tenant = "Tenant";
+}
+
+public static class DealerOrderApprovalStatuses
+{
+    public const string PendingCustomerApproval = "PendingCustomerApproval";
+    public const string Approved = "Approved";
+    public const string Rejected = "Rejected";
 }
 
 public class Order : TenantEntity
@@ -64,9 +80,36 @@ public class Order : TenantEntity
     public string? CustomerNotes { get; private set; }
     public string? Notes { get; private set; }
 
+    public string? OriginPersona { get; private set; }
+    public Guid? OriginCustomerUserId { get; private set; }
+    public Guid? OriginDealerAccountId { get; private set; }
+    public Guid? OriginDealerUserId { get; private set; }
+
+    public string? DealerApprovalStatus { get; private set; }
+    public Guid? DealerApprovedByUserId { get; private set; }
+    public DateTime? DealerApprovedAtUtc { get; private set; }
+    public DateTime? DealerRejectedAtUtc { get; private set; }
+    public string? DealerRejectionReason { get; private set; }
+
+    public Guid? SourceQuoteId { get; private set; }
+    public Guid? GlassProjectId { get; private set; }
+    public Guid? SourceGlassProjectId { get; private set; }
+
+    public Guid? CurrentRevisionId { get; private set; }
+    public int AppliedRevisionCount { get; private set; }
+    public string? OriginalSubmittedSnapshotJson { get; private set; }
+
     public Customer Customer { get; set; } = null!;
     public ICollection<OrderLine> Lines { get; private set; } = new List<OrderLine>();
     public ICollection<Shipment> Shipments { get; private set; } = new List<Shipment>();
+    public ICollection<OrderRevision> Revisions { get; private set; } = new List<OrderRevision>();
+
+    public bool IsDealerOrder => string.Equals(OriginPersona, OrderOriginPersona.Dealer, StringComparison.Ordinal);
+    public bool IsPendingDealerApproval =>
+        string.Equals(DealerApprovalStatus, DealerOrderApprovalStatuses.PendingCustomerApproval, StringComparison.Ordinal);
+
+    public bool CanRequestRevision() =>
+        Status is OrderStatus.Submitted or OrderStatus.Approved or OrderStatus.Allocated or OrderStatus.Picking;
 
     protected Order() { }
 
@@ -84,7 +127,8 @@ public class Order : TenantEntity
         Status == OrderStatus.Draft ||
         Status == OrderStatus.Submitted ||
         Status == OrderStatus.Approved ||
-        Status == OrderStatus.Allocated;
+        Status == OrderStatus.Allocated ||
+        Status == OrderStatus.Confirmed;
     public bool IsEditable => Status == OrderStatus.Draft;
 
     public void UpdateHeader(string orderNumber, Guid customerId, DateTime orderDate, string currency, string? notes)
@@ -115,7 +159,8 @@ public class Order : TenantEntity
         string? channel,
         string? internalNotes,
         string? customerNotes,
-        Guid? originOrderId)
+        Guid? originOrderId,
+        decimal roundingAdjustment = 0m)
     {
         EnsureDraft();
         Type = type;
@@ -128,6 +173,7 @@ public class Order : TenantEntity
         PriceListId = priceListId;
         ExchangeRate = exchangeRate > 0 ? exchangeRate : 1m;
         ShippingCost = shippingCost;
+        RoundingAdjustment = roundingAdjustment;
         HeaderDiscountPercent = headerDiscountPercent;
         HeaderDiscountAmount = headerDiscountAmount;
         SalesRepUserId = salesRepUserId;
@@ -204,6 +250,7 @@ public class Order : TenantEntity
         if (effect == OrderStockEffect.Decrement || effect == OrderStockEffect.Restore)
         {
             var snapshot = Lines
+                .Where(l => !l.IsService)
                 .Select(l => new OrderLineSnapshot(l.ProductId, l.Quantity))
                 .ToList();
             if (effect == OrderStockEffect.Decrement)
@@ -232,6 +279,10 @@ public class Order : TenantEntity
         Status = OrderStatus.Submitted;
         SubmittedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = SubmittedAtUtc.Value;
+        if (string.IsNullOrEmpty(OriginalSubmittedSnapshotJson))
+        {
+            OriginalSubmittedSnapshotJson = JsonSerializer.Serialize(BuildCurrentLineSnapshot());
+        }
         AddDomainEvent(new OrderSubmittedEvent(TenantId, Id, OrderNumber, SubmittedAtUtc.Value));
         AddDomainEvent(new OrderStatusChangedEvent(TenantId, Id, OrderNumber, OrderStatus.Draft, OrderStatus.Submitted, SubmittedAtUtc.Value));
     }
@@ -260,8 +311,10 @@ public class Order : TenantEntity
         Status = OrderStatus.Allocated;
         UpdatedAtUtc = now;
 
-        var snapshot = Lines.Select(l => new OrderLineDetailSnapshot(l.Id, l.ProductId, l.Quantity)).ToList();
-        AddDomainEvent(new OrderAllocationRequestedEvent(TenantId, Id, OrderNumber, preferredWarehouseId, snapshot, now));
+        // Reservations are created directly by the allocation handler (ReserveAsync),
+        // not via a domain event — the preferred warehouse is honoured there. The
+        // status transition is the only signal broadcast here.
+        _ = preferredWarehouseId;
         AddDomainEvent(new OrderStatusChangedEvent(TenantId, Id, OrderNumber, OrderStatus.Approved, OrderStatus.Allocated, now));
     }
 
@@ -280,7 +333,10 @@ public class Order : TenantEntity
 
         if (previous is OrderStatus.Confirmed or OrderStatus.Shipped)
         {
-            var snap = Lines.Select(l => new OrderLineSnapshot(l.ProductId, l.Quantity)).ToList();
+            // Mirror ChangeStatus's restore snapshot: service lines carry no
+            // ProductId and must be excluded, else the restore handler resolves a
+            // Guid.Empty "product" and throws KeyNotFoundException.
+            var snap = Lines.Where(l => !l.IsService).Select(l => new OrderLineSnapshot(l.ProductId, l.Quantity)).ToList();
             AddDomainEvent(new OrderCancelledFromActiveEvent(TenantId, Id, OrderNumber, snap, CancelledAtUtc.Value));
         }
     }
@@ -296,8 +352,20 @@ public class Order : TenantEntity
 
     public void MarkFullyShipped(Guid shipmentId, string shipmentNumber, bool isPartial)
     {
+        var target = isPartial ? OrderStatus.PartiallyShipped : OrderStatus.Shipped;
+
+        // A stray shipment dispatched after the order has already moved downstream
+        // (Delivered/Closed) or to a terminal state (Cancelled/Returned) must NOT
+        // drag the order backward to Shipped/PartiallyShipped and re-emit
+        // OrderShippedEvent. Only mutate when the FSM permits the forward move;
+        // otherwise the shipment dispatch proceeds without touching order status.
+        if (Status == target || !IsTransitionAllowed(Status, target))
+        {
+            return;
+        }
+
         var now = DateTime.UtcNow;
-        Status = isPartial ? OrderStatus.PartiallyShipped : OrderStatus.Shipped;
+        Status = target;
         UpdatedAtUtc = now;
         AddDomainEvent(new OrderShippedEvent(TenantId, Id, shipmentId, OrderNumber, shipmentNumber, isPartial, now));
     }
@@ -332,7 +400,14 @@ public class Order : TenantEntity
 
     private static void EnsureTransitionAllowed(OrderStatus from, OrderStatus to)
     {
-        var allowed = from switch
+        if (!IsTransitionAllowed(from, to))
+        {
+            throw new InvalidOrderStatusTransitionException(from.ToString(), to.ToString());
+        }
+    }
+
+    private static bool IsTransitionAllowed(OrderStatus from, OrderStatus to) =>
+        from switch
         {
             OrderStatus.Draft => to is OrderStatus.Submitted or OrderStatus.Cancelled or OrderStatus.Confirmed,
             OrderStatus.Submitted => to is OrderStatus.Approved or OrderStatus.Draft or OrderStatus.Cancelled,
@@ -350,12 +425,6 @@ public class Order : TenantEntity
             _ => false
         };
 
-        if (!allowed)
-        {
-            throw new InvalidOrderStatusTransitionException(from.ToString(), to.ToString());
-        }
-    }
-
     private static OrderStockEffect ResolveStockEffect(OrderStatus from, OrderStatus to)
     {
         if (from == OrderStatus.Draft && to == OrderStatus.Confirmed) return OrderStockEffect.Decrement;
@@ -364,5 +433,209 @@ public class Order : TenantEntity
             return OrderStockEffect.Restore;
         }
         return OrderStockEffect.None;
+    }
+
+    public void MarkOrigin(string persona, Guid? customerUserId, Guid? dealerAccountId, Guid? dealerUserId)
+    {
+        if (string.IsNullOrWhiteSpace(persona))
+        {
+            throw new ArgumentException("Persona is required.", nameof(persona));
+        }
+        if (Status != OrderStatus.Draft)
+        {
+            throw new InvalidOrderApprovalStateException(
+                $"Origin can only be set while order is Draft (current: {Status}).");
+        }
+
+        OriginPersona = persona;
+        OriginCustomerUserId = customerUserId;
+        OriginDealerAccountId = dealerAccountId;
+        OriginDealerUserId = dealerUserId;
+
+        if (string.Equals(persona, OrderOriginPersona.Dealer, StringComparison.Ordinal))
+        {
+            DealerApprovalStatus = DealerOrderApprovalStatuses.PendingCustomerApproval;
+        }
+        else
+        {
+            DealerApprovalStatus = null;
+            DealerApprovedByUserId = null;
+            DealerApprovedAtUtc = null;
+            DealerRejectedAtUtc = null;
+            DealerRejectionReason = null;
+        }
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void ApproveDealerSubmission(Guid approverId)
+    {
+        if (!IsPendingDealerApproval)
+        {
+            throw new InvalidOrderApprovalStateException(
+                $"Order is not pending dealer approval (state: {DealerApprovalStatus ?? "<none>"}).");
+        }
+        DealerApprovalStatus = DealerOrderApprovalStatuses.Approved;
+        DealerApprovedByUserId = approverId;
+        DealerApprovedAtUtc = DateTime.UtcNow;
+        DealerRejectionReason = null;
+        UpdatedAtUtc = DealerApprovedAtUtc.Value;
+    }
+
+    public void RejectDealerSubmission(Guid rejectorId, string reason)
+    {
+        if (!IsPendingDealerApproval)
+        {
+            throw new InvalidOrderApprovalStateException(
+                $"Order is not pending dealer approval (state: {DealerApprovalStatus ?? "<none>"}).");
+        }
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            throw new InvalidOrderApprovalStateException("Rejection reason is required.");
+        }
+        DealerApprovalStatus = DealerOrderApprovalStatuses.Rejected;
+        DealerApprovedByUserId = rejectorId;
+        DealerRejectedAtUtc = DateTime.UtcNow;
+        DealerRejectionReason = reason.Trim();
+        UpdatedAtUtc = DealerRejectedAtUtc.Value;
+    }
+
+    public void LinkSourceQuote(Guid quoteId)
+    {
+        SourceQuoteId = quoteId;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void LinkToGlassProject(Guid projectId)
+    {
+        GlassProjectId = projectId;
+        SourceGlassProjectId = projectId;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public IReadOnlyList<RevisionLineSnapshot> BuildCurrentLineSnapshot()
+    {
+        return Lines
+            .OrderBy(l => l.LineNumber)
+            .Select(l => new RevisionLineSnapshot
+            {
+                ProductId = l.ProductId,
+                ProductSku = l.ProductSku,
+                ProductName = l.ProductName,
+                LineNumber = l.LineNumber,
+                Quantity = l.Quantity,
+                UnitPrice = l.UnitPrice,
+                LineDiscountPercent = l.LineDiscountPercent,
+                LineDiscountAmount = l.LineDiscountAmount,
+                TaxRatePercent = l.TaxRatePercent,
+                IsTaxInclusive = l.IsTaxInclusive,
+                WithholdingRatePercent = l.WithholdingRatePercent,
+                LineNotes = l.LineNotes,
+            })
+            .ToList();
+    }
+
+    public OrderRevision RequestRevision(
+        Guid userId,
+        string persona,
+        IEnumerable<RevisionLineSnapshot> lineSnapshots,
+        string? notes,
+        DateTime nowUtc)
+    {
+        if (!CanRequestRevision())
+        {
+            throw new RequestRevisionForbiddenException(Status.ToString());
+        }
+
+        foreach (var existing in Revisions.Where(r => r.IsPending).ToList())
+        {
+            existing.Supersede(nowUtc);
+        }
+
+        var nextNumber = Revisions.Count + 1;
+        var revision = new OrderRevision(Id, nextNumber, userId, persona, lineSnapshots, notes, nowUtc)
+        {
+            TenantId = TenantId,
+        };
+        Revisions.Add(revision);
+        CurrentRevisionId = revision.Id;
+        UpdatedAtUtc = nowUtc;
+
+        AddDomainEvent(new OrderRevisionRequestedEvent(
+            TenantId, Id, revision.Id, revision.RevisionNumber, OrderNumber, userId, persona, nowUtc));
+
+        return revision;
+    }
+
+    public void ApplyRevision(Guid revisionId, Guid decidedByUserId, DateTime nowUtc)
+    {
+        var revision = Revisions.FirstOrDefault(r => r.Id == revisionId)
+            ?? throw new OrderRevisionNotFoundException();
+        revision.Approve(decidedByUserId, nowUtc);
+
+        foreach (var snap in revision.ProposedLines)
+        {
+            var line = Lines.FirstOrDefault(l => l.ProductId == snap.ProductId);
+            if (line is null) continue;
+
+            line.ApplyPricing(
+                quantity: snap.Quantity,
+                listPriceSnapshot: line.ListPriceSnapshot,
+                unitPrice: snap.UnitPrice,
+                lineDiscountPercent: snap.LineDiscountPercent,
+                lineDiscountAmount: snap.LineDiscountAmount,
+                isManualPriceOverride: line.IsManualPriceOverride,
+                taxRatePercent: snap.TaxRatePercent,
+                taxRateId: line.TaxRateId,
+                isTaxInclusive: snap.IsTaxInclusive,
+                withholdingRatePercent: snap.WithholdingRatePercent,
+                unitCostSnapshot: line.UnitCostSnapshot,
+                uomId: line.UomId,
+                uomCode: line.UomCode,
+                uomConversionFactor: line.UomConversionFactor,
+                warehouseId: line.WarehouseId,
+                lineNotes: snap.LineNotes,
+                parentLineId: line.ParentLineId,
+                isKitComponent: line.IsKitComponent,
+                productDescriptionSnapshot: line.ProductDescriptionSnapshot);
+        }
+
+        Recalculate();
+        AppliedRevisionCount++;
+        UpdatedAtUtc = nowUtc;
+
+        AddDomainEvent(new OrderRevisionApprovedEvent(
+            TenantId, Id, revision.Id, revision.RevisionNumber, OrderNumber, decidedByUserId, Total, Currency, nowUtc));
+    }
+
+    public void RejectRevision(Guid revisionId, Guid decidedByUserId, string reason, DateTime nowUtc)
+    {
+        var revision = Revisions.FirstOrDefault(r => r.Id == revisionId)
+            ?? throw new OrderRevisionNotFoundException();
+        revision.Reject(decidedByUserId, reason, nowUtc);
+        UpdatedAtUtc = nowUtc;
+
+        AddDomainEvent(new OrderRevisionRejectedEvent(
+            TenantId, Id, revision.Id, revision.RevisionNumber, OrderNumber, decidedByUserId, reason, nowUtc));
+    }
+
+    public void CancelRevision(Guid revisionId, Guid cancelledByUserId, DateTime nowUtc)
+    {
+        var revision = Revisions.FirstOrDefault(r => r.Id == revisionId)
+            ?? throw new OrderRevisionNotFoundException();
+        revision.Cancel(cancelledByUserId, nowUtc);
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void RecordLineScrap(Guid lineId, decimal qty, string? reason = null)
+    {
+        if (Status == OrderStatus.Cancelled || Status == OrderStatus.Closed)
+        {
+            throw new InvalidOrderStatusTransitionException(Status.ToString(), "Scrap");
+        }
+        var line = Lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new InvalidOrderLineException($"Order line '{lineId}' not found.");
+        line.RecordScrap(qty);
+        UpdatedAtUtc = DateTime.UtcNow;
+        _ = reason;
     }
 }

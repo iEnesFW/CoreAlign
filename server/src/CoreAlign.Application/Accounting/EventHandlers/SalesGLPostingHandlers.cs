@@ -1,0 +1,201 @@
+using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Common.Outbox;
+using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Events;
+using CoreAlign.Domain.Interfaces;
+using MediatR;
+
+namespace CoreAlign.Application.Accounting.EventHandlers;
+
+/// <summary>
+/// Builds the AR-side journal lines for a sales document. Revenue is booked at
+/// the taxable base; any tevkifat (withholding) the customer does not pay is
+/// debited to a withholding-receivable control account so the entry still
+/// balances: DR(AR + Withholding) == CR(Revenue + VAT). <paramref name="reverse"/>
+/// flips the entry for credit notes and for voids/cancellations.
+/// </summary>
+internal static class SalesGLLines
+{
+    public static IReadOnlyList<GLPostingLine> Build(decimal revenue, decimal tax, decimal withholding, bool reverse)
+    {
+        revenue = Math.Max(0m, revenue);
+        withholding = Math.Max(0m, withholding);
+        // AR is what the customer actually owes: taxable base + VAT − withholding.
+        var receivable = Math.Max(0m, revenue + tax - withholding);
+        return reverse
+            ? new[]
+            {
+                new GLPostingLine(GLPostingKey.SalesRevenue, revenue, 0m),
+                new GLPostingLine(GLPostingKey.OutputVat, tax, 0m),
+                new GLPostingLine(GLPostingKey.AccountsReceivable, 0m, receivable),
+                new GLPostingLine(GLPostingKey.WithholdingReceivable, 0m, withholding),
+            }
+            : new[]
+            {
+                new GLPostingLine(GLPostingKey.AccountsReceivable, receivable, 0m),
+                new GLPostingLine(GLPostingKey.WithholdingReceivable, withholding, 0m),
+                new GLPostingLine(GLPostingKey.SalesRevenue, 0m, revenue),
+                new GLPostingLine(GLPostingKey.OutputVat, 0m, tax),
+            };
+    }
+}
+
+public class InvoiceIssuedGLHandler : INotificationHandler<InvoiceIssuedEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IInvoiceRepository _invoices;
+
+    public InvoiceIssuedGLHandler(IGLPostingOutbox outbox, IInvoiceRepository invoices)
+    {
+        _outbox = outbox;
+        _invoices = invoices;
+    }
+
+    public async Task Handle(InvoiceIssuedEvent n, CancellationToken cancellationToken)
+    {
+        var invoice = await _invoices.GetByIdAsync(n.InvoiceId, cancellationToken);
+        if (invoice is null) return;
+
+        var reverse = invoice.Type == InvoiceType.CreditNote;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.SalesInvoice,
+            n.InvoiceId,
+            n.InvoiceNumber,
+            n.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            reverse ? $"İade faturası {n.InvoiceNumber}" : $"Satış faturası {n.InvoiceNumber}",
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            invoice.Currency, invoice.ExchangeRate), cancellationToken);
+    }
+}
+
+public class InvoiceVoidedGLHandler : INotificationHandler<InvoiceVoidedEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IInvoiceRepository _invoices;
+
+    public InvoiceVoidedGLHandler(IGLPostingOutbox outbox, IInvoiceRepository invoices)
+    {
+        _outbox = outbox;
+        _invoices = invoices;
+    }
+
+    public async Task Handle(InvoiceVoidedEvent n, CancellationToken cancellationToken)
+    {
+        var invoice = await _invoices.GetByIdAsync(n.InvoiceId, cancellationToken);
+        if (invoice is null) return;
+
+        // Voiding a sales invoice reverses the original issuance; voiding a credit
+        // note un-reverses it.
+        var reverse = invoice.Type != InvoiceType.CreditNote;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.SalesInvoiceReversal,
+            n.InvoiceId,
+            n.InvoiceNumber,
+            n.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            $"Fatura iptali {n.InvoiceNumber}",
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            invoice.Currency, invoice.ExchangeRate), cancellationToken);
+    }
+}
+
+public class InvoiceCancelledGLHandler : INotificationHandler<InvoiceCancelledEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IInvoiceRepository _invoices;
+
+    public InvoiceCancelledGLHandler(IGLPostingOutbox outbox, IInvoiceRepository invoices)
+    {
+        _outbox = outbox;
+        _invoices = invoices;
+    }
+
+    public async Task Handle(InvoiceCancelledEvent n, CancellationToken cancellationToken)
+    {
+        if (!n.WasIssued) return; // never posted to AR → nothing to reverse
+
+        var invoice = await _invoices.GetByIdAsync(n.InvoiceId, cancellationToken);
+        if (invoice is null) return;
+
+        var reverse = invoice.Type != InvoiceType.CreditNote;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.SalesInvoiceReversal,
+            n.InvoiceId,
+            n.InvoiceNumber,
+            n.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            $"Fatura iptali {n.InvoiceNumber}",
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            invoice.Currency, invoice.ExchangeRate), cancellationToken);
+    }
+}
+
+public class PaymentConfirmedGLHandler : INotificationHandler<PaymentConfirmedEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IPaymentRepository _payments;
+
+    public PaymentConfirmedGLHandler(IGLPostingOutbox outbox, IPaymentRepository payments)
+    {
+        _outbox = outbox;
+        _payments = payments;
+    }
+
+    public async Task Handle(PaymentConfirmedEvent n, CancellationToken cancellationToken)
+    {
+        var payment = await _payments.GetByIdAsync(n.PaymentId, cancellationToken);
+        var cashKey = payment?.Method == PaymentMethod.Cash ? GLPostingKey.Cash : GLPostingKey.Bank;
+        var isReceipt = n.Direction == PaymentDirection.CustomerReceipt;
+
+        // Receipt: money in → DR cash / CR AR. Refund: the reverse.
+        var lines = PaymentGLLines.CashMovement(
+            cashKey, GLPostingKey.AccountsReceivable, n.Amount, cashIsDebit: isReceipt);
+
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.CustomerPayment,
+            n.PaymentId,
+            n.PaymentNumber,
+            n.OccurredAtUtc.Date,
+            isReceipt ? JournalEntryType.Tahsil : JournalEntryType.Tediye,
+            isReceipt ? $"Tahsilat {n.PaymentNumber}" : $"İade ödemesi {n.PaymentNumber}",
+            lines,
+            n.Currency, n.ExchangeRate), cancellationToken);
+    }
+}
+
+public class PaymentVoidedGLHandler : INotificationHandler<PaymentVoidedEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IPaymentRepository _payments;
+
+    public PaymentVoidedGLHandler(IGLPostingOutbox outbox, IPaymentRepository payments)
+    {
+        _outbox = outbox;
+        _payments = payments;
+    }
+
+    public async Task Handle(PaymentVoidedEvent n, CancellationToken cancellationToken)
+    {
+        var payment = await _payments.GetByIdAsync(n.PaymentId, cancellationToken);
+        var cashKey = payment?.Method == PaymentMethod.Cash ? GLPostingKey.Cash : GLPostingKey.Bank;
+        var currency = payment?.Currency ?? "TRY";
+        var exchangeRate = payment?.ExchangeRate ?? 1m;
+        var wasReceipt = payment is null || payment.Direction == PaymentDirection.CustomerReceipt;
+
+        // Reverse the original cash movement: a receipt becomes DR AR / CR Cash
+        // (cash credited), a refund the opposite.
+        var lines = PaymentGLLines.CashMovement(
+            cashKey, GLPostingKey.AccountsReceivable, n.Amount, cashIsDebit: !wasReceipt);
+
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.CustomerPaymentReversal,
+            n.PaymentId,
+            n.PaymentNumber,
+            n.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            $"Tahsilat iptali {n.PaymentNumber}",
+            lines,
+            currency, exchangeRate), cancellationToken);
+    }
+}

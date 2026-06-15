@@ -7,6 +7,7 @@ import type {
   DeliverShipmentInput,
   DispatchShipmentInput,
   OrderListParams,
+  RecordOrderScrapInput,
   UpdateOrderInput,
 } from '../model/order.types';
 
@@ -166,5 +167,13 @@ export const useCancelShipment = () => {
     mutationFn: (params: { id: string; reason?: string | null }) =>
       ordersApi.cancelShipment(params.id, params.reason),
     onSuccess: () => invalidateOrder(queryClient),
+  });
+};
+
+export const useRecordOrderScrap = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: RecordOrderScrapInput) => ordersApi.recordScrap(input),
+    onSuccess: (_, input) => invalidateOrder(queryClient, input.id),
   });
 };

@@ -11,8 +11,8 @@ interface AuthLayoutProps {
 // Lazily load the 3D scene so the ~700 KB three.js + lil-gui chunk only ships
 // when actually needed (i.e. on auth pages, on capable devices, with motion
 // allowed). Other dashboard routes never pay this cost.
-const Jira3DScene = lazy(() =>
-  import('@/shared/ui/Background/Jira3DScene').then((m) => ({ default: m.Jira3DScene })),
+const CoreAlign3DLogin = lazy(() =>
+  import('@/shared/ui/Background/CoreAlign3DLogin').then((m) => ({ default: m.CoreAlign3DLogin })),
 );
 
 const StaticBackground = ({ theme }: { theme: 'light' | 'dark' }) => (
@@ -33,25 +33,12 @@ const StaticBackground = ({ theme }: { theme: 'light' | 'dark' }) => (
 );
 
 const useAllowExpensiveScene = (): boolean => {
-  // Skip the GPU-heavy scene on:
-  //   • prefers-reduced-motion
-  //   • obvious low-end devices (mobile, very low CPU/RAM, save-data, slow net)
-  //   • SSR (no window)
+  // Sadece prefers-reduced-motion kontrolü yapıyoruz.
+  // Kullanıcının isteği doğrultusunda eski katı donanım limitlerini kaldırdık.
   const [allow, setAllow] = useState(() => {
     if (typeof window === 'undefined') return false;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return false;
-    const nav = navigator as Navigator & {
-      deviceMemory?: number;
-      hardwareConcurrency?: number;
-      connection?: { saveData?: boolean; effectiveType?: string };
-    };
-    if (nav.deviceMemory !== undefined && nav.deviceMemory < 4) return false;
-    if (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency < 4) return false;
-    if (nav.connection?.saveData) return false;
-    if (nav.connection?.effectiveType && /^(slow-2g|2g|3g)$/.test(nav.connection.effectiveType)) {
-      return false;
-    }
     return true;
   });
 
@@ -66,18 +53,26 @@ const useAllowExpensiveScene = (): boolean => {
   return allow;
 };
 
+import { LightModeBackground } from '@/shared/ui/Background/LightModeBackground';
+
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   const { theme, toggleTheme } = useTheme();
   const allow3d = useAllowExpensiveScene();
 
+  const isDark = theme === 'dark';
+
   return (
     <div className={styles.container}>
-      {allow3d ? (
-        <Suspense fallback={<StaticBackground theme={theme} />}>
-          <Jira3DScene theme={theme} />
-        </Suspense>
+      {isDark ? (
+        allow3d ? (
+          <Suspense fallback={<StaticBackground theme="dark" />}>
+            <CoreAlign3DLogin theme="dark" />
+          </Suspense>
+        ) : (
+          <StaticBackground theme="dark" />
+        )
       ) : (
-        <StaticBackground theme={theme} />
+        <LightModeBackground />
       )}
 
       <header className={styles.header}>

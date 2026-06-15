@@ -53,6 +53,15 @@ public class CustomerProductPriceDto
     public bool IsActive { get; set; }
 }
 
+public record GLPostingMappingDto(
+    GLPostingKey Key,
+    string KeyName,
+    string EffectiveAccountCode,
+    string? OverrideAccountCode,
+    string? DefaultAccountCode,
+    string? AccountName,
+    bool IsPostable);
+
 public class ResolvedPriceDto
 {
     public decimal UnitPrice { get; set; }

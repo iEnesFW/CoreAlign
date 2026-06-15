@@ -19,6 +19,9 @@ public class JwtTokenService : IJwtTokenService
     }
 
     public string GenerateAccessToken(Guid userId, Guid tenantId, string email, IEnumerable<string> roles)
+        => GenerateAccessToken(userId, tenantId, email, roles, persona: null, mfaVerifiedAtUtc: null);
+
+    public string GenerateAccessToken(Guid userId, Guid tenantId, string email, IEnumerable<string> roles, string? persona, DateTime? mfaVerifiedAtUtc = null)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -34,6 +37,17 @@ public class JwtTokenService : IJwtTokenService
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        if (!string.IsNullOrWhiteSpace(persona))
+        {
+            claims.Add(new Claim("persona", persona));
+        }
+
+        if (mfaVerifiedAtUtc.HasValue)
+        {
+            var unix = new DateTimeOffset(mfaVerifiedAtUtc.Value, TimeSpan.Zero).ToUnixTimeSeconds();
+            claims.Add(new Claim("mfa_verified_at", unix.ToString(), ClaimValueTypes.Integer64));
         }
 
         var token = new JwtSecurityToken(

@@ -296,3 +296,11 @@ export interface DeliverShipmentInput {
   receivedBy?: string | null;
   deliveredAtUtc?: string | null;
 }
+
+export interface RecordOrderScrapInput {
+  id: string;
+  orderLineId: string;
+  quantity: number;
+  warehouseId: string;
+  notes?: string | null;
+}

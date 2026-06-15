@@ -58,7 +58,8 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 AvatarUrl = user.AvatarUrl,
-                Roles = roles
+                Roles = roles,
+                PreferredLocale = user.PreferredLocale
             }
         };
     }

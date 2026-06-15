@@ -11,4 +11,13 @@ public enum DocumentSequenceType
     PaymentNumber = 6,
     ShipmentNumber = 7,
     JournalNumber = 8,
+    SubscriptionOrderNumber = 9,
+    QuoteNumber = 10,
+    ReturnRequestNumber = 11,
+    PurchaseOrderNumber = 12,
+    VendorPaymentNumber = 13,
+    GlassProjectCode = 14,
+    StockCountNumber = 15,
+    PurchaseRequisitionNumber = 16,
+    MrpPlanRunNumber = 17,
 }

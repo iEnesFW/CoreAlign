@@ -14,6 +14,7 @@ const valid = {
   isStockTracked: true,
   isLotTracked: false,
   isSerialTracked: false,
+  procurementType: 'Buy' as const,
   isActive: true,
 };
 

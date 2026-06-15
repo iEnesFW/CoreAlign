@@ -20,6 +20,10 @@ export const userProfileSchema = z.object({
     .nullish()
     .transform((v) => v ?? null),
   roles: z.array(z.string()),
+  preferredLocale: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? null),
 });
 
 export const authResponseSchema = z.object({

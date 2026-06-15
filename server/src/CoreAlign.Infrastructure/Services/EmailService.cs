@@ -40,6 +40,47 @@ public class EmailService : IEmailService
         return Task.CompletedTask;
     }
 
+    public Task SendSecurityAlertAsync(object payload, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Security alert email queued (payload type {PayloadType})",
+            payload?.GetType().Name ?? "<null>");
+        return Task.CompletedTask;
+    }
+
+    public Task SendInvoiceIssuedAsync(string email, string invoiceNumber, string customerName, decimal total, string currency, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Invoice issued email queued for {Email} (invoice {InvoiceNumber}, total {Total} {Currency})",
+            MaskEmail(email),
+            invoiceNumber,
+            total,
+            currency);
+        return Task.CompletedTask;
+    }
+
+    public Task SendOrderCommentPostedAsync(string email, string authorPersona, string body, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Order comment notification queued for {Email} (persona {AuthorPersona}, body length {BodyLength})",
+            MaskEmail(email),
+            authorPersona,
+            body?.Length ?? 0);
+        return Task.CompletedTask;
+    }
+
+    public Task SendDealerOrderPendingApprovalAsync(string email, string dealerName, int lineCount, decimal total, string currency, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Dealer order pending approval email queued for {Email} (dealer {DealerName}, lines {LineCount}, total {Total} {Currency})",
+            MaskEmail(email),
+            dealerName,
+            lineCount,
+            total,
+            currency);
+        return Task.CompletedTask;
+    }
+
     private static string ShortHash(string token)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));

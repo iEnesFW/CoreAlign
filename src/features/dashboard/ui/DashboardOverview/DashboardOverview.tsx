@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, DollarSign, FileText, Package, ShoppingCart, Users } from 'lucide-react';
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats';
+import { StatStrip, type StatStripItem } from '@/shared/ui/StatStrip/StatStrip';
 
 // Recharts is ~150 KB gzipped — keep it out of the dashboard's first paint by
 // lazy-loading the chart wrappers. The Suspense fallback below renders the
@@ -83,6 +84,78 @@ export const DashboardOverview = () => {
   const draftCount = stats?.orderCountByStatus.Draft ?? 0;
   const confirmedCount = stats?.orderCountByStatus.Confirmed ?? 0;
 
+  const overviewStatItems: StatStripItem[] = [
+    {
+      id: 'customers',
+      label: t('dashboard.stats.customers'),
+      value: stats?.customerCount ?? 0,
+      format: (v) => (isPending ? '…' : formatNumber(v, i18n.language)),
+      icon: <Users size={16} />,
+      tone: 'indigo',
+      onClick: () => navigate('/dashboard/customers'),
+    },
+    {
+      id: 'products',
+      label: t('dashboard.stats.products'),
+      value: stats?.activeProductCount ?? 0,
+      format: (v) => (isPending ? '…' : formatNumber(v, i18n.language)),
+      icon: <Package size={16} />,
+      tone: 'emerald',
+      onClick: () => navigate('/dashboard/products'),
+    },
+    {
+      id: 'orders',
+      label: t('dashboard.stats.orders'),
+      value: stats?.totalOrderCount ?? 0,
+      format: (v) => (isPending ? '…' : formatNumber(v, i18n.language)),
+      sub: `${draftCount} ${t('orders.status.Draft').toLowerCase()} · ${confirmedCount} ${t('orders.status.Confirmed').toLowerCase()}`,
+      icon: <ShoppingCart size={16} />,
+      tone: 'amber',
+      onClick: () => navigate('/dashboard/orders'),
+    },
+    {
+      id: 'totalSales',
+      label: t('dashboard.stats.totalSales'),
+      value: stats?.totalSales ?? 0,
+      format: (v) => (isPending ? '…' : formatCurrency(v, i18n.language)),
+      icon: <DollarSign size={16} />,
+      tone: 'violet',
+    },
+  ];
+
+  const financialStatItems: StatStripItem[] = [
+    {
+      id: 'outstanding',
+      label: t('dashboard.stats.outstandingReceivables'),
+      value: stats?.outstandingReceivables ?? 0,
+      format: (v) => (isPending ? '…' : formatCurrency(v, i18n.language)),
+      sub: `${stats?.openInvoiceCount ?? 0} ${t('dashboard.stats.openInvoices')}`,
+      icon: <FileText size={16} />,
+      tone: 'amber',
+      onClick: () => navigate('/dashboard/invoices'),
+    },
+    {
+      id: 'collected',
+      label: t('dashboard.stats.collectedThisMonth'),
+      value: stats?.collectedThisMonth ?? 0,
+      format: (v) => (isPending ? '…' : formatCurrency(v, i18n.language)),
+      icon: <DollarSign size={16} />,
+      tone: 'emerald',
+    },
+    {
+      id: 'invoices',
+      label: t('dashboard.stats.totalInvoices'),
+      value:
+        (stats?.openInvoiceCount ?? 0) +
+        ((stats?.orderCountByStatus?.Closed ?? 0) + (stats?.orderCountByStatus?.Shipped ?? 0)),
+      format: (v) => (isPending ? '…' : formatNumber(v, i18n.language)),
+      sub: t('dashboard.stats.openAndIssued'),
+      icon: <FileText size={16} />,
+      tone: 'indigo',
+      onClick: () => navigate('/dashboard/invoices'),
+    },
+  ];
+
   return (
     <div className="space-y-4 p-4 sm:p-6">
       <div>
@@ -92,73 +165,8 @@ export const DashboardOverview = () => {
         <p className="text-xs text-slate-500 dark:text-slate-400">{t('dashboard.subtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          label={t('dashboard.stats.customers')}
-          value={formatNumber(stats?.customerCount ?? 0, i18n.language)}
-          icon={<Users size={18} />}
-          accent="indigo"
-          loading={isPending}
-          onClick={() => navigate('/dashboard/customers')}
-        />
-        <StatCard
-          label={t('dashboard.stats.products')}
-          value={formatNumber(stats?.activeProductCount ?? 0, i18n.language)}
-          icon={<Package size={18} />}
-          accent="emerald"
-          loading={isPending}
-          onClick={() => navigate('/dashboard/products')}
-        />
-        <StatCard
-          label={t('dashboard.stats.orders')}
-          value={formatNumber(stats?.totalOrderCount ?? 0, i18n.language)}
-          subtitle={`${draftCount} ${t('orders.status.Draft').toLowerCase()} · ${confirmedCount} ${t('orders.status.Confirmed').toLowerCase()}`}
-          icon={<ShoppingCart size={18} />}
-          accent="amber"
-          loading={isPending}
-          onClick={() => navigate('/dashboard/orders')}
-        />
-        <StatCard
-          label={t('dashboard.stats.totalSales')}
-          value={formatCurrency(stats?.totalSales ?? 0, i18n.language)}
-          icon={<DollarSign size={18} />}
-          accent="violet"
-          loading={isPending}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatCard
-          label={t('dashboard.stats.outstandingReceivables')}
-          value={formatCurrency(stats?.outstandingReceivables ?? 0, i18n.language)}
-          subtitle={`${stats?.openInvoiceCount ?? 0} ${t('dashboard.stats.openInvoices')}`}
-          icon={<FileText size={18} />}
-          accent="amber"
-          loading={isPending}
-          onClick={() => navigate('/dashboard/invoices')}
-        />
-        <StatCard
-          label={t('dashboard.stats.collectedThisMonth')}
-          value={formatCurrency(stats?.collectedThisMonth ?? 0, i18n.language)}
-          icon={<DollarSign size={18} />}
-          accent="emerald"
-          loading={isPending}
-        />
-        <StatCard
-          label={t('dashboard.stats.totalInvoices')}
-          value={formatNumber(
-            (stats?.openInvoiceCount ?? 0) +
-              ((stats?.orderCountByStatus?.Closed ?? 0) +
-                (stats?.orderCountByStatus?.Shipped ?? 0)),
-            i18n.language,
-          )}
-          subtitle={t('dashboard.stats.openAndIssued')}
-          icon={<FileText size={18} />}
-          accent="indigo"
-          loading={isPending}
-          onClick={() => navigate('/dashboard/invoices')}
-        />
-      </div>
+      <StatStrip items={overviewStatItems} />
+      <StatStrip items={financialStatItems} columnsClassName="grid-cols-1 sm:grid-cols-3" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -264,44 +272,7 @@ export const DashboardOverview = () => {
   );
 };
 
-type Accent = 'indigo' | 'emerald' | 'amber' | 'violet';
-
-const accentClasses: Record<Accent, string> = {
-  indigo: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300',
-  emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
-  amber: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  violet: 'bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300',
-};
-
-interface StatCardProps {
-  label: string;
-  value: string;
-  subtitle?: string;
-  icon: React.ReactNode;
-  accent: Accent;
-  loading?: boolean;
-  onClick?: () => void;
-}
-
-const StatCard = ({ label, value, subtitle, icon, accent, loading, onClick }: StatCardProps) => (
-  <button
-    type="button"
-    onClick={onClick}
-    disabled={!onClick}
-    className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-300 hover:shadow-sm disabled:cursor-default disabled:hover:border-slate-200 disabled:hover:shadow-none dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-500/50"
-  >
-    <div className="flex w-full items-center justify-between">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-        {label}
-      </span>
-      <span className={`rounded p-1.5 ${accentClasses[accent]}`}>{icon}</span>
-    </div>
-    <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-      {loading ? '…' : value}
-    </div>
-    {subtitle && <div className="text-[10px] text-slate-500 dark:text-slate-400">{subtitle}</div>}
-  </button>
-);
+// Removed unused StatCard components
 
 interface PanelCardProps {
   title: string;

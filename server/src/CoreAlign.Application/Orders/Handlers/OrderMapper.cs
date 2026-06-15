@@ -7,6 +7,14 @@ namespace CoreAlign.Application.Orders.Handlers;
 
 public static class OrderMapper
 {
+    public static OrderDto ToDto(Order order, string? originDealerName, string? dealerApprovedByName)
+    {
+        var dto = ToDto(order);
+        dto.OriginDealerName = originDealerName;
+        dto.DealerApprovedByName = dealerApprovedByName;
+        return dto;
+    }
+
     public static OrderDto ToDto(Order order) => new()
     {
         Id = order.Id,
@@ -54,7 +62,12 @@ public static class OrderMapper
         Notes = order.Notes,
         Lines = order.Lines.OrderBy(l => l.LineNumber).Select(ToLineDto).ToList(),
         CreatedAtUtc = order.CreatedAtUtc,
-        UpdatedAtUtc = order.UpdatedAtUtc
+        UpdatedAtUtc = order.UpdatedAtUtc,
+        OriginPersona = order.OriginPersona,
+        DealerApprovalStatus = order.DealerApprovalStatus,
+        OriginDealerAccountId = order.OriginDealerAccountId,
+        OriginDealerUserId = order.OriginDealerUserId,
+        OriginCustomerUserId = order.OriginCustomerUserId,
     };
 
     public static OrderSummaryDto ToSummaryDto(Order order) => new()

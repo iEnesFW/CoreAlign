@@ -27,6 +27,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(o => o.ShippingCost).HasColumnType("numeric(18,4)");
         builder.Property(o => o.RoundingAdjustment).HasColumnType("numeric(18,4)");
         builder.Property(o => o.Total).HasColumnType("numeric(18,4)");
+        // Phase59 migration original_submitted_snapshot_json sutununu jsonb olarak yaratti — entity mapping de jsonb olmali.
+        builder.Property(o => o.OriginalSubmittedSnapshotJson).HasColumnType("jsonb");
         builder.Property(o => o.Notes).HasMaxLength(2000);
         builder.Property(o => o.InternalNotes).HasMaxLength(2000);
         builder.Property(o => o.CustomerNotes).HasMaxLength(2000);
@@ -114,6 +116,8 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.HasIndex(l => l.OrderId);
         builder.HasIndex(l => l.ProductId);
         builder.HasIndex(l => new { l.TenantId, l.Status });
+        builder.HasIndex(l => new { l.TenantId, l.SourceBomLineId });
+        builder.HasIndex(l => new { l.TenantId, l.SubstituteFromProductId });
         builder.Ignore(l => l.LineTaxAmount);
         builder.Ignore(l => l.LineWithholdingAmount);
         builder.Ignore(l => l.QuantityRemainingToShip);

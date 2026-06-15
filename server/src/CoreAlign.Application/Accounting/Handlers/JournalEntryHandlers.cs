@@ -319,8 +319,9 @@ public class GetJournalEntryByIdHandler : IRequestHandler<GetJournalEntryByIdQue
 
     public async Task<JournalEntryDto?> Handle(GetJournalEntryByIdQuery q, CancellationToken ct)
     {
-        var entry = await _journals.GetWithLinesAsync(q.Id, ct);
-        return entry is null ? null : AccountingMapper.ToDto(entry);
+        var entry = await _journals.GetWithLinesAsync(q.Id, ct)
+            ?? throw new JournalEntryNotFoundException(q.Id);
+        return AccountingMapper.ToDto(entry);
     }
 }
 

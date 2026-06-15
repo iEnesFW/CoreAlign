@@ -71,6 +71,11 @@ public class CannotOverPayInvoiceException : DomainException
         : base($"Cannot apply {requested} to invoice; only {remaining} remains due.") { }
 }
 
+public class InvalidInvoiceLineException : DomainException
+{
+    public InvalidInvoiceLineException(string message) : base(message) { }
+}
+
 public class PeriodClosedException : DomainException
 {
     public PeriodClosedException(DateTime postingDate)

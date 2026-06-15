@@ -9,6 +9,7 @@ import {
   CalendarRange,
   Coins,
   DollarSign,
+  FileDown,
   Package,
   TrendingUp,
   Trophy,
@@ -126,6 +127,15 @@ export const ReportsPage = () => {
           <p className="text-xs text-slate-500 dark:text-slate-400">{t('reports.subtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/reports/library')}
+            className="inline-flex items-center gap-1.5 rounded border border-indigo-300 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
+          >
+            <FileDown size={11} />
+            {t('reports.library.openLibrary')}
+          </button>
+          <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-800" />
           <PresetToggle current={preset} value="30d" onClick={() => applyPreset('30d')}>
             30d
           </PresetToggle>

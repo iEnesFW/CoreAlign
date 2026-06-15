@@ -7,6 +7,7 @@ import {
   Clock,
   ExternalLink,
   FileText,
+  History,
   ListOrdered,
   NotebookPen,
   Percent,
@@ -18,6 +19,7 @@ import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import { useOrderQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { AuditTimeline } from '@/widgets/AuditTimeline';
 import type { Customer } from '@/features/customers/model/customer.types';
 import type { Order, OrderLine, OrderStatus } from '@/features/orders/model/order.types';
 import { OrderAllocationsTab } from './OrderAllocationsTab';
@@ -44,6 +46,7 @@ type Tab =
   | 'customer'
   | 'invoices'
   | 'audit'
+  | 'changes'
   | 'notes';
 
 const INVOICEABLE: OrderStatus[] = [
@@ -111,6 +114,11 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
       label: t('orders.detail.tabs.audit', { defaultValue: 'Audit' }),
       icon: <Clock size={12} />,
     },
+    {
+      id: 'changes',
+      label: t('Common.AuditTab.ChangesTitle', { defaultValue: 'Changes' }),
+      icon: <History size={12} />,
+    },
     { id: 'notes', label: t('orders.detail.tabs.notes'), icon: <NotebookPen size={12} /> },
   ];
 
@@ -176,6 +184,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
           />
         )}
         {tab === 'audit' && order && <OrderAuditTab order={order} locale={i18n.language} />}
+        {tab === 'changes' && order && <AuditTimeline entityType="Order" entityId={order.id} />}
         {tab === 'notes' && (
           <div className="rounded border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
             {order?.notes || (

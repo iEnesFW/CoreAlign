@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "CoreAlign",
+    "loading": "Загрузка...",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить",
+    "retry": "Повторить",
+    "offline": "Вы офлайн",
+    "online": "Снова онлайн"
+  },
+  "auth": {
+    "loginTitle": "Войти",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "loginButton": "Войти",
+    "loginError": "Неверные учетные данные",
+    "logout": "Выйти"
+  },
+  "tabs": {
+    "home": "Главная",
+    "installations": "Заказы",
+    "tickets": "Сервисные заявки",
+    "profile": "Профиль"
+  },
+  "home": {
+    "greeting": "Здравствуйте, {{name}}",
+    "pendingInstallations": "Ожидают приемки",
+    "openTickets": "Открытые заявки"
+  },
+  "installation": {
+    "listTitle": "Ожидающие приемки монтажей",
+    "detailTitle": "Приемка монтажа",
+    "capturePhoto": "Сделать фото",
+    "pickPhoto": "Из галереи",
+    "captureSignature": "Получить подпись",
+    "signerName": "Имя клиента",
+    "signerRole": "Должность",
+    "signerNameRequired": "Имя клиента обязательно",
+    "submit": "Отправить приемку",
+    "submitted": "Приемка отправлена",
+    "submittedOffline": "Сохранено офлайн. Синхронизируется при подключении.",
+    "submitFailed": "Не удалось отправить",
+    "empty": "Нет ожидающих монтажей",
+    "notFound": "Монтаж не найден",
+    "photos": "Фотографии",
+    "noPhotos": "Фото не сделано",
+    "photoUploadFailed": "Не удалось загрузить фото",
+    "punchList": "Список замечаний",
+    "punchPlaceholder": "Описание дефекта",
+    "addPunch": "Добавить",
+    "notes": "Заметки",
+    "notesPlaceholder": "Доп. заметки"
+  },
+  "ticket": {
+    "listTitle": "Мои сервисные заявки",
+    "detailTitle": "Сервисная заявка",
+    "newTitle": "Новая заявка",
+    "new": "Новая",
+    "title": "Заголовок",
+    "titlePlaceholder": "Кратко опишите проблему",
+    "description": "Описание",
+    "descriptionPlaceholder": "Опишите проблему подробно",
+    "priority": "Приоритет",
+    "submit": "Создать заявку",
+    "fillRequired": "Заполните заголовок и описание",
+    "queuedOffline": "Сохранено офлайн, будет отправлено",
+    "createFailed": "Не удалось создать заявку",
+    "addComment": "Добавить комментарий",
+    "comments": "Комментарии",
+    "noComments": "Комментариев пока нет",
+    "commentPlaceholder": "Напишите комментарий",
+    "commentFailed": "Не удалось добавить комментарий",
+    "updateStatus": "Обновить статус",
+    "markResolved": "Отметить решенной",
+    "resolution": "Решение",
+    "resolutionPlaceholder": "Как решена проблема?",
+    "resolveFailed": "Не удалось решить заявку",
+    "notFound": "Заявка не найдена",
+    "status": {
+      "Open": "Открыто",
+      "Assigned": "Назначено",
+      "InProgress": "В работе",
+      "Resolved": "Решено",
+      "Closed": "Закрыто"
+    },
+    "empty": "Нет назначенных заявок"
+  },
+  "project": {
+    "notFound": "Проект не найден",
+    "plan": "План объекта",
+    "summary": "Сводка",
+    "runs": "Стеклянные линии",
+    "panels": "Панели",
+    "totalArea": "Общая площадь",
+    "largestPanel": "Самая большая панель"
+  },
+  "profile": {
+    "title": "Мой профиль",
+    "language": "Язык",
+    "version": "Версия"
+  },
+  "offline": {
+    "bannerOffline": "Нет сети",
+    "bannerOfflineWithPending": "Нет сети — {{count}} изменение в очереди",
+    "bannerOfflineWithPendingPlural": "Нет сети — {{count}} изменений в очереди",
+    "bannerOnlinePending": "Отправка {{count}} изменения…",
+    "bannerOnlinePendingPlural": "Отправка {{count}} изменений…",
+    "bannerFailed": "{{count}} изменение не отправлено",
+    "bannerFailedPlural": "{{count}} изменений не отправлены",
+    "syncNow": "Синхронизировать"
+  }
+}

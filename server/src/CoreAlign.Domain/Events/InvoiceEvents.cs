@@ -61,7 +61,8 @@ public record PaymentConfirmedEvent(
     PaymentDirection Direction,
     decimal Amount,
     string Currency,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record PaymentAppliedEvent(
     Guid TenantId,

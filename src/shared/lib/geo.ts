@@ -1,0 +1,239 @@
+/**
+ * Browser locale → country detection from the IANA timezone reported by
+ * `Intl.DateTimeFormat().resolvedOptions().timeZone`. No network calls, no
+ * permissions — purely the runtime's own timezone. Country names are localized
+ * via `Intl.DisplayNames`; flags are rendered from the ISO-3166 alpha-2 code by
+ * the `flag-icons` CSS set (works on Windows, unlike emoji flags).
+ */
+
+// IANA timezone → ISO 3166-1 alpha-2 (lowercase, matching flag-icons class names).
+// Covers every country's primary zone plus the major cities of multi-zone
+// countries. Unmapped zones fall back to null (no flag shown).
+const TZ_TO_COUNTRY: Record<string, string> = {
+  // Europe
+  'Europe/Istanbul': 'tr',
+  'Europe/London': 'gb',
+  'Europe/Dublin': 'ie',
+  'Europe/Lisbon': 'pt',
+  'Europe/Madrid': 'es',
+  'Europe/Paris': 'fr',
+  'Europe/Brussels': 'be',
+  'Europe/Amsterdam': 'nl',
+  'Europe/Luxembourg': 'lu',
+  'Europe/Berlin': 'de',
+  'Europe/Zurich': 'ch',
+  'Europe/Vienna': 'at',
+  'Europe/Rome': 'it',
+  'Europe/Malta': 'mt',
+  'Europe/Vatican': 'va',
+  'Europe/Copenhagen': 'dk',
+  'Europe/Oslo': 'no',
+  'Europe/Stockholm': 'se',
+  'Europe/Helsinki': 'fi',
+  'Europe/Tallinn': 'ee',
+  'Europe/Riga': 'lv',
+  'Europe/Vilnius': 'lt',
+  'Europe/Warsaw': 'pl',
+  'Europe/Prague': 'cz',
+  'Europe/Bratislava': 'sk',
+  'Europe/Budapest': 'hu',
+  'Europe/Ljubljana': 'si',
+  'Europe/Zagreb': 'hr',
+  'Europe/Sarajevo': 'ba',
+  'Europe/Belgrade': 'rs',
+  'Europe/Podgorica': 'me',
+  'Europe/Skopje': 'mk',
+  'Europe/Tirane': 'al',
+  'Europe/Athens': 'gr',
+  'Europe/Sofia': 'bg',
+  'Europe/Bucharest': 'ro',
+  'Europe/Chisinau': 'md',
+  'Europe/Kyiv': 'ua',
+  'Europe/Kiev': 'ua',
+  'Europe/Minsk': 'by',
+  'Europe/Moscow': 'ru',
+  'Europe/Kaliningrad': 'ru',
+  'Europe/Samara': 'ru',
+  'Europe/Reykjavik': 'is',
+  'Europe/Andorra': 'ad',
+  'Europe/Monaco': 'mc',
+  'Europe/San_Marino': 'sm',
+  'Atlantic/Canary': 'es',
+  'Atlantic/Reykjavik': 'is',
+
+  // Middle East
+  'Asia/Nicosia': 'cy',
+  'Asia/Famagusta': 'cy',
+  'Asia/Beirut': 'lb',
+  'Asia/Damascus': 'sy',
+  'Asia/Amman': 'jo',
+  'Asia/Jerusalem': 'il',
+  'Asia/Gaza': 'ps',
+  'Asia/Hebron': 'ps',
+  'Asia/Baghdad': 'iq',
+  'Asia/Kuwait': 'kw',
+  'Asia/Riyadh': 'sa',
+  'Asia/Bahrain': 'bh',
+  'Asia/Qatar': 'qa',
+  'Asia/Dubai': 'ae',
+  'Asia/Muscat': 'om',
+  'Asia/Aden': 'ye',
+  'Asia/Tehran': 'ir',
+  'Asia/Baku': 'az',
+  'Asia/Yerevan': 'am',
+  'Asia/Tbilisi': 'ge',
+
+  // Asia
+  'Asia/Karachi': 'pk',
+  'Asia/Kabul': 'af',
+  'Asia/Tashkent': 'uz',
+  'Asia/Ashgabat': 'tm',
+  'Asia/Dushanbe': 'tj',
+  'Asia/Bishkek': 'kg',
+  'Asia/Almaty': 'kz',
+  'Asia/Kolkata': 'in',
+  'Asia/Calcutta': 'in',
+  'Asia/Colombo': 'lk',
+  'Asia/Kathmandu': 'np',
+  'Asia/Thimphu': 'bt',
+  'Asia/Dhaka': 'bd',
+  'Asia/Yangon': 'mm',
+  'Asia/Bangkok': 'th',
+  'Asia/Vientiane': 'la',
+  'Asia/Phnom_Penh': 'kh',
+  'Asia/Ho_Chi_Minh': 'vn',
+  'Asia/Jakarta': 'id',
+  'Asia/Makassar': 'id',
+  'Asia/Jayapura': 'id',
+  'Asia/Kuala_Lumpur': 'my',
+  'Asia/Singapore': 'sg',
+  'Asia/Brunei': 'bn',
+  'Asia/Manila': 'ph',
+  'Asia/Hong_Kong': 'hk',
+  'Asia/Macau': 'mo',
+  'Asia/Taipei': 'tw',
+  'Asia/Shanghai': 'cn',
+  'Asia/Urumqi': 'cn',
+  'Asia/Seoul': 'kr',
+  'Asia/Pyongyang': 'kp',
+  'Asia/Tokyo': 'jp',
+  'Asia/Ulaanbaatar': 'mn',
+
+  // Africa
+  'Africa/Casablanca': 'ma',
+  'Africa/Algiers': 'dz',
+  'Africa/Tunis': 'tn',
+  'Africa/Tripoli': 'ly',
+  'Africa/Cairo': 'eg',
+  'Africa/Khartoum': 'sd',
+  'Africa/Juba': 'ss',
+  'Africa/Addis_Ababa': 'et',
+  'Africa/Nairobi': 'ke',
+  'Africa/Kampala': 'ug',
+  'Africa/Dar_es_Salaam': 'tz',
+  'Africa/Kigali': 'rw',
+  'Africa/Lagos': 'ng',
+  'Africa/Accra': 'gh',
+  'Africa/Abidjan': 'ci',
+  'Africa/Dakar': 'sn',
+  'Africa/Bamako': 'ml',
+  'Africa/Nouakchott': 'mr',
+  'Africa/Johannesburg': 'za',
+  'Africa/Maputo': 'mz',
+  'Africa/Harare': 'zw',
+  'Africa/Lusaka': 'zm',
+  'Africa/Luanda': 'ao',
+  'Africa/Kinshasa': 'cd',
+  'Africa/Douala': 'cm',
+  'Africa/Windhoek': 'na',
+  'Africa/Gaborone': 'bw',
+  'Indian/Mauritius': 'mu',
+
+  // Americas
+  'America/New_York': 'us',
+  'America/Detroit': 'us',
+  'America/Chicago': 'us',
+  'America/Denver': 'us',
+  'America/Phoenix': 'us',
+  'America/Los_Angeles': 'us',
+  'America/Anchorage': 'us',
+  'Pacific/Honolulu': 'us',
+  'America/Toronto': 'ca',
+  'America/Vancouver': 'ca',
+  'America/Edmonton': 'ca',
+  'America/Winnipeg': 'ca',
+  'America/Halifax': 'ca',
+  'America/Mexico_City': 'mx',
+  'America/Tijuana': 'mx',
+  'America/Monterrey': 'mx',
+  'America/Guatemala': 'gt',
+  'America/El_Salvador': 'sv',
+  'America/Tegucigalpa': 'hn',
+  'America/Managua': 'ni',
+  'America/Costa_Rica': 'cr',
+  'America/Panama': 'pa',
+  'America/Havana': 'cu',
+  'America/Santo_Domingo': 'do',
+  'America/Bogota': 'co',
+  'America/Caracas': 've',
+  'America/Lima': 'pe',
+  'America/Guayaquil': 'ec',
+  'America/La_Paz': 'bo',
+  'America/Santiago': 'cl',
+  'America/Asuncion': 'py',
+  'America/Montevideo': 'uy',
+  'America/Argentina/Buenos_Aires': 'ar',
+  'America/Sao_Paulo': 'br',
+  'America/Bahia': 'br',
+  'America/Manaus': 'br',
+  'America/Fortaleza': 'br',
+
+  // Oceania
+  'Australia/Sydney': 'au',
+  'Australia/Melbourne': 'au',
+  'Australia/Brisbane': 'au',
+  'Australia/Perth': 'au',
+  'Australia/Adelaide': 'au',
+  'Pacific/Auckland': 'nz',
+  'Pacific/Fiji': 'fj',
+  'Pacific/Guam': 'gu',
+  'Pacific/Port_Moresby': 'pg',
+};
+
+export interface DetectedLocation {
+  /** IANA timezone, e.g. "Europe/Istanbul". */
+  timezone: string;
+  /** ISO 3166-1 alpha-2, lowercase, e.g. "tr" — or null if unmapped. */
+  countryCode: string | null;
+  /** Localized country name (per the given locale), or null. */
+  countryName: string | null;
+}
+
+export const detectTimezone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+};
+
+export const countryCodeFromTimezone = (timezone: string): string | null =>
+  TZ_TO_COUNTRY[timezone] ?? null;
+
+export const countryName = (code: string, locale: string): string | null => {
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code.toUpperCase()) ?? null;
+  } catch {
+    return null;
+  }
+};
+
+export const detectLocation = (locale: string): DetectedLocation => {
+  const timezone = detectTimezone();
+  const countryCode = countryCodeFromTimezone(timezone);
+  return {
+    timezone,
+    countryCode,
+    countryName: countryCode ? countryName(countryCode, locale) : null,
+  };
+};

@@ -37,6 +37,21 @@ public class IssueStockCommandValidator : AbstractValidator<IssueStockCommand>
     }
 }
 
+public class ApplyStockTransferCommandValidator : AbstractValidator<ApplyStockTransferCommand>
+{
+    public ApplyStockTransferCommandValidator()
+    {
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.FromWarehouseId).NotEmpty();
+        RuleFor(x => x.ToWarehouseId).NotEmpty();
+        RuleFor(x => x.ToWarehouseId)
+            .NotEqual(x => x.FromWarehouseId)
+            .WithMessage("Validation.TransferWarehousesMustDiffer");
+        RuleFor(x => x.Quantity).GreaterThan(0m).WithMessage("Validation.QuantityMustBePositive");
+        RuleFor(x => x.Reference).MaximumLength(128);
+    }
+}
+
 public class CreateLotCommandValidator : AbstractValidator<CreateLotCommand>
 {
     public CreateLotCommandValidator()

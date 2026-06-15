@@ -3,6 +3,7 @@ using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Payments.Commands;
 using CoreAlign.Application.Payments.Queries;
+using CoreAlign.Application.Providers.Payment;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,7 +69,45 @@ public class PaymentsController : ControllerBase
     [HttpPost("{id:guid}/void")]
     public async Task<IActionResult> Void(Guid id, [FromBody] VoidPaymentCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(new VoidPaymentCommand(id, cmd?.Reason), ct)).ToOk();
+
+    [HttpPost("transactions/{transactionId}/refund")]
+    [Authorize(Policy = "Payment.Refund")]
+    public async Task<IActionResult> RefundTransaction(
+        string transactionId,
+        [FromBody] PaymentRefundApiRequest body,
+        [FromServices] IPaymentDispatcher dispatcher,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(transactionId))
+        {
+            return BadRequest(ApiResponse<object>.Failure("transactionId is required.", 400));
+        }
+        if (body is null)
+        {
+            return BadRequest(ApiResponse<object>.Failure("Refund body is required.", 400));
+        }
+        if (body.Amount is decimal amt && amt <= 0m)
+        {
+            return BadRequest(ApiResponse<object>.Failure("Refund amount must be positive.", 400));
+        }
+
+        try
+        {
+            var result = await dispatcher.RefundAsync(transactionId, body.Amount, body.Reason ?? string.Empty, ct);
+            if (!result.Success)
+            {
+                return BadRequest(ApiResponse<PaymentRefundResult>.Failure(result.FailureMessage ?? "Refund declined.", 400));
+            }
+            return Ok(ApiResponse<PaymentRefundResult>.Success(result));
+        }
+        catch (PaymentTransactionNotFoundException)
+        {
+            return NotFound(ApiResponse<object>.Failure($"Payment transaction '{transactionId}' not found.", 404));
+        }
+    }
 }
+
+public sealed record PaymentRefundApiRequest(decimal? Amount, string? Reason);
 
 [ApiController]
 [Authorize]

@@ -1,4 +1,24 @@
+using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Catalog.Linker;
 using CoreAlign.Application.Common.Behaviors;
+using CoreAlign.Application.Common.Outbox;
+using CoreAlign.Application.CustomerPortal.Payments;
+using CoreAlign.Application.GlassEnclosure.BomFreshness;
+using CoreAlign.Application.GlassEnclosure.Presets;
+using CoreAlign.Application.GlassEnclosure.Services;
+using CoreAlign.Application.Identity.PersonaPreference;
+using CoreAlign.Application.Providers.EFatura.Outbox;
+using CoreAlign.Application.Providers.Payment.Outbox;
+using CoreAlign.Application.Stock.Availability;
+using CoreAlign.Application.Stock.Substitute;
+using CoreAlign.Application.Installation;
+using CoreAlign.Application.Installation.Outbox;
+using CoreAlign.Application.Installation.Subscribers;
+using CoreAlign.Application.Installation.Validation;
+using CoreAlign.Application.Warranty;
+using CoreAlign.Application.Warranty.Outbox;
+using CoreAlign.Application.Warranty.Subscribers;
+using CoreAlign.Domain.Events;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,13 +33,107 @@ public static class ApplicationServiceRegistration
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
-        // Behaviors execute in registration order — outermost first. Logging wraps
-        // everything so every request gets a structured timing log even if validation
-        // or the handler itself throws. Scoped instead of Transient: one instance per
-        // request is reused across nested mediator sends, eliminating per-handler alloc.
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ConcurrencyTokenBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(SaveChangesBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OutboxDrainBehavior<,>));
+
+        services.AddScoped<IPersonaPreferenceService, PersonaPreferenceService>();
+        services.AddScoped<IStockAvailabilityService, StockAvailabilityService>();
+        services.AddScoped<IProductSubstituteResolver, ProductSubstituteResolver>();
+        services.AddScoped<CoreAlign.Application.Inventory.Services.IProductionExecutionService,
+            CoreAlign.Application.Inventory.Services.ProductionExecutionService>();
+        services.AddScoped<CoreAlign.Application.Inventory.Services.IStockOpeningBalanceBridge,
+            CoreAlign.Application.Inventory.Services.StockOpeningBalanceBridge>();
+
+        services.AddScoped<IProjectTemplateService, ProjectTemplateService>();
+        services.AddScoped<CoreAlign.Application.GlassEnclosure.Marketplace.Services.IProjectMarketplaceService,
+            CoreAlign.Application.GlassEnclosure.Marketplace.Services.ProjectMarketplaceService>();
+        services.AddScoped<IBOMComposer, BOMComposer>();
+        services.AddScoped<IClimateAdvisor, ClimateAdvisor>();
+        services.AddScoped<IFieldSurveyApplier, FieldSurveyApplier>();
+        services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+        services.AddScoped<IProductionScheduler, ProductionScheduler>();
+        services.AddScoped<IProjectRecomputeService, ProjectRecomputeService>();
+        services.AddScoped<IShareTokenService, ShareTokenService>();
+        services.AddScoped<IThermalAcousticCalculator, ThermalAcousticCalculator>();
+        services.AddScoped<IWindLoadCalculator, WindLoadCalculator>();
+        services.AddSingleton<IEnclosurePreset, BalconyPreset>();
+        services.AddSingleton<IEnclosurePreset, GreenhousePreset>();
+        services.AddSingleton<IEnclosurePreset, ShowerCabinPreset>();
+        services.AddSingleton<IEnclosurePreset, BalustradePreset>();
+        services.AddSingleton<IEnclosurePreset, FramelessDoorPreset>();
+        services.AddSingleton<IEnclosurePreset, CurtainWallPreset>();
+        services.AddSingleton<IEnclosurePreset, SpiderFacadePreset>();
+        services.AddSingleton<IEnclosurePreset, FreeFormPreset>();
+        services.AddSingleton<ITemplateRegistry, TemplateRegistry>();
+        services.AddSingleton<ISceneCompressor, BrotliSceneCompressor>();
+        services.AddSingleton<IExpressionEvaluator, DynamicExpressoEvaluator>();
+        services.AddScoped<ISceneValidator, SceneValidator>();
+        services.AddScoped<ICuttingOptimizer1D, FirstFitDecreasingOptimizer1D>();
+        services.AddScoped<ICuttingOptimizer2D, MaximalRectanglesOptimizer2D>();
+
+        services.AddScoped<IGLPostingService, GLPostingService>();
+        services.AddScoped<IInvoicePaymentSessionWebhookService, InvoicePaymentSessionWebhookService>();
+
+        services.AddSingleton<ISkuTemplateCache, InMemorySkuTemplateCache>();
+        services.AddScoped<ISkuStrategy, DefaultSkuStrategy>();
+        services.AddScoped<ICatalogProductLinker, CatalogProductLinker>();
+        services.AddScoped<IBomStaleSignal, BomStaleSignal>();
+
+        // F2 audit fix: outbox handlers for the 8 provider message types emitted
+        // by the Payment + EFatura dispatchers/reconciliation jobs. Replay
+        // handlers (PaymentWebhookEventHandler, EFaturaWebhookEventHandler,
+        // BomRecomputedOutboxHandler) stay in Infrastructure where they were
+        // wired against the inbox repository.
+        services.AddScoped<IOutboxMessageHandler, PaymentInitiatedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, PaymentSucceededOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, PaymentFailedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, PaymentRefundedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, Payment3DSecureRequiredOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, PaymentWebhookReceivedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, EFaturaDispatchAttemptedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, EFaturaStatusChangedOutboxHandler>();
+
+        // F3.3 TCMB FX sync — broadcasts FxRatesUpdatedEvent so downstream consumers
+        // (dashboard invalidation, invoice cost re-derivation, etc.) can react.
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Fx.Handlers.FxRatesUpdatedOutboxHandler>();
+
+        // F3.1 Warranty + Maintenance module: services and outbox handlers
+        // for the message types emitted by the warranty/service-ticket domain.
+        // INotificationHandler<T> implementations are auto-scanned by
+        // AddMediatR(RegisterServicesFromAssembly) — explicit registrations
+        // here would cause duplicate dispatch (each event fires twice).
+        services.AddScoped<IWarrantyContractService, WarrantyContractService>();
+        services.AddScoped<IServiceTicketService, ServiceTicketService>();
+        services.AddScoped<IMaintenanceScheduleService, MaintenanceScheduleService>();
+        services.AddScoped<IOutboxMessageHandler, WarrantyActivatedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, WarrantyExpiredOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, WarrantyExpiringNotificationOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, WarrantyExtendedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, ServiceTicketOpenedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, ServiceTicketResolvedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, ServiceTicketAssignedOutboxHandler>();
+
+        services.AddScoped<IInstallationAcceptanceService, InstallationAcceptanceService>();
+        services.AddScoped<IFileOwnershipValidator, FileOwnershipValidator>();
+        services.AddScoped<IOutboxMessageHandler, InstallationAcceptedOutboxHandler>();
+
+        // F4.1 Notification subsystem (multi-channel email/sms/push/whatsapp/in-app)
+        services.AddScoped<CoreAlign.Application.Notifications.INotificationDispatcher,
+            CoreAlign.Application.Notifications.NotificationDispatcher>();
+        services.AddScoped<CoreAlign.Application.Notifications.Templates.INotificationTemplateRenderer,
+            CoreAlign.Application.Notifications.Templates.ScribanNotificationTemplateRenderer>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Notifications.Outbox.NotificationDispatchOutboxHandler>();
+        services.AddScoped<CoreAlign.Application.Notifications.Webhooks.INotificationStatusUpdater,
+            CoreAlign.Application.Notifications.Webhooks.NotificationStatusUpdater>();
+
+        // F4.5 Whitelabel customization (tenant theme + assets + public theme by subdomain)
+        services.AddScoped<CoreAlign.Application.Whitelabel.ITenantThemeService,
+            CoreAlign.Application.Whitelabel.TenantThemeService>();
 
         return services;
     }

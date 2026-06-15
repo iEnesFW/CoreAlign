@@ -506,6 +506,10 @@ export const CustomersPage = () => {
           isLoading={customersQuery.isPending}
           selectedId={selectedId}
           onSelect={(c) => setSelectedId((curr) => (curr === c.id ? null : c.id))}
+          onOpenDetails={(c) => {
+            setSelectedId(c.id);
+            setPanelOpen(true);
+          }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onCreate={handleCreate}

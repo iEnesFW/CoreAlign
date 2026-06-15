@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "CoreAlign",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "offline": "You are offline",
+    "online": "Back online"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "loginError": "Invalid credentials",
+    "logout": "Sign out"
+  },
+  "tabs": {
+    "home": "Home",
+    "installations": "Work orders",
+    "tickets": "Service tickets",
+    "profile": "Profile"
+  },
+  "home": {
+    "greeting": "Hi, {{name}}",
+    "pendingInstallations": "Pending acceptances",
+    "openTickets": "Open tickets"
+  },
+  "installation": {
+    "listTitle": "Pending installation acceptances",
+    "detailTitle": "Installation acceptance",
+    "capturePhoto": "Take photo",
+    "pickPhoto": "From gallery",
+    "captureSignature": "Capture signature",
+    "signerName": "Customer name",
+    "signerRole": "Customer role",
+    "signerNameRequired": "Customer name is required",
+    "submit": "Submit acceptance",
+    "submitted": "Acceptance submitted",
+    "submittedOffline": "Saved offline. Will sync when online.",
+    "submitFailed": "Submission failed",
+    "empty": "No pending installations",
+    "notFound": "Installation not found",
+    "photos": "Photos",
+    "noPhotos": "No photos captured yet",
+    "photoUploadFailed": "Photo upload failed",
+    "punchList": "Punch list",
+    "punchPlaceholder": "Describe defect",
+    "addPunch": "Add",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes"
+  },
+  "ticket": {
+    "listTitle": "My service tickets",
+    "detailTitle": "Service ticket",
+    "newTitle": "New service ticket",
+    "new": "New",
+    "title": "Title",
+    "titlePlaceholder": "Summarize the issue",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe the issue in detail",
+    "priority": "Priority",
+    "submit": "Create ticket",
+    "fillRequired": "Please fill in title and description",
+    "queuedOffline": "Queued offline; will sync when online",
+    "createFailed": "Failed to create ticket",
+    "addComment": "Add comment",
+    "comments": "Comments",
+    "noComments": "No comments yet",
+    "commentPlaceholder": "Write a comment",
+    "commentFailed": "Failed to add comment",
+    "updateStatus": "Update status",
+    "markResolved": "Mark resolved",
+    "resolution": "Resolution",
+    "resolutionPlaceholder": "How was the issue resolved?",
+    "resolveFailed": "Failed to resolve ticket",
+    "notFound": "Ticket not found",
+    "status": {
+      "Open": "Open",
+      "Assigned": "Assigned",
+      "InProgress": "In progress",
+      "Resolved": "Resolved",
+      "Closed": "Closed"
+    },
+    "empty": "No tickets assigned"
+  },
+  "project": {
+    "notFound": "Project not found",
+    "plan": "Site plan",
+    "summary": "Summary",
+    "runs": "Glass runs",
+    "panels": "Panels",
+    "totalArea": "Total area",
+    "largestPanel": "Largest panel"
+  },
+  "profile": {
+    "title": "My profile",
+    "language": "Language",
+    "version": "Version"
+  },
+  "offline": {
+    "bannerOffline": "Offline",
+    "bannerOfflineWithPending": "Offline — {{count}} change waiting",
+    "bannerOfflineWithPendingPlural": "Offline — {{count}} changes waiting",
+    "bannerOnlinePending": "Syncing {{count}} change…",
+    "bannerOnlinePendingPlural": "Syncing {{count}} changes…",
+    "bannerFailed": "{{count}} change failed",
+    "bannerFailedPlural": "{{count}} changes failed",
+    "syncNow": "Sync now"
+  }
+}

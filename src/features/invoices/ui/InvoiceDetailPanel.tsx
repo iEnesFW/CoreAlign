@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   BookOpen,
   CheckCircle2,
+  Clock,
   CreditCard,
   FileText,
   ListOrdered,
@@ -13,6 +14,7 @@ import { useInvoiceQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { InvoiceLedgerTab } from '@/features/invoices/ui/InvoiceLedgerTab';
 import { InvoiceOverviewTab } from '@/features/invoices/ui/InvoiceOverviewTab';
 import { PaymentsAppliedTab } from '@/features/invoices/ui/PaymentsAppliedTab';
+import { AuditTimeline } from '@/widgets/AuditTimeline';
 import type { Invoice } from '@/features/invoices/model/invoice.types';
 
 interface Props {
@@ -23,7 +25,7 @@ interface Props {
   onRecordPayment?: (invoiceId: string) => void;
 }
 
-type Tab = 'overview' | 'lines' | 'payments' | 'ledger' | 'activity' | 'notes';
+type Tab = 'overview' | 'lines' | 'payments' | 'ledger' | 'activity' | 'audit' | 'notes';
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
@@ -84,6 +86,11 @@ export const InvoiceDetailPanel = ({
       label: t('invoices.detail.tabs.activity'),
       icon: <CheckCircle2 size={12} />,
     },
+    {
+      id: 'audit',
+      label: t('Common.AuditTab.Title', { defaultValue: 'Audit' }),
+      icon: <Clock size={12} />,
+    },
     { id: 'notes', label: t('invoices.detail.tabs.notes'), icon: <StickyNote size={12} /> },
   ];
 
@@ -128,6 +135,7 @@ export const InvoiceDetailPanel = ({
           <InvoiceLedgerTab invoice={invoice} locale={i18n.language} />
         )}
         {tab === 'activity' && invoice && <ActivityTab invoice={invoice} locale={i18n.language} />}
+        {tab === 'audit' && invoice && <AuditTimeline entityType="Invoice" entityId={invoice.id} />}
         {tab === 'notes' && (
           <div className="rounded border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
             {invoice?.notes || (

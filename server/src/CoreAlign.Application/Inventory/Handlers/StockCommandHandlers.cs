@@ -97,6 +97,31 @@ public class IssueStockHandler : IRequestHandler<IssueStockCommand, StockMovemen
     }
 }
 
+public class ApplyStockTransferHandler : IRequestHandler<ApplyStockTransferCommand, StockTransferResultDto>
+{
+    private readonly IAllocationService _allocation;
+    private readonly IUnitOfWork _uow;
+
+    public ApplyStockTransferHandler(IAllocationService allocation, IUnitOfWork uow)
+    {
+        _allocation = allocation;
+        _uow = uow;
+    }
+
+    public async Task<StockTransferResultDto> Handle(ApplyStockTransferCommand c, CancellationToken ct)
+    {
+        var result = await _allocation.ApplyTransferAsync(
+            c.ProductId,
+            c.FromWarehouseId,
+            c.ToWarehouseId,
+            c.Quantity,
+            c.Reference,
+            ct);
+        await _uow.SaveChangesAsync(ct);
+        return InventoryMapper.ToDto(result);
+    }
+}
+
 public class CreateLotHandler : IRequestHandler<CreateLotCommand, LotDto>
 {
     private readonly ILotRepository _lots;

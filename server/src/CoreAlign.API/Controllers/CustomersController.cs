@@ -2,7 +2,12 @@ using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Customers.Commands;
+using CoreAlign.Application.Customers.Merge;
 using CoreAlign.Application.Customers.Queries;
+using CoreAlign.Application.Customers.Statements;
+using CoreAlign.Application.Customers.Tags;
+using CoreAlign.Application.Reports.Common;
+using CoreAlign.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +21,20 @@ namespace CoreAlign.API.Controllers;
 public class CustomersController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IReportFileFactory _reportFileFactory;
+    private readonly ITenantRepository _tenants;
+    private readonly ITenantContext _tenantContext;
 
-    public CustomersController(IMediator mediator)
+    public CustomersController(
+        IMediator mediator,
+        IReportFileFactory reportFileFactory,
+        ITenantRepository tenants,
+        ITenantContext tenantContext)
     {
         _mediator = mediator;
+        _reportFileFactory = reportFileFactory;
+        _tenants = tenants;
+        _tenantContext = tenantContext;
     }
 
     [HttpGet]
@@ -149,6 +164,62 @@ public class CustomersController : ControllerBase
     public async Task<IActionResult> DeleteCustomerContactAsync(Guid id, Guid contactId, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new DeleteCustomerContactCommand(id, contactId), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpGet("{id:guid}/statement")]
+    public async Task<IActionResult> GetCustomerStatementAsync(
+        Guid id,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromQuery] string format = "pdf",
+        CancellationToken cancellationToken = default)
+    {
+        var statement = await _mediator.Send(new GetCustomerStatementQuery(id, from, to), cancellationToken);
+        if (string.Equals(format, "json", StringComparison.OrdinalIgnoreCase))
+        {
+            return statement.ToOk();
+        }
+
+        var tenantId = _tenantContext.RequireTenantId();
+        var tenant = await _tenants.GetByIdAsync(tenantId, cancellationToken);
+        var document = CustomerStatementReportBuilder.Build(statement, tenant);
+        var fmt = string.Equals(format, "xlsx", StringComparison.OrdinalIgnoreCase)
+            ? ReportFormat.Xlsx
+            : ReportFormat.Pdf;
+        var reportKey = $"customer-statement-{(statement.CustomerCode ?? id.ToString("N"))}";
+        var file = await _reportFileFactory.RenderAsync(document, fmt, reportKey, cancellationToken);
+        return File(file.Content, file.ContentType, file.FileName);
+    }
+
+    [HttpGet("{id:guid}/tags")]
+    public async Task<IActionResult> GetCustomerTagsAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetCustomerTagsQuery(id), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("{id:guid}/tags/{tagId:guid}")]
+    public async Task<IActionResult> AttachCustomerTagAsync(Guid id, Guid tagId, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new AttachCustomerTagCommand(id, tagId), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpDelete("{id:guid}/tags/{tagId:guid}")]
+    public async Task<IActionResult> DetachCustomerTagAsync(Guid id, Guid tagId, CancellationToken cancellationToken)
+    {
+        await _mediator.Send(new DetachCustomerTagCommand(id, tagId), cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("merge")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> MergeCustomersAsync(
+        [FromBody] MergeCustomersCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
         return result.ToOk();
     }
 

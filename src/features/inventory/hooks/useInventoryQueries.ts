@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { newOperationId } from '@/shared/lib/operationId';
 import {
   inventoryApi,
   type StockItemsParams,
@@ -8,8 +9,10 @@ import type {
   AdjustStockInput,
   CreateLotInput,
   IssueStockInput,
+  ProduceInput,
   ReceiveStockInput,
   StockReasonCategory,
+  TransferStockInput,
   UpdateLotInput,
 } from '../model/inventory.types';
 
@@ -111,6 +114,23 @@ export const useUpdateLot = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateLotInput) => inventoryApi.updateLot(input),
+    onSuccess: () => invalidateInventory(qc),
+  });
+};
+
+export const useProduce = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: ProduceInput) => inventoryApi.produce(input),
+    onSuccess: () => invalidateInventory(qc),
+  });
+};
+
+export const useTransferStock = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Omit<TransferStockInput, 'operationId'>) =>
+      inventoryApi.transfer({ ...input, operationId: newOperationId() }),
     onSuccess: () => invalidateInventory(qc),
   });
 };

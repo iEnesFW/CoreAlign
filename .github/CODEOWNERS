@@ -1,0 +1,62 @@
+# CoreAlign CODEOWNERS
+#
+# Order matters: the LAST matching pattern wins. Keep more specific patterns below
+# the general ones. Pattern syntax matches .gitignore. Use GitHub team handles
+# (org/team-slug) or individual @logins. Teams below are placeholders and must be
+# created in the corealign GitHub org before branch protection is enforced.
+#
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Fallback owner: anything not matched below needs a maintainer review.
+*                                       @corealign/maintainers
+
+# --- Backend (.NET) ---
+/server/                                @corealign/backend-leads
+/server/src/CoreAlign.Domain/           @corealign/backend-leads @corealign/domain-architects
+/server/src/CoreAlign.Application/      @corealign/backend-leads
+/server/src/CoreAlign.Infrastructure/   @corealign/backend-leads @corealign/platform-leads
+/server/src/CoreAlign.API/              @corealign/backend-leads
+/server/tests/                          @corealign/backend-leads @corealign/qa-leads
+
+# --- Frontend admin SPA (root) ---
+/src/                                   @corealign/frontend-leads
+/public/                                @corealign/frontend-leads
+/vite.config.ts                         @corealign/frontend-leads @corealign/platform-leads
+/eslint.config.js                       @corealign/frontend-leads
+/tsconfig*.json                         @corealign/frontend-leads
+
+# --- Customer portal ---
+/apps/customer-portal/                  @corealign/portal-leads
+
+# --- B2B portal ---
+/apps/b2b/                              @corealign/portal-leads @corealign/b2b-leads
+
+# --- i18n ---
+/src/app/i18n/locales/                  @corealign/frontend-leads @corealign/localisation
+/apps/customer-portal/src/app/locales/  @corealign/portal-leads @corealign/localisation
+/apps/b2b/src/app/locales/              @corealign/portal-leads @corealign/localisation
+
+# --- Docs ---
+/docs/                                  @corealign/tech-writers
+/docs/adr/                              @corealign/tech-writers @corealign/domain-architects
+/docs/runbooks/                         @corealign/platform-leads @corealign/tech-writers
+/docs/legal/                            @corealign/legal @corealign/tech-writers
+/CHANGELOG.md                           @corealign/maintainers @corealign/tech-writers
+/README.md                              @corealign/tech-writers
+
+# --- CI / DX ---
+/.github/                               @corealign/platform-leads
+/.github/workflows/                     @corealign/platform-leads @corealign/maintainers
+/.github/CODEOWNERS                     @corealign/maintainers
+/scripts/                               @corealign/platform-leads
+/Dockerfile                             @corealign/platform-leads
+/docker-compose*.yml                    @corealign/platform-leads
+/Caddyfile                              @corealign/platform-leads
+/nginx.conf                             @corealign/platform-leads
+
+# --- Solution-level project files: maintainers only ---
+/CoreAlign.sln                          @corealign/maintainers
+/Directory.Build.props                  @corealign/maintainers
+**/*.csproj                             @corealign/backend-leads @corealign/maintainers
+/package.json                           @corealign/frontend-leads @corealign/maintainers
+/package-lock.json                      @corealign/frontend-leads @corealign/maintainers

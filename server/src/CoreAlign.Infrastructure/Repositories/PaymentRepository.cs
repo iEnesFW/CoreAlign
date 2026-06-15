@@ -181,4 +181,36 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
             .FirstOrDefaultAsync(cancellationToken);
         return last?.RunningBalanceAfter ?? 0m;
     }
+
+    public async Task<decimal> GetBalanceAsOfAsync(Guid customerId, DateTime? cutoffUtc, CancellationToken cancellationToken = default)
+    {
+        var query = _context.CustomerLedgerEntries
+            .AsNoTracking()
+            .Where(e => e.CustomerId == customerId);
+        if (cutoffUtc.HasValue)
+        {
+            var cutoff = DateTime.SpecifyKind(cutoffUtc.Value, DateTimeKind.Utc);
+            query = query.Where(e => e.OccurredAtUtc <= cutoff);
+        }
+
+        var row = await query
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null) return 0m;
+        return Math.Round(row.Debit - row.Credit, 4);
+    }
+
+    public async Task<int> CountByCustomerAsync(Guid customerId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken = default)
+    {
+        var query = _context.CustomerLedgerEntries.AsNoTracking().Where(e => e.CustomerId == customerId);
+        if (fromUtc.HasValue) query = query.Where(e => e.OccurredAtUtc >= fromUtc.Value);
+        if (toUtc.HasValue) query = query.Where(e => e.OccurredAtUtc <= toUtc.Value);
+        return await query.CountAsync(cancellationToken);
+    }
 }

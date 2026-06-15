@@ -442,6 +442,10 @@ export const OrdersPage = () => {
             setSelectedId((curr) => (curr === o.id ? null : o.id));
             setPanelOpen(false);
           }}
+          onOpenDetails={(o) => {
+            setSelectedId(o.id);
+            setPanelOpen(true);
+          }}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onGenerateInvoice={handleGenerateInvoice}

@@ -1,6 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
 import { routePreloaders } from '@/app/router/routePrefetch';
+import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
 import {
   LayoutDashboard,
   Users,
@@ -17,6 +19,14 @@ import {
   Activity,
   BarChart3,
   Settings,
+  Plug,
+  Factory,
+  ShieldCheck,
+  Wrench,
+  FolderKanban,
+  KeyRound,
+  LayoutGrid,
+  ClipboardList,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,17 +38,19 @@ interface SidebarProps {
 
 type NavItem = {
   name?: string;
+  labelKey?: string;
   href?: string;
   icon?: React.ComponentType<{ size?: number; className?: string }>;
   children?: { name: string; href: string }[];
   section?: string;
+  tourAnchor?: string;
 };
 
 // Only routes that are actually wired in App.tsx appear here. New modules are
 // added when their routes ship; never advertise a link before the page exists
 // — clicking a dead link erodes user trust and bypasses the SPA's protected
 // boundary.
-const navigation: NavItem[] = [
+const baseNavigation: NavItem[] = [
   { section: 'OVERVIEW' },
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 
@@ -47,12 +59,50 @@ const navigation: NavItem[] = [
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
   { name: 'Invoices', href: '/dashboard/invoices', icon: FileText },
 
+  { section: 'PROJECTS' },
+  {
+    name: 'Projects',
+    href: '/dashboard/glass-enclosure/projects',
+    icon: FolderKanban,
+    tourAnchor: 'sidebar-projects',
+  },
+
   { section: 'PURCHASING' },
   { name: 'Vendors', href: '/dashboard/vendors', icon: Box },
 
   { section: 'INVENTORY' },
   { name: 'Products', href: '/dashboard/products', icon: Package },
   { name: 'Stock', href: '/dashboard/inventory', icon: Boxes },
+  {
+    name: 'Stock Counts',
+    labelKey: 'Inventory.StockCounts.navLabel',
+    href: '/dashboard/inventory/stock-counts',
+    icon: ClipboardList,
+    tourAnchor: 'sidebar-stock-counts',
+  },
+
+  { section: 'PRODUCTION' },
+  { name: 'MRP', href: '/dashboard/mrp', icon: Factory, tourAnchor: 'sidebar-mrp' },
+  {
+    name: 'MRP Workbench',
+    href: '/dashboard/mrp/workbench',
+    icon: LayoutGrid,
+    tourAnchor: 'sidebar-mrp-workbench',
+  },
+
+  { section: 'AFTER SALES' },
+  {
+    name: 'Warranty',
+    href: '/dashboard/warranty/contracts',
+    icon: ShieldCheck,
+    tourAnchor: 'sidebar-warranty',
+  },
+  {
+    name: 'Installation',
+    href: '/dashboard/installation/acceptances',
+    icon: Wrench,
+    tourAnchor: 'sidebar-installation',
+  },
 
   { section: 'ACCOUNTING' },
   {
@@ -76,13 +126,25 @@ const navigation: NavItem[] = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
+const adminNavigation: NavItem[] = [
+  { section: 'ADMINISTRATION' },
+  { name: 'Providers', href: '/dashboard/admin/providers', icon: Plug },
+  { name: 'SSO Settings', href: '/dashboard/admin/providers/sso', icon: KeyRound },
+];
+
 const SidebarComponent: React.FC<SidebarProps> = ({
   isOpen,
   setIsOpen,
   isCollapsed,
   setIsCollapsed,
 }) => {
+  const { t } = useTranslation();
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Customers', 'Orders']);
+  const isAdmin = useIsTenantAdmin();
+  const navigation = useMemo<NavItem[]>(
+    () => (isAdmin ? [...baseNavigation, ...adminNavigation] : baseNavigation),
+    [isAdmin],
+  );
 
   const prefetch = useCallback((href: string) => {
     const loader = routePreloaders[href];
@@ -165,6 +227,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
             const Icon = item.icon!;
             const hasChildren = item.children && item.children.length > 0;
             const isExpanded = expandedMenus.includes(item.name!);
+            const label = item.labelKey ? t(item.labelKey, { defaultValue: item.name }) : item.name;
 
             if (hasChildren) {
               return (
@@ -231,6 +294,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
                 to={item.href!}
                 onMouseEnter={() => prefetch(item.href!)}
                 onFocus={() => prefetch(item.href!)}
+                data-tour={item.tourAnchor}
                 className={({ isActive }) =>
                   `flex items-center gap-2 px-2 py-1.5 rounded-[5px] transition-all duration-200 group ${
                     isActive
@@ -248,7 +312,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
                     <span
                       className={`text-xs transition-opacity duration-300 whitespace-nowrap ${isCollapsed ? 'lg:opacity-0 lg:w-0 lg:overflow-hidden' : 'opacity-100'}`}
                     >
-                      {item.name}
+                      {label}
                     </span>
                   </>
                 )}

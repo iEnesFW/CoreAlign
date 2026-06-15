@@ -57,7 +57,8 @@ public record UpdateCustomerCommand(
     string? LanguageCode,
     Guid? ParentCustomerId,
     string? Notes,
-    CustomerStatus Status
+    CustomerStatus Status,
+    IReadOnlyCollection<Guid>? TagIds = null
 ) : IRequest<CustomerDto>, ITransactionalRequest;
 
 public record DeleteCustomerCommand(

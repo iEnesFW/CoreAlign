@@ -1,4 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import i18n from '@/app/i18n/config';
+import { resolveLocale } from '@/app/i18n/supportedLocales';
 import { authApi } from '../api/authApi';
 import { useAuthStore } from '../model/authStore';
 import type {
@@ -19,6 +21,13 @@ export const useLogin = () => {
     onSuccess: (response) => {
       if (response.isSuccess && response.data) {
         setAuth(response.data.accessToken, response.data.user);
+        const preferred = response.data.user.preferredLocale;
+        if (preferred) {
+          const resolved = resolveLocale(preferred);
+          if (resolved !== i18n.language) {
+            void i18n.changeLanguage(resolved);
+          }
+        }
       }
     },
   });

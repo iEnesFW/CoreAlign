@@ -1,0 +1,4 @@
+{
+  "debug.openDebug": "openOnDebugBreak",
+  "debug.internalConsoleOptions": "openOnSessionStart"
+}

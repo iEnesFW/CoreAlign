@@ -43,6 +43,8 @@ public record SearchJournalEntriesQuery(
 
 // ---------- Mizan / Trial Balance ----------
 
+public record ListGLPostingMappingsQuery() : IRequest<IReadOnlyList<GLPostingMappingDto>>;
+
 public record GetTrialBalanceQuery(
     DateTime? FromDate = null,
     DateTime? ToDate = null) : IRequest<TrialBalanceReportDto>;

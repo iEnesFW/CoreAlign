@@ -38,6 +38,8 @@ public class ProductDto
     public decimal MaxStock { get; set; }
     public decimal ReorderPoint { get; set; }
     public decimal SafetyStock { get; set; }
+    public decimal? MinOrderQuantity { get; set; }
+    public ProcurementType ProcurementType { get; set; }
     public int LeadTimeDays { get; set; }
     public decimal? WeightKg { get; set; }
     public decimal? WidthCm { get; set; }

@@ -11,11 +11,19 @@ namespace CoreAlign.Application.Customers.Handlers;
 public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerCommand, CustomerDto>
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerTagLinkRepository _customerTagLinkRepository;
+    private readonly ITagRepository _tagRepository;
     private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateCustomerCommandHandler(ICustomerRepository customerRepository, IUnitOfWork unitOfWork)
+    public UpdateCustomerCommandHandler(
+        ICustomerRepository customerRepository,
+        ICustomerTagLinkRepository customerTagLinkRepository,
+        ITagRepository tagRepository,
+        IUnitOfWork unitOfWork)
     {
         _customerRepository = customerRepository;
+        _customerTagLinkRepository = customerTagLinkRepository;
+        _tagRepository = tagRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -23,6 +31,11 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
     {
         var customer = await _customerRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new CustomerNotFoundException();
+
+        if (customer.IsAnonymized)
+        {
+            throw new CustomerIsAnonymizedException();
+        }
 
         customer.Update(
             type: request.Type,
@@ -63,6 +76,20 @@ public class UpdateCustomerCommandHandler : IRequestHandler<UpdateCustomerComman
         }
 
         _customerRepository.Update(customer);
+
+        if (request.TagIds is not null)
+        {
+            if (request.TagIds.Count > 0)
+            {
+                var resolved = await _tagRepository.GetByIdsAsync(request.TagIds, cancellationToken);
+                if (resolved.Count != request.TagIds.Count)
+                {
+                    throw new CustomerNotFoundException();
+                }
+            }
+            await _customerTagLinkRepository.SyncAsync(customer.Id, request.TagIds, cancellationToken);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return CustomerMapper.ToDto(customer);

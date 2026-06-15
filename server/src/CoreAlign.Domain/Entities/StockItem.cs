@@ -3,7 +3,7 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class StockItem : TenantEntity
+public class StockItem : TenantEntity, IHasConcurrencyToken
 {
     public Guid ProductId { get; private set; }
     public Guid WarehouseId { get; private set; }
@@ -13,6 +13,9 @@ public class StockItem : TenantEntity
     public decimal Reserved { get; private set; }
     public decimal AvgCost { get; private set; }
     public DateTime? LastMovementAtUtc { get; private set; }
+
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
 
     public Product Product { get; set; } = null!;
     public Warehouse Warehouse { get; set; } = null!;

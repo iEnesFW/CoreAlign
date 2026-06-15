@@ -29,6 +29,10 @@ public class JournalEntry : TenantEntity
     /// <summary>For an original entry that has been reversed: the reversal entry.</summary>
     public Guid? ReversedById { get; private set; }
 
+    public JournalSourceType? SourceType { get; private set; }
+    public Guid? SourceDocumentId { get; private set; }
+    public string? SourceDocumentNumber { get; private set; }
+
     private readonly List<JournalLine> _lines = new();
     public IReadOnlyCollection<JournalLine> Lines => _lines;
 
@@ -166,6 +170,13 @@ public class JournalEntry : TenantEntity
         // Reversal entries are themselves Draft initially; the application layer
         // posts them right after creation.
         ReversalOfId = originalEntryId;
+    }
+
+    public void AssignSource(JournalSourceType sourceType, Guid sourceDocumentId, string? sourceDocumentNumber)
+    {
+        SourceType = sourceType;
+        SourceDocumentId = sourceDocumentId == Guid.Empty ? null : sourceDocumentId;
+        SourceDocumentNumber = string.IsNullOrWhiteSpace(sourceDocumentNumber) ? null : sourceDocumentNumber.Trim();
     }
 
     private void RecalculateTotals()

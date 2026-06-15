@@ -70,6 +70,8 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             launchDate: request.LaunchDate,
             endOfLifeDate: request.EndOfLifeDate);
 
+        product.SetProcurementType(request.ProcurementType);
+
         _productRepository.Update(product);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 

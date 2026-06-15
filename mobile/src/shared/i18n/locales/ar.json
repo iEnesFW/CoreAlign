@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "CoreAlign",
+    "loading": "جارٍ التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "retry": "إعادة المحاولة",
+    "offline": "أنت غير متصل",
+    "online": "عاد الاتصال"
+  },
+  "auth": {
+    "loginTitle": "تسجيل الدخول",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "loginButton": "تسجيل الدخول",
+    "loginError": "بيانات الاعتماد غير صالحة",
+    "logout": "تسجيل الخروج"
+  },
+  "tabs": {
+    "home": "الرئيسية",
+    "installations": "أوامر العمل",
+    "tickets": "تذاكر الخدمة",
+    "profile": "الملف الشخصي"
+  },
+  "home": {
+    "greeting": "مرحبًا، {{name}}",
+    "pendingInstallations": "قبولات قيد الانتظار",
+    "openTickets": "تذاكر مفتوحة"
+  },
+  "installation": {
+    "listTitle": "قبولات التركيب قيد الانتظار",
+    "detailTitle": "قبول التركيب",
+    "capturePhoto": "التقاط صورة",
+    "pickPhoto": "من المعرض",
+    "captureSignature": "التقاط التوقيع",
+    "signerName": "اسم العميل",
+    "signerRole": "صفة العميل",
+    "signerNameRequired": "اسم العميل مطلوب",
+    "submit": "إرسال القبول",
+    "submitted": "تم إرسال القبول",
+    "submittedOffline": "تم الحفظ دون اتصال. ستتم المزامنة عند الاتصال.",
+    "submitFailed": "فشل الإرسال",
+    "empty": "لا توجد تركيبات قيد الانتظار",
+    "notFound": "التركيب غير موجود",
+    "photos": "الصور",
+    "noPhotos": "لم يتم التقاط صور بعد",
+    "photoUploadFailed": "فشل رفع الصورة",
+    "punchList": "قائمة الملاحظات",
+    "punchPlaceholder": "صف العيب",
+    "addPunch": "إضافة",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "ملاحظات إضافية"
+  },
+  "ticket": {
+    "listTitle": "تذاكر الخدمة الخاصة بي",
+    "detailTitle": "تذكرة الخدمة",
+    "newTitle": "تذكرة خدمة جديدة",
+    "new": "جديدة",
+    "title": "العنوان",
+    "titlePlaceholder": "لخص المشكلة",
+    "description": "الوصف",
+    "descriptionPlaceholder": "اشرح المشكلة بالتفصيل",
+    "priority": "الأولوية",
+    "submit": "إنشاء التذكرة",
+    "fillRequired": "يرجى ملء العنوان والوصف",
+    "queuedOffline": "تم وضعها في قائمة الانتظار دون اتصال",
+    "createFailed": "تعذر إنشاء التذكرة",
+    "addComment": "إضافة تعليق",
+    "comments": "التعليقات",
+    "noComments": "لا توجد تعليقات بعد",
+    "commentPlaceholder": "اكتب تعليقاً",
+    "commentFailed": "تعذر إضافة التعليق",
+    "updateStatus": "تحديث الحالة",
+    "markResolved": "وضع علامة كمحلولة",
+    "resolution": "الحل",
+    "resolutionPlaceholder": "كيف تم حل المشكلة؟",
+    "resolveFailed": "تعذر حل التذكرة",
+    "notFound": "التذكرة غير موجودة",
+    "status": {
+      "Open": "مفتوحة",
+      "Assigned": "معينة",
+      "InProgress": "قيد التنفيذ",
+      "Resolved": "تم الحل",
+      "Closed": "مغلقة"
+    },
+    "empty": "لا توجد تذاكر معينة"
+  },
+  "project": {
+    "notFound": "المشروع غير موجود",
+    "plan": "مخطط الموقع",
+    "summary": "ملخص",
+    "runs": "خطوط الزجاج",
+    "panels": "الألواح",
+    "totalArea": "المساحة الإجمالية",
+    "largestPanel": "أكبر لوح"
+  },
+  "profile": {
+    "title": "ملفي الشخصي",
+    "language": "اللغة",
+    "version": "الإصدار"
+  },
+  "offline": {
+    "bannerOffline": "غير متصل",
+    "bannerOfflineWithPending": "غير متصل — {{count}} تغيير في الانتظار",
+    "bannerOfflineWithPendingPlural": "غير متصل — {{count}} تغييرات في الانتظار",
+    "bannerOnlinePending": "جارٍ مزامنة {{count}} تغيير…",
+    "bannerOnlinePendingPlural": "جارٍ مزامنة {{count}} تغييرات…",
+    "bannerFailed": "فشل {{count}} تغيير",
+    "bannerFailedPlural": "فشل {{count}} تغييرات",
+    "syncNow": "مزامنة الآن"
+  }
+}

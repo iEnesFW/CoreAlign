@@ -45,7 +45,8 @@ public record CreateProductCommand(
     decimal? VolumeM3 = null,
     ProductStatus Status = ProductStatus.Active,
     DateTime? LaunchDate = null,
-    DateTime? EndOfLifeDate = null
+    DateTime? EndOfLifeDate = null,
+    ProcurementType ProcurementType = ProcurementType.Buy
 ) : IRequest<ProductDto>, ITransactionalRequest;
 
 public record UpdateProductCommand(
@@ -88,7 +89,8 @@ public record UpdateProductCommand(
     decimal? VolumeM3,
     ProductStatus Status,
     DateTime? LaunchDate,
-    DateTime? EndOfLifeDate
+    DateTime? EndOfLifeDate,
+    ProcurementType ProcurementType = ProcurementType.Buy
 ) : IRequest<ProductDto>, ITransactionalRequest;
 
 public record DeleteProductCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;

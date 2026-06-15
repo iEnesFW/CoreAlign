@@ -114,6 +114,13 @@ public class OrderDto
     public List<OrderLineDto> Lines { get; set; } = new();
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    public string? OriginDealerName { get; set; }
+    public string? DealerApprovedByName { get; set; }
+    public string? OriginPersona { get; set; }
+    public string? DealerApprovalStatus { get; set; }
+    public Guid? OriginDealerAccountId { get; set; }
+    public Guid? OriginDealerUserId { get; set; }
+    public Guid? OriginCustomerUserId { get; set; }
 }
 
 public class OrderSummaryDto

@@ -238,6 +238,51 @@ public class InvoiceRepository : IInvoiceRepository
             .OrderByDescending(i => i.IssueDate)
             .ToListAsync(cancellationToken);
 
+    public async Task<(IReadOnlyList<InvoiceSearchRow> Items, int Total)> SearchForCustomersAsync(
+        IReadOnlyCollection<Guid> customerIds,
+        InvoiceStatus? status,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        if (customerIds is null || customerIds.Count == 0)
+        {
+            return (Array.Empty<InvoiceSearchRow>(), 0);
+        }
+
+        var customerIdArray = customerIds.Distinct().ToArray();
+        var query = _context.Invoices
+            .AsNoTracking()
+            .Where(i => customerIdArray.Contains(i.CustomerId));
+
+        if (status.HasValue) query = query.Where(i => i.Status == status.Value);
+        if (fromUtc.HasValue) query = query.Where(i => i.IssueDate >= fromUtc.Value);
+        if (toUtc.HasValue) query = query.Where(i => i.IssueDate <= toUtc.Value);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(i => i.IssueDate)
+            .ThenBy(i => i.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(i => new InvoiceSearchRow(
+                i.Id,
+                i.InvoiceNumber,
+                i.Type,
+                i.OrderId,
+                i.Customer != null ? i.Customer.Name : i.CustomerNameSnapshot,
+                i.IssueDate,
+                i.DueDate,
+                i.Status,
+                i.Currency,
+                i.Total,
+                i.AmountPaid))
+            .ToListAsync(cancellationToken);
+        return (items, total);
+    }
+
     public async Task<IReadOnlyDictionary<Guid, Invoice>> GetByIdsAsync(
         IEnumerable<Guid> ids,
         CancellationToken cancellationToken = default)

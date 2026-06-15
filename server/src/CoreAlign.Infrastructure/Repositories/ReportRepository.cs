@@ -219,7 +219,13 @@ public class ReportRepository : IReportRepository
         if (fromUtc.HasValue) query = query.Where(l => l.Invoice!.IssueDate >= fromUtc.Value);
         if (toUtc.HasValue) query = query.Where(l => l.Invoice!.IssueDate <= toUtc.Value);
 
-        return await query
+        // EF Core 10: GroupBy icinde nested Distinct().Count() server-side translate edilemiyor.
+        // Flat fetch + in-memory group (production'da bir sure sonra Raw SQL'e gecmek lazim).
+        var flat = await query
+            .Select(l => new { l.ProductId, l.ProductSku, l.ProductName, l.Quantity, l.LineTotal, l.InvoiceId })
+            .ToListAsync(cancellationToken);
+
+        return flat
             .GroupBy(l => new { l.ProductId, l.ProductSku, l.ProductName })
             .Select(g => new TopProductRow(
                 g.Key.ProductId,
@@ -230,7 +236,7 @@ public class ReportRepository : IReportRepository
                 g.Select(x => x.InvoiceId).Distinct().Count()))
             .OrderByDescending(t => t.Revenue)
             .Take(limit)
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public async Task<IReadOnlyList<OpenInvoiceRow>> GetOpenInvoicesAcrossCustomersAsync(

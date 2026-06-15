@@ -79,6 +79,10 @@ public class StockController : ControllerBase
     public async Task<IActionResult> Issue([FromBody] IssueStockCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
 
+    [HttpPost("transfer")]
+    public async Task<IActionResult> Transfer([FromBody] ApplyStockTransferCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToCreated();
+
     [HttpPost("lots")]
     public async Task<IActionResult> CreateLot([FromBody] CreateLotCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();

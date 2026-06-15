@@ -1,0 +1,644 @@
+using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.B2B;
+using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Outbox;
+using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Exceptions;
+using CoreAlign.Domain.Interfaces;
+using MediatR;
+
+namespace CoreAlign.Application.Purchasing;
+
+internal static class VendorGLLines
+{
+    public static IReadOnlyList<GLPostingLine> Bill(decimal subtotal, decimal tax, decimal total, bool inventoryPurchase, bool reverse)
+    {
+        var debitKey = inventoryPurchase ? GLPostingKey.GoodsReceiptClearing : GLPostingKey.PurchaseExpense;
+        return reverse
+            ? new[]
+            {
+                new GLPostingLine(GLPostingKey.AccountsPayable, total, 0m),
+                new GLPostingLine(debitKey, 0m, subtotal),
+                new GLPostingLine(GLPostingKey.InputVat, 0m, tax),
+            }
+            : new[]
+            {
+                new GLPostingLine(debitKey, subtotal, 0m),
+                new GLPostingLine(GLPostingKey.InputVat, tax, 0m),
+                new GLPostingLine(GLPostingKey.AccountsPayable, 0m, total),
+            };
+    }
+}
+
+internal static class VendorBillingMapper
+{
+    public static VendorBillDto ToDto(VendorBill b) => new(
+        b.Id, b.VendorId, b.VendorName, b.BillNumber, b.BillDate, b.DueDate, b.Currency,
+        b.Subtotal, b.TaxAmount, b.Total, b.AmountPaid, b.AmountDue, b.Status, b.PurchaseOrderId, b.Notes, b.CreatedAtUtc);
+
+    public static VendorPaymentDto ToDto(VendorPayment p) => new(
+        p.Id, p.VendorId, p.VendorName, p.PaymentNumber, p.PaymentDate, p.Amount,
+        p.AppliedAmount, p.UnappliedAmount, p.IsVoided, p.VoidedAtUtc, p.VoidReason,
+        p.Currency, p.Method, p.VendorBillId, p.Notes, p.CreatedAtUtc);
+
+    public static VendorPaymentApplicationDto ToDto(VendorPaymentApplication a, string paymentNumber, string billNumber) => new(
+        a.Id, a.VendorPaymentId, paymentNumber, a.VendorBillId, billNumber,
+        a.AppliedAmount, a.AppliedAtUtc, a.AppliedByUserId, a.Notes);
+}
+
+internal static class VendorLedgerPoster
+{
+    public static async Task PostAsync(
+        IVendorLedgerRepository ledger,
+        IVendorRepository vendors,
+        Guid vendorId,
+        DateTime occurredAtUtc,
+        LedgerEntryType entryType,
+        decimal amount,
+        string currency,
+        decimal exchangeRate,
+        LedgerSourceType sourceType,
+        Guid? sourceDocumentId,
+        string? sourceDocumentNumber,
+        string? description,
+        CancellationToken ct)
+    {
+        var last = await ledger.GetLastRunningBalanceAsync(vendorId, ct);
+        var signed = entryType == LedgerEntryType.Credit ? Math.Abs(amount) : -Math.Abs(amount);
+        var balance = Math.Round(last + signed, 4);
+
+        var entry = new VendorLedgerEntry(vendorId, occurredAtUtc, occurredAtUtc.Date, entryType, amount,
+            currency, exchangeRate, sourceType, sourceDocumentId, sourceDocumentNumber, description);
+        entry.SetRunningBalance(balance);
+        await ledger.AddAsync(entry, ct);
+
+        var vendor = await vendors.GetByIdAsync(vendorId, ct);
+        if (vendor is not null)
+        {
+            vendor.RecalculateBalance(balance, 0m, Math.Max(0m, balance));
+            vendors.Update(vendor);
+        }
+    }
+}
+
+public class CreateVendorBillHandler : IRequestHandler<CreateVendorBillCommand, VendorBillDto>
+{
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorRepository _vendors;
+    private readonly IUnitOfWork _uow;
+
+    public CreateVendorBillHandler(IVendorBillRepository bills, IVendorRepository vendors, IUnitOfWork uow)
+    {
+        _bills = bills;
+        _vendors = vendors;
+        _uow = uow;
+    }
+
+    public async Task<VendorBillDto> Handle(CreateVendorBillCommand c, CancellationToken ct)
+    {
+        var vendor = await _vendors.GetByIdAsync(c.VendorId, ct) ?? throw new VendorNotFoundForPurchaseException();
+        if (await _bills.BillNumberExistsAsync(c.VendorId, c.BillNumber.Trim(), null, ct))
+        {
+            throw new DuplicateVendorBillNumberException();
+        }
+        var bill = new VendorBill(vendor.Id, vendor.Name, c.BillNumber.Trim(), c.BillDate, c.Currency.ToUpperInvariant(),
+            c.Subtotal, c.TaxAmount, c.DueDate, c.ExchangeRate, c.PurchaseOrderId, c.Notes);
+        await _bills.AddAsync(bill, ct);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class PostVendorBillHandler : IRequestHandler<PostVendorBillCommand, VendorBillDto>
+{
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorLedgerRepository _ledger;
+    private readonly IVendorRepository _vendors;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public PostVendorBillHandler(IVendorBillRepository bills, IVendorLedgerRepository ledger, IVendorRepository vendors, IGLPostingOutbox outbox, IUnitOfWork uow)
+    {
+        _bills = bills;
+        _ledger = ledger;
+        _vendors = vendors;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<VendorBillDto> Handle(PostVendorBillCommand c, CancellationToken ct)
+    {
+        var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
+        bill.Post();
+        await VendorLedgerPoster.PostAsync(_ledger, _vendors, bill.VendorId, DateTime.UtcNow,
+            LedgerEntryType.Credit, bill.Total, bill.Currency, bill.ExchangeRate,
+            LedgerSourceType.Invoice, bill.Id, bill.BillNumber, $"Tedarikçi faturası {bill.BillNumber}", ct);
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.VendorBill, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
+            JournalEntryType.Mahsup, $"Tedarikçi faturası {bill.BillNumber}",
+            VendorGLLines.Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.PurchaseOrderId is not null, reverse: false),
+            bill.Currency), ct);
+        _bills.Update(bill);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class CancelVendorBillHandler : IRequestHandler<CancelVendorBillCommand, VendorBillDto>
+{
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorLedgerRepository _ledger;
+    private readonly IVendorRepository _vendors;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public CancelVendorBillHandler(IVendorBillRepository bills, IVendorLedgerRepository ledger, IVendorRepository vendors, IGLPostingOutbox outbox, IUnitOfWork uow)
+    {
+        _bills = bills;
+        _ledger = ledger;
+        _vendors = vendors;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<VendorBillDto> Handle(CancelVendorBillCommand c, CancellationToken ct)
+    {
+        var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
+        var wasPosted = bill.PostedAtUtc is not null;
+        var due = bill.AmountDue;
+        bill.Cancel();
+        if (wasPosted && due > 0m)
+        {
+            await VendorLedgerPoster.PostAsync(_ledger, _vendors, bill.VendorId, DateTime.UtcNow,
+                LedgerEntryType.Debit, due, bill.Currency, bill.ExchangeRate,
+                LedgerSourceType.InvoiceVoid, bill.Id, bill.BillNumber, $"Fatura iptali {bill.BillNumber}", ct);
+        }
+        if (wasPosted && due > 0m)
+        {
+            var factor = bill.Total == 0m ? 0m : due / bill.Total;
+            var reversedTax = Math.Round(bill.TaxAmount * factor, 4, MidpointRounding.ToEven);
+            var reversedSubtotal = due - reversedTax;
+            await _outbox.EnqueueAsync(new GLPostingRequest(
+                JournalSourceType.VendorBillReversal, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
+                JournalEntryType.Mahsup, $"Fatura iptali {bill.BillNumber}",
+                VendorGLLines.Bill(reversedSubtotal, reversedTax, due, bill.PurchaseOrderId is not null, reverse: true),
+                bill.Currency, bill.ExchangeRate), ct);
+        }
+        _bills.Update(bill);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCommand, VendorPaymentDto>
+{
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorRepository _vendors;
+    private readonly IVendorLedgerRepository _ledger;
+    private readonly IDocumentSequenceRepository _sequences;
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly ICurrentUserAccessor _currentUser;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public CreateVendorPaymentHandler(
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills,
+        IVendorRepository vendors,
+        IVendorLedgerRepository ledger,
+        IDocumentSequenceRepository sequences,
+        IVendorPaymentApplicationRepository applications,
+        ICurrentUserAccessor currentUser,
+        IGLPostingOutbox outbox,
+        IUnitOfWork uow)
+    {
+        _payments = payments;
+        _bills = bills;
+        _vendors = vendors;
+        _ledger = ledger;
+        _sequences = sequences;
+        _applications = applications;
+        _currentUser = currentUser;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<VendorPaymentDto> Handle(CreateVendorPaymentCommand c, CancellationToken ct)
+    {
+        if (c.Amount <= 0m)
+        {
+            throw new StockMovementValidationException("Payment amount must be positive.");
+        }
+        var vendor = await _vendors.GetByIdAsync(c.VendorId, ct) ?? throw new VendorNotFoundForPurchaseException();
+        var now = DateTime.UtcNow;
+        var paymentCurrency = c.Currency.ToUpperInvariant();
+
+        VendorBill? autoBill = null;
+        decimal autoApplyAmount = 0m;
+        if (c.VendorBillId is { } billId)
+        {
+            autoBill = await _bills.GetByIdAsync(billId, ct) ?? throw new VendorBillNotFoundException();
+            if (autoBill.VendorId != vendor.Id
+                || !string.Equals(autoBill.Currency, paymentCurrency, StringComparison.OrdinalIgnoreCase)
+                || autoBill.Status is VendorBillStatus.Draft or VendorBillStatus.Cancelled or VendorBillStatus.Paid)
+            {
+                throw new VendorPaymentBillMismatchException();
+            }
+            autoApplyAmount = Math.Min(Math.Round(c.Amount, 4), autoBill.AmountDue);
+            if (autoApplyAmount <= 0m)
+            {
+                throw new VendorPaymentBillMismatchException();
+            }
+        }
+
+        var seq = await _sequences.GetAsync(DocumentSequenceType.VendorPaymentNumber, ct);
+        if (seq is null)
+        {
+            await _sequences.AddAsync(new DocumentSequence(DocumentSequenceType.VendorPaymentNumber, "VPAY", now.Year, 1, 5), ct);
+            await _uow.SaveChangesAsync(ct);
+        }
+        var number = await _sequences.ConsumeAsync(DocumentSequenceType.VendorPaymentNumber, now, ct);
+
+        var payment = new VendorPayment(vendor.Id, vendor.Name, number, c.PaymentDate, c.Amount,
+            paymentCurrency, c.ExchangeRate, c.Method, c.VendorBillId, c.Notes);
+        await _payments.AddAsync(payment, ct);
+
+        if (autoBill is not null && autoApplyAmount > 0m)
+        {
+            autoBill.RecordPayment(autoApplyAmount);
+            _bills.Update(autoBill);
+            payment.RecordApplication(autoApplyAmount);
+            var application = new VendorPaymentApplication(
+                payment.Id, autoBill.Id, autoApplyAmount, _currentUser.UserId, c.Notes);
+            await _applications.AddAsync(application, ct);
+        }
+
+        await VendorLedgerPoster.PostAsync(_ledger, _vendors, vendor.Id, now,
+            LedgerEntryType.Debit, c.Amount, c.Currency.ToUpperInvariant(), c.ExchangeRate,
+            LedgerSourceType.Payment, payment.Id, number, $"Tedarikçi ödemesi {number}", ct);
+
+        var cashKey = string.Equals(c.Method, "Cash", StringComparison.OrdinalIgnoreCase)
+            ? GLPostingKey.Cash
+            : GLPostingKey.Bank;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.VendorPayment, payment.Id, number, now.Date,
+            JournalEntryType.Tediye, $"Tedarikçi ödemesi {number}",
+            PaymentGLLines.CashMovement(cashKey, GLPostingKey.AccountsPayable, c.Amount, cashIsDebit: false),
+            c.Currency.ToUpperInvariant(), c.ExchangeRate), ct);
+
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(payment);
+    }
+}
+
+public class SearchVendorBillsHandler : IRequestHandler<SearchVendorBillsQuery, PagedResult<VendorBillDto>>
+{
+    private readonly IVendorBillRepository _bills;
+    public SearchVendorBillsHandler(IVendorBillRepository bills) => _bills = bills;
+
+    public async Task<PagedResult<VendorBillDto>> Handle(SearchVendorBillsQuery q, CancellationToken ct)
+    {
+        var page = q.Page < 1 ? 1 : q.Page;
+        var pageSize = q.PageSize is < 1 or > 200 ? 25 : q.PageSize;
+        var (items, total) = await _bills.SearchAsync(q.VendorId, q.Status, page, pageSize, ct);
+        return new PagedResult<VendorBillDto>
+        {
+            Items = items.Select(VendorBillingMapper.ToDto).ToList(),
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+        };
+    }
+}
+
+public class GetVendorBillByIdHandler : IRequestHandler<GetVendorBillByIdQuery, VendorBillDto?>
+{
+    private readonly IVendorBillRepository _bills;
+    public GetVendorBillByIdHandler(IVendorBillRepository bills) => _bills = bills;
+
+    public async Task<VendorBillDto?> Handle(GetVendorBillByIdQuery q, CancellationToken ct)
+    {
+        var bill = await _bills.GetByIdAsync(q.Id, ct)
+            ?? throw new VendorBillNotFoundException(q.Id);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class GetVendorAgingHandler : IRequestHandler<GetVendorAgingQuery, IReadOnlyList<VendorAgingRowDto>>
+{
+    private readonly IVendorBillRepository _bills;
+    public GetVendorAgingHandler(IVendorBillRepository bills) => _bills = bills;
+
+    public async Task<IReadOnlyList<VendorAgingRowDto>> Handle(GetVendorAgingQuery q, CancellationToken ct)
+    {
+        var asOf = (q.AsOfUtc ?? DateTime.UtcNow).Date;
+        var rows = await _bills.GetAgingBucketsAsync(asOf, ct);
+        return rows.Select(r => new VendorAgingRowDto(
+            r.VendorId, r.VendorName, r.Currency,
+            r.Current, r.Days1To30, r.Days31To60, r.Days61To90, r.DaysOver90,
+            r.Current + r.Days1To30 + r.Days31To60 + r.Days61To90 + r.DaysOver90)).ToList();
+    }
+}
+
+public class SearchVendorPaymentsHandler : IRequestHandler<SearchVendorPaymentsQuery, PagedResult<VendorPaymentDto>>
+{
+    private readonly IVendorPaymentRepository _payments;
+    public SearchVendorPaymentsHandler(IVendorPaymentRepository payments) => _payments = payments;
+
+    public async Task<PagedResult<VendorPaymentDto>> Handle(SearchVendorPaymentsQuery q, CancellationToken ct)
+    {
+        var page = q.Page < 1 ? 1 : q.Page;
+        var pageSize = q.PageSize is < 1 or > 200 ? 25 : q.PageSize;
+        var (items, total) = await _payments.SearchAsync(q.VendorId, page, pageSize, ct);
+        return new PagedResult<VendorPaymentDto>
+        {
+            Items = items.Select(VendorBillingMapper.ToDto).ToList(),
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+        };
+    }
+}
+
+public class GetVendorPaymentByIdHandler : IRequestHandler<GetVendorPaymentByIdQuery, VendorPaymentDto?>
+{
+    private readonly IVendorPaymentRepository _payments;
+    public GetVendorPaymentByIdHandler(IVendorPaymentRepository payments) => _payments = payments;
+
+    public async Task<VendorPaymentDto?> Handle(GetVendorPaymentByIdQuery q, CancellationToken ct)
+    {
+        var entity = await _payments.GetByIdAsync(q.Id, ct);
+        return entity is null ? null : VendorBillingMapper.ToDto(entity);
+    }
+}
+
+public class UpdateVendorBillHandler : IRequestHandler<UpdateVendorBillCommand, VendorBillDto>
+{
+    private readonly IVendorBillRepository _bills;
+    private readonly IUnitOfWork _uow;
+
+    public UpdateVendorBillHandler(IVendorBillRepository bills, IUnitOfWork uow)
+    {
+        _bills = bills;
+        _uow = uow;
+    }
+
+    public async Task<VendorBillDto> Handle(UpdateVendorBillCommand c, CancellationToken ct)
+    {
+        var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
+        if (await _bills.BillNumberExistsAsync(bill.VendorId, c.BillNumber.Trim(), bill.Id, ct))
+        {
+            throw new DuplicateVendorBillNumberException();
+        }
+        bill.UpdateDraft(c.BillNumber.Trim(), c.BillDate, c.DueDate, c.Currency.ToUpperInvariant(),
+            c.ExchangeRate, c.Subtotal, c.TaxAmount, c.PurchaseOrderId, c.Notes);
+        _bills.Update(bill);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class UpdateVendorPaymentHandler : IRequestHandler<UpdateVendorPaymentCommand, VendorPaymentDto>
+{
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IUnitOfWork _uow;
+
+    public UpdateVendorPaymentHandler(IVendorPaymentRepository payments, IUnitOfWork uow)
+    {
+        _payments = payments;
+        _uow = uow;
+    }
+
+    public async Task<VendorPaymentDto> Handle(UpdateVendorPaymentCommand c, CancellationToken ct)
+    {
+        if (c.Amount <= 0m)
+        {
+            throw new StockMovementValidationException("Payment amount must be positive.");
+        }
+        var payment = await _payments.GetByIdAsync(c.Id, ct) ?? throw new VendorPaymentApplicationNotFoundException();
+        payment.UpdateDraft(c.PaymentDate, c.Amount, c.Currency.ToUpperInvariant(), c.ExchangeRate, c.Method, c.Notes);
+        _payments.Update(payment);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(payment);
+    }
+}
+
+public class VoidVendorPaymentHandler : IRequestHandler<VoidVendorPaymentCommand, VendorPaymentDto>
+{
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly IVendorLedgerRepository _ledger;
+    private readonly IVendorRepository _vendors;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public VoidVendorPaymentHandler(
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills,
+        IVendorPaymentApplicationRepository applications,
+        IVendorLedgerRepository ledger,
+        IVendorRepository vendors,
+        IGLPostingOutbox outbox,
+        IUnitOfWork uow)
+    {
+        _payments = payments;
+        _bills = bills;
+        _applications = applications;
+        _ledger = ledger;
+        _vendors = vendors;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<VendorPaymentDto> Handle(VoidVendorPaymentCommand c, CancellationToken ct)
+    {
+        var payment = await _payments.GetByIdAsync(c.Id, ct) ?? throw new VendorPaymentApplicationNotFoundException();
+        var applications = await _applications.GetByVendorPaymentAsync(payment.Id, ct);
+        foreach (var app in applications)
+        {
+            var bill = await _bills.GetByIdAsync(app.VendorBillId, ct);
+            if (bill is not null)
+            {
+                bill.ReverseRecordedPayment(app.AppliedAmount);
+                _bills.Update(bill);
+            }
+            payment.ReverseApplication(app.AppliedAmount);
+            _applications.Remove(app);
+        }
+        payment.Void(c.Reason);
+
+        await VendorLedgerPoster.PostAsync(_ledger, _vendors, payment.VendorId, DateTime.UtcNow,
+            LedgerEntryType.Credit, payment.Amount, payment.Currency, payment.ExchangeRate,
+            LedgerSourceType.PaymentReversal, payment.Id, payment.PaymentNumber,
+            $"Tedarikçi ödeme iptali {payment.PaymentNumber}", ct);
+
+        var cashKey = string.Equals(payment.Method, "Cash", StringComparison.OrdinalIgnoreCase)
+            ? GLPostingKey.Cash
+            : GLPostingKey.Bank;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.VendorPaymentReversal, payment.Id, payment.PaymentNumber, DateTime.UtcNow.Date,
+            JournalEntryType.Mahsup, $"Tedarikçi ödeme iptali {payment.PaymentNumber}",
+            PaymentGLLines.CashMovement(cashKey, GLPostingKey.AccountsPayable, payment.Amount, cashIsDebit: true),
+            payment.Currency, payment.ExchangeRate), ct);
+
+        _payments.Update(payment);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(payment);
+    }
+}
+
+public class ApplyVendorPaymentHandler : IRequestHandler<ApplyVendorPaymentCommand, VendorPaymentApplicationDto>
+{
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly ICurrentUserAccessor _currentUser;
+    private readonly IUnitOfWork _uow;
+
+    public ApplyVendorPaymentHandler(
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills,
+        IVendorPaymentApplicationRepository applications,
+        ICurrentUserAccessor currentUser,
+        IUnitOfWork uow)
+    {
+        _payments = payments;
+        _bills = bills;
+        _applications = applications;
+        _currentUser = currentUser;
+        _uow = uow;
+    }
+
+    public async Task<VendorPaymentApplicationDto> Handle(ApplyVendorPaymentCommand c, CancellationToken ct)
+    {
+        if (c.Amount <= 0m)
+        {
+            throw new VendorPaymentOverApplicationException();
+        }
+        var payment = await _payments.GetByIdAsync(c.VendorPaymentId, ct)
+            ?? throw new VendorPaymentApplicationNotFoundException();
+        var bill = await _bills.GetByIdAsync(c.VendorBillId, ct) ?? throw new VendorBillNotFoundException();
+
+        var existing = await _applications.GetByPaymentAndBillAsync(payment.Id, bill.Id, ct);
+        if (existing is not null)
+        {
+            return VendorBillingMapper.ToDto(existing, payment.PaymentNumber, bill.BillNumber);
+        }
+
+        if (payment.IsVoided)
+        {
+            throw new VendorPaymentAlreadyVoidedException();
+        }
+        if (payment.VendorId != bill.VendorId
+            || !string.Equals(payment.Currency, bill.Currency, StringComparison.OrdinalIgnoreCase)
+            || bill.Status is VendorBillStatus.Draft or VendorBillStatus.Cancelled or VendorBillStatus.Paid)
+        {
+            throw new VendorPaymentBillMismatchException();
+        }
+
+        var amount = Math.Round(c.Amount, 4);
+        if (amount > payment.UnappliedAmount + 0.0001m)
+        {
+            throw new VendorPaymentOverApplicationException();
+        }
+        if (amount > bill.AmountDue + 0.0001m)
+        {
+            throw new VendorPaymentOverApplicationException();
+        }
+
+        var application = new VendorPaymentApplication(payment.Id, bill.Id, amount, _currentUser.UserId, c.Notes);
+        await _applications.AddAsync(application, ct);
+
+        payment.RecordApplication(amount);
+        _payments.Update(payment);
+
+        bill.RecordPayment(amount);
+        _bills.Update(bill);
+
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(application, payment.PaymentNumber, bill.BillNumber);
+    }
+}
+
+public class GetVendorBillApplicationsHandler : IRequestHandler<GetVendorBillApplicationsQuery, IReadOnlyList<VendorPaymentApplicationDto>>
+{
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+
+    public GetVendorBillApplicationsHandler(
+        IVendorPaymentApplicationRepository applications,
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills)
+    {
+        _applications = applications;
+        _payments = payments;
+        _bills = bills;
+    }
+
+    public async Task<IReadOnlyList<VendorPaymentApplicationDto>> Handle(GetVendorBillApplicationsQuery q, CancellationToken ct)
+    {
+        var apps = await _applications.GetByVendorBillAsync(q.VendorBillId, ct);
+        if (apps.Count == 0) return Array.Empty<VendorPaymentApplicationDto>();
+        var bill = await _bills.GetByIdAsync(q.VendorBillId, ct);
+        var billNumber = bill?.BillNumber ?? string.Empty;
+        var result = new List<VendorPaymentApplicationDto>(apps.Count);
+        foreach (var a in apps)
+        {
+            var payment = await _payments.GetByIdAsync(a.VendorPaymentId, ct);
+            result.Add(VendorBillingMapper.ToDto(a, payment?.PaymentNumber ?? string.Empty, billNumber));
+        }
+        return result;
+    }
+}
+
+public class GetVendorPaymentApplicationsHandler : IRequestHandler<GetVendorPaymentApplicationsQuery, IReadOnlyList<VendorPaymentApplicationDto>>
+{
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+
+    public GetVendorPaymentApplicationsHandler(
+        IVendorPaymentApplicationRepository applications,
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills)
+    {
+        _applications = applications;
+        _payments = payments;
+        _bills = bills;
+    }
+
+    public async Task<IReadOnlyList<VendorPaymentApplicationDto>> Handle(GetVendorPaymentApplicationsQuery q, CancellationToken ct)
+    {
+        var apps = await _applications.GetByVendorPaymentAsync(q.VendorPaymentId, ct);
+        if (apps.Count == 0) return Array.Empty<VendorPaymentApplicationDto>();
+        var payment = await _payments.GetByIdAsync(q.VendorPaymentId, ct);
+        var paymentNumber = payment?.PaymentNumber ?? string.Empty;
+        var result = new List<VendorPaymentApplicationDto>(apps.Count);
+        foreach (var a in apps)
+        {
+            var bill = await _bills.GetByIdAsync(a.VendorBillId, ct);
+            result.Add(VendorBillingMapper.ToDto(a, paymentNumber, bill?.BillNumber ?? string.Empty));
+        }
+        return result;
+    }
+}
+
+public class GetThreeWayMatchHandler : IRequestHandler<GetThreeWayMatchQuery, IReadOnlyList<ThreeWayMatchRowDto>>
+{
+    private readonly IThreeWayMatchReader _reader;
+    public GetThreeWayMatchHandler(IThreeWayMatchReader reader) => _reader = reader;
+
+    public async Task<IReadOnlyList<ThreeWayMatchRowDto>> Handle(GetThreeWayMatchQuery q, CancellationToken ct)
+    {
+        var rows = await _reader.GetMismatchesAsync(q.VendorId, q.FromUtc, q.ToUtc, ct);
+        return rows.Select(r => new ThreeWayMatchRowDto(
+            r.PurchaseOrderId, r.PoNumber, r.VendorId, r.VendorName, r.Currency,
+            r.ProductId, r.ProductSku, r.ProductName,
+            r.ExpectedQty, r.ReceivedQty, r.BilledQty,
+            r.ExpectedAmount, r.BilledAmount, r.Discrepancies)).ToList();
+    }
+}

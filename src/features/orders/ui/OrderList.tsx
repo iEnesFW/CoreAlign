@@ -11,6 +11,7 @@ interface Props {
   isLoading: boolean;
   selectedId?: string | null;
   onSelect?: (order: OrderSummary) => void;
+  onOpenDetails?: (order: OrderSummary) => void;
   onEdit: (order: OrderSummary) => void;
   onDelete: (order: OrderSummary) => void;
   onGenerateInvoice: (order: OrderSummary) => void;
@@ -72,6 +73,7 @@ export const OrderList = ({
   isLoading,
   selectedId,
   onSelect,
+  onOpenDetails,
   onEdit,
   onDelete,
   onGenerateInvoice,
@@ -193,11 +195,11 @@ export const OrderList = ({
       }
       rowActions={(o) => (
         <>
-          {onSelect && (
+          {onOpenDetails && (
             <RowActionButton
               icon={<PanelRightOpen size={14} />}
               label={t('common.details', { defaultValue: 'Details' })}
-              onClick={() => onSelect(o)}
+              onClick={() => onOpenDetails(o)}
             />
           )}
           {INVOICEABLE_STATUSES.includes(o.status) && (

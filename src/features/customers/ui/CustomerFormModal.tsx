@@ -53,6 +53,7 @@ interface Props {
   open: boolean;
   customer: Customer | null;
   onClose: () => void;
+  onCreated?: (customer: Customer) => void;
 }
 
 const emptyValues: CustomerFormValues = {
@@ -94,7 +95,7 @@ const QUICK_ADD_FIELD: Record<
   customerGroup: 'customerGroupId',
 };
 
-export const CustomerFormModal = ({ open, customer, onClose }: Props) => {
+export const CustomerFormModal = ({ open, customer, onClose, onCreated }: Props) => {
   const { t } = useTranslation();
   const createMutation = useCreateCustomer();
   const updateMutation = useUpdateCustomer();
@@ -210,6 +211,7 @@ export const CustomerFormModal = ({ open, customer, onClose }: Props) => {
         onSuccess: (response) => {
           if (response.isSuccess) {
             toast.success(t('customers.toast.created'));
+            if (response.data) onCreated?.(response.data);
             onClose();
             return;
           }

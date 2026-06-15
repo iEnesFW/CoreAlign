@@ -50,7 +50,28 @@ public class ProductHandlerTests
         result.Sku.Should().Be("SKU-A");
         result.Name.Should().Be("Widget");
         result.StockQuantity.Should().Be(50m);
+        result.ProcurementType.Should().Be(ProcurementType.Buy);
         await _productRepository.Received(1).AddAsync(Arg.Any<Product>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Create_persists_make_procurement_type()
+    {
+        _productRepository.SkuExistsAsync(Arg.Any<string>(), null, Arg.Any<CancellationToken>()).Returns(false);
+        Product? captured = null;
+        await _productRepository.AddAsync(Arg.Do<Product>(p => captured = p), Arg.Any<CancellationToken>());
+
+        var command = new CreateProductCommand(
+            Sku: "SKU-MAKE",
+            Name: "Assembly",
+            Unit: "pcs",
+            Price: 100m,
+            Currency: "TRY",
+            ProcurementType: ProcurementType.Make);
+        var result = await _createSut.Handle(command, default);
+
+        result.ProcurementType.Should().Be(ProcurementType.Make);
+        captured!.ProcurementType.Should().Be(ProcurementType.Make);
     }
 
     private static UpdateProductCommand BuildUpdate(Guid id, string sku) =>

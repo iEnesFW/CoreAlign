@@ -138,8 +138,8 @@ public class GetGLAccountByIdHandler : IRequestHandler<GetGLAccountByIdQuery, GL
 
     public async Task<GLAccountDto?> Handle(GetGLAccountByIdQuery q, CancellationToken ct)
     {
-        var account = await _repo.GetByIdAsync(q.Id, ct);
-        if (account is null) return null;
+        var account = await _repo.GetByIdAsync(q.Id, ct)
+            ?? throw new GLAccountNotFoundException(q.Id);
         string? parentCode = null;
         if (account.ParentId.HasValue)
         {

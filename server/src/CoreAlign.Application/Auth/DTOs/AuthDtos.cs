@@ -5,7 +5,9 @@ public class AuthResponseDto
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTime ExpiresAt { get; set; }
-    public UserProfileDto User { get; set; } = null!;
+    public UserProfileDto? User { get; set; }
+    public bool RequiresTwoFactor { get; set; }
+    public string? TwoFactorChallengeToken { get; set; }
 }
 
 public class UserProfileDto
@@ -20,6 +22,8 @@ public class UserProfileDto
     public string? LastName { get; set; }
     public string? AvatarUrl { get; set; }
     public List<string> Roles { get; set; } = new();
+    public string? Persona { get; set; }
+    public string? PreferredLocale { get; set; }
 }
 
 public class SubscriptionDto

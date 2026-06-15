@@ -54,6 +54,33 @@ public class UserRepository : IUserRepository
             .AnyAsync(u => u.Username == username, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<User>> ListByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .IgnoreQueryFilters()
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
+            .Where(u => u.TenantId == tenantId)
+            .OrderBy(u => u.Email)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<User>> ListByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idList.Length == 0)
+        {
+            return Array.Empty<User>();
+        }
+        return await _context.Users
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
+            .Where(u => idList.Contains(u.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _context.Users.AddAsync(user, cancellationToken);
@@ -122,6 +149,34 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             .AsNoTracking()
             .Where(t => t.UserId == userId && t.RevokedAtUtc == null && t.ExpiresAtUtc > DateTime.UtcNow)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<RefreshToken>> ListChainFromAsync(string tokenHash, CancellationToken cancellationToken = default)
+    {
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        var chain = new List<RefreshToken>();
+        var currentHash = tokenHash;
+        while (!string.IsNullOrEmpty(currentHash) && visited.Add(currentHash))
+        {
+            var node = await _context.RefreshTokens
+                .FirstOrDefaultAsync(t => t.TokenHash == currentHash, cancellationToken);
+            if (node is null) break;
+            chain.Add(node);
+            currentHash = node.ReplacedByTokenHash;
+        }
+        return chain;
+    }
+
+    public async Task RevokeManyAsync(IEnumerable<Guid> refreshTokenIds, CancellationToken cancellationToken = default)
+    {
+        var idArray = refreshTokenIds?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idArray.Length == 0) return;
+        var now = DateTime.UtcNow;
+        await _context.RefreshTokens
+            .Where(t => idArray.Contains(t.Id) && t.RevokedAtUtc == null)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(t => t.RevokedAtUtc, now),
+                cancellationToken);
     }
 
     public async Task AddAsync(RefreshToken token, CancellationToken cancellationToken = default)
@@ -302,5 +357,37 @@ public class RoleRepository : IRoleRepository
     public async Task<Role?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
     {
         return await _context.Roles.FirstOrDefaultAsync(r => r.Name == name, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Role>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Roles
+            .AsNoTracking()
+            .OrderBy(r => r.Name)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Role>> GetByIdsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids?.Distinct().ToArray() ?? Array.Empty<int>();
+        if (idList.Length == 0)
+        {
+            return Array.Empty<Role>();
+        }
+        return await _context.Roles
+            .Where(r => idList.Contains(r.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Role>> GetByNamesAsync(IEnumerable<string> names, CancellationToken cancellationToken = default)
+    {
+        var nameList = names?.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct().ToArray() ?? Array.Empty<string>();
+        if (nameList.Length == 0)
+        {
+            return Array.Empty<Role>();
+        }
+        return await _context.Roles
+            .Where(r => nameList.Contains(r.Name))
+            .ToListAsync(cancellationToken);
     }
 }

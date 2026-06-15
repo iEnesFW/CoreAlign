@@ -41,6 +41,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.VolumeM3).HasColumnType("numeric(18,6)");
 
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20);
+        builder.Property(p => p.ProcurementType).HasConversion<string>().HasMaxLength(10);
+        builder.Property(p => p.AbcClass).HasConversion<string>().HasMaxLength(20);
+        builder.Property(p => p.WorkCenterId).HasColumnName("work_center_id");
+        builder.Property(p => p.RunTimeMinutesPerUnit).HasColumnName("run_time_minutes_per_unit").HasColumnType("numeric(18,4)");
         builder.Property(p => p.LaunchDate).HasColumnType("timestamp with time zone");
         builder.Property(p => p.EndOfLifeDate).HasColumnType("timestamp with time zone");
         builder.Property(p => p.CreatedAtUtc).HasColumnType("timestamp with time zone");

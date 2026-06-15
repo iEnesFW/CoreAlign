@@ -1,5 +1,7 @@
 export type ProductStatus = 'Active' | 'New' | 'Discontinued' | 'EndOfLife';
 
+export type ProcurementType = 'Buy' | 'Make';
+
 export interface Product {
   id: string;
   sku: string;
@@ -36,6 +38,7 @@ export interface Product {
   reorderPoint: number;
   safetyStock: number;
   leadTimeDays: number;
+  procurementType: ProcurementType;
   weightKg: number | null;
   widthCm: number | null;
   heightCm: number | null;
@@ -82,6 +85,7 @@ export interface CreateProductInput {
   reorderPoint?: number;
   safetyStock?: number;
   leadTimeDays?: number;
+  procurementType?: ProcurementType;
   weightKg?: number | null;
   widthCm?: number | null;
   heightCm?: number | null;
@@ -125,6 +129,7 @@ export interface UpdateProductInput {
   reorderPoint: number;
   safetyStock: number;
   leadTimeDays: number;
+  procurementType: ProcurementType;
   weightKg?: number | null;
   widthCm?: number | null;
   heightCm?: number | null;

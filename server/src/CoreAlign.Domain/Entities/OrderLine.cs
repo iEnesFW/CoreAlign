@@ -1,5 +1,6 @@
 using CoreAlign.Domain.Common;
 using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
@@ -22,6 +23,7 @@ public class OrderLine : TenantEntity
     public decimal QuantityInvoiced { get; private set; }
     public decimal QuantityReturned { get; private set; }
     public decimal QuantityCancelled { get; private set; }
+    public decimal QuantityScrapped { get; private set; }
 
     public decimal ListPriceSnapshot { get; private set; }
     public decimal UnitPrice { get; private set; }
@@ -48,15 +50,29 @@ public class OrderLine : TenantEntity
     public Guid? ParentLineId { get; private set; }
     public bool IsKitComponent { get; private set; }
 
+    public Guid? SourceBomLineId { get; private set; }
+    public Guid? SourceProjectId { get; private set; }
+    public Guid? SubstituteFromProductId { get; private set; }
+    public bool IsService { get; private set; }
+
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
-    public decimal QuantityRemainingToShip => Math.Max(0m, Quantity - QuantityShipped - QuantityCancelled);
+    public decimal QuantityRemainingToShip => Math.Max(0m, Quantity - QuantityShipped - QuantityCancelled - QuantityScrapped);
     public decimal QuantityRemainingToInvoice => Math.Max(0m, Quantity - QuantityInvoiced - QuantityCancelled);
 
     protected OrderLine() { }
 
-    public OrderLine(Guid productId, string productSku, string productName, decimal quantity, decimal unitPrice)
+    public OrderLine(
+        Guid productId,
+        string productSku,
+        string productName,
+        decimal quantity,
+        decimal unitPrice,
+        Guid? sourceBomLineId = null,
+        Guid? sourceProjectId = null,
+        bool isService = false,
+        Guid? substituteFromProductId = null)
     {
         ProductId = productId;
         ProductSku = productSku;
@@ -64,6 +80,10 @@ public class OrderLine : TenantEntity
         Quantity = quantity;
         UnitPrice = unitPrice;
         ListPriceSnapshot = unitPrice;
+        SourceBomLineId = sourceBomLineId;
+        SourceProjectId = sourceProjectId;
+        SubstituteFromProductId = substituteFromProductId;
+        IsService = isService;
         Recalculate();
     }
 
@@ -197,5 +217,20 @@ public class OrderLine : TenantEntity
         {
             Status = OrderLineStatus.Cancelled;
         }
+    }
+
+    public void RecordScrap(decimal qty)
+    {
+        if (qty <= 0m)
+        {
+            throw new InvalidOrderLineException("Scrap quantity must be positive.");
+        }
+        var remaining = QuantityRemainingToShip;
+        if (qty > remaining)
+        {
+            throw new InvalidOrderLineException(
+                $"Scrap quantity {qty} exceeds remaining-to-ship {remaining} for line {Id}.");
+        }
+        QuantityScrapped += qty;
     }
 }

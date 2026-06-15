@@ -227,4 +227,12 @@ public class DocumentSequenceRepository : IDocumentSequenceRepository
         if (exists) return;
         await _context.DocumentSequences.AddAsync(new DocumentSequence(type, prefix, year, 1, padLength), cancellationToken);
     }
+
+    public async Task<IReadOnlyList<DocumentSequence>> ListAsync(CancellationToken cancellationToken = default) =>
+        await _context.DocumentSequences.AsNoTracking().ToListAsync(cancellationToken);
+
+    public async Task AddAsync(DocumentSequence sequence, CancellationToken cancellationToken = default) =>
+        await _context.DocumentSequences.AddAsync(sequence, cancellationToken);
+
+    public void Update(DocumentSequence sequence) => _context.DocumentSequences.Update(sequence);
 }

@@ -1,0 +1,3757 @@
+{
+  "inventory": {
+    "summary": {
+      "totalOnHand": "Всего в наличии",
+      "totalReserved": "Зарезервировано",
+      "totalAvailable": "Доступно",
+      "warehouses": "Склады",
+      "belowReorder": "Ниже точки заказа",
+      "avgCost": "Средняя стоимость"
+    },
+    "byWarehouse": {
+      "title": "Остатки по складам",
+      "adjust": "Корректировка остатков",
+      "empty": "Записи об остатках отсутствуют."
+    },
+    "stockItem": {
+      "title": "Сведения о складской позиции",
+      "noReorderPoint": "Для этой позиции не задана точка заказа.",
+      "reorderTitle": "Планирование пополнения",
+      "reorderPoint": "Точка заказа",
+      "minStock": "Страховой запас",
+      "suggestedQty": "Рекомендуемое пополнение",
+      "lotInfo": "Информация о партии",
+      "lotNumber": "Партия",
+      "manufactureDate": "Дата производства",
+      "expiryDate": "Срок годности",
+      "daysUntilExpiry": "Осталось дней",
+      "lotBlocked": "Заблокирована",
+      "lotExpired": "Просрочена",
+      "expiringInDays": "Истекает через {{count}} дн.",
+      "movementChart": "Активность за 30 дней",
+      "recentMovements": "Последние движения"
+    },
+    "velocity": {
+      "title": "Оборачиваемость и ABC-класс",
+      "abcClass": "Класс",
+      "avgDailyOut": "Среднее списание/день",
+      "avgDailyIn": "Среднее поступление/день",
+      "daysOfStock": "Дней запаса",
+      "daysOfStockSub": "до исчерпания",
+      "netDelta": "Чистое Δ (90 дн.)",
+      "activeDays": "активных дней",
+      "windowDays": "за последние {{count}} дн.",
+      "abcA": "A ― высокая ценность и оборачиваемость. Следите за дефицитом.",
+      "abcB": "B ― средняя ценность или оборачиваемость. Регулярный контроль.",
+      "abcC": "C ― низкооборачиваемая. Рассмотрите корректировку EOQ.",
+      "abcD": "D ― неактивная. Кандидат на снятие или распродажу."
+    },
+    "fields": {
+      "warehouse": "Склад",
+      "onHand": "В наличии",
+      "reserved": "Зарезервировано",
+      "available": "Доступно",
+      "avgCost": "Средняя стоимость",
+      "value": "Стоимость запасов",
+      "lastMovement": "Последнее движение",
+      "lot": "Партия",
+      "bin": "Ячейка",
+      "reorderHint": "Точка заказа: {{value}}",
+      "product": "Товар"
+    },
+    "adjust": {
+      "title": "Корректировка остатков",
+      "modeAdd": "Приход на склад",
+      "modeRemove": "Списание со склада",
+      "warehouse": "Склад",
+      "warehousePlaceholder": "Выберите склад…",
+      "lot": "Партия (опционально)",
+      "lotHint": "Выберите конкретную партию, если применимо.",
+      "noLot": "― Без партии ―",
+      "quantity": "Количество",
+      "unitCost": "Цена за единицу",
+      "reasonCode": "Причина",
+      "reasonHint": "Помогает в аудите и отчётности.",
+      "noReason": "― Без причины ―",
+      "notes": "Примечания",
+      "notesPlaceholder": "Причина корректировки? Номера документов и т. п.",
+      "currentOnHand": "Текущий остаток",
+      "delta": "Изменение",
+      "projectedOnHand": "После корректировки",
+      "negativeWarning": "Остаток станет отрицательным. Уменьшите количество или выберите другой склад.",
+      "avgCostHint": "Текущая средняя стоимость: {{current}} {{currency}}. Новые поступления усредняются по скользящему среднему.",
+      "confirmAdd": "Оприходовать",
+      "confirmRemove": "Списать",
+      "success": "Остаток скорректирован",
+      "errorFallback": "Не удалось выполнить корректировку остатка."
+    },
+    "movements": {
+      "filterByType": "Тип",
+      "allTypes": "Все типы",
+      "totalCount": "{{count}} движений",
+      "empty": "Движений пока нет.",
+      "when": "Когда",
+      "type": "Тип",
+      "warehouse": "Склад",
+      "quantity": "Кол-во",
+      "onHandAfter": "Остаток после",
+      "unitCost": "Цена за единицу",
+      "source": "Источник",
+      "reason": "Причина / примечания",
+      "type.OpeningBalance": "Начальный остаток",
+      "type.Receipt": "Приход",
+      "type.Issue": "Расход",
+      "type.TransferIn": "Перемещение (приход)",
+      "type.TransferOut": "Перемещение (расход)",
+      "type.AdjustmentPositive": "Корректировка +",
+      "type.AdjustmentNegative": "Корректировка −",
+      "type.CountVariancePositive": "Инвентаризация +",
+      "type.CountVarianceNegative": "Инвентаризация −",
+      "type.Reservation": "Резервирование",
+      "type.UnReservation": "Снятие резерва"
+    },
+    "production": {
+      "invalid": "Укажите товар, склад и корректное количество.",
+      "noBom": "У этого товара нет спецификации (BOM).",
+      "done": "Производственная операция обработана.",
+      "title": "Производственный ваучер",
+      "product": "Производимый товар",
+      "warehouse": "Склад",
+      "quantity": "Производимое количество",
+      "notes": "Примечания",
+      "components": "Расходуемые компоненты (BOM)",
+      "component": "Компонент",
+      "perUnit": "На единицу",
+      "required": "Требуется",
+      "selectProduct": "Сначала выберите товар.",
+      "produce": "Произвести",
+      "action": "Производство"
+    },
+    "voucher": {
+      "selectWarehouse": "Выберите…",
+      "warehouseRequired": "Выберите склад.",
+      "toWarehouseRequired": "Выберите другой склад назначения.",
+      "linesRequired": "Добавьте хотя бы одну корректную строку.",
+      "posted": "Обработано строк: {{count}}.",
+      "partial": "Обработано {{ok}} строк, не выполнено {{failed}}.",
+      "fromWarehouse": "Склад-источник",
+      "warehouse": "Склад",
+      "toWarehouse": "Склад назначения",
+      "reference": "Номер / ссылка документа",
+      "notes": "Примечания",
+      "product": "Товар",
+      "counted": "Подсчитано",
+      "quantity": "Количество",
+      "unitCost": "Цена за единицу",
+      "onHand": "В наличии",
+      "addLine": "Добавить строку",
+      "post": "Провести ваучер"
+    },
+    "status": {
+      "warehouse": "Склад",
+      "allWarehouses": "Все склады",
+      "belowReorderOnly": "Только ниже точки заказа",
+      "totalCount": "{{count}} записей",
+      "empty": "Записи об остатках не найдены."
+    },
+    "warehouse": {
+      "created": "Склад создан.",
+      "updated": "Склад обновлён.",
+      "new": "Новый склад",
+      "edit": "Редактировать склад",
+      "code": "Код",
+      "type": "Тип",
+      "name": "Наименование",
+      "address": "Адрес",
+      "city": "Город",
+      "country": "Страна",
+      "phone": "Телефон",
+      "isDefault": "Склад по умолчанию",
+      "isActive": "Активен",
+      "deleteTitle": "Удалить склад",
+      "deleteConfirm": "Удалить {{name}}?",
+      "deleted": "Склад удалён.",
+      "count": "{{count}} складов",
+      "empty": "Склады ещё не заданы.",
+      "location": "Расположение",
+      "status": "Статус"
+    },
+    "page": {
+      "title": "Управление запасами",
+      "subtitle": "Остатки, количества и все движения по складам ― в одном экране."
+    }
+  },
+  "Validation": {
+    "Required": "Это поле обязательно.",
+    "InvalidEmail": "Введите корректный адрес электронной почты.",
+    "EmailTooLong": "Адрес электронной почты слишком длинный.",
+    "PasswordTooShort": "Пароль должен содержать минимум 8 символов.",
+    "PasswordMismatch": "Пароли не совпадают.",
+    "PasswordNeedsUppercase": "Пароль должен содержать хотя бы одну заглавную букву.",
+    "PasswordNeedsLowercase": "Пароль должен содержать хотя бы одну строчную букву.",
+    "PasswordNeedsDigit": "Пароль должен содержать хотя бы одну цифру.",
+    "PasswordNeedsSpecial": "Пароль должен содержать хотя бы один специальный символ.",
+    "UsernameTooShort": "Имя пользователя должно содержать минимум 3 символа.",
+    "UsernameTooLong": "Имя пользователя не должно превышать 64 символа.",
+    "UsernameInvalidChars": "Имя пользователя может содержать только буквы, цифры, точки, дефисы и подчёркивания.",
+    "OrganizationNameTooShort": "Название организации должно содержать минимум 2 символа.",
+    "OrganizationNameTooLong": "Название организации не должно превышать 150 символов.",
+    "NameTooShort": "Имя должно содержать минимум 2 символа.",
+    "NameTooLong": "Имя слишком длинное.",
+    "TooLong": "Слишком длинное значение.",
+    "NonNegative": "Не может быть отрицательным.",
+    "CurrencyLength": "Код валюты должен содержать 3 символа.",
+    "CurrencyFormat": "Используйте ISO-код в верхнем регистре (например, USD).",
+    "Positive": "Должно быть положительным.",
+    "AtLeastOneLine": "Добавьте хотя бы одну строку.",
+    "PasswordMustDiffer": "Новый пароль должен отличаться от текущего."
+  },
+  "profile": {
+    "title": "Мой профиль",
+    "tabs": {
+      "profile": "Профиль",
+      "security": "Безопасность"
+    },
+    "fields": {
+      "firstName": "Имя",
+      "firstNamePlaceholder": "Иван",
+      "lastName": "Фамилия",
+      "lastNamePlaceholder": "Иванов",
+      "phoneNumber": "Телефон",
+      "phonePlaceholder": "+7 999 000 00 00",
+      "avatarUrl": "URL аватара"
+    },
+    "security": {
+      "note": "После смены пароля все сеансы будут завершены.",
+      "currentPassword": "Текущий пароль",
+      "newPassword": "Новый пароль",
+      "confirmPassword": "Подтвердите новый пароль",
+      "submit": "Сменить пароль"
+    },
+    "toast": {
+      "profileUpdated": "Профиль обновлён.",
+      "passwordChanged": "Пароль изменён. Войдите снова."
+    }
+  },
+  "orders": {
+    "title": "Заказы",
+    "subtitle": "Управление заказами клиентов.",
+    "searchPlaceholder": "Поиск по номеру или клиенту...",
+    "addNew": "Новый заказ",
+    "empty": "Заказы отсутствуют.",
+    "confirmDelete": "Удалить заказ {{number}}?",
+    "status": {
+      "Draft": "Черновик",
+      "Submitted": "Отправлен",
+      "Approved": "Утверждён",
+      "Allocated": "Зарезервирован",
+      "Picking": "Комплектуется",
+      "Packed": "Упакован",
+      "PartiallyShipped": "Частично отгружен",
+      "Shipped": "Отгружен",
+      "Delivered": "Доставлен",
+      "Closed": "Закрыт",
+      "Cancelled": "Отменён",
+      "Returned": "Возвращён",
+      "Confirmed": "Подтверждён",
+      "changeHint": "Изменить статус"
+    },
+    "shipmentStatus": {
+      "Draft": "Черновик",
+      "Picked": "Скомплектован",
+      "Packed": "Упакован",
+      "Dispatched": "В пути",
+      "Delivered": "Доставлен",
+      "Cancelled": "Отменён",
+      "Returned": "Возвращён"
+    },
+    "actions": {
+      "submit": "Отправить",
+      "approve": "Утвердить",
+      "allocate": "Зарезервировать",
+      "cancel": "Отменить",
+      "deliver": "Отметить доставленным",
+      "close": "Закрыть заказ",
+      "createShipment": "Создать отгрузку",
+      "pickShipment": "Отметить скомплектованным",
+      "packShipment": "Отметить упакованным",
+      "dispatchShipment": "Отгрузить",
+      "deliverShipment": "Отметить доставленным",
+      "cancelShipment": "Отменить отгрузку",
+      "generateInvoice": "Сформировать счёт",
+      "scrap": "Зафиксировать брак"
+    },
+    "timeline": {
+      "title": "История статусов",
+      "draftedAt": "Создан черновик",
+      "submittedAt": "Отправлен",
+      "approvedAt": "Утверждён",
+      "cancelledAt": "Отменён",
+      "deliveredAt": "Доставлен"
+    },
+    "shipments": {
+      "title": "Отгрузки",
+      "empty": "Отгрузки отсутствуют.",
+      "carrier": "Перевозчик",
+      "trackingNumber": "Номер отслеживания",
+      "trackingUrl": "URL отслеживания",
+      "shippingCost": "Стоимость доставки",
+      "receivedBy": "Получил",
+      "createTitle": "Создать отгрузку",
+      "selectLines": "Выберите строки и количество к отгрузке",
+      "remaining": "Остаток: {{value}}"
+    },
+    "columns": {
+      "orderNumber": "№ заказа",
+      "customer": "Клиент",
+      "orderDate": "Дата",
+      "status": "Статус",
+      "total": "Итого",
+      "actions": "Действия"
+    },
+    "fields": {
+      "orderNumber": "Номер заказа",
+      "orderDate": "Дата заказа",
+      "customer": "Клиент",
+      "customerPlaceholder": "Выберите клиента",
+      "status": "Статус",
+      "currency": "Валюта",
+      "total": "Итого",
+      "notes": "Примечания",
+      "notesPlaceholder": "Внутренние примечания",
+      "lines": "Строки заказа",
+      "terms": "Условия",
+      "dueDate": "Срок оплаты",
+      "requestedDelivery": "Запрошенная доставка",
+      "channel": "Канал",
+      "type": "Тип заказа",
+      "source": "Источник",
+      "exchangeRate": "Курс валюты",
+      "promisedDelivery": "Обещанная доставка",
+      "paymentTerms": "Условия оплаты",
+      "priceList": "Прайс-лист",
+      "billingAddress": "Адрес выставления счёта",
+      "shippingAddress": "Адрес доставки",
+      "headerDiscount": "Скидка %",
+      "shippingCost": "Стоимость доставки",
+      "internalNotes": "Внутренние примечания",
+      "customerNotes": "Примечания для клиента",
+      "roundingAdjustment": "Округление / корректировка суммы"
+    },
+    "sections": {
+      "general": "Общие сведения",
+      "commercial": "Коммерческие условия",
+      "addresses": "Адреса",
+      "notes": "Примечания"
+    },
+    "type": {
+      "Standard": "Стандартный",
+      "Blanket": "Рамочный",
+      "Return": "Возврат",
+      "Sample": "Образец",
+      "Internal": "Внутренний"
+    },
+    "source": {
+      "Manual": "Вручную",
+      "Web": "Веб",
+      "Api": "API",
+      "Edi": "EDI",
+      "Marketplace": "Маркетплейс",
+      "Phone": "Телефон",
+      "InStore": "В магазине"
+    },
+    "summary": {
+      "subtotal": "Подытог",
+      "lineDiscount": "Скидки по строкам",
+      "headerDiscount": "Скидка на заказ",
+      "taxableTotal": "Налогооблагаемая сумма",
+      "tax": "НДС",
+      "withholding": "Удержание",
+      "shipping": "Доставка",
+      "grandTotal": "Итого к оплате",
+      "estimate": "Расчётно ― итоговые суммы вычисляются при сохранении",
+      "rounding": "Округление"
+    },
+    "dueToday": "Срок сегодня",
+    "dueIn": "Срок через {{count}} дн.",
+    "overdueBy": "Просрочено {{count}} дн.",
+    "overdue": "Просрочено",
+    "lines": {
+      "add": "Добавить строку",
+      "product": "Товар",
+      "productPlaceholder": "Выберите товар",
+      "quantity": "Кол-во",
+      "unitPrice": "Цена за ед.",
+      "discountPercent": "Скидка %",
+      "taxRate": "НДС",
+      "taxRatePlaceholder": "Ставка НДС",
+      "withholding": "Удерж. %",
+      "warehouse": "Склад",
+      "warehousePlaceholder": "Выберите склад",
+      "lineNotes": "Примечание к строке",
+      "lineTotal": "Сумма строки",
+      "none": "―"
+    },
+    "modal": {
+      "createTitle": "Новый заказ",
+      "editTitle": "Редактирование заказа"
+    },
+    "toast": {
+      "created": "Заказ создан.",
+      "updated": "Заказ обновлён.",
+      "deleted": "Заказ удалён.",
+      "invoiceGenerated": "Счёт сформирован."
+    },
+    "confirmGenerateInvoice": "Сформировать счёт для {{number}}?",
+    "detail": {
+      "tabs": {
+        "overview": "Обзор",
+        "lines": "Строки",
+        "margin": "Маржа",
+        "allocations": "Резервирование",
+        "customer": "Клиент",
+        "invoices": "Счета",
+        "audit": "Аудит",
+        "notes": "Примечания"
+      },
+      "metrics": {
+        "total": "Итого по заказу",
+        "lines": "Строки",
+        "units": "ед.",
+        "shipped": "Отгружено",
+        "invoiced": "Выставлено"
+      },
+      "billingAddress": "Адрес выставления счёта",
+      "shippingAddress": "Адрес доставки",
+      "noBillingAddress": "Адрес выставления счёта не указан.",
+      "noShippingAddress": "Адрес доставки не указан.",
+      "customerSnapshot": "Карточка клиента",
+      "lineProgress": "Прогресс по строкам",
+      "lineProgressShipped": "Отгружено",
+      "lineProgressInvoiced": "Выставлено",
+      "financial": {
+        "title": "Финансовая разбивка",
+        "subtotal": "Подытог",
+        "lineDiscount": "Скидки по строкам",
+        "headerDiscount": "Скидка по заказу ({{pct}}%)",
+        "taxable": "Налогооблагаемая сумма",
+        "tax": "НДС",
+        "withholding": "Удержание",
+        "shipping": "Доставка",
+        "rounding": "Округление",
+        "total": "Итого"
+      },
+      "noLines": "В заказе нет строк.",
+      "noNotes": "Примечания к заказу отсутствуют.",
+      "noCustomer": "Не удалось загрузить данные клиента.",
+      "noInvoices": "По этому заказу счета ещё не сформированы."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} из {{total}}",
+      "previous": "Назад",
+      "next": "Далее"
+    },
+    "margin": {
+      "lineTitle": "Маржа по строкам",
+      "unitCost": "Себестоимость ед.",
+      "unitPrice": "Цена за ед.",
+      "revenue": "Выручка",
+      "cost": "Себестоимость",
+      "profit": "Прибыль",
+      "marginPct": "Маржа %",
+      "markupShort": "Наценка",
+      "total": "Итого",
+      "partialCost": "Неполные данные о себестоимости",
+      "missingCostWarning": "У некоторых строк нет зафиксированной себестоимости ― маржа рассчитана только по строкам с данными о себестоимости.",
+      "loss": "Убыток",
+      "thin": "Низкая",
+      "healthy": "Нормальная"
+    },
+    "allocations": {
+      "empty": "Резервирование запасов отсутствует.",
+      "list": "Резервы",
+      "byWarehouse": "Зарезервировано по складам",
+      "totalAllocated": "Зарезервировано",
+      "consumed": "Списано",
+      "remaining": "Осталось",
+      "released": "Снято",
+      "remainingLabel": "осталось",
+      "status": {
+        "Active": "Активный",
+        "PartiallyConsumed": "Частично",
+        "Consumed": "Списан",
+        "Released": "Снят"
+      }
+    },
+    "audit": {
+      "title": "Журнал аудита",
+      "created": "Заказ создан",
+      "submitted": "Отправлен на утверждение",
+      "approved": "Утверждён",
+      "delivered": "Доставлен",
+      "cancelled": "Отменён",
+      "updated": "Последнее обновление",
+      "currentStatus": "Текущий статус",
+      "lastUpdate": "Последнее обновление",
+      "deliveryDates": "Обязательства по доставке",
+      "requestedDelivery": "Запрошено клиентом",
+      "promisedDelivery": "Обещано клиенту",
+      "actualDelivery": "Фактическая доставка",
+      "dueDate": "Срок оплаты"
+    },
+    "tabs": {
+      "info": "Общие",
+      "lines": "Позиции"
+    },
+    "emptyHint": "Создайте первый заказ, чтобы запустить процесс продаж.",
+    "scrap": {
+      "invalid": "Укажите позицию, склад и корректное количество.",
+      "exceeds": "Количество брака не может превышать остаток ({{max}}).",
+      "done": "Брак зафиксирован.",
+      "title": "Зафиксировать брак",
+      "noLines": "Нет позиций для фиксации брака.",
+      "line": "Позиция",
+      "remaining": "Осталось",
+      "quantity": "Количество брака",
+      "max": "Максимум",
+      "warehouse": "Склад",
+      "selectWarehouse": "Выберите…",
+      "notes": "Причина / примечания к браку",
+      "notesPlaceholder": "Напр., производственный дефект, повреждение…",
+      "submit": "Сохранить брак"
+    },
+    "stats": {
+      "total": "Заказы (страница)",
+      "totalHint": "{{count}} из {{all}}",
+      "pageVolume": "Объём на странице",
+      "avg": "Среднее",
+      "open": "Открытая воронка",
+      "drafts": "Черновики в ожидании",
+      "draftsHint": "Отправить или отменить"
+    },
+    "eyebrow": "Продажи · Выполнение",
+    "filter": {
+      "all": "Все",
+      "open": "Открытые",
+      "fulfilled": "Выполненные",
+      "closed": "Закрытые",
+      "cancelled": "Отменённые",
+      "draftsOnly": "Только черновики",
+      "highValue": "Высокая сумма (≥1.5× от средней)"
+    },
+    "resultCountLabel": "заказов"
+  },
+  "invoices": {
+    "title": "Счета",
+    "subtitle": "Выставленные счета и платежи.",
+    "searchPlaceholder": "Поиск по номеру или клиенту...",
+    "empty": "Счета отсутствуют.",
+    "confirmMarkPaid": "Отметить {{number}} как оплаченный?",
+    "confirmCancel": "Отменить счёт {{number}}?",
+    "status": {
+      "Draft": "Черновик",
+      "Issued": "Выставлен",
+      "Sent": "Отправлен",
+      "PartiallyPaid": "Частично оплачен",
+      "Paid": "Оплачен",
+      "Overdue": "Просрочен",
+      "Void": "Аннулирован",
+      "Cancelled": "Отменён",
+      "changeHint": "Изменить статус"
+    },
+    "paymentStatus": {
+      "Draft": "Черновик",
+      "Confirmed": "Подтверждён",
+      "PartiallyApplied": "Частично применён",
+      "FullyApplied": "Полностью применён",
+      "Refunded": "Возвращён",
+      "Void": "Аннулирован"
+    },
+    "paymentMethod": {
+      "Cash": "Наличные",
+      "BankTransfer": "Банковский перевод",
+      "CreditCard": "Кредитная карта",
+      "DebitCard": "Дебетовая карта",
+      "Check": "Чек",
+      "PromissoryNote": "Вексель",
+      "OnlineGateway": "Онлайн-платёж",
+      "Other": "Иное"
+    },
+    "columns": {
+      "invoiceNumber": "№ счёта",
+      "customer": "Клиент",
+      "issueDate": "Дата выставления",
+      "dueDate": "Срок оплаты",
+      "status": "Статус",
+      "total": "Итого",
+      "actions": "Действия"
+    },
+    "fields": {
+      "product": "Товар",
+      "quantity": "Кол-во",
+      "unitPrice": "Цена за ед.",
+      "lineTotal": "Сумма строки",
+      "total": "Итого",
+      "issueDate": "Дата выставления",
+      "dueDate": "Срок оплаты",
+      "postingDate": "Дата проводки",
+      "type": "Тип",
+      "currency": "Валюта",
+      "paidAt": "Оплачен",
+      "cancelledAt": "Отменён",
+      "notes": "Примечания"
+    },
+    "type": {
+      "SalesInvoice": "Счёт-фактура",
+      "ProForma": "Проформа",
+      "CreditNote": "Кредитное авизо",
+      "DebitNote": "Дебетовое авизо",
+      "Advance": "Аванс"
+    },
+    "dueSoon": "Срок скоро",
+    "detail": {
+      "title": "Счёт",
+      "tabs": {
+        "overview": "Обзор",
+        "lines": "Строки",
+        "payments": "Платежи",
+        "ledger": "Проводки и напоминания",
+        "activity": "Активность",
+        "notes": "Примечания"
+      },
+      "metrics": {
+        "lines": "Строки",
+        "paid": "Оплачено",
+        "due": "К оплате",
+        "totalInvoice": "Итого по счёту"
+      },
+      "linkedOrder": "Исходный заказ",
+      "paymentProgress": "Прогресс оплаты",
+      "paymentsApplied": "Применённые платежи",
+      "noPayments": "Платежи ещё не применены.",
+      "taxBreakdown": "Разбивка по НДС",
+      "tax": {
+        "rate": "Ставка",
+        "base": "База",
+        "amount": "Сумма"
+      },
+      "eInvoice": "Электронный счёт",
+      "eInvoiceUuid": "UUID электронного счёта",
+      "eInvoiceStatus": "Статус",
+      "postedToLedger": "Проведён в учёте",
+      "issuedAt": "Выставлен",
+      "noNotes": "Примечания к счёту отсутствуют.",
+      "activity": {
+        "created": "Создан",
+        "issued": "Выставлен",
+        "paid": "Оплачен",
+        "cancelled": "Отменён"
+      }
+    },
+    "actions": {
+      "markPaid": "Отметить оплаченным",
+      "cancel": "Отменить счёт",
+      "print": "Печать счёта",
+      "recordPayment": "Зафиксировать платёж"
+    },
+    "ledger": {
+      "glTitle": "Предпросмотр проводки",
+      "posted": "Проведено",
+      "notPosted": "В ожидании",
+      "account": "Счёт",
+      "description": "Описание",
+      "debit": "Дебет",
+      "credit": "Кредит",
+      "total": "Итого",
+      "balanced": "Сбалансирована",
+      "unbalanced": "Не сбалансирована",
+      "linkedDocs": "Связанные документы",
+      "creditNote": "Кредитное авизо",
+      "originInvoice": "Исходный счёт",
+      "dunning": {
+        "title": "Статус взыскания",
+        "clear": "Нет задолженности",
+        "level1": "Дружеское напоминание",
+        "level2": "Повторное уведомление",
+        "level3": "Окончательное уведомление",
+        "daysOverdue": "Дней просрочки",
+        "recommended": "Рекомендуемое действие",
+        "noActionNeeded": "Действия не требуются",
+        "action1": "Отправить напоминание по e-mail",
+        "action2": "Отправить повторное уведомление",
+        "action3": "Передать на взыскание",
+        "guidance": "Счёт просрочен на {{count}} дн. Рекомендуется напоминание или передача на взыскание."
+      },
+      "reminders": {
+        "title": "История напоминаний",
+        "first": "Счёт отправлен",
+        "followUp": "Повторное напоминание",
+        "final": "Окончательное уведомление",
+        "suggested": "Рекомендуется сейчас",
+        "escalate": "Передать на взыскание",
+        "note": "Исходящие напоминания в очереди ― подключите SMTP для отправки.",
+        "sendCta": "Отправить напоминание"
+      }
+    },
+    "print": {
+      "button": "Печать",
+      "heading": "СЧЁТ",
+      "from": "Выставлен",
+      "billTo": "Кому",
+      "footer": "Благодарим за сотрудничество."
+    },
+    "toast": {
+      "paid": "Счёт отмечен как оплаченный.",
+      "cancelled": "Счёт отменён."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} из {{total}}",
+      "previous": "Назад",
+      "next": "Далее"
+    },
+    "emptyHint": "Создавайте счета из заказов или формируйте их вручную.",
+    "stats": {
+      "total": "Счета (страница)",
+      "totalHint": "{{count}} из {{all}}",
+      "outstanding": "Дебиторская задолженность",
+      "openInvoices": "открытых",
+      "collected": "Получено (страница)",
+      "overdue": "Просрочено",
+      "overdueHint": "просроченных счетов"
+    },
+    "eyebrow": "Финансы · Дебиторка",
+    "filter": {
+      "all": "Все",
+      "open": "Открытые",
+      "overdue": "Просроченные",
+      "paid": "Оплаченные",
+      "cancelled": "Отменённые",
+      "dueSoon": "Срок ≤7 дн."
+    },
+    "resultCountLabel": "счетов"
+  },
+  "products": {
+    "tabs": {
+      "general": "Общие",
+      "pricing": "Цены и запасы",
+      "logistics": "Логистика и жизненный цикл"
+    },
+    "title": "Товары",
+    "subtitle": "Управление каталогом товаров.",
+    "searchPlaceholder": "Поиск по SKU, наименованию, описанию...",
+    "addNew": "Новый товар",
+    "empty": "Товары отсутствуют.",
+    "confirmDelete": "Удалить «{{name}}»?",
+    "columns": {
+      "sku": "SKU",
+      "name": "Наименование",
+      "price": "Цена",
+      "stock": "Остаток",
+      "status": "Статус",
+      "actions": "Действия"
+    },
+    "fields": {
+      "sku": "SKU",
+      "skuPlaceholder": "PRD-001",
+      "name": "Наименование",
+      "namePlaceholder": "Название товара",
+      "description": "Описание",
+      "descriptionPlaceholder": "Внутреннее описание",
+      "unit": "Единица",
+      "unitPlaceholder": "шт., кг, час",
+      "price": "Цена",
+      "currency": "Валюта",
+      "stockQuantity": "Остаток",
+      "isActive": "Активен",
+      "shortDescription": "Краткое описание",
+      "barcode": "Штрихкод",
+      "mpn": "MPN",
+      "brand": "Бренд",
+      "category": "Категория",
+      "status": "Статус",
+      "baseUom": "Базовая единица",
+      "salesUom": "Единица продаж",
+      "purchaseUom": "Единица закупки",
+      "listPrice": "Прейскурантная цена",
+      "minSellingPrice": "Мин. цена продажи",
+      "standardCost": "Стандартная себестоимость",
+      "taxRate": "Ставка НДС",
+      "taxInclusive": "Цена включает НДС",
+      "isStockTracked": "Учёт остатков",
+      "isLotTracked": "Учёт партий",
+      "isSerialTracked": "Учёт по серийным номерам",
+      "minStock": "Мин. остаток",
+      "maxStock": "Макс. остаток",
+      "reorderPoint": "Точка заказа",
+      "safetyStock": "Страховой запас",
+      "leadTimeDays": "Срок поставки (дн.)",
+      "weightKg": "Вес (кг)",
+      "widthCm": "Ширина (см)",
+      "heightCm": "Высота (см)",
+      "depthCm": "Глубина (см)",
+      "volumeM3": "Объём (м³)",
+      "launchDate": "Дата запуска",
+      "endOfLifeDate": "Дата снятия",
+      "none": "―"
+    },
+    "sections": {
+      "identity": "Идентификация",
+      "uom": "Единицы измерения",
+      "pricing": "Цены",
+      "stock": "Запасы",
+      "logistics": "Логистика и габариты",
+      "lifecycle": "Жизненный цикл"
+    },
+    "status": {
+      "Active": "Активный",
+      "New": "Новый",
+      "Discontinued": "Снят с производства",
+      "EndOfLife": "Завершён"
+    },
+    "modal": {
+      "createTitle": "Новый товар",
+      "editTitle": "Редактирование товара"
+    },
+    "toast": {
+      "created": "Товар создан.",
+      "updated": "Товар обновлён.",
+      "deleted": "Товар удалён."
+    },
+    "detail": {
+      "tabs": {
+        "overview": "Обзор",
+        "transactions": "Операции",
+        "warehouses": "Склады",
+        "rules": "Правила",
+        "movements": "Движения"
+      },
+      "txnType": {
+        "Initial": "Начальный",
+        "Sale": "Продажа",
+        "SaleCancelled": "Отмена продажи",
+        "Restock": "Пополнение",
+        "Adjustment": "Корректировка"
+      },
+      "balance": "Остаток",
+      "noTransactions": "Складские операции отсутствуют.",
+      "warehousesComingSoon": "Разбивка по складам будет доступна в следующем релизе.",
+      "rulesComingSoon": "Составные правила запасов (BOM) скоро появятся.",
+      "components": {
+        "intro": "Составной запас: укажите подтовары, которые входят в этот товар. При продаже основного товара указанные компоненты списываются со склада.",
+        "addNew": "Добавить компонент",
+        "empty": "Компоненты не заданы. Товар является самостоятельным.",
+        "confirmDelete": "Удалить компонент «{{name}}»?",
+        "toast": {
+          "added": "Компонент добавлен.",
+          "updated": "Компонент обновлён.",
+          "removed": "Компонент удалён."
+        },
+        "fields": {
+          "component": "Компонент",
+          "componentPlaceholder": "Выберите товар-компонент...",
+          "quantity": "Количество на единицу родителя",
+          "notes": "Примечания"
+        }
+      }
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} из {{total}}",
+      "previous": "Назад",
+      "next": "Далее"
+    },
+    "emptyHint": "Создайте первый товар, чтобы запустить заказы, счета и учёт запасов.",
+    "reorderAt": "Точка заказа",
+    "outOfStock": "Нет в наличии",
+    "lowStock": "Низкий остаток",
+    "stats": {
+      "total": "Товары (страница)",
+      "totalHint": "{{count}} из {{all}}",
+      "inventoryValue": "Стоимость запасов",
+      "inventoryHint": "По средней цене",
+      "lowStock": "Низкий остаток",
+      "lowStockHint": "Нажмите для фильтрации",
+      "outOfStock": "Нет в наличии",
+      "outOfStockHint": "Требуется пополнение"
+    },
+    "eyebrow": "Запасы · Каталог",
+    "filter": {
+      "all": "Все",
+      "tracked": "С учётом остатков",
+      "lowStock": "Низкий остаток",
+      "outOfStock": "Нет в наличии"
+    },
+    "statusLabel": {
+      "Active": "Активный",
+      "New": "Новый",
+      "Discontinued": "Снят",
+      "EndOfLife": "Завершён"
+    },
+    "resultCountLabel": "товаров"
+  },
+  "errorState": {
+    "title": "Что-то пошло не так",
+    "description": "Не удалось загрузить данные. Повторите попытку.",
+    "retry": "Повторить"
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "empty": "Новых уведомлений нет",
+    "viewAll": "Просмотреть всю активность"
+  },
+  "collab": {
+    "comments": {
+      "tab": "Комментарии",
+      "title": "Комментарии",
+      "open": "Открыть комментарии",
+      "count_one": "{{count}} комментарий",
+      "count_other": "{{count}} комментариев",
+      "empty": "Комментариев пока нет. Начните обсуждение.",
+      "placeholder": "Написать комментарий…",
+      "replyPlaceholder": "Написать ответ…",
+      "submit": "Опубликовать",
+      "reply": "Ответить",
+      "edited": "изменено",
+      "deleted": "Комментарий удалён",
+      "shortcutHint": "Ctrl/⌘ + Enter для отправки"
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "empty": "Новых уведомлений нет",
+      "markAllRead": "Отметить все как прочитанные"
+    },
+    "entity": {
+      "order": "Заказ",
+      "vendorBill": "Счёт",
+      "shipment": "Отгрузка",
+      "subscriptionOrder": "Подписка"
+    }
+  },
+  "common": {
+    "unsaved": {
+      "title": "Несохранённые изменения",
+      "message": "У вас есть несохранённые изменения. Действительно покинуть страницу?",
+      "discard": "Отменить изменения",
+      "keep": "Продолжить редактирование"
+    },
+    "add_new": "Добавить",
+    "edit": "Изменить",
+    "delete": "Удалить",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "loading": "Загрузка...",
+    "success": "Успешно",
+    "error": "Ошибка",
+    "warning": "Предупреждение",
+    "info": "Информация",
+    "active": "Активный",
+    "inactive": "Неактивный",
+    "pagination": "Страница {{page}} из {{totalPages}}",
+    "prev": "Назад",
+    "next": "Далее",
+    "confirm": "Подтвердить",
+    "confirmDelete": "Удалить",
+    "view": "Просмотр",
+    "back": "Назад",
+    "details": "Подробнее",
+    "close": "Закрыть",
+    "saving": "Отправка…",
+    "created": "Создано.",
+    "updated": "Обновлено.",
+    "deleted": "Удалено.",
+    "new": "Новый",
+    "deactivate": "Деактивировать",
+    "activate": "Активировать",
+    "exportCsv": "Экспорт в CSV",
+    "export": "Экспорт",
+    "unknown": "Неизвестно"
+  },
+  "activity": {
+    "title": "Журнал активности",
+    "subtitle": "Все операции записи, выполненные в вашей организации.",
+    "empty": "Записи активности отсутствуют.",
+    "columns": {
+      "time": "Время",
+      "method": "Метод",
+      "path": "Путь",
+      "status": "Статус",
+      "duration": "Длительность",
+      "user": "Пользователь",
+      "ip": "IP"
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} из {{total}}",
+      "previous": "Назад",
+      "next": "Далее"
+    }
+  },
+  "customers": {
+    "tabs": {
+      "general": "Общие",
+      "commercial": "Коммерческие условия",
+      "notes": "Примечания"
+    },
+    "title": "Клиенты",
+    "subtitle": "Управление карточками клиентов.",
+    "eyebrow": "Продажи · CRM",
+    "emptyHint": "Добавьте первого клиента, чтобы отслеживать заказы, счета и платежи.",
+    "resultCountLabel": "результатов",
+    "statusLabel": {
+      "Active": "Активный",
+      "Blocked": "Заблокирован",
+      "Archived": "В архиве"
+    },
+    "stats": {
+      "total": "Всего клиентов",
+      "outstanding": "Задолженность (страница)",
+      "outstandingHint": "По {{count}} клиентам",
+      "overdue": "Просроченная дебиторка",
+      "overdueHint": "{{count}} клиентов",
+      "atRisk": "Кредит в зоне риска (≥80%)",
+      "atRiskHint": "Нажмите для фильтрации"
+    },
+    "filter": {
+      "all": "Все",
+      "overdue": "С просрочкой",
+      "atRisk": "Кредит ≥ 80%",
+      "statusAria": "Фильтр по статусу"
+    },
+    "analytics": {
+      "noData": "Недостаточно данных для аналитики.",
+      "lifetimeValue": "Пожизненная ценность",
+      "totalPaid": "Всего оплачено",
+      "avgOrderValue": "Средний заказ",
+      "relationshipMonths": "Месяцев активности",
+      "paymentsLabel": "платежей",
+      "paymentBehavior": "Платёжное поведение",
+      "onTimePayments": "Вовремя",
+      "latePayments": "С опозданием",
+      "avgDaysToPay": "Среднее время оплаты",
+      "daysShort": "дн.",
+      "aheadOfDue": "до срока",
+      "pastDue": "после срока",
+      "monthlyRevenue": "Динамика выручки ({{count}} мес.)",
+      "avgMonth": "Среднее/мес.",
+      "peakMonth": "Пиковый месяц",
+      "totalPeriod": "Итого",
+      "invoicesPeriod": "Счета",
+      "topProducts": "Топ-товары по выручке",
+      "orderStatusBreakdown": "Заказы по статусам",
+      "invoiceStatusBreakdown": "Счета по статусам",
+      "tier": {
+        "excellent": "Отлично",
+        "fair": "Удовлетворительно",
+        "poor": "Плохо"
+      }
+    },
+    "detail": {
+      "subtitle": "Обзор клиента, заказов и счетов.",
+      "tabs": {
+        "overview": "Обзор",
+        "analytics": "Аналитика",
+        "transactions": "Операции",
+        "addresses": "Адреса",
+        "contacts": "Контакты",
+        "orders": "Заказы",
+        "invoices": "Счета",
+        "notes": "Примечания",
+        "mail": "Отправить письмо"
+      },
+      "metrics": {
+        "orders": "Заказы",
+        "invoiced": "Всего выставлено",
+        "paid": "Всего оплачено",
+        "outstanding": "Задолженность",
+        "invoiceCount": "счетов",
+        "balance": "Баланс",
+        "creditLine": "Кредит и баланс",
+        "creditLimit": "Кредитный лимит",
+        "available": "Доступно",
+        "creditUsed": "Использовано",
+        "overdue": "Просрочено",
+        "overLimit": "Превышен лимит"
+      },
+      "txnType": {
+        "InvoiceIssued": "Счёт выставлен",
+        "Payment": "Платёж",
+        "Refund": "Возврат",
+        "Adjustment": "Корректировка"
+      },
+      "snapshot": "Сводка",
+      "primaryAddress": "Основной адрес",
+      "primaryContact": "Основной контакт",
+      "noPrimaryAddress": "Основной адрес не задан.",
+      "noPrimaryContact": "Основной контакт не задан.",
+      "recentActivity": "Недавняя активность",
+      "noRecentActivity": "Недавней активности нет.",
+      "blockedTitle": "Клиент заблокирован",
+      "overdueWarning": "Просроченная задолженность: {{amount}}",
+      "actions": {
+        "newOrder": "Новый заказ",
+        "newInvoice": "Новый счёт",
+        "recordPayment": "Зафиксировать платёж"
+      },
+      "meta": {
+        "group": "Группа",
+        "salesRep": "Менеджер",
+        "priceList": "Прайс-лист",
+        "paymentTerms": "Условия",
+        "netDays": "Нетто {{count}} дн."
+      },
+      "activity": {
+        "Order": "Заказ",
+        "Invoice": "Счёт",
+        "Payment": "Платёж"
+      },
+      "noOrders": "У клиента ещё нет заказов.",
+      "noInvoices": "У клиента ещё нет счетов.",
+      "noTransactions": "Операций пока нет.",
+      "noNotes": "Примечаний по клиенту нет.",
+      "mailNotice": "Исходящая почта ещё не подключена к SMTP ― это предпросмотр.",
+      "mailTo": "Кому",
+      "mailSubject": "Тема",
+      "mailBody": "Текст",
+      "mailSend": "Отправить",
+      "mailComingSoon": "Письмо «{{subject}}» поставлено в очередь (только предпросмотр).",
+      "addresses": {
+        "addNew": "Добавить адрес",
+        "empty": "Адресов пока нет.",
+        "primary": "Основной",
+        "confirmDelete": "Удалить адрес «{{label}}»?",
+        "toast": {
+          "created": "Адрес добавлен.",
+          "updated": "Адрес обновлён.",
+          "deleted": "Адрес удалён."
+        },
+        "fields": {
+          "label": "Метка",
+          "labelPlaceholder": "Юридический, доставки...",
+          "line1": "Адресная строка 1",
+          "line2": "Адресная строка 2",
+          "city": "Город",
+          "state": "Регион / область",
+          "postalCode": "Почтовый индекс",
+          "country": "Страна",
+          "isPrimary": "Сделать основным"
+        }
+      },
+      "contacts": {
+        "addNew": "Добавить контакт",
+        "empty": "Контакты отсутствуют.",
+        "primary": "Основной",
+        "confirmDelete": "Удалить контакт «{{name}}»?",
+        "toast": {
+          "created": "Контакт добавлен.",
+          "updated": "Контакт обновлён.",
+          "deleted": "Контакт удалён."
+        },
+        "fields": {
+          "name": "Имя",
+          "role": "Должность",
+          "rolePlaceholder": "Бухгалтер, закупщик...",
+          "email": "E-mail",
+          "phone": "Телефон",
+          "notes": "Примечания",
+          "isPrimary": "Сделать основным"
+        }
+      }
+    },
+    "searchPlaceholder": "Поиск по имени, e-mail, телефону...",
+    "addNew": "Новый клиент",
+    "empty": "Клиенты отсутствуют.",
+    "confirmDelete": "Удалить «{{name}}»?",
+    "columns": {
+      "name": "Наименование",
+      "email": "E-mail",
+      "phone": "Телефон",
+      "status": "Статус",
+      "actions": "Действия",
+      "balance": "Баланс",
+      "creditUsage": "Кредит"
+    },
+    "fields": {
+      "name": "Наименование",
+      "namePlaceholder": "ООО «Ромашка»",
+      "email": "E-mail",
+      "emailPlaceholder": "billing@example.com",
+      "phone": "Телефон",
+      "phonePlaceholder": "+7 999 000 00 00",
+      "taxNumber": "ИНН",
+      "taxNumberPlaceholder": "ИНН / VAT",
+      "taxOffice": "Налоговая инспекция",
+      "nationalId": "Идентификационный номер",
+      "type": "Тип",
+      "code": "Код",
+      "legalName": "Юридическое наименование",
+      "tradeName": "Торговое наименование",
+      "currency": "Валюта",
+      "address": "Адрес",
+      "addressPlaceholder": "Улица, город, страна",
+      "notes": "Примечания",
+      "notesPlaceholder": "Внутренние примечания",
+      "isActive": "Активен"
+    },
+    "type": {
+      "Individual": "Физическое лицо",
+      "Business": "Юридическое лицо",
+      "Government": "Государственная организация"
+    },
+    "modal": {
+      "createTitle": "Новый клиент",
+      "editTitle": "Редактирование клиента"
+    },
+    "toast": {
+      "created": "Клиент создан.",
+      "updated": "Клиент обновлён.",
+      "deleted": "Клиент удалён."
+    },
+    "pagination": {
+      "summary": "{{from}}-{{to}} из {{total}}",
+      "previous": "Назад",
+      "next": "Далее"
+    }
+  },
+  "tags": {
+    "label": "Метки",
+    "manageTitle": "Метки клиентов",
+    "selectPlaceholder": "Выберите метки…",
+    "searchOrCreate": "Найти или создать…",
+    "createNamed": "Создать «{{name}}»",
+    "empty": "Меток пока нет.",
+    "preview": "Метка",
+    "deleteConfirm": "Удалить метку «{{name}}»?",
+    "fields": {
+      "name": "Наименование",
+      "color": "Цвет"
+    }
+  },
+  "reports": {
+    "title": "Отчёты",
+    "subtitle": "Аналитика по продажам, клиентам и просрочкам.",
+    "bucket": {
+      "day": "День",
+      "week": "Неделя",
+      "month": "Месяц"
+    },
+    "kpi": {
+      "revenue": "Выручка",
+      "collected": "Получено",
+      "collectionRate": "коэффициент сбора",
+      "invoices": "Счета",
+      "activeCustomers": "Активные клиенты"
+    },
+    "salesTrend": {
+      "title": "Динамика продаж",
+      "empty": "В этом периоде продаж нет."
+    },
+    "aging": {
+      "title": "Сводка по срокам задолженности",
+      "empty": "Открытой дебиторки нет.",
+      "byCustomer": "Топ-клиенты по задолженности"
+    },
+    "topCustomers": {
+      "title": "Топ-клиенты",
+      "empty": "В этом периоде активности клиентов нет.",
+      "orders": "Заказы",
+      "outstanding": "Задолженность"
+    },
+    "topProducts": {
+      "title": "Топ-товары",
+      "empty": "В этом периоде продаж товаров нет.",
+      "product": "Товар",
+      "sku": "SKU",
+      "quantity": "Продано шт.",
+      "revenue": "Выручка",
+      "invoiceCount": "Счета"
+    }
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "subtitle": "Обзор вашего бизнеса.",
+    "stats": {
+      "customers": "Клиенты",
+      "products": "Товары",
+      "orders": "Заказы",
+      "totalSales": "Общие продажи",
+      "outstandingReceivables": "Дебиторская задолженность",
+      "openInvoices": "открытых счетов",
+      "collectedThisMonth": "Получено в этом месяце",
+      "totalInvoices": "Активные счета",
+      "openAndIssued": "Открытые или отгруженные"
+    },
+    "lowStock": {
+      "title": "Низкие остатки",
+      "empty": "Все товары в достаточном количестве."
+    },
+    "recentOrders": {
+      "title": "Недавние заказы",
+      "empty": "Заказы отсутствуют."
+    },
+    "salesTrend": {
+      "title": "Продажи (последние 30 дней)",
+      "empty": "Продаж пока нет."
+    },
+    "statusChart": {
+      "title": "Заказы по статусам",
+      "empty": "Заказы отсутствуют."
+    }
+  },
+  "table": {
+    "showing": "Показано",
+    "to": "по",
+    "of": "из",
+    "results": "результатов"
+  },
+  "navigation": {
+    "dashboard": "Панель управления",
+    "users": "Пользователи",
+    "settings": "Настройки",
+    "analytics": "Аналитика"
+  },
+  "auth": {
+    "sign_in": "Войти",
+    "sign_up": "Регистрация",
+    "sign_out": "Выйти",
+    "profile": "Ваш профиль",
+    "settings": "Настройки",
+    "common": {
+      "unexpectedError": "Произошла непредвиденная ошибка."
+    },
+    "login": {
+      "title": "С возвращением",
+      "subtitle": "Введите данные для доступа к учётной записи.",
+      "emailLabel": "Адрес электронной почты",
+      "emailPlaceholder": "name@company.com",
+      "passwordLabel": "Пароль",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Запомнить меня",
+      "forgotPassword": "Забыли пароль?",
+      "submitButton": "Войти",
+      "noAccount": "Нет учётной записи?",
+      "registerLink": "Зарегистрироваться",
+      "success": {
+        "title": "Вход выполнен",
+        "message": "Вы успешно вошли в систему."
+      },
+      "errors": {
+        "loginFailed": "Не удалось войти. Повторите попытку."
+      }
+    },
+    "register": {
+      "title": "Регистрация",
+      "subtitle": "Введите данные для создания учётной записи.",
+      "organizationNameLabel": "Название организации",
+      "organizationNamePlaceholder": "ООО «Ромашка»",
+      "firstNameLabel": "Имя",
+      "firstNamePlaceholder": "Иван",
+      "lastNameLabel": "Фамилия",
+      "lastNamePlaceholder": "Иванов",
+      "usernameLabel": "Имя пользователя",
+      "usernamePlaceholder": "ivanov",
+      "emailLabel": "Адрес электронной почты",
+      "emailPlaceholder": "ivan@example.com",
+      "passwordLabel": "Пароль",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Подтверждение пароля",
+      "confirmPasswordPlaceholder": "••••••••",
+      "termsText": "Я принимаю",
+      "termsLinkText": "Условия использования",
+      "submitButton": "Создать учётную запись",
+      "haveAccountText": "Уже есть учётная запись?",
+      "loginLinkText": "Войти",
+      "success": {
+        "title": "Регистрация успешна",
+        "message": "Ваша учётная запись успешно создана.",
+        "backToLogin": "Вернуться ко входу"
+      },
+      "errors": {
+        "passwordMismatch": "Пароли не совпадают",
+        "registerFailed": "Не удалось зарегистрироваться. Повторите попытку."
+      }
+    },
+    "forgotPassword": {
+      "title": "Восстановление пароля",
+      "subtitle": "Введите адрес электронной почты, чтобы получить ссылку для сброса пароля.",
+      "emailLabel": "Адрес электронной почты",
+      "emailPlaceholder": "name@company.com",
+      "submitButton": "Отправить ссылку",
+      "backToLogin": "Вернуться ко входу",
+      "success": {
+        "title": "Ссылка отправлена",
+        "message": "Проверьте почту: мы отправили ссылку для сброса пароля.",
+        "backToLogin": "Вернуться ко входу"
+      }
+    },
+    "resetPassword": {
+      "title": "Сброс пароля",
+      "subtitle": "Введите новый пароль ниже.",
+      "passwordLabel": "Новый пароль",
+      "passwordPlaceholder": "••••••••",
+      "confirmPasswordLabel": "Подтверждение нового пароля",
+      "confirmPasswordPlaceholder": "••••••••",
+      "submitButton": "Сбросить пароль",
+      "backToLogin": "Вернуться ко входу",
+      "success": {
+        "title": "Пароль сброшен",
+        "message": "Ваш пароль успешно сброшен.",
+        "backToLogin": "Вернуться ко входу"
+      },
+      "errors": {
+        "invalidToken": "Недействительный или истёкший токен.",
+        "passwordMismatch": "Пароли не совпадают.",
+        "passwordLength": "Пароль должен содержать минимум 8 символов."
+      }
+    },
+    "verification": {
+      "title": "Подтверждение e-mail",
+      "subtitle": "Мы проверяем ваш адрес электронной почты...",
+      "success": {
+        "title": "Подтверждение успешно",
+        "message": "Ваш адрес электронной почты успешно подтверждён.",
+        "loginButton": "Перейти ко входу"
+      },
+      "errors": {
+        "invalidToken": "Недействительный или истёкший токен подтверждения.",
+        "verificationFailed": "Не удалось подтвердить. Повторите попытку."
+      }
+    }
+  },
+  "accounting": {
+    "coa": {
+      "created": "Счёт создан.",
+      "updated": "Счёт обновлён.",
+      "newAccount": "Новый счёт",
+      "editAccount": "Редактировать счёт",
+      "seedConfirm": "Будет загружен типовой план счетов. Продолжить?",
+      "seedDone": "Добавлено счетов: {{count}}.",
+      "deleteConfirm": "Удалить {{code}} — {{name}}?",
+      "title": "План счетов",
+      "subtitle": "Иерархический вид плана счетов. Проводки можно создавать только по конечным «Постируемым» счетам.",
+      "searchPlaceholder": "Поиск по коду или наименованию…",
+      "seedTurkish": "Загрузить типовой план",
+      "create": "Новый счёт",
+      "empty": "Счета пока не добавлены. Начните с загрузки типового плана.",
+      "noResults": "Подходящие счета не найдены."
+    },
+    "journal": {
+      "posted": "Проводка сохранена и проведена.",
+      "draftSaved": "Черновик проводки сохранён."
+    },
+    "periods": {
+      "created": "Период создан.",
+      "confirmClose": "Закрыть период {{code}}?",
+      "closed": "Период закрыт.",
+      "reopened": "Период открыт повторно.",
+      "confirmLock": "Заблокировать период {{code}}? Действие необратимо.",
+      "locked": "Период заблокирован.",
+      "title": "Учётные периоды",
+      "subtitle": "Закройте период, чтобы запретить проводки; заблокируйте, чтобы сделать это окончательным.",
+      "closedAt": "Закрыт",
+      "create": "Открыть период",
+      "close": "Закрыть",
+      "reopen": "Открыть повторно",
+      "lock": "Заблокировать",
+      "lockedHint": "Окончательно — повторно открыть нельзя"
+    }
+  },
+  "gl": {
+    "entriesTitle": "Бухгалтерские проводки",
+    "loadError": "Не удалось загрузить проводки.",
+    "noEntries": "По данному документу проводки ещё не созданы (возможно, в очереди или не настроены счета).",
+    "account": "Счёт",
+    "debit": "Дебет",
+    "credit": "Кредит",
+    "total": "Итого"
+  },
+  "payments": {
+    "ledger": {
+      "title": "Книга проводок",
+      "from": "С",
+      "to": "По",
+      "exportCsv": "Экспорт в CSV",
+      "recordPayment": "Зафиксировать платёж",
+      "entries": "Записи книги",
+      "empty": "Записей в книге проводок нет.",
+      "description": "Описание",
+      "debit": "Дебет",
+      "credit": "Кредит",
+      "balance": "Баланс"
+    },
+    "aging": {
+      "current": "Текущая",
+      "title": "Анализ сроков задолженности",
+      "overdueWarning": "{{amount}} просрочено более чем на 90 дней."
+    },
+    "list": {
+      "title": "Недавние платежи",
+      "unapplied": "Не применён"
+    },
+    "create": {
+      "amountRequired": "Сумма должна быть положительной.",
+      "overAllocated": "Распределённая сумма превышает сумму платежа.",
+      "success": "Платёж зафиксирован.",
+      "title": "Зафиксировать платёж",
+      "paymentDate": "Дата платежа",
+      "amount": "Сумма",
+      "method": "Способ",
+      "reference": "Ссылка / № транзакции",
+      "bankAccount": "Банковский счёт",
+      "checkNumber": "№ чека",
+      "checkDueDate": "Срок оплаты чека",
+      "applyToInvoices": "Применить к открытым счетам",
+      "autoApply": "Авто-применение (FIFO)",
+      "noOpenInvoices": "Нет открытых счетов для применения.",
+      "amountDue": "К оплате",
+      "notes": "Примечания",
+      "allocated": "Распределено",
+      "unapplied": "Останется нераспределённым",
+      "confirm": "Зафиксировать платёж"
+    }
+  },
+  "feedback": {
+    "form": {
+      "required": "Заголовок и описание обязательны.",
+      "sent": "Ваше сообщение получено. Благодарим!",
+      "title": "Обратная связь / сообщение об ошибке",
+      "type": "Тип",
+      "priority": "Приоритет",
+      "module": "Связанный модуль",
+      "modulePlaceholder": "Выберите (опционально)",
+      "titleField": "Заголовок",
+      "titlePlaceholder": "Краткое описание",
+      "description": "Описание",
+      "descriptionPlaceholder": "Что ожидалось и что произошло на самом деле?",
+      "steps": "Шаги для воспроизведения",
+      "stepsPlaceholder": "1) … 2) … 3) …",
+      "pageUrl": "Страница / расположение",
+      "submit": "Отправить"
+    },
+    "statusUpdated": "Статус обновлён.",
+    "page": {
+      "title": "Обратная связь и сообщения об ошибках",
+      "subtitle": "Сообщите об ошибке, предложите улучшение или задайте вопрос. Все обращения отслеживаются здесь.",
+      "new": "Новое обращение"
+    },
+    "filter": {
+      "allTypes": "Все типы",
+      "allStatuses": "Все статусы"
+    },
+    "count": "{{count}} обращений",
+    "empty": "Обращений пока нет. Создайте первое.",
+    "adminResponse": "Ответ администратора",
+    "status": "Статус",
+    "responsePlaceholder": "Ответ (опционально)",
+    "apply": "Применить"
+  },
+  "masterData": {
+    "deleteConfirm": "Удалить эту запись?",
+    "empty": "Записи отсутствуют."
+  },
+  "po": {
+    "form": {
+      "vendorRequired": "Выберите поставщика.",
+      "linesRequired": "Добавьте хотя бы одну корректную строку.",
+      "updated": "Заказ поставщику обновлён.",
+      "created": "Заказ поставщику создан.",
+      "editTitle": "Заказ поставщику",
+      "newTitle": "Новый заказ поставщику",
+      "vendor": "Поставщик",
+      "selectVendor": "Выберите…",
+      "warehouse": "Склад получения",
+      "selectWarehouse": "Выберите…",
+      "currency": "Валюта",
+      "orderDate": "Дата заказа",
+      "expectedDate": "Ожидаемая поставка",
+      "product": "Товар",
+      "qty": "Кол-во",
+      "unitCost": "Цена за ед.",
+      "tax": "НДС %",
+      "addLine": "Добавить строку",
+      "subtotal": "Подытог",
+      "taxTotal": "НДС",
+      "total": "Итого",
+      "notes": "Примечания"
+    },
+    "receive": {
+      "nothing": "Введите количество для приёмки.",
+      "over": "Нельзя принять больше, чем остаток.",
+      "warehouseRequired": "Выберите склад.",
+      "done": "Приёмка проведена; запасы обновлены.",
+      "title": "Приёмка товара",
+      "allReceived": "Все позиции уже приняты.",
+      "warehouse": "Склад получения",
+      "selectWarehouse": "Выберите…",
+      "product": "Товар",
+      "remaining": "Осталось",
+      "qty": "Принятое кол-во",
+      "notes": "Примечания / № накладной",
+      "submit": "Провести приёмку"
+    },
+    "cancelTitle": "Отменить заказ поставщику",
+    "cancelConfirm": "Отменить {{po}}?",
+    "actionDone": "Действие выполнено.",
+    "deleteTitle": "Удалить заказ поставщику",
+    "deleteConfirm": "Удалить {{po}}?",
+    "deleted": "Заказ поставщику удалён.",
+    "page": {
+      "title": "Заказы поставщикам",
+      "subtitle": "Создавайте, утверждайте и отслеживайте заказы поставщикам.",
+      "new": "Новый заказ"
+    },
+    "filter": {
+      "all": "Все",
+      "allStatuses": "Все статусы",
+      "statusAria": "Фильтр по статусу",
+      "vendor": "Поставщик",
+      "allVendors": "Все поставщики"
+    },
+    "status": {
+      "Draft": "Черновик",
+      "Submitted": "Отправлен",
+      "Approved": "Утверждён",
+      "PartiallyReceived": "Частично принят",
+      "Received": "Принят",
+      "Closed": "Закрыт",
+      "Cancelled": "Отменён"
+    },
+    "count": "{{count}} заказов",
+    "resultCountLabel": "заказов",
+    "empty": "Заказы поставщикам не найдены.",
+    "cols": {
+      "number": "№",
+      "vendor": "Поставщик",
+      "date": "Дата",
+      "status": "Статус",
+      "total": "Сумма"
+    },
+    "actions": {
+      "submit": "Отправить",
+      "approve": "Утвердить",
+      "receive": "Приёмка",
+      "close": "Закрыть",
+      "cancel": "Отменить"
+    }
+  },
+  "ap": {
+    "bill": {
+      "invalid": "Введите поставщика, номер счёта и сумму.",
+      "created": "Счёт поставщика создан.",
+      "newTitle": "Новый счёт поставщика",
+      "vendor": "Поставщик",
+      "selectVendor": "Выберите…",
+      "number": "№ счёта",
+      "currency": "Валюта",
+      "date": "Дата счёта",
+      "due": "Срок оплаты",
+      "subtotal": "Подытог",
+      "tax": "Сумма НДС",
+      "total": "Итого",
+      "notes": "Примечания"
+    },
+    "pay": {
+      "invalid": "Введите корректную сумму (не превышающую остаток к оплате).",
+      "done": "Платёж зафиксирован.",
+      "title": "Оплата поставщику",
+      "due": "Остаток к оплате",
+      "amount": "Сумма",
+      "date": "Дата",
+      "method": "Способ оплаты",
+      "bankTransfer": "Банковский перевод",
+      "cash": "Наличные",
+      "check": "Чек",
+      "card": "Карта",
+      "notes": "Примечания",
+      "submit": "Произвести оплату"
+    },
+    "cancelTitle": "Отменить счёт",
+    "cancelConfirm": "Отменить {{n}}?",
+    "actionDone": "Действие выполнено.",
+    "page": {
+      "title": "Счета поставщиков",
+      "subtitle": "Обработка и оплата счетов поставщиков; реестр поставщика обновляется автоматически.",
+      "new": "Новый счёт"
+    },
+    "tab": {
+      "bills": "Счета",
+      "payments": "Платежи"
+    },
+    "filter": {
+      "allVendors": "Все поставщики",
+      "allStatuses": "Все статусы"
+    },
+    "count": "{{count}} счетов",
+    "paymentCount": "{{count}} платежей",
+    "empty": "Счета поставщиков не найдены.",
+    "cols": {
+      "number": "№ счёта",
+      "vendor": "Поставщик",
+      "date": "Дата",
+      "total": "Сумма",
+      "due": "Остаток к оплате",
+      "status": "Статус"
+    },
+    "actions": {
+      "glEntry": "Проводка",
+      "post": "Провести в учёте",
+      "pay": "Оплатить",
+      "cancel": "Отменить"
+    },
+    "payments": {
+      "empty": "Платежи поставщикам не найдены."
+    },
+    "payCols": {
+      "number": "№ платежа",
+      "method": "Способ",
+      "amount": "Сумма"
+    },
+    "glEntryTitle": "Проводка · {{n}}"
+  },
+  "numbering": {
+    "document": "Документ",
+    "prefix": "Префикс",
+    "pad": "Разрядность",
+    "format": "Формат",
+    "next": "Следующий",
+    "preview": "Предпросмотр",
+    "prefixRequired": "Префикс обязателен.",
+    "saved": "Нумерация сохранена.",
+    "notConfigured": "ещё не настроено"
+  },
+  "users": {
+    "deactivateTitle": "Деактивировать пользователя",
+    "activateTitle": "Активировать пользователя",
+    "deactivateConfirm": "{{user}} больше не сможет войти. Продолжить?",
+    "activateConfirm": "{{user}} снова сможет входить в систему.",
+    "statusUpdated": "Статус пользователя обновлён.",
+    "count": "{{count}} пользователей",
+    "invite": "Добавить пользователя",
+    "user": "Пользователь",
+    "roles": "Роли",
+    "lastLogin": "Последний вход",
+    "status": "Статус",
+    "editRoles": "Изменить роли",
+    "empty": "Пользователи не найдены.",
+    "invited": "Пользователь создан.",
+    "rolesUpdated": "Роли обновлены.",
+    "inviteInvalid": "Требуются имя пользователя, e-mail и пароль не менее 8 символов.",
+    "username": "Имя пользователя",
+    "email": "E-mail",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "tempPassword": "Временный пароль",
+    "tempPasswordHint": "Минимум 8 символов. Пользователь должен сменить его при первом входе.",
+    "create": "Создать"
+  },
+  "apAging": {
+    "title": "Сроки кредиторской задолженности",
+    "subtitle": "Открытые обязательства, распределённые по срокам.",
+    "toBills": "К счетам поставщиков →",
+    "vendor": "Поставщик",
+    "total": "Итого",
+    "error": "Не удалось загрузить отчёт.",
+    "empty": "Открытых обязательств перед поставщиками нет.",
+    "grandTotal": "Общий итог"
+  },
+  "billing": {
+    "eyebrow": "Биллинг",
+    "title": "Биллинг",
+    "crumbs": {
+      "billing": "Биллинг",
+      "orders": "Заказы"
+    },
+    "home": {
+      "title": "Мои подписки",
+      "subtitle": "Отслеживайте активные модули, предстоящие истечения и недавние покупки.",
+      "browse": "Просмотреть модули",
+      "activeCount": "Активные модули",
+      "activeHint": "{{count}} модулей подключено",
+      "expiringSoon": "Истекает через {{days}} дн.",
+      "nextExpiry": "Ближайшее: {{date}}",
+      "noExpiring": "Ничего не истекает в ближайшее время.",
+      "recentOrders": "Недавние заказы",
+      "lastOrder": "Последний заказ {{number}}",
+      "noOrders": "Заказы на подписку отсутствуют.",
+      "expiringSoonTitle": "Скоро продление",
+      "renew": "Продлить",
+      "recentOrdersTitle": "Последние заказы",
+      "viewAll": "Просмотреть все"
+    },
+    "activeBanner": {
+      "title_one": "{{count}} активный модуль",
+      "title_other": "{{count}} активных модулей",
+      "empty": "Активных модулей нет. Выберите из каталога ниже."
+    },
+    "modules": {
+      "title": "Модули",
+      "subtitle": "Подпишитесь, чтобы открыть дополнительные возможности для команды.",
+      "activeUntil": "Активен до {{date}}",
+      "daysLeft_one": "Остался {{count}} день",
+      "daysLeft_other": "Осталось {{count}} дн.",
+      "notSubscribed": "Ещё не подключён",
+      "coreAlwaysOn": "Базовый модуль — всегда включён",
+      "coreLabel": "Базовый",
+      "coreNoPurchase": "Доступен всем",
+      "durationDays_one": "{{count}} день",
+      "durationDays_other": "{{count}} дн.",
+      "addToCart": "В корзину",
+      "renew": "Продлить план",
+      "inCart": "Добавлено",
+      "uncategorized": "Прочие модули",
+      "emptyTitle": "Доступных модулей нет",
+      "emptyDescription": "В данный момент модулей для покупки нет.",
+      "renewalHint": "Продление: {{duration}} будет добавлено к текущему сроку — время не теряется."
+    },
+    "cart": {
+      "title": "Корзина",
+      "empty": "Корзина пуста. Выберите модуль для начала.",
+      "total": "Итого",
+      "buy": "Оформить",
+      "adminOnly": "Покупку могут завершить только администраторы организации.",
+      "openButton_one": "Корзина ({{count}})",
+      "openButton_other": "Корзина ({{count}})",
+      "remove": "Удалить"
+    },
+    "order": {
+      "title": "Заказ {{number}}",
+      "subtitle": "Сведения о заказе на подписку и статусе оплаты.",
+      "backToList": "К списку заказов",
+      "createdAt": "Создан {{value}}",
+      "totalLabel": "Итого",
+      "itemsTitle": "Позиции",
+      "paymentTitle": "Оплата",
+      "gateway": "Шлюз",
+      "intentId": "ID транзакции",
+      "reference": "Ссылка",
+      "paidAt": "Оплачен",
+      "completedAt": "Завершён",
+      "attempts": "Попыток оплаты",
+      "payNowTitle": "Требуется оплата",
+      "payNowDescription": "Заказ ожидает оплаты. Перейдите на (тестовую) страницу оплаты, чтобы завершить.",
+      "payNow": "Перейти к тестовой оплате",
+      "paidTitle": "Оплата подтверждена",
+      "paidDescription": "Платёж получен {{value}}. Ваши модули активированы.",
+      "cancelled": "Этот заказ был отменён.",
+      "col": {
+        "orderNumber": "№ заказа",
+        "createdAt": "Создан",
+        "status": "Статус",
+        "itemsCount": "Позиции",
+        "total": "Итого",
+        "module": "Модуль",
+        "plan": "Тариф",
+        "duration": "Срок",
+        "unitPrice": "Цена за ед."
+      },
+      "status": {
+        "Draft": "Черновик",
+        "PendingPayment": "Ожидает оплаты",
+        "Paid": "Оплачен",
+        "Failed": "Ошибка",
+        "Cancelled": "Отменён",
+        "Expired": "Истёк"
+      }
+    },
+    "orders": {
+      "title": "Заказы на подписку",
+      "subtitle": "Все заказы на подписку на модули.",
+      "statusFilter": "Фильтр по статусу",
+      "count": "заказов",
+      "bucket": {
+        "all": "Все"
+      },
+      "emptyTitle": "Заказов пока нет",
+      "emptyDescription": "Когда вы купите модуль, заказ появится здесь.",
+      "view": "Подробнее"
+    },
+    "cancel": {
+      "action": "Отменить заказ",
+      "confirmTitle": "Отменить заказ?",
+      "confirmMessage": "Заказ {{number}} будет отменён. Действие необратимо.",
+      "confirm": "Да, отменить"
+    },
+    "mock": {
+      "eyebrow": "Разработка",
+      "title": "Тестовая оплата",
+      "subtitle": "Имитация результата оплаты для этого заказа.",
+      "banner": "DEV / ТЕСТОВАЯ ОПЛАТА",
+      "bannerDescription": "Этот экран существует только в режиме разработки. В продакшене оплаты обрабатываются реальным шлюзом.",
+      "orderLabel": "Заказ",
+      "missingOrder": "ID заказа не указан. Откройте эту страницу из заказа со статусом «Ожидает оплаты».",
+      "adminOnly": "Имитацию оплаты могут выполнить только администраторы организации.",
+      "approve": "Одобрить",
+      "cancel": "Отменить",
+      "fail": "Имитировать ошибку"
+    },
+    "checkout": {
+      "title": "Оформление заказа",
+      "payNow": "Оплатить"
+    },
+    "gateway": {
+      "title": "Способ оплаты",
+      "mockLabel": "Тестовый (разработка)",
+      "iyzicoLabel": "Iyzico (реальная оплата)",
+      "requiresInfo": "Требуются платёжные реквизиты",
+      "devOnly": "Только песочница / разработка",
+      "empty": "Платёжный шлюз не настроен. Обратитесь к администратору.",
+      "pickerRequired": "Выберите способ оплаты."
+    },
+    "billingInfo": {
+      "title": "Платёжные реквизиты",
+      "name": "Имя",
+      "surname": "Фамилия",
+      "email": "E-mail",
+      "gsm": "Мобильный телефон",
+      "identity": "Идентификационный номер",
+      "address": "Адрес",
+      "city": "Город",
+      "country": "Страна",
+      "zip": "Почтовый индекс",
+      "privacy": "Данные шифруются при передаче. Мы не храним номер карты.",
+      "errors": {
+        "nameRequired": "Имя обязательно.",
+        "surnameRequired": "Фамилия обязательна.",
+        "emailInvalid": "Введите корректный e-mail.",
+        "gsmInvalid": "Введите корректный мобильный номер (10–15 цифр, опционально с +).",
+        "identityInvalid": "Введите корректный идентификационный номер (5–32 буквенно-цифровых символа).",
+        "addressRequired": "Адрес обязателен.",
+        "cityRequired": "Город обязателен.",
+        "countryInvalid": "Страна обязательна (мин. 2 символа).",
+        "zipRequired": "Почтовый индекс обязателен.",
+        "formInvalid": "Пожалуйста, заполните платёжную форму."
+      }
+    },
+    "toast": {
+      "created": "Заказ создан.",
+      "approved": "Оплата подтверждена.",
+      "cancelled": "Заказ отменён.",
+      "failed": "Что-то пошло не так. Попробуйте ещё раз."
+    },
+    "errors": {
+      "catalogTitle": "Не удалось загрузить модули",
+      "catalogDescription": "Не удалось загрузить каталог модулей. Повторите попытку.",
+      "activeTitle": "Не удалось загрузить активные модули",
+      "orderTitle": "Не удалось загрузить заказ",
+      "orderDescription": "Не удалось загрузить этот заказ на подписку.",
+      "ordersTitle": "Не удалось загрузить заказы"
+    }
+  },
+  "error": {
+    "NetworkError": "Ошибка сети.",
+    "DefaultError": "Запрос завершился ошибкой."
+  },
+  "GlassEnclosure": {
+    "Title": "Стеклянное ограждение",
+    "Subtitle": "Управление профильными системами, стеклом, фурнитурой, скидками и настройками цеха.",
+    "Tab": {
+      "ProfileSystems": "Профильные системы",
+      "GlassTypes": "Типы стекла",
+      "Colors": "Цвета",
+      "HardwareItems": "Фурнитура",
+      "HardwareKits": "Комплекты фурнитуры",
+      "DiscountRules": "Правила скидок",
+      "NotificationTemplates": "Шаблоны уведомлений",
+      "WindZones": "Ветровые зоны",
+      "ClimateZones": "Климатические зоны",
+      "Settings": "Настройки"
+    },
+    "Field": {
+      "Code": "Код",
+      "Name": "Наименование",
+      "Brand": "Бренд",
+      "SystemType": "Тип системы",
+      "MaxPanel": "Макс. панель",
+      "ItemCount": "Позиции",
+      "Thickness": "Толщина",
+      "Structure": "Структура",
+      "UValue": "U-значение",
+      "SoundDb": "Акустика",
+      "PricePerM2": "Цена (м²)",
+      "Category": "Категория",
+      "Unit": "Единица",
+      "UnitPrice": "Цена за ед.",
+      "MaxLoad": "Макс. нагрузка",
+      "System": "Система",
+      "Active": "Активно",
+      "Scope": "Область",
+      "DiscountKind": "Тип скидки",
+      "DiscountValue": "Значение скидки",
+      "Coupon": "Купон",
+      "Event": "Событие",
+      "Channel": "Канал",
+      "Locale": "Локаль",
+      "Subject": "Тема",
+      "Region": "Регион",
+      "BasePressure": "Базовое давление",
+      "HeightFactor": "Коэф. высоты",
+      "Coastal": "Прибрежная зона",
+      "WinterTemp": "Зимняя температура",
+      "Humidity": "Влажность",
+      "Corrosion": "Коррозия",
+      "Recommendations": "Рекомендации",
+      "StockBarLength": "Длина хлыста",
+      "JumboGlass": "Джамбо-стекло",
+      "SawKerf": "Пропил пилы",
+      "GlassKerf": "Пропил стекла",
+      "GuillotineRequired": "Требуется гильотина",
+      "WastePercent": "Отходы %",
+      "LaborCost": "Работа",
+      "MarginPercent": "Маржа %",
+      "ToleranceTop": "Допуск сверху",
+      "ToleranceSide": "Допуск сбоку",
+      "TransportPerKm": "Транспорт / км",
+      "TransportPerKg": "Транспорт / кг",
+      "ScaffoldingFromFloor": "Леса от этажа",
+      "ScaffoldingRate": "Тариф лесов",
+      "CraneFromFloor": "Кран от этажа",
+      "CraneRate": "Тариф крана",
+      "WorkshopCapacity": "Мощность цеха",
+      "DefaultLocale": "Локаль по умолчанию",
+      "DefaultCurrency": "Валюта по умолчанию",
+      "DataRetention": "Хранение данных",
+      "QuoteTokenTtl": "TTL токена сметы",
+      "OnboardingComplete": "Онбординг завершён",
+      "Label": "Метка",
+      "Length": "Длина",
+      "Height": "Высота",
+      "Width": "Ширина",
+      "OriginX": "X",
+      "OriginY": "Y",
+      "Rotation": "Поворот",
+      "ProfileSystem": "Профильная система",
+      "Color": "Цвет",
+      "TopDrip": "Верхний капельник",
+      "BottomThreshold": "Нижний порог",
+      "OpeningType": "Тип открывания",
+      "GlassType": "Тип стекла",
+      "HasHandle": "Ручка",
+      "HasLock": "Замок",
+      "HasBrushSeal": "Щёточный уплотнитель",
+      "Floor": "Этаж",
+      "BuildingHeight": "Высота здания (м)",
+      "City": "Город",
+      "Currency": "Валюта"
+    },
+    "System": {
+      "Folding": "Складная",
+      "Sliding": "Раздвижная",
+      "HeatInsulatedSliding": "Раздвижная с теплоизоляцией",
+      "Guillotine": "Гильотинная",
+      "Hinged": "Распашная",
+      "Fixed": "Глухая"
+    },
+    "GlassStructure": {
+      "Tempered": "Закалённое",
+      "Laminated": "Триплекс",
+      "DoubleGlazed": "Двухкамерный стеклопакет",
+      "TripleGlazed": "Трёхкамерный стеклопакет",
+      "LowE": "Low-E"
+    },
+    "HardwareCategory": {
+      "Hinge": "Петля",
+      "Roller": "Ролик",
+      "Lock": "Замок",
+      "Handle": "Ручка",
+      "Gasket": "Уплотнитель",
+      "Brush": "Щётка",
+      "Bumper": "Демпфер",
+      "WallBracket": "Настенный кронштейн",
+      "Chain": "Цепь",
+      "DripCap": "Капельник",
+      "CornerPost": "Угловая стойка",
+      "Other": "Прочее"
+    },
+    "Finish": {
+      "Anodized": "Анодированный",
+      "PowderCoated": "Порошковая окраска",
+      "WoodLook": "Под дерево",
+      "Raw": "Без покрытия"
+    },
+    "DiscountScope": {
+      "CustomerGroup": "Группа клиентов",
+      "Coupon": "Купон",
+      "Volume": "Объём",
+      "DateRange": "Период",
+      "Manual": "Вручную"
+    },
+    "DiscountKind": {
+      "Percent": "Процент",
+      "FixedAmount": "Фиксированная сумма"
+    },
+    "Settings": {
+      "Core": "Основные",
+      "Field": "Полевой замер",
+      "Installation": "Монтаж",
+      "Locale": "Локаль и связь",
+      "Onboarding": "Онбординг"
+    },
+    "Recommend": {
+      "DoubleGlazing": "Рекомендован двухкамерный стеклопакет",
+      "CorrosionCoating": "Антикоррозийное покрытие",
+      "SeismicSmaller": "Меньшие панели"
+    },
+    "Projects": {
+      "Title": "Проекты остекления",
+      "Subtitle": "Клиентские проекты и 3D-дизайны.",
+      "New": "Новый проект",
+      "ProjectName": "Название проекта",
+      "Customer": "Клиент",
+      "CustomerId": "ID клиента",
+      "Status": "Статус",
+      "Panels": "Панели",
+      "Area": "Площадь",
+      "GrandTotal": "Итого",
+      "Updated": "Обновлён",
+      "SearchPlaceholder": "Поиск по коду или названию…",
+      "Empty": "Проектов пока нет.",
+      "Created": "Проект создан"
+    },
+    "Status": {
+      "All": "Все",
+      "Draft": "Черновик",
+      "Surveyed": "Замерен",
+      "Quoted": "Сметирован",
+      "Confirmed": "Подтверждён",
+      "InProduction": "В производстве",
+      "Ready": "Готов",
+      "InTransit": "В пути",
+      "Installed": "Установлен",
+      "Defective": "Дефект",
+      "Cancelled": "Отменён"
+    },
+    "Designer": {
+      "Shell": {
+        "PersonaOverride": {
+          "TriggerAria": "Режим персоны экрана",
+          "TriggerTitle": "Режим персоны для этого экрана",
+          "MenuTitle": "На этом экране",
+          "Default": "Использовать по умолчанию",
+          "DefaultHelp": "Следовать глобальному режиму персоны",
+          "Simple": "Простой",
+          "SimpleHelp": "С подсказками, меньше панелей",
+          "Pro": "Профи",
+          "ProHelp": "Полный контроль, плотная информация"
+        },
+        "Tab": {
+          "Runs": {
+            "Simple": "Фасады",
+            "Pro": "Прогоны"
+          },
+          "Canvas": {
+            "Simple": "Чертёж",
+            "Pro": "Холст"
+          },
+          "Inspector": {
+            "Simple": "Детали",
+            "Pro": "Инспектор"
+          },
+          "BOM": {
+            "Simple": "Материалы",
+            "Pro": "Спецификация"
+          }
+        },
+        "Panel": {
+          "Runs": {
+            "AddSimple": "Добавить фасад",
+            "AddPro": "Добавить прогон"
+          },
+          "Inspector": {
+            "Title": {
+              "Simple": "Редактировать детали",
+              "Pro": "Инспектор"
+            }
+          },
+          "BOM": {
+            "Title": {
+              "Simple": "Список материалов",
+              "Pro": "Спецификация"
+            }
+          }
+        },
+        "Toolbar": {
+          "ZoomIn": "Приблизить",
+          "ZoomOut": "Отдалить",
+          "FitScreen": "Вписать",
+          "Grid": "Сетка"
+        },
+        "Back": "Назад",
+        "Close": "Закрыть",
+        "CloseDrawer": "Закрыть",
+        "OpenInspector": "Детали",
+        "SideRail": "Навигация",
+        "Collapse": "Свернуть",
+        "Expand": "Развернуть"
+      },
+      "NewRun": "Новый прогон",
+      "Save": "Сохранить",
+      "SaveSuccess": "Сцена сохранена",
+      "Validate": "Проверить",
+      "ValidationDone": "Проверка завершена",
+      "Annotations": "Аннотации",
+      "Presentation": "Презентация",
+      "Quality": "Качество",
+      "Inspector": "Инспектор",
+      "RunInspector": "Инспектор прогона",
+      "PanelInspector": "Инспектор панели",
+      "PanelCount": "Количество панелей",
+      "Rebalance": "Перебалансировать",
+      "TechnicalSummary": "Техническая сводка",
+      "TotalArea": "Общая площадь",
+      "TotalWeight": "Общий вес",
+      "WeightedU": "Взвешенное U",
+      "AvgSoundDb": "Средняя акустика",
+      "MaxThickness": "Макс. толщина",
+      "NoSelection": "Выберите прогон или панель в 3D-сцене.",
+      "DefaultRunLabel": "Прогон",
+      "RunAdded": "Прогон добавлен",
+      "ConnectionInspector": "Угловое соединение",
+      "ViewSplit": "Разделённый вид",
+      "ViewPlan": "План (2D)",
+      "View3D": "3D",
+      "LiveCost": "Стоимость в реальном времени",
+      "LivePreview": "Предпросмотр",
+      "NoCostYet": "Добавьте прогоны и панели, чтобы увидеть стоимость.",
+      "LiveCostDisclaimer": "Оценка в браузере. Серверный отчёт является официальной записью.",
+      "ViewCutting": "Раскрой",
+      "ViewEngineering": "Инженерия",
+      "ViewQuote": "Смета",
+      "ViewSurvey": "Полевой замер",
+      "Greenhouse": {
+        "PitchParam": {
+          "SectionTitle": "Параметры скатной крыши",
+          "RoofPitch": "Уклон крыши",
+          "RidgeHeight": "Высота конька",
+          "EaveHeight": "Высота карниза",
+          "PitchOutOfRange": "Уклон крыши должен быть между {{min}}° и {{max}}°.",
+          "RidgeMustExceedEave": "Высота конька должна превышать высоту карниза.",
+          "RidgeRequired": "Высота конька обязательна для скатной крыши.",
+          "EaveRequired": "Высота карниза обязательна для скатной крыши.",
+          "PitchRequired": "Уклон крыши обязателен для скатной крыши."
+        }
+      }
+    },
+    "Survey": {
+      "Title": "Полевой замер",
+      "Subtitle": "Фиксируйте замеры и наблюдения на объекте; применяйте допуски к прогонам после согласования.",
+      "New": "Новый замер",
+      "Created": "Замер создан",
+      "Saved": "Черновик сохранён",
+      "Submitted": "Замер отправлен на согласование",
+      "Approved": "Замер утверждён",
+      "Rejected": "Замер отклонён",
+      "RejectPrompt": "Причина (опционально)",
+      "PhotoUploaded": "Фото загружено",
+      "PhotoTypeError": "Допускаются только изображения (JPG, PNG, WebP, HEIC).",
+      "PhotoSizeError": "Размер файла должен быть менее 25 МБ.",
+      "GpsUnavailable": "Геолокация недоступна; замер создан без координат GPS.",
+      "AppliedBadge": "Применён: {{date}}",
+      "NoActive": "Активного замера нет. Запустите через «Новый замер».",
+      "Slope": "Уклон / отклонение от вертикали",
+      "SlopeTop": "Верх",
+      "SlopeBottom": "Низ",
+      "SlopeLeft": "Лево",
+      "SlopeRight": "Право",
+      "SlopeHint": "Положительные значения ― отклонение наружу, отрицательные ― внутрь.",
+      "Measurements": "Ручные замеры",
+      "AddMeasurement": "Добавить замер",
+      "MeasureLabel": "Метка (напр., верхняя длина)",
+      "MeasureValue": "Значение (мм)",
+      "NoMeasurements": "Ручные замеры отсутствуют.",
+      "Obstacles": "Препятствия",
+      "AddObstacle": "Добавить препятствие",
+      "NoObstacles": "Препятствий не зафиксировано.",
+      "ObstaclePlaceholder": "Описание",
+      "ObstacleKind": {
+        "pipe": "Труба",
+        "radiator": "Радиатор",
+        "window": "Окно",
+        "door": "Дверь",
+        "other": "Прочее"
+      },
+      "Photos": "Фотографии",
+      "UploadPhoto": "Загрузить фото",
+      "NoPhotos": "Фотографий пока нет.",
+      "Notes": "Заметки",
+      "NotesPlaceholder": "Наблюдения на объекте…",
+      "SaveDraft": "Сохранить черновик",
+      "Submit": "Отправить",
+      "ApproveAndApply": "Утвердить и применить",
+      "ApproveOnly": "Только утвердить",
+      "Reject": "Отклонить",
+      "AppliedInfo": "Обновлено прогонов: {{runs}} · применён допуск уклона {{mm}} мм",
+      "Status": {
+        "InProgress": "В работе",
+        "Submitted": "На согласовании",
+        "Approved": "Утверждён",
+        "Rejected": "Отклонён"
+      }
+    },
+    "Quote": {
+      "Title": "Сводка сметы",
+      "ValidUntil": "Действительно до",
+      "Recompute": "Пересчитать",
+      "Recomputed": "BOM пересчитан",
+      "ExportCsv": "Экспорт в CSV",
+      "NoBom": "BOM ещё не рассчитан. Нажмите «Пересчитать».",
+      "Panels": "Панели",
+      "Area": "Площадь",
+      "Weight": "Вес",
+      "Lines": "Позиции",
+      "Description": "Описание",
+      "Qty": "Кол-во",
+      "Unit": "Единица",
+      "UnitCost": "Цена за ед.",
+      "LineCost": "Сумма строки",
+      "Totals": "Итоги",
+      "SourceNote": "Сводка формируется из BOM проекта ― для изменения позиций отредактируйте дизайн.",
+      "Group": {
+        "ProfileCut": "Профиль",
+        "GlassPiece": "Стекло",
+        "HardwarePiece": "Фурнитура",
+        "Labor": "Работа",
+        "Transport": "Транспорт",
+        "Installation": "Монтаж / леса",
+        "Other": "Прочее"
+      }
+    },
+    "Commerce": {
+      "ShareLinks": "Ссылки для общего доступа",
+      "CreateShareLink": "Создать ссылку",
+      "ShareLinkCreated": "Ссылка создана",
+      "NoShareLinks": "Ссылок пока нет. Создайте ссылку для отправки клиенту.",
+      "Accepted": "Принят",
+      "Rejected": "Отклонён",
+      "Pending": "В ожидании",
+      "Views": "просмотров",
+      "CopyUrl": "Копировать URL",
+      "OrderConversion": "Заказ",
+      "ConvertToOrder": "Преобразовать в заказ",
+      "OrderConverted": "Проект преобразован в заказ",
+      "ConvertHint": "Сначала пересчитайте BOM и убедитесь, что проект в статусе «Сметирован» / «Подтверждён».",
+      "Production": "Производство",
+      "RequestedStart": "Запрошенный старт",
+      "ReleaseToProduction": "Передать в производство",
+      "Released": "Передан в производство",
+      "ReleaseHint": "Сначала преобразуйте в заказ и убедитесь в статусе «Подтверждён»."
+    },
+    "Notifications": {
+      "Title": "История уведомлений",
+      "None": "Уведомления ещё не отправлены."
+    },
+    "WorkOrder": {
+      "None": "Производственных заданий пока нет.",
+      "Updated": "Производственное задание обновлено",
+      "DefectRecorded": "Дефект зафиксирован",
+      "Defect": "Зафиксировать дефект",
+      "DefectSubmit": "Отправить дефект",
+      "DefectPlaceholder": "Подробности дефекта...",
+      "BlockedByRevision": "Производственное задание приостановлено из-за ожидающей ревизии",
+      "DefectiveExitRequiresRevision": "Выход из статуса \"Дефект\" требует новой ревизии спецификации",
+      "Revision": {
+        "Title": "Ревизии",
+        "PendingApproval": "Ожидает утверждения",
+        "Approved": "Утверждено",
+        "Rejected": "Отклонено",
+        "Blocked": "Заблокировано",
+        "SilentSnapshot": "Тихий снимок",
+        "Number": "Рев.",
+        "DeltaPercent": "Дельта",
+        "Approve": "Утвердить",
+        "Reject": "Отклонить",
+        "OverrideReason": "Причина переопределения",
+        "OverrideReasonPlaceholder": "Опциональная заметка о переопределении",
+        "RejectionReason": "Причина отклонения",
+        "RejectionReasonPlaceholder": "Требуется обоснование",
+        "Approved.Toast": "Ревизия утверждена",
+        "Rejected.Toast": "Ревизия отклонена",
+        "Empty": "Ревизий пока нет.",
+        "Banner.Simple": "Это задание ожидает утверждения",
+        "Banner.Pro": "Ожидающая блокирующая ревизия",
+        "Banner.Action": "Просмотреть",
+        "CreatedAt": "Создано"
+      },
+      "Status": {
+        "Pending": "В ожидании",
+        "Cutting": "Раскрой",
+        "Assembling": "Сборка",
+        "Ready": "Готово",
+        "InTransit": "В пути",
+        "Installed": "Установлено",
+        "Defective": "Дефект"
+      }
+    },
+    "Share": {
+      "Title": "Смета на остекление",
+      "GrandTotal": "Итого",
+      "Customer": "Клиент",
+      "Status": "Статус",
+      "Version": "Версия",
+      "ValidUntil": "Действительно до",
+      "Decide": "Решение",
+      "Accept": "Принять дизайн",
+      "Reject": "Отклонить",
+      "RejectReason": "Причина (опционально)",
+      "RejectReasonPlaceholder": "Ваши пожелания по изменениям…",
+      "Signature": "Подпись",
+      "ClearSignature": "Очистить",
+      "Accepted": "Смета принята",
+      "Rejected": "Смета отклонена",
+      "NotFound": "Недействительная или истёкшая ссылка.",
+      "Footer": "Защищённая ссылка для подписи и согласования."
+    },
+    "Cutting": {
+      "Title": "Отчёт по раскрою",
+      "Profile1D": "Раскрой профиля (1D)",
+      "Glass2D": "Раскрой стекла (2D)",
+      "StockBar": "Хлыст",
+      "Bars": "Хлысты",
+      "Cuts": "Резы",
+      "Utilization": "Использование",
+      "Waste": "Отходы",
+      "Jumbo": "Джамбо-лист",
+      "Sheets": "Листы",
+      "Regenerate": "Перегенерировать",
+      "Generated": "План раскроя сгенерирован",
+      "NoReport": "Плана раскроя пока нет. Нажмите «Перегенерировать».",
+      "ExportCsv": "Экспорт в CSV",
+      "ExportDxf": "Экспорт в DXF",
+      "UnplacedWarning": "Не размещено стеклянных деталей: {{count}}",
+      "Nesting": {
+        "Title": "Расширенная 2D укладка",
+        "Algorithm": "Алгоритм",
+        "Heuristic": "Эвристика",
+        "Utilization": "Использование",
+        "Waste": "Отходы",
+        "SheetsUsed": "Использовано листов",
+        "UnplacedPanels": "Не размещено панелей: {{count}}",
+        "OptimizeAdvanced": "Расширенная 2D укладка",
+        "Optimizing": "Расчёт...",
+        "Run": "Запустить",
+        "GuillotineOnly": "Только гильотинная резка",
+        "AllowRotation": "Разрешить вращение",
+        "OptimizeSuccess": "2D укладка обновлена.",
+        "OptimizeError": "Ошибка оптимизации укладки.",
+        "PrintExport": "Печать / PDF",
+        "NoReport": "Отчёт по укладке ещё не сформирован."
+      }
+    },
+    "Engineering": {
+      "Title": "Инженерный отчёт",
+      "WindLoad": "Ветровая нагрузка",
+      "Thermal": "Теплотехника",
+      "Acoustic": "Акустика",
+      "AppliedPressure": "Приложенное давление",
+      "HeightFactor": "Коэф. высоты",
+      "WeightedU": "Взвешенное U",
+      "WeightedDb": "Взвешенное дБ",
+      "EnergySavings": "Расчётная экономия энергии",
+      "DbReduction": "Снижение шума",
+      "Runs": "Прогоны",
+      "Panels": "Панели",
+      "TotalArea": "Общая площадь",
+      "TotalWeight": "Общий вес",
+      "Overall": "Итого",
+      "Disclaimer": "Расчёты приблизительные. Для несущего применения требуется согласование инженера.",
+      "WindZoneMissing": "Ветровая зона не задана. Укажите в заголовке проекта.",
+      "NoSummary": "Сохраните проект, чтобы увидеть инженерную сводку."
+    },
+    "Plan2D": {
+      "Select": "Выбрать",
+      "Draw": "Рисовать",
+      "Fit": "По размеру",
+      "ZoomIn": "Приблизить",
+      "ZoomOut": "Отдалить",
+      "DrawHint": "Перетащите от начальной точки к конечной"
+    },
+    "Connection": {
+      "JointAngle": "Угол соединения",
+      "MitreCut": "Усовой рез",
+      "SuggestedMitre": "Рекомендовано {{value}}°",
+      "UseCornerPost": "Использовать угловую стойку",
+      "CornerProfile": "Угловой профиль",
+      "NoCornerProfile": "― Нет ―",
+      "Added": "Соединение добавлено"
+    },
+    "Cost": {
+      "Materials": "Профиль",
+      "Glass": "Стекло",
+      "Hardware": "Фурнитура",
+      "Waste": "Отходы",
+      "Labor": "Работа",
+      "Scaffolding": "Леса",
+      "Crane": "Кран",
+      "Transport": "Транспорт",
+      "BaseCost": "Базовая стоимость",
+      "Margin": "Маржа",
+      "Tax": "НДС",
+      "GrandTotal": "Итого для клиента"
+    },
+    "Quality": {
+      "low": "Низкое",
+      "medium": "Среднее",
+      "high": "Высокое",
+      "ultra": "Сверхвысокое"
+    },
+    "Opening": {
+      "Fixed": "Глухое",
+      "SlidingLeft": "Сдвиг ← влево",
+      "SlidingRight": "Сдвиг → вправо",
+      "Folding": "Складное",
+      "Hinged": "Распашное",
+      "Guillotine": "Гильотинное"
+    },
+    "Validation": {
+      "AllGood": "Все проверки пройдены.",
+      "PanelTooWide": "Панель превышает макс. ширину системы",
+      "RunTooTall": "Прогон превышает макс. высоту системы",
+      "GlassThicknessMismatch": "Толщина стекла несовместима с системой",
+      "GlassAreaExceedsMax": "Площадь стекла превышает максимум",
+      "WeightExceeds": "Вес панели превышает грузоподъёмность системы",
+      "WindLoadFail": "Стекло не выдержит ветровую нагрузку",
+      "SystemOpeningMismatch": "Система не поддерживает данный тип открывания",
+      "SeismicTooLarge": "Панель слишком велика для сейсмической зоны",
+      "ConnectionAngleInvalid": "Угол уса вне рекомендуемого диапазона",
+      "SystemNotFound": "Профильная система не найдена",
+      "GlassNotFound": "Тип стекла не найден"
+    },
+    "NewProjectWizard": {
+      "Title": "Новый стеклянный проект",
+      "TitleSimple": "Новый стеклянный проект",
+      "TitlePro": "Новый проект",
+      "CloseAria": "Закрыть",
+      "Back": "Назад",
+      "Next": "Далее",
+      "Step": {
+        "Category": "Тип помещения",
+        "Template": "Шаблон",
+        "Meta": "Информация о проекте",
+        "QuickDimensions": "Быстрые размеры"
+      },
+      "Action": {
+        "Next": "Далее",
+        "Back": "Назад",
+        "Skip": "Пропустить",
+        "Finish": "Завершить",
+        "EmptyStart": "Начать с нуля"
+      },
+      "Header": {
+        "Simple": "Шаг {{step}} / {{total}}",
+        "Pro": "Шаг {{step}}/{{total}}"
+      },
+      "Banner": {
+        "PersonaSimple": "Пошаговый режим с подсказками",
+        "PersonaPro": "Полный профессиональный контроль"
+      },
+      "Indicator": {
+        "Step1": {
+          "Label": "Категория",
+          "Subtitle": "Тип помещения"
+        },
+        "Step2": {
+          "Label": "Шаблон",
+          "Subtitle": "Готовый шаблон или с нуля"
+        },
+        "Step3": {
+          "Label": "Информация о проекте",
+          "Subtitle": "Клиент и адрес"
+        },
+        "Step4": {
+          "Label": "Размеры",
+          "Subtitle": "Быстрый ввод размеров"
+        }
+      },
+      "Preset": {
+        "Balcony": {
+          "Title": "Балконное остекление",
+          "Description": "Закрытие стеклянного балкона",
+          "Subtitle": "TPH-модель | встроенная геометрия | гильотина/слайдер",
+          "DescriptionSimple": "Закрытие стеклянного балкона",
+          "DescriptionPro": "TPH-модель | встроенная геометрия | гильотина/слайдер"
+        },
+        "Greenhouse": {
+          "Title": "Теплица",
+          "Description": "Теплица / зимний сад",
+          "Subtitle": "Параметрическая скатная кровля | стеклянная кровля",
+          "DescriptionSimple": "Теплица и зимний сад",
+          "DescriptionPro": "Параметрическая скатная кровля | стеклянная кровля | контроль конька"
+        },
+        "ShowerCabin": {
+          "Title": "Душевая кабина",
+          "Description": "Угловая или нишевая душевая кабина",
+          "Subtitle": "8/10 мм закалённое | угловой кронштейн",
+          "DescriptionSimple": "Угловая или нишевая душевая кабина",
+          "DescriptionPro": "8/10 мм закалённое | угловой кронштейн | патч-фитинг"
+        },
+        "Balustrade": {
+          "Title": "Ограждение",
+          "Description": "Стеклянное ограждение и лестничные перила",
+          "Subtitle": "12-19 мм конструкционное | TRSB",
+          "DescriptionSimple": "Стеклянное ограждение, лестница и край балкона",
+          "DescriptionPro": "12-19 мм конструкционное | TRSB | канал/зажим"
+        },
+        "FramelessDoor": {
+          "Title": "Безрамная дверь",
+          "Description": "Безрамная стеклянная дверь",
+          "Subtitle": "Патч-фитинг | 10-12 мм закалённое",
+          "DescriptionSimple": "Безрамные стеклянные двери и входные перегородки",
+          "DescriptionPro": "Патч-фитинг | 10-12 мм закалённое | напольная пружина"
+        },
+        "CurtainWall": {
+          "Title": "Навесной фасад",
+          "Description": "Фасад здания с кассетной системой",
+          "Subtitle": "Кассетная система | 1.5x3 м панель | алюминиевый профиль",
+          "DescriptionSimple": "Навесной фасад для офисных и коммерческих зданий",
+          "DescriptionPro": "Кассетная система | многоугольный полигон | 4-12 панелей"
+        },
+        "SpiderFacade": {
+          "Title": "Спайдерный фасад",
+          "Description": "Структурный стеклянный фасад на спайдер-фитингах",
+          "Subtitle": "4-точечное крепление | мин. 12 мм конструкционное стекло",
+          "DescriptionSimple": "Структурный стеклянный фасад для лобби и входов",
+          "DescriptionPro": "Спайдер-фитинг | 3-4 точки на панель | конструкционное стекло"
+        },
+        "FreeForm": {
+          "Title": "Свободная форма",
+          "Description": "Произвольный полигон, заданный пользователем",
+          "Subtitle": "Пустой старт | вершины полигона >= 3",
+          "DescriptionSimple": "Произвольный дизайн с пустым полигоном",
+          "DescriptionPro": "Пользовательский полигон | свободная геометрия | самонесущая"
+        }
+      },
+      "Step1": {
+        "Title": "Какое помещение проектируем?",
+        "HintSimple": "Выберите наиболее близкий вариант, остальное сделаем вместе.",
+        "HintPro": "Выбор категории определяет геометрию и топологию монтажа."
+      },
+      "Step2": {
+        "Title": "Начните с готового шаблона",
+        "HintSimple": "Самые популярные раскладки. Можно начать и с нуля.",
+        "HintPro": "Системные шаблоны включают предустановки прогонов и панелей.",
+        "StartBlank": "С нуля",
+        "StartBlankHint": "Без шаблона, с чистого листа.",
+        "EmptyHint": "Нет шаблонов для этой категории. Продолжите \"С нуля\".",
+        "EmptyMessage": "Шаблоны для этой категории не найдены."
+      },
+      "Template": {
+        "EmptyMessage": "Шаблоны недоступны.",
+        "RunCount_one": "{{count}} прогон",
+        "RunCount_few": "{{count}} прогона",
+        "RunCount_many": "{{count}} прогонов",
+        "RunCount_other": "{{count}} прогона",
+        "RunCount": "{{count}} прогон",
+        "PanelCount_one": "{{count}} панель",
+        "PanelCount_few": "{{count}} панели",
+        "PanelCount_many": "{{count}} панелей",
+        "PanelCount_other": "{{count}} панелей",
+        "PanelCount": "{{count}} панель",
+        "EstimatedArea": "{{min}}–{{max}} м²"
+      },
+      "Step3": {
+        "Title": "Детали проекта",
+        "Hint": "Название проекта и клиент обязательны, остальные поля опциональны.",
+        "ProjectName": "Название проекта *",
+        "ProjectNamePlaceholder": "напр. Йылдыз балкон",
+        "NameError": "Название проекта должно быть от {{min}} до {{max}} символов.",
+        "Customer": "Клиент *",
+        "CustomerSearchPlaceholder": "Поиск клиента...",
+        "ChangeCustomer": "Изменить",
+        "CreateNewCustomer": "Создать клиента",
+        "Address": "Адрес объекта",
+        "AddressPlaceholder": "Улица, номер, дом, район/город",
+        "Notes": "Заметки",
+        "NotesPlaceholder": "Внутренние заметки, условия монтажа и т.п."
+      },
+      "Meta": {
+        "Name": "Название проекта",
+        "NamePlaceholder": "напр. Йылдыз балкон",
+        "NameError": "3-120 символов",
+        "Customer": "Клиент",
+        "CustomerPlaceholder": "Поиск клиента...",
+        "CustomerNew": "Новый клиент",
+        "Address": "Адрес объекта",
+        "AddressPlaceholder": "Улица, номер, дом, район/город",
+        "Notes": "Заметки",
+        "NotesPlaceholder": "Внутренние заметки, условия монтажа и т.п."
+      },
+      "Step4": {
+        "TitleSimple": "Введите быстрый замер, точно настроим позже",
+        "TitlePro": "Размеры прогонов и количество панелей",
+        "HintSimple": "Замерьте лазером на месте и введите здесь. Или замерьте позже.",
+        "HintPro": "Приблизительные значения — финальные размеры на полевом замере.",
+        "RunCount": "Количество прогонов",
+        "RunLabel": "Прогон {{index}}",
+        "WidthMm": "Ширина (мм)",
+        "HeightMm": "Высота (мм)",
+        "PanelCount": "Количество панелей",
+        "LaserHint": "Интеграция лазерного дальномера скоро.",
+        "SkipSimple": "Пропустить и замерить позже",
+        "SkipPro": "Создать без размеров",
+        "Create": "Создать проект"
+      },
+      "Dimensions": {
+        "RunNumber": "Прогон {{index}}",
+        "Width": "Ширина (мм)",
+        "Height": "Высота (мм)",
+        "PanelCount": "Количество панелей",
+        "Skip": "Замерить позже",
+        "Submit": "Создать проект"
+      },
+      "Validation": {
+        "CustomerRequired": "Требуется клиент.",
+        "ProjectNameRequired": "Требуется название проекта."
+      },
+      "Create": {
+        "Loading": "Создание проекта...",
+        "Success": "Проект успешно создан.",
+        "Error": "Не удалось создать проект."
+      }
+    },
+    "FieldExt": {}
+  },
+  "Common": {
+    "Yes": "Да",
+    "No": "Нет",
+    "Day": "День",
+    "Days": "Дней",
+    "Loading": "Загрузка…",
+    "Delete": "Удалить",
+    "Disabled": "Отключено",
+    "Enabled": "Включено",
+    "Create": "Создать",
+    "Cancel": "Отмена",
+    "Save": "Сохранить",
+    "Undo": "Отменить",
+    "Redo": "Повторить",
+    "Previous": "Назад",
+    "Next": "Далее",
+    "PageOf": "{{current}}/{{total}}",
+    "Refresh": "Обновить",
+    "All": "Все",
+    "Offline": {
+      "Banner": "Вы офлайн. Изменения будут синхронизированы при восстановлении соединения.",
+      "Queued": "Ожидает {{count}} изменений",
+      "Synced": "Синхронизировано {{count}} изменений",
+      "Error": "Не удалось синхронизировать {{count}} изменений",
+      "SyncNow": "Синхронизировать"
+    }
+  },
+  "Privacy": {
+    "Title": "Конфиденциальность и защита данных",
+    "Subtitle": "Управляйте правами на персональные данные: загрузите данные или удалите учётную запись.",
+    "Export": {
+      "Title": "Экспорт моих данных",
+      "Description": "Загрузите все ваши персональные данные ― учётную запись, проекты и историю активности ― в формате JSON.",
+      "Button": "Скачать пакет данных",
+      "Preparing": "Подготовка…",
+      "Success": "Пакет данных готов"
+    },
+    "Erase": {
+      "Title": "Удалить мою учётную запись",
+      "Description": "Запрос на анонимизацию учётной записи согласно правам защиты данных. Операция необратима; финансовые записи хранятся в течение установленного законом срока, но персональные данные удаляются.",
+      "ConfirmPrompt": "Введите имя пользователя для подтверждения удаления",
+      "Button": "Удалить учётную запись",
+      "Processing": "Обработка…",
+      "Success": "Запрос на удаление принят",
+      "MismatchError": "Имя пользователя не совпадает"
+    },
+    "Consent": {
+      "Marketing": "Маркетинговые сообщения",
+      "Analytics": "Анонимная аналитика использования",
+      "Updated": "Настройка обновлена"
+    },
+    "ExportIncludes": "Экспорт включает профиль, членства в клиентах/дилерах, историю заказов и недавнюю активность.",
+    "Result": {
+      "AccountAnonymized": "Учётная запись анонимизирована. Финансовые записи хранятся в течение установленного законом срока.",
+      "CustomerAnonymized": "Запись клиента анонимизирована. Финансовые снимки хранятся в течение установленного законом срока."
+    },
+    "Admin": {
+      "Actions": "Действия",
+      "AllStatuses": "Все статусы",
+      "Empty": "Запросы не найдены",
+      "Notes": "Примечания",
+      "Process": "Обработать",
+      "ProcessSuccess": "Запрос обработан",
+      "Reject": "Отклонить",
+      "RejectSuccess": "Запрос отклонён",
+      "RejectionPrompt": "Укажите причину отказа",
+      "Status": "Статус",
+      "StatusFilter": "Фильтр по статусу",
+      "SubmittedAt": "Дата подачи",
+      "Subtitle": "Управление запросами субъектов данных KVKK/GDPR",
+      "Tab": {
+        "Audit": "Аудит",
+        "AuditPlaceholder": "Журналы аудита скоро будут доступны",
+        "Policies": "Политики хранения",
+        "Requests": "Запросы"
+      },
+      "Title": "Управление конфиденциальностью",
+      "Type": "Тип"
+    },
+    "DataSubjectRequestNotFound": "Запрос субъекта данных не найден",
+    "EmailRequired": "Требуется email",
+    "Portal": {
+      "LastSubmitted": "ID последнего отправленного запроса",
+      "Subtitle": "Реализуйте свои права согласно GDPR / KVKK ст. 11",
+      "Title": "Запросы конфиденциальности"
+    },
+    "Request": {
+      "Email": "Адрес email",
+      "Notes": "Примечания (необязательно)",
+      "Submit": "Отправить запрос",
+      "SubmittedSuccess": "Запрос успешно отправлен",
+      "Submitting": "Отправка...",
+      "Type": "Тип запроса",
+      "TypeOption": {
+        "Access": "Право доступа",
+        "Erasure": "Право на удаление",
+        "Export": "Экспорт данных",
+        "Objection": "Право возражения",
+        "Portability": "Переносимость данных",
+        "Rectification": "Право на исправление",
+        "Restriction": "Ограничение обработки"
+      }
+    },
+    "RequestAlreadyClosed": "Запрос уже закрыт",
+    "RequestTypeMismatch": "Несоответствие типа запроса",
+    "RetentionExpiry": "Срок хранения истёк",
+    "RetentionPolicyNotFound": "Политика хранения не найдена",
+    "Retention": {
+      "Action": "Действие",
+      "ActionOption": {
+        "Anonymize": "Анонимизировать",
+        "Archive": "Архивировать",
+        "Delete": "Удалить"
+      },
+      "AddButton": "Добавить политику",
+      "AddPolicy": "Добавить политику хранения",
+      "CreateSuccess": "Политика хранения создана",
+      "Days": "Дни",
+      "Empty": "Политики ещё не определены",
+      "Enabled": "Включена",
+      "EntityType": "Тип данных",
+      "ExistingPolicies": "Существующие политики",
+      "LastRun": "Последний запуск",
+      "UpdateSuccess": "Политика хранения обновлена"
+    },
+    "Status": {
+      "Completed": "Завершено",
+      "InProgress": "В обработке",
+      "Rejected": "Отклонено",
+      "Submitted": "Отправлено"
+    },
+    "TenantRequired": "Требуется арендатор",
+    "VerificationEmailSent": "Письмо подтверждения отправлено"
+  },
+  "Persona": {
+    "Mode": {
+      "Pro": "Профи",
+      "Simple": "Простой",
+      "Updated": "Режим установлен на {{mode}}"
+    }
+  },
+  "Admin": {
+    "Providers": {
+      "Title": "Provider Integrations",
+      "Eyebrow": "Administration",
+      "Description": "Configure third-party integrations for your tenant.",
+      "CategoryTabs": "Provider category tabs",
+      "Empty": "No providers registered in this category.",
+      "LoadFailed": "Failed to load providers.",
+      "Default": "Default",
+      "Sandbox": "Sandbox",
+      "Prod": "Production",
+      "LastChecked": "Last checked",
+      "Category": {
+        "EFatura": "E-Invoice",
+        "Payment": "Payment",
+        "LaserMeter": "Laser Meter",
+        "Other": "Other"
+      },
+      "Status": {
+        "Healthy": "Healthy",
+        "Degraded": "Degraded",
+        "Unhealthy": "Unhealthy",
+        "Unknown": "Unknown",
+        "NotConfigured": "Not configured"
+      },
+      "Action": {
+        "Configure": "Configure",
+        "CheckHealth": "Check health",
+        "RunTestSuite": "Run test suite",
+        "WebhookHistory": "Webhooks",
+        "SetDefault": "Set as default",
+        "Enable": "Enabled",
+        "Disable": "Disabled"
+      },
+      "Form": {
+        "Title": "Configure {{name}}",
+        "DisplayName": "Display name",
+        "ApiKey": "API key",
+        "SecretKey": "Secret key",
+        "WebhookSecret": "Webhook secret",
+        "Endpoint": "Endpoint URL",
+        "IsSandbox": "Sandbox mode",
+        "IsEnabled": "Enabled",
+        "IsEnabledHint": "Enables routing through this provider.",
+        "SandboxHint": "Test environment. No real charges or filings.",
+        "ProdHint": "Production environment. Real charges and filings will be made.",
+        "SecretsHint": "Leave blank to keep existing values. Secrets are encrypted at rest."
+      },
+      "TestSuite": {
+        "Title": "Test suite — {{name}}",
+        "Running": "Running test suite…",
+        "Success": "Passed",
+        "Failed": "Failed",
+        "Outcome": "Outcome",
+        "NoResult": "No test result available.",
+        "StepX": "Step {{n}}"
+      },
+      "Webhook": {
+        "Title": "Webhook history — {{name}}",
+        "ReceivedAt": "Received",
+        "EventType": "Event",
+        "Status": "Status",
+        "Retries": "Retries",
+        "Error": "Error",
+        "Actions": "Actions",
+        "Replay": "Replay",
+        "Empty": "No webhook events match the current filters.",
+        "From": "From",
+        "To": "To",
+        "AllStatuses": "All statuses",
+        "Reset": "Reset filters",
+        "PageInfo": "Page {{page}} of {{totalPages}} ({{total}} events)",
+        "StatusValue": {
+          "Received": "Received",
+          "Processed": "Processed",
+          "Failed": "Failed",
+          "Retrying": "Retrying",
+          "Discarded": "Discarded",
+          "Pending": "Pending"
+        }
+      },
+      "Toast": {
+        "Saved": "Provider configuration saved.",
+        "SaveFailed": "Provider configuration could not be saved.",
+        "Enabled": "Provider enabled.",
+        "Disabled": "Provider disabled.",
+        "DefaultSet": "Default provider updated.",
+        "HealthOk": "Provider is healthy.",
+        "HealthFailed": "Health check failed.",
+        "WebhookReplayed": "Webhook replayed.",
+        "WebhookReplayFailed": "Failed to replay webhook."
+      }
+    }
+  },
+  "Fx": {
+    "LatestRates": {
+      "Title": "Актуальные курсы валют",
+      "LastUpdated": "Последнее обновление",
+      "Loading": "Загрузка курса...",
+      "Unavailable": "Курс недоступен"
+    },
+    "Currency": {
+      "Buying": "Покупка",
+      "Selling": "Продажа"
+    },
+    "Source": {
+      "TCMB": "TCMB (Центральный банк Турции)"
+    }
+  },
+  "Marketplace": {
+    "List": {
+      "Eyebrow": "Сообщество",
+      "Title": "Маркетплейс шаблонов",
+      "Subtitle": "Просматривайте шаблоны сообщества и устанавливайте их в свое рабочее пространство.",
+      "SubmitButton": "Отправить шаблон",
+      "LoadFailed": "Не удалось загрузить шаблоны",
+      "EmptyTitle": "Нет шаблонов по этим фильтрам",
+      "EmptyDescription": "Попробуйте другую категорию или снизьте минимальный рейтинг."
+    },
+    "Filters": {
+      "Category": "Категория",
+      "AllCategories": "Все категории",
+      "Sort": "Сортировка",
+      "MinRating": "Минимальный рейтинг",
+      "AnyRating": "Любой",
+      "Sort.Popularity": "Популярность",
+      "Sort.Newest": "Новейшие",
+      "Sort.Rating": "Высокий рейтинг",
+      "Sort.Alphabetical": "По алфавиту"
+    },
+    "Card": { "NoPreview": "Нет превью" },
+    "Detail": {
+      "Back": "Назад к маркетплейсу",
+      "Install": "Установить шаблон",
+      "Installing": "Установка...",
+      "Installed": "Шаблон установлен",
+      "InstallFailed": "Не удалось установить шаблон",
+      "LoadFailed": "Не удалось загрузить шаблон",
+      "MissingId": "Отсутствует id шаблона",
+      "NoPreview": "Превью недоступно",
+      "NoDescription": "Описание не предоставлено.",
+      "Specs": "Спецификации",
+      "Subtype": "Подтип",
+      "GeometryMode": "Геометрия",
+      "Mounting": "Крепление",
+      "Connector": "Коннектор",
+      "RunPresets": "Пресеты",
+      "Downloads": "Загрузки",
+      "PublishedAt": "Опубликовано"
+    },
+    "Reviews": {
+      "Title": "Отзывы",
+      "Empty": "Пока нет отзывов.",
+      "Loading": "Загрузка отзывов...",
+      "User": "Пользователь",
+      "LeaveReview": "Оставить отзыв",
+      "CommentPlaceholder": "Поделитесь опытом...",
+      "Submit": "Отправить",
+      "Submitting": "Отправка...",
+      "Submitted": "Отзыв отправлен",
+      "SubmitFailed": "Не удалось отправить отзыв",
+      "SelectRating": "Пожалуйста, выберите оценку"
+    },
+    "Submit": {
+      "Title": "Отправить шаблон",
+      "Subtitle": "Поделитесь своим приватным шаблоном с сообществом после одобрения.",
+      "TenantTemplateId": "ID шаблона",
+      "TenantTemplateIdRequired": "Требуется ID шаблона",
+      "Submit": "Отправить",
+      "Submitting": "Отправка...",
+      "Submitted": "Заявка отправлена на проверку",
+      "Failed": "Не удалось отправить шаблон",
+      "Cancel": "Отмена"
+    },
+    "MySubmissions": {
+      "Eyebrow": "Маркетплейс",
+      "Title": "Мои заявки",
+      "Subtitle": "Отслеживайте шаблоны, отправленные в маркетплейс сообщества.",
+      "New": "Отправить еще",
+      "LoadFailed": "Не удалось загрузить заявки",
+      "EmptyTitle": "Пока нет заявок",
+      "EmptyDescription": "Отправьте свой шаблон, чтобы поделиться с сообществом.",
+      "Code": "Код",
+      "Name": "Название",
+      "Status": "Статус",
+      "SubmittedAt": "Отправлено",
+      "PublishedAt": "Опубликовано",
+      "Downloads": "Загрузки"
+    },
+    "Admin": {
+      "Eyebrow": "Администратор платформы",
+      "Title": "Очередь проверки маркетплейса",
+      "Subtitle": "Одобряйте или отклоняйте заявки сообщества перед публикацией.",
+      "LoadFailed": "Не удалось загрузить ожидающие заявки",
+      "EmptyTitle": "Очередь пуста",
+      "EmptyDescription": "Нет ожидающих заявок маркетплейса.",
+      "Code": "Код",
+      "Name": "Название",
+      "SubmittedAt": "Отправлено",
+      "Actions": "Действия",
+      "Publish": "Опубликовать",
+      "Published": "Шаблон опубликован",
+      "PublishFailed": "Не удалось опубликовать шаблон",
+      "Reject": "Отклонить",
+      "Rejected": "Заявка отклонена",
+      "RejectFailed": "Не удалось отклонить заявку",
+      "Rejecting": "Отклонение...",
+      "RejectTitle": "Отклонить заявку",
+      "RejectReason": "Причина отклонения",
+      "RejectReasonRequired": "Требуется причина отклонения",
+      "ConfirmReject": "Отклонить",
+      "Cancel": "Отмена"
+    }
+  },
+  "Warranty": {
+    "Title": "Гарантийные договоры",
+    "Subtitle": "Отслеживание покрытия гарантии, сроков и продлений.",
+    "Empty": "Нет договоров, соответствующих текущим фильтрам.",
+    "StartDate": "Начало",
+    "EndDate": "Окончание",
+    "MonthsShort": "мес",
+    "Status": {
+      "Active": "Активный",
+      "Expired": "Истёк",
+      "Cancelled": "Отменён",
+      "Suspended": "Приостановлен"
+    },
+    "CoverageType": {
+      "ManufacturerDefect": "Производственный дефект",
+      "Installation": "Установка",
+      "FullService": "Полный сервис",
+      "Limited": "Ограниченный"
+    },
+    "Action": {
+      "Create": "Создать гарантию",
+      "Extend": "Продлить",
+      "Cancel": "Отменить",
+      "Suspend": "Приостановить",
+      "Resume": "Возобновить",
+      "MonthsToAdd": "Месяцы",
+      "ReasonOptional": "Причина (необязательно)",
+      "ReasonRequired": "Причина",
+      "ExtendedToast": "Гарантия продлена.",
+      "CancelledToast": "Гарантия отменена.",
+      "CancelReasonRequired": "Причина отмены обязательна."
+    },
+    "Alerts": {
+      "BadgeAria": "Истекающие гарантии",
+      "ExpiringCount": "{{count}} истекает"
+    },
+    "ServiceTicket": {
+      "Title": "Сервисные заявки",
+      "Subtitle": "Обращения клиентов и плановое обслуживание.",
+      "Empty": "Нет заявок по текущим фильтрам.",
+      "OpenNew": "Открыть новую заявку",
+      "Description": "Описание",
+      "ReportedAt": "Создано",
+      "Type": {
+        "Label": "Тип",
+        "PreventiveMaintenance": "Профилактическое ТО",
+        "WarrantyClaim": "Гарантийный случай",
+        "OutOfWarrantyRepair": "Ремонт вне гарантии",
+        "Inspection": "Осмотр"
+      },
+      "Status": {
+        "Label": "Статус",
+        "Open": "Открыта",
+        "Assigned": "Назначена",
+        "InProgress": "В работе",
+        "Resolved": "Решена",
+        "Cancelled": "Отменена"
+      },
+      "Priority": {
+        "Label": "Приоритет",
+        "Low": "Низкий",
+        "Normal": "Обычный",
+        "High": "Высокий",
+        "Urgent": "Срочный"
+      },
+      "Action": {
+        "Submit": "Отправить заявку",
+        "Assign": "Назначить",
+        "Resolve": "Решить",
+        "Cancel": "Отменить"
+      },
+      "Validation": {
+        "Required": "Требуются заголовок и описание."
+      },
+      "Toast": {
+        "Created": "Заявка создана.",
+        "Assigned": "Заявка назначена.",
+        "Resolved": "Заявка решена."
+      }
+    },
+    "Maintenance": {
+      "Title": "Планы обслуживания",
+      "Empty": "Обслуживание не запланировано.",
+      "Type": {
+        "PreventiveAnnual": "Ежегодное ТО",
+        "SemiAnnual": "Полугодовое",
+        "Quarterly": "Квартальное",
+        "Custom": "Своё"
+      },
+      "NextDue": "Следующий срок",
+      "LastCompleted": "Последнее выполнение",
+      "Action": {
+        "Schedule": "Запланировать ТО",
+        "Complete": "Отметить как выполнено"
+      }
+    }
+  },
+  "InstallationAcceptance": {
+    "Title": "Приёмка монтажа",
+    "OpenForm": "Открыть форму",
+    "OpenPunchListItems": "Открытые пункты дефектов",
+    "Status": {
+      "Draft": "Черновик",
+      "InProgress": "В процессе",
+      "SignedByCustomer": "Подписано клиентом",
+      "Accepted": "Принято",
+      "Rejected": "Отклонено"
+    },
+    "Action": {
+      "Start": "Начать приёмку",
+      "UpdateChecklist": "Обновить чек-лист",
+      "UploadPhoto": "Загрузить фото",
+      "CaptureSignature": "Получить подпись",
+      "Accept": "Принять",
+      "Reject": "Отклонить",
+      "RejectReasonPrompt": "Причина отказа"
+    },
+    "Checklist": {
+      "Category": {
+        "Mechanical": "Механика",
+        "Glass": "Стекло",
+        "Seal": "Уплотнение",
+        "Dimension": "Размеры",
+        "Hardware": "Фурнитура"
+      },
+      "Result": {
+        "Pass": "Годен",
+        "Fail": "Не годен",
+        "NA": "Н/П"
+      },
+      "Item": {
+        "Mechanical.FrameRigidity": "Жёсткость рамы приемлема",
+        "Mechanical.AnchorBolts": "Анкерные болты затянуты",
+        "Mechanical.Levelness": "Горизонталь/вертикаль <2мм/м",
+        "Mechanical.ScrewFastenings": "Винтовые крепления завершены",
+        "Glass.NoChips": "Стеклянные панели без повреждений",
+        "Glass.PanelAlignment": "Выравнивание панелей",
+        "Glass.EdgePolish": "Кромки стекла отполированы",
+        "Glass.StampVisible": "Маркировка CE видна",
+        "Seal.SiliconeApplied": "Силикон нанесён",
+        "Seal.NoGaps": "Уплотнение без зазоров",
+        "Seal.WaterTest": "Водонепроницаемость проверена",
+        "Dimension.WidthTolerance": "Допуск ширины ±2мм",
+        "Dimension.HeightTolerance": "Допуск высоты ±2мм",
+        "Dimension.Diagonal": "Равенство диагоналей",
+        "Hardware.HandlesOperational": "Ручки работают",
+        "Hardware.LocksOperational": "Замки работают",
+        "Hardware.HingesLubricated": "Петли смазаны",
+        "Hardware.HingeAlignment": "Выравнивание петель"
+      },
+      "NotesPlaceholder": "Заметки..."
+    },
+    "PunchList": {
+      "Title": "Список дефектов",
+      "Empty": "Нет пунктов дефектов.",
+      "Add": "Добавить",
+      "Resolve": "Закрыть",
+      "DescriptionPlaceholder": "Описание дефекта",
+      "Severity": {
+        "Minor": "Незначительный",
+        "Moderate": "Средний",
+        "Critical": "Критический"
+      },
+      "Status": {
+        "Open": "Открыт",
+        "InProgress": "В работе",
+        "Resolved": "Закрыт",
+        "Deferred": "Отложен"
+      }
+    },
+    "PhotoCapture": {
+      "TakePhoto": "Сделать фото",
+      "PickFromGallery": "Выбрать из галереи",
+      "Counter": "{{count}} фото"
+    },
+    "SignaturePad": {
+      "CustomerNamePlaceholder": "Имя представителя клиента",
+      "Instructions": "Пожалуйста, подпишите в области ниже.",
+      "Clear": "Очистить",
+      "Save": "Сохранить подпись"
+    }
+  },
+  "Mrp": {
+    "Dashboard": {
+      "Title": "Панель MRP",
+      "Subtitle": "Планирование потребности в материалах и предложения по дозаказу.",
+      "TotalTracked": "Отслеживаемые товары",
+      "ReorderCandidates": "Кандидаты на дозаказ",
+      "PendingRequisitions": "Ожидающие заявки",
+      "OpenPurchaseOrders": "Открытые заказы",
+      "ViewRequisitions": "Управление заявками"
+    },
+    "Suggestions": {
+      "Title": "Предложения по дозаказу",
+      "Empty": "Нет товаров ниже точки заказа.",
+      "Sku": "Артикул",
+      "Product": "Товар",
+      "OnHand": "В наличии",
+      "OnOrder": "В заказе",
+      "Available": "Доступно",
+      "ReorderPoint": "Точка заказа",
+      "Suggested": "Рекомендовано",
+      "DaysUntilStockOut": "Дней до окончания"
+    },
+    "Projection": {
+      "Title": "Прогноз запасов",
+      "Subtitle": "Прогноз баланса на ближайшие {{days}} дн.",
+      "NoData": "Нет данных для прогноза.",
+      "ReorderPoint": "Точка заказа",
+      "ShouldReorder": "Рекомендуется дозаказ",
+      "OnHand": "В наличии",
+      "Reserved": "Резерв",
+      "OnOrder": "В заказе",
+      "Suggested": "Рекомендовано"
+    },
+    "Forecast": {
+      "Title": "Прогноз спроса",
+      "Window": "Период",
+      "AverageDaily": "Средний дневной спрос",
+      "TotalDemand": "Общий спрос",
+      "Peak": "Пиковый день"
+    },
+    "Requisition": {
+      "PageTitle": "Заявки на закупку",
+      "PageSubtitle": "Проверка, утверждение и преобразование заявок.",
+      "NewRequisition": "Новая заявка",
+      "Empty": "Нет заявок по фильтрам.",
+      "Notes": "Примечания",
+      "Lines": "Строки",
+      "LineCount": "строк",
+      "AddLine": "Добавить строку",
+      "RemoveLine": "Удалить строку",
+      "ProductId": "ID товара",
+      "Quantity": "Количество",
+      "UnitCost": "Стоимость единицы",
+      "EstimatedTotal": "Сумма (оценка)",
+      "Status": {
+        "Draft": "Черновик",
+        "Submitted": "Отправлена",
+        "Approved": "Утверждена",
+        "Rejected": "Отклонена",
+        "Converted": "Преобразована",
+        "Cancelled": "Отменена"
+      },
+      "Reason": {
+        "Label": "Причина",
+        "MRPSuggestion": "Предложение MRP",
+        "Manual": "Вручную",
+        "EmergencyOrder": "Экстренный заказ",
+        "StockOut": "Нет на складе"
+      }
+    },
+    "Action": {
+      "Submit": "Отправить",
+      "Approve": "Утвердить",
+      "Reject": "Отклонить",
+      "Convert": "В заказ",
+      "Cancel": "Отменить",
+      "Generate": "Запустить MRP"
+    }
+  },
+  "Onboarding": {
+    "Action": {
+      "Next": "Далее",
+      "Previous": "Назад",
+      "Skip": "Пропустить",
+      "Finish": "Готово",
+      "Restart": "Перезапустить"
+    },
+    "WelcomeBanner": {
+      "Title": "Добро пожаловать!",
+      "Description": "Короткий тур по основным экранам.",
+      "StartButton": "Начать тур"
+    },
+    "Settings": {
+      "Title": "Обучающий тур",
+      "Description": "Перезапустить туры или посмотреть их статус.",
+      "ResetAll": "Сбросить все туры",
+      "ResetOne": "Сбросить",
+      "StatusPending": "Ожидает",
+      "StatusCompleted": "Завершён",
+      "StatusSkipped": "Пропущен"
+    },
+    "TourName": {
+      "Dashboard": "Панель",
+      "Designer": "Дизайнер",
+      "Mrp": "Планирование производства",
+      "Installation": "Приёмка"
+    },
+    "Tour": {
+      "Dashboard": {
+        "Step1": {
+          "Title": "Стеклянные проекты",
+          "Content": "Проекты здесь. Нажмите, чтобы создать новый проект остекления."
+        },
+        "Step2": {
+          "Title": "Мастер нового проекта",
+          "Content": "Четыре шага: Категория → Шаблон → Информация → Размеры."
+        },
+        "Step3": {
+          "Title": "Режим Persona",
+          "Content": "Переключение между Простой (большие кнопки) и Pro (технические детали)."
+        },
+        "Step4": {
+          "Title": "Производство и закупки",
+          "Content": "Планирование, заявки и прогноз запасов."
+        }
+      },
+      "Designer": {
+        "Step1": {
+          "Title": "Холст дизайнера",
+          "Content": "Проектируйте остекление здесь. Добавляйте участки, делите панели, выбирайте фурнитуру."
+        },
+        "Step2": {
+          "Title": "Участки",
+          "Content": "Добавляйте участки фасада из левой панели."
+        },
+        "Step3": {
+          "Title": "Инспектор",
+          "Content": "Детали выбранного элемента справа. Тип стекла, цвет и фурнитура."
+        },
+        "Step4": {
+          "Title": "Спецификация и стоимость",
+          "Content": "Спецификация и стоимость рассчитываются автоматически."
+        }
+      },
+      "Mrp": {
+        "Step1": {
+          "Title": "Панель MRP",
+          "Content": "Сводка: критические позиции, открытые заявки, остатки."
+        },
+        "Step2": {
+          "Title": "Сформировать предложения",
+          "Content": "Система формирует предложения по заявкам из заказов и запасов."
+        },
+        "Step3": {
+          "Title": "Кандидаты",
+          "Content": "Просмотрите предложения и преобразуйте в закупочные заявки."
+        },
+        "Step4": {
+          "Title": "Заявки",
+          "Content": "Просмотр и утверждение всех заявок."
+        }
+      },
+      "Installation": {
+        "Step1": {
+          "Title": "Чек-лист",
+          "Content": "Чек-лист приёмки. Отметьте каждый пункт Пройдено/Не пройдено/Н/П."
+        },
+        "Step2": {
+          "Title": "Сделать фото",
+          "Content": "Загрузите фотографии с объекта."
+        },
+        "Step3": {
+          "Title": "Список замечаний",
+          "Content": "Добавляйте отсутствующие или дефектные элементы в список замечаний."
+        },
+        "Step4": {
+          "Title": "Подпись клиента",
+          "Content": "Получите подпись клиента на планшете. После подписания форма блокируется."
+        }
+      }
+    }
+  },
+  "Notifications": {
+    "Title": "Уведомления",
+    "SeeAll": "Показать все",
+    "UnreadOnly": "Только непрочитанные",
+    "AllStatuses": "Все статусы",
+    "MarkRead": "Отметить как прочитанное",
+    "TableSubject": "Тема",
+    "TableCategory": "Категория",
+    "TableChannel": "Канал",
+    "TableStatus": "Статус",
+    "TableCreatedAt": "Создано",
+    "Bell": {
+      "Unread": "Непрочитанные уведомления",
+      "Empty": "Нет новых уведомлений"
+    },
+    "Channel": {
+      "InApp": "В приложении",
+      "Email": "Эл. почта",
+      "Sms": "SMS",
+      "Push": "Push",
+      "WhatsApp": "WhatsApp"
+    },
+    "Status": {
+      "Pending": "Ожидает",
+      "Queued": "В очереди",
+      "Sending": "Отправляется",
+      "Sent": "Отправлено",
+      "Delivered": "Доставлено",
+      "Failed": "Ошибка",
+      "Bounced": "Отклонено",
+      "Read": "Прочитано"
+    },
+    "Category": {
+      "Warranty": "Гарантия",
+      "Installation": "Установка",
+      "Payment": "Платёж",
+      "Mrp": "MRP",
+      "ServiceTicket": "Сервисный запрос"
+    },
+    "Preferences": {
+      "Title": "Настройки уведомлений",
+      "ChannelMatrix": "Категория / Канал"
+    },
+    "Settings": {
+      "Title": "Параметры уведомлений",
+      "Description": "Выберите категории и каналы для получения уведомлений."
+    },
+    "Template": {
+      "Subject": {
+        "Warranty.Activated": "Ваша гарантия активирована",
+        "Warranty.Expiring": "Срок гарантии скоро истекает",
+        "Payment.Succeeded": "Платёж получен",
+        "Payment.Failed": "Платёж не выполнен",
+        "Installation.Accepted": "Установка принята",
+        "Mrp.SuggestionsCreated": "Новые MRP-предложения",
+        "ServiceTicket.Resolved": "Ваш запрос решён"
+      }
+    }
+  },
+  "Whitelabel": {
+    "page": {
+      "title": "Кастомизация White-label",
+      "subtitle": "Настройте рабочее пространство CoreAlign под ваш бренд: цвета, логотип, страница входа и идентификатор отправителя e-mail."
+    },
+    "fields": {
+      "logo": "Логотип",
+      "favicon": "Favicon",
+      "loginBackground": "Фон страницы входа",
+      "primaryColor": "Основной цвет",
+      "accentColor": "Акцентный цвет",
+      "brandName": "Название бренда",
+      "emailFromName": "Имя отправителя",
+      "emailFromAddress": "Адрес отправителя",
+      "customSubdomain": "Поддомен",
+      "customSubdomainHint": "Используется как tenant.corealign.com.",
+      "customDomain": "Собственный домен",
+      "customDomainHint": "Требуется проверка DNS (CNAME).",
+      "loginHeading": "Заголовок страницы входа (Markdown)"
+    },
+    "upload": {
+      "empty": "Нет изображения",
+      "choose": "Выбрать файл",
+      "uploading": "Загрузка…",
+      "acceptImage": "PNG, JPG, SVG или WebP, до 2 МБ.",
+      "acceptFavicon": "Рекомендуется PNG, SVG или ICO.",
+      "tooLarge": "Файл превышает {{max}} КБ."
+    },
+    "save": {
+      "submit": "Сохранить",
+      "saving": "Сохранение…",
+      "success": "Тема сохранена.",
+      "error": "Не удалось сохранить тему."
+    },
+    "preview": {
+      "title": "Предпросмотр e-mail",
+      "defaultBrand": "Ваш бренд",
+      "empty": "(Предпросмотр тела)",
+      "sampleBody": "Здравствуйте,\n\nЭто пример уведомления с вашей темой арендатора."
+    },
+    "subdomain": {
+      "available": "Поддомен доступен.",
+      "unavailable": "Поддомен уже используется.",
+      "checking": "Проверка…"
+    }
+  },
+  "CustomerPortal": {
+    "Common": {
+      "PortalTitle": "Кабинет клиента",
+      "OpenMenu": "Открыть меню",
+      "CloseMenu": "Закрыть меню",
+      "Notifications": "Уведомления",
+      "Logout": "Выйти",
+      "Loading": "Загрузка...",
+      "NoData": "Пока нет данных",
+      "ViewAll": "Показать все",
+      "Back": "Назад",
+      "LoadError": "Не удалось загрузить данные.",
+      "Cancel": "Отмена",
+      "Submitting": "Отправка...",
+      "Previous": "Назад",
+      "Next": "Далее"
+    },
+    "Nav": {
+      "Dashboard": "Главная",
+      "Projects": "Проекты",
+      "Warranty": "Гарантия",
+      "ServiceTickets": "Заявки",
+      "Invoices": "Счета",
+      "Payments": "Платежи",
+      "Profile": "Профиль"
+    },
+    "Dashboard": {
+      "Welcome": "Здравствуйте, {{name}}",
+      "Subtitle": "Краткий обзор ваших проектов, гарантий и счетов.",
+      "WarrantiesActive": "Active warranties",
+      "OpenTickets": "Service tickets",
+      "Invoices": "Invoices",
+      "RecentPayments": "Recent payments",
+      "RecentTicketsTitle": "Recent service tickets",
+      "RecentInvoicesTitle": "Recent invoices"
+    },
+    "Warranty": {
+      "ListTitle": "My warranties",
+      "Empty": "You have no active warranty contracts.",
+      "CoverageLabel": "Coverage",
+      "Period": "Period",
+      "Months": "Warranty months",
+      "StartDate": "Start date",
+      "EndDate": "End date",
+      "Notes": "Notes",
+      "Status": {
+        "Active": "Active",
+        "Expired": "Expired",
+        "Cancelled": "Cancelled",
+        "Suspended": "Suspended"
+      },
+      "CoverageType": {
+        "ManufacturerDefect": "Manufacturer defect",
+        "Installation": "Installation",
+        "FullService": "Full service",
+        "Limited": "Limited"
+      }
+    },
+    "ServiceTicket": {
+      "ListTitle": "Service tickets",
+      "New": "New ticket",
+      "NewTitle": "Open a new service ticket",
+      "Empty": "You have no service tickets.",
+      "FieldTitle": "Title",
+      "FieldType": "Type",
+      "FieldPriority": "Priority",
+      "FieldDescription": "Describe the issue",
+      "Submit": "Submit ticket",
+      "Description": "Description",
+      "Resolution": "Resolution",
+      "Status": {
+        "Open": "Open",
+        "Assigned": "Assigned",
+        "InProgress": "In progress",
+        "Resolved": "Resolved",
+        "Cancelled": "Cancelled"
+      },
+      "Priority": {
+        "Low": "Low",
+        "Normal": "Normal",
+        "High": "High",
+        "Urgent": "Urgent"
+      },
+      "Type": {
+        "PreventiveMaintenance": "Preventive maintenance",
+        "WarrantyClaim": "Warranty claim",
+        "OutOfWarrantyRepair": "Out-of-warranty repair",
+        "Inspection": "Inspection"
+      }
+    },
+    "Invoice": {
+      "ListTitle": "Invoices",
+      "Empty": "You have no invoices.",
+      "IssueDate": "Issue date",
+      "DueDate": "Due date",
+      "Total": "Total",
+      "Paid": "Paid",
+      "Due": "Outstanding",
+      "Download": "Download PDF",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Issued": "Issued",
+        "Sent": "Sent",
+        "PartiallyPaid": "Partially paid",
+        "Paid": "Paid",
+        "Overdue": "Overdue",
+        "Void": "Void",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Payment": {
+      "ListTitle": "Payments",
+      "New": "Pay an invoice",
+      "Empty": "No payments yet.",
+      "InitiateTitle": "Pay an invoice online",
+      "FieldInvoiceId": "Invoice ID",
+      "InvoiceIdHint": "Paste the invoice ID you want to pay. You can find it from the invoice detail page.",
+      "InvoiceIdRequired": "Invoice ID is required.",
+      "InitiateError": "Could not start the payment. Please try again.",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Confirmed": "Confirmed",
+        "PartiallyApplied": "Partially applied",
+        "FullyApplied": "Fully applied",
+        "Refunded": "Refunded",
+        "Void": "Void"
+      },
+      "Method": {
+        "Cash": "Cash",
+        "BankTransfer": "Bank transfer",
+        "CreditCard": "Credit card",
+        "DebitCard": "Debit card",
+        "Check": "Check",
+        "PromissoryNote": "Promissory note",
+        "OnlineGateway": "Online",
+        "Other": "Other"
+      }
+    },
+    "Project": {
+      "ListTitle": "My projects",
+      "Empty": "No projects yet.",
+      "Code": "Code",
+      "Total": "Grand total",
+      "Panels": "Panels",
+      "SiteCity": "Site city",
+      "SiteDistrict": "Site district",
+      "LastUpdated": "Last updated",
+      "ValidUntil": "Quote valid until",
+      "ReadOnlyNotice": "Project details are read-only in the customer portal.",
+      "Status": {
+        "Draft": "Draft",
+        "InDesign": "In design",
+        "AwaitingApproval": "Awaiting approval",
+        "Approved": "Approved",
+        "InProduction": "In production",
+        "Shipped": "Shipped",
+        "Installed": "Installed",
+        "Closed": "Closed",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Profile": {
+      "Title": "Profile",
+      "Name": "Name",
+      "Email": "Email",
+      "Username": "Username",
+      "Tenant": "Account",
+      "NotificationPrefsTitle": "Notification preferences",
+      "NotificationPrefsHint": "Choose how we contact you about your warranties, tickets and invoices."
+    }
+  },
+  "BI": {
+    "Common": {
+      "Loading": "Zagruzka..."
+    },
+    "Dashboard": {
+      "Title": "KPI Panel",
+      "Empty": "Net vidzhetov — dobavte pervyi vidzhet.",
+      "RemoveWidget": "Udalit vidzhet"
+    },
+    "Reports": {
+      "Title": "Sokhrannye otchety",
+      "Create": "Novyi otchet",
+      "Name": "Nazvanie",
+      "DataSource": "Istochnik dannykh",
+      "Visibility": "Vidimost",
+      "LastRun": "Posledniy zapusk",
+      "Actions": "Deistviya",
+      "Open": "Otkryt",
+      "Delete": "Udalit",
+      "Empty": "Net sokhranennykh otchetov."
+    },
+    "Builder": {
+      "Title": "Konstruktor otchetov",
+      "DataSource": "Istochnik dannykh",
+      "GroupBy": "Gruppirovat po",
+      "Aggregation": "Agregatsiya",
+      "MeasureField": "Pole mery",
+      "FromDate": "S",
+      "ToDate": "Po",
+      "Filters": "Filtry",
+      "AddFilter": "Dobavit filtr",
+      "Field": "Pole",
+      "Value": "Znachenie",
+      "ReportName": "Nazvanie otcheta",
+      "Public": "Vidimo vsem polzovatelyam tenanta",
+      "Preview": "Predprosmotr",
+      "PreviewResult": "Predprosmotr",
+      "PreviewFailed": "Oshibka predprosmotra",
+      "Save": "Sokhranit",
+      "Saved": "Otchet sokhranen",
+      "SaveFailed": "Ne udalos sokhranit otchet",
+      "NameRequired": "Nazvanie obyazatelno"
+    },
+    "Export": {
+      "Button": "Eksport",
+      "Success": "Eksport zagruzhen",
+      "Failed": "Oshibka eksporta"
+    }
+  }
+}

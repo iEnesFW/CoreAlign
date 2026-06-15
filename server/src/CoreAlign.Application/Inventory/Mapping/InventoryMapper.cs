@@ -80,6 +80,21 @@ public static class InventoryMapper
         Notes = m.Notes,
     };
 
+    public static StockTransferResultDto ToDto(StockTransferResult r) => new()
+    {
+        ProductId = r.ProductId,
+        FromWarehouseId = r.FromWarehouseId,
+        ToWarehouseId = r.ToWarehouseId,
+        Quantity = r.Quantity,
+        UnitCost = r.UnitCost,
+        FromOnHandAfter = r.FromOnHandAfter,
+        ToOnHandAfter = r.ToOnHandAfter,
+        SourceDocumentId = r.SourceDocumentId,
+        MovementsCreated = r.MovementsCreated,
+        TransferOut = ToDto(r.TransferOut),
+        TransferIn = ToDto(r.TransferIn),
+    };
+
     public static StockAllocationDto ToDto(StockAllocation a) => new()
     {
         Id = a.Id,

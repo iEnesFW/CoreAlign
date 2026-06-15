@@ -11,5 +11,6 @@ public enum StockSourceDocumentType
     Adjustment = 6,
     OpeningBalance = 7,
     CycleCount = 8,
-    Production = 9
+    Production = 9,
+    Purchase = 10,
 }

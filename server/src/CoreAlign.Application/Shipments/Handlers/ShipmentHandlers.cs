@@ -1,4 +1,7 @@
+using CoreAlign.Application.Accounting.Services;
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Outbox;
+using CoreAlign.Application.Orders.EventHandlers;
 using CoreAlign.Application.Shipments.Commands;
 using CoreAlign.Application.Shipments.DTOs;
 using CoreAlign.Application.Shipments.Mapping;
@@ -115,13 +118,15 @@ public class DispatchShipmentHandler : IRequestHandler<DispatchShipmentCommand, 
     private readonly IShipmentRepository _shipments;
     private readonly IOrderRepository _orders;
     private readonly IAllocationService _allocator;
+    private readonly IGLPostingOutbox _glOutbox;
     private readonly IUnitOfWork _uow;
 
-    public DispatchShipmentHandler(IShipmentRepository shipments, IOrderRepository orders, IAllocationService allocator, IUnitOfWork uow)
+    public DispatchShipmentHandler(IShipmentRepository shipments, IOrderRepository orders, IAllocationService allocator, IGLPostingOutbox glOutbox, IUnitOfWork uow)
     {
         _shipments = shipments;
         _orders = orders;
         _allocator = allocator;
+        _glOutbox = glOutbox;
         _uow = uow;
     }
 
@@ -132,12 +137,30 @@ public class DispatchShipmentHandler : IRequestHandler<DispatchShipmentCommand, 
 
         shipment.Dispatch(c.CarrierName, c.TrackingNumber, c.TrackingUrl, c.ShippingCost);
 
+        // Σ issue cost across the consumed reservations; relieved to COGS below.
+        var cogsCost = 0m;
         foreach (var line in shipment.Lines)
         {
             var orderLine = order.Lines.FirstOrDefault(l => l.Id == line.OrderLineId);
             if (orderLine is null) continue;
             orderLine.RecordShipment(line.Quantity);
-            await _allocator.ConsumeForOrderLineAsync(order.Id, orderLine.Id, line.Quantity, postedByUserId: null, ct);
+            var consumption = await _allocator.ConsumeForOrderLineAsync(order.Id, orderLine.Id, line.Quantity, postedByUserId: null, ct);
+            cogsCost += consumption.Cost;
+        }
+
+        // COGS recognition for the reserve→ship flow (stock relieved at dispatch,
+        // not at confirm). Keyed by (CostOfGoodsSold, ShipmentId) so it is
+        // idempotent per shipment and independent of any confirm-time posting.
+        if (cogsCost > 0m)
+        {
+            await _glOutbox.EnqueueAsync(new GLPostingRequest(
+                JournalSourceType.CostOfGoodsSold,
+                shipment.Id,
+                shipment.ShipmentNumber,
+                DateTime.UtcNow.Date,
+                JournalEntryType.Mahsup,
+                $"Satış maliyeti ({shipment.ShipmentNumber})",
+                CogsGLLines.Build(cogsCost, reverse: false)), ct);
         }
 
         var allLinesShipped = order.Lines.All(l => l.QuantityShipped + l.QuantityCancelled >= l.Quantity);

@@ -1,0 +1,15 @@
+export {
+  applyPlanMoveSnap,
+  snapDimensionMm,
+  stickyDimensionMm,
+  filterSnapTargets,
+  EMPTY_SNAP_TARGETS,
+  type PlanPoint,
+  type PlanSnapPoint,
+  type PlanSnapSegment,
+  type PlanSnapTargets,
+  type PlanMoveDelta,
+  type PlanSnapGuide,
+  type PlanSnapGuideKind,
+  type PlanSnapResult,
+} from '@/shared/three-engine';

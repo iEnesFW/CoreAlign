@@ -158,36 +158,104 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 
 ---
 
-## 4. Database
+## 4. Database — PostgreSQL Mühendislik Standardı
 
-### 4.1 İsimlendirme (basit ve anlaşılır)
+> CoreAlign **code-first**'tür: şema, Entity + EF Configuration kodundan `dotnet ef migrations add` ile üretilir. Bu yüzden **DB kalitesi koddan başlar** — bir kolonun tipi, bir index'in varlığı, bir FK'nin `OnDelete`'i, bir CHECK constraint hepsi Configuration'da/migration'da bilinçli yazılır. Aşağıdaki kurallar bağlayıcıdır ve "1 yıl sonra 10M–1B satır" (§11 Foresight) testinden geçecek şekilde tasarlanmıştır. §11 (Foresight), §12 (DB yaşam döngüsü), §16 (ERP doğruluk) bu bölümü tamamlar; çelişkide bu bölüm + §16 kazanır.
 
-- **Tablo adı:** `snake_case`, **çoğul**. Örn: `users`, `user_roles`, `subscription_plans`, `login_audit_logs`.
-- **Sütun adı:** `snake_case`. Entity property suffix'i `*AtUtc` ise sütun `*_at_utc` olur. Örn: `created_at_utc`, `last_login_at_utc`, `user_id`.
-- **Primary key:** `id` (Guid).
-- **Foreign key:** `<entity>_id`. Örn: `user_id`, `role_id`.
-- **Timestamp standardı:** Her tablo `created_at_utc`, `updated_at_utc` (PG `timestamp with time zone`). Soft-delete kullanılıyorsa `deleted_at_utc`.
-- **Indeks adı:** EF default + global snake_case dönüşümü. Örn: `ix_users_normalized_email`, `pk_users`, `fk_user_roles_users_user_id`.
+### 4.1 İsimlendirme
 
-C# Entity sınıfı **PascalCase** (`User.CreatedAtUtc`), DbContext içinde `ApplySnakeCaseNaming()` çağrısı tüm tablo / sütun / FK / indeks adlarını otomatik snake*case'e dönüştürür. EF Configuration'larda artık `ToTable("Users")` veya `HasDatabaseName("IX*...")` yazılmaz — convention yapar.
+- **Tablo:** `snake_case`, **çoğul** (`users`, `customer_ledger_entries`).
+- **Sütun:** `snake_case`. `*AtUtc` → `*_at_utc`. **PK:** `id` (Guid). **FK:** `<entity>_id`.
+- **Timestamp:** her tabloda `created_at_utc`, `updated_at_utc` (`timestamptz`); soft-delete varsa `deleted_at_utc` veya `is_deleted`.
+- **Index/constraint adı:** EF default + global snake_case (`ix_...`, `pk_...`, `fk_...`, `ux_...`, `ck_...`). Configuration'da `ToTable("Users")`/`HasDatabaseName("IX_...")` **yazılmaz** — `ApplySnakeCaseNaming()` convention yapar. Entity sınıfı PascalCase kalır.
 
-### 4.2 Migrations
+### 4.2 Migrations & Governance
 
-- Migration adı: `YYYYMMDDHHMMSS_<purpose>.cs` — EF zaten verir, dosya açıklayıcı isim taşır (`AddSubscriptionStatusColumn`).
-- **Production'a giden migration silinmez** (tarihçe). Geliştirme aşamasında silinmesi serbest; mevcut işsiz migration temizlenir, yenisi `InitialSchema` adıyla kurulur.
-- Migration **veri** içermez (lookup seed hariç). Veri taşıması ayrı bir command.
-- Migration EF Core convention'a uygun **idempotent** olmalı; her ortamda yeniden çalıştırılabilir.
+- Migration adı açıklayıcı (`AddSubscriptionStatusColumn`); EF `YYYYMMDDHHMMSS_` prefix'i verir. **Phase numarası tekilliği:** iki migration aynı `Phase##` etiketini taşımaz; üretmeden önce mevcut migration klasörünü tara (§1.1 migration sanity sweep).
+- **Production'a giden migration silinmez/değiştirilmez** (tarihçe immutable).
+- **Idempotent yaz** (§12.7): `CREATE TABLE/INDEX IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `ADD CONSTRAINT ... IF NOT EXISTS` (raw SQL ile), `DROP ... IF EXISTS`. EF auto-üretilen migration'lar bunu garanti etmez — yıkıcı/raw adımlarda guard'la.
+- **Boş/scratch migration teslim edilmez.** `TempPendingProbe`, boş `Up/Down`, placeholder migration dev'de silinir; repoya bırakılmaz (Global Rule "No Scratch Files").
+- **Veri migration'a gömülmez** (lookup seed hariç). Geri-alınamaz data backfill ayrı, post-deploy, idempotent bir command/job'a taşınır (§16.3 transaction sınırı).
+- **Down migration gerçek olmalı** — finansal/audit tablolarda yıkıcı `Down` yazma; reversible değilse migration'ı forward-only işaretle ve nedenini not düş.
+- **Apply-same-turn (§12.8):** migration yazıldıysa aynı turda `dotnet ef database update` ile uygulanır ve şema reconcile edilir. Uygulanamıyorsa idempotent yaz + follow-up'ı `docs/sprintN-blockers.md`'ye düş.
+- **Snapshot drift yasağı:** Şemayı değiştiren her şey `CoreAlignDbContextModelSnapshot.cs`'e yansımalı. Bir index/constraint yalnızca `migrationBuilder.Sql()` ile yaratılıp model'de bildirilmezse (örn. GIN/BRIN/functional index), ya EF API'siyle modele bildir (§4.5 `HasMethod`) ya da `docs/RAW_SQL_INDEX_REGISTRY.md`'ye kaydet + INVARIANTS'a intentional-exception düş. **Modelde görünmeyen DB nesnesi = drift = sonraki `migrations add` onu görmez.**
+- **Paralel ajan snapshot'ı tutuyorsa (§12.9):** snapshot mid-edit ise ona dokunma; el-yazımı idempotent migration ekle, hemen uygula, snapshot reconcile follow-up'ını blocker'a yaz.
+- **Sıfırdan apply testi (§1.1):** yapısal değişiklikten sonra `DROP DATABASE → CREATE → ef database update` ile tüm zincir temiz uygulanmalı; `column already exists`/`does not exist` çıkarsa düzelt.
 
-### 4.3 Bütünlük
+### 4.3 Tip & Precision Standardı (koddan pinlenir)
 
-- FK her zaman bildirilir; `OnDelete` davranışı **bilinçli** seçilir (default Restrict, junction tablolarında Cascade).
-- `nullable` sütunlar nedeni anlaşılır olmalı; her opsiyonellik bir kararın sonucu.
-- Para birimi `decimal(18,4)` veya minor unit `bigint`.
+- **Para = `decimal(18,4)`** (`HasPrecision(18,4)`) **veya** minor-unit `bigint`. `float`/`double`/bare `numeric` (precision'sız) para için **yasak**. Tek istisna yok.
+- **FX/exchange rate = tek proje-geneli scale.** Master `exchange_rates` ve tüm `ExchangeRate`/`FxRate*` kolonları **aynı** precision'ı kullanır (`decimal(18,6)` — `Money.RateScale` ile hizalı). Bir tabloda `18,6`, diğerinde `18,8` **yasak** (reconciliation drift).
+- **Yüzde = `decimal(6,3)`** veya açık scale; `discount_percent`/`tax_rate` `[0,100]` CHECK ile (§4.4).
+- **Miktar/quantity = `decimal(18,4)` veya `(12,3)`** (birim hassasiyetine göre, bilinçli). Fiziksel ölçü (glass mm) `(6,3)` gibi domain-uygun scale.
+- **`float`/`double` yalnızca** gerçek bilimsel/yaklaşık ölçümlerde; para/oran/miktar/bakiyede asla.
+- **Zaman = `timestamptz`, UTC saklanır** (§16.6). Naive `timestamp`, `DateTimeOffset` drift'i yasak. **Saf takvim tarihi** (vade, geçerlilik) `date`/`DateOnly` ile map edilir — özellikle unique key'e giren tarihlerde (`valid_on_date`). Aksi halde 00:00 UTC truncation belgelenir.
+- **Enum saklama:** domain enum **int** olarak saklanır (kompakt) + geçerli değer kümesi DB'de CHECK ile zorlanır; ya da kasıtlı olarak `varchar` + CHECK. İkisinden biri seçilir, gerekçe net olur; serbest `text` status kolonu yasak.
+- **String cap:** filtrelenen/indexlenen/iş-anlamlı her `string` `HasMaxLength(n)` ile sınırlanır (email/code/slug/phone/status). Sınırsız `text` yalnızca gerçek serbest-metin (note, description, markdown) için.
+- **JSON = `jsonb`** (validity + GIN-ability). `varchar` içine JSON gömme yasak. Yalnızca write-once opaque blob ise gerekçesi not düşülür.
+- **PK = UUIDv7** (time-ordered). `BaseEntity`/`TenantEntity` Id initializer `Guid.CreateVersion7()` kullanır (.NET 10). Random v4 (`Guid.NewGuid()`) yüksek-velocity tablolarda PK btree page-split + WAL amplification üretir — yeni entity'de v7. (int/long IDENTITY kullanan log tabloları zaten sequential.)
 
-### 4.4 Performans
+### 4.4 Bütünlük & Constraints
 
-- Sorgu indeksini öngör: where/join/order alanlarına indeks. Indeks olmadan tabloya `>10k` satır beklenen sorgu yazılmaz.
-- Paging zorunlu. `Take(int.MaxValue)` ve sınırsız `ToList()` yok.
+- **FK her zaman bildirilir** (`HasForeignKey`); soft Guid `*_id` referansı (FK'siz) bırakma — orphan + plansız seq-scan üretir. Bu, `tenant_id` dahil: her `TenantEntity` `tenant_id`'yi `HasOne<Tenant>().WithMany().HasForeignKey(...).OnDelete(Restrict).IsRequired()` ile gerçek FK yapar (convention loop ile toplu).
+- **`OnDelete` bilinçli seçilir:**
+  - **Restrict (default):** finansal/audit/ledger/stock geçmişi olan parent'lar (`customer_transactions→customers`, `vendor_ledger_entries→vendors`, `stock_transactions→products`, `journal_lines→gl_accounts`). Geçmiş varsa silme DB'de bloklanır.
+  - **Cascade:** yalnızca gerçek parent-owns-child (`invoice_lines→invoices`, `journal_lines→journal_entries`, `payment_applications→payments`, junction'lar).
+  - **SetNull:** opsiyonel attribution (`assigned_*_user_id`).
+  - Finansal/audit child'ı parent silindiğinde **CASCADE ile silme** — bu para/iz kaybıdır.
+- **CHECK constraint zorunlu (savunma derinliği):** app-katmanı enum/validation tek hat değildir; kötü migration/manuel SQL/domain-bypass DB'ye dayanır. Idempotent raw-SQL CHECK ile (Phase48 pattern): (1) `quantity`/`amount`/`on_hand` `>= 0`; (2) `discount_percent`/`tax_rate` `BETWEEN 0 AND 100`; (3) `debit >= 0 AND credit >= 0` + `NOT (debit > 0 AND credit > 0)`; (4) `journal_entries`: `total_debit = total_credit WHERE status='Posted'`; (5) status `IN (...)` (enum value-set'inden üret); (6) `start <= end` (dönem/geçerlilik). C# enum/sınırlardan türet, INVARIANTS'a kuralı düş.
+- **Unique constraint tenant-scoped:** business key `(tenant_id, code/number/...)` ile unique — **global** `(code)` unique multi-tenant bug'ıdır. Junction tekilliği `(tenant_id, a_id, b_id)`. Reference/lookup tabloları (currencies, countries, modules) bilinçli **global**.
+- **NOT NULL disiplini:** zorunlu FK, para, status, `tenant_id` `IsRequired`. `nullable` her zaman bir kararın sonucu, gerekçesi anlaşılır.
+
+### 4.5 Index Disiplini
+
+- **Her FK'ye index** (join + cascade + RI seek). Filtrelenen/sıralanan/join'lenen her kolon indexlenir; index'siz `>10k` satır beklenen sorgu yazılmaz (§11.2).
+- **Composite sıra selectivity'ye göre, tenant-leading:** tenant-scoped hot tablolarda `tenant_id` **lider** (pruning + selectivity). Eşitlik-filtre kolonları range/sort kolonlarından önce.
+- **Status index'lerine trailing sort kolonu:** düşük-kardinalite `(tenant_id, status)` work-queue sorgusunu karşılamaz; `(tenant_id, status, created_at_utc DESC)` (veya domain date) yaz, redundant bare `(tenant_id, status)`'ı düşür.
+- **Partial index:** soft-delete tablolarında **her unique index** `HasFilter("is_deleted = false")`/`"deleted_at_utc IS NULL"` (yoksa silinen kayıt re-create'te 23505). Sıcak index'lere de `WHERE NOT is_deleted`. Aktif-altküme sorgularına partial (`outbox WHERE status IN ('Pending','Deferred')`).
+- **Covering/INCLUDE** dar hot read path'lerde. **Redundant index** (daha uzun unique'in left-prefix'i olan non-unique) düşürülür — write amplification (§12.3).
+- **GIN:** trigram/ILIKE arama (`USING gin (... gin_trgm_ops)`) ve content-filtrelenen `jsonb` (`jsonb_path_ops`) için. EF API ile bildir: `HasIndex(...).HasMethod("gin").HasOperators("gin_trgm_ops")` — raw SQL'e gömüp snapshot'tan saklama (§4.2 drift). Trigram index'leri mümkünse tenant-scoped (`btree_gin` ile `(tenant_id, lower(col))`) — cross-tenant candidate set'i küçült.
+- **BRIN:** append-only, fiziksel-zaman-sıralı tablolarda zaman kolonuna (`USING brin`) — milyar-satırda btree'nin GB'larına karşı KB. Partition + BRIN birlikte (§4.9).
+- **Keyset (seek) pagination zorunlu** büyüyen tablolarda (§11.1): `WHERE (tenant_id, created_at_utc, id) < @cursor ORDER BY ... DESC LIMIT n` + uygun composite index. `OFFSET` yalnızca küçük bounded admin listelerinde.
+- **EXPLAIN ANALYZE gate (§12.4):** `>10k` satır beklenen yeni/değişen sorguda plan kontrol; beklenmeyen seq scan → index ekle, sonucu PR notuna yaz.
+
+### 4.6 Concurrency & ERP Doğruluğu (§16 ile)
+
+- **Optimistic concurrency = `xmin`.** Yarışabilen tablolarda `.UseXminAsConcurrencyToken()` (zero-storage, otomatik, raw-SQL writer'a bağışık). **Zorunlu liste:** `invoices`, `payments`, `orders`, `journal_entries`, `customer_ledger_entries`, `vendor_ledger_entries`, `vendor_bills`, `vendor_payments`, `stock_items`. Manuel `long` token tercih edilmez (bump unutulur, raw-SQL bypass eder). Çakışma → `DbUpdateConcurrencyException` → **409** (zaten `ConcurrencyTokenBehavior` ile bağlı), sessiz overwrite yok.
+- **Gapless döküman numarası atomik:** `document_sequences` tüketimi **tek atomik statement** — `UPDATE document_sequences SET next_number = next_number + 1 WHERE tenant_id=@t AND type=@ty RETURNING next_number - 1`. Read-modify-write (`NextNumber++`) **yasak** (lost-update + duplicate + 23505→500 cascade). Gerçek DB-gaplessness gerekmiyorsa per-(tenant,type) Postgres `SEQUENCE`.
+- **Ledger append serialize:** `running_balance_after` hesaplayan ledger insert'i müşteri/satıcı başına `pg_advisory_xact_lock(hashtextextended(<party>_id))` ile serialize edilir (pattern: `QuoteRepository.AcquireConversionLockAsync`). Kilitsiz "son bakiyeyi oku" kalıcı bakiye bozulmasıdır.
+- **Idempotency (§16.2):** para/stok mutasyonu idempotency key + unique constraint ile; retry çift kayıt üretmez. **Transaction sınırı (§16.3):** çok-tablolu tutarlılık (sipariş+stok+fatura+ledger) tek UnitOfWork.
+- **23505 → 409 map:** `ExceptionHandlingMiddleware`'de `DbUpdateException`/`PostgresException` SQLSTATE `23505` (unique_violation) **409**'a, `23503` (FK) **409/422**'ye map edilir — unique yarışları 500 dönmez.
+- **FILLFACTOR:** sürekli UPDATE edilen hot satırlarda (`stock_items`, `document_sequences`) `ALTER TABLE ... SET (fillfactor=85)` — HOT-update headroom.
+
+### 4.7 Multi-Tenant DB Kuralları
+
+- **`tenant_id` her index/unique'de lider** (tenant-scoped tablolarda) — pruning + tenant-scoped uniqueness.
+- **`tenant_id` gerçek FK** (`→ tenants`, Restrict) — soft Guid bırakma (cross-tenant orphan tespit edilemez; global filtre orphan'ı saklar).
+- **RLS = savunma derinliği (yüksek-değerli tablolarda).** App-katmanı global filtre tek hat değildir (`IgnoreQueryFilters`/Dapper bypass eder). Finansal/ledger/stock tablolarına önce: `ENABLE/FORCE ROW LEVEL SECURITY; CREATE POLICY tenant_isolation USING (tenant_id = current_setting('app.tenant_id')::uuid)`. GUC'yi `DbConnection` interceptor'da `TenantContextAccessor`'dan set et; app non-owner DB rolü kullansın (RLS-bypass etmesin); global/FX tabloları muaf.
+- **`IgnoreQueryFilters()` disiplini:** her kullanım bilinçli; filtre düştüğünde `TenantId` manuel re-scope edilir veya yorumla gerekçelendirilir. Global-read için tek sanctioned yol seçilir (`IGlobalReadable` semantiği implement edilir ya da explicit `IgnoreQueryFilters` pattern'i — ikisi karışık değil).
+- **Yeni tenant-data entity'si `TenantEntity` türetir** (otomatik filtre + auto-stamp + tenant FK). `ITenantOwned`'ı `BaseEntity` üstüne elle takma — auto-stamp loop `Entries<ITenantOwned>()` görmez.
+
+### 4.8 Soft-Delete, Audit & Retention
+
+- **Soft-delete politikası entity başına bilinçli:** `ISoftDeletable` (+ partial unique, §4.5) **veya** `status=Archived` + hard-delete bloklu. Master/finansal parent'lar hard-delete edilmez (ledger child'ları `Restrict`). Politika INVARIANTS'a yazılır.
+- **Audit append-only + zincir bütünlüğü:** `EntityAuditLog` insert-only, eski→yeni, actor+tenant, per-tenant rolling-hash chain (§16.5). Retention zinciri kırmaz — purge'de signed checkpoint satırı yaz veya cold storage; finansal tenant'larda `KeepFinancialTrail`. Audit sequence atomik allocate edilir (advisory lock / DB sequence) — `(tenant_id, sequence)` unique altında eşzamanlı writer 23505 üretmesin.
+- **Retention ölçeklenebilir:** satır-satır `ExecuteDeleteAsync`/in-memory `.ToListAsync()` yasak (OOM). Partition gelene kadar **batched/keyset** (10k chunk); partition sonrası retention = `DROP/DETACH PARTITION` (O(1), §4.9).
+
+### 4.9 Ölçek & Partitioning
+
+- **High-growth tablolar register'lanır** (`docs/INVARIANTS.md` `[PERF]`, §11.5): audit/log (`entity_audit_logs`, `login_audit_logs`, `activity_logs`, `glass_project_change_logs`), ledger (`customer/vendor/dealer_commission_ledger_entries`, `customer_transactions`), stock (`stock_movements`, `stock_transactions`), messaging (`outbox_messages`, `provider_webhook_inbox`, `processed_webhook_events`, `notification_messages`). Bu tablolara dokunan task partitioning adımını tetikler.
+- **Strateji:** zaman kolonuyla **RANGE** partition (ledger çeyreklik, stock/audit aylık, outbox/webhook haftalık-aylık); çok büyük tek tenant'lar için **HASH by `tenant_id`** sub-partition. **EF `PARTITION BY` emit edemez** → `migrationBuilder.Sql()` + partition pre-create + rollover otomasyonu (**pg_partman** veya scheduled `HostedService`).
+- **PG kuralı:** partition key her UNIQUE/PK'nin parçası olmalı → `id` PK'yi `(id, <ts>)` yap veya mevcut `(tenant_id, sequence)`/business-unique partition key'i absorbe etsin.
+- **BRIN her partition içinde** zaman kolonuna; selective `tenant_id`-equality için btree korunur.
+- **Retention = `DROP PARTITION`** (satır DELETE değil): O(1), WAL/vacuum yok. Finansal partition'lar silinmez → compressed/cold tablespace'e DETACH.
+
+### 4.10 PostgreSQL İşletme
+
+- **Extension'lar guard'lı + belgeli:** `CREATE EXTENSION IF NOT EXISTS pg_trgm` (ve gerekirse `btree_gin`, `pg_partman`) migration'da; fresh-DB provisioning için `docs/`'ta listeli.
+- **Bağlantı dayanıklılığı:** Npgsql `EnableRetryOnFailure` (transient) + bilinçli `CommandTimeout`; connection pooling (PgBouncer-uyumlu — prepared statement ayarına dikkat).
+- **Read disiplini:** read query'lerde `AsNoTracking`; koleksiyon include'larında `AsSplitQuery` veya projection (N+1 yok, §3.6/§11.3).
+- **Test parity uyarısı:** Sqlite test yolu (`EnsureCreated`) şemayı **modelden** kurar — raw-SQL-only index'ler (GIN/BRIN/partition) orada yok; bu nesnelere bağlı davranış Postgres integration test ile doğrulanır (§4.2 drift ile birleşir).
 
 ---
 

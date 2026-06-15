@@ -8,6 +8,7 @@ import {
   ProductsPage,
   ProfilePage,
   ReportsPage,
+  StockCountsPage,
 } from './routes';
 
 /** Map URL path → lazy component, used by Sidebar prefetch on hover/focus. */
@@ -15,6 +16,7 @@ export const routePreloaders: Record<string, () => Promise<unknown>> = {
   '/dashboard': DashboardPage.preload,
   '/dashboard/customers': CustomersPage.preload,
   '/dashboard/products': ProductsPage.preload,
+  '/dashboard/inventory/stock-counts': StockCountsPage.preload,
   '/dashboard/orders': OrdersPage.preload,
   '/dashboard/invoices': InvoicesPage.preload,
   '/dashboard/activity': ActivityPage.preload,

@@ -20,6 +20,9 @@ public class Payment : TenantEntity
 
     public string Currency { get; private set; } = "TRY";
     public decimal ExchangeRate { get; private set; } = 1m;
+    public decimal? FxRateSnapshot { get; private set; }
+    public string? FxSource { get; private set; }
+    public DateTime? FxLockedAtUtc { get; private set; }
     public decimal Amount { get; private set; }
     public decimal AppliedAmount { get; private set; }
     public decimal UnappliedAmount => Math.Max(0m, Amount - AppliedAmount);
@@ -114,7 +117,7 @@ public class Payment : TenantEntity
         ConfirmedAtUtc = DateTime.UtcNow;
         PostedByUserId = postedByUserId;
         UpdatedAtUtc = ConfirmedAtUtc.Value;
-        AddDomainEvent(new PaymentConfirmedEvent(TenantId, Id, CustomerId, PaymentNumber, Direction, Amount, Currency, ConfirmedAtUtc.Value));
+        AddDomainEvent(new PaymentConfirmedEvent(TenantId, Id, CustomerId, PaymentNumber, Direction, Amount, Currency, ConfirmedAtUtc.Value, ExchangeRate));
     }
 
     public PaymentApplication Apply(Guid invoiceId, decimal amount, decimal invoiceRemaining)
@@ -126,6 +129,11 @@ public class Payment : TenantEntity
         if (amount <= 0m)
         {
             throw new PaymentApplicationException("Application amount must be positive.");
+        }
+        var existing = Applications.FirstOrDefault(a => a.InvoiceId == invoiceId);
+        if (existing is not null)
+        {
+            return existing;
         }
         if (amount > UnappliedAmount)
         {
@@ -157,6 +165,13 @@ public class Payment : TenantEntity
 
     public void Void(string? reason)
     {
+        if (Status == PaymentStatus.Void)
+        {
+            // Terminal-state self-guard: a retry/double-click must not re-emit
+            // PaymentVoidedEvent (which would double-reverse cash + AR). Mirrors
+            // VendorPayment.Void's already-voided guard.
+            return;
+        }
         var now = DateTime.UtcNow;
         Status = PaymentStatus.Void;
         VoidReason = reason;
@@ -168,6 +183,23 @@ public class Payment : TenantEntity
     public void MarkRefunded()
     {
         Status = PaymentStatus.Refunded;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void ApplyFxRateSnapshot(decimal rate, string source, DateTime lockedAtUtc)
+    {
+        if (rate <= 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rate), "Exchange rate must be positive.");
+        }
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            throw new ArgumentException("Source is required.", nameof(source));
+        }
+        FxRateSnapshot = rate;
+        FxSource = source.Trim().ToUpperInvariant();
+        FxLockedAtUtc = DateTime.SpecifyKind(lockedAtUtc, DateTimeKind.Utc);
+        ExchangeRate = rate;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

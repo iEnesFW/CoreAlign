@@ -2,7 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invoicesApi } from '../api/invoicesApi';
 import { invoiceKeys } from './invoiceKeys';
 import { orderKeys } from '@/features/orders/hooks/orderKeys';
-import type { GenerateInvoiceRequest, InvoiceListParams } from '../model/invoice.types';
+import type {
+  CreateStandaloneInvoiceInput,
+  GenerateInvoiceRequest,
+  InvoiceListParams,
+  IssueCreditNotePayload,
+} from '../model/invoice.types';
 
 export const useInvoicesQuery = (params: InvoiceListParams, options?: { enabled?: boolean }) =>
   useQuery({
@@ -69,6 +74,33 @@ export const useCancelInvoice = () => {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(id) });
+    },
+  });
+};
+
+export const useCreateStandaloneInvoice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateStandaloneInvoiceInput) => invoicesApi.createStandalone(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+    },
+  });
+};
+
+interface IssueCreditNoteArgs {
+  id: string;
+  payload: IssueCreditNotePayload;
+}
+
+export const useIssueCreditNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: IssueCreditNoteArgs) => invoicesApi.issueCreditNote(id, payload),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(vars.id) });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'credit-notes', vars.id] });
     },
   });
 };

@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "CoreAlign",
+    "loading": "Yükleniyor...",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "retry": "Tekrar dene",
+    "offline": "Çevrimdışısınız",
+    "online": "Tekrar çevrimiçi"
+  },
+  "auth": {
+    "loginTitle": "Giriş yap",
+    "email": "E-posta",
+    "password": "Şifre",
+    "loginButton": "Giriş yap",
+    "loginError": "Geçersiz kimlik bilgileri",
+    "logout": "Çıkış yap"
+  },
+  "tabs": {
+    "home": "Ana sayfa",
+    "installations": "İş emirleri",
+    "tickets": "Servis talepleri",
+    "profile": "Profilim"
+  },
+  "home": {
+    "greeting": "Merhaba, {{name}}",
+    "pendingInstallations": "Bekleyen kabuller",
+    "openTickets": "Açık talepler"
+  },
+  "installation": {
+    "listTitle": "Bekleyen montaj kabulleri",
+    "detailTitle": "Montaj kabulü",
+    "capturePhoto": "Fotoğraf çek",
+    "pickPhoto": "Galeriden seç",
+    "captureSignature": "İmza al",
+    "signerName": "Müşteri adı",
+    "signerRole": "Müşteri ünvanı",
+    "signerNameRequired": "Müşteri adı zorunlu",
+    "submit": "Kabulü gönder",
+    "submitted": "Kabul gönderildi",
+    "submittedOffline": "Çevrimdışı kaydedildi. Çevrimiçi olunca eşitlenecek.",
+    "submitFailed": "Gönderim başarısız",
+    "empty": "Bekleyen montaj yok",
+    "notFound": "Montaj bulunamadı",
+    "photos": "Fotoğraflar",
+    "noPhotos": "Henüz fotoğraf yok",
+    "photoUploadFailed": "Fotoğraf yüklenemedi",
+    "punchList": "Eksikler listesi",
+    "punchPlaceholder": "Eksiği tanımla",
+    "addPunch": "Ekle",
+    "notes": "Notlar",
+    "notesPlaceholder": "Ek notlar"
+  },
+  "ticket": {
+    "listTitle": "Servis taleplerim",
+    "detailTitle": "Servis talebi",
+    "newTitle": "Yeni servis talebi",
+    "new": "Yeni",
+    "title": "Başlık",
+    "titlePlaceholder": "Sorunu özetleyin",
+    "description": "Açıklama",
+    "descriptionPlaceholder": "Sorunu ayrıntılı anlatın",
+    "priority": "Öncelik",
+    "submit": "Talep oluştur",
+    "fillRequired": "Lütfen başlık ve açıklamayı doldurun",
+    "queuedOffline": "Çevrimdışı kuyruğa alındı; bağlanınca gönderilecek",
+    "createFailed": "Talep oluşturulamadı",
+    "addComment": "Yorum ekle",
+    "comments": "Yorumlar",
+    "noComments": "Henüz yorum yok",
+    "commentPlaceholder": "Yorum yazın",
+    "commentFailed": "Yorum eklenemedi",
+    "updateStatus": "Durumu güncelle",
+    "markResolved": "Çözüldü olarak işaretle",
+    "resolution": "Çözüm",
+    "resolutionPlaceholder": "Sorun nasıl çözüldü?",
+    "resolveFailed": "Talep çözülemedi",
+    "notFound": "Talep bulunamadı",
+    "status": {
+      "Open": "Açık",
+      "Assigned": "Atanmış",
+      "InProgress": "Devam ediyor",
+      "Resolved": "Çözüldü",
+      "Closed": "Kapalı"
+    },
+    "empty": "Atanmış talep yok"
+  },
+  "project": {
+    "notFound": "Proje bulunamadı",
+    "plan": "Saha planı",
+    "summary": "Özet",
+    "runs": "Cam dizileri",
+    "panels": "Paneller",
+    "totalArea": "Toplam alan",
+    "largestPanel": "En büyük panel"
+  },
+  "profile": {
+    "title": "Profilim",
+    "language": "Dil",
+    "version": "Sürüm"
+  },
+  "offline": {
+    "bannerOffline": "Çevrimdışı",
+    "bannerOfflineWithPending": "Çevrimdışı — {{count}} değişiklik bekliyor",
+    "bannerOfflineWithPendingPlural": "Çevrimdışı — {{count}} değişiklik bekliyor",
+    "bannerOnlinePending": "{{count}} değişiklik gönderiliyor…",
+    "bannerOnlinePendingPlural": "{{count}} değişiklik gönderiliyor…",
+    "bannerFailed": "{{count}} değişiklik gönderilemedi",
+    "bannerFailedPlural": "{{count}} değişiklik gönderilemedi",
+    "syncNow": "Şimdi senkronize et"
+  }
+}

@@ -14,6 +14,10 @@ public class TenantContextAccessor : ITenantContext
     private const string CacheKey = "__tenant_id_parsed";
     private static readonly object Sentinel = new();
 
+    // AsyncLocal override used by background work (PushScope) to inject a tenant
+    // when there is no HttpContext. Always takes precedence over the claim lookup.
+    private static readonly AsyncLocal<Guid?> AmbientScope = new();
+
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public TenantContextAccessor(IHttpContextAccessor httpContextAccessor)
@@ -25,6 +29,8 @@ public class TenantContextAccessor : ITenantContext
     {
         get
         {
+            if (AmbientScope.Value.HasValue) return AmbientScope.Value;
+
             var ctx = _httpContextAccessor.HttpContext;
             // No HTTP context (background work / anonymous endpoints) → no tenant.
             if (ctx is null) return null;
@@ -67,5 +73,32 @@ public class TenantContextAccessor : ITenantContext
     {
         if (resourceTenantId == Guid.Empty) throw new CrossTenantAccessException();
         if (RequireTenantId() != resourceTenantId) throw new CrossTenantAccessException();
+    }
+
+    public IDisposable PushScope(Guid tenantId)
+    {
+        var prior = AmbientScope.Value;
+        AmbientScope.Value = tenantId == Guid.Empty ? null : tenantId;
+        return new ScopePopper(prior);
+    }
+
+    public static IDisposable PushTenant(Guid tenantId)
+    {
+        var prior = AmbientScope.Value;
+        AmbientScope.Value = tenantId == Guid.Empty ? null : tenantId;
+        return new ScopePopper(prior);
+    }
+
+    private sealed class ScopePopper : IDisposable
+    {
+        private readonly Guid? _prior;
+        private bool _disposed;
+        public ScopePopper(Guid? prior) { _prior = prior; }
+        public void Dispose()
+        {
+            if (_disposed) return;
+            AmbientScope.Value = _prior;
+            _disposed = true;
+        }
     }
 }

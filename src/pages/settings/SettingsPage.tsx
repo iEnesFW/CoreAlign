@@ -1,23 +1,31 @@
 import { useState } from 'react';
-import { Building2, Database, Hash, Mail, Palette } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Building2, Compass, Database, Hash, Mail, Palette } from 'lucide-react';
 import { CompanyProfileSection } from '@/features/settings/ui/CompanyProfileSection';
 import { BrandingSection } from '@/features/settings/ui/BrandingSection';
 import { EmailTemplatesSection } from '@/features/settings/ui/EmailTemplatesSection';
 import { MasterDataSection } from '@/features/settings/ui/MasterDataSection';
 import { NumberFormatSection } from '@/features/settings/ui/NumberFormatSection';
+import { OnboardingSettingsSection } from '@/features/onboarding/ui/OnboardingSettingsSection';
 
-type Tab = 'company' | 'branding' | 'masterData' | 'numberFormat' | 'email';
-
-const TABS: { id: Tab; label: string; icon: typeof Building2 }[] = [
-  { id: 'company', label: 'Firma Bilgileri', icon: Building2 },
-  { id: 'branding', label: 'Marka & Logo', icon: Palette },
-  { id: 'masterData', label: 'Tanımlar', icon: Database },
-  { id: 'numberFormat', label: 'Sayı Biçimi', icon: Hash },
-  { id: 'email', label: 'E-posta Şablonları', icon: Mail },
-];
+type Tab = 'company' | 'branding' | 'masterData' | 'numberFormat' | 'email' | 'onboarding';
 
 export const SettingsPage = () => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('company');
+
+  const TABS: { id: Tab; label: string; icon: typeof Building2 }[] = [
+    { id: 'company', label: 'Firma Bilgileri', icon: Building2 },
+    { id: 'branding', label: 'Marka & Logo', icon: Palette },
+    { id: 'masterData', label: 'Tanımlar', icon: Database },
+    { id: 'numberFormat', label: 'Sayı Biçimi', icon: Hash },
+    { id: 'email', label: 'E-posta Şablonları', icon: Mail },
+    {
+      id: 'onboarding',
+      label: t('Onboarding.Settings.Title', { defaultValue: 'Onboarding Tur' }),
+      icon: Compass,
+    },
+  ];
 
   return (
     <div className="space-y-4 p-4">
@@ -56,6 +64,7 @@ export const SettingsPage = () => {
         {tab === 'masterData' && <MasterDataSection />}
         {tab === 'numberFormat' && <NumberFormatSection />}
         {tab === 'email' && <EmailTemplatesSection />}
+        {tab === 'onboarding' && <OnboardingSettingsSection />}
       </div>
     </div>
   );

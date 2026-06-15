@@ -56,6 +56,10 @@ public class StockItemConfiguration : IEntityTypeConfiguration<StockItem>
         builder.Property(s => s.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(s => s.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(s => s.ConcurrencyToken)
+            .IsConcurrencyToken()
+            .HasDefaultValue(0L);
+
         builder.HasOne(s => s.Product).WithMany().HasForeignKey(s => s.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(s => s.Warehouse).WithMany().HasForeignKey(s => s.WarehouseId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(s => s.Lot).WithMany().HasForeignKey(s => s.LotId).OnDelete(DeleteBehavior.Restrict);

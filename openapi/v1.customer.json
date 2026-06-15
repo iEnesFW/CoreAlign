@@ -1,0 +1,1530 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "CoreAlign API",
+    "description": "Multi-tenant Turkish SaaS ERP HTTP API.",
+    "contact": {
+      "name": "CoreAlign Engineering",
+      "url": "https://corealign.app/contact",
+      "email": "engineering@corealign.app"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://corealign.app/license"
+    },
+    "version": "1.0.0+b8342793f98cab31c3ba3012944bdd05abd7369e"
+  },
+  "paths": {
+    "/api/v1/customer-portal/dashboard": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["CustomerPortal"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CustomerPortal.CreateCustomerDirectOrderCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CustomerPortal.CreateCustomerDirectOrderCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.B2B.CustomerPortal.CreateCustomerDirectOrderCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}/revisions": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRequestRevisionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRequestRevisionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRequestRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}/revisions/{revisionId}/approve": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}/revisions/{revisionId}/reject": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRejectRevisionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRejectRevisionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PortalRejectRevisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}/revisions/{revisionId}/cancel": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/invoices": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/invoices/{id}": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/dealers": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/approvals": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/approvals/{id}": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/approvals/{id}/approve": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/approvals/{id}/reject": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.RejectDealerOrderRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.RejectDealerOrderRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.RejectDealerOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/catalog/products": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/dealer-links/{linkId}/product-visibility": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "linkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "linkId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.SetDealerProductVisibilityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.SetDealerProductVisibilityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.SetDealerProductVisibilityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{orderId}/comments": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostOrderCommentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostOrderCommentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PostOrderCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/invoices/{id}/pdf": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/orders/{id}/pdf": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/invoices/{id}/pay": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PayInvoiceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PayInvoiceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.PayInvoiceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/profile": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": ["CustomerPortal"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalProfileRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalProfileRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/profile/sessions": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/profile/sessions/revoke-all": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/notifications": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/notifications/unread-count": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/notifications/{id}/read": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/notifications/read-all": {
+      "post": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/addresses": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": ["CustomerPortal"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.CustomerPortal.Addresses.CreatePortalAddressCommand"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.CustomerPortal.Addresses.CreatePortalAddressCommand"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.Application.CustomerPortal.Addresses.CreatePortalAddressCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/addresses/{id}": {
+      "put": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalAddressRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalAddressRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalAddressRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CustomerPortal"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/credit": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/customer-portal/notification-preferences": {
+      "get": {
+        "tags": ["CustomerPortal"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": ["CustomerPortal"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalNotificationPreferenceRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalNotificationPreferenceRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoreAlign.API.Controllers.UpdatePortalNotificationPreferenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/unread-count": {
+      "get": {
+        "tags": ["Notifications"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{id}/read": {
+      "post": {
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/read-all": {
+      "post": {
+        "tags": ["Notifications"],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CoreAlign.API.Controllers.PayInvoiceRequest": {
+        "type": "object",
+        "properties": {
+          "billingInfo": {
+            "$ref": "#/components/schemas/CoreAlign.Application.CustomerPortal.Payments.PortalBillingInfoInput"
+          },
+          "gatewayName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.PortalRejectRevisionRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.PortalRequestRevisionRequest": {
+        "type": "object",
+        "properties": {
+          "proposedLines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreAlign.Application.Orders.Revisions.RevisionLineInput"
+            }
+          },
+          "requestNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.PostOrderCommentRequest": {
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.RejectDealerOrderRequest": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.SetDealerProductVisibilityRequest": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string"
+          },
+          "productIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.UpdatePortalAddressRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.UpdatePortalNotificationPreferenceRequest": {
+        "type": "object",
+        "properties": {
+          "notificationKind": {
+            "type": "string"
+          },
+          "emailEnabled": {
+            "type": "boolean"
+          },
+          "inAppEnabled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.API.Controllers.UpdatePortalProfileRequest": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "preferredLocale": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.CustomerPortal.CreateCustomerDirectOrderCommand": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoreAlign.Application.B2B.CustomerPortal.CustomerDirectOrderLineInput"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "customerNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "shippingAddressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "billingAddressId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.B2B.CustomerPortal.CustomerDirectOrderLineInput": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.CustomerPortal.Addresses.CreatePortalAddressCommand": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "postalCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "country": {
+            "type": "string",
+            "nullable": true
+          },
+          "isPrimary": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.CustomerPortal.Payments.PortalBillingInfoInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "surname": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "gsmNumber": {
+            "type": "string"
+          },
+          "identityNumber": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "zipCode": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CoreAlign.Application.Orders.Revisions.RevisionLineInput": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "number",
+            "format": "double"
+          },
+          "unitPrice": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lineDiscountPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineDiscountAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "isTaxInclusive": {
+            "type": "boolean"
+          },
+          "withholdingRatePercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "lineNotes": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [{}],
+  "tags": [
+    {
+      "name": "Accounting"
+    },
+    {
+      "name": "Activity"
+    },
+    {
+      "name": "Audit"
+    },
+    {
+      "name": "Auth"
+    },
+    {
+      "name": "Billing"
+    },
+    {
+      "name": "CatalogLinker"
+    },
+    {
+      "name": "Comments"
+    },
+    {
+      "name": "Consents"
+    },
+    {
+      "name": "CustomerLedger"
+    },
+    {
+      "name": "CustomerPortal"
+    },
+    {
+      "name": "Customers"
+    },
+    {
+      "name": "CustomerUsers"
+    },
+    {
+      "name": "Dashboard"
+    },
+    {
+      "name": "DealerAccounts"
+    },
+    {
+      "name": "DealerCustomerLinks"
+    },
+    {
+      "name": "DealerPortal"
+    },
+    {
+      "name": "DealerUsers"
+    },
+    {
+      "name": "DiscountRules"
+    },
+    {
+      "name": "Documents"
+    },
+    {
+      "name": "Feedback"
+    },
+    {
+      "name": "GlassEnclosureBomLinker"
+    },
+    {
+      "name": "GlassEnclosureCatalog"
+    },
+    {
+      "name": "GlassEnclosureProjects"
+    },
+    {
+      "name": "GlassFieldSurveys"
+    },
+    {
+      "name": "GlassShare"
+    },
+    {
+      "name": "GlassWorkOrderRevisions"
+    },
+    {
+      "name": "Imports"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Lookups"
+    },
+    {
+      "name": "MasterData"
+    },
+    {
+      "name": "Modules"
+    },
+    {
+      "name": "Notifications"
+    },
+    {
+      "name": "Orders"
+    },
+    {
+      "name": "OrderTemplates"
+    },
+    {
+      "name": "Payments"
+    },
+    {
+      "name": "PriceListItems"
+    },
+    {
+      "name": "Pricing"
+    },
+    {
+      "name": "Privacy"
+    },
+    {
+      "name": "Products"
+    },
+    {
+      "name": "PurchaseOrders"
+    },
+    {
+      "name": "Quotes"
+    },
+    {
+      "name": "Reports"
+    },
+    {
+      "name": "Returns"
+    },
+    {
+      "name": "Settings"
+    },
+    {
+      "name": "Shipments"
+    },
+    {
+      "name": "Stock"
+    },
+    {
+      "name": "Tags"
+    },
+    {
+      "name": "TaxDeclarations"
+    },
+    {
+      "name": "TaxRules"
+    },
+    {
+      "name": "TenantProviderConfigs"
+    },
+    {
+      "name": "Tenants"
+    },
+    {
+      "name": "TenantUxSettings"
+    },
+    {
+      "name": "UserPreferences"
+    },
+    {
+      "name": "Users"
+    },
+    {
+      "name": "VendorBills"
+    },
+    {
+      "name": "VendorPayments"
+    },
+    {
+      "name": "Vendors"
+    }
+  ]
+}

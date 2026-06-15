@@ -73,3 +73,16 @@ public class ShipmentLineQuantityExceededException : DomainException
     {
     }
 }
+
+public class InvalidOrderApprovalStateException : DomainException
+{
+    public InvalidOrderApprovalStateException(string message) : base(message) { }
+}
+
+public class DealerCustomerNotAuthorizedException : ForbiddenException
+{
+    public DealerCustomerNotAuthorizedException()
+        : base("This dealer is not authorized to act on behalf of the requested customer.")
+    {
+    }
+}

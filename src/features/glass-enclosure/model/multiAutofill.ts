@@ -1,0 +1,374 @@
+import { RUN_PLAN_THICKNESS_MM, penetratesAny } from '../scene/interaction/planCollision';
+import type { PlanFootprint } from '../scene/interaction/planCollision';
+import type { SceneRunState, SceneWallState } from './project.types';
+import type { OpenEdge } from './wallAutofill';
+
+export interface GapEdge extends OpenEdge {
+  cornerGroup?: number;
+}
+
+const DEG2RAD = Math.PI / 180;
+const RAD2DEG = 180 / Math.PI;
+const ENDPOINT_JOIN_TOLERANCE_MM = 150;
+const MIN_GAP_MM = 300;
+const MAX_GAP_MM = 12000;
+const MIN_RUN_MM = 300;
+const CORNER_ANGLE_TOLERANCE_DEG = 45;
+const OUTWARD_TOLERANCE_MM = 100;
+const OUTWARD_DOT_MIN = -0.35;
+const TRIM_ITERATIONS = 16;
+const GAP_RUN_ID = 'gap-run-candidate';
+
+interface WallEndpoint {
+  wall: SceneWallState;
+  x: number;
+  y: number;
+  outwardDeg: number;
+  heightMm: number;
+}
+
+interface EdgeCandidate {
+  originX: number;
+  originY: number;
+  rotationDeg: number;
+  lengthMm: number;
+  heightMm: number;
+}
+
+const roundDeg = (deg: number) => Math.round(deg * 100) / 100;
+
+const normalizeDeg = (deg: number) => ((deg % 360) + 360) % 360;
+
+const angleDiffDeg = (a: number, b: number) => {
+  const d = Math.abs((((a - b) % 180) + 180) % 180);
+  return Math.min(d, 180 - d);
+};
+
+const capsuleFootprint = (
+  ownerId: string,
+  startX: number,
+  startY: number,
+  lengthMm: number,
+  rotationDeg: number,
+  halfWidthMm: number,
+  zMinMm: number,
+  zMaxMm: number,
+): PlanFootprint => {
+  const rad = rotationDeg * DEG2RAD;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const inset = Math.min(halfWidthMm, lengthMm / 2);
+  return {
+    ownerId,
+    x1: startX + inset * cos,
+    y1: startY + inset * sin,
+    x2: startX + (lengthMm - inset) * cos,
+    y2: startY + (lengthMm - inset) * sin,
+    halfWidthMm,
+    zMinMm,
+    zMaxMm,
+  };
+};
+
+const wallBlocker = (wall: SceneWallState): PlanFootprint =>
+  capsuleFootprint(
+    wall.id,
+    wall.originX,
+    wall.originY,
+    wall.lengthMm,
+    wall.rotationDeg,
+    wall.thicknessMm / 2,
+    0,
+    Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm),
+  );
+
+const runBlocker = (run: SceneRunState): PlanFootprint => {
+  const zMin = run.geomZ ?? 0;
+  return capsuleFootprint(
+    run.id,
+    run.originX,
+    run.originY,
+    run.lengthMm,
+    run.rotationDeg,
+    RUN_PLAN_THICKNESS_MM / 2,
+    zMin,
+    zMin + run.heightMm,
+  );
+};
+
+const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
+  const rad = wall.rotationDeg * DEG2RAD;
+  return [
+    {
+      wall,
+      x: wall.originX,
+      y: wall.originY,
+      outwardDeg: normalizeDeg(wall.rotationDeg + 180),
+      heightMm: wall.heightMm,
+    },
+    {
+      wall,
+      x: wall.originX + wall.lengthMm * Math.cos(rad),
+      y: wall.originY + wall.lengthMm * Math.sin(rad),
+      outwardDeg: normalizeDeg(wall.rotationDeg),
+      heightMm: wall.heightEndMm ?? wall.heightMm,
+    },
+  ];
+};
+
+const lineIntersection = (
+  p1: { x: number; y: number },
+  dir1Deg: number,
+  p2: { x: number; y: number },
+  dir2Deg: number,
+): { x: number; y: number } | null => {
+  const d1x = Math.cos(dir1Deg * DEG2RAD);
+  const d1y = Math.sin(dir1Deg * DEG2RAD);
+  const d2x = Math.cos(dir2Deg * DEG2RAD);
+  const d2y = Math.sin(dir2Deg * DEG2RAD);
+  const denom = d1x * d2y - d1y * d2x;
+  if (Math.abs(denom) < 1e-9) return null;
+  const t = ((p2.x - p1.x) * d2y - (p2.y - p1.y) * d2x) / denom;
+  return { x: p1.x + d1x * t, y: p1.y + d1y * t };
+};
+
+const edgeFootprint = (edge: EdgeCandidate, startTrimMm: number, endTrimMm: number) => {
+  const rad = edge.rotationDeg * DEG2RAD;
+  return capsuleFootprint(
+    GAP_RUN_ID,
+    edge.originX + startTrimMm * Math.cos(rad),
+    edge.originY + startTrimMm * Math.sin(rad),
+    edge.lengthMm - startTrimMm - endTrimMm,
+    edge.rotationDeg,
+    RUN_PLAN_THICKNESS_MM / 2,
+    0,
+    Math.max(1, edge.heightMm),
+  );
+};
+
+const edgePenetrates = (
+  edge: EdgeCandidate,
+  startTrimMm: number,
+  endTrimMm: number,
+  blockers: PlanFootprint[],
+) => {
+  if (edge.lengthMm - startTrimMm - endTrimMm < MIN_RUN_MM) return true;
+  return penetratesAny(edgeFootprint(edge, startTrimMm, endTrimMm), blockers);
+};
+
+const findMinTrim = (
+  edge: EdgeCandidate,
+  blockers: PlanFootprint[],
+  fromStart: boolean,
+  otherTrimMm: number,
+): number | null => {
+  const check = (trim: number) =>
+    fromStart
+      ? edgePenetrates(edge, trim, otherTrimMm, blockers)
+      : edgePenetrates(edge, otherTrimMm, trim, blockers);
+  if (!check(0)) return 0;
+  const maxTrim = edge.lengthMm - otherTrimMm - MIN_RUN_MM;
+  if (maxTrim <= 0 || check(maxTrim)) return null;
+  let lo = 0;
+  let hi = maxTrim;
+  for (let i = 0; i < TRIM_ITERATIONS; i += 1) {
+    const mid = (lo + hi) / 2;
+    if (check(mid)) lo = mid;
+    else hi = mid;
+  }
+  return Math.ceil(hi);
+};
+
+const buildTrimmed = (
+  edge: EdgeCandidate,
+  startTrimMm: number,
+  endTrimMm: number,
+  blockers: PlanFootprint[],
+): EdgeCandidate | null => {
+  const lengthMm = Math.round(edge.lengthMm - startTrimMm - endTrimMm);
+  if (lengthMm < MIN_RUN_MM) return null;
+  const rad = edge.rotationDeg * DEG2RAD;
+  const trimmed: EdgeCandidate = {
+    originX: Math.round(edge.originX + startTrimMm * Math.cos(rad)),
+    originY: Math.round(edge.originY + startTrimMm * Math.sin(rad)),
+    rotationDeg: edge.rotationDeg,
+    lengthMm,
+    heightMm: edge.heightMm,
+  };
+  if (edgePenetrates(trimmed, 0, 0, blockers)) return null;
+  return trimmed;
+};
+
+const trimWithOrder = (
+  edge: EdgeCandidate,
+  blockers: PlanFootprint[],
+  startFirst: boolean,
+): EdgeCandidate | null => {
+  const first = findMinTrim(edge, blockers, startFirst, 0);
+  if (first === null) return null;
+  const second = findMinTrim(edge, blockers, !startFirst, first);
+  if (second === null) return null;
+  const startTrim = startFirst ? first : second;
+  const endTrim = startFirst ? second : first;
+  return buildTrimmed(edge, startTrim, endTrim, blockers);
+};
+
+const trimEdge = (edge: EdgeCandidate, blockers: PlanFootprint[]): EdgeCandidate | null => {
+  const startFirst = trimWithOrder(edge, blockers, true);
+  const endFirst = trimWithOrder(edge, blockers, false);
+  if (!startFirst) return endFirst;
+  if (!endFirst) return startFirst;
+  return endFirst.lengthMm > startFirst.lengthMm ? endFirst : startFirst;
+};
+
+const edgeBetween = (
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  heightMm: number,
+): EdgeCandidate | null => {
+  const lengthMm = Math.hypot(to.x - from.x, to.y - from.y);
+  if (lengthMm < MIN_RUN_MM) return null;
+  return {
+    originX: from.x,
+    originY: from.y,
+    rotationDeg: roundDeg(normalizeDeg(Math.atan2(to.y - from.y, to.x - from.x) * RAD2DEG)),
+    lengthMm,
+    heightMm,
+  };
+};
+
+interface CornerLeg {
+  edge: EdgeCandidate;
+  ownWallId: string;
+}
+
+const cornerCandidates = (
+  a: WallEndpoint,
+  b: WallEndpoint,
+  heightMm: number,
+): CornerLeg[] | null => {
+  if (angleDiffDeg(a.wall.rotationDeg, b.wall.rotationDeg) < 90 - CORNER_ANGLE_TOLERANCE_DEG) {
+    return null;
+  }
+  const corner = lineIntersection(a, a.outwardDeg, b, b.outwardDeg);
+  if (!corner) return null;
+  const aDist = Math.hypot(corner.x - a.x, corner.y - a.y);
+  const bDist = Math.hypot(corner.x - b.x, corner.y - b.y);
+  if (aDist > MAX_GAP_MM || bDist > MAX_GAP_MM) return null;
+  const outwardA =
+    (corner.x - a.x) * Math.cos(a.outwardDeg * DEG2RAD) +
+    (corner.y - a.y) * Math.sin(a.outwardDeg * DEG2RAD);
+  const outwardB =
+    (corner.x - b.x) * Math.cos(b.outwardDeg * DEG2RAD) +
+    (corner.y - b.y) * Math.sin(b.outwardDeg * DEG2RAD);
+  if (outwardA < -OUTWARD_TOLERANCE_MM || outwardB < -OUTWARD_TOLERANCE_MM) return null;
+  const legs: CornerLeg[] = [];
+  const legA = edgeBetween(a, corner, heightMm);
+  // Each leg only touches its OWN wall; the other wall stays an obstacle so the
+  // two legs never interpenetrate the opposite wall at the corner.
+  if (legA) legs.push({ edge: legA, ownWallId: a.wall.id });
+  const legB = edgeBetween(corner, b, heightMm);
+  if (legB) legs.push({ edge: legB, ownWallId: b.wall.id });
+  return legs.length > 0 ? legs : null;
+};
+
+const connectorLeavesOutward = (a: WallEndpoint, b: WallEndpoint): boolean => {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6) return false;
+  const ux = dx / len;
+  const uy = dy / len;
+  const dotA = ux * Math.cos(a.outwardDeg * DEG2RAD) + uy * Math.sin(a.outwardDeg * DEG2RAD);
+  const dotB = -ux * Math.cos(b.outwardDeg * DEG2RAD) - uy * Math.sin(b.outwardDeg * DEG2RAD);
+  return dotA >= OUTWARD_DOT_MIN && dotB >= OUTWARD_DOT_MIN;
+};
+
+export const computeMultiWallGapRuns = (
+  selectedWalls: SceneWallState[],
+  allWalls: SceneWallState[],
+  existingRuns: SceneRunState[],
+): GapEdge[] => {
+  if (selectedWalls.length < 2) return [];
+  const allEndpoints = allWalls.flatMap(wallEndpoints);
+  const free = selectedWalls
+    .flatMap(wallEndpoints)
+    .filter(
+      (point) =>
+        !allEndpoints.some(
+          (other) =>
+            other.wall.id !== point.wall.id &&
+            Math.hypot(other.x - point.x, other.y - point.y) <= ENDPOINT_JOIN_TOLERANCE_MM,
+        ),
+    );
+  const wallBlockers = allWalls.map(wallBlocker);
+  const gapRunBlockers: PlanFootprint[] = existingRuns.map(runBlocker);
+  const pairs: { i: number; j: number; distance: number }[] = [];
+  for (let i = 0; i < free.length; i += 1) {
+    for (let j = i + 1; j < free.length; j += 1) {
+      if (free[j].wall.id === free[i].wall.id) continue;
+      const distance = Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y);
+      if (distance < MIN_GAP_MM || distance > MAX_GAP_MM) continue;
+      if (!connectorLeavesOutward(free[i], free[j])) continue;
+      pairs.push({ i, j, distance });
+    }
+  }
+  pairs.sort((a, b) => a.distance - b.distance);
+  const edges: GapEdge[] = [];
+  const used = new Set<number>();
+  let cornerGroup = 0;
+  for (const pair of pairs) {
+    if (used.has(pair.i) || used.has(pair.j)) continue;
+    const a = free[pair.i];
+    const b = free[pair.j];
+    const heightMm = Math.round(Math.min(a.heightMm, b.heightMm));
+    // The straight bridge touches BOTH walls it connects, so both are excluded.
+    const straightBlockers: PlanFootprint[] = [
+      ...wallBlockers.filter((w) => w.ownerId !== a.wall.id && w.ownerId !== b.wall.id),
+      ...gapRunBlockers,
+    ];
+    // Each corner leg only touches its OWN wall; the opposite wall stays a blocker.
+    const legBlockers = (ownWallId: string): PlanFootprint[] => [
+      ...wallBlockers.filter((w) => w.ownerId !== ownWallId),
+      ...gapRunBlockers,
+    ];
+    const corner = cornerCandidates(a, b, heightMm);
+    let isCorner = corner !== null;
+    let trimmed = (corner ?? [])
+      .map((leg) => trimEdge(leg.edge, legBlockers(leg.ownWallId)))
+      .filter((candidate): candidate is EdgeCandidate => candidate !== null);
+    if (trimmed.length === 0) {
+      isCorner = false;
+      const straight = edgeBetween(a, b, heightMm);
+      const trimmedStraight = straight ? trimEdge(straight, straightBlockers) : null;
+      trimmed = trimmedStraight ? [trimmedStraight] : [];
+    }
+    if (trimmed.length === 0) continue;
+    used.add(pair.i);
+    used.add(pair.j);
+    const group = isCorner && trimmed.length > 1 ? (cornerGroup += 1) : undefined;
+    for (const candidate of trimmed) {
+      gapRunBlockers.push(
+        capsuleFootprint(
+          `gap-run-${edges.length}`,
+          candidate.originX,
+          candidate.originY,
+          candidate.lengthMm,
+          candidate.rotationDeg,
+          RUN_PLAN_THICKNESS_MM / 2,
+          0,
+          Math.max(1, candidate.heightMm),
+        ),
+      );
+      edges.push({
+        originX: Math.round(candidate.originX),
+        originY: Math.round(candidate.originY),
+        rotationDeg: candidate.rotationDeg,
+        lengthMm: Math.round(candidate.lengthMm),
+        heightMm: candidate.heightMm,
+        cornerGroup: group,
+      });
+    }
+  }
+  return edges;
+};

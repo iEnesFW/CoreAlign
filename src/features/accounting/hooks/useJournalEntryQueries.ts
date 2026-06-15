@@ -80,3 +80,11 @@ export const useTrialBalanceQuery = (params: { fromDate?: string; toDate?: strin
     queryFn: () => journalEntryApi.trialBalance(params),
     staleTime: 60 * 1000,
   });
+
+export const useJournalEntriesBySource = (sourceDocumentId: string | null) =>
+  useQuery({
+    queryKey: ['accounting', 'journal-entries', 'by-source', sourceDocumentId] as const,
+    queryFn: () => journalEntryApi.bySource(sourceDocumentId as string),
+    enabled: !!sourceDocumentId,
+    staleTime: 30 * 1000,
+  });

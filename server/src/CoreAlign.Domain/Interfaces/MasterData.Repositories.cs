@@ -9,6 +9,9 @@ public interface IDocumentSequenceRepository
     Task<string> ConsumeAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default);
     Task<string> PeekAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default);
     Task EnsureExistsAsync(DocumentSequenceType type, string prefix, int padLength, int year, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DocumentSequence>> ListAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(DocumentSequence sequence, CancellationToken cancellationToken = default);
+    void Update(DocumentSequence sequence);
 }
 
 public interface ITaxRateRepository

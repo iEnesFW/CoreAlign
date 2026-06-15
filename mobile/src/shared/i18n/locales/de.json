@@ -1,0 +1,113 @@
+{
+  "common": {
+    "appName": "CoreAlign",
+    "loading": "Wird geladen...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "retry": "Wiederholen",
+    "offline": "Sie sind offline",
+    "online": "Wieder online"
+  },
+  "auth": {
+    "loginTitle": "Anmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "loginButton": "Anmelden",
+    "loginError": "Ungültige Anmeldedaten",
+    "logout": "Abmelden"
+  },
+  "tabs": {
+    "home": "Start",
+    "installations": "Aufträge",
+    "tickets": "Service-Tickets",
+    "profile": "Profil"
+  },
+  "home": {
+    "greeting": "Hallo, {{name}}",
+    "pendingInstallations": "Offene Abnahmen",
+    "openTickets": "Offene Tickets"
+  },
+  "installation": {
+    "listTitle": "Offene Montageabnahmen",
+    "detailTitle": "Montageabnahme",
+    "capturePhoto": "Foto aufnehmen",
+    "pickPhoto": "Aus Galerie",
+    "captureSignature": "Unterschrift erfassen",
+    "signerName": "Kundenname",
+    "signerRole": "Funktion",
+    "signerNameRequired": "Kundenname ist erforderlich",
+    "submit": "Abnahme senden",
+    "submitted": "Abnahme übermittelt",
+    "submittedOffline": "Offline gespeichert. Wird synchronisiert, sobald online.",
+    "submitFailed": "Übermittlung fehlgeschlagen",
+    "empty": "Keine offenen Abnahmen",
+    "notFound": "Montage nicht gefunden",
+    "photos": "Fotos",
+    "noPhotos": "Noch keine Fotos",
+    "photoUploadFailed": "Foto konnte nicht hochgeladen werden",
+    "punchList": "Mängelliste",
+    "punchPlaceholder": "Mangel beschreiben",
+    "addPunch": "Hinzu",
+    "notes": "Notizen",
+    "notesPlaceholder": "Zusätzliche Notizen"
+  },
+  "ticket": {
+    "listTitle": "Meine Service-Tickets",
+    "detailTitle": "Service-Ticket",
+    "newTitle": "Neues Service-Ticket",
+    "new": "Neu",
+    "title": "Titel",
+    "titlePlaceholder": "Fasse das Problem zusammen",
+    "description": "Beschreibung",
+    "descriptionPlaceholder": "Beschreibe das Problem im Detail",
+    "priority": "Priorität",
+    "submit": "Ticket erstellen",
+    "fillRequired": "Bitte Titel und Beschreibung ausfüllen",
+    "queuedOffline": "Offline in Warteschlange, wird synchronisiert",
+    "createFailed": "Ticket konnte nicht erstellt werden",
+    "addComment": "Kommentar hinzufügen",
+    "comments": "Kommentare",
+    "noComments": "Noch keine Kommentare",
+    "commentPlaceholder": "Kommentar schreiben",
+    "commentFailed": "Kommentar konnte nicht hinzugefügt werden",
+    "updateStatus": "Status aktualisieren",
+    "markResolved": "Als gelöst markieren",
+    "resolution": "Lösung",
+    "resolutionPlaceholder": "Wie wurde das Problem gelöst?",
+    "resolveFailed": "Ticket konnte nicht gelöst werden",
+    "notFound": "Ticket nicht gefunden",
+    "status": {
+      "Open": "Offen",
+      "Assigned": "Zugewiesen",
+      "InProgress": "In Bearbeitung",
+      "Resolved": "Gelöst",
+      "Closed": "Geschlossen"
+    },
+    "empty": "Keine zugewiesenen Tickets"
+  },
+  "project": {
+    "notFound": "Projekt nicht gefunden",
+    "plan": "Bauplan",
+    "summary": "Zusammenfassung",
+    "runs": "Glasreihen",
+    "panels": "Paneele",
+    "totalArea": "Gesamtfläche",
+    "largestPanel": "Größtes Panel"
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "language": "Sprache",
+    "version": "Version"
+  },
+  "offline": {
+    "bannerOffline": "Offline",
+    "bannerOfflineWithPending": "Offline — {{count}} Änderung wartet",
+    "bannerOfflineWithPendingPlural": "Offline — {{count}} Änderungen warten",
+    "bannerOnlinePending": "{{count}} Änderung wird synchronisiert…",
+    "bannerOnlinePendingPlural": "{{count}} Änderungen werden synchronisiert…",
+    "bannerFailed": "{{count}} Änderung fehlgeschlagen",
+    "bannerFailedPlural": "{{count}} Änderungen fehlgeschlagen",
+    "syncNow": "Jetzt synchronisieren"
+  }
+}

@@ -35,6 +35,14 @@ public record IssueStockCommand(
     string? Reference,
     string? Notes) : IRequest<StockMovementDto>, ITransactionalRequest;
 
+public record ApplyStockTransferCommand(
+    Guid ProductId,
+    Guid FromWarehouseId,
+    Guid ToWarehouseId,
+    decimal Quantity,
+    Guid? OperationId = null,
+    string? Reference = null) : IRequest<StockTransferResultDto>, ITransactionalRequest;
+
 public record CreateLotCommand(
     Guid ProductId,
     string LotNumber,

@@ -135,3 +135,51 @@ export interface InvoiceListParams {
   search?: string;
   customerId?: string;
 }
+
+export interface IssueCreditNoteLineInput {
+  invoiceLineId: string;
+  quantity: number;
+}
+
+export interface IssueCreditNotePayload {
+  lines: IssueCreditNoteLineInput[];
+  reason?: string | null;
+  returnRequestId?: string | null;
+}
+
+export interface StandaloneInvoiceLineInput {
+  productId?: string | null;
+  productSku: string;
+  productName: string;
+  description?: string | null;
+  quantity: number;
+  unitPrice: number;
+  taxRatePercent?: number;
+  lineDiscountPercent?: number | null;
+  lineDiscountAmount?: number | null;
+  taxRateId?: string | null;
+  isTaxInclusive?: boolean;
+  withholdingRatePercent?: number | null;
+  uomId?: string | null;
+  uomCode?: string | null;
+}
+
+export interface CreateStandaloneInvoiceInput {
+  customerId: string;
+  issueDate: string;
+  currency: string;
+  lines: StandaloneInvoiceLineInput[];
+  dueDays?: number;
+  paymentTermsId?: string | null;
+  billingAddressId?: string | null;
+  shippingAddressId?: string | null;
+  exchangeRate?: number | null;
+  headerDiscountPercent?: number | null;
+  headerDiscountAmount?: number | null;
+  shippingCost?: number | null;
+  roundingAdjustment?: number | null;
+  internalNotes?: string | null;
+  publicNotes?: string | null;
+  termsAndConditions?: string | null;
+  notes?: string | null;
+}

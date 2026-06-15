@@ -68,6 +68,21 @@ public class StockMovementDto
     public string? Notes { get; set; }
 }
 
+public class StockTransferResultDto
+{
+    public Guid ProductId { get; set; }
+    public Guid FromWarehouseId { get; set; }
+    public Guid ToWarehouseId { get; set; }
+    public decimal Quantity { get; set; }
+    public decimal UnitCost { get; set; }
+    public decimal FromOnHandAfter { get; set; }
+    public decimal ToOnHandAfter { get; set; }
+    public Guid SourceDocumentId { get; set; }
+    public int MovementsCreated { get; set; }
+    public StockMovementDto TransferOut { get; set; } = new();
+    public StockMovementDto TransferIn { get; set; } = new();
+}
+
 public class StockAllocationDto
 {
     public Guid Id { get; set; }

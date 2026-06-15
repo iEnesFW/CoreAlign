@@ -20,6 +20,30 @@ public class ProductRepository : IProductRepository
         return _context.Products.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    public Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(sku)) return Task.FromResult<Product?>(null);
+        var trimmed = sku.Trim();
+        return _context.Products.FirstOrDefaultAsync(p => p.Sku == trimmed, cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<string, Product>> GetBySkusAsync(IEnumerable<string> skus, CancellationToken cancellationToken = default)
+    {
+        var skuList = skus?
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s => s.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray() ?? Array.Empty<string>();
+        if (skuList.Length == 0)
+        {
+            return new Dictionary<string, Product>(StringComparer.Ordinal);
+        }
+        var rows = await _context.Products
+            .Where(p => skuList.Contains(p.Sku))
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(p => p.Sku, StringComparer.Ordinal);
+    }
+
     public Task<bool> SkuExistsAsync(string sku, Guid? excludeId, CancellationToken cancellationToken = default)
     {
         var query = _context.Products.Where(p => p.Sku == sku);
@@ -39,14 +63,42 @@ public class ProductRepository : IProductRepository
         return products.ToDictionary(p => p.Id);
     }
 
-    public async Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
+    public Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
+        string? search,
+        bool? isActive,
+        int page,
+        int pageSize,
+        IReadOnlyCollection<Guid>? restrictToIds,
+        CancellationToken cancellationToken)
+        => SearchInternalAsync(search, isActive, page, pageSize, restrictToIds, cancellationToken);
+
+    public Task<(IReadOnlyList<Product> Items, int Total)> SearchAsync(
         string? search,
         bool? isActive,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
+        => SearchInternalAsync(search, isActive, page, pageSize, null, cancellationToken);
+
+    private async Task<(IReadOnlyList<Product> Items, int Total)> SearchInternalAsync(
+        string? search,
+        bool? isActive,
+        int page,
+        int pageSize,
+        IReadOnlyCollection<Guid>? restrictToIds,
+        CancellationToken cancellationToken)
     {
         var query = _context.Products.AsNoTracking();
+
+        if (restrictToIds is not null)
+        {
+            if (restrictToIds.Count == 0)
+            {
+                return (Array.Empty<Product>(), 0);
+            }
+            var idArray = restrictToIds.Distinct().ToArray();
+            query = query.Where(p => idArray.Contains(p.Id));
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {

@@ -1,0 +1,113 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: corealign-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: corealign
+    volumes:
+      - corealign-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d corealign']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - corealign
+
+  api:
+    image: corealign-api:${BUILD_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
+    container_name: corealign-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=corealign;Username=postgres;Password=postgres
+      Database__Provider: Postgres
+      Database__AutoMigrate: 'true'
+      Cors__AllowedOrigins__0: http://admin.localhost
+      Cors__AllowedOrigins__1: http://customers.localhost
+      Cors__AllowedOrigins__2: http://b2b.localhost
+      Jwt__SecretKey: ${JWT_SECRET_KEY:-change-me-this-must-be-at-least-64-characters-long-for-hmac-sha256-keys}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:8080/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - corealign
+
+  admin-spa:
+    image: corealign-admin:${BUILD_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
+    container_name: corealign-admin
+    restart: unless-stopped
+    networks:
+      - corealign
+
+  customer-portal:
+    image: corealign-customer-portal:${BUILD_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: apps/customer-portal/Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
+    container_name: corealign-customer-portal
+    restart: unless-stopped
+    networks:
+      - corealign
+
+  b2b-portal:
+    image: corealign-b2b:${BUILD_VERSION:-dev}
+    build:
+      context: .
+      dockerfile: apps/b2b/Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-dev}
+    container_name: corealign-b2b
+    restart: unless-stopped
+    networks:
+      - corealign
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: corealign-caddy
+    restart: unless-stopped
+    depends_on:
+      - api
+      - admin-spa
+      - customer-portal
+      - b2b-portal
+    ports:
+      - '80:80'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - corealign
+
+networks:
+  corealign:
+    driver: bridge
+
+volumes:
+  corealign-postgres-data:
+    external: false
+  caddy-data:
+  caddy-config:

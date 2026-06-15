@@ -56,7 +56,8 @@
       "lastMovement": "Son hareket",
       "lot": "Parti",
       "bin": "Raf",
-      "reorderHint": "Yeniden sipariş: {{value}}"
+      "reorderHint": "Yeniden sipariş: {{value}}",
+      "product": "Ürün"
     },
     "adjust": {
       "title": "Stok düzeltme",
@@ -108,6 +109,89 @@
       "type.CountVarianceNegative": "Sayım −",
       "type.Reservation": "Rezerve",
       "type.UnReservation": "Serbest"
+    },
+    "page": {
+      "subtitle": "Stok seviyeleri, miktarlar ve depo bazında tüm stok hareketleri — tek ekranda.",
+      "title": "Stok Yönetimi"
+    },
+    "production": {
+      "action": "Üretim",
+      "component": "Bileşen",
+      "components": "Tüketilecek bileşenler (Reçete)",
+      "done": "Üretim kaydı işlendi.",
+      "invalid": "Ürün, depo ve geçerli bir miktar girin.",
+      "noBom": "Bu ürün için tanımlı reçete (BOM) bulunmuyor.",
+      "notes": "Notlar",
+      "perUnit": "Birim başına",
+      "produce": "Üret",
+      "product": "Üretilecek ürün",
+      "quantity": "Üretim miktarı",
+      "required": "Gerekli",
+      "selectProduct": "Önce bir ürün seçin.",
+      "title": "Üretim fişi",
+      "warehouse": "Depo"
+    },
+    "status": {
+      "allWarehouses": "Tüm depolar",
+      "belowReorderOnly": "Yalnızca kritik stok altı",
+      "empty": "Stok kaydı bulunamadı.",
+      "totalCount": "{{count}} kayıt",
+      "warehouse": "Depo"
+    },
+    "voucher": {
+      "addLine": "Satır ekle",
+      "counted": "Sayılan",
+      "fromWarehouse": "Kaynak depo",
+      "linesRequired": "En az bir geçerli satır ekleyin.",
+      "notes": "Notlar",
+      "onHand": "Mevcut",
+      "partial": "{{ok}} satır işlendi, {{failed}} başarısız.",
+      "post": "Fişi işle",
+      "posted": "{{count}} satır işlendi.",
+      "product": "Ürün",
+      "quantity": "Miktar",
+      "reference": "Belge no / referans",
+      "selectWarehouse": "Seçin…",
+      "toWarehouse": "Hedef depo",
+      "toWarehouseRequired": "Farklı bir hedef depo seçin.",
+      "transferStock": "Stok transfer et",
+      "unitCost": "Birim maliyet",
+      "warehouse": "Depo",
+      "warehouseRequired": "Bir depo seçin.",
+      "action": {
+        "receive": "Giriş fişi",
+        "issue": "Çıkış fişi",
+        "count": "Sayım fişi",
+        "transfer": "Transfer fişi"
+      },
+      "title": {
+        "receive": "Stok giriş fişi",
+        "issue": "Stok çıkış fişi",
+        "count": "Stok sayım fişi",
+        "transfer": "Stok transfer fişi"
+      }
+    },
+    "warehouse": {
+      "address": "Adres",
+      "city": "Şehir",
+      "code": "Kod",
+      "count": "{{count}} depo",
+      "country": "Ülke",
+      "created": "Depo oluşturuldu.",
+      "deleteConfirm": "{{name}} silinsin mi?",
+      "deleteTitle": "Depoyu sil",
+      "deleted": "Depo silindi.",
+      "edit": "Depoyu düzenle",
+      "empty": "Henüz depo tanımlanmadı.",
+      "isActive": "Aktif",
+      "isDefault": "Varsayılan depo",
+      "location": "Konum",
+      "name": "Ad",
+      "new": "Yeni depo",
+      "phone": "Telefon",
+      "status": "Durum",
+      "type": "Tür",
+      "updated": "Depo güncellendi."
     }
   },
   "Validation": {
@@ -160,6 +244,17 @@
     "toast": {
       "profileUpdated": "Profil güncellendi.",
       "passwordChanged": "Şifre değiştirildi. Lütfen tekrar giriş yapın."
+    },
+    "notifications": {
+      "channel": {
+        "email": "E-posta",
+        "inApp": "Uygulama içi"
+      },
+      "loading": "Tercihler yükleniyor…",
+      "save": "Tercihleri kaydet",
+      "saved": "Bildirim tercihleri kaydedildi.",
+      "subtitle": "Hangi olayların e-posta veya uygulama içi bildirim tetikleyeceğini seçin.",
+      "title": "Bildirim tercihleri"
     }
   },
   "orders": {
@@ -182,7 +277,8 @@
       "Closed": "Kapatıldı",
       "Cancelled": "İptal",
       "Returned": "İade",
-      "Confirmed": "Onaylı"
+      "Confirmed": "Onaylı",
+      "changeHint": "Durumu değiştir"
     },
     "shipmentStatus": {
       "Draft": "Taslak",
@@ -206,7 +302,8 @@
       "dispatchShipment": "Sevk Et",
       "deliverShipment": "Teslim Edildi",
       "cancelShipment": "Sevkiyatı İptal Et",
-      "generateInvoice": "Fatura oluştur"
+      "generateInvoice": "Fatura oluştur",
+      "scrap": "Fire Kaydet"
     },
     "timeline": {
       "title": "Durum zaman çizelgesi",
@@ -262,7 +359,8 @@
       "headerDiscount": "İskonto %",
       "shippingCost": "Kargo Ücreti",
       "internalNotes": "Dahili Notlar",
-      "customerNotes": "Müşteri Notları"
+      "customerNotes": "Müşteri Notları",
+      "roundingAdjustment": "Yuvarlama / tutar düzeltme"
     },
     "sections": {
       "general": "Genel Bilgiler",
@@ -295,7 +393,8 @@
       "withholding": "Tevkifat",
       "shipping": "Kargo",
       "grandTotal": "Genel Toplam",
-      "estimate": "Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır"
+      "estimate": "Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır",
+      "rounding": "Yuvarlama"
     },
     "dueToday": "Bugün vadeli",
     "dueIn": "{{count}}g içinde vadeli",
@@ -427,6 +526,61 @@
     "tabs": {
       "info": "Genel Bilgiler",
       "lines": "Kalemler"
+    },
+    "emptyHint": "Satış sürecini başlatmak için ilk siparişinizi oluşturun.",
+    "eyebrow": "Satış · Sevkiyat",
+    "filter": {
+      "all": "Tümü",
+      "cancelled": "İptal",
+      "closed": "Kapatılan",
+      "draftsOnly": "Yalnızca taslaklar",
+      "fulfilled": "Tamamlanan",
+      "highValue": "Yüksek tutar (≥1,5× ort.)",
+      "open": "Açık"
+    },
+    "resultCountLabel": "sipariş",
+    "scrap": {
+      "done": "Fire kaydedildi.",
+      "exceeds": "Fire miktarı kalan miktarı aşamaz ({{max}}).",
+      "invalid": "Satır, depo ve geçerli bir miktar girin.",
+      "line": "Satır",
+      "max": "Maksimum",
+      "noLines": "Fire kaydı için uygun satır yok.",
+      "notes": "Fire nedeni / notlar",
+      "notesPlaceholder": "Örn. üretim hatası, hasar…",
+      "quantity": "Fire miktarı",
+      "remaining": "Kalan",
+      "selectWarehouse": "Seçin…",
+      "submit": "Fireyi kaydet",
+      "title": "Fire Kaydet",
+      "warehouse": "Depo"
+    },
+    "stats": {
+      "avg": "Ort.",
+      "drafts": "Bekleyen taslaklar",
+      "draftsHint": "Onaya gönderin veya vazgeçin",
+      "open": "Açık siparişler",
+      "pageVolume": "Sayfa hacmi",
+      "total": "Siparişler (sayfa)",
+      "totalHint": "{{count}} / {{all}}"
+    },
+    "revisions": {
+      "approveButton": "Onayla",
+      "cancelButton": "Talebi İptal Et",
+      "decidedAt": "Karar tarihi: {{when}}",
+      "empty": "Henüz revizyon yok.",
+      "modalSubmit": "Revizyon Talebi Gönder",
+      "modalTitle": "Sipariş Revizyonu Talep Et",
+      "proposedLines": "Önerilen satırlar",
+      "rejectButton": "Reddet",
+      "rejectionReason": "Ret Nedeni",
+      "rejectionReasonPlaceholder": "Revizyonun neden reddedildiğini açıklayın...",
+      "requestButton": "Revizyon Talep Et",
+      "requestNotes": "Talep Notları",
+      "requestNotesPlaceholder": "Bu revizyon talebiyle ilgili isteğe bağlı notlar...",
+      "requestedAt": "{{persona}} tarafından {{when}} tarihinde talep edildi",
+      "revisionNumber": "Revizyon #{{number}}",
+      "tabTitle": "Revizyonlar"
     }
   },
   "invoices": {
@@ -444,7 +598,8 @@
       "Paid": "Ödendi",
       "Overdue": "Vadesi Geçti",
       "Void": "İptal (Geçersiz)",
-      "Cancelled": "İptal"
+      "Cancelled": "İptal",
+      "changeHint": "Durumu değiştir"
     },
     "paymentStatus": {
       "Draft": "Taslak",
@@ -595,6 +750,64 @@
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
       "next": "Sonraki"
+    },
+    "emptyHint": "Siparişlerden fatura oluşturun veya manuel olarak yeni fatura ekleyin.",
+    "eyebrow": "Finans · Alacaklar",
+    "filter": {
+      "all": "Tümü",
+      "cancelled": "İptal",
+      "dueSoon": "Vade ≤7 gün",
+      "open": "Açık",
+      "overdue": "Vadesi Geçen",
+      "paid": "Ödenen"
+    },
+    "resultCountLabel": "fatura",
+    "stats": {
+      "collected": "Tahsilat (sayfa)",
+      "openInvoices": "açık",
+      "outstanding": "Açık Alacak",
+      "overdue": "Vadesi Geçen",
+      "overdueHint": "vadesi geçen fatura",
+      "total": "Faturalar (sayfa)",
+      "totalHint": "{{count}} / {{all}}"
+    },
+    "creditNote": {
+      "help": "Alacak dekontuna dahil edilecek satırları ve miktarları seçin. Bu fatura için bir alacak dekontu oluşturulacaktır.",
+      "invoiced": "Faturalanan",
+      "product": "Ürün",
+      "quantity": "Miktar",
+      "reason": "Gerekçe",
+      "remaining": "Kalan",
+      "selectLine": "{{sku}} satırını seç",
+      "submit": "Alacak Dekontu Oluştur",
+      "subtotal": "Ara Toplam",
+      "title": "Alacak Dekontu Oluştur",
+      "toastSuccess": "Alacak dekontu oluşturuldu.",
+      "unitPrice": "Birim Fiyat",
+      "reasonPlaceholder": ""
+    },
+    "standalone": {
+      "addLine": "Satır Ekle",
+      "created": "Fatura oluşturuldu.",
+      "creating": "Oluşturuluyor...",
+      "currency": "Para Birimi",
+      "customer": "Müşteri",
+      "dueDays": "Vade (Gün)",
+      "internalNotes": "Dahili Notlar",
+      "issueDate": "Fatura Tarihi",
+      "lineName": "Kalem adı",
+      "lineQuantity": "Miktar",
+      "lineSku": "Stok Kodu",
+      "lineTaxRate": "KDV Oranı (%)",
+      "lineUnitPrice": "Birim Fiyat",
+      "publicNotes": "Genel Notlar",
+      "removeLine": "Satırı kaldır",
+      "selectCustomer": "Müşteri seçin",
+      "title": "Bağımsız Fatura Oluştur",
+      "validation": {
+        "customerRequired": "Lütfen bir müşteri seçin.",
+        "lineNamePositive": "En az bir satıra stok kodu, ad ve sıfırdan büyük miktar girin."
+      }
     }
   },
   "products": {
@@ -652,6 +865,7 @@
       "reorderPoint": "Sipariş Noktası",
       "safetyStock": "Emniyet Stoğu",
       "leadTimeDays": "Tedarik Süresi (gün)",
+      "procurementType": "Tedarik türü",
       "weightKg": "Ağırlık (kg)",
       "widthCm": "Genişlik (cm)",
       "heightCm": "Yükseklik (cm)",
@@ -661,11 +875,20 @@
       "endOfLifeDate": "Kullanım Sonu Tarihi",
       "none": "—"
     },
+    "procurementType": {
+      "Buy": "Satın al",
+      "Make": "Üret"
+    },
+    "procurementTypeHint": {
+      "Buy": "Tedarikçiden ikmal edilir — MRP bir satın alma talebi planlar.",
+      "Make": "Şirket içinde üretilir — MRP bir üretim emri planlar ve ürün ağacını patlatır."
+    },
     "sections": {
       "identity": "Kimlik",
       "uom": "Birimler",
       "pricing": "Fiyatlandırma",
       "stock": "Stok",
+      "procurement": "Tedarik",
       "logistics": "Lojistik & Boyutlar",
       "lifecycle": "Yaşam Döngüsü"
     },
@@ -689,7 +912,8 @@
         "overview": "Genel",
         "transactions": "Hareketler",
         "warehouses": "Depolar",
-        "rules": "Kurallar"
+        "rules": "Kurallar",
+        "movements": "Hareketler"
       },
       "txnType": {
         "Initial": "Açılış",
@@ -724,7 +948,37 @@
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
       "next": "Sonraki"
-    }
+    },
+    "emptyHint": "Sipariş, fatura ve stok takibini başlatmak için ilk ürününüzü oluşturun.",
+    "eyebrow": "Stok · Katalog",
+    "filter": {
+      "all": "Tümü",
+      "lowStock": "Düşük stok",
+      "outOfStock": "Stokta yok",
+      "tracked": "Stok takipli"
+    },
+    "lowStock": "Düşük stok",
+    "outOfStock": "Stokta yok",
+    "reorderAt": "Kritik stok seviyesi",
+    "resultCountLabel": "ürün",
+    "stats": {
+      "inventoryHint": "Ortalama maliyetle",
+      "inventoryValue": "Stok değeri",
+      "lowStock": "Düşük stok",
+      "lowStockHint": "Filtrelemek için tıklayın",
+      "outOfStock": "Stokta yok",
+      "outOfStockHint": "Stok yenileme gerekli",
+      "total": "Ürünler (sayfa)",
+      "totalHint": "{{count}} / {{all}}"
+    },
+    "statusLabel": {
+      "Active": "Aktif",
+      "Discontinued": "Üretimden Kalktı",
+      "EndOfLife": "Ömür Sonu",
+      "New": "Yeni"
+    },
+    "bulkPartial": "{{deleted}} silindi, {{failed}} başarısız.",
+    "bulkSelected": "{{count}} seçili"
   },
   "customers": {
     "tabs": {
@@ -950,7 +1204,32 @@
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
       "next": "Sonraki"
-    }
+    },
+    "merge": {
+      "cancel": "İptal",
+      "executing": "Birleştiriliyor...",
+      "missingSelectionError": "Lütfen kaynak ve hedef müşteriyi seçin.",
+      "searchPlaceholder": "Müşteri ara...",
+      "source": "Kaynak Müşteri",
+      "target": "Hedef Müşteri",
+      "title": "Müşterileri Birleştir",
+      "warning": "Kaynak müşterinin tüm kayıtları hedef müşteriye taşınacaktır. Bu işlem geri alınamaz."
+    },
+    "statement": {
+      "downloading": "İndiriliyor...",
+      "from": "Başlangıç",
+      "openMenu": "Ekstre seçeneklerini aç",
+      "subtitle": "Tarih aralığını seçip cari ekstresini indirin.",
+      "to": "Bitiş"
+    },
+    "tagsEditor": {
+      "add": "Etiket Ekle",
+      "available": "Kullanılabilir etiketler",
+      "noTags": "Etiket yok.",
+      "title": "Etiketler"
+    },
+    "bulkPartial": "{{deleted}} silindi, {{failed}} başarısız.",
+    "bulkSelected": "{{count}} seçili"
   },
   "errorState": {
     "title": "Bir şeyler ters gitti",
@@ -990,7 +1269,21 @@
     "confirmDelete": "Sil",
     "view": "Görüntüle",
     "back": "Geri",
-    "details": "Detaylar"
+    "details": "Detaylar",
+    "activate": "Aktifleştir",
+    "close": "Kapat",
+    "created": "Oluşturuldu.",
+    "deactivate": "Pasifleştir",
+    "deleted": "Silindi.",
+    "export": "Dışa Aktar",
+    "exportCsv": "CSV'ye Aktar",
+    "new": "Yeni",
+    "saving": "Gönderiliyor…",
+    "unknown": "Bilinmiyor",
+    "updated": "Güncellendi.",
+    "all": "Tümü",
+    "fillRequired": "Lütfen tüm zorunlu alanları doldurun.",
+    "noResults": "Sonuç bulunamadı."
   },
   "activity": {
     "title": "Aktivite Günlüğü",
@@ -1049,6 +1342,71 @@
       "quantity": "Satılan",
       "revenue": "Ciro",
       "invoiceCount": "Fatura"
+    },
+    "custom": {
+      "add": "Ekle",
+      "dimensions": "Boyutlar",
+      "entityType": "Veri Kaynağı",
+      "error": {
+        "catalog": "Alan kataloğu yüklenemedi",
+        "nameRequired": "Rapor adı zorunludur",
+        "preview": "Önizleme oluşturulamadı",
+        "save": "Rapor kaydedilemedi"
+      },
+      "filters": "Filtreler",
+      "measures": "Ölçüler",
+      "name": "Rapor Adı",
+      "namePlaceholder": "örn. Müşteri bazında aylık satışlar",
+      "preview": "Önizle",
+      "previewEmpty": "Sonuçları görmek için önizleme çalıştırın",
+      "previewTitle": "Önizleme",
+      "rowLimit": "Satır Limiti",
+      "save": "Kaydet",
+      "savedEmpty": "Henüz kayıtlı rapor yok",
+      "savedTitle": "Kayıtlı Raporlar",
+      "title": "Özel Rapor Oluşturucu",
+      "value": "Değer"
+    },
+    "library": {
+      "accountId": "Hesap ID",
+      "asOfDate": "Tarih İtibarıyla",
+      "back": "Geri",
+      "download": "Seçili filtrelerle indirilir",
+      "downloading": "İndiriliyor...",
+      "filters": "Filtreler",
+      "fromDate": "Başlangıç Tarihi",
+      "onlyBelowReorder": "Yalnızca yeniden sipariş seviyesinin altındakiler",
+      "openLibrary": "Rapor Kitaplığı",
+      "productId": "Ürün ID",
+      "title": "Rapor Kitaplığı",
+      "toDate": "Bitiş Tarihi",
+      "warehouseId": "Depo ID"
+    },
+    "schedules": {
+      "active": "Aktif",
+      "cols": {
+        "actions": "İşlemler",
+        "frequency": "Sıklık",
+        "name": "Ad",
+        "nextRun": "Sonraki Çalışma",
+        "recipients": "Alıcılar",
+        "reportKey": "Rapor",
+        "status": "Durum"
+      },
+      "empty": "Henüz zamanlanmış rapor yok",
+      "error": {
+        "recipients": "En az bir alıcı e-posta adresi girin",
+        "save": "Zamanlama kaydedilemedi"
+      },
+      "format": "Format",
+      "frequency": "Sıklık",
+      "name": "Ad",
+      "new": "Yeni Zamanlama",
+      "newTitle": "Zamanlama Oluştur",
+      "recipients": "Alıcılar (virgülle ayırın)",
+      "reportKey": "Rapor Anahtarı",
+      "startAt": "Başlangıç Zamanı",
+      "title": "Zamanlanmış Raporlar"
     }
   },
   "dashboard": {
@@ -1201,5 +1559,3866 @@
         "verificationFailed": "Doğrulama başarısız. Lütfen tekrar deneyin."
       }
     }
+  },
+  "LandingPage": {
+    "nav": {
+      "home": "Ana Sayfa",
+      "about": "Hakkımızda",
+      "solutions": "Çözümler",
+      "articles": "Makaleler",
+      "contact": "İletişim"
+    },
+    "hero": {
+      "badge": "Sistem Sürümü v2.3.25 Devrede",
+      "title": "İşletmenizin Merkezi Bulut Zekası",
+      "subtitle": "CoreAlign; bayi siparişleri, üretim planlama (MRP), akıllı proje konfigürasyonu ve finansal muhasebe süreçlerini entegre yöneten yeni nesil bulut ERP platformudur.",
+      "cta": "Çözümlerimizi Keşfedin",
+      "metrics": {
+        "activeDealers": "Aktif Bayi Ağı",
+        "activeDealersDesc": "1.420+ Eşzamanlı Bayi",
+        "wasteReduction": "Fire Oranı Azalımı",
+        "wasteReductionDesc": "MRP ile %15 Tasarruf",
+        "orderSpeed": "Sipariş Onay Hızı",
+        "orderSpeedDesc": "%70 Daha Hızlı Süreç",
+        "compliance": "Yönetici Güvenliği",
+        "complianceDesc": "ISO 27001 & GDPR Uyumlu"
+      }
+    },
+    "about": {
+      "title": "CoreAlign Hakkında",
+      "subtitle": "İşletmenizin dijital omurgasını tek çatı altında topluyoruz.",
+      "historyTitle": "Tarihçemiz ve Vizyonumuz",
+      "historyText": "2018 yılında kurulan CoreAlign, üretimden sevkiyata, bayi ağından finansal muhasebeye kadar geniş bir modüler yapıda işletmelerin uçtan uca dijital dönüşümüne liderlik etmektedir.",
+      "missionTitle": "Misyonumuz",
+      "missionText": "Gelişmiş veri doğrulama ve entegrasyon teknolojilerimizle operasyonel süreçlerdeki kayıpları sıfıra indirerek iş verimliliğini maksimize etmek.",
+      "visionTitle": "Biz Kimiz?",
+      "visionText": "Cam işleme, metal konstrüksiyon ve benzeri karmaşık siparişe özel imalat alanları başta olmak üzere tüm ölçeklerdeki kurumsal şirketlerin ana işletim sistemiyiz.",
+      "valuesTitle": "Temel Değerlerimiz",
+      "valuesText": "Veri tutarlılığına adanmışlık, bayi-merkez entegrasyonu, modüler esneklik ve global güvenlik standartlarına tam uyum.",
+      "timelineTitle": "Gelişim Kilometre Taşlarımız",
+      "timelineSubtitle": "Yıllar içinde sürekli genişleyen kurumsal kabiliyetlerimiz.",
+      "t1Year": "2018",
+      "t1Title": "CAD Çizim Motoru",
+      "t1Text": "İlk 3D/2D cam ve profil konfigürasyon çizim motorunun devreye alınması.",
+      "t2Year": "2021",
+      "t2Title": "B2B Bulut Altyapısı",
+      "t2Text": "Çoklu kiracılı (multi-tenant) bayi ağ portalının yayına alınarak sipariş süreçlerinin dijitalleştirilmesi.",
+      "t3Year": "2024",
+      "t3Title": "Entegre MRP Optimizasyonu",
+      "t3Text": "Üretim fırınlama planlaması ve 2D kesim algoritması ile fire oranlarının %1.2'ye düşürülmesi.",
+      "t4Year": "2026+",
+      "t4Title": "Yapay Zeka Destekli Tahmin",
+      "t4Text": "Talep analizlerine göre otomatik stok ikmali, muhasebe mutabakat robotları ve servis entegrasyonları.",
+      "complianceTitle": "Kurumsal Uyumluluk ve Güvenlik",
+      "complianceSubtitle": "Şirket verilerinizin bütünlüğü ve erişilebilirliği güvencemiz altındadır.",
+      "c1Title": "Bilgi Güvenliği (ISO 27001)",
+      "c1Desc": "Tüm sunucu ve veri iletim katmanlarında uluslararası standartlara uygun tam şifreleme ve siber güvenlik.",
+      "c2Title": "Veri Koruma (GDPR / KVKK)",
+      "c2Desc": "Bayi, müşteri ve kullanıcı verilerinin yasalara tam uyumlu şekilde saklanması ve izole edilmesi.",
+      "c3Title": "Kesintisiz SLA (%99.99)",
+      "c3Desc": "Redundant veri merkezleri ve yedekli cluster mimarisi ile sıfır kesintili operasyonel süreklilik.",
+      "c4Title": "SOC 2 Type II Sertifikasyonu",
+      "c4Desc": "Veri işleme süreçlerinin düzenli olarak denetlenmesi ve kurumsal audit log altyapısının tutulması."
+    },
+    "solutions": {
+      "title": "ERP ve MRP Çözümlerimiz",
+      "subtitle": "İşletmenizdeki tüm departmanların birbiriyle eşzamanlı çalışmasını sağlayın.",
+      "mrpTitle": "MRP & Üretim Planlama",
+      "mrpDesc": "Müşteri siparişlerinden başlayarak malzeme ihtiyaç planlaması, iş istasyonları kapasite analizi ve fırınlama/üretim sıralama.",
+      "b2bTitle": "B2B Bayi Ağ Arayüzü",
+      "b2bDesc": "Bayilerinizin kendi siparişlerini girmesini, teklif oluşturmasını, cari hesap ekstrelerini ve ödeme planlarını online yönetmesini sağlayın.",
+      "financeTitle": "Finans & Muhasebe",
+      "financeDesc": "Mizan, bilanço, gelir tablosu, yevmiye fişleri ve muhasebe dönemlerinin uluslararası standartlarla tam entegrasyonu.",
+      "glassTitle": "Akıllı Cam Proje Tasarımcısı",
+      "glassDesc": "Ölçülere göre dinamik cam balkon, giyotin ve cephe kaplama projeleri çizin, maliyet ve fire analizlerini anında yapın.",
+      "warrantyTitle": "Garanti & Servis Destek",
+      "warrantyDesc": "Kurulum sonrası kabul formlarını, garanti sürelerini ve bayilerden veya son kullanıcılardan gelen servis destek taleplerini takip edin.",
+      "inventoryTitle": "Envanter & Lojistik",
+      "inventoryDesc": "Çoklu depo yönetimi, yeniden sipariş noktaları, ABC hız analizleri ve barkod destekli sevkiyat süreçleri.",
+      "simulator": {
+        "title": "CoreAlign Etkileşimli Modül Simülatörleri",
+        "subtitle": "ERP sistemimizin dört ana omurgasını canlı parametrelerle deneyimleyin.",
+        "tabCAD": "Akıllı CAD Tasarımı",
+        "tabB2B": "B2B Bayi Cari Limiti",
+        "tabMRP": "MRP Fırın Planlama",
+        "tabFinance": "Muhasebe Fişi Kaydı",
+        "width": "Genişlik (mm)",
+        "height": "Yükseklik (mm)",
+        "glassType": "Cam Tipi",
+        "profile": "Profil Seçimi",
+        "calcTitle": "MRP Optimizasyon Analizi (Eşzamanlı Simülasyon)",
+        "totalArea": "Toplam Alan",
+        "panelCount": "Panel Sayısı",
+        "wasteRate": "MRP Fire Oranı",
+        "wasteSaved": "Kazanılan Fire Tasarrufu",
+        "estCost": "Tahmini İmalat Maliyeti",
+        "dealerPrice": "Bayi Alış Fiyatı (Net)",
+        "leadTime": "Tahmini Sevk Süresi",
+        "leadTimeValue": "3 İş Günü (Üretim Bandı Sıralı)",
+        "wasteCompare": "Geleneksel üretimde %15 olan fire oranı, CoreAlign MRP kesim optimizasyonu algoritması sayesinde %1.2 seviyesine çekilmiştir.",
+        "calculate": "Simüle Et ve Hesapla",
+        "glassStandard": "4mm Temperli Tek Cam",
+        "glassDouble": "Isıcam Konfor (4+12+4)",
+        "glassLaminated": "Lamine Güvenlikli Cam",
+        "profileStandard": "Standart Alüminyum Profil",
+        "profileThermal": "Premium Isı Yalıtımlı Profil",
+        "profileSlim": "Slim Line Minimalist Profil",
+        "b2bOrderVal": "Sipariş Tutarı (€)",
+        "b2bDealerTier": "Bayi Segmenti",
+        "b2bTerms": "Ödeme Vadesi",
+        "b2bRisk": "Bayi Risk Profili",
+        "b2bLimitStatus": "Kredi Limiti Durumu",
+        "b2bDownpayment": "Gerekli Peşinat Oranı / Tutarı",
+        "b2bReservation": "Rezerve Edilen Envanter",
+        "b2bApproved": "ONAYLANDI",
+        "b2bWarning": "RİSKLİ / UYARI",
+        "b2bOverlimit": "LİMİT AŞILDI / BLOKE",
+        "b2bTierStandard": "Standart Bayi",
+        "b2bTierGold": "Gold Bayi (%10 İndirimli)",
+        "b2bTierPremium": "Premium Partner (%20 İndirimli)",
+        "b2bTermsAdvance": "Peşin Ödeme",
+        "b2bTerms30": "30 Gün Vadeli",
+        "b2bTerms60": "60 Gün Vadeli (Çekli)",
+        "b2bRiskLow": "Düşük (Sorunsuz)",
+        "b2bRiskMedium": "Orta (Takipte)",
+        "b2bRiskHigh": "Yüksek (Teminat Gerekli)",
+        "mrpWeight": "Toplam Cam Ağırlığı (kg)",
+        "mrpThickness": "Cam Kalınlığı (mm)",
+        "mrpFurnaceLoad": "Fırın Doluluk Oranı (%)",
+        "mrpCycles": "Gerekli Pişirme Döngüsü",
+        "mrpEnergy": "Tahmini Enerji Maliyeti",
+        "mrpCycleVal": "{{count}} Döngü",
+        "finInvoiceVal": "Fatura Tutarı",
+        "finVatRate": "KDV Oranı",
+        "finPostLedger": "Oluşturulacak Çift Taraflı Muhasebe Kaydı (T-Tablosu)",
+        "finAccount": "Hesap Kodu ve Adı",
+        "finDebit": "Borç Kaydı",
+        "finCredit": "Alacak Kaydı",
+        "finNetRevenue": "Net Ciro (KDV Hariç)",
+        "finCalculatedVat": "Hesaplanan KDV (391)",
+        "finReceivableVal": "Bayi Cari Borcu (120)",
+        "finPeriodStatus": "Aktif Muhasebe Dönemi Etkisi",
+        "finPeriodOpen": "Dönem Açık (Oto Post Aktif)"
+      }
+    },
+    "articles": {
+      "title": "Strateji ve Makaleler",
+      "subtitle": "CoreAlign ile dijitalleşen işletmelerin deneyimleri ve sektörel makaleler.",
+      "readMore": "Devamını Oku",
+      "close": "Kapat",
+      "a1Category": "CEO VİZYON",
+      "a1Title": "Bulut Tabanlı ERP Sistemlerinde Veri Bütünlüğü",
+      "a1Text": "Geleneksel ERP modellerinin aksine, CoreAlign bulut mimarisi tüm veri girişlerini anlık olarak doğrular. Bayi siparişlerinin üretime aktarılmasında sıfır kayıp hedefiyle tasarlanan altyapımız, ERP-MRP-Muhasebe katmanları arasında eşzamanlı veri mutabakatı sağlar.",
+      "a1Author": "Ahmet Yılmaz",
+      "a1Role": "CEO, CoreAlign Inc.",
+      "a1FullText": "Geleneksel ERP sistemlerinin en büyük zafiyeti, operasyonel birimler arasındaki kopuk veri akışıdır. Bayilerden e-posta veya telefon ile alınan siparişler, elle sisteme girilerken hata payı barındırır. Bu durum, yanlış ebatta cam kesilmesinden tutarsız faturalandırmaya kadar ciddi ciro kayıplarına yol açar. CoreAlign, bayinin sipariş girdiği andan itibaren dinamik kısıt doğrulamalarını (credit limit check, profile dimension constraints, inventory blockages) devreye alır. Sistemimiz, siparişi direkt olarak MRP üretim havuzuna ve muhasebedeki yevmiye fişlerine anlık olarak işler. CEO ve finans yöneticileri için bu, gün sonu mutabakatına gerek kalmadan şirketin nakit akışını ve üretim verimliliğini gerçek zamanlı izlemek demektir.",
+      "a2Category": "MRP VE ÜRETİM",
+      "a2Title": "İmalatta Kaynak Planlama: Fire ve Kapasite Optimizasyonu",
+      "a2Text": "Cam balkon ve metal işleme gibi siparişe özel imalat sektörlerinde en büyük maliyet kalemi fire oranlarıdır. CoreAlign Akıllı Cam Tasarım modülü ile entegre çalışan MRP motorumuz, kesim optimizasyonu yaparak hammadde firesini %15 oranında azaltırken iş istasyonlarındaki darboğazları önler.",
+      "a2Author": "Dr. Elif Kaya",
+      "a2Role": "MRP Ürün Yöneticisi",
+      "a2FullText": "Cam ve metal işleme gibi malzeme firesinin kritik olduğu sektörlerde, siparişlerin üretim sırası ve kesim şablonları kârlılığı belirler. Geleneksel yöntemlerde, operatörler cam plakaları kendi deneyimlerine göre keserler ve bu da ortalama %15 ile %18 arasında hammadde israfına neden olur. CoreAlign MRP modülü, 2D Kesim Optimizasyon algoritmalarını kullanarak gelen tüm bayi siparişlerini otomatik gruplar ve minimum fire çıkartacak şekilde yerleştirir. Ayrıca, fırınlama ve temperleme fırınlarının kapasite doluluk oranlarını gerçek zamanlı takip ederek enerji tasarrufu sağlar. Bu sayede üretim kapasitesi %35 artarken, ham malzeme alım maliyetleri doğrudan aşağı çekilir.",
+      "a3Category": "BAYİ İLİŞKİLERİ",
+      "a3Title": "B2B Bayi Portallarında Hız ve Sipariş Doğruluğu",
+      "a3Text": "Bayilerin sipariş verirken yaptıkları hatalar üretim hattında geri dönüşü olmayan kayıplara yol açar. Geliştirdiğimiz entegre doğrulama kuralları ve anlık cari hesap limit kontrolleri sayesinde bayilerin hatalı sipariş verme oranını sıfıra indirdik. Mobil uyumlu arayüzümüz sipariş onay sürelerini %70 hızlandırdı.",
+      "a3Author": "Can Demir",
+      "a3Role": "Bayi Ağ Yöneticisi",
+      "a3FullText": "Bir üreticinin büyümesi, bayi ağının sipariş verme kolaylığı ve hızı ile doğrudan ilişkilidir. B2B portalımız, bayilerin 3D veya 2D çizim yaparak özel ölçülerde siparişlerini oluşturabilmelerini sağlar. Bayi çizimi bitirdiğinde, arka planda çalışan CoreAlign API'leri profil uzunluklarını, cam kalınlığı toleranslarını ve rüzgar yükü hesaplarını otomatik test eder. Hatalı ölçü içeren siparişlerin sisteme kaydedilmesi engellenerek, bayiye anında düzeltme önerisi sunulur. Onaylanan sipariş, otomatik olarak sevkiyat planlamasına ve ilgili bayi cari kartına yansır. Bu uçtan uca otomasyon, telefonla onay mekanizmalarını ortadan kaldırarak operasyonel işlem sürelerini saatlerden dakikalara indirir.",
+      "a4Category": "ALTYAPI & GÜVENLİK",
+      "a4Title": "Çoklu Kiracılı (Multi-Tenant) Yapılarda Veri İzolasyonu",
+      "a4Text": "Bulut ERP altyapılarında kurumsal verilerin gizliliği en hassas konudur. CoreAlign hibrit şifreleme ve kiracı seviyesinde izole edilmiş veritabanı şemaları ile bayilerinizin ve kurumsal operasyonlarınızın veri güvenliğini garanti altına alır.",
+      "a4Author": "Murat Çelik",
+      "a4Role": "Altyapı ve Güvenlik Yöneticisi",
+      "a4FullText": "Kurumsal SaaS ERP sistemlerinde en büyük endişelerden biri, bir firmanın verilerinin yanlışlıkla bir diğer firmaya sızmasıdır. CoreAlign, bu riski ortadan kaldırırmak için kiracı seviyesinde mantıksal veri izolasyonu uygular. Veritabanındaki her sorgu, otomatik olarak kiracı anahtarı (TenantKey) ile filtrelenir. Ek olarak, finansal ve biyometrik veriler AES-256 algoritmasıyla sunucu tarafında şifrelenir. Sistem yöneticileri bile doğrudan veritabanına eriştiğinde şifrelenmiş verileri göremez. API katmanındaki rol tabanlı yetkilendirme (RBAC) mekanizmaları sayesinde, bayi kullanıcıları sadece kendilerine izin verilen cihaz ve bayi sipariş alanlarına erişebilir. Bu yapı, şirketinizin verilerini endüstri standardı güvenlik protokolleri altında güvende tutar."
+    },
+    "migration": {
+      "title": "Kolay Geçiş ve Veri Aktarım Zekası",
+      "subtitle": "Aktif kullandığınız yazılımlardaki verileri sıfır kayıpla CoreAlign altyapısına göç ettirin.",
+      "desc": "CoreAlign, Türkiye'deki popüler ERP/muhasebe programları ve global sistemlerle çift yönlü entegrasyon şablonlarına sahiptir. Mevcut verilerinizi tek tıkla şema uyumlu şekilde içe aktarabilir, anında çalışmaya başlayabilirsiniz.",
+      "selectErp": "1. Mevcut ERP / Yazılıminizi Seçin",
+      "selectEntity": "2. Aktarılacak Veri Türünü Seçin",
+      "mappingPreview": "Şema Eşleştirme Önizlemesi",
+      "legacyField": "Eski Alan (Kaynak)",
+      "corealignField": "CoreAlign Alanı (Hedef)",
+      "status": "Durum",
+      "autoMapped": "Oto Eşleşti",
+      "btnStart": "Veri Aktarım Simülasyonunu Başlat",
+      "btnSimulating": "Aktarılıyor...",
+      "successTitle": "Göç Tamamlandı ve Doğrulandı!",
+      "successText": "Tüm verileriniz şema bütünlüğü kontrolünden geçerek başarıyla içeri aktarılmıştır.",
+      "session": "Oturum Kimliği",
+      "imported": "Aktarılan Kayıt",
+      "skipped": "Atlanan Kayıt (Tekrarlı)",
+      "errors": "Hata Sayısı",
+      "faqCta": "Bize Ulaşın",
+      "entityCustomers": "Cari Kartlar (120/320)",
+      "entityProducts": "Ürün Kataloğu & Fiyat Listesi",
+      "entityGlAccounts": "Genel Muhasebe Hesap Planı",
+      "stepRead": "Kaynak dosya okunuyor ve başlıklar çözümleniyor...",
+      "stepVal": "Kayız satırları ve veri biçimleri doğrulanıyor...",
+      "stepNormalize": "İlişkili veriler normalleştiriliyor (Ülke, para birimi vb.)...",
+      "stepEncrypt": "Finansal veriler AES-256 ile şifreleniyor...",
+      "stepPost": "Cari bakiyeler ve yevmiye fişleri muhasebeleştiriliyor...",
+      "log1": "[BİLGİ] CSV/Excel veri kaynağı başarıyla çözümlendi. 248 kayıt algılandı.",
+      "log2": "[UYARI] Standart dışı ülke formatı tespit edildi. Otomatik normalleştiriliyor: 'Turkey' -> 'Türkiye'.",
+      "log3": "[BİLGİ] Kriptografik doğrulama devrede. AES-256 geçici anahtarları üretiliyor.",
+      "log4": "[BİLGİ] Şema CoreAlign Cari modeline uygun eşleşti. TenantKey: 'tenant_usr_01'.",
+      "log5": "[BAŞARI] 1.240 kayıt çift taraflı defter-i kebire işlendi. Borç/Alacak dengelendi."
+    },
+    "faq": {
+      "title": "Yöneticiler İçin Sıkça Sorulan Sorular",
+      "subtitle": "CoreAlign'in kurumsal entegrasyonu, güvenliği ve operasyonel faydaları hakkında merak edilenler.",
+      "q1": "Mevcut ERP ve Muhasebe sistemimizle entegre çalışabilir mi?",
+      "a1": "Evet. CoreAlign, çift yönlü REST API'leri ve hazır ETL (Extract, Transform, Load) şablonları sayesinde Logo Go/Tiger, Mikro, Netsis ve global SAP sistemleriyle gerçek zamanlı veya periyodik veri senkronizasyonu yapabilir. Bayileriniz sipariş girdiğinde cari fişler ve faturalar otomatik olarak mevcut muhasebe sisteminize işlenir.",
+      "q2": "Bayi siparişlerindeki çizim hatalarını nasıl engelliyor?",
+      "a2": "CoreAlign bünyesindeki Akıllı CAD Çizim motoru, sipariş aşamasında dinamik kurallar ve tolerans sınırlarını (cam kalınlık limitleri, rüzgar yükü dayanımları, maksimum kanat genişlikleri) anlık olarak denetler. Hatalı çizimler veya geçersiz ebatlar siparişe eklenemez; bayiye otomatik düzeltme önerisi sunulur. Böylece üretimde hatalı kesim riski sıfıra indirilir.",
+      "q3": "Veri güvenliği ve barındırma seçenekleri nelerdir?",
+      "a3": "CoreAlign, çoklu kiracılı (multi-tenant) bulut mimarisinde kiracı seviyesinde mantıksal veri izolasyonu uygular. Tüm hassas veriler sunucu tarafında AES-256 ile şifrelenir. Kurumsal müşterilerimiz için verilerin Türkiye sınırları içindeki özel sunucularda veya kendi yerel veri merkezlerinde (On-Premise) barındırılması seçeneklerini de sunuyoruz.",
+      "q4": "Stok ve üretim planlamasında (MRP) fırın kapasitesi nasıl optimize ediliyor?",
+      "a4": "MRP modülümüz, sipariş ölçülerini alarak 2D Kesim Optimizasyonu algoritmasıyla plakaları en az fire verecek şekilde yerleştirir (fireyi %15'ten %1.2'ye düşürür). Ayrıca temperleme fırınlarının doluluk oranlarını cam ağırlık ve kalınlıklarına göre hesaplayarak pişirme döngülerini gruplar. Bu sayede fırın boş çalıştırılmaz, enerji maliyetlerinde ciddi tasarruf elde edilir."
+    },
+    "showcase": {
+      "title": "CoreAlign Enterprise Modül Eko-Sistemi",
+      "subtitle": "Cam işleme, metal konstrüksiyon ve özel imalat sektörlerinin tüm operasyonel ihtiyaçlarını karşılayan entegre mimari.",
+      "m1Title": "Akıllı CAD Çizim Motoru",
+      "m1Desc": "Profil kesim toleransları, rüzgar yükü statiği ve 3D açı yakalama algoritmaları ile bayilerinizin sıfır hata ile çizim siparişleri göndermesini sağlar.",
+      "m2Title": "MRP Fırın & Kesim Optimizasyonu",
+      "m2Desc": "2D yerleşim optimizasyonu (nesting) algoritması ile cam ve sac fire oranını %1.2'ye indirir, temperleme fırını doluluk oranını ve pişirme sürelerini optimize eder.",
+      "m3Title": "B2B Bayi Ağı Portal Yönetimi",
+      "m3Desc": "Bayilerinize özel dinamik fiyat listeleri, anlık cari limit kontrolleri, sipariş şablonları, teklif hazırlama ve sevkiyat takip süreçlerini tek platformda birleştirir.",
+      "m4Title": "Kurumsal Finans & Genel Muhasebe",
+      "m4Desc": "Yevmiye fişlerinin siparişten otomatik oluşturulması, mizan raporları, gelir tablosu, bilanço, KDV tevkifat hesaplamaları ve muhasebe dönem kilitleri ile tam uyum.",
+      "m5Title": "Satınalma & Tedarik Zinciri",
+      "m5Desc": "İç taleplerden satın alma siparişlerine, tedarikçi fiyat tekliflerinden (RFQ) depo kabul ve barkodlu giriş işlemlerine kadar tedarik süreçlerinizi yönetir.",
+      "m6Title": "Garanti, Kabul & Servis Yönetimi",
+      "m6Desc": "Kurulum sonrası bayi ve müşteri dijital kabul formları, servis destek biletleri (ticket), teknisyen atama, iş emri kapatma ve garanti sözleşmeleri takibi."
+    },
+    "security": {
+      "title": "Kurumsal Güvenlik ve Altyapı Bütünlüğü",
+      "subtitle": "Verileriniz, uluslararası standartlarda izole edilmiş altyapı ve gelişmiş şifreleme protokolleri ile korunur.",
+      "tabCrypto": "Veri Şifreleme (AES-256)",
+      "tabCryptoDesc": "CoreAlign, veritabanı seviyesinde durağan verileri (at-rest) ve ağ iletimi sırasındaki hareketli verileri (in-transit) AES-256 standardı ile şifreler. Sistem yöneticileri ve veritabanı yöneticileri dahil, yetkisiz hiç kimse finansal ve kişisel verileri düz metin olarak okuyamaz.",
+      "tabTenant": "Kiracı İzolasyonu",
+      "tabTenantDesc": "Çoklu kiracılı (multi-tenant) mimarimiz, her işletmenin verilerini mantıksal olarak birbirinden tamamen ayırır. Veritabanı katmanında çalışan tüm sorgular otomatik olarak TenantKey filtresine tabi tutulur, bu sayede çapraz kiracı veri sızıntısı riski matematiksel olarak sıfırlanır.",
+      "tabAudit": "Denetim İzleri (Audit Log)",
+      "tabAuditDesc": "Sistem üzerinde gerçekleşen tüm kritik işlemler, veri değişiklikleri ve yetki güncellemeleri silinemez ve değiştirilemez bir denetim günlüğüne (audit trail) kaydedilir. SOC 2 uyumluluğu için kullanıcı hareketleri saniye hassasiyetinde kayıt altına alınır.",
+      "tabCert": "Global Sertifikasyonlar",
+      "tabCertDesc": "CoreAlign altyapısı ISO 27001 Bilgi Güvenliği Yönetim Sistemi, GDPR/KVKK veri koruma mevzuatları ve SOC 2 kurumsal güvenlik standartları ile tam uyumlu çalışır. Yedekli sunucu kümelerimizle yıllık %99.99 çalışma süresi (SLA) garanti edilir."
+    },
+    "savings": {
+      "title": "Finansal ROI ve Hammadde Tasarrufu Hesaplayıcı",
+      "subtitle": "CoreAlign'in fabrikanızda sağlayacağı hammadde ve zaman tasarrufunu anlık hesaplayın.",
+      "desc": "Aşağıdaki sürgüleri kullanarak fabrikanızın aylık üretim hacmini ve mevcut fire oranlarını girin. CoreAlign'in 2D kesim ve fırın optimizasyonuyla elde edeceğiniz yıllık net kazancı görün.",
+      "volLabel": "Aylık Cam / Profil İşleme Hacmi",
+      "wasteLabel": "Mevcut Malzeme Fire Oranı",
+      "orderLabel": "Aylık Bayi Sipariş Adedi",
+      "annualSaving": "Yıllık Hammadde Kazancı",
+      "timeSaved": "Kazanılan Operasyon Süresi",
+      "timeSavedVal": "{{count}} Saat/Ay",
+      "roiLabel": "Yatırım Amortisman Süresi",
+      "roiValue": "{{count}} Ay",
+      "compareText": "CoreAlign MRP algoritması ham malzeme firesini %1.2 seviyesinde sabitler. Bu hesaplama €140/m² ortalama malzeme birim maliyeti üzerinden yapılmıştır."
+    },
+    "integrations": {
+      "title": "Desteklenen Entegrasyon ve Protokol Kataloğu",
+      "subtitle": "CoreAlign, fabrikanızdaki mevcut ERP'ler, veritabanları ve üretim makineleriyle çift yönlü konuşur.",
+      "erpLabel": "ERP Entegrasyonları",
+      "dbLabel": "Veritabanı & API",
+      "hwLabel": "Donanım & Protokoller",
+      "erpDesc": "Logo Tiger/Go, Netsis, Mikro ve SAP ERP sistemleriyle tam senkronize cari, stok ve fatura fiş akışı.",
+      "dbDesc": "MS SQL, PostgreSQL veri tabanı konektörleri ve REST API / Webhook entegrasyon arayüzleri.",
+      "hwDesc": "Temperleme fırınları ve kesim makineleri için Modbus TCP/IP ve OPC UA donanımsal haberleşme protokolleri."
+    },
+    "testimonials": {
+      "title": "Üreticilerin Başarı Hikayeleri",
+      "subtitle": "CoreAlign altyapısına geçerek üretim verimliliğini artıran lider fabrikaların deneyimleri.",
+      "t1Quote": "B2B sipariş doğrulama sayesinde hatalı bayi çizimlerini sıfıra indirdik. Üretim bandı duraksamadan çalışıyor.",
+      "t1Author": "Mehmet Şahin",
+      "t1Role": "Genel Müdür, AlumGlass A.Ş.",
+      "t2Quote": "Fırın doluluk optimizasyonu ve 2D kesim algoritmaları sayesinde fırın enerji tüketimimiz %22 azaldı, fire oranımız %1.2'de sabitlendi.",
+      "t2Author": "Dr. Yavuz Selim",
+      "t2Role": "Operasyon Direktörü, AynaYapı A.Ş."
+    },
+    "scheduler": {
+      "title": "Canlı Demo Randevusu Planlayın",
+      "subtitle": "CoreAlign uzmanlarıyla işletmenize özel 15 dakikalık canlı bir demo planlayın, tüm sorularınızı yanıtlayalım.",
+      "name": "Adınız Soyadınız",
+      "email": "E-posta Adresiniz",
+      "company": "Şirket Unvanı",
+      "module": "İlginizi Çeken Modül",
+      "date": "Tercih Ettiğiniz Tarih",
+      "submit": "Demo Randevusunu Planla",
+      "sending": "Planlanıyor...",
+      "success": "Demo talebiniz başarıyla alınmıştır! Ekibimiz en kısa sürede sizinle iletişime geçecektir.",
+      "optCAD": "Akıllı CAD Çizim Motoru",
+      "optMRP": "MRP Üretim ve Fırın Planlama",
+      "optB2B": "B2B Bayi Ağı Portal Yönetimi",
+      "optFinance": "Muhasebe & Defter-i Kebir"
+    },
+    "contact": {
+      "title": "Bizimle İletişime Geçin",
+      "subtitle": "CoreAlign çözümlerini işletmenizde devreye almak veya teknik destek almak için formu doldurabilirsiniz.",
+      "name": "Adınız Soyadınız",
+      "email": "E-posta Adresiniz",
+      "subject": "Konu",
+      "message": "Mesajınız",
+      "submit": "Gönder",
+      "sending": "Gönderiliyor...",
+      "success": "Mesajınız başarıyla iletildi!",
+      "error": "Mesaj iletilemedi, lütfen tekrar deneyin.",
+      "infoTitle": "İrtibat Bilgileri",
+      "address": "Adres: Teknopark İstanbul, A Blok No: 120, Pendik / İstanbul",
+      "phone": "Telefon: +90 (216) 555 01 00",
+      "emailLabel": "E-posta: info@corealign.com",
+      "hours": "Çalışma Saatleri: Hafta İçi 09:00 - 18:00"
+    },
+    "comparison": {
+      "title": "Neden CoreAlign?",
+      "subtitle": "CoreAlign'i geleneksel yöntemler ve eski nesil ERP sistemleri ile karşılaştırın.",
+      "colAspect": "Değerlendirme Kriteri",
+      "colCorealign": "CoreAlign Bulut Platformu",
+      "colLegacy": "Geleneksel ERP / MRP",
+      "colExcel": "Excel / Manuel Takip",
+      "aspectCAD": "Sipariş CAD Doğrulaması",
+      "aspectCADCorealign": "Dinamik kurallarla anlık ve hatasız doğrulama",
+      "aspectCADLegacy": "Üretim aşamasında manuel kontrol gerekir",
+      "aspectCADExcel": "Hata tespiti imkansız, operatör inisiyatifinde",
+      "aspectWaste": "Hammadde Fire Oranları",
+      "aspectWasteCorealign": "2D Optimizasyon ile %1.2 seviyesinde sabit",
+      "aspectWasteLegacy": "Sınırlı nesting algoritmaları ile %8 - %12 arası",
+      "aspectWasteExcel": "Optimizasyon yok, %15 ve üzeri yüksek fire",
+      "aspectLedger": "Finansal Muhasebe Entegrasyonu",
+      "aspectLedgerCorealign": "Sipariş anında otomatik defter-i kebir kaydı",
+      "aspectLedgerLegacy": "Gün sonu veya hafta sonu toplu aktarım",
+      "aspectLedgerExcel": "Manuel çift giriş, mutabakat hataları yaygın",
+      "aspectSpeed": "Entegrasyon ve Devreye Alma",
+      "aspectSpeedCorealign": "Hazır ETL şablonları ile birkaç günde canlıda",
+      "aspectSpeedLegacy": "Aylar süren danışmanlık ve yüksek maliyet",
+      "aspectSpeedExcel": "Altyapı yok, anlık kurulur fakat sürdürülemez",
+      "aspectMachine": "Canlı Makine Haberleşmesi",
+      "aspectMachineCorealign": "OPC UA & Modbus ile doğrudan fırın entegrasyonu",
+      "aspectMachineLegacy": "Ek arayüz / donanım yatırımı gerektirir",
+      "aspectMachineExcel": "Desteklenmiyor, manuel veri girişi"
+    },
+    "pricing": {
+      "title": "İşletmenize Uygun Ölçeklendirme Planları",
+      "subtitle": "Üretim hacminize ve bayi sayınıza göre esnek lisanslama ve entegrasyon paketleri.",
+      "plan1Title": "Büyüyen İşletme",
+      "plan1Desc": "B2B bayi sipariş kanallarını dijitalleştirmek ve CAD kontrolü sağlamak isteyen üreticiler için.",
+      "plan1Features": [
+        "Akıllı CAD Çizim Doğrulama",
+        "B2B Bayi Ağı Arayüzü",
+        "Cari Limit & Risk Kontrolü",
+        "Çoklu Para Birimi Desteği",
+        "Standart Destek SLA"
+      ],
+      "plan2Title": "Operasyonel Güç",
+      "plan2Desc": "Üretim verimliliğini fırın ve kesim optimizasyonuyla maksimize etmek isteyen orta ölçekli fabrikalar.",
+      "plan2Features": [
+        "Starter Planındaki Tüm Özellikler",
+        "MRP Üretim ve Fırın Planlama",
+        "2D Kesim Optimizasyonu (Nesting)",
+        "Stok & Çoklu Depo Yönetimi",
+        "Öncelikli E-posta & Telefon Desteği"
+      ],
+      "plan3Title": "Fabrika Çözümü",
+      "plan3Desc": "Mevcut kurumsal ERP'leriyle çift yönlü entegrasyon ve tam finansal muhasebe uyumu arayan lider üreticiler.",
+      "plan3Features": [
+        "Scale Planındaki Tüm Özellikler",
+        "Muhasebe & Çift Taraflı Defter-i Kebir",
+        "Hazır ERP Bağlayıcıları (SAP, Logo, Mikro)",
+        "Modbus / OPC UA Canlı Makine API'leri",
+        "Adanmış Müşteri Temsilcisi & 7/24 Destek"
+      ],
+      "contactUs": "Demo Planlayın",
+      "recommended": "EN POPÜLER",
+      "contactCta": "Fiyat Teklifi Alın"
+    },
+    "workflow": {
+      "title": "B2B Siparişten Defter-i Kebire Canlı Akış",
+      "subtitle": "CoreAlign altyapısının departmanlar arası veri akışını nasıl otomatik yönettiğini canlı inceleyin.",
+      "step1Title": "1. Bayi Çizim & Kontrol",
+      "step1Desc": "Bayiniz siparişi CAD ile çizer, limitler otomatik denetlenir.",
+      "step2Title": "2. MRP Optimizasyon",
+      "step2Desc": "Üretim şablonları 2D nesting ile gruplanır ve fırına gönderilir.",
+      "step3Title": "3. Muhasebe Postu",
+      "step3Desc": "Fatura ve çift taraflı defter-i kebir yevmiye fişi anında kesilir.",
+      "interactivePreview": "Etkileşimli Akış Simülasyonu",
+      "simCADStatus": "CAD Doğrulama Durumu: ONAYLANDI",
+      "simCADWidth": "Genişlik: {{w}} mm",
+      "simCADHeight": "Yükseklik: {{h}} mm",
+      "simMRPTitle": "MRP Algoritma Planı",
+      "simMRPWaste": "Optimize Edilen Fire Oranı: %1.2 (Sıfır Hata)",
+      "simMRPTemp": "Temperleme Fırın Sıcaklığı: 680°C",
+      "simFinTitle": "Muhasebe Cari Fişi (Otomatik Oluşturulan Yevmiye Kaydı)",
+      "simFinAccount": "Hesap Kodu / Adı",
+      "simFinDebit": "Borç",
+      "simFinCredit": "Alacak",
+      "simFinTotal": "Toplam"
+    }
+  },
+  "GlassEnclosure": {
+    "Designer": {
+      "Shell": {
+        "PersonaOverride": {
+          "TriggerAria": "Ekran persona modu",
+          "TriggerTitle": "Ekrana özel persona modu",
+          "MenuTitle": "Bu ekranda",
+          "Default": "Varsayılanı kullan",
+          "DefaultHelp": "Genel persona modunu izle",
+          "Simple": "Basit",
+          "SimpleHelp": "Yönlendirmeli, daha az panel",
+          "Pro": "Pro",
+          "ProHelp": "Tam kontrol, yoğun bilgi"
+        },
+        "Tab": {
+          "Runs": {
+            "Simple": "Cepheler",
+            "Pro": "Hatlar"
+          },
+          "Canvas": {
+            "Simple": "Çizim",
+            "Pro": "Kanvas"
+          },
+          "Inspector": {
+            "Simple": "Detaylar",
+            "Pro": "Denetçi"
+          },
+          "BOM": {
+            "Simple": "Malzemeler",
+            "Pro": "Ürün Ağacı"
+          }
+        },
+        "Panel": {
+          "Runs": {
+            "AddSimple": "Cephe Ekle",
+            "AddPro": "Hat Ekle"
+          },
+          "Inspector": {
+            "Title": {
+              "Simple": "Detayları Düzenle",
+              "Pro": "Denetçi"
+            }
+          },
+          "BOM": {
+            "Title": {
+              "Simple": "Malzeme Listesi",
+              "Pro": "Ürün Ağacı"
+            }
+          }
+        },
+        "Toolbar": {
+          "ZoomIn": "Yakınlaştır",
+          "ZoomOut": "Uzaklaştır",
+          "FitScreen": "Ekrana Sığdır",
+          "Grid": "Izgara"
+        },
+        "Back": "Geri",
+        "Close": "Kapat",
+        "CloseDrawer": "Kapat",
+        "OpenInspector": "Detaylar",
+        "SideRail": "Gezinme",
+        "Collapse": "Daralt",
+        "Expand": "Genişlet",
+        "BomLines": "Satır",
+        "BomPanel": "Malzeme Listesi",
+        "BomStale": "Güncel değil",
+        "BomTitleSimple": "Malzeme Listesi",
+        "BomTotal": "Toplam",
+        "CanvasPanel": "Çizim Alanı",
+        "Fit": "Sığdır",
+        "FitToScreen": "Ekrana sığdır",
+        "FocusMode": "Tam ekran",
+        "Grid": "Izgara",
+        "NoRuns": "Henüz cephe eklenmedi.",
+        "RecomputeSimple": "Yenile",
+        "RunsPanel": "Cepheler",
+        "SelectedRun": "Seçili",
+        "ZoomIn": "Yakınlaş",
+        "ZoomOut": "Uzaklaş",
+        "ExpandRunsPanel": "Hat panelini genişlet",
+        "CollapseRunsPanel": "Hat panelini daralt",
+        "ExpandInspectorPanel": "Detay panelini genişlet",
+        "CollapseInspectorPanel": "Detay panelini daralt"
+      },
+      "NewRun": "Yeni hat",
+      "Save": "Kaydet",
+      "SaveSuccess": "Sahne kaydedildi",
+      "Validate": "Doğrula",
+      "ValidationDone": "Doğrulama tamamlandı",
+      "Annotations": "Ölçülendirme",
+      "Presentation": "Sunum",
+      "Quality": "Kalite",
+      "Inspector": "Denetçi",
+      "RunInspector": "Hat denetçisi",
+      "PanelInspector": "Panel denetçisi",
+      "PanelCount": "{{count}} panel",
+      "Rebalance": "Yeniden Dağıt",
+      "TechnicalSummary": "Teknik özet",
+      "TotalArea": "Toplam alan",
+      "TotalWeight": "Toplam ağırlık",
+      "WeightedU": "Ağırlıklı U değeri",
+      "AvgSoundDb": "Ort. ses yalıtımı",
+      "MaxThickness": "Maks. kalınlık",
+      "NoSelection": "3D sahnede bir hat veya panel seçin.",
+      "DefaultRunLabel": "Hat",
+      "RunAdded": "Hat eklendi",
+      "ConnectionInspector": "Köşe bağlantısı",
+      "ViewSplit": "Bölünmüş",
+      "ViewPlan": "Plan (2D)",
+      "View3D": "3D",
+      "LiveCost": "Canlı maliyet",
+      "LivePreview": "Önizleme",
+      "NoCostYet": "Maliyeti görmek için hat ve panel ekleyin.",
+      "LiveCostDisclaimer": "Tarayıcı içi tahmindir. Resmi kayıt sunucu raporudur.",
+      "ViewCutting": "Kesim",
+      "ViewEngineering": "Statik",
+      "ViewQuote": "Teklif",
+      "ViewSurvey": "Keşif",
+      "Greenhouse": {
+        "PitchParam": {
+          "SectionTitle": "Beşik çatı parametreleri",
+          "RoofPitch": "Çatı eğimi",
+          "RidgeHeight": "Mahya yüksekliği",
+          "EaveHeight": "Saçak yüksekliği",
+          "PitchOutOfRange": "Çatı eğimi {{min}}° ile {{max}}° arasında olmalıdır.",
+          "RidgeMustExceedEave": "Mahya yüksekliği saçak yüksekliğinden büyük olmalıdır.",
+          "RidgeRequired": "Beşik çatı için mahya yüksekliği gereklidir.",
+          "EaveRequired": "Beşik çatı için saçak yüksekliği gereklidir.",
+          "PitchRequired": "Beşik çatı için çatı eğimi gereklidir."
+        }
+      },
+      "AddPanel": "Panel ekle",
+      "ArcSweepInfo": "Kavisli · yay ≈ {{deg}}°",
+      "ArcStraightInfo": "0 = düz cephe; kavis için yarıçap girin.",
+      "ArcMinRadiusInfo": "Min. yarıçap {{min}} mm",
+      "PanelCountLabel": "Panel sayısı",
+      "GlassPerPanelHint": "Cam, panel bazında seçilir. Cam tipini belirlemek için yerleşimden bir panel seçin.",
+      "DeleteRun": "Hattı sil",
+      "DeletePanel": "Paneli sil",
+      "RunDeleted": "Hat silindi",
+      "PanelDeleted": "Panel silindi",
+      "PanelAdded": "Panel eklendi",
+      "CurvedRunsTitle": "Kavisli hatlar",
+      "CurvedRunsHint": "Hat uzunlukları açılım (gelişim) boyudur; kesim listesi ve m² doğrudur. Cam ve profiller üretimde kavise bükülmelidir.",
+      "Help": {
+        "Open": "Kullanım ve kısayollar",
+        "Title": "Kullanım ve Kısayollar",
+        "Close": "Kapat",
+        "Selection": {
+          "Title": "Seçim",
+          "Click": "Tıkla = seç",
+          "ClickEmpty": "Boş alana tıkla = seçimi bırak"
+        },
+        "Keyboard": {
+          "Title": "Klavye",
+          "Undo": "Geri al",
+          "Redo": "Yinele",
+          "Save": "Kaydet",
+          "Copy": "Kopyala",
+          "Paste": "Yapıştır",
+          "Cancel": "İptal"
+        },
+        "Plan2D": {
+          "Title": "2D Plan",
+          "Draw": "Çizim modunda sürükleyerek hat çiz",
+          "Resize": "Uç noktaları sürükleyerek boyutlandır",
+          "DrawWall": "Duvar modunda sürükleyerek duvar/engel çiz",
+          "Autofill": "Bir duvar seçin → 'Boşlukları camla doldur' duvarın boşluk ve deliklerine cam hattı oluşturur"
+        },
+        "View3D": {
+          "Title": "3D",
+          "Move": "Seçili donanımı eksen oklarıyla sürükle",
+          "Orbit": "Sağ tık veya orta tekerlek ile döndür ve yakınlaş",
+          "MullionResize": "Ara kaydı (panel bölücü) sürükleyerek panel genişliğini ayarla"
+        },
+        "Tools": {
+          "Title": "Araçlar",
+          "Basic": "Seç · Taşı · Döndür · Genişlet",
+          "Surface": "Yüzeye çiz · Boya · Sil",
+          "Autofill": "Seçili duvarın boşluklarını camla doldur",
+          "Placement": "Hat / Duvar / Zemin / Çatı ekle — imlece yapışır, tıklayınca yerleşir",
+          "Delete": "Seçili öğeyi sil",
+          "Cancel": "Aracı ve yerleştirmeyi iptal et",
+          "Lasso": "Lasso ile çoklu seçim — Del ile topluca silin",
+          "CtrlSelect": "Öğeleri çoklu seçime ekle/çıkar — sağ üstten hizala, uç uca birleştir, eşitle, araları doldur",
+          "Pen": "Kalem — serbest çokgen yüzey çiz (köşe tıkla, yapış, Shift düz, kapatınca biter)",
+          "Stack": "Taşırken Alt basılı tutarak objeleri üst üste istifle"
+        },
+        "Draw": {
+          "Title": "Yüzeye çizim",
+          "Shapes": "Şekli (dikdörtgen, daire, oval, üçgen, çokgen, serbest kalem) üst şeritten seçin; çizilen alan yüzeyde bölge olarak işaretlenir",
+          "Drag": "Duvar veya zemin/çatı yüzeyinde sürükleyerek alanı çizin — bölge bağımsız bir katmana dönüşür",
+          "PushPull": "Genişlet aracıyla katman yüzeyini çekip iterek derinliği ayarlayın; tamamen itilen katman boşluğa dönüşür",
+          "Split": "'Duvarı böl' şekli ile tıkladığınız noktadan duvar ikiye ayrılır"
+        }
+      },
+      "Arc": {
+        "Title": "Kavis (arc)",
+        "SweepInput": "Yay açısı (°)",
+        "SurveyTitle": "Saha ölçüsünden (kiriş + ok yüksekliği)",
+        "Chord": "Kiriş (mm)",
+        "Sagitta": "Ok (mm)",
+        "Apply": "Uygula",
+        "DerivedInfo": "R{{r}} · {{deg}}° · kiriş {{chord}} mm · ok {{sagitta}} mm · eklem {{joint}}°",
+        "BentGlass": "Bombeli cam (özel üretim, ~2.5-3× maliyet)",
+        "WarnTightRadius": "Dar yarıçap ({{r}} mm) — sistem üreticisinin minimumunu doğrulayın (tipik ≥1500 mm).",
+        "WarnJointAngle": "Eklem açısı {{deg}}° — faseta için panel sayısını artırın (önerilen ≤10°).",
+        "WarnSliding": "Kayar paneller kavisli rayda düz camla çalışmaz — bombeli cam modunu açın veya açılım tipini değiştirin.",
+        "ModeBent": "Bombeli cam",
+        "ModeFaceted": "Faseta"
+      },
+      "PastePanelHint": "Yapıştır: hedef hatta veya panele tıkla · Esc iptal",
+      "PasteHardwareHint": "Yapıştır: hedef panele tıkla · Esc iptal",
+      "Appearance": {
+        "Label": "Görünüm",
+        "Studio": "Stüdyo",
+        "Sunset": "Gün Batımı",
+        "City": "Şehir",
+        "Dawn": "Şafak",
+        "Plain": "Düz"
+      },
+      "Polygon": {
+        "SectionTitle": "Çokgen köşeleri",
+        "VertexX": "X (mm)",
+        "VertexY": "Y (mm)",
+        "AddVertex": "Köşe ekle",
+        "RemoveVertex": "Sil",
+        "Save": "Çokgeni kaydet",
+        "Saved": "Çokgen kaydedildi",
+        "Invalid": "En az 3 köşe ve sıfır olmayan kenarlar gerekli",
+        "HeightNote": "Cephe yüksekliği: {{height}} mm"
+      },
+      "Wall": {
+        "Title": "Duvar / Engel",
+        "Delete": "Duvarı sil",
+        "Thickness": "Kalınlık",
+        "Autofill": "Boşlukları camla doldur",
+        "AutofillHint": "Seçili duvarın pencere/kapı boşluklarını ve deliklerini cam hattıyla doldurur.",
+        "AutofillDone": "{{count}} cam hattı oluşturuldu.",
+        "AutofillNone": "Doldurulacak boşluk bulunamadı — duvara pencere/kapı boşluğu veya delik ekleyin.",
+        "HeightEnd": "Uç yükseklik / eğim (mm)",
+        "Openings": "Boşluklar",
+        "AddWindow": "Pencere",
+        "AddDoor": "Kapı",
+        "NoOpenings": "Boşluk yok — pencere veya kapı ekleyin.",
+        "Window": "Pencere",
+        "Door": "Kapı",
+        "RemoveOpening": "Boşluğu sil",
+        "OpeningOffset": "Konum",
+        "OpeningSill": "Alt",
+        "NoRoomForOpening": "Duvarda yeni boşluk için yer yok — mevcutları daraltın veya duvarı uzatın.",
+        "AutofillSelectWall": "Camla doldurmak için bir duvar seçin (boşluk/delik doldurma) veya birden fazla duvarı çoklu seçin (aralarını doldurma).",
+        "AutofillNoGaps": "Seçili duvarlar arasında doldurulabilir boşluk bulunamadı — serbest duvar uçları arasında 30 cm - 12 m aralık olmalı."
+      },
+      "Slab": {
+        "Floor": "Zemin",
+        "Roof": "Çatı",
+        "Kind": "Tip",
+        "Depth": "Derinlik",
+        "Thickness": "Kalınlık",
+        "Elevation": "Kot",
+        "Rotation": "Dönüş",
+        "DeleteFloor": "Zemini sil",
+        "DeleteRoof": "Çatıyı sil"
+      },
+      "Transform": {
+        "Title": "Dönüşüm",
+        "Length": "Uzunluk",
+        "Height": "Yükseklik",
+        "HeightEnd": "Uç Yükseklik",
+        "Thickness": "Kalınlık",
+        "Depth": "Derinlik",
+        "Width": "Genişlik",
+        "X": "X",
+        "Y": "Y",
+        "Rotation": "Dönüş",
+        "Base": "Taban",
+        "Elevation": "Kot"
+      },
+      "Toolbox": {
+        "Title": "Nesneler",
+        "AddRun": "Hat ekle",
+        "AddWall": "Duvar ekle",
+        "AddFloor": "Zemin ekle",
+        "AddRoof": "Çatı ekle"
+      },
+      "Tool": {
+        "Select": "Seç",
+        "Move": "Taşı",
+        "Rotate": "Döndür",
+        "Stretch": "Genişlet",
+        "Paint": "Boya",
+        "Erase": "Sil",
+        "Autofill": "Boşlukları camla doldur",
+        "AddRun": "Hat ekle",
+        "AddWall": "Duvar ekle",
+        "AddFloor": "Zemin ekle",
+        "AddRoof": "Çatı ekle",
+        "NoColors": "Renk kataloğu boş",
+        "Draw": "Yüzeye çiz",
+        "ShapeRect": "Dikdörtgen",
+        "ShapeCircle": "Daire",
+        "ShapeEllipse": "Oval",
+        "ShapeTriangle": "Üçgen",
+        "ShapePolygon": "Çokgen",
+        "ShapeFree": "Serbest çizim",
+        "ShapeSplit": "Duvarı böl",
+        "ModeRecess": "Girinti (oyma)",
+        "ModeProtrude": "Çıkıntı (katman)",
+        "ModeHole": "Boşluk (delik)",
+        "DrawHint": "Yüzeyde bölge çiz → Genişlet (S) aracıyla girinti/çıkıntı derinliği ver",
+        "MultiSelect": "Çoklu seç (lasso)",
+        "Material_wood": "Ahşap",
+        "Material_marble": "Mermer",
+        "Material_concrete": "Beton",
+        "Material_panel": "Panel",
+        "Pen": "Kalemle yüzey / katman çiz",
+        "PenHint": "Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal"
+      },
+      "WallFeature": {
+        "Title": "Duvar katmanı",
+        "Mode": "Davranış",
+        "Depth": "Derinlik",
+        "Offset": "Konum X",
+        "CenterZ": "Konum Y (yükseklik)",
+        "Sides": "Kenar sayısı",
+        "FlipSide": "Yüz değiştir (iç/dış)",
+        "Color": "Katman rengi",
+        "ColorReset": "Yüzey rengi",
+        "Hint": "Genişlet aracıyla katman yüzeyini sürükleyerek derinliği ayarlayabilirsiniz; tamamen içeri itilen katman boşluğa dönüşür.",
+        "ListTitle": "Katmanlar",
+        "None": "Katman yok — üstteki 'Yüzeye çiz' aracıyla yüzeye şekil çizin.",
+        "Remove": "Katmanı sil",
+        "DoesNotFit": "Alan duvar sınırlarına sığmıyor.",
+        "Overlaps": "Alan mevcut bir boşluk veya katmanla çakışıyor.",
+        "DoesNotFitSlab": "Alan zemin/çatı sınırlarına sığmıyor.",
+        "SlabTitle": "Zemin/çatı katmanı"
+      },
+      "CollisionBlocked": "Bu değer başka bir nesneyle çakışıyor — uygulanmadı.",
+      "PastePlaceHint": "Yapıştır: konuma tıkla · Esc iptal",
+      "MultiSelect": {
+        "Count": "{{count}} öğe seçili",
+        "DeleteAll": "Seçilenleri sil",
+        "AlignX": "X hizala",
+        "AlignY": "Y hizala",
+        "Join": "Uç uca birleştir",
+        "EqualHeights": "Yükseklikleri eşitle",
+        "EqualLengths": "Uzunlukları eşitle",
+        "FillGaps": "Araları camla doldur",
+        "SkippedCollision": "{{count}} öğe çakışma nedeniyle atlandı.",
+        "NeedTwo": "Bu işlem için en az iki öğe seçin."
+      },
+      "Corner": {
+        "Title": "Köşe ovalliği (mm)",
+        "TL": "Sol üst",
+        "TR": "Sağ üst",
+        "BL": "Sol alt",
+        "BR": "Sağ alt"
+      },
+      "Surface": {
+        "Title": "Çizilen yüzey",
+        "Delete": "Yüzeyi sil",
+        "Hint": "Taşı aracıyla yüzeyi sürükleyebilir, Boya aracıyla renk/malzeme verebilirsiniz."
+      }
+    },
+    "Field": {
+      "Code": "Kod",
+      "Name": "Ad",
+      "Brand": "Marka",
+      "SystemType": "Sistem tipi",
+      "MaxPanel": "Maks. panel",
+      "ItemCount": "Kalem sayısı",
+      "Thickness": "Kalınlık",
+      "Structure": "Yapı",
+      "UValue": "U değeri",
+      "SoundDb": "Ses yalıtımı (dB)",
+      "PricePerM2": "Fiyat (m²)",
+      "Category": "Kategori",
+      "Unit": "Birim",
+      "UnitPrice": "Birim fiyat",
+      "MaxLoad": "Maks. yük",
+      "System": "Sistem",
+      "Active": "Aktif",
+      "Scope": "Kapsam",
+      "DiscountKind": "İndirim türü",
+      "DiscountValue": "İndirim değeri",
+      "Coupon": "Kupon",
+      "Event": "Olay",
+      "Channel": "Kanal",
+      "Locale": "Dil",
+      "Subject": "Konu",
+      "Region": "Bölge",
+      "BasePressure": "Temel basınç",
+      "HeightFactor": "Yükseklik katsayısı",
+      "Coastal": "Kıyı bölgesi",
+      "WinterTemp": "Kış sıcaklığı",
+      "Humidity": "Nem",
+      "Corrosion": "Korozyon",
+      "Recommendations": "Öneriler",
+      "StockBarLength": "Boy uzunluğu",
+      "JumboGlass": "Jumbo cam",
+      "SawKerf": "Testere kesim payı",
+      "GlassKerf": "Cam kesim payı",
+      "GuillotineRequired": "Giyotin gerekli",
+      "WastePercent": "Fire %",
+      "LaborCost": "İşçilik maliyeti",
+      "MarginPercent": "Marj %",
+      "ToleranceTop": "Üst tolerans",
+      "ToleranceSide": "Yan tolerans",
+      "TransportPerKm": "Nakliye / km",
+      "TransportPerKg": "Nakliye / kg",
+      "ScaffoldingFromFloor": "İskele başlangıç katı",
+      "ScaffoldingRate": "İskele ücreti",
+      "CraneFromFloor": "Vinç başlangıç katı",
+      "CraneRate": "Vinç ücreti",
+      "WorkshopCapacity": "Atölye kapasitesi",
+      "DefaultLocale": "Varsayılan dil",
+      "DefaultCurrency": "Varsayılan para birimi",
+      "DataRetention": "Veri saklama",
+      "QuoteTokenTtl": "Teklif token TTL",
+      "OnboardingComplete": "Onboarding tamamlandı",
+      "Label": "Etiket",
+      "Length": "Uzunluk",
+      "Height": "Yükseklik",
+      "Width": "Genişlik",
+      "OriginX": "X",
+      "OriginY": "Y",
+      "Rotation": "Dönüş",
+      "ProfileSystem": "Profil sistemi",
+      "Color": "Renk",
+      "TopDrip": "Üst damlalık",
+      "BottomThreshold": "Alt eşik",
+      "OpeningType": "Açılım tipi",
+      "GlassType": "Cam tipi",
+      "HasHandle": "Kulp",
+      "HasLock": "Kilit",
+      "HasBrushSeal": "Fırça fitil",
+      "Floor": "Kat",
+      "BuildingHeight": "Bina yüksekliği (m)",
+      "City": "Şehir",
+      "Currency": "Para birimi",
+      "ArcRadius": "Kavis yarıçapı"
+    },
+    "FieldExt": {},
+    "Engineering": {
+      "Title": "Mühendislik Raporu",
+      "WindLoad": "Rüzgar Yükü",
+      "Thermal": "Isı Yalıtımı",
+      "Acoustic": "Ses Yalıtımı",
+      "AppliedPressure": "Uygulanan Basınç",
+      "HeightFactor": "Yükseklik Katsayısı",
+      "WeightedU": "Ağırlıklı U Değeri",
+      "WeightedDb": "Ağırlıklı dB",
+      "EnergySavings": "Tahmini Enerji Tasarrufu",
+      "DbReduction": "Ses Azaltımı",
+      "Runs": "Cepheler",
+      "Panels": "Paneller",
+      "TotalArea": "Toplam Alan",
+      "TotalWeight": "Toplam Ağırlık",
+      "Overall": "Genel",
+      "Disclaimer": "Hesaplamalar TS 498'e göre yaklaşık değerlerdir. Taşıyıcı uygulamalar için statik mühendisi onayı gereklidir.",
+      "WindZoneMissing": "Rüzgar bölgesi atanmamış. Proje başlığından belirleyin.",
+      "NoSummary": "Mühendislik özetini görmek için projeyi kaydedin."
+    },
+    "Share": {
+      "Title": "Cam Balkon Teklifi",
+      "GrandTotal": "Genel Toplam",
+      "Customer": "Müşteri",
+      "Status": "Durum",
+      "Version": "Versiyon",
+      "ValidUntil": "Geçerlilik Tarihi",
+      "Decide": "Karar Ver",
+      "Accept": "Tasarımı Onayla",
+      "Reject": "Reddet",
+      "RejectReason": "Gerekçe (isteğe bağlı)",
+      "RejectReasonPlaceholder": "Değişiklik talepleriniz...",
+      "Signature": "İmza",
+      "ClearSignature": "Temizle",
+      "Accepted": "Teklif kabul edildi",
+      "Rejected": "Teklif reddedildi",
+      "NotFound": "Geçersiz veya süresi dolmuş paylaşım bağlantısı.",
+      "Footer": "İmza ve onayınız için güvenli paylaşım."
+    },
+    "Projects": {
+      "Title": "Cam Balkon Projeleri",
+      "Subtitle": "Müşteri projeleri ve 3D tasarımlar.",
+      "New": "Yeni Proje",
+      "ProjectName": "Proje Adı",
+      "Customer": "Müşteri",
+      "CustomerId": "Müşteri ID",
+      "Status": "Durum",
+      "Panels": "Panel",
+      "Area": "Alan",
+      "GrandTotal": "Genel Toplam",
+      "Updated": "Güncellendi",
+      "SearchPlaceholder": "Kod veya ada göre ara...",
+      "Empty": "Henüz proje yok.",
+      "Created": "Proje oluşturuldu"
+    },
+    "HardwareCategory": {
+      "Hinge": "Menteşe",
+      "Roller": "Makara",
+      "Lock": "Kilit",
+      "Handle": "Kulp",
+      "Gasket": "Fitil",
+      "Brush": "Fırça",
+      "Bumper": "Tampon",
+      "WallBracket": "Duvar Braketi",
+      "Chain": "Zincir",
+      "DripCap": "Damlalık",
+      "CornerPost": "Köşe Dikmesi",
+      "Other": "Diğer"
+    },
+    "Cost": {
+      "Materials": "Profil",
+      "Glass": "Cam",
+      "Hardware": "Aksesuar",
+      "Waste": "Fire",
+      "Labor": "İşçilik",
+      "Scaffolding": "İskele",
+      "Crane": "Vinç",
+      "Transport": "Nakliye",
+      "BaseCost": "Baz Maliyet",
+      "Margin": "Marj",
+      "Tax": "KDV",
+      "GrandTotal": "Müşteri Genel Toplamı"
+    },
+    "Validation": {
+      "AllGood": "Tüm kontroller başarılı.",
+      "PanelTooWide": "Panel, maksimum sistem genişliğini aşıyor",
+      "RunTooTall": "Cephe, maksimum sistem yüksekliğini aşıyor",
+      "GlassThicknessMismatch": "Cam kalınlığı sistemle uyumlu değil",
+      "GlassAreaExceedsMax": "Cam alanı maksimumu aşıyor",
+      "WeightExceeds": "Panel ağırlığı sistem kapasitesini aşıyor",
+      "WindLoadFail": "Cam, rüzgar yükü için yetersiz",
+      "SystemOpeningMismatch": "Sistem bu açılım tipini desteklemiyor",
+      "SeismicTooLarge": "Panel, deprem bölgesi için çok büyük",
+      "ConnectionAngleInvalid": "Gönye açısı önerilen aralığın dışında",
+      "SystemNotFound": "Profil sistemi bulunamadı",
+      "GlassNotFound": "Cam tipi bulunamadı"
+    },
+    "Status": {
+      "All": "Tümü",
+      "Draft": "Taslak",
+      "Surveyed": "Keşif Yapıldı",
+      "Quoted": "Teklif Verildi",
+      "Confirmed": "Onaylandı",
+      "InProduction": "Üretimde",
+      "Ready": "Hazır",
+      "InTransit": "Yolda",
+      "Installed": "Monte Edildi",
+      "Defective": "Kusurlu",
+      "Cancelled": "İptal"
+    },
+    "Tab": {
+      "ProfileSystems": "Profil Sistemleri",
+      "GlassTypes": "Cam Tipleri",
+      "Colors": "Renkler",
+      "HardwareItems": "Aksesuarlar",
+      "HardwareKits": "Aksesuar Setleri",
+      "DiscountRules": "İndirim Kuralları",
+      "NotificationTemplates": "Bildirim Şablonları",
+      "WindZones": "Rüzgar Bölgeleri",
+      "ClimateZones": "İklim Bölgeleri",
+      "Settings": "Ayarlar"
+    },
+    "Connection": {
+      "JointAngle": "Birleşim Açısı",
+      "MitreCut": "Gönye Kesim",
+      "SuggestedMitre": "Önerilen {{value}}°",
+      "UseCornerPost": "Köşe dikmesi kullan",
+      "CornerProfile": "Köşe Profili",
+      "NoCornerProfile": "— Yok —",
+      "Added": "Birleşim eklendi"
+    },
+    "System": {
+      "Folding": "Katlanır",
+      "Sliding": "Sürme",
+      "HeatInsulatedSliding": "Isı Yalıtımlı Sürme",
+      "Guillotine": "Giyotin",
+      "Hinged": "Menteşeli",
+      "Fixed": "Sabit"
+    },
+    "Plan2D": {
+      "Select": "Seç",
+      "Draw": "Çiz",
+      "Fit": "Sığdır",
+      "ZoomIn": "Yakınlaştır",
+      "ZoomOut": "Uzaklaştır",
+      "DrawHint": "Başlangıç noktasından bitiş noktasına sürükleyin",
+      "WallMode": "Duvar çiz"
+    },
+    "Opening": {
+      "Fixed": "Sabit",
+      "SlidingLeft": "Sürme ← Sol",
+      "SlidingRight": "Sürme → Sağ",
+      "Folding": "Katlanır",
+      "Hinged": "Menteşeli",
+      "Guillotine": "Giyotin"
+    },
+    "GlassStructure": {
+      "Tempered": "Temperli",
+      "Laminated": "Lamine",
+      "DoubleGlazed": "Çift Cam",
+      "TripleGlazed": "Üçlü Cam",
+      "LowE": "Low-E"
+    },
+    "DiscountScope": {
+      "CustomerGroup": "Müşteri Grubu",
+      "Coupon": "Kupon",
+      "Volume": "Hacim",
+      "DateRange": "Tarih Aralığı",
+      "Manual": "Manuel"
+    },
+    "Settings": {
+      "Core": "Temel",
+      "Field": "Saha Keşfi",
+      "Installation": "Montaj",
+      "Locale": "Dil ve İletişim",
+      "Onboarding": "Onboarding"
+    },
+    "Finish": {
+      "Anodized": "Eloksal",
+      "PowderCoated": "Elektrostatik Toz Boyalı",
+      "WoodLook": "Ahşap Desenli",
+      "Raw": "Ham"
+    },
+    "Quality": {
+      "low": "Düşük",
+      "medium": "Orta",
+      "high": "Yüksek",
+      "ultra": "Ultra"
+    },
+    "Recommend": {
+      "DoubleGlazing": "Çift cam önerilir",
+      "CorrosionCoating": "Korozyona dayanıklı kaplama",
+      "SeismicSmaller": "Daha küçük paneller"
+    },
+    "DiscountKind": {
+      "Percent": "Yüzde",
+      "FixedAmount": "Sabit Tutar"
+    },
+    "Notifications": {
+      "Title": "Bildirim Geçmişi",
+      "None": "Henüz bildirim gönderilmedi."
+    },
+    "Title": "Cam Balkon",
+    "Subtitle": "Profil sistemlerini, camları, aksesuarları, indirimleri ve atölye ayarlarını yönetin.",
+    "Survey": {
+      "Title": "Saha Keşfi",
+      "Subtitle": "Sahada ölçüleri ve gözlemleri kaydedin; onaydan sonra cephelere tolerans uygulayın.",
+      "New": "Yeni keşif",
+      "Created": "Keşif oluşturuldu",
+      "Saved": "Taslak kaydedildi",
+      "Submitted": "Onaya gönderildi",
+      "Approved": "Keşif onaylandı",
+      "Rejected": "Keşif reddedildi",
+      "RejectPrompt": "Gerekçe (isteğe bağlı)",
+      "PhotoUploaded": "Fotoğraf yüklendi",
+      "PhotoTypeError": "Yalnızca görsel dosyalarına izin verilir (JPG, PNG, WebP, HEIC).",
+      "PhotoSizeError": "Dosya 25 MB'tan küçük olmalıdır.",
+      "GpsUnavailable": "Konum alınamadı; keşif GPS koordinatları olmadan oluşturuldu.",
+      "AppliedBadge": "Uygulandı: {{date}}",
+      "NoActive": "Henüz aktif keşif yok. 'Yeni keşif' ile başlatın.",
+      "Slope": "Eğim / şakül sapması",
+      "SlopeTop": "Üst",
+      "SlopeBottom": "Alt",
+      "SlopeLeft": "Sol",
+      "SlopeRight": "Sağ",
+      "SlopeHint": "Pozitif değerler dışa, negatif değerler içe sapmayı gösterir.",
+      "Measurements": "Manuel ölçümler",
+      "AddMeasurement": "Ölçüm ekle",
+      "MeasureLabel": "Etiket (örn. üst kenar uzunluğu)",
+      "MeasureValue": "Değer (mm)",
+      "NoMeasurements": "Henüz manuel ölçüm yok.",
+      "Obstacles": "Engeller",
+      "AddObstacle": "Engel ekle",
+      "NoObstacles": "Kayıtlı engel yok.",
+      "ObstaclePlaceholder": "Açıklama",
+      "ObstacleKind": {
+        "pipe": "Boru",
+        "radiator": "Radyatör",
+        "window": "Pencere",
+        "door": "Kapı",
+        "other": "Diğer"
+      },
+      "Photos": "Fotoğraflar",
+      "UploadPhoto": "Fotoğraf yükle",
+      "NoPhotos": "Henüz fotoğraf yok.",
+      "Notes": "Notlar",
+      "NotesPlaceholder": "Sahada gözlemlenen detaylar…",
+      "SaveDraft": "Taslağı kaydet",
+      "Submit": "Gönder",
+      "ApproveAndApply": "Onayla ve uygula",
+      "ApproveOnly": "Yalnızca onayla",
+      "Reject": "Reddet",
+      "AppliedInfo": "{{runs}} cephe güncellendi · {{mm}} mm eğim toleransı uygulandı",
+      "Status": {
+        "InProgress": "Devam ediyor",
+        "Submitted": "Gönderildi",
+        "Approved": "Onaylandı",
+        "Rejected": "Reddedildi"
+      },
+      "ObstaclesInfo": "Engeller yalnızca kayıt amaçlıdır; çizime veya hesaba uygulanmaz."
+    },
+    "WorkOrder": {
+      "None": "Henüz iş emri yok.",
+      "Updated": "İş emri güncellendi",
+      "DefectRecorded": "Kusur kaydedildi",
+      "Defect": "Kusur kaydet",
+      "DefectSubmit": "Kusuru gönder",
+      "DefectPlaceholder": "Kusur açıklaması...",
+      "BlockedByRevision": "İş emri bekleyen revizyon nedeniyle durduruldu",
+      "DefectiveExitRequiresRevision": "Kusurlu durumundan çıkış yeni bir BOM revizyonu gerektirir",
+      "Revision": {
+        "Title": "Revizyonlar",
+        "PendingApproval": "Onay bekliyor",
+        "Approved": "Onaylandı",
+        "Rejected": "Reddedildi",
+        "Blocked": "Engellendi",
+        "SilentSnapshot": "Sessiz anlık görüntü",
+        "Number": "Rev.",
+        "DeltaPercent": "Delta",
+        "Approve": "Onayla",
+        "Reject": "Reddet",
+        "OverrideReason": "Geçersiz kılma gerekçesi",
+        "OverrideReasonPlaceholder": "İsteğe bağlı geçersiz kılma notu",
+        "RejectionReason": "Ret gerekçesi",
+        "RejectionReasonPlaceholder": "Gerekçe zorunludur",
+        "Approved.Toast": "Revizyon onaylandı",
+        "Rejected.Toast": "Revizyon reddedildi",
+        "Empty": "Henüz revizyon kaydı yok.",
+        "Banner.Simple": "Bu iş emri onay bekliyor",
+        "Banner.Pro": "Bekleyen engelleyici revizyon",
+        "Banner.Action": "İncele",
+        "CreatedAt": "Oluşturulma",
+        "Banner": {
+          "Action": "İncele",
+          "Simple": "Bu iş emri onay bekliyor"
+        },
+        "Toast": {
+          "Approved": "Revizyon onaylandı",
+          "Rejected": "Revizyon reddedildi"
+        }
+      },
+      "Status": {
+        "Pending": "Beklemede",
+        "Cutting": "Kesim",
+        "Assembling": "Montaj",
+        "Ready": "Hazır",
+        "InTransit": "Yolda",
+        "Installed": "Monte edildi",
+        "Defective": "Kusurlu"
+      }
+    },
+    "Cutting": {
+      "Title": "Kesim Raporu",
+      "Profile1D": "Profil kesimi (1D)",
+      "Glass2D": "Cam kesimi (2D)",
+      "StockBar": "Boy",
+      "Bars": "Boylar",
+      "Cuts": "Kesimler",
+      "Utilization": "Verimlilik",
+      "Waste": "Fire",
+      "Jumbo": "Jumbo levha",
+      "Sheets": "Levhalar",
+      "Regenerate": "Yeniden oluştur",
+      "Generated": "Kesim planı oluşturuldu",
+      "NoReport": "Henüz kesim planı yok. Yeniden oluştur'a tıklayın.",
+      "ExportCsv": "CSV dışa aktar",
+      "ExportDxf": "DXF dışa aktar",
+      "UnplacedWarning": "{{count}} cam parçası yerleştirilemedi",
+      "Nesting": {
+        "Title": "Gelişmiş 2D Yerleşim",
+        "Algorithm": "Algoritma",
+        "Heuristic": "Sezgisel yöntem",
+        "Utilization": "Verimlilik",
+        "Waste": "Fire",
+        "SheetsUsed": "Kullanılan levha",
+        "UnplacedPanels": "{{count}} panel yerleştirilemedi",
+        "OptimizeAdvanced": "Gelişmiş 2D yerleşim",
+        "Optimizing": "Optimize ediliyor...",
+        "Run": "Çalıştır",
+        "GuillotineOnly": "Yalnızca giyotin kesim",
+        "AllowRotation": "Döndürmeye izin ver",
+        "OptimizeSuccess": "2D yerleşim optimize edildi.",
+        "OptimizeError": "Optimizasyon başarısız oldu.",
+        "PrintExport": "Yazdır / PDF",
+        "NoReport": "Henüz yerleşim raporu yok.",
+        "AdvancedNesting": "Gelişmiş 2D Nesting",
+        "OpenAdvanced": "Gelişmiş 2D nesting'i aç"
+      }
+    },
+    "Quote": {
+      "Title": "Teklif Özeti",
+      "ValidUntil": "Geçerlilik tarihi",
+      "Recompute": "Yeniden hesapla",
+      "Recomputed": "BOM yeniden hesaplandı",
+      "ExportCsv": "CSV dışa aktar",
+      "NoBom": "BOM henüz hesaplanmadı. Yeniden hesapla'ya tıklayın.",
+      "Panels": "Paneller",
+      "Area": "Alan",
+      "Weight": "Ağırlık",
+      "Lines": "Kalemler",
+      "Description": "Açıklama",
+      "Qty": "Miktar",
+      "Unit": "Birim",
+      "UnitCost": "Birim maliyet",
+      "LineCost": "Kalem tutarı",
+      "Totals": "Toplamlar",
+      "SourceNote": "Bu özet proje BOM'undan türetilir — kalemleri değiştirmek için tasarımı düzenleyin.",
+      "Group": {
+        "ProfileCut": "Profil",
+        "GlassPiece": "Cam",
+        "HardwarePiece": "Aksesuar",
+        "Labor": "İşçilik",
+        "Transport": "Nakliye",
+        "Installation": "Montaj / iskele",
+        "Other": "Diğer"
+      },
+      "Actions": "İşlemler",
+      "EditPrice": "Birim fiyatı düzenle",
+      "ManualBadge": "Manuel",
+      "CustomBadge": "Özel satır",
+      "OriginalPrice": "Liste fiyatı",
+      "ClearOverride": "Liste fiyatına dön",
+      "PriceUpdated": "Birim fiyat güncellendi.",
+      "OverrideCleared": "Manuel fiyat kaldırıldı; liste fiyatına dönüldü.",
+      "PushToCatalog": "Fiyat listesini güncelle",
+      "PushToCatalogConfirm": "Bu kalemin katalog fiyatı manuel fiyatla güncellenecek. Devam edilsin mi?",
+      "CatalogPriceUpdated": "Katalog fiyatı güncellendi.",
+      "AddCustomLine": "Özel satır ekle",
+      "AddLine": "Satır ekle",
+      "Category": "Kategori",
+      "CustomLineAdded": "Özel satır teklife eklendi.",
+      "DeleteCustomLine": "Özel satırı kaldır",
+      "DeleteCustomLineConfirm": "Bu özel satır tekliften kaldırılacak. Devam edilsin mi?",
+      "CustomLineDeleted": "Özel satır kaldırıldı."
+    },
+    "Commerce": {
+      "ShareLinks": "Paylaşım bağlantıları",
+      "CreateShareLink": "Bağlantı oluştur",
+      "ShareLinkCreated": "Bağlantı oluşturuldu",
+      "NoShareLinks": "Henüz paylaşım yok. Müşteri için bir bağlantı oluşturun.",
+      "Accepted": "Kabul edildi",
+      "Rejected": "Reddedildi",
+      "Pending": "Beklemede",
+      "Views": "Görüntülenme",
+      "CopyUrl": "URL'yi kopyala",
+      "OrderConversion": "Sipariş",
+      "ConvertToOrder": "Siparişe dönüştür",
+      "OrderConverted": "Proje siparişe dönüştürüldü",
+      "ConvertHint": "Önce BOM'u hesaplayın ve projenin teklif verildi/onaylandı durumunda olduğundan emin olun.",
+      "Production": "Üretim",
+      "RequestedStart": "İstenen başlangıç",
+      "ReleaseToProduction": "Üretime gönder",
+      "Released": "Üretime gönderildi",
+      "ReleaseHint": "Önce siparişe dönüştürün ve Onaylandı durumunda olduğundan emin olun."
+    },
+    "NewProjectWizard": {
+      "Title": "Yeni Cam Projesi",
+      "TitleSimple": "Yeni Cam Projesi",
+      "TitlePro": "Yeni Proje",
+      "CloseAria": "Kapat",
+      "Back": "Geri",
+      "Next": "İleri",
+      "Step": {
+        "Category": "Sistem türü",
+        "Template": "Şablon",
+        "Meta": "Proje bilgileri",
+        "QuickDimensions": "Hızlı ölçüler"
+      },
+      "Action": {
+        "Next": "İleri",
+        "Back": "Geri",
+        "Skip": "Atla",
+        "Finish": "Tamamla",
+        "EmptyStart": "Boş başla"
+      },
+      "Header": {
+        "Simple": "Adım {{step}} / {{total}}",
+        "Pro": "Adım {{step}}/{{total}}"
+      },
+      "Banner": {
+        "PersonaSimple": "Adım adım rehberli mod",
+        "PersonaPro": "Tam profesyonel kontrol"
+      },
+      "Indicator": {
+        "Step1": {
+          "Label": "Kategori",
+          "Subtitle": "Sistem türü"
+        },
+        "Step2": {
+          "Label": "Şablon",
+          "Subtitle": "Sistem şablonu veya boş"
+        },
+        "Step3": {
+          "Label": "Proje bilgileri",
+          "Subtitle": "Müşteri ve adres"
+        },
+        "Step4": {
+          "Label": "Ölçüler",
+          "Subtitle": "Hızlı ölçü girişi"
+        }
+      },
+      "Preset": {
+        "Balcony": {
+          "Title": "Cam Balkon",
+          "Description": "Cam balkon kapatma",
+          "Subtitle": "TPH modeli | doğrusal geometri | giyotin/sürme sistem",
+          "DescriptionSimple": "Cam balkon kapatma",
+          "DescriptionPro": "TPH modeli | doğrusal geometri | giyotin/sürme sistem"
+        },
+        "Greenhouse": {
+          "Title": "Sera",
+          "Description": "Sera / kış bahçesi",
+          "Subtitle": "Parametrik kırma çatı | cam çatı",
+          "DescriptionSimple": "Sera ve kış bahçesi",
+          "DescriptionPro": "Parametrik kırma çatı | cam çatı | mahya/saçak kontrolü"
+        },
+        "ShowerCabin": {
+          "Title": "Duşakabin",
+          "Description": "Köşe veya niş duşakabin",
+          "Subtitle": "8/10 mm temperli | köşe bağlantı",
+          "DescriptionSimple": "Köşe veya niş duşakabin",
+          "DescriptionPro": "8/10 mm temperli | köşe bağlantı | patch fitting"
+        },
+        "Balustrade": {
+          "Title": "Korkuluk",
+          "Description": "Cam korkuluk ve merdiven korkuluğu",
+          "Subtitle": "12-19 mm strüktürel cam | TRSB",
+          "DescriptionSimple": "Cam korkuluk, merdiven ve balkon kenarı",
+          "DescriptionPro": "12-19 mm strüktürel cam | TRSB | kanal/kelepçe seçenekleri"
+        },
+        "FramelessDoor": {
+          "Title": "Çerçevesiz Kapı",
+          "Description": "Çerçevesiz cam kapı",
+          "Subtitle": "Patch fitting | 10-12 mm temperli",
+          "DescriptionSimple": "Çerçevesiz cam kapılar ve giriş bölmeleri",
+          "DescriptionPro": "Patch fitting | 10-12 mm temperli | yer yayı seçeneği"
+        },
+        "CurtainWall": {
+          "Title": "Giydirme Cephe",
+          "Description": "Kaset sistemli bina cephesi",
+          "Subtitle": "Kaset sistem | 1.5x3 m panel | alüminyum profil",
+          "DescriptionSimple": "Ofis ve ticari binalar için giydirme cephe",
+          "DescriptionPro": "Kaset sistem | çok kenarlı poligon | 4-12 panel"
+        },
+        "SpiderFacade": {
+          "Title": "Spider Cephe",
+          "Description": "Noktasal tutuculu strüktürel cam cephe",
+          "Subtitle": "4 nokta bağlantı | min. 12 mm strüktürel cam",
+          "DescriptionSimple": "Lobi ve girişler için strüktürel cam cephe",
+          "DescriptionPro": "Spider bağlantı | panel başına 3-4 nokta | strüktürel cam"
+        },
+        "FreeForm": {
+          "Title": "Serbest Form",
+          "Description": "Kullanıcı tanımlı özel poligon",
+          "Subtitle": "Boş başlangıç | poligon köşe sayısı >= 3",
+          "DescriptionSimple": "Boş poligon başlangıcıyla özel tasarım",
+          "DescriptionPro": "Özel poligon | serbest geometri | kendinden taşıyıcı"
+        }
+      },
+      "Step1": {
+        "Title": "Hangi sistemi tasarlıyorsunuz?",
+        "HintSimple": "En yakın seçeneği seçin, gerisini biz hallederiz.",
+        "HintPro": "Kategori seçimi geometriyi ve montaj topolojisini belirler."
+      },
+      "Step2": {
+        "Title": "Hazır bir şablonla başlayın",
+        "HintSimple": "Sık kullanılan yerleşimler. Boş da başlayabilirsiniz.",
+        "HintPro": "Sistem şablonları cephe ve panel ön ayarları sağlar.",
+        "StartBlank": "Boş başla",
+        "StartBlankHint": "Şablonsuz, sıfırdan.",
+        "EmptyHint": "Bu kategori için şablon yok. \"Boş başla\" ile devam edin.",
+        "EmptyMessage": "Bu kategori için şablon bulunamadı."
+      },
+      "Template": {
+        "EmptyMessage": "Kullanılabilir şablon yok.",
+        "RunCount_one": "{{count}} cephe",
+        "RunCount_other": "{{count}} cephe",
+        "RunCount": "{{count}} cephe",
+        "PanelCount_one": "{{count}} panel",
+        "PanelCount_other": "{{count}} panel",
+        "PanelCount": "{{count}} panel",
+        "EstimatedArea": "{{min}}–{{max}} m²"
+      },
+      "Step3": {
+        "Title": "Proje detayları",
+        "Hint": "Proje adı ve müşteri zorunludur, diğer alanlar isteğe bağlıdır.",
+        "ProjectName": "Proje adı *",
+        "ProjectNamePlaceholder": "örn. Yıldız Apartmanı balkon",
+        "NameError": "Proje adı {{min}}-{{max}} karakter olmalıdır.",
+        "Customer": "Müşteri *",
+        "CustomerSearchPlaceholder": "Müşteri ara...",
+        "ChangeCustomer": "Değiştir",
+        "CreateNewCustomer": "Yeni müşteri oluştur",
+        "Address": "Montaj adresi",
+        "AddressPlaceholder": "Cadde, no, bina, semt/şehir",
+        "Notes": "Notlar",
+        "NotesPlaceholder": "İç notlar, montaj koşulları vb."
+      },
+      "Meta": {
+        "Name": "Proje adı",
+        "NamePlaceholder": "örn. Yıldız Apartmanı balkon",
+        "NameError": "3-120 karakter",
+        "Customer": "Müşteri",
+        "CustomerPlaceholder": "Müşteri ara...",
+        "CustomerNew": "Yeni müşteri",
+        "Address": "Montaj adresi",
+        "AddressPlaceholder": "Cadde, no, bina, semt/şehir",
+        "Notes": "Notlar",
+        "NotesPlaceholder": "İç notlar, montaj koşulları vb."
+      },
+      "Step4": {
+        "TitleSimple": "Hızlı ölçü girin, ince ayarı sonra yapın",
+        "TitlePro": "Cephe ölçüleri ve panel sayısı",
+        "HintSimple": "Yerinde lazerle ölçüp buraya girin. Ya da sonra ölçün.",
+        "HintPro": "Yaklaşık değerler — kesin ölçüler keşifte alınır.",
+        "RunCount": "Cephe sayısı",
+        "RunLabel": "Cephe {{index}}",
+        "WidthMm": "Genişlik (mm)",
+        "HeightMm": "Yükseklik (mm)",
+        "PanelCount": "Panel sayısı",
+        "LaserHint": "Lazer metre entegrasyonu yakında.",
+        "SkipSimple": "Atla, sonra ölç",
+        "SkipPro": "Ölçüsüz oluştur",
+        "Create": "Proje oluştur"
+      },
+      "Dimensions": {
+        "RunNumber": "Cephe {{index}}",
+        "Width": "Genişlik (mm)",
+        "Height": "Yükseklik (mm)",
+        "PanelCount": "Panel sayısı",
+        "Skip": "Sonra ölç",
+        "Submit": "Proje oluştur"
+      },
+      "Validation": {
+        "CustomerRequired": "Müşteri zorunludur.",
+        "ProjectNameRequired": "Proje adı zorunludur."
+      },
+      "Create": {
+        "Loading": "Proje oluşturuluyor...",
+        "Success": "Proje başarıyla oluşturuldu.",
+        "Error": "Proje oluşturulamadı."
+      },
+      "Quick": {
+        "Title": "Hazır şablonlar",
+        "Straight": "Düz balkon",
+        "LShape": "L balkon",
+        "UShape": "U balkon"
+      }
+    },
+    "Hardware": {
+      "Title": "Donanım",
+      "Objects": "Donanım nesneleri",
+      "Empty": "Henüz donanım eklenmedi",
+      "Kind": {
+        "Handle": "Kulp",
+        "Lock": "Kilit",
+        "Hinge": "Menteşe",
+        "Roller": "Makara",
+        "Vent": "Menfez",
+        "Louver": "Panjur",
+        "Bracket": "Braket",
+        "Accessory": "Aksesuar",
+        "PullHandle": "Çekme Kulbu",
+        "Stopper": "Stoper",
+        "CornerJoint": "Köşe Bağlantı",
+        "GasketStrip": "Fitil",
+        "DripProfile": "Damlalık"
+      },
+      "Field": {
+        "Kind": "Tür",
+        "Color": "Renk",
+        "OffsetX": "X (mm)",
+        "OffsetY": "Y (mm)",
+        "OffsetZ": "Z (mm)",
+        "Width": "Genişlik (mm)",
+        "Height": "Yükseklik (mm)",
+        "Depth": "Derinlik (mm)"
+      }
+    }
+  },
+  "Admin": {
+    "Providers": {
+      "Title": "Sağlayıcı Entegrasyonları",
+      "Eyebrow": "Yönetim",
+      "Description": "Kiracınız için üçüncü taraf entegrasyonlarını yapılandırın.",
+      "CategoryTabs": "Sağlayıcı kategori sekmeleri",
+      "Empty": "Bu kategoride kayıtlı sağlayıcı yok.",
+      "LoadFailed": "Sağlayıcılar yüklenemedi.",
+      "Default": "Varsayılan",
+      "Sandbox": "Sandbox",
+      "Prod": "Canlı",
+      "LastChecked": "Son kontrol",
+      "Category": {
+        "EFatura": "E-Fatura",
+        "Payment": "Ödeme",
+        "LaserMeter": "Lazer Metre",
+        "Other": "Diğer"
+      },
+      "Status": {
+        "Healthy": "Sağlıklı",
+        "Degraded": "Kısmen sorunlu",
+        "Unhealthy": "Sorunlu",
+        "Unknown": "Bilinmiyor",
+        "NotConfigured": "Yapılandırılmadı"
+      },
+      "Action": {
+        "Configure": "Yapılandır",
+        "CheckHealth": "Durumu kontrol et",
+        "RunTestSuite": "Test paketini çalıştır",
+        "WebhookHistory": "Webhook'lar",
+        "SetDefault": "Varsayılan yap",
+        "Enable": "Etkin",
+        "Disable": "Devre dışı"
+      },
+      "Form": {
+        "Title": "{{name}} yapılandır",
+        "DisplayName": "Görünen ad",
+        "ApiKey": "API anahtarı",
+        "SecretKey": "Gizli anahtar",
+        "WebhookSecret": "Webhook gizli anahtarı",
+        "Endpoint": "Uç nokta URL'si",
+        "IsSandbox": "Sandbox modu",
+        "IsEnabled": "Etkin",
+        "IsEnabledHint": "Bu sağlayıcı üzerinden yönlendirmeyi etkinleştirir.",
+        "SandboxHint": "Test ortamı. Gerçek tahsilat veya gönderim yapılmaz.",
+        "ProdHint": "Canlı ortam. Gerçek tahsilatlar ve gönderimler yapılır.",
+        "SecretsHint": "Mevcut değerleri korumak için boş bırakın. Gizli bilgiler şifrelenerek saklanır."
+      },
+      "TestSuite": {
+        "Title": "Test paketi — {{name}}",
+        "Running": "Test paketi çalıştırılıyor…",
+        "Success": "Başarılı",
+        "Failed": "Başarısız",
+        "Outcome": "Sonuç",
+        "NoResult": "Test sonucu bulunamadı.",
+        "StepX": "Adım {{n}}",
+        "Unavailable": "Test paketi yalnızca yapılandırılmış ve etkin sandbox sağlayıcılarda çalıştırılabilir."
+      },
+      "Webhook": {
+        "Title": "Webhook geçmişi — {{name}}",
+        "ReceivedAt": "Alındı",
+        "EventType": "Olay",
+        "Status": "Durum",
+        "Retries": "Yeniden denemeler",
+        "Error": "Hata",
+        "Actions": "İşlemler",
+        "Replay": "Yeniden işle",
+        "Empty": "Geçerli filtrelerle eşleşen webhook olayı yok.",
+        "From": "Başlangıç",
+        "To": "Bitiş",
+        "AllStatuses": "Tüm durumlar",
+        "Reset": "Filtreleri sıfırla",
+        "PageInfo": "Sayfa {{page}} / {{totalPages}} ({{total}} olay)",
+        "StatusValue": {
+          "Received": "Alındı",
+          "Processed": "İşlendi",
+          "Failed": "Başarısız",
+          "Retrying": "Yeniden deneniyor",
+          "Discarded": "Yok sayıldı",
+          "Pending": "Beklemede"
+        }
+      },
+      "Toast": {
+        "Saved": "Sağlayıcı yapılandırması kaydedildi.",
+        "SaveFailed": "Sağlayıcı yapılandırması kaydedilemedi.",
+        "Enabled": "Sağlayıcı etkinleştirildi.",
+        "Disabled": "Sağlayıcı devre dışı bırakıldı.",
+        "DefaultSet": "Varsayılan sağlayıcı güncellendi.",
+        "HealthOk": "Sağlayıcı sağlıklı.",
+        "HealthFailed": "Sağlık kontrolü başarısız.",
+        "WebhookReplayed": "Webhook yeniden işlendi.",
+        "WebhookReplayFailed": "Webhook yeniden işlenemedi."
+      }
+    }
+  },
+  "users": {
+    "deactivateTitle": "Kullanıcıyı devre dışı bırak",
+    "activateTitle": "Kullanıcıyı etkinleştir",
+    "deactivateConfirm": "{{user}} artık oturum açamayacak. Devam edilsin mi?",
+    "activateConfirm": "{{user}} yeniden oturum açabilecek.",
+    "statusUpdated": "Kullanıcı durumu güncellendi.",
+    "count": "{{count}} kullanıcı",
+    "invite": "Kullanıcı ekle",
+    "user": "Kullanıcı",
+    "roles": "Roller",
+    "lastLogin": "Son giriş",
+    "status": "Durum",
+    "editRoles": "Rolleri düzenle",
+    "empty": "Kullanıcı bulunamadı.",
+    "invited": "Kullanıcı oluşturuldu.",
+    "rolesUpdated": "Roller güncellendi.",
+    "inviteInvalid": "Kullanıcı adı, e-posta ve en az 8 karakterli bir parola gereklidir.",
+    "username": "Kullanıcı adı",
+    "email": "E-posta",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "tempPassword": "Geçici parola",
+    "tempPasswordHint": "En az 8 karakter. Kullanıcı ilk oturum açışında değiştirmelidir.",
+    "create": "Oluştur"
+  },
+  "tags": {
+    "label": "Etiketler",
+    "manageTitle": "Müşteri etiketleri",
+    "selectPlaceholder": "Etiket seçin…",
+    "searchOrCreate": "Ara veya oluştur…",
+    "createNamed": "\"{{name}}\" oluştur",
+    "empty": "Henüz etiket yok.",
+    "preview": "Etiket",
+    "deleteConfirm": "\"{{name}}\" etiketi silinsin mi?",
+    "fields": {
+      "name": "Ad",
+      "color": "Renk"
+    }
+  },
+  "numbering": {
+    "document": "Belge",
+    "prefix": "Ön ek",
+    "pad": "Basamak sayısı",
+    "format": "Format",
+    "next": "Sıradaki",
+    "preview": "Önizleme",
+    "prefixRequired": "Ön ek zorunludur.",
+    "saved": "Numaralandırma kaydedildi.",
+    "notConfigured": "henüz yapılandırılmadı"
+  },
+  "masterData": {
+    "deleteConfirm": "Bu kayıt silinsin mi?",
+    "empty": "Henüz kayıt yok."
+  },
+  "error": {
+    "NetworkError": "Ağ hatası.",
+    "DefaultError": "İstek başarısız oldu."
+  },
+  "Persona": {
+    "Mode": {
+      "Pro": "Profesyonel",
+      "Simple": "Basit",
+      "Updated": "Mod {{mode}} olarak ayarlandı"
+    }
+  },
+  "Common": {
+    "Yes": "Evet",
+    "No": "Hayır",
+    "Day": "Gün",
+    "Days": "Gün",
+    "Loading": "Yükleniyor…",
+    "Delete": "Sil",
+    "Disabled": "Devre dışı",
+    "Enabled": "Etkin",
+    "Create": "Oluştur",
+    "Cancel": "İptal",
+    "Save": "Kaydet",
+    "Undo": "Geri al",
+    "Redo": "Yinele",
+    "Previous": "Önceki",
+    "Next": "Sonraki",
+    "PageOf": "{{current}}/{{total}}",
+    "Refresh": "Yenile",
+    "All": "Tümü",
+    "Offline": {
+      "Banner": "Çevrimdışısınız. Bağlantı yeniden kurulduğunda değişiklikler senkronize edilecek.",
+      "Queued": "{{count}} değişiklik beklemede",
+      "Synced": "{{count}} değişiklik senkronize edildi",
+      "Error": "{{count}} değişiklik senkronize edilemedi",
+      "SyncNow": "Şimdi senkronize et"
+    },
+    "Duplicate": "Çoğalt",
+    "AuditTab": {
+      "After": "Sonrası",
+      "Before": "Öncesi",
+      "Empty": "Henüz denetim geçmişi yok.",
+      "ChangesTitle": "Değişiklikler",
+      "Title": "Denetim"
+    },
+    "Close": "Kapat",
+    "Edit": "Düzenle",
+    "Back": "Geri",
+    "Filter": {
+      "All": "Tümü"
+    },
+    "Hide": "Gizle"
+  },
+  "collab": {
+    "comments": {
+      "tab": "Yorumlar",
+      "title": "Yorumlar",
+      "open": "Yorumları aç",
+      "count_one": "{{count}} yorum",
+      "count_other": "{{count}} yorum",
+      "empty": "Henüz yorum yok. Sohbeti başlatın.",
+      "placeholder": "Yorum yazın…",
+      "replyPlaceholder": "Yanıt yazın…",
+      "submit": "Gönder",
+      "reply": "Yanıtla",
+      "edited": "düzenlendi",
+      "deleted": "Yorum silindi",
+      "shortcutHint": "Göndermek için Ctrl/⌘ + Enter"
+    },
+    "notifications": {
+      "title": "Bildirimler",
+      "empty": "Her şey güncel",
+      "markAllRead": "Tümünü okundu olarak işaretle"
+    },
+    "entity": {
+      "order": "Sipariş",
+      "vendorBill": "Alış faturası",
+      "shipment": "Sevkiyat",
+      "subscriptionOrder": "Abonelik"
+    }
+  },
+  "feedback": {
+    "form": {
+      "required": "Başlık ve açıklama zorunludur.",
+      "sent": "Geri bildiriminiz alındı. Teşekkürler!",
+      "title": "Geri bildirim / Hata bildir",
+      "type": "Tür",
+      "priority": "Öncelik",
+      "module": "İlgili modül",
+      "modulePlaceholder": "Seçin (isteğe bağlı)",
+      "titleField": "Başlık",
+      "titlePlaceholder": "Kısa ve açıklayıcı bir başlık",
+      "description": "Açıklama",
+      "descriptionPlaceholder": "Ne bekliyordunuz ve bunun yerine ne oldu?",
+      "steps": "Yeniden üretme adımları",
+      "stepsPlaceholder": "1) … 2) … 3) …",
+      "pageUrl": "Sayfa / konum",
+      "submit": "Gönder"
+    },
+    "statusUpdated": "Durum güncellendi.",
+    "page": {
+      "title": "Geri bildirim ve hata raporları",
+      "subtitle": "Hata bildirin, özellik önerin veya soru sorun. Tüm gönderimler burada takip edilir.",
+      "new": "Yeni gönderim"
+    },
+    "filter": {
+      "allTypes": "Tüm türler",
+      "allStatuses": "Tüm durumlar"
+    },
+    "count": "{{count}} gönderim",
+    "empty": "Henüz gönderim yok. İlk gönderiminizi oluşturun.",
+    "adminResponse": "Yönetici yanıtı",
+    "status": "Durum",
+    "responsePlaceholder": "Yanıt (isteğe bağlı)",
+    "apply": "Uygula"
+  },
+  "Privacy": {
+    "Title": "Gizlilik & KVKK",
+    "Subtitle": "Kişisel veri haklarınızı yönetin: verilerinizi indirin veya hesabınızı silin.",
+    "Export": {
+      "Title": "Verilerimi Dışa Aktar",
+      "Description": "Tüm kişisel verilerinizi — hesap, projeler ve etkinlik geçmişi — JSON formatında indirin.",
+      "Button": "Veri Paketini İndir",
+      "Preparing": "Hazırlanıyor…",
+      "Success": "Veri paketi hazır"
+    },
+    "Erase": {
+      "Title": "Hesabımı Sil",
+      "Description": "Veri koruma hakları kapsamında hesabınızın anonimleştirilmesini talep edin. Bu işlem geri alınamaz; finansal kayıtlar yasal saklama süresi boyunca tutulur, ancak kişisel kimlik bilgileri silinir.",
+      "ConfirmPrompt": "Onaylamak için kullanıcı adınızı yazın",
+      "Button": "Hesabı Sil",
+      "Processing": "İşleniyor…",
+      "Success": "Silme talebi alındı",
+      "MismatchError": "Kullanıcı adı eşleşmiyor"
+    },
+    "Consent": {
+      "Marketing": "Pazarlama iletişimleri",
+      "Analytics": "Anonim kullanım analitiği",
+      "Updated": "Tercih güncellendi"
+    },
+    "ExportIncludes": "Dışa aktarım; profil, müşteri/bayi üyelikleri, sipariş geçmişi ve son etkinlikleri kapsar.",
+    "Result": {
+      "AccountAnonymized": "Hesap anonimleştirildi. Finansal kayıtlar yasal saklama süresi boyunca tutulur.",
+      "CustomerAnonymized": "Müşteri kaydı anonimleştirildi. Finansal anlık görüntüler yasal saklama süresi boyunca tutulur."
+    },
+    "Admin": {
+      "Actions": "İşlemler",
+      "AllStatuses": "Tüm durumlar",
+      "Empty": "Talep bulunamadı",
+      "Notes": "Notlar",
+      "Process": "İşle",
+      "ProcessSuccess": "Talep işlendi",
+      "Reject": "Reddet",
+      "RejectSuccess": "Talep reddedildi",
+      "RejectionPrompt": "Reddetme nedenini girin",
+      "Status": "Durum",
+      "StatusFilter": "Durum filtresi",
+      "SubmittedAt": "Gönderim tarihi",
+      "Subtitle": "KVKK/GDPR veri sahibi taleplerini yönetin",
+      "Tab": {
+        "Audit": "Denetim",
+        "AuditPlaceholder": "Denetim kayıtları yakında",
+        "Policies": "Saklama politikaları",
+        "Requests": "Talepler"
+      },
+      "Title": "Gizlilik Yönetimi",
+      "Type": "Tür"
+    },
+    "DataSubjectRequestNotFound": "Veri sahibi talebi bulunamadı",
+    "EmailRequired": "E-posta gereklidir",
+    "Portal": {
+      "LastSubmitted": "Son gönderilen talep ID'si",
+      "Subtitle": "GDPR / KVKK md. 11 kapsamındaki haklarınızı kullanın",
+      "Title": "Gizlilik Talepleri"
+    },
+    "Request": {
+      "Email": "E-posta adresi",
+      "Notes": "Notlar (isteğe bağlı)",
+      "Submit": "Talep gönder",
+      "SubmittedSuccess": "Talep başarıyla gönderildi",
+      "Submitting": "Gönderiliyor...",
+      "Type": "Talep türü",
+      "TypeOption": {
+        "Access": "Erişim hakkı",
+        "Erasure": "Silme hakkı",
+        "Export": "Veri dışa aktarımı",
+        "Objection": "İtiraz hakkı",
+        "Portability": "Veri taşınabilirliği",
+        "Rectification": "Düzeltme hakkı",
+        "Restriction": "İşlemeyi kısıtlama"
+      }
+    },
+    "RequestAlreadyClosed": "Talep zaten kapatılmış",
+    "RequestTypeMismatch": "Talep türü uyuşmazlığı",
+    "RetentionExpiry": "Saklama süresi doldu",
+    "RetentionPolicyNotFound": "Saklama politikası bulunamadı",
+    "Retention": {
+      "Action": "İşlem",
+      "ActionOption": {
+        "Anonymize": "Anonimleştir",
+        "Archive": "Arşivle",
+        "Delete": "Sil"
+      },
+      "AddButton": "Politika ekle",
+      "AddPolicy": "Saklama politikası ekle",
+      "CreateSuccess": "Saklama politikası oluşturuldu",
+      "Days": "Gün",
+      "Empty": "Henüz politika tanımlanmadı",
+      "Enabled": "Etkin",
+      "EntityType": "Veri türü",
+      "ExistingPolicies": "Mevcut politikalar",
+      "LastRun": "Son çalıştırma",
+      "UpdateSuccess": "Saklama politikası güncellendi"
+    },
+    "Status": {
+      "Completed": "Tamamlandı",
+      "InProgress": "İşlemde",
+      "Rejected": "Reddedildi",
+      "Submitted": "Gönderildi"
+    },
+    "TenantRequired": "Kiracı gereklidir",
+    "VerificationEmailSent": "Doğrulama e-postası gönderildi"
+  },
+  "Warranty": {
+    "Title": "Garanti Sözleşmeleri",
+    "Subtitle": "Garanti kapsamını, bitiş tarihlerini ve uzatmaları takip edin.",
+    "Empty": "Mevcut filtrelere uygun garanti sözleşmesi yok.",
+    "StartDate": "Başlangıç",
+    "EndDate": "Bitiş",
+    "MonthsShort": "ay",
+    "Status": {
+      "Active": "Aktif",
+      "Expired": "Süresi Doldu",
+      "Cancelled": "İptal Edildi",
+      "Suspended": "Askıya Alındı"
+    },
+    "CoverageType": {
+      "ManufacturerDefect": "Üretici Hatası",
+      "Installation": "Montaj",
+      "FullService": "Tam Servis",
+      "Limited": "Sınırlı"
+    },
+    "Action": {
+      "Create": "Garanti Oluştur",
+      "Extend": "Uzat",
+      "Cancel": "İptal Et",
+      "Suspend": "Askıya Al",
+      "Resume": "Devam Ettir",
+      "MonthsToAdd": "Ay",
+      "ReasonOptional": "Neden (isteğe bağlı)",
+      "ReasonRequired": "Neden",
+      "ExtendedToast": "Garanti uzatıldı.",
+      "CancelledToast": "Garanti iptal edildi.",
+      "CancelReasonRequired": "İptal nedeni gereklidir."
+    },
+    "Alerts": {
+      "BadgeAria": "Süresi yaklaşan garantiler",
+      "ExpiringCount": "{{count}} tanesi yakında sona eriyor"
+    },
+    "ServiceTicket": {
+      "Title": "Servis Talepleri",
+      "Subtitle": "Müşteri bildirimleri ve planlı bakım.",
+      "Empty": "Mevcut filtrelere uygun talep yok.",
+      "OpenNew": "Servis Talebi Aç",
+      "Description": "Açıklama",
+      "ReportedAt": "Bildirim Tarihi",
+      "Type": {
+        "Label": "Tür",
+        "PreventiveMaintenance": "Önleyici Bakım",
+        "WarrantyClaim": "Garanti Talebi",
+        "OutOfWarrantyRepair": "Garanti Dışı Onarım",
+        "Inspection": "İnceleme"
+      },
+      "Status": {
+        "Label": "Durum",
+        "Open": "Açık",
+        "Assigned": "Atandı",
+        "InProgress": "Devam Ediyor",
+        "Resolved": "Çözüldü",
+        "Cancelled": "İptal Edildi"
+      },
+      "Priority": {
+        "Label": "Öncelik",
+        "Low": "Düşük",
+        "Normal": "Normal",
+        "High": "Yüksek",
+        "Urgent": "Acil"
+      },
+      "Action": {
+        "Submit": "Talep Gönder",
+        "Assign": "Ata",
+        "Resolve": "Çöz",
+        "Cancel": "İptal Et"
+      },
+      "Validation": {
+        "Required": "Başlık ve açıklama gereklidir."
+      },
+      "Toast": {
+        "Created": "Servis talebi oluşturuldu.",
+        "Assigned": "Servis talebi atandı.",
+        "Resolved": "Servis talebi çözüldü."
+      }
+    },
+    "Maintenance": {
+      "Title": "Bakım Planları",
+      "Empty": "Planlanmış bakım yok.",
+      "Type": {
+        "PreventiveAnnual": "Yıllık Bakım",
+        "SemiAnnual": "Altı Aylık",
+        "Quarterly": "Üç Aylık",
+        "Custom": "Özel"
+      },
+      "NextDue": "Sonraki Tarih",
+      "LastCompleted": "Son Tamamlanan",
+      "Action": {
+        "Schedule": "Bakım Planla",
+        "Complete": "Tamamlandı Olarak İşaretle"
+      }
+    }
+  },
+  "InstallationAcceptance": {
+    "Title": "Montaj Kabulü",
+    "OpenForm": "Formu Aç",
+    "OpenPunchListItems": "Açık Eksik Maddeleri",
+    "Status": {
+      "Draft": "Taslak",
+      "InProgress": "Devam Ediyor",
+      "SignedByCustomer": "Müşteri Tarafından İmzalandı",
+      "Accepted": "Kabul Edildi",
+      "Rejected": "Reddedildi"
+    },
+    "Action": {
+      "Start": "Kabulü Başlat",
+      "UpdateChecklist": "Kontrol Listesini Güncelle",
+      "UploadPhoto": "Fotoğraf Yükle",
+      "CaptureSignature": "İmza Al",
+      "Accept": "Kabul Et",
+      "Reject": "Reddet",
+      "RejectReasonPrompt": "Reddetme nedeni"
+    },
+    "Checklist": {
+      "Category": {
+        "Mechanical": "Mekanik",
+        "Glass": "Cam",
+        "Seal": "Sızdırmazlık",
+        "Dimension": "Ölçüler",
+        "Hardware": "Aksesuar"
+      },
+      "Result": {
+        "Pass": "Uygun",
+        "Fail": "Uygun Değil",
+        "NA": "G/D"
+      },
+      "Item": {
+        "Mechanical.FrameRigidity": "Çerçeve rijitliği uygun",
+        "Mechanical.AnchorBolts": "Ankraj cıvataları sıkılı",
+        "Mechanical.Levelness": "Yatay/dikey terazi <2mm/m",
+        "Mechanical.ScrewFastenings": "Vida bağlantıları tamamlanmış",
+        "Glass.NoChips": "Cam paneller hasarsız",
+        "Glass.PanelAlignment": "Panel hizalaması",
+        "Glass.EdgePolish": "Cam kenarları rodajlı",
+        "Glass.StampVisible": "CE işareti görünür",
+        "Seal.SiliconeApplied": "Silikon uygulanmış",
+        "Seal.NoGaps": "Sızdırmazlıkta boşluk yok",
+        "Seal.WaterTest": "Su sızdırmazlığı test edildi",
+        "Dimension.WidthTolerance": "Genişlik toleransı ±2mm",
+        "Dimension.HeightTolerance": "Yükseklik toleransı ±2mm",
+        "Dimension.Diagonal": "Köşegen eşitliği",
+        "Hardware.HandlesOperational": "Kollar çalışıyor",
+        "Hardware.LocksOperational": "Kilitler çalışıyor",
+        "Hardware.HingesLubricated": "Menteşeler yağlanmış",
+        "Hardware.HingeAlignment": "Menteşe hizalaması"
+      },
+      "NotesPlaceholder": "Notlar..."
+    },
+    "PunchList": {
+      "Title": "Eksik Listesi",
+      "Empty": "Açık madde yok.",
+      "Add": "Ekle",
+      "Resolve": "Çöz",
+      "DescriptionPlaceholder": "Açıklama",
+      "Severity": {
+        "Minor": "Küçük",
+        "Moderate": "Orta",
+        "Critical": "Kritik"
+      },
+      "Status": {
+        "Open": "Açık",
+        "InProgress": "Devam Ediyor",
+        "Resolved": "Çözüldü",
+        "Deferred": "Ertelendi"
+      }
+    },
+    "PhotoCapture": {
+      "TakePhoto": "Fotoğraf Çek",
+      "PickFromGallery": "Galeriden Seç",
+      "Counter": "{{count}} fotoğraf"
+    },
+    "SignaturePad": {
+      "CustomerNamePlaceholder": "Müşteri temsilcisinin adı",
+      "Instructions": "Lütfen aşağıdaki alana imza atın.",
+      "Clear": "Temizle",
+      "Save": "İmzayı Kaydet"
+    }
+  },
+  "billing": {
+    "eyebrow": "Faturalama",
+    "title": "Faturalama",
+    "crumbs": {
+      "billing": "Faturalama",
+      "orders": "Siparişler"
+    },
+    "home": {
+      "title": "Aboneliklerim",
+      "subtitle": "Aktif modülleri, yaklaşan bitişleri ve son satın alımları takip edin.",
+      "browse": "Modüllere göz at",
+      "activeCount": "Aktif modüller",
+      "activeHint": "{{count}} modül tanımlı",
+      "expiringSoon": "{{days}} gün içinde bitiyor",
+      "nextExpiry": "Sıradaki: {{date}}",
+      "noExpiring": "Yakında süresi dolan abonelik yok.",
+      "recentOrders": "Son siparişler",
+      "lastOrder": "Son sipariş {{number}}",
+      "noOrders": "Henüz abonelik siparişi yok.",
+      "expiringSoonTitle": "Yaklaşan yenilemeler",
+      "renew": "Yenile",
+      "recentOrdersTitle": "En son siparişler",
+      "viewAll": "Tümünü gör"
+    },
+    "activeBanner": {
+      "title_one": "{{count}} aktif modül",
+      "title_other": "{{count}} aktif modül",
+      "empty": "Aktif modül yok. Aşağıdaki katalogdan seçim yapın.",
+      "title": "{{count}} aktif modül"
+    },
+    "modules": {
+      "title": "Modüller",
+      "subtitle": "Ekibiniz için ek özelliklerin kilidini açmak üzere abone olun.",
+      "activeUntil": "{{date}} tarihine kadar aktif",
+      "daysLeft_one": "{{count}} gün kaldı",
+      "daysLeft_other": "{{count}} gün kaldı",
+      "notSubscribed": "Henüz abone değilsiniz",
+      "coreAlwaysOn": "Çekirdek modül — her zaman aktif",
+      "coreLabel": "Çekirdek",
+      "coreNoPurchase": "Herkese dahil",
+      "durationDays_one": "{{count}} gün",
+      "durationDays_other": "{{count}} gün",
+      "addToCart": "Sepete ekle",
+      "renew": "Planı yenile",
+      "inCart": "Eklendi",
+      "uncategorized": "Diğer modüller",
+      "emptyTitle": "Kullanılabilir modül yok",
+      "emptyDescription": "Şu anda satın alınabilir modül bulunmuyor.",
+      "renewalHint": "Yenileme: {{duration}} mevcut sürenin üzerine eklenir — süre kaybı olmaz.",
+      "daysLeft": "{{count}} gün kaldı",
+      "durationDays": "{{count}} gün"
+    },
+    "cart": {
+      "title": "Sepet",
+      "empty": "Sepetiniz boş. Başlamak için bir modül seçin.",
+      "total": "Toplam",
+      "buy": "Satın al",
+      "adminOnly": "Satın almayı yalnızca kiracı yöneticileri tamamlayabilir.",
+      "openButton_one": "Sepet ({{count}})",
+      "openButton_other": "Sepet ({{count}})",
+      "remove": "Kaldır",
+      "openButton": "Sepet ({{count}})"
+    },
+    "order": {
+      "title": "Sipariş {{number}}",
+      "subtitle": "Abonelik siparişi detayları ve ödeme durumu.",
+      "backToList": "Listeye dön",
+      "createdAt": "Oluşturulma {{value}}",
+      "totalLabel": "Toplam",
+      "itemsTitle": "Kalemler",
+      "paymentTitle": "Ödeme",
+      "gateway": "Ödeme altyapısı",
+      "intentId": "Intent ID",
+      "reference": "Referans",
+      "paidAt": "Ödendi",
+      "completedAt": "Tamamlandı",
+      "attempts": "Ödeme denemeleri",
+      "payNowTitle": "Ödeme gerekli",
+      "payNowDescription": "Bu sipariş ödeme bekliyor. Tamamlamak için (mock) ödeme sayfasına geçin.",
+      "payNow": "Mock ödemeye git",
+      "paidTitle": "Ödeme onaylandı",
+      "paidDescription": "Ödeme {{value}} tarihinde alındı. Modülleriniz artık aktif.",
+      "cancelled": "Bu sipariş iptal edildi.",
+      "col": {
+        "orderNumber": "Sipariş No",
+        "createdAt": "Oluşturulma",
+        "status": "Durum",
+        "itemsCount": "Kalem",
+        "total": "Toplam",
+        "module": "Modül",
+        "plan": "Plan",
+        "duration": "Süre",
+        "unitPrice": "Birim Fiyat"
+      },
+      "status": {
+        "Draft": "Taslak",
+        "PendingPayment": "Ödeme Bekliyor",
+        "Paid": "Ödendi",
+        "Failed": "Başarısız",
+        "Cancelled": "İptal",
+        "Expired": "Süresi Doldu"
+      }
+    },
+    "orders": {
+      "title": "Abonelik siparişleri",
+      "subtitle": "Modül abonelikleri için verilen tüm siparişler.",
+      "statusFilter": "Duruma göre filtrele",
+      "count": "sipariş",
+      "bucket": {
+        "all": "Tümü"
+      },
+      "emptyTitle": "Henüz sipariş yok",
+      "emptyDescription": "Bir modül satın aldığınızda sipariş burada görünür.",
+      "view": "Detayları gör"
+    },
+    "cancel": {
+      "action": "Siparişi iptal et",
+      "confirmTitle": "Sipariş iptal edilsin mi?",
+      "confirmMessage": "{{number}} numaralı sipariş iptal edilecek. Bu işlem geri alınamaz.",
+      "confirm": "Evet, iptal et"
+    },
+    "mock": {
+      "eyebrow": "Geliştirme",
+      "title": "Mock ödeme",
+      "subtitle": "Bu abonelik siparişi için ödeme sonucunu simüle edin.",
+      "banner": "DEV / MOCK ÖDEME",
+      "bannerDescription": "Bu sayfa yalnızca geliştirme ortamında bulunur. Canlı ödemeler gerçek ödeme altyapısı tarafından işlenir.",
+      "orderLabel": "Sipariş",
+      "missingOrder": "Sipariş ID'si belirtilmedi. Bu sayfayı \"Ödeme Bekliyor\" durumundaki bir siparişten açın.",
+      "adminOnly": "Ödeme sonucunu yalnızca kiracı yöneticileri simüle edebilir.",
+      "approve": "Onayla",
+      "cancel": "İptal et",
+      "fail": "Hata simüle et"
+    },
+    "checkout": {
+      "title": "Ödeme",
+      "payNow": "Şimdi öde"
+    },
+    "gateway": {
+      "title": "Ödeme yöntemi",
+      "mockLabel": "Mock (geliştirme)",
+      "iyzicoLabel": "Iyzico (gerçek ödeme)",
+      "requiresInfo": "Fatura bilgileri gerekli",
+      "devOnly": "Yalnızca sandbox / geliştirme",
+      "empty": "Yapılandırılmış ödeme altyapısı yok. Yöneticinizle iletişime geçin.",
+      "pickerRequired": "Lütfen bir ödeme yöntemi seçin."
+    },
+    "billingInfo": {
+      "title": "Fatura bilgileri",
+      "name": "Ad",
+      "surname": "Soyad",
+      "email": "E-posta",
+      "gsm": "Cep telefonu",
+      "identity": "Kimlik / TC Kimlik No",
+      "address": "Adres",
+      "city": "Şehir",
+      "country": "Ülke",
+      "zip": "Posta kodu",
+      "privacy": "Şifreli olarak iletilir. Kart numaranızı saklamayız.",
+      "errors": {
+        "nameRequired": "Ad zorunludur.",
+        "surnameRequired": "Soyad zorunludur.",
+        "emailInvalid": "Geçerli bir e-posta adresi girin.",
+        "gsmInvalid": "Geçerli bir cep telefonu numarası girin (10-15 rakam, isteğe bağlı +).",
+        "identityInvalid": "Geçerli bir kimlik numarası girin (5-32 alfasayısal karakter).",
+        "addressRequired": "Adres zorunludur.",
+        "cityRequired": "Şehir zorunludur.",
+        "countryInvalid": "Ülke zorunludur (en az 2 karakter).",
+        "zipRequired": "Posta kodu zorunludur.",
+        "formInvalid": "Lütfen fatura formunu eksiksiz doldurun."
+      }
+    },
+    "toast": {
+      "created": "Sipariş oluşturuldu.",
+      "approved": "Ödeme onaylandı.",
+      "cancelled": "Sipariş iptal edildi.",
+      "failed": "Bir şeyler ters gitti. Lütfen tekrar deneyin."
+    },
+    "errors": {
+      "catalogTitle": "Modüller yüklenemedi",
+      "catalogDescription": "Modül kataloğu yüklenemedi. Lütfen tekrar deneyin.",
+      "activeTitle": "Aktif modüller yüklenemedi",
+      "orderTitle": "Sipariş yüklenemedi",
+      "orderDescription": "Bu abonelik siparişi yüklenemedi.",
+      "ordersTitle": "Siparişler yüklenemedi"
+    }
+  },
+  "Fx": {
+    "LatestRates": {
+      "Title": "Güncel döviz kurları",
+      "LastUpdated": "Son güncelleme",
+      "Loading": "Kur yükleniyor...",
+      "Unavailable": "Kur bilgisi alınamadı"
+    },
+    "Currency": {
+      "Buying": "Alış",
+      "Selling": "Satış"
+    },
+    "Source": {
+      "TCMB": "TCMB (Türkiye Cumhuriyet Merkez Bankası)"
+    },
+    "Preferences": {
+      "Clear": "Temizle",
+      "Currency": "Para Birimi",
+      "DefaultSource": "Varsayılan Kaynak",
+      "Description": "Döviz kurlarını sağlayan kaynağı seçin; para birimi bazında farklı kaynaklar tanımlayabilirsiniz.",
+      "Loading": "Kur tercihleri yükleniyor...",
+      "Reset": "Sıfırla",
+      "Saved": "Kur tercihleri kaydedildi",
+      "Saving": "Kaydediliyor...",
+      "Title": "Kur Kaynağı Tercihleri",
+      "UseDefault": "Varsayılanı kullan"
+    },
+    "Snapshot": {
+      "LockedAt": "Kilitlenme zamanı",
+      "NotLocked": "Kur kilidi yok",
+      "On": "—"
+    }
+  },
+  "payments": {
+    "ledger": {
+      "title": "Cari hesap",
+      "from": "Başlangıç",
+      "to": "Bitiş",
+      "exportCsv": "CSV dışa aktar",
+      "recordPayment": "Tahsilat gir",
+      "entries": "Cari hareketler",
+      "empty": "Henüz cari hareket yok.",
+      "description": "Açıklama",
+      "debit": "Borç",
+      "credit": "Alacak",
+      "balance": "Bakiye"
+    },
+    "aging": {
+      "current": "Güncel",
+      "title": "Yaşlandırma analizi",
+      "overdueWarning": "{{amount}} tutarındaki alacağın vadesi 90 günden fazla geçmiş."
+    },
+    "list": {
+      "title": "Son tahsilatlar",
+      "unapplied": "Uygulanmamış"
+    },
+    "create": {
+      "amountRequired": "Tutar pozitif olmalıdır.",
+      "overAllocated": "Dağıtılan tutar ödeme tutarını aşıyor.",
+      "success": "Tahsilat kaydedildi.",
+      "title": "Tahsilat gir",
+      "paymentDate": "Ödeme tarihi",
+      "amount": "Tutar",
+      "method": "Yöntem",
+      "reference": "Referans / İşlem No",
+      "bankAccount": "Banka hesabı",
+      "checkNumber": "Çek No",
+      "checkDueDate": "Çek vadesi",
+      "applyToInvoices": "Açık faturalara uygula",
+      "autoApply": "Otomatik uygula (FIFO)",
+      "noOpenInvoices": "Uygulanacak açık fatura yok.",
+      "amountDue": "Bakiye",
+      "notes": "Notlar",
+      "allocated": "Dağıtılan",
+      "unapplied": "Uygulanmadan kalan",
+      "confirm": "Tahsilatı kaydet"
+    }
+  },
+  "apAging": {
+    "title": "Borç yaşlandırma",
+    "subtitle": "Vade aralıklarına göre açık tedarikçi borçları.",
+    "toBills": "Alış faturaları →",
+    "vendor": "Tedarikçi",
+    "total": "Toplam",
+    "error": "Rapor yüklenemedi.",
+    "empty": "Açık tedarikçi borcu yok.",
+    "grandTotal": "Genel toplam"
+  },
+  "gl": {
+    "entriesTitle": "Yevmiye kayıtları",
+    "loadError": "Yevmiye kayıtları yüklenemedi.",
+    "noEntries": "Bu belge için henüz muhasebe kaydı oluşturulmadı (kuyrukta olabilir veya hesap eşlemesi eksik).",
+    "account": "Hesap",
+    "debit": "Borç",
+    "credit": "Alacak",
+    "total": "Toplam"
+  },
+  "accounting": {
+    "coa": {
+      "created": "Hesap oluşturuldu.",
+      "updated": "Hesap güncellendi.",
+      "newAccount": "Yeni hesap",
+      "editAccount": "Hesabı düzenle",
+      "seedConfirm": "Tekdüzen Hesap Planı (TDHP) eklenecek. Devam edilsin mi?",
+      "seedDone": "{{count}} hesap eklendi.",
+      "deleteConfirm": "{{code}} - {{name}} silinsin mi?",
+      "title": "Hesap planı",
+      "subtitle": "Tekdüzen Hesap Planı'nın (TDHP) hiyerarşik görünümü. Kayıtlar yalnızca işlenebilir alt hesaplara girilebilir.",
+      "searchPlaceholder": "Kod veya ada göre ara…",
+      "seedTurkish": "TDHP yükle",
+      "create": "Yeni hesap",
+      "empty": "Henüz hesap eklenmedi. TDHP'yi yükleyerek başlayın.",
+      "noResults": "Eşleşen hesap bulunamadı."
+    },
+    "journal": {
+      "posted": "Yevmiye kaydı kaydedildi ve muhasebeleştirildi.",
+      "draftSaved": "Yevmiye taslağı kaydedildi."
+    },
+    "periods": {
+      "created": "Muhasebe dönemi oluşturuldu.",
+      "confirmClose": "{{code}} dönemi kapatılsın mı?",
+      "closed": "Dönem kapatıldı.",
+      "reopened": "Dönem yeniden açıldı.",
+      "confirmLock": "{{code}} dönemi kilitlensin mi? Bu işlem geri alınamaz.",
+      "locked": "Dönem kilitlendi.",
+      "title": "Muhasebe dönemleri",
+      "subtitle": "Kayıt girişini engellemek için dönemi kapatın; kalıcı yapmak için kilitleyin.",
+      "closedAt": "Kapatıldı",
+      "create": "Dönem aç",
+      "close": "Kapat",
+      "reopen": "Yeniden aç",
+      "lock": "Kilitle",
+      "lockedHint": "Kalıcı — yeniden açılamaz"
+    }
+  },
+  "Notifications": {
+    "Title": "Bildirimler",
+    "SeeAll": "Tümünü gör",
+    "UnreadOnly": "Yalnızca okunmamış",
+    "AllStatuses": "Tüm durumlar",
+    "MarkRead": "Okundu olarak işaretle",
+    "TableSubject": "Konu",
+    "TableCategory": "Kategori",
+    "TableChannel": "Kanal",
+    "TableStatus": "Durum",
+    "TableCreatedAt": "Oluşturulma",
+    "Bell": {
+      "Unread": "Okunmamış bildirimler",
+      "Empty": "Yeni bildirim yok"
+    },
+    "Channel": {
+      "InApp": "Uygulama içi",
+      "Email": "E-posta",
+      "Sms": "SMS",
+      "Push": "Push",
+      "WhatsApp": "WhatsApp"
+    },
+    "Status": {
+      "Pending": "Beklemede",
+      "Queued": "Kuyrukta",
+      "Sending": "Gönderiliyor",
+      "Sent": "Gönderildi",
+      "Delivered": "Teslim edildi",
+      "Failed": "Başarısız",
+      "Bounced": "Geri döndü",
+      "Read": "Okundu"
+    },
+    "Category": {
+      "Warranty": "Garanti",
+      "Installation": "Montaj",
+      "Payment": "Ödeme",
+      "Mrp": "MRP",
+      "ServiceTicket": "Servis kaydı"
+    },
+    "Preferences": {
+      "Title": "Bildirim tercihleri",
+      "ChannelMatrix": "Kategori / Kanal"
+    },
+    "Settings": {
+      "Title": "Bildirim ayarları",
+      "Description": "Hangi kategorileri hangi kanaldan alacağınızı seçin."
+    },
+    "Template": {
+      "Subject": {
+        "Warranty.Activated": "Garantiniz aktif",
+        "Warranty.Expiring": "Garantinizin süresi yakında doluyor",
+        "Payment.Succeeded": "Ödeme alındı",
+        "Payment.Failed": "Ödeme başarısız oldu",
+        "Installation.Accepted": "Montaj kabul edildi",
+        "Mrp.SuggestionsCreated": "Yeni MRP önerileri",
+        "ServiceTicket.Resolved": "Servis kaydınız çözüldü"
+      }
+    }
+  },
+  "Onboarding": {
+    "Action": {
+      "Next": "İleri",
+      "Previous": "Geri",
+      "Skip": "Atla",
+      "Finish": "Bitir",
+      "Restart": "Yeniden başlat"
+    },
+    "WelcomeBanner": {
+      "Title": "Hoş geldiniz!",
+      "Description": "Kısa bir tur temel ekranları tanıtır.",
+      "StartButton": "Tura başla"
+    },
+    "Settings": {
+      "Title": "Tanıtım turu",
+      "Description": "Rehberli turları yeniden başlatın veya durumlarını görüntüleyin.",
+      "ResetAll": "Tüm turları sıfırla",
+      "ResetOne": "Sıfırla",
+      "StatusPending": "Beklemede",
+      "StatusCompleted": "Tamamlandı",
+      "StatusSkipped": "Atlandı"
+    },
+    "TourName": {
+      "Dashboard": "Gösterge Paneli",
+      "Designer": "Tasarımcı",
+      "Mrp": "Üretim planlama",
+      "Installation": "Saha kabulü"
+    },
+    "Tour": {
+      "Dashboard": {
+        "Step1": {
+          "Title": "Cam projeleri",
+          "Content": "Projeler burada yönetilir. Yeni bir cam projesi başlatmak için tıklayın."
+        },
+        "Step2": {
+          "Title": "Yeni proje sihirbazı",
+          "Content": "Dört adım: Kategori → Şablon → Bilgi → Ölçüler."
+        },
+        "Step3": {
+          "Title": "Persona modu",
+          "Content": "Basit (büyük düğmeler) ile Pro (teknik ayrıntı) arasında geçiş yapın."
+        },
+        "Step4": {
+          "Title": "Üretim ve satın alma",
+          "Content": "Üretim planlama, ihtiyaçlar ve stok tahminleri."
+        }
+      },
+      "Designer": {
+        "Step1": {
+          "Title": "Tasarım tuvali",
+          "Content": "Cam mekanınızı burada tasarlayın. Cephe ekleyin, panelleri bölün, aksesuar seçin."
+        },
+        "Step2": {
+          "Title": "Cepheler",
+          "Content": "Sol panelden cephe ekleyin."
+        },
+        "Step3": {
+          "Title": "Denetçi",
+          "Content": "Seçili parçanın ayrıntıları sağda. Cam, renk ve aksesuarları değiştirin."
+        },
+        "Step4": {
+          "Title": "Malzeme listesi ve maliyet",
+          "Content": "Malzeme listesi ve maliyet otomatik olarak hesaplanır."
+        }
+      },
+      "Mrp": {
+        "Step1": {
+          "Title": "MRP paneli",
+          "Content": "Özet: kritik kalemler, açık ihtiyaçlar, stok seviyeleri."
+        },
+        "Step2": {
+          "Title": "Öneri oluştur",
+          "Content": "Siparişlerden ve stoklardan ihtiyaç önerileri oluşturun."
+        },
+        "Step3": {
+          "Title": "Adaylar",
+          "Content": "Adayları inceleyin ve satın alma taleplerine dönüştürün."
+        },
+        "Step4": {
+          "Title": "Talepler",
+          "Content": "Tüm talepleri görüntüleyin, onaylayın veya iptal edin."
+        }
+      },
+      "Installation": {
+        "Step1": {
+          "Title": "Kontrol listesi",
+          "Content": "Kabul kontrol listesi. Her maddeyi Geçti/Kaldı/Yok olarak işaretleyin."
+        },
+        "Step2": {
+          "Title": "Fotoğraf çek",
+          "Content": "Montaj yerinden fotoğraf yükleyin."
+        },
+        "Step3": {
+          "Title": "Eksik listesi",
+          "Content": "Eksik veya kusurlu parçaları eksik listesine ekleyin."
+        },
+        "Step4": {
+          "Title": "Müşteri imzası",
+          "Content": "Müşteri imzasını tablette alın. Form ardından kilitlenir."
+        }
+      }
+    }
+  },
+  "Whitelabel": {
+    "page": {
+      "title": "White-label özelleştirme",
+      "subtitle": "CoreAlign çalışma alanınızı marka renkleri, logo, giriş sayfası ve e-posta gönderen kimliğiyle kişiselleştirin."
+    },
+    "fields": {
+      "logo": "Logo",
+      "favicon": "Favicon",
+      "loginBackground": "Giriş arka planı",
+      "primaryColor": "Ana renk",
+      "accentColor": "Vurgu rengi",
+      "brandName": "Marka adı",
+      "emailFromName": "Gönderen adı",
+      "emailFromAddress": "Gönderen adresi",
+      "customSubdomain": "Özel alt alan adı",
+      "customSubdomainHint": "tenant.corealign.com olarak kullanılır.",
+      "customDomain": "Özel alan adı",
+      "customDomainHint": "DNS doğrulaması gerektirir (CNAME).",
+      "loginHeading": "Giriş sayfası başlığı (Markdown)"
+    },
+    "upload": {
+      "empty": "Görsel yok",
+      "choose": "Dosya seç",
+      "uploading": "Yükleniyor…",
+      "acceptImage": "PNG, JPG, SVG veya WebP, en fazla 2 MB.",
+      "acceptFavicon": "PNG, SVG veya ICO önerilir.",
+      "tooLarge": "Dosya {{max}} KB sınırını aşıyor."
+    },
+    "save": {
+      "submit": "Değişiklikleri kaydet",
+      "saving": "Kaydediliyor…",
+      "success": "Tema kaydedildi.",
+      "error": "Tema kaydedilemedi."
+    },
+    "preview": {
+      "title": "E-posta önizleme",
+      "defaultBrand": "Markanız",
+      "empty": "(İçerik önizlemesi)",
+      "sampleBody": "Merhaba,\n\nBu, kiracı temanızla gönderilen örnek bir bildirimdir."
+    },
+    "subdomain": {
+      "available": "Alt alan adı kullanılabilir.",
+      "unavailable": "Alt alan adı zaten kullanımda.",
+      "checking": "Kontrol ediliyor…"
+    }
+  },
+  "CustomerPortal": {
+    "Common": {
+      "PortalTitle": "Müşteri Portalı",
+      "OpenMenu": "Menüyü aç",
+      "CloseMenu": "Menüyü kapat",
+      "Notifications": "Bildirimler",
+      "Logout": "Çıkış yap",
+      "Loading": "Yükleniyor...",
+      "NoData": "Henüz veri yok",
+      "ViewAll": "Tümünü gör",
+      "Back": "Geri",
+      "LoadError": "Veriler yüklenemedi.",
+      "Cancel": "İptal",
+      "Submitting": "Gönderiliyor...",
+      "Previous": "Önceki",
+      "Next": "Sonraki"
+    },
+    "Nav": {
+      "Dashboard": "Genel Bakış",
+      "Projects": "Projeler",
+      "Warranty": "Garanti",
+      "ServiceTickets": "Servis Talepleri",
+      "Invoices": "Faturalar",
+      "Payments": "Ödemeler",
+      "Profile": "Profil"
+    },
+    "Dashboard": {
+      "Welcome": "Hoş geldiniz, {{name}}",
+      "Subtitle": "Projeleriniz, garantileriniz ve faturalarınıza hızlı bir bakış.",
+      "WarrantiesActive": "Aktif garantiler",
+      "OpenTickets": "Servis talepleri",
+      "Invoices": "Faturalar",
+      "RecentPayments": "Son tahsilatlar",
+      "RecentTicketsTitle": "Son servis talepleri",
+      "RecentInvoicesTitle": "Son faturalar"
+    },
+    "Warranty": {
+      "ListTitle": "Garantilerim",
+      "Empty": "Aktif garanti sözleşmeniz bulunmuyor.",
+      "CoverageLabel": "Kapsam",
+      "Period": "Dönem",
+      "Months": "Garanti süresi (ay)",
+      "StartDate": "Başlangıç tarihi",
+      "EndDate": "Bitiş tarihi",
+      "Notes": "Notlar",
+      "Status": {
+        "Active": "Aktif",
+        "Expired": "Süresi Doldu",
+        "Cancelled": "İptal",
+        "Suspended": "Askıda"
+      },
+      "CoverageType": {
+        "ManufacturerDefect": "Üretici kusuru",
+        "Installation": "Montaj",
+        "FullService": "Tam servis",
+        "Limited": "Sınırlı"
+      }
+    },
+    "ServiceTicket": {
+      "ListTitle": "Servis talepleri",
+      "New": "Yeni talep",
+      "NewTitle": "Yeni servis talebi oluştur",
+      "Empty": "Servis talebiniz bulunmuyor.",
+      "FieldTitle": "Başlık",
+      "FieldType": "Tür",
+      "FieldPriority": "Öncelik",
+      "FieldDescription": "Sorunu açıklayın",
+      "Submit": "Talebi gönder",
+      "Description": "Açıklama",
+      "Resolution": "Çözüm",
+      "Status": {
+        "Open": "Açık",
+        "Assigned": "Atandı",
+        "InProgress": "Devam Ediyor",
+        "Resolved": "Çözüldü",
+        "Cancelled": "İptal"
+      },
+      "Priority": {
+        "Low": "Düşük",
+        "Normal": "Normal",
+        "High": "Yüksek",
+        "Urgent": "Acil"
+      },
+      "Type": {
+        "PreventiveMaintenance": "Periyodik bakım",
+        "WarrantyClaim": "Garanti talebi",
+        "OutOfWarrantyRepair": "Garanti dışı onarım",
+        "Inspection": "Keşif"
+      }
+    },
+    "Invoice": {
+      "ListTitle": "Faturalar",
+      "Empty": "Faturanız bulunmuyor.",
+      "IssueDate": "Düzenleme tarihi",
+      "DueDate": "Vade tarihi",
+      "Total": "Toplam",
+      "Paid": "Ödenen",
+      "Due": "Bakiye",
+      "Download": "PDF indir",
+      "PayNow": "Şimdi öde",
+      "Status": {
+        "Draft": "Taslak",
+        "Issued": "Düzenlendi",
+        "Sent": "Gönderildi",
+        "PartiallyPaid": "Kısmi Ödenmiş",
+        "Paid": "Ödendi",
+        "Overdue": "Vadesi Geçti",
+        "Void": "İptal (Geçersiz)",
+        "Cancelled": "İptal"
+      }
+    },
+    "Payment": {
+      "ListTitle": "Ödemeler",
+      "New": "Fatura öde",
+      "Empty": "Henüz ödeme yok.",
+      "InitiateTitle": "Online fatura ödeme",
+      "FieldInvoiceId": "Fatura ID",
+      "InvoiceIdHint": "Ödemek istediğiniz faturanın ID'sini yapıştırın. Fatura detay sayfasından bulabilirsiniz.",
+      "InvoiceIdRequired": "Fatura ID zorunludur.",
+      "InitiateError": "Ödeme başlatılamadı. Lütfen tekrar deneyin.",
+      "PayNow": "Şimdi öde",
+      "Status": {
+        "Draft": "Taslak",
+        "Confirmed": "Onaylı",
+        "PartiallyApplied": "Kısmi Uygulanmış",
+        "FullyApplied": "Tam Uygulanmış",
+        "Refunded": "İade Edildi",
+        "Void": "Geçersiz"
+      },
+      "Method": {
+        "Cash": "Nakit",
+        "BankTransfer": "Banka Havalesi",
+        "CreditCard": "Kredi Kartı",
+        "DebitCard": "Banka Kartı",
+        "Check": "Çek",
+        "PromissoryNote": "Senet",
+        "OnlineGateway": "Online",
+        "Other": "Diğer"
+      }
+    },
+    "Project": {
+      "ListTitle": "Projelerim",
+      "Empty": "Henüz proje yok.",
+      "Code": "Kod",
+      "Total": "Genel toplam",
+      "Panels": "Paneller",
+      "SiteCity": "Şantiye ili",
+      "SiteDistrict": "Şantiye ilçesi",
+      "LastUpdated": "Son güncelleme",
+      "ValidUntil": "Teklif geçerlilik tarihi",
+      "ReadOnlyNotice": "Proje detayları müşteri portalında salt okunurdur.",
+      "Status": {
+        "Draft": "Taslak",
+        "InDesign": "Tasarımda",
+        "AwaitingApproval": "Onay Bekliyor",
+        "Approved": "Onaylandı",
+        "InProduction": "Üretimde",
+        "Shipped": "Sevk Edildi",
+        "Installed": "Montajı Yapıldı",
+        "Closed": "Kapandı",
+        "Cancelled": "İptal"
+      }
+    },
+    "Profile": {
+      "Title": "Profil",
+      "Name": "Ad",
+      "Email": "E-posta",
+      "Username": "Kullanıcı adı",
+      "Tenant": "Hesap",
+      "NotificationPrefsTitle": "Bildirim tercihleri",
+      "NotificationPrefsHint": "Garantileriniz, talepleriniz ve faturalarınız hakkında sizinle nasıl iletişim kuracağımızı seçin."
+    }
+  },
+  "Marketplace": {
+    "List": {
+      "Eyebrow": "Topluluk",
+      "Title": "Şablon Pazaryeri",
+      "Subtitle": "Topluluk şablonlarına göz atın ve çalışma alanınıza kurun.",
+      "SubmitButton": "Şablon gönder",
+      "LoadFailed": "Şablonlar yüklenemedi",
+      "EmptyTitle": "Bu filtrelerle eşleşen şablon yok",
+      "EmptyDescription": "Farklı bir kategori deneyin veya minimum puanı düşürün."
+    },
+    "Filters": {
+      "Category": "Kategori",
+      "AllCategories": "Tüm kategoriler",
+      "Sort": "Sıralama",
+      "MinRating": "Minimum puan",
+      "AnyRating": "Tümü",
+      "Sort.Popularity": "Popülerlik",
+      "Sort.Newest": "En yeni",
+      "Sort.Rating": "En yüksek puan",
+      "Sort.Alphabetical": "Alfabetik"
+    },
+    "Card": {
+      "NoPreview": "Önizleme yok"
+    },
+    "Detail": {
+      "Back": "Pazaryerine dön",
+      "Install": "Şablonu kur",
+      "Installing": "Kuruluyor...",
+      "Installed": "Şablon kuruldu",
+      "InstallFailed": "Şablon kurulamadı",
+      "LoadFailed": "Şablon yüklenemedi",
+      "MissingId": "Şablon ID eksik",
+      "NoPreview": "Önizleme mevcut değil",
+      "NoDescription": "Açıklama girilmemiş.",
+      "Specs": "Özellikler",
+      "Subtype": "Alt tür",
+      "GeometryMode": "Geometri",
+      "Mounting": "Montaj",
+      "Connector": "Bağlantı elemanı",
+      "RunPresets": "Çalıştırma ön ayarları",
+      "Downloads": "İndirme",
+      "PublishedAt": "Yayınlanma"
+    },
+    "Reviews": {
+      "Title": "Değerlendirmeler",
+      "Empty": "Henüz değerlendirme yok.",
+      "Loading": "Değerlendirmeler yükleniyor...",
+      "User": "Kullanıcı",
+      "LeaveReview": "Değerlendirme yap",
+      "CommentPlaceholder": "Deneyiminizi paylaşın...",
+      "Submit": "Gönder",
+      "Submitting": "Gönderiliyor...",
+      "Submitted": "Değerlendirme gönderildi",
+      "SubmitFailed": "Değerlendirme gönderilemedi",
+      "SelectRating": "Lütfen bir puan seçin"
+    },
+    "Submit": {
+      "Title": "Şablon gönder",
+      "Subtitle": "Özel şablonunuzu onay sonrasında toplulukla paylaşın.",
+      "TenantTemplateId": "Şablon ID",
+      "TenantTemplateIdRequired": "Şablon ID zorunludur",
+      "Submit": "Gönder",
+      "Submitting": "Gönderiliyor...",
+      "Submitted": "Başvuru incelemeye gönderildi",
+      "Failed": "Şablon gönderilemedi",
+      "Cancel": "İptal"
+    },
+    "MySubmissions": {
+      "Eyebrow": "Pazaryeri",
+      "Title": "Başvurularım",
+      "Subtitle": "Topluluk pazaryerine gönderdiğiniz şablonları takip edin.",
+      "New": "Yeni gönder",
+      "LoadFailed": "Başvurular yüklenemedi",
+      "EmptyTitle": "Henüz başvuru yok",
+      "EmptyDescription": "Toplulukla paylaşmak için kendi şablonunuzu gönderin.",
+      "Code": "Kod",
+      "Name": "Ad",
+      "Status": "Durum",
+      "SubmittedAt": "Gönderilme",
+      "PublishedAt": "Yayınlanma",
+      "Downloads": "İndirme"
+    },
+    "Admin": {
+      "Eyebrow": "Platform Yöneticisi",
+      "Title": "Pazaryeri inceleme kuyruğu",
+      "Subtitle": "Topluluk başvurularını yayınlamadan önce onaylayın veya reddedin.",
+      "LoadFailed": "Bekleyen başvurular yüklenemedi",
+      "EmptyTitle": "Kuyruk boş",
+      "EmptyDescription": "Bekleyen pazaryeri başvurusu yok.",
+      "Code": "Kod",
+      "Name": "Ad",
+      "SubmittedAt": "Gönderilme",
+      "Actions": "İşlemler",
+      "Publish": "Yayınla",
+      "Published": "Şablon yayınlandı",
+      "PublishFailed": "Şablon yayınlanamadı",
+      "Reject": "Reddet",
+      "Rejected": "Başvuru reddedildi",
+      "RejectFailed": "Başvuru reddedilemedi",
+      "Rejecting": "Reddediliyor...",
+      "RejectTitle": "Başvuruyu reddet",
+      "RejectReason": "Ret nedeni",
+      "RejectReasonRequired": "Ret nedeni zorunludur",
+      "ConfirmReject": "Reddet",
+      "Cancel": "İptal"
+    }
+  },
+  "Mrp": {
+    "Dashboard": {
+      "Title": "MRP Paneli",
+      "Subtitle": "Malzeme ihtiyaç planlaması ve yeniden sipariş önerileri.",
+      "TotalTracked": "İzlenen Ürünler",
+      "ReorderCandidates": "Yeniden Sipariş Adayları",
+      "PendingRequisitions": "Bekleyen Talepler",
+      "OpenPurchaseOrders": "Açık Satın Alma Siparişleri",
+      "ViewRequisitions": "Talepleri Yönet",
+      "OpenWorkbench": "Tezgahı Aç"
+    },
+    "Workbench": {
+      "Title": "MRP Planlama Tezgahı",
+      "Subtitle": "Zaman fazlı malzeme planlaması, istisna triyajı ve planlanan sipariş serbest bırakma.",
+      "BucketKind": "Periyot",
+      "Horizon": "Ufuk",
+      "HorizonDays": "{{days}} gün",
+      "RunPreview": "Önizlemeyi çalıştır",
+      "Commit": "Planı kaydet",
+      "ClassifyAbc": "ABC sınıflandır",
+      "AsOf": "Tarih",
+      "ProductsEvaluated": "{{count}} ürün değerlendirildi",
+      "Bucket": {
+        "Day": "Günlük",
+        "Week": "Haftalık"
+      },
+      "Tab": {
+        "grid": "Planlama tablosu",
+        "queue": "İşlem kuyruğu",
+        "impact": "Değişim etkisi",
+        "distribution": "Dağıtım",
+        "capacity": "Kapasite",
+        "runs": "Plan çalışmaları"
+      },
+      "Procurement": {
+        "Make": "Üret",
+        "Buy": "Satın al"
+      },
+      "Abc": {
+        "A": "A",
+        "B": "B",
+        "C": "C"
+      },
+      "Kpi": {
+        "StockoutRisk": "Stok tükenme riski",
+        "ProjectedStockouts": "Öngörülen tükenmeler",
+        "OpenExceptions": "Açık istisnalar",
+        "OnOrder": "Siparişte"
+      },
+      "Grid": {
+        "Empty": "Zaman fazlı planı görmek için önizleme çalıştırın.",
+        "Row": {
+          "Gross": "Brüt ihtiyaç",
+          "ScheduledReceipts": "Planlı girişler",
+          "ProjectedOnHand": "Öngörülen eldeki stok",
+          "Net": "Net ihtiyaç",
+          "PlannedReleases": "Planlanan serbest bırakmalar"
+        }
+      },
+      "Chart": {
+        "NoData": "Zaman fazlı veri yok.",
+        "ProjectedOnHand": "Öngörülen eldeki stok",
+        "ScheduledReceipts": "Planlı girişler",
+        "Demand": "Talep",
+        "Rop": "Yeniden sipariş noktası"
+      },
+      "Queue": {
+        "Empty": "Açık istisna yok.",
+        "SelectAll": "Tümünü seç",
+        "SelectRow": "{{sku}} seç",
+        "SelectedCount": "{{count}} seçildi",
+        "ReleaseSelected": "Seçilenleri serbest bırak",
+        "Severity": "Önem",
+        "Type": "Tür",
+        "Product": "Ürün",
+        "Quantity": "Miktar",
+        "DaysToStockout": "Tükenmeye kalan gün",
+        "Message": "Mesaj",
+        "Actions": "İşlemler",
+        "Release": "Serbest bırak",
+        "Dismiss": "Yoksay",
+        "OpenInGrid": "Tabloda aç",
+        "CommitToRelease": "Planlanan siparişleri taleplere dönüştürmek için planı işleyin."
+      },
+      "Drawer": {
+        "Title": "{{sku}} planı",
+        "OnHand": "Eldeki stok",
+        "SafetyStock": "Emniyet stoğu",
+        "ReorderPoint": "Yeniden sipariş noktası",
+        "Policy": "Parti politikası",
+        "PlannedOrders": "Planlanan siparişler",
+        "NoPlannedOrders": "Planlanan sipariş yok.",
+        "Pegging": "Eşleştirme",
+        "NoPegging": "Eşleştirilmiş talep yok.",
+        "Release": "Serbest bırakma",
+        "Due": "Termin",
+        "Quantity": "Miktar",
+        "Firm": "Sabitle",
+        "Firmed": "Sabitlendi",
+        "Overridden": "Geçersiz kılındı",
+        "Released": "Serbest bırakıldı",
+        "CreateProductionOrder": "Üretim emri oluştur",
+        "ProductionOrderCreated": "Üretim emri oluşturuldu",
+        "Complete": "Tamamla",
+        "Completed": "Tamamlandı",
+        "OrderCount": "{{count}} sipariş",
+        "OrderCount_other": "{{count}} sipariş",
+        "CommitRequired": "Bu planlanan siparişleri sabitlemek veya serbest bırakmak için planı işleyin."
+      },
+      "Runs": {
+        "Number": "Numara",
+        "AsOf": "Tarih",
+        "Products": "Ürünler",
+        "PlannedOrders": "Planlanan siparişler",
+        "Exceptions": "İstisnalar",
+        "Empty": "Henüz kaydedilmiş plan çalışması yok."
+      },
+      "Filter": {
+        "Type": "İstisna türü",
+        "Severity": "Önem",
+        "Supplier": "Tedarikçi",
+        "Procurement": "Tedarik"
+      },
+      "ChangeImpact": {
+        "Help": "Hangi planlanan siparişlerin bir talep kaynağına bağlı olduğunu izleyin — iptal veya değişiklik durumunda nelerin etkileneceğini görün.",
+        "CommitRequired": "Değişim etkisini analiz etmek için planı işleyin.",
+        "SourceKind": "Kaynak türü",
+        "Source": "Talep kaynağı",
+        "SelectSource": "Bir satış siparişi seçin…",
+        "Analyze": "Etkiyi analiz et",
+        "Prompt": "Bir talep kaynağı seçin ve analizi çalıştırın.",
+        "Empty": "Bu talep kaynağına bağlı planlanan sipariş yok.",
+        "Summary": "{{source}} iptal edilirse {{count}} planlanan sipariş etkilenir.",
+        "Type": "Tür",
+        "Product": "Ürün",
+        "Level": "Ürün ağacı seviyesi",
+        "Quantity": "Miktar",
+        "Due": "Termin"
+      },
+      "Distribution": {
+        "Help": "Daha fazla satın almadan önce fazla stoğu eksik olan depolara transfer ederek depolar arası stoğu dengeleyin.",
+        "Summary": "{{products}} ürün değerlendirildi · {{transfers}} transfer önerildi.",
+        "NoSuggestions": "Transfer gerekmiyor — her depo kendi talebini karşılayabiliyor.",
+        "From": "Kaynak",
+        "To": "Hedef",
+        "Quantity": "Miktar",
+        "Transfer": "Transfer",
+        "TransferAria": "{{from}} deposundan {{to}} deposuna {{quantity}} {{sku}} transfer et",
+        "Execute": "Uygula",
+        "Executing": "Uygulanıyor…",
+        "Product": "Ürün",
+        "Warehouse": "Depo",
+        "Available": "Mevcut",
+        "Demand": "Talep",
+        "Net": "Net",
+        "ExternalReplenishment": "Dış tedarik gerekiyor",
+        "ExternalRow": "{{warehouse}} deposunda {{sku}}: {{quantity}} eksik, transfer edilecek fazla stok yok."
+      },
+      "Capacity": {
+        "Help": "Kaba kapasite planlaması — her iş merkezindeki üretim yükünü periyot bazında mevcut kapasiteyle karşılaştırın.",
+        "Summary": "Planlı yükü olan {{count}} iş merkezi.",
+        "WorkCenter": "İş merkezi",
+        "DailyCapacity": "{{minutes}} dk/gün",
+        "Bucket": "Periyot",
+        "Load": "Yük (dk)",
+        "Capacity": "Kapasite (dk)",
+        "LoadVsCapacity": "Yük / kapasite",
+        "WithinCapacity": "Kapasite dahilinde",
+        "Overloaded": "Aşırı yüklü",
+        "OverloadedBuckets": "{{count}} aşırı yüklü",
+        "Unrouted": "Rotasız",
+        "UnroutedNote": "{{count}} üretim emrinin iş merkezi rotası yok ve kapasiteye dahil edilmedi.",
+        "BarAria": "{{capacity}} dakikanın {{load}} dakikası yüklü",
+        "NoData": "İş merkezi veya planlı yük yok — kapasiteyi görmek için üretilen ürünleri bir iş merkezine yönlendirin."
+      },
+      "Severity": {
+        "Critical": "Kritik",
+        "Warning": "Uyarı",
+        "Info": "Bilgi"
+      },
+      "ActionType": {
+        "Release": "Serbest bırak",
+        "RescheduleIn": "Öne al",
+        "RescheduleOut": "Ertele",
+        "Expedite": "Hızlandır",
+        "CancelSupply": "Tedariği iptal et",
+        "BelowSafetyStock": "Emniyet stoğunun altında",
+        "ProjectedStockout": "Öngörülen tükenme"
+      },
+      "Policy": {
+        "LotForLot": "Parti-parti",
+        "FixedOrderQuantity": "Sabit sipariş miktarı",
+        "MinMax": "Min/Maks",
+        "EconomicOrderQuantity": "EOQ",
+        "PeriodOrderQuantity": "Dönem sipariş miktarı"
+      },
+      "PegSource": {
+        "SalesOrder": "Satış siparişi",
+        "PlannedOrder": "Planlanan sipariş",
+        "Forecast": "Tahmin"
+      }
+    },
+    "Convert": {
+      "Title": "{{number}} satın almaya dönüştür",
+      "Vendor": "Tedarikçi",
+      "SelectVendor": "Tedarikçi seçin…",
+      "Currency": "Para birimi",
+      "ExpectedDate": "Beklenen teslimat"
+    },
+    "Suggestions": {
+      "Title": "Yeniden Sipariş Önerileri",
+      "Empty": "Yeniden sipariş noktasının altında ürün yok.",
+      "Sku": "SKU",
+      "Product": "Ürün",
+      "OnHand": "Eldeki Stok",
+      "OnOrder": "Siparişte",
+      "Available": "Kullanılabilir",
+      "ReorderPoint": "Yeniden Sipariş Noktası",
+      "Suggested": "Önerilen",
+      "DaysUntilStockOut": "Stok Bitimine Kalan Gün"
+    },
+    "Projection": {
+      "Title": "Stok Projeksiyonu",
+      "Subtitle": "Önümüzdeki {{days}} gün için öngörülen stok.",
+      "NoData": "Projeksiyon verisi yok.",
+      "ReorderPoint": "Yeniden Sipariş Noktası",
+      "ShouldReorder": "Yeniden sipariş önerilir",
+      "OnHand": "Eldeki Stok",
+      "Reserved": "Rezerve",
+      "OnOrder": "Siparişte",
+      "Suggested": "Önerilen"
+    },
+    "Forecast": {
+      "Title": "Talep Tahmini",
+      "Window": "Dönem",
+      "AverageDaily": "Günlük Ortalama Talep",
+      "TotalDemand": "Toplam Talep",
+      "Peak": "Zirve Gün"
+    },
+    "Requisition": {
+      "PageTitle": "Satın Alma Talepleri",
+      "PageSubtitle": "Talepleri inceleyin, onaylayın ve satın alma siparişine dönüştürün.",
+      "NewRequisition": "Yeni Talep",
+      "Empty": "Filtrelere uyan talep yok.",
+      "Notes": "Notlar",
+      "Lines": "Kalemler",
+      "LineCount": "kalem",
+      "AddLine": "Kalem ekle",
+      "RemoveLine": "Kalemi kaldır",
+      "ProductId": "Ürün ID",
+      "Quantity": "Miktar",
+      "UnitCost": "Birim Maliyet",
+      "EstimatedTotal": "Tahmini Toplam",
+      "ReasonPrompt": "Neden (isteğe bağlı)",
+      "RejectTitle": "{{number}} reddet",
+      "CancelTitle": "{{number}} iptal et",
+      "Status": {
+        "Draft": "Taslak",
+        "Submitted": "Onaya Gönderildi",
+        "Approved": "Onaylandı",
+        "Rejected": "Reddedildi",
+        "Converted": "Dönüştürüldü",
+        "Cancelled": "İptal"
+      },
+      "Reason": {
+        "Label": "Neden",
+        "MRPSuggestion": "MRP Önerisi",
+        "Manual": "Manuel",
+        "EmergencyOrder": "Acil Sipariş",
+        "StockOut": "Stok Tükendi"
+      }
+    },
+    "Action": {
+      "Submit": "Onaya Gönder",
+      "Approve": "Onayla",
+      "Reject": "Reddet",
+      "Convert": "Siparişe Dönüştür",
+      "Cancel": "İptal Et",
+      "Generate": "MRP Çalıştır"
+    }
+  },
+  "po": {
+    "form": {
+      "vendorRequired": "Lütfen bir tedarikçi seçin.",
+      "linesRequired": "En az bir geçerli kalem ekleyin.",
+      "updated": "Satın alma siparişi güncellendi.",
+      "created": "Satın alma siparişi oluşturuldu.",
+      "editTitle": "Satın Alma Siparişi",
+      "newTitle": "Yeni Satın Alma Siparişi",
+      "vendor": "Tedarikçi",
+      "selectVendor": "Seçiniz…",
+      "warehouse": "Mal Kabul Deposu",
+      "selectWarehouse": "Seçiniz…",
+      "currency": "Para Birimi",
+      "orderDate": "Sipariş Tarihi",
+      "expectedDate": "Beklenen Teslimat",
+      "product": "Ürün",
+      "qty": "Miktar",
+      "unitCost": "Birim Maliyet",
+      "tax": "KDV %",
+      "addLine": "Kalem ekle",
+      "subtotal": "Ara Toplam",
+      "taxTotal": "KDV",
+      "total": "Genel Toplam",
+      "notes": "Notlar"
+    },
+    "receive": {
+      "nothing": "Teslim alınacak bir miktar girin.",
+      "over": "Kalan miktardan fazlası teslim alınamaz.",
+      "warehouseRequired": "Lütfen bir depo seçin.",
+      "done": "Mal kabul kaydedildi; stok güncellendi.",
+      "title": "Mal Kabul",
+      "allReceived": "Tüm kalemler teslim alındı.",
+      "warehouse": "Mal Kabul Deposu",
+      "selectWarehouse": "Seçiniz…",
+      "product": "Ürün",
+      "remaining": "Kalan",
+      "qty": "Teslim Alınan Miktar",
+      "notes": "Notlar / İrsaliye No",
+      "submit": "Mal Kabulü Kaydet"
+    },
+    "cancelTitle": "Siparişi İptal Et",
+    "cancelConfirm": "{{po}} iptal edilsin mi?",
+    "actionDone": "İşlem tamamlandı.",
+    "deleteTitle": "Siparişi Sil",
+    "deleteConfirm": "{{po}} silinsin mi?",
+    "deleted": "Satın alma siparişi silindi.",
+    "page": {
+      "title": "Satın Alma Siparişleri",
+      "subtitle": "Tedarikçilere verilen siparişleri oluşturun, onaylayın ve takip edin.",
+      "new": "Yeni Sipariş"
+    },
+    "filter": {
+      "all": "Tümü",
+      "allStatuses": "Tüm Durumlar",
+      "statusAria": "Duruma göre filtrele",
+      "vendor": "Tedarikçi",
+      "allVendors": "Tüm Tedarikçiler"
+    },
+    "status": {
+      "Draft": "Taslak",
+      "Submitted": "Onaya Gönderildi",
+      "Approved": "Onaylandı",
+      "PartiallyReceived": "Kısmen Teslim Alındı",
+      "Received": "Teslim Alındı",
+      "Closed": "Kapatıldı",
+      "Cancelled": "İptal"
+    },
+    "count": "{{count}} sipariş",
+    "resultCountLabel": "sipariş",
+    "empty": "Satın alma siparişi bulunamadı.",
+    "cols": {
+      "number": "No",
+      "vendor": "Tedarikçi",
+      "date": "Tarih",
+      "status": "Durum",
+      "total": "Tutar"
+    },
+    "actions": {
+      "submit": "Onaya Gönder",
+      "approve": "Onayla",
+      "receive": "Mal Kabul",
+      "close": "Kapat",
+      "cancel": "İptal Et"
+    }
+  },
+  "ap": {
+    "bill": {
+      "invalid": "Tedarikçi, fatura numarası ve tutar girin.",
+      "created": "Tedarikçi faturası oluşturuldu.",
+      "newTitle": "Yeni Tedarikçi Faturası",
+      "vendor": "Tedarikçi",
+      "selectVendor": "Seçiniz…",
+      "number": "Fatura No",
+      "currency": "Para Birimi",
+      "date": "Fatura Tarihi",
+      "due": "Vade Tarihi",
+      "subtotal": "Ara Toplam",
+      "tax": "KDV Tutarı",
+      "total": "Genel Toplam",
+      "notes": "Notlar"
+    },
+    "pay": {
+      "invalid": "Geçerli bir tutar girin (kalan bakiyeyi aşamaz).",
+      "done": "Ödeme kaydedildi.",
+      "title": "Tedarikçi Ödemesi",
+      "due": "Kalan Bakiye",
+      "amount": "Tutar",
+      "date": "Tarih",
+      "method": "Ödeme Yöntemi",
+      "bankTransfer": "Havale / EFT",
+      "cash": "Nakit",
+      "check": "Çek",
+      "card": "Kart",
+      "notes": "Notlar",
+      "submit": "Ödeme Yap"
+    },
+    "cancelTitle": "Faturayı İptal Et",
+    "cancelConfirm": "{{n}} iptal edilsin mi?",
+    "actionDone": "İşlem tamamlandı.",
+    "page": {
+      "title": "Tedarikçi Faturaları",
+      "subtitle": "Tedarikçi faturalarını işleyin ve ödeyin; tedarikçi cari hesabı otomatik güncellenir.",
+      "new": "Yeni Fatura"
+    },
+    "tab": {
+      "bills": "Faturalar",
+      "payments": "Ödemeler"
+    },
+    "filter": {
+      "allVendors": "Tüm Tedarikçiler",
+      "allStatuses": "Tüm Durumlar"
+    },
+    "count": "{{count}} fatura",
+    "paymentCount": "{{count}} ödeme",
+    "empty": "Tedarikçi faturası bulunamadı.",
+    "cols": {
+      "number": "Fatura No",
+      "vendor": "Tedarikçi",
+      "date": "Tarih",
+      "total": "Tutar",
+      "due": "Kalan Bakiye",
+      "status": "Durum"
+    },
+    "actions": {
+      "glEntry": "Yevmiye Kaydı",
+      "post": "Muhasebeleştir",
+      "pay": "Öde",
+      "cancel": "İptal Et"
+    },
+    "payments": {
+      "empty": "Tedarikçi ödemesi bulunamadı."
+    },
+    "payCols": {
+      "number": "Ödeme No",
+      "method": "Yöntem",
+      "amount": "Tutar"
+    },
+    "glEntryTitle": "Yevmiye Kaydı · {{n}}"
+  },
+  "BI": {
+    "Common": {
+      "Loading": "Yükleniyor..."
+    },
+    "Dashboard": {
+      "Title": "KPI Paneli",
+      "Empty": "Henüz widget yok — ilk widget'ınızı ekleyin.",
+      "RemoveWidget": "Widget'ı kaldır",
+      "WidgetError": "Widget verisi yüklenemedi."
+    },
+    "Reports": {
+      "Title": "Kayıtlı Raporlar",
+      "Create": "Yeni Rapor",
+      "Name": "Ad",
+      "DataSource": "Veri Kaynağı",
+      "Visibility": "Görünürlük",
+      "LastRun": "Son Çalıştırma",
+      "Actions": "İşlemler",
+      "Open": "Aç",
+      "Delete": "Sil",
+      "Empty": "Henüz kayıtlı rapor yok."
+    },
+    "Builder": {
+      "Title": "Rapor Oluşturucu",
+      "DataSource": "Veri Kaynağı",
+      "GroupBy": "Gruplama",
+      "Aggregation": "Toplulaştırma",
+      "MeasureField": "Ölçü Alanı",
+      "FromDate": "Başlangıç",
+      "ToDate": "Bitiş",
+      "Filters": "Filtreler",
+      "AddFilter": "Filtre Ekle",
+      "Field": "Alan",
+      "Value": "Değer",
+      "ReportName": "Rapor Adı",
+      "Public": "Tüm kiracı kullanıcılarına görünür",
+      "Preview": "Önizleme",
+      "PreviewResult": "Önizleme",
+      "PreviewFailed": "Önizleme başarısız",
+      "Save": "Kaydet",
+      "Saved": "Rapor kaydedildi",
+      "SaveFailed": "Rapor kaydedilemedi",
+      "NameRequired": "Ad gereklidir"
+    },
+    "Export": {
+      "Button": "Dışa Aktar",
+      "Success": "Dışa aktarma indirildi",
+      "Failed": "Dışa aktarma başarısız"
+    }
+  },
+  "Audit": {
+    "Admin": {
+      "Action": "İşlem",
+      "AfterJson": "Sonrası (JSON)",
+      "AnyAction": "Tüm işlemler",
+      "ApplyFilter": "Filtreleri uygula",
+      "ChangedAt": "Değişiklik zamanı",
+      "DetailTitle": "Denetim kaydı detayı",
+      "EntityId": "Kayıt ID",
+      "EntityType": "Kayıt türü",
+      "EntityTypePlaceholder": "örn. Order, Invoice",
+      "EntityTypesFilter": "Kayıt türleri (virgülle ayrılmış)",
+      "ExportStarted": "Denetim dışa aktarımı başlatıldı",
+      "Format": "Biçim",
+      "Frequency": "Sıklık",
+      "FromDate": "Başlangıç tarihi",
+      "Id": "ID",
+      "LastRun": "Son çalıştırma",
+      "LookbackDays": "Geriye dönük gün sayısı",
+      "NoResults": "Mevcut filtrelerle eşleşen denetim kaydı yok.",
+      "PageTitle": "Denetim Günlüğü",
+      "Recipients": "Alıcılar (virgülle ayrılmış e-postalar)",
+      "Reset": "Sıfırla",
+      "RollingHash": "Zincir özeti (rolling hash)",
+      "SaveSchedule": "Zamanlamayı kaydet",
+      "ScheduleEnabled": "Zamanlanmış dışa aktarma etkin",
+      "ScheduleSaved": "Dışa aktarma zamanlaması kaydedildi",
+      "Sequence": "Sıra No",
+      "Tab": {
+        "Log": "Günlük"
+      },
+      "ToDate": "Bitiş tarihi",
+      "TotalRows": "Toplam {{count}} kayıt",
+      "UserId": "Kullanıcı ID"
+    }
+  },
+  "Conflict": {
+    "AttemptedVersion": "Sizin sürümünüz",
+    "ConflictingFields": "Çakışan alanlar",
+    "CurrentVersion": "Geçerli sürüm",
+    "Description": "Bu kayıt siz düzenlerken başka bir kullanıcı tarafından değiştirildi. Devam etmeden önce farkları inceleyin.",
+    "OverwriteButton": "Yine de üzerine yaz",
+    "OverwritePendingPhase": "Değişiklikleriniz üzerine yazılarak yeniden gönderiliyor...",
+    "OverwriteWarning": "Üzerine yazarsanız diğer kullanıcının değişiklikleri kaybolur.",
+    "ReloadButton": "Güncel veriyi yükle",
+    "Title": "Güncelleme çakışması"
+  },
+  "Platform": {
+    "Tenants": {
+      "Archive": "Arşivle",
+      "Empty": "Kiracı bulunamadı.",
+      "Fields": {
+        "Dpo": "DPO",
+        "DpoEmail": "DPO e-postası",
+        "DpoName": "DPO adı",
+        "Name": "Ad",
+        "Slug": "Kısa ad (slug)",
+        "Status": "Durum"
+      },
+      "IncludeArchived": "Arşivlenenleri dahil et",
+      "Restore": "Geri yükle",
+      "SearchPlaceholder": "Kiracı ara...",
+      "StatusActive": "Aktif",
+      "StatusArchived": "Arşivlendi",
+      "Title": "Kiracılar"
+    }
+  },
+  "consent": {
+    "banner": {
+      "acceptAll": "Tümünü kabul et",
+      "alwaysOn": "Her zaman açık",
+      "categories": {
+        "analytics": {
+          "title": "Analitik çerezler"
+        },
+        "essential": {
+          "title": "Zorunlu çerezler"
+        },
+        "marketing": {
+          "title": "Pazarlama çerezleri"
+        }
+      },
+      "categoriesAria": "Çerez kategorileri",
+      "essentialOnly": "Yalnızca zorunlu",
+      "managePreferences": "Tercihleri yönet",
+      "savePreferences": "Tercihleri kaydet",
+      "title": "Çerez tercihleri"
+    }
+  },
+  "legal": {
+    "aydinlatmaMetni": "Aydınlatma Metni",
+    "cerezPolitikasi": "Çerez Politikası",
+    "gizlilikPolitikasi": "Gizlilik Politikası",
+    "kullanimKosullari": "Kullanım Koşulları",
+    "kvkkBasvuruFormu": "KVKK Başvuru Formu"
+  },
+  "quotes": {
+    "actions": {
+      "accept": "Kabul Et",
+      "convertToOrder": "Siparişe Dönüştür",
+      "delete": "Sil",
+      "reject": "Reddet",
+      "send": "Gönder"
+    },
+    "columns": {
+      "actions": "İşlemler",
+      "quoteNumber": "Teklif No",
+      "validUntil": "Geçerlilik Tarihi"
+    },
+    "create": {
+      "addLine": "Satır Ekle",
+      "noLinesYet": "Henüz satır eklenmedi",
+      "removeLine": "Satırı kaldır",
+      "selectCustomer": "Müşteri seçin",
+      "selectProduct": "Ürün seçin",
+      "submitting": "Oluşturuluyor...",
+      "title": "Yeni Teklif",
+      "validation": {
+        "customerRequired": "Lütfen bir müşteri seçin",
+        "linePositive": "Ürün ve sıfırdan büyük miktar içeren en az bir satır ekleyin"
+      }
+    },
+    "detail": {
+      "grandTotal": "Genel Toplam",
+      "linesHeader": "Satırlar",
+      "subtotal": "Ara Toplam",
+      "tax": "Vergi"
+    },
+    "empty": "Teklif bulunamadı",
+    "eyebrow": "Satış · Teklifler",
+    "fields": {
+      "currency": "Para Birimi",
+      "customer": "Müşteri",
+      "notes": "Notlar",
+      "quantity": "Miktar",
+      "quoteDate": "Teklif Tarihi",
+      "taxRate": "Vergi Oranı (%)",
+      "unitPrice": "Birim Fiyat",
+      "validUntil": "Geçerlilik Tarihi"
+    },
+    "newButton": "Yeni Teklif",
+    "resultCountLabel": "teklif",
+    "searchPlaceholder": "Numara veya müşteri ara...",
+    "title": "Teklifler",
+    "toast": {
+      "accepted": "Teklif kabul edildi",
+      "convertedToOrder": "Teklif siparişe dönüştürüldü",
+      "created": "Teklif oluşturuldu",
+      "deleted": "Teklif silindi",
+      "rejected": "Teklif reddedildi",
+      "sent": "Teklif gönderildi"
+    }
+  },
+  "OrderTemplates": {
+    "Columns": {
+      "LastRun": "Son Çalıştırma",
+      "Name": "Ad"
+    },
+    "Empty": "Henüz sipariş şablonu bulunmuyor.",
+    "Form": {
+      "Active": "Aktif",
+      "AddLine": "Satır Ekle",
+      "Currency": "Para Birimi",
+      "Customer": "Müşteri",
+      "Deleted": "Sipariş şablonu silindi.",
+      "Frequency": "Sıklık",
+      "Lines": "Satırlar",
+      "Name": "Ad",
+      "NextRunAt": "Sonraki Çalıştırma",
+      "Notes": "Notlar",
+      "RunNow": "Şimdi Çalıştır",
+      "Saved": "Sipariş şablonu kaydedildi.",
+      "Submit": "Kaydet",
+      "TitleEdit": "Sipariş Şablonunu Düzenle"
+    },
+    "New": "Yeni Şablon",
+    "Title": "Sipariş Şablonları"
+  },
+  "Returns": {
+    "actions": {
+      "receive": "Teslim Al",
+      "reject": "Reddet",
+      "view": "Görüntüle"
+    },
+    "activity": {
+      "approved": "Onaylandı",
+      "cancelled": "İptal Edildi",
+      "creditNoted": "Alacak Dekontu Kesildi",
+      "received": "Teslim Alındı",
+      "refunded": "Geri Ödendi",
+      "rejected": "Reddedildi",
+      "requested": "Talep Edildi",
+      "title": "İşlem Geçmişi"
+    },
+    "backToList": "İade Listesine Dön",
+    "empty": "İade talebi bulunamadı.",
+    "fields": {
+      "creditNote": "Alacak Dekontu",
+      "customer": "Müşteri",
+      "number": "İade No",
+      "order": "Sipariş",
+      "product": "Ürün",
+      "quantity": "Miktar",
+      "requestedAt": "Talep Tarihi",
+      "status": "Durum",
+      "subtotal": "Ara Toplam",
+      "total": "Toplam",
+      "unitPrice": "Birim Fiyat"
+    },
+    "filters": {
+      "status": "Duruma göre filtrele"
+    },
+    "receive": {
+      "autoIssueCreditNote": "Alacak dekontunu otomatik oluştur",
+      "title": "İadeyi Teslim Al",
+      "warehouseId": "Depo",
+      "warehousePlaceholder": "Depo seçin"
+    },
+    "reject": {
+      "placeholder": "Reddetme nedeni (isteğe bağlı)",
+      "title": "İadeyi Reddet"
+    },
+    "searchPlaceholder": "İade no, sipariş veya müşteri ara...",
+    "title": "İadeler",
+    "toast": {
+      "approved": "İade onaylandı.",
+      "cancelled": "İade iptal edildi.",
+      "rejected": "İade reddedildi.",
+      "warehouseRequired": "Lütfen önce bir depo seçin."
+    }
+  },
+  "Settings": {
+    "DiscountRules": {
+      "Code": "Kod",
+      "Created": "İndirim kuralı oluşturuldu",
+      "CustomerGroup": "Cari Grubu",
+      "DeleteTitle": "İndirim Kuralını Sil",
+      "Deleted": "İndirim kuralı silindi",
+      "Description": "Açıklama",
+      "EditTitle": "İndirim Kuralını Düzenle",
+      "Empty": "Henüz tanımlı indirim kuralı yok",
+      "Errors": {
+        "InvalidValue": "Geçerli bir indirim değeri girin"
+      },
+      "MinQuantity": "Min. Miktar",
+      "Name": "Ad",
+      "New": "Yeni Kural",
+      "Priority": "Öncelik",
+      "Product": "Ürün",
+      "ProductCategory": "Ürün Kategorisi",
+      "Scope": "Kapsam",
+      "Status": "Durum",
+      "Title": "İndirim Kuralları",
+      "Updated": "İndirim kuralı güncellendi",
+      "ValidFrom": "Geçerlilik Başlangıcı",
+      "ValidUntil": "Geçerlilik Bitişi",
+      "Validity": "Geçerlilik",
+      "Value": "Değer",
+      "ValueType": "Değer Türü"
+    },
+    "ExchangeRates": {
+      "Currency": "Para Birimi",
+      "CurrencyFilter": "Para Birimine Göre Filtrele",
+      "Empty": "Döviz kuru bulunamadı",
+      "RateAgainstTry": "TRY Karşılığı Kur",
+      "Refresh": "Kurları Güncelle",
+      "Source": "Kaynak",
+      "Title": "Döviz Kurları",
+      "ValidOn": "Geçerlilik Tarihi"
+    },
+    "Imports": {
+      "Commit": "Geçerli Satırları İçe Aktar",
+      "CommittedToast": "{{count}} satır başarıyla içe aktarıldı",
+      "DropFile": "Dosyayı buraya sürükleyip bırakın veya seçmek için tıklayın (.csv, .xlsx)",
+      "Errors": "Hatalar",
+      "InvalidBlockToast": "{{count}} geçersiz satır bulundu. Devam etmek için geçersiz satırları atlama seçeneğini işaretleyin.",
+      "InvalidRows": "Geçersiz Satır",
+      "Row": "Satır",
+      "SkipInvalid": "Geçersiz satırları atla",
+      "Title": "Veri İçe Aktarma",
+      "TotalRows": "Toplam Satır",
+      "ValidRows": "Geçerli Satır"
+    },
+    "PriceLists": {
+      "Empty": "Henüz tanımlı fiyat listesi yok",
+      "Lines": {
+        "Add": "Satır Ekle",
+        "Added": "Fiyat listesi satırı eklendi",
+        "DiscountPercent": "İskonto %",
+        "Empty": "Bu fiyat listesinde henüz satır yok",
+        "Errors": {
+          "DiscountRange": "İskonto 0 ile 100 arasında olmalıdır",
+          "MinExceedsMax": "Min. miktar maks. miktardan büyük olamaz",
+          "PriceRequired": "Geçerli bir fiyat girin"
+        },
+        "MaxQuantity": "Maks. Miktar",
+        "Product": "Ürün",
+        "RemoveTitle": "Satırı Kaldır",
+        "Removed": "Fiyat listesi satırı kaldırıldı",
+        "SelectProduct": "Ürün seçin",
+        "Title": "Fiyat Listesi Satırları",
+        "Updated": "Fiyat listesi satırı güncellendi"
+      },
+      "Title": "Fiyat Listeleri"
+    },
+    "TaxRules": {
+      "Code": "Kod",
+      "Created": "Vergi kuralı oluşturuldu",
+      "DeleteTitle": "Vergi Kuralını Sil",
+      "Deleted": "Vergi kuralı silindi",
+      "Description": "Açıklama",
+      "EditTitle": "Vergi Kuralını Düzenle",
+      "Empty": "Henüz tanımlı vergi kuralı yok",
+      "Errors": {
+        "RateRange": "Oran 0 ile 100 arasında olmalıdır"
+      },
+      "Fallback": "Yedek Vergi Oranı",
+      "Name": "Ad",
+      "New": "Yeni Kural",
+      "Priority": "Öncelik",
+      "Product": "Ürün",
+      "ProductCategory": "Ürün Kategorisi",
+      "ProductClass": "Ürün Sınıfı",
+      "Rate": "Oran (%)",
+      "RegionCode": "Bölge Kodu",
+      "Scope": "Kapsam",
+      "Status": "Durum",
+      "Title": "Vergi Kuralları",
+      "Updated": "Vergi kuralı güncellendi",
+      "ValidFrom": "Geçerlilik Başlangıcı",
+      "ValidUntil": "Geçerlilik Bitişi"
+    }
+  },
+  "Inventory": {
+    "StockCounts": {
+      "allLinesRequired": "Tüm satırlar girilmelidir.",
+      "backToList": "Sayımlara dön",
+      "cancel": {
+        "title": "Sayımı İptal Et"
+      },
+      "cancelled": "Sayım iptal edildi.",
+      "cols": {
+        "lines": "Satır",
+        "number": "Sayım No",
+        "planned": "Planlandı",
+        "status": "Durum",
+        "varianceCost": "Sapma Tutarı",
+        "warehouse": "Depo"
+      },
+      "count": "{{count}} sayım",
+      "empty": "Sayım bulunamadı.",
+      "filter": {
+        "allStatuses": "Tüm durumlar",
+        "allWarehouses": "Tüm depolar"
+      },
+      "lineCols": {
+        "counted": "Sayılan",
+        "expected": "Beklenen",
+        "sku": "SKU",
+        "variance": "Sapma"
+      },
+      "navLabel": "Stok Sayımları",
+      "new": "Yeni Sayım",
+      "plan": {
+        "notes": "Notlar",
+        "snapshotHint": "Plan oluşturulduğunda seçilen deponun tüm stok kalemleri sayım satırlarına anlık görüntü olarak yazılır.",
+        "submit": "Sayımı Oluştur",
+        "title": "Yeni Sayım Planla",
+        "warehouse": "Depo"
+      },
+      "planned": "Sayım oluşturuldu.",
+      "post": {
+        "button": "Sayımı İşle",
+        "title": "Sayımı İşle"
+      },
+      "posted": "Sayım işlendi.",
+      "reconcile": "Mutabakat",
+      "reconcileNotes": "Mutabakat Notları (opsiyonel)",
+      "reconciled": "Sayım mutabık kılındı.",
+      "recorded": "Sayım girişleri kaydedildi.",
+      "saveCounts": "Sayımları Kaydet",
+      "start": "Sayımı Başlat",
+      "started": "Sayım başlatıldı.",
+      "subtitle": "Depo bazlı sayım dönemleri planla, gir, mutabık kıl ve işle.",
+      "summary": {
+        "lines": "Satır Sayısı",
+        "varianceCost": "Sapma Tutarı",
+        "varianceQty": "Sapma Miktarı"
+      },
+      "title": "Stok Sayımları"
+    }
+  },
+  "Locale": {
+    "label": "Dil"
+  },
+  "Products": {
+    "Images": {
+      "alt": "Alternatif metin",
+      "delete": "Sil",
+      "empty": "Henüz görsel yok",
+      "invalidType": "Desteklenmeyen dosya türü",
+      "loading": "Görseller yükleniyor…",
+      "markPrimary": "Birincil yap",
+      "moveDown": "Arkaya taşı",
+      "moveUp": "Öne taşı",
+      "primary": "Birincil",
+      "subtitle": "En fazla {{max}} görsel, JPG/PNG/WebP, her biri 5 MB.",
+      "title": "Görseller",
+      "tooLarge": "Dosya 5 MB sınırını aşıyor",
+      "upload": "Yükle",
+      "uploaded": "Görsel yüklendi"
+    },
+    "Variants": {
+      "actions": "İşlemler",
+      "active": "Aktif",
+      "add": "Varyant ekle",
+      "attributes": "Özellikler (JSON)",
+      "attributesHint": "JSON nesnesi, örn. {\"color\":\"red\",\"size\":\"L\"}",
+      "attributesInvalid": "Özellikler bir JSON nesnesi olmalıdır.",
+      "barcode": "Barkod",
+      "cancel": "İptal",
+      "delete": "Sil",
+      "deleteConfirm": "Bu varyant silinsin mi?",
+      "edit": "Düzenle",
+      "editTitle": "Varyantı düzenle",
+      "empty": "Henüz varyant yok.",
+      "loading": "Varyantlar yükleniyor…",
+      "priceOverride": "Özel fiyat",
+      "save": "Kaydet",
+      "saveFailed": "Kayıt başarısız",
+      "sku": "SKU",
+      "skuRequired": "SKU zorunludur.",
+      "stock": "Stok",
+      "subtitle": "Bu ürünü paylaşan SKU'ları yönetin (örn. renk/beden).",
+      "title": "Varyantlar"
+    }
+  },
+  "Sso": {
+    "Admin": {
+      "AttributeMappings": "Öznitelik Eşlemeleri (JSON)",
+      "ClientSecret": "Client Secret",
+      "Created": "Sağlayıcı oluşturuldu.",
+      "DeleteButton": "Sil",
+      "DeleteFailed": "Silme başarısız.",
+      "Deleted": "Sağlayıcı silindi.",
+      "Empty": "Henüz tanımlı sağlayıcı yok.",
+      "EntityIdOrClientId": "EntityId / ClientId",
+      "IsActive": "Aktif",
+      "Name": "İsim",
+      "New": "Yeni Sağlayıcı",
+      "Protocol": "Protokol",
+      "SaveFailed": "Kayıt başarısız.",
+      "Saved": "Sağlayıcı güncellendi.",
+      "SelectHint": "Bir sağlayıcı seçin veya yeni oluşturun.",
+      "Subtitle": "SAML 2.0 / OpenID Connect entegrasyonlarını yönetin.",
+      "TestButton": "Bağlantı Testi",
+      "TestFailed": "Test başarısız.",
+      "TestRequiresSave": "Önce kaydedin.",
+      "Title": "SSO Kimlik Sağlayıcıları",
+      "UpdateButton": "Güncelle",
+      "Validation": {
+        "Required": "Zorunlu alanları doldurun."
+      }
+    },
+    "Login": {
+      "Continue": "Devam Et",
+      "IdpName": "Sağlayıcı Adı",
+      "OpenButton": "SSO ile Giriş",
+      "TenantSlug": "Tenant Kodu"
+    }
+  },
+  "TenantBranding": {
+    "current": "Mevcut logo",
+    "dragDropHint": "Buraya bir PNG, JPG veya SVG sürükleyin (en fazla {{max}} KB) ya da seçmek için tıklayın.",
+    "invalidType": "Desteklenmeyen dosya türü. PNG, JPG veya SVG kullanın.",
+    "noLogo": "Yüklenmiş logo yok.",
+    "subtitle": "Faturalarda, portal üst bilgisinde ve e-posta şablonlarında görünen logoyu yükleyin.",
+    "title": "Marka ve logo",
+    "tooLarge": "Dosya {{max}} KB sınırını aşıyor.",
+    "uploaded": "Logo güncellendi.",
+    "uploading": "Yükleniyor…"
+  },
+  "VendorBills": {
+    "threeWayMatch": {
+      "allVendors": "Tüm tedarikçiler",
+      "cols": {
+        "billed": "Fatura",
+        "billedAmount": "Fatura Tutarı",
+        "expected": "Beklenen",
+        "flags": "Uyumsuzluklar",
+        "po": "PO No",
+        "product": "Ürün",
+        "received": "Gelen",
+        "vendor": "Tedarikçi"
+      },
+      "count": "{{count}} satır",
+      "empty": "Tüm sipariş-mal kabul-fatura zincirleri uyumlu.",
+      "subtitle": "Sipariş ↔ Mal Kabul ↔ Fatura uyumsuzluklarını listeler. Uyumsuzluk kodlarına göre filtreleyin.",
+      "title": "3-Way Match Raporu"
+    }
+  },
+  "VendorPayments": {
+    "applications": {
+      "amount": "Tutar",
+      "date": "Tarih",
+      "empty": "Uygulanan ödeme yok.",
+      "paymentNo": "Ödeme No",
+      "title": "Uygulanan Ödemeler"
+    },
+    "apply": {
+      "amount": "Tutar",
+      "amountDue": "Kalan",
+      "billTotal": "Fatura Toplamı",
+      "maxHint": "Maksimum {{m}}",
+      "noEligible": "Bu tedarikçi için uygulanabilir ödeme bulunamadı.",
+      "notes": "Notlar",
+      "payment": "Ödeme",
+      "pickPayment": "Ödeme seç…",
+      "submit": "Uygula",
+      "subtitle": "{{n}} faturasına uygulanacak ödemeyi seç.",
+      "title": "Tedarikçi Ödemesini Uygula",
+      "unapplied": "uygulanmamış"
+    },
+    "applyPayment": "Mevcut ödemeyi uygula",
+    "applySuccess": "Ödeme faturaya uygulandı.",
+    "viewApplications": "Uygulanan ödemeler"
   }
 }

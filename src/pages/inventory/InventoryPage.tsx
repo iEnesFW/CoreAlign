@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowDownToLine,
   ArrowLeftRight,
+  ArrowRightLeft,
   ArrowUpFromLine,
   Boxes,
   ClipboardList,
@@ -47,6 +48,12 @@ const VOUCHER_ACTIONS: {
     label: 'Sayım Fişi',
     icon: ClipboardList,
     tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20',
+  },
+  {
+    type: 'transfer',
+    label: 'Transfer Fişi',
+    icon: ArrowRightLeft,
+    tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20',
   },
 ];
 

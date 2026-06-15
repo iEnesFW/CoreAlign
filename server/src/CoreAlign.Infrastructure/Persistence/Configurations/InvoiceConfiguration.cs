@@ -17,6 +17,9 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(i => i.Status).HasMaxLength(20).HasConversion<string>();
         builder.Property(i => i.Type).HasMaxLength(20).HasConversion<string>();
         builder.Property(i => i.ExchangeRate).HasColumnType("numeric(18,6)");
+        builder.Property(i => i.FxRateSnapshot).HasColumnType("numeric(18,6)");
+        builder.Property(i => i.FxSource).HasMaxLength(32);
+        builder.Property(i => i.FxLockedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(i => i.Subtotal).HasColumnType("numeric(18,4)");
         builder.Property(i => i.LineDiscountTotal).HasColumnType("numeric(18,4)");
         builder.Property(i => i.HeaderDiscountAmount).HasColumnType("numeric(18,4)");
@@ -75,6 +78,9 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.HasIndex(i => new { i.TenantId, i.Status });
         builder.HasIndex(i => new { i.TenantId, i.DueDate });
         builder.HasIndex(i => new { i.TenantId, i.IssueDate }).IsDescending(false, true);
+        builder.HasIndex(i => new { i.TenantId, i.FxSource })
+            .HasFilter("fx_source IS NOT NULL")
+            .HasDatabaseName("ix_invoices_tenant_id_fx_source");
 
         builder.Ignore(i => i.AmountDue);
         builder.Ignore(i => i.IsEditable);
@@ -129,6 +135,9 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.Status).HasMaxLength(30).HasConversion<string>();
         builder.Property(p => p.Method).HasMaxLength(30).HasConversion<string>();
         builder.Property(p => p.ExchangeRate).HasColumnType("numeric(18,6)");
+        builder.Property(p => p.FxRateSnapshot).HasColumnType("numeric(18,6)");
+        builder.Property(p => p.FxSource).HasMaxLength(32);
+        builder.Property(p => p.FxLockedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.Amount).HasColumnType("numeric(18,4)");
         builder.Property(p => p.AppliedAmount).HasColumnType("numeric(18,4)");
         builder.Property(p => p.BankAccountInfo).HasMaxLength(200);
@@ -151,6 +160,9 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(p => new { p.TenantId, p.CustomerId });
         builder.HasIndex(p => new { p.TenantId, p.Status });
         builder.HasIndex(p => new { p.TenantId, p.PaymentDate }).IsDescending(false, true);
+        builder.HasIndex(p => new { p.TenantId, p.FxSource })
+            .HasFilter("fx_source IS NOT NULL")
+            .HasDatabaseName("ix_payments_tenant_id_fx_source");
 
         builder.Ignore(p => p.UnappliedAmount);
         builder.Ignore(p => p.IsEditable);

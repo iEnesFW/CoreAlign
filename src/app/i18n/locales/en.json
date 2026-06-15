@@ -56,7 +56,8 @@
       "lastMovement": "Last movement",
       "lot": "Lot",
       "bin": "Bin",
-      "reorderHint": "Reorder point: {{value}}"
+      "reorderHint": "Reorder point: {{value}}",
+      "product": "Product"
     },
     "adjust": {
       "title": "Adjust stock",
@@ -108,6 +109,89 @@
       "type.CountVarianceNegative": "Count −",
       "type.Reservation": "Reserved",
       "type.UnReservation": "Released"
+    },
+    "page": {
+      "subtitle": "Stock levels, quantities and every stock movement by warehouse — all in one view.",
+      "title": "Inventory Management"
+    },
+    "production": {
+      "action": "Production",
+      "component": "Component",
+      "components": "Components to consume (BOM)",
+      "done": "Production entry processed.",
+      "invalid": "Enter a product, warehouse and a valid quantity.",
+      "noBom": "This product has no bill of materials (BOM).",
+      "notes": "Notes",
+      "perUnit": "Per unit",
+      "produce": "Produce",
+      "product": "Product to produce",
+      "quantity": "Production quantity",
+      "required": "Required",
+      "selectProduct": "Select a product first.",
+      "title": "Production voucher",
+      "warehouse": "Warehouse"
+    },
+    "status": {
+      "allWarehouses": "All warehouses",
+      "belowReorderOnly": "Below reorder point only",
+      "empty": "No stock records found.",
+      "totalCount": "{{count}} records",
+      "warehouse": "Warehouse"
+    },
+    "voucher": {
+      "addLine": "Add line",
+      "counted": "Counted",
+      "fromWarehouse": "From warehouse",
+      "linesRequired": "Add at least one valid line.",
+      "notes": "Notes",
+      "onHand": "On hand",
+      "partial": "{{ok}} lines processed, {{failed}} failed.",
+      "post": "Post voucher",
+      "posted": "{{count}} lines processed.",
+      "product": "Product",
+      "quantity": "Quantity",
+      "reference": "Document # / reference",
+      "selectWarehouse": "Select…",
+      "toWarehouse": "To warehouse",
+      "toWarehouseRequired": "Select a different destination warehouse.",
+      "transferStock": "Transfer stock",
+      "unitCost": "Unit cost",
+      "warehouse": "Warehouse",
+      "warehouseRequired": "Select a warehouse.",
+      "action": {
+        "receive": "Receipt voucher",
+        "issue": "Issue voucher",
+        "count": "Count voucher",
+        "transfer": "Transfer voucher"
+      },
+      "title": {
+        "receive": "Stock receipt voucher",
+        "issue": "Stock issue voucher",
+        "count": "Stock count voucher",
+        "transfer": "Stock transfer voucher"
+      }
+    },
+    "warehouse": {
+      "address": "Address",
+      "city": "City",
+      "code": "Code",
+      "count": "{{count}} warehouses",
+      "country": "Country",
+      "created": "Warehouse created.",
+      "deleteConfirm": "Delete {{name}}?",
+      "deleteTitle": "Delete warehouse",
+      "deleted": "Warehouse deleted.",
+      "edit": "Edit warehouse",
+      "empty": "No warehouses defined yet.",
+      "isActive": "Active",
+      "isDefault": "Default warehouse",
+      "location": "Location",
+      "name": "Name",
+      "new": "New warehouse",
+      "phone": "Phone",
+      "status": "Status",
+      "type": "Type",
+      "updated": "Warehouse updated."
     }
   },
   "Validation": {
@@ -160,6 +244,17 @@
     "toast": {
       "profileUpdated": "Profile updated.",
       "passwordChanged": "Password changed. Please sign in again."
+    },
+    "notifications": {
+      "channel": {
+        "email": "Email",
+        "inApp": "In-app"
+      },
+      "loading": "Loading preferences…",
+      "save": "Save preferences",
+      "saved": "Notification preferences saved.",
+      "subtitle": "Choose which events trigger emails or in-app alerts.",
+      "title": "Notification preferences"
     }
   },
   "orders": {
@@ -182,7 +277,8 @@
       "Closed": "Closed",
       "Cancelled": "Cancelled",
       "Returned": "Returned",
-      "Confirmed": "Confirmed"
+      "Confirmed": "Confirmed",
+      "changeHint": "Change status"
     },
     "shipmentStatus": {
       "Draft": "Draft",
@@ -206,7 +302,8 @@
       "dispatchShipment": "Dispatch",
       "deliverShipment": "Mark delivered",
       "cancelShipment": "Cancel shipment",
-      "generateInvoice": "Generate invoice"
+      "generateInvoice": "Generate invoice",
+      "scrap": "Record scrap"
     },
     "timeline": {
       "title": "Status timeline",
@@ -262,7 +359,8 @@
       "headerDiscount": "Discount %",
       "shippingCost": "Shipping Cost",
       "internalNotes": "Internal Notes",
-      "customerNotes": "Customer Notes"
+      "customerNotes": "Customer Notes",
+      "roundingAdjustment": "Rounding / amount adjustment"
     },
     "sections": {
       "general": "General",
@@ -295,7 +393,8 @@
       "withholding": "Withholding",
       "shipping": "Shipping",
       "grandTotal": "Grand Total",
-      "estimate": "Estimated — final amounts are calculated on save"
+      "estimate": "Estimated — final amounts are calculated on save",
+      "rounding": "Rounding"
     },
     "dueToday": "Due today",
     "dueIn": "Due in {{count}}d",
@@ -427,6 +526,61 @@
     "tabs": {
       "info": "General",
       "lines": "Line Items"
+    },
+    "emptyHint": "Create your first order to kick off the sales pipeline.",
+    "eyebrow": "Sales · Fulfillment",
+    "filter": {
+      "all": "All",
+      "cancelled": "Cancelled",
+      "closed": "Closed",
+      "draftsOnly": "Drafts only",
+      "fulfilled": "Fulfilled",
+      "highValue": "High value (≥1.5× avg)",
+      "open": "Open"
+    },
+    "resultCountLabel": "orders",
+    "scrap": {
+      "done": "Scrap recorded.",
+      "exceeds": "Scrap quantity cannot exceed the remaining quantity ({{max}}).",
+      "invalid": "Enter a line, warehouse and a valid quantity.",
+      "line": "Line",
+      "max": "Maximum",
+      "noLines": "No lines available for scrap.",
+      "notes": "Scrap reason / notes",
+      "notesPlaceholder": "E.g. production defect, damage…",
+      "quantity": "Scrap quantity",
+      "remaining": "Remaining",
+      "selectWarehouse": "Select…",
+      "submit": "Save scrap",
+      "title": "Record scrap",
+      "warehouse": "Warehouse"
+    },
+    "stats": {
+      "avg": "Avg",
+      "drafts": "Pending drafts",
+      "draftsHint": "Submit or discard",
+      "open": "Open pipeline",
+      "pageVolume": "Page volume",
+      "total": "Orders (page)",
+      "totalHint": "{{count}} of {{all}}"
+    },
+    "revisions": {
+      "approveButton": "Approve",
+      "cancelButton": "Cancel Request",
+      "decidedAt": "Decided at {{when}}",
+      "empty": "No revisions yet.",
+      "modalSubmit": "Submit Revision Request",
+      "modalTitle": "Request Order Revision",
+      "proposedLines": "Proposed lines",
+      "rejectButton": "Reject",
+      "rejectionReason": "Rejection Reason",
+      "rejectionReasonPlaceholder": "Explain why this revision is rejected...",
+      "requestButton": "Request Revision",
+      "requestNotes": "Request Notes",
+      "requestNotesPlaceholder": "Optional notes about this revision request...",
+      "requestedAt": "Requested at {{when}} by {{persona}}",
+      "revisionNumber": "Revision #{{number}}",
+      "tabTitle": "Revisions"
     }
   },
   "invoices": {
@@ -444,7 +598,8 @@
       "Paid": "Paid",
       "Overdue": "Overdue",
       "Void": "Void",
-      "Cancelled": "Cancelled"
+      "Cancelled": "Cancelled",
+      "changeHint": "Change status"
     },
     "paymentStatus": {
       "Draft": "Draft",
@@ -595,6 +750,64 @@
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
       "next": "Next"
+    },
+    "emptyHint": "Generate invoices from orders or create new ones manually.",
+    "eyebrow": "Finance · Receivables",
+    "filter": {
+      "all": "All",
+      "cancelled": "Cancelled",
+      "dueSoon": "Due in ≤7d",
+      "open": "Open",
+      "overdue": "Overdue",
+      "paid": "Paid"
+    },
+    "resultCountLabel": "invoices",
+    "stats": {
+      "collected": "Collected (page)",
+      "openInvoices": "open",
+      "outstanding": "Outstanding",
+      "overdue": "Overdue",
+      "overdueHint": "overdue invoices",
+      "total": "Invoices (page)",
+      "totalHint": "{{count}} of {{all}}"
+    },
+    "creditNote": {
+      "help": "Select the lines and quantities to credit. A credit note will be issued against this invoice.",
+      "invoiced": "Invoiced",
+      "product": "Product",
+      "quantity": "Quantity",
+      "reason": "Reason",
+      "remaining": "Remaining",
+      "selectLine": "Select line {{sku}}",
+      "submit": "Issue Credit Note",
+      "subtotal": "Subtotal",
+      "title": "Issue Credit Note",
+      "toastSuccess": "Credit note issued.",
+      "unitPrice": "Unit Price",
+      "reasonPlaceholder": ""
+    },
+    "standalone": {
+      "addLine": "Add Line",
+      "created": "Invoice created.",
+      "creating": "Creating...",
+      "currency": "Currency",
+      "customer": "Customer",
+      "dueDays": "Due Days",
+      "internalNotes": "Internal Notes",
+      "issueDate": "Issue Date",
+      "lineName": "Item name",
+      "lineQuantity": "Quantity",
+      "lineSku": "SKU",
+      "lineTaxRate": "Tax Rate (%)",
+      "lineUnitPrice": "Unit Price",
+      "publicNotes": "Public Notes",
+      "removeLine": "Remove line",
+      "selectCustomer": "Select a customer",
+      "title": "Create Standalone Invoice",
+      "validation": {
+        "customerRequired": "Please select a customer.",
+        "lineNamePositive": "Add at least one line with SKU, name and a positive quantity."
+      }
     }
   },
   "products": {
@@ -652,6 +865,7 @@
       "reorderPoint": "Reorder Point",
       "safetyStock": "Safety Stock",
       "leadTimeDays": "Lead Time (days)",
+      "procurementType": "Procurement type",
       "weightKg": "Weight (kg)",
       "widthCm": "Width (cm)",
       "heightCm": "Height (cm)",
@@ -661,11 +875,20 @@
       "endOfLifeDate": "End-of-Life Date",
       "none": "—"
     },
+    "procurementType": {
+      "Buy": "Buy",
+      "Make": "Make"
+    },
+    "procurementTypeHint": {
+      "Buy": "Replenished from a vendor — MRP plans a purchase requisition.",
+      "Make": "Manufactured in-house — MRP plans a production order and explodes its BOM."
+    },
     "sections": {
       "identity": "Identity",
       "uom": "Units",
       "pricing": "Pricing",
       "stock": "Stock",
+      "procurement": "Procurement",
       "logistics": "Logistics & Dimensions",
       "lifecycle": "Lifecycle"
     },
@@ -689,7 +912,8 @@
         "overview": "Overview",
         "transactions": "Transactions",
         "warehouses": "Warehouses",
-        "rules": "Rules"
+        "rules": "Rules",
+        "movements": "Movements"
       },
       "txnType": {
         "Initial": "Initial",
@@ -724,7 +948,37 @@
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
       "next": "Next"
-    }
+    },
+    "emptyHint": "Create your first product to enable orders, invoices and stock tracking.",
+    "eyebrow": "Inventory · Catalog",
+    "filter": {
+      "all": "All",
+      "lowStock": "Low stock",
+      "outOfStock": "Out of stock",
+      "tracked": "Stock tracked"
+    },
+    "lowStock": "Low stock",
+    "outOfStock": "Out of stock",
+    "reorderAt": "Reorder point",
+    "resultCountLabel": "products",
+    "stats": {
+      "inventoryHint": "At avg cost",
+      "inventoryValue": "Inventory value",
+      "lowStock": "Low stock",
+      "lowStockHint": "Tap to filter",
+      "outOfStock": "Out of stock",
+      "outOfStockHint": "Restock needed",
+      "total": "Products (page)",
+      "totalHint": "{{count}} of {{all}}"
+    },
+    "statusLabel": {
+      "Active": "Active",
+      "Discontinued": "Discontinued",
+      "EndOfLife": "EoL",
+      "New": "New"
+    },
+    "bulkPartial": "{{deleted}} deleted, {{failed}} failed.",
+    "bulkSelected": "{{count}} selected"
   },
   "errorState": {
     "title": "Something went wrong",
@@ -764,7 +1018,21 @@
     "confirmDelete": "Delete",
     "view": "View",
     "back": "Back",
-    "details": "Details"
+    "details": "Details",
+    "activate": "Activate",
+    "close": "Close",
+    "created": "Created.",
+    "deactivate": "Deactivate",
+    "deleted": "Deleted.",
+    "export": "Export",
+    "exportCsv": "Export CSV",
+    "new": "New",
+    "saving": "Submitting…",
+    "unknown": "Unknown",
+    "updated": "Updated.",
+    "all": "All",
+    "fillRequired": "Please fill in all required fields.",
+    "noResults": "No results."
   },
   "activity": {
     "title": "Activity Log",
@@ -1009,7 +1277,32 @@
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
       "next": "Next"
-    }
+    },
+    "merge": {
+      "cancel": "Cancel",
+      "executing": "Merging...",
+      "missingSelectionError": "Select both a source and a target customer.",
+      "searchPlaceholder": "Search customers...",
+      "source": "Source Customer",
+      "target": "Target Customer",
+      "title": "Merge Customers",
+      "warning": "All records of the source customer will be moved to the target customer. This action cannot be undone."
+    },
+    "statement": {
+      "downloading": "Downloading...",
+      "from": "From",
+      "openMenu": "Open statement options",
+      "subtitle": "Choose a date range and download the statement.",
+      "to": "To"
+    },
+    "tagsEditor": {
+      "add": "Add Tag",
+      "available": "Available tags",
+      "noTags": "No tags.",
+      "title": "Tags"
+    },
+    "bulkPartial": "{{deleted}} deleted, {{failed}} failed.",
+    "bulkSelected": "{{count}} selected"
   },
   "reports": {
     "title": "Reports",
@@ -1049,6 +1342,71 @@
       "quantity": "Qty sold",
       "revenue": "Revenue",
       "invoiceCount": "Invoices"
+    },
+    "custom": {
+      "add": "Add",
+      "dimensions": "Dimensions",
+      "entityType": "Data Source",
+      "error": {
+        "catalog": "Failed to load the field catalog",
+        "nameRequired": "Report name is required",
+        "preview": "Failed to generate the preview",
+        "save": "Failed to save the report"
+      },
+      "filters": "Filters",
+      "measures": "Measures",
+      "name": "Report Name",
+      "namePlaceholder": "e.g. Monthly sales by customer",
+      "preview": "Preview",
+      "previewEmpty": "Run a preview to see results here",
+      "previewTitle": "Preview",
+      "rowLimit": "Row Limit",
+      "save": "Save",
+      "savedEmpty": "No saved reports yet",
+      "savedTitle": "Saved Reports",
+      "title": "Custom Report Builder",
+      "value": "Value"
+    },
+    "library": {
+      "accountId": "Account ID",
+      "asOfDate": "As of Date",
+      "back": "Back",
+      "download": "Download with the selected filters",
+      "downloading": "Downloading...",
+      "filters": "Filters",
+      "fromDate": "From Date",
+      "onlyBelowReorder": "Only items below reorder level",
+      "openLibrary": "Report Library",
+      "productId": "Product ID",
+      "title": "Report Library",
+      "toDate": "To Date",
+      "warehouseId": "Warehouse ID"
+    },
+    "schedules": {
+      "active": "Active",
+      "cols": {
+        "actions": "Actions",
+        "frequency": "Frequency",
+        "name": "Name",
+        "nextRun": "Next Run",
+        "recipients": "Recipients",
+        "reportKey": "Report",
+        "status": "Status"
+      },
+      "empty": "No scheduled reports yet",
+      "error": {
+        "recipients": "Enter at least one recipient email address",
+        "save": "Failed to save the schedule"
+      },
+      "format": "Format",
+      "frequency": "Frequency",
+      "name": "Name",
+      "new": "New Schedule",
+      "newTitle": "Create Schedule",
+      "recipients": "Recipients (comma separated)",
+      "reportKey": "Report Key",
+      "startAt": "Start At",
+      "title": "Scheduled Reports"
     }
   },
   "dashboard": {
@@ -1201,5 +1559,3866 @@
         "verificationFailed": "Verification failed. Please try again."
       }
     }
+  },
+  "LandingPage": {
+    "nav": {
+      "home": "Home",
+      "about": "About",
+      "solutions": "Solutions",
+      "articles": "Articles",
+      "contact": "Contact"
+    },
+    "hero": {
+      "badge": "System Version v2.3.25 Active",
+      "title": "Central Cloud Intelligence of Your Business",
+      "subtitle": "CoreAlign is a next-generation cloud ERP platform that integrates dealer orders, material requirements planning (MRP), smart project configuration, and financial accounting.",
+      "cta": "Explore Our Solutions",
+      "metrics": {
+        "activeDealers": "Active Dealer Network",
+        "activeDealersDesc": "1,420+ Concurrent Dealers",
+        "wasteReduction": "Waste Reduction",
+        "wasteReductionDesc": "15% Savings via MRP",
+        "orderSpeed": "Order Approval Speed",
+        "orderSpeedDesc": "70% Faster Process",
+        "compliance": "Executive Security",
+        "complianceDesc": "ISO 27001 & GDPR Compliant"
+      }
+    },
+    "about": {
+      "title": "About CoreAlign",
+      "subtitle": "Unifying your business's digital backbone under one roof.",
+      "historyTitle": "Our History & Vision",
+      "historyText": "Founded in 2018, CoreAlign leads the end-to-end digital transformation of businesses, offering a comprehensive modular architecture that ranges from production to shipping, dealer networks to financial accounting.",
+      "missionTitle": "Our Mission",
+      "missionText": "To maximize operational efficiency and reduce process losses to zero through our advanced data validation and integration technologies.",
+      "visionTitle": "Who We Are",
+      "visionText": "We serve as the primary operating system for enterprise companies of all scales, particularly specializing in complex custom manufacturing industries like glass processing and metal structures.",
+      "valuesTitle": "Core Values",
+      "valuesText": "Dedication to data consistency, dealer-central integration, modular flexibility, and full alignment with global security standards.",
+      "timelineTitle": "Our Strategic Journey",
+      "timelineSubtitle": "Continually expanding our enterprise capabilities over the years.",
+      "t1Year": "2018",
+      "t1Title": "CAD Configurator Engine",
+      "t1Text": "Launched the first 2D/3D glass and profile configuration engine for instant draft designs.",
+      "t2Year": "2021",
+      "t2Title": "Multi-Tenant B2B Cloud",
+      "t2Text": "Deployed B2B dealer ordering networks, digitalizing workflows and credit limit structures.",
+      "t3Year": "2024",
+      "t3Title": "Full MRP & Nesting Sync",
+      "t3Text": "Linked CAD layouts with 2D cutting optimizations and furnace schedules, cutting scrap to 1.2%.",
+      "t4Year": "2026+",
+      "t4Title": "AI-Driven Forecasting",
+      "t4Text": "Automatic inventory replenishment, robotic account reconciliation, and service support automation.",
+      "complianceTitle": "Enterprise Compliance & Trust",
+      "complianceSubtitle": "We certify data integrity, isolation, and operational uptime.",
+      "c1Title": "Information Security (ISO 27001)",
+      "c1Desc": "Full encryption across database clusters and web endpoints, paired with continuous network auditing.",
+      "c2Title": "Data Privacy (GDPR / CCPA)",
+      "c2Desc": "Absolute compliance with regional data processing laws, ensuring encrypted customer records.",
+      "c3Title": "Continuous Uptime SLA (99.99%)",
+      "c3Desc": "Redundant data center hosting with automated multi-region failovers for zero business disruption.",
+      "c4Title": "SOC 2 Type II Certified",
+      "c4Desc": "All administrative actions, data edits, and B2B parameters are tracked with cryptographically signed logs."
+    },
+    "solutions": {
+      "title": "ERP & MRP Solutions",
+      "subtitle": "Enable real-time collaboration across all departments of your business.",
+      "mrpTitle": "MRP & Production Planning",
+      "mrpDesc": "Material requirements planning starting from customer orders, work center capacity analysis, and baking/production scheduling.",
+      "b2bTitle": "B2B Dealer Network Interface",
+      "b2bDesc": "Enable your dealers to place their own orders, generate quotes, and manage current account statements and payment schedules online.",
+      "financeTitle": "Finance & Accounting",
+      "financeDesc": "Full integration of trial balances, balance sheets, income statements, journal entries, and accounting periods with international standards.",
+      "glassTitle": "Smart Glass Project Designer",
+      "glassDesc": "Draw dynamic glass enclosure, guillotine, and facade cladding projects based on custom dimensions, generating instant cost and waste analyses.",
+      "warrantyTitle": "Warranty & Service Support",
+      "warrantyDesc": "Track post-installation acceptance forms, warranty durations, and service support tickets originating from dealers or end-users.",
+      "inventoryTitle": "Inventory & Logistics",
+      "inventoryDesc": "Multi-warehouse management, reorder points, ABC velocity analysis, and barcode-supported shipping processes.",
+      "simulator": {
+        "title": "CoreAlign Interactive Module Simulators",
+        "subtitle": "Experience four main pillars of our cloud platform using live parameters.",
+        "tabCAD": "Smart CAD Designer",
+        "tabB2B": "B2B Dealer Credit",
+        "tabMRP": "MRP Furnace Scheduling",
+        "tabFinance": "Double-Entry Ledger",
+        "width": "Width (mm)",
+        "height": "Height (mm)",
+        "glassType": "Glass Type",
+        "profile": "Profile Selection",
+        "calcTitle": "MRP Optimization Analysis (Concurrent Simulation)",
+        "totalArea": "Total Area",
+        "panelCount": "Number of Panels",
+        "wasteRate": "MRP Waste Rate",
+        "wasteSaved": "Saved Waste Savings",
+        "estCost": "Estimated Mfg Cost",
+        "dealerPrice": "Dealer Cost (Net)",
+        "leadTime": "Est. Dispatch Time",
+        "leadTimeValue": "3 Business Days (Production Line Ordered)",
+        "wasteCompare": "While traditional manufacturing incurs a 15% waste rate, CoreAlign's MRP 2D cutting optimization algorithm suppresses scrap to just 1.2%.",
+        "calculate": "Simulate & Calculate",
+        "glassStandard": "4mm Tempered Single Glass",
+        "glassDouble": "Double Glazed Comfort (4+12+4)",
+        "glassLaminated": "Laminated Safety Glass",
+        "profileStandard": "Standard Aluminum Profile",
+        "profileThermal": "Premium Thermal Insulated Profile",
+        "profileSlim": "Slim Line Minimalist Profile",
+        "b2bOrderVal": "Order Value (€)",
+        "b2bDealerTier": "Dealer Segment",
+        "b2bTerms": "Payment Terms",
+        "b2bRisk": "Dealer Risk Profile",
+        "b2bLimitStatus": "Credit Limit Status",
+        "b2bDownpayment": "Required Downpayment / Amt",
+        "b2bReservation": "Allocated Stock Reservation",
+        "b2bApproved": "APPROVED",
+        "b2bWarning": "WARNING / RISKY",
+        "b2bOverlimit": "CREDIT BLOCK / LOCKED",
+        "b2bTierStandard": "Standard Dealer",
+        "b2bTierGold": "Gold Dealer (10% Discount)",
+        "b2bTierPremium": "Premium Partner (20% Discount)",
+        "b2bTermsAdvance": "Cash in Advance",
+        "b2bTerms30": "Net 30 Days",
+        "b2bTerms60": "Net 60 Days (Cheque)",
+        "b2bRiskLow": "Low Risk (Reliable)",
+        "b2bRiskMedium": "Medium Risk (Monitored)",
+        "b2bRiskHigh": "High Risk (Collateral Required)",
+        "mrpWeight": "Total Glass Weight (kg)",
+        "mrpThickness": "Glass Thickness (mm)",
+        "mrpFurnaceLoad": "Tempering Furnace Load (%)",
+        "mrpCycles": "Required Baking Cycles",
+        "mrpEnergy": "Est. Baking Power Cost",
+        "mrpCycleVal": "{{count}} Cycle(s)",
+        "finInvoiceVal": "Invoice Value",
+        "finVatRate": "VAT Rate",
+        "finPostLedger": "Resulting Double-Entry Journal (T-Account)",
+        "finAccount": "Account Code & Label",
+        "finDebit": "Debit (Dr.)",
+        "finCredit": "Credit (Cr.)",
+        "finNetRevenue": "Net Revenue (Excl. VAT)",
+        "finCalculatedVat": "Calculated Output VAT (391)",
+        "finReceivableVal": "Dealer Receivables (120)",
+        "finPeriodStatus": "Active Fiscal Period Impact",
+        "finPeriodOpen": "Period Open (Auto Post Active)"
+      }
+    },
+    "articles": {
+      "title": "Strategy & Articles",
+      "subtitle": "Case studies of businesses digitizing with CoreAlign and industry insights.",
+      "readMore": "Read More",
+      "close": "Close",
+      "a1Category": "CEO VISION",
+      "a1Title": "Data Integrity in Cloud-Based ERP Systems",
+      "a1Text": "Unlike traditional ERP models, the CoreAlign cloud architecture validates all data entries in real time. Designed with a goal of zero data loss during dealer-to-production handoffs, our infrastructure provides synchronous data reconciliation across ERP, MRP, and accounting layers.",
+      "a1Author": "Ahmet Yilmaz",
+      "a1Role": "CEO, CoreAlign Inc.",
+      "a1FullText": "The biggest vulnerability of traditional ERP systems is disconnected data flow between operational units. Orders received from dealers via email or phone bear a significant margin of error during manual entry. This leads to severe revenue leakages, ranging from incorrect glass sizing to inconsistent billing. CoreAlign initiates dynamic constraint checks (credit limit, profile dimension restrictions, inventory blockages) the moment a dealer inputs an order. Our system instantly commits the order directly to the MRP production queue and bookkeeping journal entries. For CEOs and financial executives, this translates to real-time visibility into cash flow and manufacturing throughput, completely eliminating the need for manual end-of-day reconciliation.",
+      "a2Category": "MRP & PRODUCTION",
+      "a2Title": "Resource Planning in Manufacturing: Waste & Capacity Optimization",
+      "a2Text": "In custom-made manufacturing sectors like glass enclosure and metal processing, the largest cost driver is waste. Our MRP engine, integrated with the CoreAlign Smart Glass Design module, performs cutting optimization to reduce raw material waste by 15% while preventing bottlenecks at work centers.",
+      "a2Author": "Dr. Elif Kaya",
+      "a2Role": "MRP Product Manager",
+      "a2FullText": "In sectors like glass and metal processing where material waste is a critical factor, production scheduling and cutting templates dictate profitability. In traditional operations, shop floor operators cut sheets based on personal intuition, causing an average raw material waste of 15% to 18%. The CoreAlign MRP module leverages 2D Cutting Optimization algorithms to automatically group incoming dealer orders, arranging them to ensure minimal scrap. Additionally, it tracks tempering furnace load ratios in real time to optimize energy consumption. This yields a 35% increase in production capacity while directly lowering raw material procurement expenses.",
+      "a3Category": "DEALER RELATIONS",
+      "a3Title": "Speed and Order Accuracy in B2B Dealer Portals",
+      "a3Text": "Mistakes made by dealers when ordering cause irreversible losses on the production line. Thanks to our integrated validation rules and real-time current account credit checks, we have reduced dealer order error rates to zero. Our mobile-responsive interface has sped up order approval times by 70%.",
+      "a3Author": "Can Demir",
+      "a3Role": "Dealer Network Director",
+      "a3FullText": "A manufacturer's scaling capability is directly linked to the ordering speed and ease of its dealer network. Our B2B portal empowers dealers to draft 3D or 2D design layouts for bespoke dimensions. Once designed, CoreAlign backend APIs evaluate profile lengths, glass thickness tolerances, and wind-load metrics automatically. Orders containing structural anomalies are blocked from submission, showing real-time corrective suggestions to the dealer. Approved entries seamlessly populate dispatch logs and dealer ledgers. This end-to-end automation terminates administrative telephone confirmation cycles, transforming transaction times from hours to minutes.",
+      "a4Category": "INFRASTRUCTURE & SECURITY",
+      "a4Title": "Cloud Data Isolation in Multi-Tenant Architectures",
+      "a4Text": "Corporate data confidentiality is of paramount importance in cloud ERP architectures. CoreAlign guarantees absolute records security through hybrid encryption keys and logically isolated schema namespaces.",
+      "a4Author": "Murat Celik",
+      "a4Role": "Head of Security & Infrastructure",
+      "a4FullText": "One of the chief concerns of enterprise companies utilizing SaaS ERP platforms is the risk of cross-tenant data leaks. CoreAlign addresses this directly by implementing tenant-scoped database query filters. Every database lookup automatically applies the local TenantKey constraint. Furthermore, all sensitive financial records, billing metadata, and hardware fingerprints are encrypted at-rest using AES-256 keys. This ensures that database administrators cannot view plaintext billing parameters directly from DB clusters. Our role-based access control (RBAC) structures prevent unauthorized API query requests, ensuring dealers are constrained solely to their localized portals."
+    },
+    "migration": {
+      "title": "Easy Migration & Data Import Intelligence",
+      "subtitle": "Migrate data from your active software into CoreAlign infrastructure with zero loss.",
+      "desc": "CoreAlign has bi-directional integration templates with popular ERP/accounting programs and global systems. You can import your existing data to be schema-compliant with a single click and start working immediately.",
+      "selectErp": "1. Select Your Current ERP / Software",
+      "selectEntity": "2. Select Data Type to Migrate",
+      "mappingPreview": "Schema Mapping Preview",
+      "legacyField": "Legacy Field (Source)",
+      "corealignField": "CoreAlign Field (Target)",
+      "status": "Status",
+      "autoMapped": "Auto Mapped",
+      "btnStart": "Start Data Migration Simulation",
+      "btnSimulating": "Migrating...",
+      "successTitle": "Migration Completed and Verified!",
+      "successText": "All your data has passed schema integrity validation and was successfully imported.",
+      "session": "Session ID",
+      "imported": "Records Imported",
+      "skipped": "Records Skipped (Duplicates)",
+      "errors": "Error Count",
+      "faqCta": "Contact Us",
+      "entityCustomers": "Customer Cards (120/320)",
+      "entityProducts": "Product Catalog & Price List",
+      "entityGlAccounts": "General Ledger Chart of Accounts",
+      "stepRead": "Reading source file and parsing headers...",
+      "stepVal": "Validating record rows and data formats...",
+      "stepNormalize": "Normalizing relational data (Country, currency etc.)...",
+      "stepEncrypt": "Encrypting financial data with AES-256...",
+      "stepPost": "Posting customer balances and journal entries to ledger...",
+      "log1": "[INFO] CSV/Excel data source successfully resolved. 248 records found.",
+      "log2": "[WARN] Non-standard country format detected. Auto-normalizing: 'Turkey' -> 'Türkiye'.",
+      "log3": "[INFO] Cryptographic validation active. Generating AES-256 transient keys.",
+      "log4": "[INFO] Schema matches CoreAlign Customer model. TenantKey: 'tenant_usr_01'.",
+      "log5": "[SUCCESS] 1,240 records posted to double-entry ledger. Balanced debit/credit."
+    },
+    "faq": {
+      "title": "Frequently Asked Questions for Executives",
+      "subtitle": "Learn about CoreAlign's enterprise integration, security, and operational benefits.",
+      "q1": "Can it integrate with our existing ERP and Accounting systems?",
+      "a1": "Yes. CoreAlign can perform real-time or periodic data synchronization with Logo Go/Tiger, Mikro, Netsis, and global SAP systems through bi-directional REST APIs and pre-built ETL templates. When your dealers place orders, ledger transactions and invoices are automatically posted to your legacy accounting system.",
+      "q2": "How does it prevent drawing errors in dealer orders?",
+      "a2": "The built-in Smart CAD Drawing engine inspects dynamic rules and tolerance limits (glass thickness boundaries, wind-load tolerances, maximum panel widths) in real time at the order stage. Invalid dimensions or incorrect structures cannot be submitted; the system automatically offers corrective feedback to the dealer, reducing shop-floor scrap rates to zero.",
+      "q3": "What are the data security and hosting options?",
+      "a3": "CoreAlign applies tenant-level logical data isolation in a multi-tenant cloud architecture. All sensitive fields are encrypted at-rest using AES-256. For enterprise clients, we offer hosting options on dedicated cloud instances or within their local data centers (On-Premise).",
+      "q4": "How is furnace capacity optimized in stock and production planning (MRP)?",
+      "a4": "Our MRP module takes order dimensions and schedules sheets using 2D Cutting Optimization algorithms (cutting waste from 15% to 1.2%). Additionally, it groups tempering furnace runs based on glass thickness and weight to compute furnace load ratios, preventing empty furnace runs and saving significant energy costs."
+    },
+    "showcase": {
+      "title": "CoreAlign Enterprise Module Ecosystem",
+      "subtitle": "Integrated architecture covering all operational needs of glass processing, metal construction, and bespoke manufacturing sectors.",
+      "m1Title": "Smart CAD Drawing Engine",
+      "m1Desc": "Provides profile cut tolerances, wind load statics, and 3D angle snapping algorithms to let your dealers submit zero-error drawing orders.",
+      "m2Title": "MRP Furnace & Cut Optimizer",
+      "m2Desc": "Reduces glass and metal sheet waste ratios to 1.2% with a 2D nesting algorithm, optimizing tempering furnace loading and baking run scheduling.",
+      "m3Title": "B2B Dealer Network Portal",
+      "m3Desc": "Unifies dealer-specific pricing tiers, instant credit check gates, order templates, quotation drafting, and dispatch tracking in a single platform.",
+      "m4Title": "Enterprise Finance & Ledger",
+      "m4Desc": "Synchronizes transaction voucher generation directly from sales orders, providing trial balances, income statements, and tax withholding calculation controls.",
+      "m5Title": "Procurement & Supply Chain",
+      "m5Desc": "Manages purchase requisitions, supplier requests for quotation (RFQ), warehouse receipt slips, and barcode-validated item storage logs.",
+      "m6Title": "Warranty, Acceptance & Service",
+      "m6Desc": "Tracks digital post-installation acceptance sign-offs, customer support tickets, technician scheduling, work order closures, and warranty contract lifecycles."
+    },
+    "security": {
+      "title": "Enterprise Security & Infrastructure Integrity",
+      "subtitle": "Your business records are protected by international security standards, isolated namespaces, and advanced cryptographic protocols.",
+      "tabCrypto": "Data Encryption (AES-256)",
+      "tabCryptoDesc": "CoreAlign encrypts data at-rest within database clusters and in-transit across networks using the AES-256 standard. No unauthorized actors, including system or database administrators, can view financial ledger records in plaintext.",
+      "tabTenant": "Tenant Isolation",
+      "tabTenantDesc": "Our multi-tenant architecture logically isolates records between distinct enterprises. Every database lookup automatically applies the local TenantKey constraint, mathematically eliminating any risk of cross-tenant data leakages.",
+      "tabAudit": "Audit Trails",
+      "tabAuditDesc": "All administrative adjustments, records changes, and user permission updates are logged to an immutable and undeletable audit trail. User operations are captured with millisecond precision to verify SOC 2 auditing compliance.",
+      "tabCert": "Global Certifications",
+      "tabCertDesc": "CoreAlign operations fully comply with ISO 27001 Information Security standards, GDPR privacy regulations, and SOC 2 Type II trust principles. Active-active redundant server clusters guarantee an annual uptime SLA of 99.99%."
+    },
+    "savings": {
+      "title": "Financial ROI & Raw Material Savings Calculator",
+      "subtitle": "Instantly calculate the raw material and administrative hours saved by deploying CoreAlign.",
+      "desc": "Adjust the sliders below to match your factory's monthly output and current waste ratios to calculate your projected annual savings with CoreAlign's 2D cutting nest optimization.",
+      "volLabel": "Monthly Glass / Profile Volume",
+      "wasteLabel": "Current Material Waste Rate",
+      "orderLabel": "Monthly Dealer Orders",
+      "annualSaving": "Annual Material Savings",
+      "timeSaved": "Administrative Time Saved",
+      "timeSavedVal": "{{count}} Hours/Month",
+      "roiLabel": "Projected ROI Amortization",
+      "roiValue": "{{count}} Month(s)",
+      "compareText": "CoreAlign MRP limits raw material waste rate to 1.2%. Calculations are based on an average material cost of €140/m²."
+    },
+    "integrations": {
+      "title": "Supported Integrations & Protocols Catalog",
+      "subtitle": "CoreAlign communicates bi-directionally with your active ERPs, databases, and shop-floor machines.",
+      "erpLabel": "ERP Integrations",
+      "dbLabel": "Database & APIs",
+      "hwLabel": "Hardware & Protocols",
+      "erpDesc": "Fully synchronized accounts, stock items, and billing vouchers flow with Logo Tiger/Go, Netsis, Mikro, and SAP ERP.",
+      "dbDesc": "MS SQL, PostgreSQL database connectors, and REST API / Webhook integration pipelines.",
+      "hwDesc": "Modbus TCP/IP and OPC UA hardware communication protocols for tempering furnaces and cutting machines."
+    },
+    "testimonials": {
+      "title": "Success Stories from Manufacturers",
+      "subtitle": "Read how leading manufacturing hubs optimized shop-floor operations by migrating to CoreAlign.",
+      "t1Quote": "Thanks to B2B order constraint verification, we reduced dealer drawing errors to absolute zero. The production line runs continuously.",
+      "t1Author": "Mehmet Sahin",
+      "t1Role": "General Manager, AlumGlass Corp.",
+      "t2Quote": "Temper furnace optimization and 2D nesting algorithms reduced our furnace power costs by 22%, locking our material waste rate at 1.2%.",
+      "t2Author": "Dr. Yavuz Selim",
+      "t2Role": "Operations Director, AynaYapı Inc."
+    },
+    "scheduler": {
+      "title": "Schedule a Live Demo Session",
+      "subtitle": "Book a 15-minute live personalized demo run with CoreAlign engineers to answer your factory's integration needs.",
+      "name": "Your Name",
+      "email": "Your Email",
+      "company": "Company Name",
+      "module": "Interested Module",
+      "date": "Preferred Date",
+      "submit": "Schedule Demo Meeting",
+      "sending": "Scheduling...",
+      "success": "Your demo request has been successfully submitted! Our team will reach out to you shortly.",
+      "optCAD": "Smart CAD Drawing Engine",
+      "optMRP": "MRP Production & Furnace Planning",
+      "optB2B": "B2B Dealer Network Portal",
+      "optFinance": "Accounting & Ledger"
+    },
+    "contact": {
+      "title": "Get in Touch with Us",
+      "subtitle": "Fill out the form to deploy CoreAlign solutions in your business or to request technical support.",
+      "name": "Your Name",
+      "email": "Your Email",
+      "subject": "Subject",
+      "message": "Your Message",
+      "submit": "Submit",
+      "sending": "Sending...",
+      "success": "Your message has been successfully sent!",
+      "error": "Failed to send message, please try again.",
+      "infoTitle": "Contact Details",
+      "address": "Address: Technopark Istanbul, Block A No: 120, Pendik / Istanbul",
+      "phone": "Phone: +90 (216) 555 01 00",
+      "emailLabel": "Email: info@corealign.com",
+      "hours": "Business Hours: Weekdays 09:00 - 18:00"
+    },
+    "comparison": {
+      "title": "Why CoreAlign?",
+      "subtitle": "Compare CoreAlign against traditional methods and legacy ERP systems.",
+      "colAspect": "Evaluation Criteria",
+      "colCorealign": "CoreAlign Cloud Platform",
+      "colLegacy": "Traditional ERP / MRP",
+      "colExcel": "Excel / Manual Tracking",
+      "aspectCAD": "Order CAD Validation",
+      "aspectCADCorealign": "Instant error-free validation via dynamic rules",
+      "aspectCADLegacy": "Requires manual check at production stage",
+      "aspectCADExcel": "Error detection impossible, relies on operator",
+      "aspectWaste": "Material Waste Rates",
+      "aspectWasteCorealign": "Fixed at 1.2% with 2D Nesting Optimization",
+      "aspectWasteLegacy": "Between 8% - 12% with basic nesting algorithms",
+      "aspectWasteExcel": "No optimization, high waste at 15% and above",
+      "aspectLedger": "Financial Accounting Integration",
+      "aspectLedgerCorealign": "Automatic general ledger entry at the moment of order",
+      "aspectLedgerLegacy": "Batch transfer at end-of-day or weekend",
+      "aspectLedgerExcel": "Manual double entry, reconciliation errors common",
+      "aspectSpeed": "Deployment & Onboarding",
+      "aspectSpeedCorealign": "Live in days with ready-to-use ETL templates",
+      "aspectSpeedLegacy": "Months of consulting and high overhead costs",
+      "aspectSpeedExcel": "No infrastructure, instant but unsustainable",
+      "aspectMachine": "Live Machine Communication",
+      "aspectMachineCorealign": "Direct furnace integration via OPC UA & Modbus",
+      "aspectMachineLegacy": "Requires additional interface/hardware investment",
+      "aspectMachineExcel": "Not supported, manual entry required"
+    },
+    "pricing": {
+      "title": "Tailored Scaling Plans for Your Business",
+      "subtitle": "Flexible licensing and integration packages tailored to your production volume and dealer network.",
+      "plan1Title": "Growing Business",
+      "plan1Desc": "For manufacturers looking to digitalize B2B dealer order channels and enforce CAD validation.",
+      "plan1Features": [
+        "Smart CAD Drawing Validation",
+        "B2B Dealer Network Interface",
+        "Credit Limit & Risk Controls",
+        "Multi-Currency Integration",
+        "Standard Support SLA"
+      ],
+      "plan2Title": "Operational Scale",
+      "plan2Desc": "For mid-scale factories aiming to maximize yield using furnace and cutting optimizations.",
+      "plan2Features": [
+        "All features in Starter Plan",
+        "MRP Production & Furnace Scheduling",
+        "2D Nesting & Yield Optimization",
+        "Inventory & Multi-Warehouse Tracking",
+        "Priority Email & Phone Support"
+      ],
+      "plan3Title": "Enterprise Suite",
+      "plan3Desc": "For market leaders requiring bi-directional ERP sync and comprehensive financial accounting.",
+      "plan3Features": [
+        "All features in Scale Plan",
+        "Accounting & Double-Entry General Ledger",
+        "Pre-built ERP Connectors (SAP, Logo, Mikro)",
+        "Modbus / OPC UA Live Machine APIs",
+        "Dedicated Account Manager & 24/7 Support"
+      ],
+      "contactUs": "Schedule a Demo",
+      "recommended": "MOST POPULAR",
+      "contactCta": "Get a Custom Quote"
+    },
+    "workflow": {
+      "title": "Live Flow from B2B Order to General Ledger",
+      "subtitle": "Observe how the CoreAlign infrastructure automatically routes data between departments in real time.",
+      "step1Title": "1. Dealer Draft & Validation",
+      "step1Desc": "Dealer draws the design in CAD, rules are checked dynamically.",
+      "step2Title": "2. MRP Optimization",
+      "step2Desc": "Cutting patterns are grouped via 2D nesting and dispatched to shop floor.",
+      "step3Title": "3. Ledger Entry",
+      "step3Desc": "Invoice and double-entry ledger entries are posted instantly.",
+      "interactivePreview": "Interactive Flow Simulation",
+      "simCADStatus": "CAD Validation Status: APPROVED",
+      "simCADWidth": "Width: {{w}} mm",
+      "simCADHeight": "Height: {{h}} mm",
+      "simMRPTitle": "MRP Algorithmic Plan",
+      "simMRPWaste": "Optimized Scrap Rate: 1.2% (Zero Errors)",
+      "simMRPTemp": "Tempering Furnace Temp: 680°C",
+      "simFinTitle": "General Ledger Entry (Auto-generated Book Record)",
+      "simFinAccount": "Account Code / Name",
+      "simFinDebit": "Debit",
+      "simFinCredit": "Credit",
+      "simFinTotal": "Total"
+    }
+  },
+  "GlassEnclosure": {
+    "Designer": {
+      "Shell": {
+        "PersonaOverride": {
+          "TriggerAria": "Screen persona mode",
+          "TriggerTitle": "Screen-specific persona mode",
+          "MenuTitle": "On this screen",
+          "Default": "Use default",
+          "DefaultHelp": "Follow the global persona mode",
+          "Simple": "Simple",
+          "SimpleHelp": "Guided, fewer panels",
+          "Pro": "Pro",
+          "ProHelp": "Full control, dense info"
+        },
+        "Tab": {
+          "Runs": {
+            "Simple": "Facades",
+            "Pro": "Runs"
+          },
+          "Canvas": {
+            "Simple": "Drawing",
+            "Pro": "Canvas"
+          },
+          "Inspector": {
+            "Simple": "Details",
+            "Pro": "Inspector"
+          },
+          "BOM": {
+            "Simple": "Materials",
+            "Pro": "BOM"
+          }
+        },
+        "Panel": {
+          "Runs": {
+            "AddSimple": "Add facade",
+            "AddPro": "Add run"
+          },
+          "Inspector": {
+            "Title": {
+              "Simple": "Edit details",
+              "Pro": "Inspector"
+            }
+          },
+          "BOM": {
+            "Title": {
+              "Simple": "Material list",
+              "Pro": "BOM"
+            }
+          }
+        },
+        "Toolbar": {
+          "ZoomIn": "Zoom in",
+          "ZoomOut": "Zoom out",
+          "FitScreen": "Fit to screen",
+          "Grid": "Grid"
+        },
+        "Back": "Back",
+        "Close": "Close",
+        "CloseDrawer": "Close",
+        "OpenInspector": "Details",
+        "SideRail": "Navigation",
+        "Collapse": "Collapse",
+        "Expand": "Expand",
+        "BomLines": "Lines",
+        "BomPanel": "Bill of Materials",
+        "BomStale": "Outdated",
+        "BomTitleSimple": "Bill of Materials",
+        "BomTotal": "Total",
+        "CanvasPanel": "Canvas",
+        "Fit": "Fit",
+        "FitToScreen": "Fit to screen",
+        "FocusMode": "Full screen",
+        "Grid": "Grid",
+        "NoRuns": "No runs added yet.",
+        "RecomputeSimple": "Refresh",
+        "RunsPanel": "Runs",
+        "SelectedRun": "Selected",
+        "ZoomIn": "Zoom in",
+        "ZoomOut": "Zoom out",
+        "ExpandRunsPanel": "Expand runs panel",
+        "CollapseRunsPanel": "Collapse runs panel",
+        "ExpandInspectorPanel": "Expand inspector panel",
+        "CollapseInspectorPanel": "Collapse inspector panel"
+      },
+      "NewRun": "New run",
+      "Save": "Save",
+      "SaveSuccess": "Scene saved",
+      "Validate": "Validate",
+      "ValidationDone": "Validation complete",
+      "Annotations": "Annotations",
+      "Presentation": "Presentation",
+      "Quality": "Quality",
+      "Inspector": "Inspector",
+      "RunInspector": "Run inspector",
+      "PanelInspector": "Panel inspector",
+      "PanelCount": "{{count}} panels",
+      "Rebalance": "Rebalance",
+      "TechnicalSummary": "Technical summary",
+      "TotalArea": "Total area",
+      "TotalWeight": "Total weight",
+      "WeightedU": "Weighted U-value",
+      "AvgSoundDb": "Avg. sound (dB)",
+      "MaxThickness": "Max. thickness",
+      "NoSelection": "Select a run or panel in the 3D scene.",
+      "DefaultRunLabel": "Run",
+      "RunAdded": "Run added",
+      "ConnectionInspector": "Corner connection",
+      "ViewSplit": "Split",
+      "ViewPlan": "Plan (2D)",
+      "View3D": "3D",
+      "LiveCost": "Live cost",
+      "LivePreview": "Preview",
+      "NoCostYet": "Add runs and panels to see costs.",
+      "LiveCostDisclaimer": "In-browser estimate. The server report is authoritative.",
+      "ViewCutting": "Cutting",
+      "ViewEngineering": "Engineering",
+      "ViewQuote": "Quote",
+      "ViewSurvey": "Site survey",
+      "Greenhouse": {
+        "PitchParam": {
+          "SectionTitle": "Gable roof parameters",
+          "RoofPitch": "Roof pitch",
+          "RidgeHeight": "Ridge height",
+          "EaveHeight": "Eave height",
+          "PitchOutOfRange": "Roof pitch must be between {{min}}° and {{max}}°.",
+          "RidgeMustExceedEave": "Ridge height must be greater than eave height.",
+          "RidgeRequired": "Ridge height is required for gable roofs.",
+          "EaveRequired": "Eave height is required for gable roofs.",
+          "PitchRequired": "Roof pitch is required for gable roofs."
+        }
+      },
+      "AddPanel": "Add panel",
+      "ArcSweepInfo": "Curved · sweep ≈ {{deg}}°",
+      "ArcStraightInfo": "0 = straight run; enter a radius to curve this run.",
+      "ArcMinRadiusInfo": "Min. radius {{min}} mm",
+      "PanelCountLabel": "Panel count",
+      "GlassPerPanelHint": "Glass is chosen per panel. Select a panel in the layout to set its glass type.",
+      "DeleteRun": "Delete run",
+      "DeletePanel": "Delete panel",
+      "RunDeleted": "Run deleted",
+      "PanelDeleted": "Panel deleted",
+      "PanelAdded": "Panel added",
+      "CurvedRunsTitle": "Curved runs",
+      "CurvedRunsHint": "Run lengths are developed (unfolded) dimensions; cutting lists and areas are correct. Glass and profiles must be bent to the radius in production.",
+      "Help": {
+        "Open": "Usage and shortcuts",
+        "Title": "Usage & Shortcuts",
+        "Close": "Close",
+        "Selection": {
+          "Title": "Selection",
+          "Click": "Click an item to select it",
+          "ClickEmpty": "Click empty space to clear the selection"
+        },
+        "Keyboard": {
+          "Title": "Keyboard",
+          "Undo": "Undo",
+          "Redo": "Redo",
+          "Save": "Save",
+          "Copy": "Copy",
+          "Paste": "Paste",
+          "Cancel": "Cancel"
+        },
+        "Plan2D": {
+          "Title": "2D Plan",
+          "Draw": "In draw mode, drag to sketch a run",
+          "Resize": "Drag the endpoints to resize",
+          "DrawWall": "In wall mode, drag to draw walls/obstacles",
+          "Autofill": "Select a wall → 'Fill openings with glass' fills its openings and holes"
+        },
+        "View3D": {
+          "Title": "3D",
+          "Move": "Drag the selected hardware with the axis arrows",
+          "Orbit": "Right-click or middle wheel to rotate and zoom",
+          "MullionResize": "Drag a mullion (panel divider) to resize panels"
+        },
+        "Tools": {
+          "Title": "Tools",
+          "Basic": "Select · Move · Rotate · Stretch",
+          "Surface": "Draw on surface · Paint · Erase",
+          "Autofill": "Fill the selected wall's openings with glass",
+          "Placement": "Add run / wall / floor / roof — sticks to the cursor, click to place",
+          "Delete": "Delete selected item",
+          "Cancel": "Cancel tool and placement",
+          "Lasso": "Multi-select with the lasso — delete them all with Del",
+          "CtrlSelect": "Ctrl+click adds/removes items to the multi-selection — align, join, match and fill from the top-right bar",
+          "Pen": "Pen — draw a free polygon surface (click corners, snap, Shift straight, close to finish)",
+          "Stack": "Hold Alt while moving to stack objects on top of each other"
+        },
+        "Draw": {
+          "Title": "Surface drawing",
+          "Shapes": "Pick the shape (rectangle, circle, ellipse, triangle, polygon, freehand pen) from the strip; the drawn area is marked as a region on the surface",
+          "Drag": "Drag on a wall or floor/roof surface to draw the area — the region becomes an independent layer",
+          "PushPull": "Use the Stretch tool to push/pull the layer face and set its depth; pushing fully through turns it into an opening",
+          "Split": "With 'Split wall', the wall is divided at the clicked point"
+        }
+      },
+      "Arc": {
+        "Title": "Curve (arc)",
+        "SweepInput": "Sweep angle (°)",
+        "SurveyTitle": "From site survey (chord + rise)",
+        "Chord": "Chord (mm)",
+        "Sagitta": "Rise (mm)",
+        "Apply": "Apply",
+        "DerivedInfo": "R{{r}} · {{deg}}° · chord {{chord}} mm · rise {{sagitta}} mm · joint {{joint}}°",
+        "BentGlass": "Bent glass (custom production, ~2.5-3× cost)",
+        "WarnTightRadius": "Tight radius ({{r}} mm) — verify the system manufacturer minimum (typically ≥1500 mm).",
+        "WarnJointAngle": "Joint angle {{deg}}° — increase the panel count for faceting (recommended ≤10°).",
+        "WarnSliding": "Sliding panels cannot run on a curved track with flat glass — enable bent glass or change the opening type.",
+        "ModeBent": "Bent glass",
+        "ModeFaceted": "Faceted"
+      },
+      "PastePanelHint": "Paste: click a target run or panel · Esc to cancel",
+      "PasteHardwareHint": "Paste: click a target panel · Esc to cancel",
+      "Appearance": {
+        "Label": "Appearance",
+        "Studio": "Studio",
+        "Sunset": "Sunset",
+        "City": "City",
+        "Dawn": "Dawn",
+        "Plain": "Plain"
+      },
+      "Polygon": {
+        "SectionTitle": "Polygon vertices",
+        "VertexX": "X (mm)",
+        "VertexY": "Y (mm)",
+        "AddVertex": "Add vertex",
+        "RemoveVertex": "Remove",
+        "Save": "Save polygon",
+        "Saved": "Polygon saved",
+        "Invalid": "At least 3 vertices with non-zero edges are required",
+        "HeightNote": "Facade height: {{height}} mm"
+      },
+      "Wall": {
+        "Title": "Wall / Obstacle",
+        "Delete": "Delete wall",
+        "Thickness": "Thickness",
+        "Autofill": "Fill openings with glass",
+        "AutofillHint": "Fills the selected wall's window/door openings and through-holes with glass runs.",
+        "AutofillDone": "{{count}} glass runs created.",
+        "AutofillNone": "No openings to fill — add a window/door opening or a through-hole to the wall.",
+        "HeightEnd": "End height / slope (mm)",
+        "Openings": "Openings",
+        "AddWindow": "Window",
+        "AddDoor": "Door",
+        "NoOpenings": "No openings — add a window or a door.",
+        "Window": "Window",
+        "Door": "Door",
+        "RemoveOpening": "Remove opening",
+        "OpeningOffset": "Position",
+        "OpeningSill": "Bottom",
+        "NoRoomForOpening": "No room for a new opening — shrink existing ones or extend the wall.",
+        "AutofillSelectWall": "Select a wall to fill its openings, or multi-select several walls to fill the gaps between them.",
+        "AutofillNoGaps": "No fillable gap found between the selected walls — free wall ends must be 30 cm - 12 m apart."
+      },
+      "Slab": {
+        "Floor": "Floor",
+        "Roof": "Roof",
+        "Kind": "Type",
+        "Depth": "Depth",
+        "Thickness": "Thickness",
+        "Elevation": "Elevation",
+        "Rotation": "Rotation",
+        "DeleteFloor": "Delete floor",
+        "DeleteRoof": "Delete roof"
+      },
+      "Transform": {
+        "Title": "Transform",
+        "Length": "Length",
+        "Height": "Height",
+        "HeightEnd": "End height",
+        "Thickness": "Thickness",
+        "Depth": "Depth",
+        "Width": "Width",
+        "X": "X",
+        "Y": "Y",
+        "Rotation": "Rotation",
+        "Base": "Base",
+        "Elevation": "Elevation"
+      },
+      "Toolbox": {
+        "Title": "Objects",
+        "AddRun": "Add run",
+        "AddWall": "Add wall",
+        "AddFloor": "Add floor",
+        "AddRoof": "Add roof"
+      },
+      "Tool": {
+        "Select": "Select",
+        "Move": "Move",
+        "Rotate": "Rotate",
+        "Stretch": "Stretch",
+        "Paint": "Paint",
+        "Erase": "Erase",
+        "Autofill": "Fill openings with glass",
+        "AddRun": "Add run",
+        "AddWall": "Add wall",
+        "AddFloor": "Add floor",
+        "AddRoof": "Add roof",
+        "NoColors": "Color catalog is empty",
+        "Draw": "Draw on surface",
+        "ShapeRect": "Rectangle",
+        "ShapeCircle": "Circle",
+        "ShapeEllipse": "Ellipse",
+        "ShapeTriangle": "Triangle",
+        "ShapePolygon": "Polygon",
+        "ShapeFree": "Freehand",
+        "ShapeSplit": "Split wall",
+        "ModeRecess": "Recess (carve)",
+        "ModeProtrude": "Protrusion (layer)",
+        "ModeHole": "Opening (hole)",
+        "DrawHint": "Draw a region on a surface → give it depth with the Stretch (S) tool",
+        "MultiSelect": "Multi-select (lasso)",
+        "Material_wood": "Wood",
+        "Material_marble": "Marble",
+        "Material_concrete": "Concrete",
+        "Material_panel": "Panel",
+        "Pen": "Pen (draw surface / layer)",
+        "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels"
+      },
+      "WallFeature": {
+        "Title": "Wall layer",
+        "Mode": "Behavior",
+        "Depth": "Depth",
+        "Offset": "Position X",
+        "CenterZ": "Position Y (height)",
+        "Sides": "Side count",
+        "FlipSide": "Flip face (inner/outer)",
+        "Color": "Layer color",
+        "ColorReset": "Surface color",
+        "Hint": "Use the Stretch tool to drag the layer face and adjust its depth; pushing it all the way through turns it into an opening.",
+        "ListTitle": "Layers",
+        "None": "No layers — draw a shape on the surface with the 'Draw on surface' tool.",
+        "Remove": "Delete layer",
+        "DoesNotFit": "The area does not fit within the wall bounds.",
+        "Overlaps": "The area overlaps an existing opening or layer.",
+        "DoesNotFitSlab": "The area does not fit within the floor/roof bounds.",
+        "SlabTitle": "Floor/roof layer"
+      },
+      "CollisionBlocked": "This value collides with another object — not applied.",
+      "PastePlaceHint": "Paste: click a location · Esc to cancel",
+      "MultiSelect": {
+        "Count": "{{count}} items selected",
+        "DeleteAll": "Delete selected",
+        "AlignX": "Align X (same X)",
+        "AlignY": "Align Y (same Y)",
+        "Join": "Join end-to-end",
+        "EqualHeights": "Match heights",
+        "EqualLengths": "Match lengths",
+        "FillGaps": "Fill gaps with glass",
+        "SkippedCollision": "{{count}} items skipped due to collision.",
+        "NeedTwo": "Select at least two items for this action."
+      },
+      "Corner": {
+        "Title": "Corner rounding (mm)",
+        "TL": "Top left",
+        "TR": "Top right",
+        "BL": "Bottom left",
+        "BR": "Bottom right"
+      },
+      "Surface": {
+        "Title": "Drawn surface",
+        "Delete": "Delete surface",
+        "Hint": "Drag the surface with the Move tool; recolor it with the Paint tool."
+      }
+    },
+    "Field": {
+      "Code": "Code",
+      "Name": "Name",
+      "Brand": "Brand",
+      "SystemType": "System type",
+      "MaxPanel": "Max. panel",
+      "ItemCount": "Items",
+      "Thickness": "Thickness",
+      "Structure": "Structure",
+      "UValue": "U-value",
+      "SoundDb": "Sound (dB)",
+      "PricePerM2": "Price (m²)",
+      "Category": "Category",
+      "Unit": "Unit",
+      "UnitPrice": "Unit price",
+      "MaxLoad": "Max. load",
+      "System": "System",
+      "Active": "Active",
+      "Scope": "Scope",
+      "DiscountKind": "Discount type",
+      "DiscountValue": "Discount value",
+      "Coupon": "Coupon",
+      "Event": "Event",
+      "Channel": "Channel",
+      "Locale": "Locale",
+      "Subject": "Subject",
+      "Region": "Region",
+      "BasePressure": "Base pressure",
+      "HeightFactor": "Height factor",
+      "Coastal": "Coastal",
+      "WinterTemp": "Winter temperature",
+      "Humidity": "Humidity",
+      "Corrosion": "Corrosion",
+      "Recommendations": "Recommendations",
+      "StockBarLength": "Stock bar length",
+      "JumboGlass": "Jumbo glass",
+      "SawKerf": "Saw kerf",
+      "GlassKerf": "Glass kerf",
+      "GuillotineRequired": "Guillotine required",
+      "WastePercent": "Waste %",
+      "LaborCost": "Labor cost",
+      "MarginPercent": "Margin %",
+      "ToleranceTop": "Top tolerance",
+      "ToleranceSide": "Side tolerance",
+      "TransportPerKm": "Transport / km",
+      "TransportPerKg": "Transport / kg",
+      "ScaffoldingFromFloor": "Scaffolding from floor",
+      "ScaffoldingRate": "Scaffolding rate",
+      "CraneFromFloor": "Crane from floor",
+      "CraneRate": "Crane rate",
+      "WorkshopCapacity": "Workshop capacity",
+      "DefaultLocale": "Default locale",
+      "DefaultCurrency": "Default currency",
+      "DataRetention": "Data retention",
+      "QuoteTokenTtl": "Quote token TTL",
+      "OnboardingComplete": "Onboarding complete",
+      "Label": "Label",
+      "Length": "Length",
+      "Height": "Height",
+      "Width": "Width",
+      "OriginX": "X",
+      "OriginY": "Y",
+      "Rotation": "Rotation",
+      "ProfileSystem": "Profile system",
+      "Color": "Color",
+      "TopDrip": "Top drip",
+      "BottomThreshold": "Bottom threshold",
+      "OpeningType": "Opening type",
+      "GlassType": "Glass type",
+      "HasHandle": "Handle",
+      "HasLock": "Lock",
+      "HasBrushSeal": "Brush seal",
+      "Floor": "Floor",
+      "BuildingHeight": "Building height (m)",
+      "City": "City",
+      "Currency": "Currency",
+      "ArcRadius": "Arc radius"
+    },
+    "FieldExt": {},
+    "Engineering": {
+      "Title": "Engineering Report",
+      "WindLoad": "Wind Load",
+      "Thermal": "Thermal",
+      "Acoustic": "Acoustic",
+      "AppliedPressure": "Applied Pressure",
+      "HeightFactor": "Height Factor",
+      "WeightedU": "Weighted U-Value",
+      "WeightedDb": "Weighted dB",
+      "EnergySavings": "Estimated Energy Savings",
+      "DbReduction": "Noise Reduction",
+      "Runs": "Runs",
+      "Panels": "Panels",
+      "TotalArea": "Total Area",
+      "TotalWeight": "Total Weight",
+      "Overall": "Overall",
+      "Disclaimer": "Calculations are approximations per TS 498. Structural engineer approval is required for load-bearing applications.",
+      "WindZoneMissing": "Wind zone not assigned. Set it in the project header.",
+      "NoSummary": "Save the project to see the engineering summary."
+    },
+    "Share": {
+      "Title": "Glass Enclosure Quote",
+      "GrandTotal": "Grand Total",
+      "Customer": "Customer",
+      "Status": "Status",
+      "Version": "Version",
+      "ValidUntil": "Valid Until",
+      "Decide": "Decide",
+      "Accept": "Accept Design",
+      "Reject": "Reject",
+      "RejectReason": "Reason (optional)",
+      "RejectReasonPlaceholder": "Your requested changes...",
+      "Signature": "Signature",
+      "ClearSignature": "Clear",
+      "Accepted": "Quote accepted",
+      "Rejected": "Quote rejected",
+      "NotFound": "Invalid or expired share link.",
+      "Footer": "Secure share for your signature and approval."
+    },
+    "Projects": {
+      "Title": "Glass Enclosure Projects",
+      "Subtitle": "Customer projects and 3D designs.",
+      "New": "New Project",
+      "ProjectName": "Project Name",
+      "Customer": "Customer",
+      "CustomerId": "Customer ID",
+      "Status": "Status",
+      "Panels": "Panels",
+      "Area": "Area",
+      "GrandTotal": "Grand Total",
+      "Updated": "Updated",
+      "SearchPlaceholder": "Search by code or name...",
+      "Empty": "No projects yet.",
+      "Created": "Project created"
+    },
+    "HardwareCategory": {
+      "Hinge": "Hinge",
+      "Roller": "Roller",
+      "Lock": "Lock",
+      "Handle": "Handle",
+      "Gasket": "Gasket",
+      "Brush": "Brush",
+      "Bumper": "Bumper",
+      "WallBracket": "Wall Bracket",
+      "Chain": "Chain",
+      "DripCap": "Drip Cap",
+      "CornerPost": "Corner Post",
+      "Other": "Other"
+    },
+    "Cost": {
+      "Materials": "Profile",
+      "Glass": "Glass",
+      "Hardware": "Hardware",
+      "Waste": "Waste",
+      "Labor": "Labor",
+      "Scaffolding": "Scaffolding",
+      "Crane": "Crane",
+      "Transport": "Transport",
+      "BaseCost": "Base Cost",
+      "Margin": "Margin",
+      "Tax": "Tax",
+      "GrandTotal": "Customer Grand Total"
+    },
+    "Validation": {
+      "AllGood": "All checks passed.",
+      "PanelTooWide": "Panel exceeds maximum system width",
+      "RunTooTall": "Run exceeds maximum system height",
+      "GlassThicknessMismatch": "Glass thickness not compatible with system",
+      "GlassAreaExceedsMax": "Glass area exceeds maximum",
+      "WeightExceeds": "Panel weight exceeds system capacity",
+      "WindLoadFail": "Glass insufficient for wind load",
+      "SystemOpeningMismatch": "System does not support this opening type",
+      "SeismicTooLarge": "Panel too large for seismic zone",
+      "ConnectionAngleInvalid": "Mitre angle outside recommended range",
+      "SystemNotFound": "Profile system not found",
+      "GlassNotFound": "Glass type not found"
+    },
+    "Status": {
+      "All": "All",
+      "Draft": "Draft",
+      "Surveyed": "Surveyed",
+      "Quoted": "Quoted",
+      "Confirmed": "Confirmed",
+      "InProduction": "In production",
+      "Ready": "Ready",
+      "InTransit": "In transit",
+      "Installed": "Installed",
+      "Defective": "Defective",
+      "Cancelled": "Cancelled"
+    },
+    "Tab": {
+      "ProfileSystems": "Profile Systems",
+      "GlassTypes": "Glass Types",
+      "Colors": "Colors",
+      "HardwareItems": "Hardware Items",
+      "HardwareKits": "Hardware Kits",
+      "DiscountRules": "Discount Rules",
+      "NotificationTemplates": "Notification Templates",
+      "WindZones": "Wind Zones",
+      "ClimateZones": "Climate Zones",
+      "Settings": "Settings"
+    },
+    "Connection": {
+      "JointAngle": "Joint Angle",
+      "MitreCut": "Mitre Cut",
+      "SuggestedMitre": "Suggested {{value}}°",
+      "UseCornerPost": "Use corner post",
+      "CornerProfile": "Corner Profile",
+      "NoCornerProfile": "— None —",
+      "Added": "Connection added"
+    },
+    "System": {
+      "Folding": "Folding",
+      "Sliding": "Sliding",
+      "HeatInsulatedSliding": "Heat-Insulated Sliding",
+      "Guillotine": "Guillotine",
+      "Hinged": "Hinged",
+      "Fixed": "Fixed"
+    },
+    "Plan2D": {
+      "Select": "Select",
+      "Draw": "Draw",
+      "Fit": "Fit",
+      "ZoomIn": "Zoom In",
+      "ZoomOut": "Zoom Out",
+      "DrawHint": "Drag from start to end point",
+      "WallMode": "Draw wall"
+    },
+    "Opening": {
+      "Fixed": "Fixed",
+      "SlidingLeft": "Sliding ← Left",
+      "SlidingRight": "Sliding → Right",
+      "Folding": "Folding",
+      "Hinged": "Hinged",
+      "Guillotine": "Guillotine"
+    },
+    "GlassStructure": {
+      "Tempered": "Tempered",
+      "Laminated": "Laminated",
+      "DoubleGlazed": "Double Glazed",
+      "TripleGlazed": "Triple Glazed",
+      "LowE": "Low-E"
+    },
+    "DiscountScope": {
+      "CustomerGroup": "Customer Group",
+      "Coupon": "Coupon",
+      "Volume": "Volume",
+      "DateRange": "Date Range",
+      "Manual": "Manual"
+    },
+    "Settings": {
+      "Core": "Core",
+      "Field": "Field Survey",
+      "Installation": "Installation",
+      "Locale": "Locale & Communication",
+      "Onboarding": "Onboarding"
+    },
+    "Finish": {
+      "Anodized": "Anodized",
+      "PowderCoated": "Powder Coated",
+      "WoodLook": "Wood Look",
+      "Raw": "Raw"
+    },
+    "Quality": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "ultra": "Ultra"
+    },
+    "Recommend": {
+      "DoubleGlazing": "Double glazing recommended",
+      "CorrosionCoating": "Corrosion-resistant coating",
+      "SeismicSmaller": "Smaller panels"
+    },
+    "DiscountKind": {
+      "Percent": "Percent",
+      "FixedAmount": "Fixed Amount"
+    },
+    "Notifications": {
+      "Title": "Notification History",
+      "None": "No notifications sent yet."
+    },
+    "Title": "Glass Enclosure",
+    "Subtitle": "Manage profile systems, glazing, hardware, discounts and workshop settings.",
+    "Survey": {
+      "Title": "Field Survey",
+      "Subtitle": "Capture on-site measurements and observations; apply tolerances to runs after approval.",
+      "New": "New survey",
+      "Created": "Survey created",
+      "Saved": "Draft saved",
+      "Submitted": "Submitted for approval",
+      "Approved": "Survey approved",
+      "Rejected": "Survey rejected",
+      "RejectPrompt": "Reason (optional)",
+      "PhotoUploaded": "Photo uploaded",
+      "PhotoTypeError": "Only image files are allowed (JPG, PNG, WebP, HEIC).",
+      "PhotoSizeError": "File must be smaller than 25 MB.",
+      "GpsUnavailable": "Location unavailable; survey created without GPS coordinates.",
+      "AppliedBadge": "Applied: {{date}}",
+      "NoActive": "No active survey yet. Start one with 'New survey'.",
+      "Slope": "Slope / plumb deviation",
+      "SlopeTop": "Top",
+      "SlopeBottom": "Bottom",
+      "SlopeLeft": "Left",
+      "SlopeRight": "Right",
+      "SlopeHint": "Positive values mean deviation outward, negative inward.",
+      "Measurements": "Manual measurements",
+      "AddMeasurement": "Add measurement",
+      "MeasureLabel": "Label (e.g. top edge length)",
+      "MeasureValue": "Value (mm)",
+      "NoMeasurements": "No manual measurements yet.",
+      "Obstacles": "Obstacles",
+      "AddObstacle": "Add obstacle",
+      "NoObstacles": "No obstacles recorded.",
+      "ObstaclePlaceholder": "Description",
+      "ObstacleKind": {
+        "pipe": "Pipe",
+        "radiator": "Radiator",
+        "window": "Window",
+        "door": "Door",
+        "other": "Other"
+      },
+      "Photos": "Photos",
+      "UploadPhoto": "Upload photo",
+      "NoPhotos": "No photos yet.",
+      "Notes": "Notes",
+      "NotesPlaceholder": "Details observed on site…",
+      "SaveDraft": "Save draft",
+      "Submit": "Submit",
+      "ApproveAndApply": "Approve & apply",
+      "ApproveOnly": "Approve only",
+      "Reject": "Reject",
+      "AppliedInfo": "{{runs}} runs updated · {{mm}} mm slope tolerance applied",
+      "Status": {
+        "InProgress": "In progress",
+        "Submitted": "Submitted",
+        "Approved": "Approved",
+        "Rejected": "Rejected"
+      },
+      "ObstaclesInfo": "Recorded for reference only — not applied to the drawing or cost."
+    },
+    "WorkOrder": {
+      "None": "No work orders yet.",
+      "Updated": "Work order updated",
+      "DefectRecorded": "Defect recorded",
+      "Defect": "Record defect",
+      "DefectSubmit": "Submit defect",
+      "DefectPlaceholder": "Defect details...",
+      "BlockedByRevision": "Work order blocked by pending revision",
+      "DefectiveExitRequiresRevision": "Exiting Defective status requires a new BOM revision",
+      "Revision": {
+        "Title": "Revisions",
+        "PendingApproval": "Pending approval",
+        "Approved": "Approved",
+        "Rejected": "Rejected",
+        "Blocked": "Blocked",
+        "SilentSnapshot": "Silent snapshot",
+        "Number": "Rev.",
+        "DeltaPercent": "Delta",
+        "Approve": "Approve",
+        "Reject": "Reject",
+        "OverrideReason": "Override reason",
+        "OverrideReasonPlaceholder": "Optional override note",
+        "RejectionReason": "Rejection reason",
+        "RejectionReasonPlaceholder": "Justification required",
+        "Approved.Toast": "Revision approved",
+        "Rejected.Toast": "Revision rejected",
+        "Empty": "No revisions recorded yet.",
+        "Banner.Simple": "This work order is awaiting an approval",
+        "Banner.Pro": "Pending blocking revision",
+        "Banner.Action": "Review",
+        "CreatedAt": "Created",
+        "Banner": {
+          "Action": "Review",
+          "Simple": "This work order is awaiting an approval"
+        },
+        "Toast": {
+          "Approved": "Revision approved",
+          "Rejected": "Revision rejected"
+        }
+      },
+      "Status": {
+        "Pending": "Pending",
+        "Cutting": "Cutting",
+        "Assembling": "Assembling",
+        "Ready": "Ready",
+        "InTransit": "In transit",
+        "Installed": "Installed",
+        "Defective": "Defective"
+      }
+    },
+    "Cutting": {
+      "Title": "Cutting Report",
+      "Profile1D": "Profile cutting (1D)",
+      "Glass2D": "Glass cutting (2D)",
+      "StockBar": "Stock bar",
+      "Bars": "Bars",
+      "Cuts": "Cuts",
+      "Utilization": "Utilization",
+      "Waste": "Waste",
+      "Jumbo": "Jumbo sheet",
+      "Sheets": "Sheets",
+      "Regenerate": "Regenerate",
+      "Generated": "Cutting plan generated",
+      "NoReport": "No cutting plan yet. Click Regenerate.",
+      "ExportCsv": "Export CSV",
+      "ExportDxf": "Export DXF",
+      "UnplacedWarning": "{{count}} glass piece(s) not placed",
+      "Nesting": {
+        "Title": "Advanced 2D Nesting",
+        "Algorithm": "Algorithm",
+        "Heuristic": "Heuristic",
+        "Utilization": "Utilization",
+        "Waste": "Waste",
+        "SheetsUsed": "Sheets used",
+        "UnplacedPanels": "{{count}} unplaced panel(s)",
+        "OptimizeAdvanced": "Advanced 2D nesting",
+        "Optimizing": "Optimizing...",
+        "Run": "Run",
+        "GuillotineOnly": "Guillotine cuts only",
+        "AllowRotation": "Allow rotation",
+        "OptimizeSuccess": "2D nesting optimized.",
+        "OptimizeError": "Optimization failed.",
+        "PrintExport": "Print / PDF",
+        "NoReport": "No nesting report yet.",
+        "AdvancedNesting": "Advanced 2D Nesting",
+        "OpenAdvanced": "Open advanced 2D nesting"
+      }
+    },
+    "Quote": {
+      "Title": "Quote Summary",
+      "ValidUntil": "Valid until",
+      "Recompute": "Recompute",
+      "Recomputed": "BOM recomputed",
+      "ExportCsv": "Export CSV",
+      "NoBom": "BOM not computed yet. Click Recompute.",
+      "Panels": "Panels",
+      "Area": "Area",
+      "Weight": "Weight",
+      "Lines": "Lines",
+      "Description": "Description",
+      "Qty": "Qty",
+      "Unit": "Unit",
+      "UnitCost": "Unit cost",
+      "LineCost": "Line cost",
+      "Totals": "Totals",
+      "SourceNote": "This summary is derived from the project BOM — adjust the design to change lines.",
+      "Group": {
+        "ProfileCut": "Profile",
+        "GlassPiece": "Glass",
+        "HardwarePiece": "Hardware",
+        "Labor": "Labor",
+        "Transport": "Transport",
+        "Installation": "Installation / scaffolding",
+        "Other": "Other"
+      },
+      "Actions": "Actions",
+      "EditPrice": "Edit unit price",
+      "ManualBadge": "Manual",
+      "CustomBadge": "Custom",
+      "OriginalPrice": "List price",
+      "ClearOverride": "Restore list price",
+      "PriceUpdated": "Unit price updated.",
+      "OverrideCleared": "Manual price removed; list price restored.",
+      "PushToCatalog": "Update price list",
+      "PushToCatalogConfirm": "The catalog price of this item will be updated with the manual price. Continue?",
+      "CatalogPriceUpdated": "Catalog price updated.",
+      "AddCustomLine": "Add custom line",
+      "AddLine": "Add line",
+      "Category": "Category",
+      "CustomLineAdded": "Custom line added to the quote.",
+      "DeleteCustomLine": "Remove custom line",
+      "DeleteCustomLineConfirm": "This custom line will be removed from the quote. Continue?",
+      "CustomLineDeleted": "Custom line removed."
+    },
+    "Commerce": {
+      "ShareLinks": "Share links",
+      "CreateShareLink": "Create link",
+      "ShareLinkCreated": "Link created",
+      "NoShareLinks": "No shares yet. Generate a link for the customer.",
+      "Accepted": "Accepted",
+      "Rejected": "Rejected",
+      "Pending": "Pending",
+      "Views": "Views",
+      "CopyUrl": "Copy URL",
+      "OrderConversion": "Order",
+      "ConvertToOrder": "Convert to order",
+      "OrderConverted": "Project converted to order",
+      "ConvertHint": "Compute the BOM first and make sure the project is quoted/confirmed.",
+      "Production": "Production",
+      "RequestedStart": "Requested start",
+      "ReleaseToProduction": "Release to production",
+      "Released": "Released to production",
+      "ReleaseHint": "Convert to an order first and ensure Confirmed status."
+    },
+    "NewProjectWizard": {
+      "Title": "New Glazing Project",
+      "TitleSimple": "New Glazing Project",
+      "TitlePro": "New Project",
+      "CloseAria": "Close",
+      "Back": "Back",
+      "Next": "Next",
+      "Step": {
+        "Category": "Enclosure type",
+        "Template": "Template",
+        "Meta": "Project info",
+        "QuickDimensions": "Quick dimensions"
+      },
+      "Action": {
+        "Next": "Next",
+        "Back": "Back",
+        "Skip": "Skip",
+        "Finish": "Finish",
+        "EmptyStart": "Start blank"
+      },
+      "Header": {
+        "Simple": "Step {{step}} / {{total}}",
+        "Pro": "Step {{step}}/{{total}}"
+      },
+      "Banner": {
+        "PersonaSimple": "Step-by-step guided mode",
+        "PersonaPro": "Full professional control"
+      },
+      "Indicator": {
+        "Step1": {
+          "Label": "Category",
+          "Subtitle": "Enclosure type"
+        },
+        "Step2": {
+          "Label": "Template",
+          "Subtitle": "System template or blank"
+        },
+        "Step3": {
+          "Label": "Project info",
+          "Subtitle": "Customer and address"
+        },
+        "Step4": {
+          "Label": "Dimensions",
+          "Subtitle": "Quick dimension entry"
+        }
+      },
+      "Preset": {
+        "Balcony": {
+          "Title": "Balcony Glazing",
+          "Description": "Enclosing a glass balcony",
+          "Subtitle": "TPH model | inline geometry | guillotine/sliding system",
+          "DescriptionSimple": "Enclosing a glass balcony",
+          "DescriptionPro": "TPH model | inline geometry | guillotine/sliding system"
+        },
+        "Greenhouse": {
+          "Title": "Greenhouse",
+          "Description": "Greenhouse / winter garden",
+          "Subtitle": "Parametric hip roof | glass roof",
+          "DescriptionSimple": "Greenhouse and winter garden",
+          "DescriptionPro": "Parametric hip roof | glass roof | ridge/eave control"
+        },
+        "ShowerCabin": {
+          "Title": "Shower Cabin",
+          "Description": "Corner or alcove shower cabin",
+          "Subtitle": "8/10 mm tempered | corner brackets",
+          "DescriptionSimple": "Corner or alcove shower cabin",
+          "DescriptionPro": "8/10 mm tempered | corner brackets | patch fittings"
+        },
+        "Balustrade": {
+          "Title": "Balustrade",
+          "Description": "Glass balustrade and stair railing",
+          "Subtitle": "12-19 mm structural glass | TRSB",
+          "DescriptionSimple": "Glass balustrade, stairs and balcony edge",
+          "DescriptionPro": "12-19 mm structural glass | TRSB | channel/clamp options"
+        },
+        "FramelessDoor": {
+          "Title": "Frameless Door",
+          "Description": "Frameless glass door",
+          "Subtitle": "Patch fittings | 10-12 mm tempered",
+          "DescriptionSimple": "Frameless glass doors and entrance partitions",
+          "DescriptionPro": "Patch fittings | 10-12 mm tempered | floor spring option"
+        },
+        "CurtainWall": {
+          "Title": "Curtain Wall",
+          "Description": "Building facade with cassette system",
+          "Subtitle": "Cassette system | 1.5x3 m panels | aluminum profile",
+          "DescriptionSimple": "Curtain wall for office and commercial buildings",
+          "DescriptionPro": "Cassette system | multi-sided polygon | 4-12 panels"
+        },
+        "SpiderFacade": {
+          "Title": "Spider Facade",
+          "Description": "Point-fixed structural glass facade",
+          "Subtitle": "4-point fixing | min. 12 mm structural glass",
+          "DescriptionSimple": "Structural glass facade for lobbies and entrances",
+          "DescriptionPro": "Spider fittings | 3-4 points per panel | structural glass"
+        },
+        "FreeForm": {
+          "Title": "Free Form",
+          "Description": "User-defined custom polygon",
+          "Subtitle": "Blank start | polygon vertices >= 3",
+          "DescriptionSimple": "Custom design with a blank polygon starter",
+          "DescriptionPro": "Custom polygon | free geometry | self-supporting"
+        }
+      },
+      "Step1": {
+        "Title": "What are you designing?",
+        "HintSimple": "Pick the closest option, we'll handle the rest.",
+        "HintPro": "Category choice determines geometry and mounting topology."
+      },
+      "Step2": {
+        "Title": "Start from a ready-made template",
+        "HintSimple": "Commonly used layouts. You can also start blank.",
+        "HintPro": "System templates provide run and panel presets.",
+        "StartBlank": "Start blank",
+        "StartBlankHint": "No template, from scratch.",
+        "EmptyHint": "No template for this category. Continue with \"Start blank\".",
+        "EmptyMessage": "No templates found for this category."
+      },
+      "Template": {
+        "EmptyMessage": "No templates available.",
+        "RunCount_one": "{{count}} run",
+        "RunCount_other": "{{count}} runs",
+        "RunCount": "{{count}} run",
+        "PanelCount_one": "{{count}} panel",
+        "PanelCount_other": "{{count}} panels",
+        "PanelCount": "{{count}} panel",
+        "EstimatedArea": "{{min}}–{{max}} m²"
+      },
+      "Step3": {
+        "Title": "Project details",
+        "Hint": "Project name and customer are required, other fields are optional.",
+        "ProjectName": "Project name *",
+        "ProjectNamePlaceholder": "e.g. Yildiz Apartment Balcony",
+        "NameError": "Project name must be {{min}}-{{max}} characters.",
+        "Customer": "Customer *",
+        "CustomerSearchPlaceholder": "Search customers...",
+        "ChangeCustomer": "Change",
+        "CreateNewCustomer": "Create new customer",
+        "Address": "Site address",
+        "AddressPlaceholder": "Street, no., building, district/city",
+        "Notes": "Notes",
+        "NotesPlaceholder": "Internal notes, installation conditions, etc."
+      },
+      "Meta": {
+        "Name": "Project name",
+        "NamePlaceholder": "e.g. Yildiz Apartment Balcony",
+        "NameError": "3-120 characters",
+        "Customer": "Customer",
+        "CustomerPlaceholder": "Search customers...",
+        "CustomerNew": "New customer",
+        "Address": "Site address",
+        "AddressPlaceholder": "Street, no., building, district/city",
+        "Notes": "Notes",
+        "NotesPlaceholder": "Internal notes, installation conditions, etc."
+      },
+      "Step4": {
+        "TitleSimple": "Enter a quick measurement, fine-tune later",
+        "TitlePro": "Run dimensions and panel count",
+        "HintSimple": "Measure on site with a laser and enter it here. Or measure later.",
+        "HintPro": "Approximate values — final dimensions at the on-site survey.",
+        "RunCount": "Number of runs",
+        "RunLabel": "Run {{index}}",
+        "WidthMm": "Width (mm)",
+        "HeightMm": "Height (mm)",
+        "PanelCount": "Panel count",
+        "LaserHint": "Laser meter integration coming soon.",
+        "SkipSimple": "Skip and measure later",
+        "SkipPro": "Create without dimensions",
+        "Create": "Create project"
+      },
+      "Dimensions": {
+        "RunNumber": "Run {{index}}",
+        "Width": "Width (mm)",
+        "Height": "Height (mm)",
+        "PanelCount": "Panel count",
+        "Skip": "Measure later",
+        "Submit": "Create project"
+      },
+      "Validation": {
+        "CustomerRequired": "Customer is required.",
+        "ProjectNameRequired": "Project name is required."
+      },
+      "Create": {
+        "Loading": "Creating project...",
+        "Success": "Project created successfully.",
+        "Error": "Failed to create project."
+      },
+      "Quick": {
+        "Title": "Quick layouts",
+        "Straight": "Straight balcony",
+        "LShape": "L-shaped balcony",
+        "UShape": "U-shaped balcony"
+      }
+    },
+    "Hardware": {
+      "Title": "Hardware",
+      "Objects": "Hardware objects",
+      "Empty": "No hardware added yet",
+      "Kind": {
+        "Handle": "Handle",
+        "Lock": "Lock",
+        "Hinge": "Hinge",
+        "Roller": "Roller",
+        "Vent": "Vent",
+        "Louver": "Louver",
+        "Bracket": "Bracket",
+        "Accessory": "Accessory",
+        "PullHandle": "Pull Handle",
+        "Stopper": "Stopper",
+        "CornerJoint": "Corner Joint",
+        "GasketStrip": "Gasket Strip",
+        "DripProfile": "Drip Profile"
+      },
+      "Field": {
+        "Kind": "Type",
+        "Color": "Color",
+        "OffsetX": "X (mm)",
+        "OffsetY": "Y (mm)",
+        "OffsetZ": "Z (mm)",
+        "Width": "Width (mm)",
+        "Height": "Height (mm)",
+        "Depth": "Depth (mm)"
+      }
+    }
+  },
+  "Admin": {
+    "Providers": {
+      "Title": "Provider Integrations",
+      "Eyebrow": "Administration",
+      "Description": "Configure third-party integrations for your tenant.",
+      "CategoryTabs": "Provider category tabs",
+      "Empty": "No providers registered in this category.",
+      "LoadFailed": "Failed to load providers.",
+      "Default": "Default",
+      "Sandbox": "Sandbox",
+      "Prod": "Production",
+      "LastChecked": "Last checked",
+      "Category": {
+        "EFatura": "E-Invoice",
+        "Payment": "Payment",
+        "LaserMeter": "Laser Meter",
+        "Other": "Other"
+      },
+      "Status": {
+        "Healthy": "Healthy",
+        "Degraded": "Degraded",
+        "Unhealthy": "Unhealthy",
+        "Unknown": "Unknown",
+        "NotConfigured": "Not configured"
+      },
+      "Action": {
+        "Configure": "Configure",
+        "CheckHealth": "Check health",
+        "RunTestSuite": "Run test suite",
+        "WebhookHistory": "Webhooks",
+        "SetDefault": "Set as default",
+        "Enable": "Enabled",
+        "Disable": "Disabled"
+      },
+      "Form": {
+        "Title": "Configure {{name}}",
+        "DisplayName": "Display name",
+        "ApiKey": "API key",
+        "SecretKey": "Secret key",
+        "WebhookSecret": "Webhook secret",
+        "Endpoint": "Endpoint URL",
+        "IsSandbox": "Sandbox mode",
+        "IsEnabled": "Enabled",
+        "IsEnabledHint": "Enables routing through this provider.",
+        "SandboxHint": "Test environment. No real charges or filings.",
+        "ProdHint": "Production environment. Real charges and filings will be made.",
+        "SecretsHint": "Leave blank to keep existing values. Secrets are encrypted at rest."
+      },
+      "TestSuite": {
+        "Title": "Test suite — {{name}}",
+        "Running": "Running test suite…",
+        "Success": "Passed",
+        "Failed": "Failed",
+        "Outcome": "Outcome",
+        "NoResult": "No test result available.",
+        "StepX": "Step {{n}}",
+        "Unavailable": "Test suite requires a configured, enabled sandbox provider."
+      },
+      "Webhook": {
+        "Title": "Webhook history — {{name}}",
+        "ReceivedAt": "Received",
+        "EventType": "Event",
+        "Status": "Status",
+        "Retries": "Retries",
+        "Error": "Error",
+        "Actions": "Actions",
+        "Replay": "Replay",
+        "Empty": "No webhook events match the current filters.",
+        "From": "From",
+        "To": "To",
+        "AllStatuses": "All statuses",
+        "Reset": "Reset filters",
+        "PageInfo": "Page {{page}} of {{totalPages}} ({{total}} events)",
+        "StatusValue": {
+          "Received": "Received",
+          "Processed": "Processed",
+          "Failed": "Failed",
+          "Retrying": "Retrying",
+          "Discarded": "Discarded",
+          "Pending": "Pending"
+        }
+      },
+      "Toast": {
+        "Saved": "Provider configuration saved.",
+        "SaveFailed": "Provider configuration could not be saved.",
+        "Enabled": "Provider enabled.",
+        "Disabled": "Provider disabled.",
+        "DefaultSet": "Default provider updated.",
+        "HealthOk": "Provider is healthy.",
+        "HealthFailed": "Health check failed.",
+        "WebhookReplayed": "Webhook replayed.",
+        "WebhookReplayFailed": "Failed to replay webhook."
+      }
+    }
+  },
+  "users": {
+    "deactivateTitle": "Deactivate user",
+    "activateTitle": "Activate user",
+    "deactivateConfirm": "{{user}} will no longer be able to sign in. Continue?",
+    "activateConfirm": "{{user}} will be able to sign in again.",
+    "statusUpdated": "User status updated.",
+    "count": "{{count}} users",
+    "invite": "Add user",
+    "user": "User",
+    "roles": "Roles",
+    "lastLogin": "Last login",
+    "status": "Status",
+    "editRoles": "Edit roles",
+    "empty": "No users found.",
+    "invited": "User created.",
+    "rolesUpdated": "Roles updated.",
+    "inviteInvalid": "Username, email and a password of at least 8 characters are required.",
+    "username": "Username",
+    "email": "Email",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "tempPassword": "Temporary password",
+    "tempPasswordHint": "At least 8 characters. The user must change it on first login.",
+    "create": "Create"
+  },
+  "tags": {
+    "label": "Tags",
+    "manageTitle": "Customer tags",
+    "selectPlaceholder": "Select tags…",
+    "searchOrCreate": "Search or create…",
+    "createNamed": "Create \"{{name}}\"",
+    "empty": "No tags yet.",
+    "preview": "Tag",
+    "deleteConfirm": "Delete tag \"{{name}}\"?",
+    "fields": {
+      "name": "Name",
+      "color": "Color"
+    }
+  },
+  "numbering": {
+    "document": "Document",
+    "prefix": "Prefix",
+    "pad": "Digits",
+    "format": "Format",
+    "next": "Next",
+    "preview": "Preview",
+    "prefixRequired": "Prefix is required.",
+    "saved": "Numbering saved.",
+    "notConfigured": "not configured yet"
+  },
+  "masterData": {
+    "deleteConfirm": "Delete this record?",
+    "empty": "No records yet."
+  },
+  "error": {
+    "NetworkError": "Network error.",
+    "DefaultError": "Request failed."
+  },
+  "Persona": {
+    "Mode": {
+      "Pro": "Pro",
+      "Simple": "Simple",
+      "Updated": "Mode set to {{mode}}"
+    }
+  },
+  "Common": {
+    "Yes": "Yes",
+    "No": "No",
+    "Day": "Day",
+    "Days": "Days",
+    "Loading": "Loading…",
+    "Delete": "Delete",
+    "Disabled": "Disabled",
+    "Enabled": "Enabled",
+    "Create": "Create",
+    "Cancel": "Cancel",
+    "Save": "Save",
+    "Undo": "Undo",
+    "Redo": "Redo",
+    "Previous": "Previous",
+    "Next": "Next",
+    "PageOf": "{{current}}/{{total}}",
+    "Refresh": "Refresh",
+    "All": "All",
+    "Offline": {
+      "Banner": "You are offline. Changes will sync once the connection is restored.",
+      "Queued": "{{count}} changes pending",
+      "Synced": "{{count}} changes synced",
+      "Error": "{{count}} changes failed to sync",
+      "SyncNow": "Sync now"
+    },
+    "Duplicate": "Duplicate",
+    "AuditTab": {
+      "After": "After",
+      "Before": "Before",
+      "Empty": "No audit history yet.",
+      "ChangesTitle": "Changes",
+      "Title": "Audit"
+    },
+    "Close": "Close",
+    "Edit": "Edit",
+    "Back": "Back",
+    "Filter": {
+      "All": "All"
+    },
+    "Hide": "Hide"
+  },
+  "collab": {
+    "comments": {
+      "tab": "Comments",
+      "title": "Comments",
+      "open": "Open comments",
+      "count_one": "{{count}} comment",
+      "count_other": "{{count}} comments",
+      "empty": "No comments yet. Start the conversation.",
+      "placeholder": "Write a comment…",
+      "replyPlaceholder": "Write a reply…",
+      "submit": "Post",
+      "reply": "Reply",
+      "edited": "edited",
+      "deleted": "Comment deleted",
+      "shortcutHint": "Ctrl/⌘ + Enter to send"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "All caught up",
+      "markAllRead": "Mark all as read"
+    },
+    "entity": {
+      "order": "Order",
+      "vendorBill": "Vendor bill",
+      "shipment": "Shipment",
+      "subscriptionOrder": "Subscription"
+    }
+  },
+  "feedback": {
+    "form": {
+      "required": "Title and description are required.",
+      "sent": "Your feedback has been received. Thank you!",
+      "title": "Feedback / Report a bug",
+      "type": "Type",
+      "priority": "Priority",
+      "module": "Related module",
+      "modulePlaceholder": "Select (optional)",
+      "titleField": "Title",
+      "titlePlaceholder": "A short, descriptive title",
+      "description": "Description",
+      "descriptionPlaceholder": "What did you expect and what happened instead?",
+      "steps": "Steps to reproduce",
+      "stepsPlaceholder": "1) … 2) … 3) …",
+      "pageUrl": "Page / location",
+      "submit": "Submit"
+    },
+    "statusUpdated": "Status updated.",
+    "page": {
+      "title": "Feedback & bug reports",
+      "subtitle": "Report a bug, suggest a feature, or ask a question. All submissions are tracked here.",
+      "new": "New submission"
+    },
+    "filter": {
+      "allTypes": "All types",
+      "allStatuses": "All statuses"
+    },
+    "count": "{{count}} submission(s)",
+    "empty": "No submissions yet. Create your first one.",
+    "adminResponse": "Admin response",
+    "status": "Status",
+    "responsePlaceholder": "Response (optional)",
+    "apply": "Apply"
+  },
+  "Privacy": {
+    "Title": "Privacy & GDPR",
+    "Subtitle": "Manage your personal data rights: download your data or delete your account.",
+    "Export": {
+      "Title": "Export My Data",
+      "Description": "Download all your personal data — account, projects, and activity history — in JSON format.",
+      "Button": "Download Data Package",
+      "Preparing": "Preparing…",
+      "Success": "Data package ready"
+    },
+    "Erase": {
+      "Title": "Delete My Account",
+      "Description": "Request anonymization of your account under data protection rights. This action is irreversible; financial records are retained for the legal retention period, but personal identifiers are erased.",
+      "ConfirmPrompt": "Type your username to confirm",
+      "Button": "Delete Account",
+      "Processing": "Processing…",
+      "Success": "Erasure request received",
+      "MismatchError": "Username does not match"
+    },
+    "Consent": {
+      "Marketing": "Marketing communications",
+      "Analytics": "Anonymous usage analytics",
+      "Updated": "Preference updated"
+    },
+    "ExportIncludes": "Export includes profile, customer/dealer memberships, order history, and recent activity.",
+    "Result": {
+      "AccountAnonymized": "Account anonymized. Financial records are retained for the legal retention period.",
+      "CustomerAnonymized": "Customer record anonymized. Financial snapshots are retained for the legal retention period."
+    },
+    "Admin": {
+      "Actions": "Actions",
+      "AllStatuses": "All statuses",
+      "Empty": "No requests found",
+      "Notes": "Notes",
+      "Process": "Process",
+      "ProcessSuccess": "Request processed",
+      "Reject": "Reject",
+      "RejectSuccess": "Request rejected",
+      "RejectionPrompt": "Enter rejection reason",
+      "Status": "Status",
+      "StatusFilter": "Status filter",
+      "SubmittedAt": "Submitted at",
+      "Subtitle": "Manage GDPR/KVKK data subject requests",
+      "Tab": {
+        "Audit": "Audit",
+        "AuditPlaceholder": "Audit logs coming soon",
+        "Policies": "Retention policies",
+        "Requests": "Requests"
+      },
+      "Title": "Privacy Administration",
+      "Type": "Type"
+    },
+    "DataSubjectRequestNotFound": "Data subject request not found",
+    "EmailRequired": "Email is required",
+    "Portal": {
+      "LastSubmitted": "Last submitted request ID",
+      "Subtitle": "Exercise your rights under GDPR / KVKK Art. 11",
+      "Title": "Privacy Requests"
+    },
+    "Request": {
+      "Email": "Email address",
+      "Notes": "Notes (optional)",
+      "Submit": "Submit request",
+      "SubmittedSuccess": "Request submitted successfully",
+      "Submitting": "Submitting...",
+      "Type": "Request type",
+      "TypeOption": {
+        "Access": "Right of access",
+        "Erasure": "Right to erasure",
+        "Export": "Data export",
+        "Objection": "Right to object",
+        "Portability": "Data portability",
+        "Rectification": "Right to rectification",
+        "Restriction": "Restrict processing"
+      }
+    },
+    "RequestAlreadyClosed": "Request is already closed",
+    "RequestTypeMismatch": "Request type mismatch",
+    "RetentionExpiry": "Retention period expired",
+    "RetentionPolicyNotFound": "Retention policy not found",
+    "Retention": {
+      "Action": "Action",
+      "ActionOption": {
+        "Anonymize": "Anonymize",
+        "Archive": "Archive",
+        "Delete": "Delete"
+      },
+      "AddButton": "Add policy",
+      "AddPolicy": "Add retention policy",
+      "CreateSuccess": "Retention policy created",
+      "Days": "Days",
+      "Empty": "No policies defined yet",
+      "Enabled": "Enabled",
+      "EntityType": "Data type",
+      "ExistingPolicies": "Existing policies",
+      "LastRun": "Last run",
+      "UpdateSuccess": "Retention policy updated"
+    },
+    "Status": {
+      "Completed": "Completed",
+      "InProgress": "In progress",
+      "Rejected": "Rejected",
+      "Submitted": "Submitted"
+    },
+    "TenantRequired": "Tenant is required",
+    "VerificationEmailSent": "Verification email sent"
+  },
+  "Warranty": {
+    "Title": "Warranty Contracts",
+    "Subtitle": "Track warranty coverage, expiry dates, and extensions.",
+    "Empty": "No warranty contracts for the current filters.",
+    "StartDate": "Start",
+    "EndDate": "End",
+    "MonthsShort": "mo",
+    "Status": {
+      "Active": "Active",
+      "Expired": "Expired",
+      "Cancelled": "Cancelled",
+      "Suspended": "Suspended"
+    },
+    "CoverageType": {
+      "ManufacturerDefect": "Manufacturer Defect",
+      "Installation": "Installation",
+      "FullService": "Full Service",
+      "Limited": "Limited"
+    },
+    "Action": {
+      "Create": "Create Warranty",
+      "Extend": "Extend",
+      "Cancel": "Cancel",
+      "Suspend": "Suspend",
+      "Resume": "Resume",
+      "MonthsToAdd": "Months",
+      "ReasonOptional": "Reason (optional)",
+      "ReasonRequired": "Reason",
+      "ExtendedToast": "Warranty extended.",
+      "CancelledToast": "Warranty cancelled.",
+      "CancelReasonRequired": "Cancellation reason is required."
+    },
+    "Alerts": {
+      "BadgeAria": "Warranties expiring soon",
+      "ExpiringCount": "{{count}} expiring soon"
+    },
+    "ServiceTicket": {
+      "Title": "Service Tickets",
+      "Subtitle": "Customer reports and scheduled maintenance.",
+      "Empty": "No tickets for the current filters.",
+      "OpenNew": "Open Service Ticket",
+      "Description": "Description",
+      "ReportedAt": "Reported",
+      "Type": {
+        "Label": "Type",
+        "PreventiveMaintenance": "Preventive Maintenance",
+        "WarrantyClaim": "Warranty Claim",
+        "OutOfWarrantyRepair": "Out-of-Warranty Repair",
+        "Inspection": "Inspection"
+      },
+      "Status": {
+        "Label": "Status",
+        "Open": "Open",
+        "Assigned": "Assigned",
+        "InProgress": "In Progress",
+        "Resolved": "Resolved",
+        "Cancelled": "Cancelled"
+      },
+      "Priority": {
+        "Label": "Priority",
+        "Low": "Low",
+        "Normal": "Normal",
+        "High": "High",
+        "Urgent": "Urgent"
+      },
+      "Action": {
+        "Submit": "Submit Ticket",
+        "Assign": "Assign",
+        "Resolve": "Resolve",
+        "Cancel": "Cancel"
+      },
+      "Validation": {
+        "Required": "Title and description are required."
+      },
+      "Toast": {
+        "Created": "Service ticket created.",
+        "Assigned": "Service ticket assigned.",
+        "Resolved": "Service ticket resolved."
+      }
+    },
+    "Maintenance": {
+      "Title": "Maintenance Schedules",
+      "Empty": "No maintenance scheduled.",
+      "Type": {
+        "PreventiveAnnual": "Annual Maintenance",
+        "SemiAnnual": "Semi-Annual",
+        "Quarterly": "Quarterly",
+        "Custom": "Custom"
+      },
+      "NextDue": "Next Due",
+      "LastCompleted": "Last Completed",
+      "Action": {
+        "Schedule": "Schedule Maintenance",
+        "Complete": "Mark Completed"
+      }
+    }
+  },
+  "InstallationAcceptance": {
+    "Title": "Installation Acceptance",
+    "OpenForm": "Open Form",
+    "OpenPunchListItems": "Open Punch List Items",
+    "Status": {
+      "Draft": "Draft",
+      "InProgress": "In Progress",
+      "SignedByCustomer": "Signed by Customer",
+      "Accepted": "Accepted",
+      "Rejected": "Rejected"
+    },
+    "Action": {
+      "Start": "Start Acceptance",
+      "UpdateChecklist": "Update Checklist",
+      "UploadPhoto": "Upload Photo",
+      "CaptureSignature": "Capture Signature",
+      "Accept": "Accept",
+      "Reject": "Reject",
+      "RejectReasonPrompt": "Rejection reason"
+    },
+    "Checklist": {
+      "Category": {
+        "Mechanical": "Mechanical",
+        "Glass": "Glass",
+        "Seal": "Seal",
+        "Dimension": "Dimensions",
+        "Hardware": "Hardware"
+      },
+      "Result": {
+        "Pass": "Pass",
+        "Fail": "Fail",
+        "NA": "N/A"
+      },
+      "Item": {
+        "Mechanical.FrameRigidity": "Frame rigidity acceptable",
+        "Mechanical.AnchorBolts": "Anchor bolts tight",
+        "Mechanical.Levelness": "Horizontal/vertical levelness <2mm/m",
+        "Mechanical.ScrewFastenings": "Screw fastenings complete",
+        "Glass.NoChips": "Glass panels undamaged",
+        "Glass.PanelAlignment": "Panel alignment",
+        "Glass.EdgePolish": "Glass edges polished",
+        "Glass.StampVisible": "CE marking visible",
+        "Seal.SiliconeApplied": "Silicone applied",
+        "Seal.NoGaps": "Seal has no gaps",
+        "Seal.WaterTest": "Water tightness tested",
+        "Dimension.WidthTolerance": "Width tolerance ±2mm",
+        "Dimension.HeightTolerance": "Height tolerance ±2mm",
+        "Dimension.Diagonal": "Diagonal equality",
+        "Hardware.HandlesOperational": "Handles operational",
+        "Hardware.LocksOperational": "Locks operational",
+        "Hardware.HingesLubricated": "Hinges lubricated",
+        "Hardware.HingeAlignment": "Hinge alignment"
+      },
+      "NotesPlaceholder": "Notes..."
+    },
+    "PunchList": {
+      "Title": "Punch List",
+      "Empty": "No open items.",
+      "Add": "Add",
+      "Resolve": "Resolve",
+      "DescriptionPlaceholder": "Description",
+      "Severity": {
+        "Minor": "Minor",
+        "Moderate": "Moderate",
+        "Critical": "Critical"
+      },
+      "Status": {
+        "Open": "Open",
+        "InProgress": "In Progress",
+        "Resolved": "Resolved",
+        "Deferred": "Deferred"
+      }
+    },
+    "PhotoCapture": {
+      "TakePhoto": "Take Photo",
+      "PickFromGallery": "Pick from Gallery",
+      "Counter": "{{count}} photo(s)"
+    },
+    "SignaturePad": {
+      "CustomerNamePlaceholder": "Customer representative name",
+      "Instructions": "Please sign in the area below.",
+      "Clear": "Clear",
+      "Save": "Save Signature"
+    }
+  },
+  "billing": {
+    "eyebrow": "Billing",
+    "title": "Billing",
+    "crumbs": {
+      "billing": "Billing",
+      "orders": "Orders"
+    },
+    "home": {
+      "title": "My Subscriptions",
+      "subtitle": "Track active modules, upcoming expirations and recent purchases.",
+      "browse": "Browse modules",
+      "activeCount": "Active modules",
+      "activeHint": "{{count}} module(s) on file",
+      "expiringSoon": "Expires in {{days}}d",
+      "nextExpiry": "Next: {{date}}",
+      "noExpiring": "Nothing expiring soon.",
+      "recentOrders": "Recent orders",
+      "lastOrder": "Last order {{number}}",
+      "noOrders": "No subscription orders yet.",
+      "expiringSoonTitle": "Renewals due soon",
+      "renew": "Renew",
+      "recentOrdersTitle": "Latest orders",
+      "viewAll": "View all"
+    },
+    "activeBanner": {
+      "title_one": "{{count}} active module",
+      "title_other": "{{count}} active modules",
+      "empty": "No active modules. Pick one from the catalog below.",
+      "title": "{{count}} active modules"
+    },
+    "modules": {
+      "title": "Modules",
+      "subtitle": "Subscribe to unlock more capabilities for your team.",
+      "activeUntil": "Active until {{date}}",
+      "daysLeft_one": "{{count}} day left",
+      "daysLeft_other": "{{count}} days left",
+      "notSubscribed": "Not subscribed yet",
+      "coreAlwaysOn": "Core module — always on",
+      "coreLabel": "Core",
+      "coreNoPurchase": "Included for everyone",
+      "durationDays_one": "{{count}} day",
+      "durationDays_other": "{{count}} days",
+      "addToCart": "Add to cart",
+      "renew": "Renew plan",
+      "inCart": "Added",
+      "uncategorized": "Other modules",
+      "emptyTitle": "No modules available",
+      "emptyDescription": "There are no purchasable modules right now.",
+      "renewalHint": "Renewal: {{duration}} will be added to your current term — no time lost.",
+      "daysLeft": "{{count}} days left",
+      "durationDays": "{{count}} days"
+    },
+    "cart": {
+      "title": "Cart",
+      "empty": "Your cart is empty. Pick a module to get started.",
+      "total": "Total",
+      "buy": "Buy",
+      "adminOnly": "Only tenant administrators can complete a purchase.",
+      "openButton_one": "Cart ({{count}})",
+      "openButton_other": "Cart ({{count}})",
+      "remove": "Remove",
+      "openButton": "Cart ({{count}})"
+    },
+    "order": {
+      "title": "Order {{number}}",
+      "subtitle": "Subscription order details and payment status.",
+      "backToList": "Back to list",
+      "createdAt": "Created {{value}}",
+      "totalLabel": "Total",
+      "itemsTitle": "Items",
+      "paymentTitle": "Payment",
+      "gateway": "Gateway",
+      "intentId": "Intent ID",
+      "reference": "Reference",
+      "paidAt": "Paid",
+      "completedAt": "Completed",
+      "attempts": "Payment attempts",
+      "payNowTitle": "Payment required",
+      "payNowDescription": "This order is awaiting payment. Head to the (mock) payment page to complete it.",
+      "payNow": "Go to mock payment",
+      "paidTitle": "Payment confirmed",
+      "paidDescription": "Payment received on {{value}}. Your modules are now active.",
+      "cancelled": "This order was cancelled.",
+      "col": {
+        "orderNumber": "Order #",
+        "createdAt": "Created",
+        "status": "Status",
+        "itemsCount": "Items",
+        "total": "Total",
+        "module": "Module",
+        "plan": "Plan",
+        "duration": "Duration",
+        "unitPrice": "Unit price"
+      },
+      "status": {
+        "Draft": "Draft",
+        "PendingPayment": "Pending payment",
+        "Paid": "Paid",
+        "Failed": "Failed",
+        "Cancelled": "Cancelled",
+        "Expired": "Expired"
+      }
+    },
+    "orders": {
+      "title": "Subscription orders",
+      "subtitle": "All orders placed for module subscriptions.",
+      "statusFilter": "Filter by status",
+      "count": "order(s)",
+      "bucket": {
+        "all": "All"
+      },
+      "emptyTitle": "No orders yet",
+      "emptyDescription": "When you purchase a module, the order will show up here.",
+      "view": "View details"
+    },
+    "cancel": {
+      "action": "Cancel order",
+      "confirmTitle": "Cancel order?",
+      "confirmMessage": "Order {{number}} will be cancelled. This cannot be undone.",
+      "confirm": "Yes, cancel"
+    },
+    "mock": {
+      "eyebrow": "Development",
+      "title": "Mock payment",
+      "subtitle": "Simulate the payment outcome for this subscription order.",
+      "banner": "DEV / MOCK PAYMENT",
+      "bannerDescription": "This page only exists in development. Production payments are handled by the real gateway.",
+      "orderLabel": "Order",
+      "missingOrder": "No order ID provided. Open this page from an order with \"Pending payment\" status.",
+      "adminOnly": "Only tenant administrators can simulate a payment outcome.",
+      "approve": "Approve",
+      "cancel": "Cancel",
+      "fail": "Simulate failure"
+    },
+    "checkout": {
+      "title": "Checkout",
+      "payNow": "Pay now"
+    },
+    "gateway": {
+      "title": "Payment method",
+      "mockLabel": "Mock (development)",
+      "iyzicoLabel": "Iyzico (real payment)",
+      "requiresInfo": "Billing info required",
+      "devOnly": "Sandbox / development only",
+      "empty": "No payment gateway is configured. Contact your administrator.",
+      "pickerRequired": "Please select a payment method."
+    },
+    "billingInfo": {
+      "title": "Billing information",
+      "name": "First name",
+      "surname": "Last name",
+      "email": "Email",
+      "gsm": "Mobile phone",
+      "identity": "Identity / TC ID number",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "zip": "Postal code",
+      "privacy": "Sent encrypted. We never store your card number.",
+      "errors": {
+        "nameRequired": "First name is required.",
+        "surnameRequired": "Last name is required.",
+        "emailInvalid": "Enter a valid email address.",
+        "gsmInvalid": "Enter a valid mobile number (10-15 digits, optional +).",
+        "identityInvalid": "Enter a valid identity number (5-32 alphanumeric characters).",
+        "addressRequired": "Address is required.",
+        "cityRequired": "City is required.",
+        "countryInvalid": "Country is required (min. 2 characters).",
+        "zipRequired": "Postal code is required.",
+        "formInvalid": "Please complete the billing form."
+      }
+    },
+    "toast": {
+      "created": "Order created.",
+      "approved": "Payment approved.",
+      "cancelled": "Order cancelled.",
+      "failed": "Something went wrong. Please try again."
+    },
+    "errors": {
+      "catalogTitle": "Couldn't load modules",
+      "catalogDescription": "The module catalog could not be loaded. Please try again.",
+      "activeTitle": "Couldn't load active modules",
+      "orderTitle": "Couldn't load order",
+      "orderDescription": "This subscription order could not be loaded.",
+      "ordersTitle": "Couldn't load orders"
+    }
+  },
+  "Fx": {
+    "LatestRates": {
+      "Title": "Latest exchange rates",
+      "LastUpdated": "Last updated",
+      "Loading": "Loading rate...",
+      "Unavailable": "Rate unavailable"
+    },
+    "Currency": {
+      "Buying": "Buying",
+      "Selling": "Selling"
+    },
+    "Source": {
+      "TCMB": "TCMB (Central Bank of Turkey)"
+    },
+    "Preferences": {
+      "Clear": "Clear",
+      "Currency": "Currency",
+      "DefaultSource": "Default Source",
+      "Description": "Choose which provider supplies exchange rates, with optional per-currency overrides.",
+      "Loading": "Loading FX preferences...",
+      "Reset": "Reset",
+      "Saved": "FX preferences saved",
+      "Saving": "Saving...",
+      "Title": "FX Source Preferences",
+      "UseDefault": "Use default"
+    },
+    "Snapshot": {
+      "LockedAt": "Locked at",
+      "NotLocked": "No FX lock",
+      "On": "on"
+    }
+  },
+  "payments": {
+    "ledger": {
+      "title": "Ledger",
+      "from": "From",
+      "to": "To",
+      "exportCsv": "Export CSV",
+      "recordPayment": "Record payment",
+      "entries": "Ledger entries",
+      "empty": "No ledger entries yet.",
+      "description": "Description",
+      "debit": "Debit",
+      "credit": "Credit",
+      "balance": "Balance"
+    },
+    "aging": {
+      "current": "Current",
+      "title": "Aging analysis",
+      "overdueWarning": "{{amount}} is overdue by more than 90 days."
+    },
+    "list": {
+      "title": "Recent payments",
+      "unapplied": "Unapplied"
+    },
+    "create": {
+      "amountRequired": "Amount must be positive.",
+      "overAllocated": "Allocated amount exceeds the payment amount.",
+      "success": "Payment recorded.",
+      "title": "Record payment",
+      "paymentDate": "Payment date",
+      "amount": "Amount",
+      "method": "Method",
+      "reference": "Reference / TX #",
+      "bankAccount": "Bank account",
+      "checkNumber": "Check #",
+      "checkDueDate": "Check due date",
+      "applyToInvoices": "Apply to open invoices",
+      "autoApply": "Auto-apply (FIFO)",
+      "noOpenInvoices": "No open invoices to apply.",
+      "amountDue": "Due",
+      "notes": "Notes",
+      "allocated": "Allocated",
+      "unapplied": "Left unapplied",
+      "confirm": "Record payment"
+    }
+  },
+  "apAging": {
+    "title": "Accounts payable aging",
+    "subtitle": "Open payables grouped by age bucket.",
+    "toBills": "Vendor bills →",
+    "vendor": "Vendor",
+    "total": "Total",
+    "error": "Failed to load report.",
+    "empty": "No open payables.",
+    "grandTotal": "Grand total"
+  },
+  "gl": {
+    "entriesTitle": "Journal entries",
+    "loadError": "Failed to load journal entries.",
+    "noEntries": "No journal entries have been generated for this document yet (it may be queued or account mapping is missing).",
+    "account": "Account",
+    "debit": "Debit",
+    "credit": "Credit",
+    "total": "Total"
+  },
+  "accounting": {
+    "coa": {
+      "created": "Account created.",
+      "updated": "Account updated.",
+      "newAccount": "New account",
+      "editAccount": "Edit account",
+      "seedConfirm": "This will add the Turkish uniform chart of accounts (TDHP). Continue?",
+      "seedDone": "{{count}} account(s) added.",
+      "deleteConfirm": "Delete {{code}} - {{name}}?",
+      "title": "Chart of accounts",
+      "subtitle": "Hierarchical view of the uniform chart of accounts (TDHP). Entries can only be posted to postable leaf accounts.",
+      "searchPlaceholder": "Search by code or name…",
+      "seedTurkish": "Load TDHP",
+      "create": "New account",
+      "empty": "No accounts yet. Start by loading the TDHP.",
+      "noResults": "No matching accounts found."
+    },
+    "journal": {
+      "posted": "Journal entry saved and posted.",
+      "draftSaved": "Journal draft saved."
+    },
+    "periods": {
+      "created": "Accounting period created.",
+      "confirmClose": "Close period {{code}}?",
+      "closed": "Period closed.",
+      "reopened": "Period reopened.",
+      "confirmLock": "Lock period {{code}}? This cannot be undone.",
+      "locked": "Period locked.",
+      "title": "Accounting periods",
+      "subtitle": "Close a period to block postings; lock it to make it permanent.",
+      "closedAt": "Closed",
+      "create": "Open period",
+      "close": "Close",
+      "reopen": "Reopen",
+      "lock": "Lock",
+      "lockedHint": "Permanent — cannot be reopened"
+    }
+  },
+  "Notifications": {
+    "Title": "Notifications",
+    "SeeAll": "See all",
+    "UnreadOnly": "Unread only",
+    "AllStatuses": "All statuses",
+    "MarkRead": "Mark as read",
+    "TableSubject": "Subject",
+    "TableCategory": "Category",
+    "TableChannel": "Channel",
+    "TableStatus": "Status",
+    "TableCreatedAt": "Created",
+    "Bell": {
+      "Unread": "Unread notifications",
+      "Empty": "No new notifications"
+    },
+    "Channel": {
+      "InApp": "In-app",
+      "Email": "Email",
+      "Sms": "SMS",
+      "Push": "Push",
+      "WhatsApp": "WhatsApp"
+    },
+    "Status": {
+      "Pending": "Pending",
+      "Queued": "Queued",
+      "Sending": "Sending",
+      "Sent": "Sent",
+      "Delivered": "Delivered",
+      "Failed": "Failed",
+      "Bounced": "Bounced",
+      "Read": "Read"
+    },
+    "Category": {
+      "Warranty": "Warranty",
+      "Installation": "Installation",
+      "Payment": "Payment",
+      "Mrp": "MRP",
+      "ServiceTicket": "Service ticket"
+    },
+    "Preferences": {
+      "Title": "Notification preferences",
+      "ChannelMatrix": "Category / Channel"
+    },
+    "Settings": {
+      "Title": "Notification settings",
+      "Description": "Choose which categories you receive through which channel."
+    },
+    "Template": {
+      "Subject": {
+        "Warranty.Activated": "Your warranty is active",
+        "Warranty.Expiring": "Your warranty is expiring soon",
+        "Payment.Succeeded": "Payment received",
+        "Payment.Failed": "Payment failed",
+        "Installation.Accepted": "Installation accepted",
+        "Mrp.SuggestionsCreated": "New MRP suggestions",
+        "ServiceTicket.Resolved": "Your ticket has been resolved"
+      }
+    }
+  },
+  "Onboarding": {
+    "Action": {
+      "Next": "Next",
+      "Previous": "Back",
+      "Skip": "Skip",
+      "Finish": "Finish",
+      "Restart": "Restart"
+    },
+    "WelcomeBanner": {
+      "Title": "Welcome!",
+      "Description": "A quick tour walks you through the key screens.",
+      "StartButton": "Start tour"
+    },
+    "Settings": {
+      "Title": "Onboarding tour",
+      "Description": "Restart guided tours or view their status.",
+      "ResetAll": "Reset all tours",
+      "ResetOne": "Reset",
+      "StatusPending": "Pending",
+      "StatusCompleted": "Completed",
+      "StatusSkipped": "Skipped"
+    },
+    "TourName": {
+      "Dashboard": "Dashboard",
+      "Designer": "Designer",
+      "Mrp": "Production planning",
+      "Installation": "Field acceptance"
+    },
+    "Tour": {
+      "Dashboard": {
+        "Step1": {
+          "Title": "Glass projects",
+          "Content": "Projects are managed here. Click to start a new glass project."
+        },
+        "Step2": {
+          "Title": "New project wizard",
+          "Content": "Four steps: Category → Template → Info → Measurements."
+        },
+        "Step3": {
+          "Title": "Persona mode",
+          "Content": "Switch between Simple (big buttons) and Pro (technical detail)."
+        },
+        "Step4": {
+          "Title": "Production & purchasing",
+          "Content": "Production planning, requisitions, and stock forecasts."
+        }
+      },
+      "Designer": {
+        "Step1": {
+          "Title": "Designer canvas",
+          "Content": "Design your glass space here. Add runs, split panels, pick hardware."
+        },
+        "Step2": {
+          "Title": "Runs",
+          "Content": "Add facade runs from the left panel."
+        },
+        "Step3": {
+          "Title": "Inspector",
+          "Content": "Details of the selected part on the right. Change glass, color, and hardware."
+        },
+        "Step4": {
+          "Title": "BOM & cost",
+          "Content": "The bill of materials and cost are calculated automatically."
+        }
+      },
+      "Mrp": {
+        "Step1": {
+          "Title": "MRP dashboard",
+          "Content": "Overview: critical items, open requisitions, stock levels."
+        },
+        "Step2": {
+          "Title": "Generate suggestions",
+          "Content": "Generate demand suggestions from orders and stock."
+        },
+        "Step3": {
+          "Title": "Candidates",
+          "Content": "Review candidates and convert them into purchase requisitions."
+        },
+        "Step4": {
+          "Title": "Requisitions",
+          "Content": "View, approve, or cancel all requisitions."
+        }
+      },
+      "Installation": {
+        "Step1": {
+          "Title": "Checklist",
+          "Content": "Acceptance checklist. Mark each item Pass/Fail/N/A."
+        },
+        "Step2": {
+          "Title": "Take a photo",
+          "Content": "Upload photos from the installation site."
+        },
+        "Step3": {
+          "Title": "Punch list",
+          "Content": "Add missing or defective parts to the punch list."
+        },
+        "Step4": {
+          "Title": "Customer signature",
+          "Content": "Capture the customer's signature on the tablet. The form locks afterwards."
+        }
+      }
+    }
+  },
+  "Whitelabel": {
+    "page": {
+      "title": "White-label customization",
+      "subtitle": "Personalize your CoreAlign workspace with brand colors, logo, login page, and email sender identity."
+    },
+    "fields": {
+      "logo": "Logo",
+      "favicon": "Favicon",
+      "loginBackground": "Login background",
+      "primaryColor": "Primary color",
+      "accentColor": "Accent color",
+      "brandName": "Brand name",
+      "emailFromName": "Sender name",
+      "emailFromAddress": "Sender address",
+      "customSubdomain": "Custom subdomain",
+      "customSubdomainHint": "Used as tenant.corealign.com.",
+      "customDomain": "Custom domain",
+      "customDomainHint": "Requires DNS verification (CNAME).",
+      "loginHeading": "Login page heading (Markdown)"
+    },
+    "upload": {
+      "empty": "No image",
+      "choose": "Choose file",
+      "uploading": "Uploading…",
+      "acceptImage": "PNG, JPG, SVG or WebP, up to 2 MB.",
+      "acceptFavicon": "PNG, SVG or ICO recommended.",
+      "tooLarge": "File exceeds {{max}} KB."
+    },
+    "save": {
+      "submit": "Save changes",
+      "saving": "Saving…",
+      "success": "Theme saved.",
+      "error": "Could not save theme."
+    },
+    "preview": {
+      "title": "Email preview",
+      "defaultBrand": "Your brand",
+      "empty": "(Body preview)",
+      "sampleBody": "Hello,\n\nThis is a sample notification using your tenant theme."
+    },
+    "subdomain": {
+      "available": "Subdomain is available.",
+      "unavailable": "Subdomain is already taken.",
+      "checking": "Checking…"
+    }
+  },
+  "CustomerPortal": {
+    "Common": {
+      "PortalTitle": "Customer portal",
+      "OpenMenu": "Open menu",
+      "CloseMenu": "Close menu",
+      "Notifications": "Notifications",
+      "Logout": "Log out",
+      "Loading": "Loading...",
+      "NoData": "No data yet",
+      "ViewAll": "View all",
+      "Back": "Back",
+      "LoadError": "Could not load data.",
+      "Cancel": "Cancel",
+      "Submitting": "Submitting...",
+      "Previous": "Previous",
+      "Next": "Next"
+    },
+    "Nav": {
+      "Dashboard": "Dashboard",
+      "Projects": "Projects",
+      "Warranty": "Warranty",
+      "ServiceTickets": "Service tickets",
+      "Invoices": "Invoices",
+      "Payments": "Payments",
+      "Profile": "Profile"
+    },
+    "Dashboard": {
+      "Welcome": "Welcome, {{name}}",
+      "Subtitle": "A quick overview of your projects, warranties and invoices.",
+      "WarrantiesActive": "Active warranties",
+      "OpenTickets": "Service tickets",
+      "Invoices": "Invoices",
+      "RecentPayments": "Recent payments",
+      "RecentTicketsTitle": "Recent service tickets",
+      "RecentInvoicesTitle": "Recent invoices"
+    },
+    "Warranty": {
+      "ListTitle": "My warranties",
+      "Empty": "You have no active warranty contracts.",
+      "CoverageLabel": "Coverage",
+      "Period": "Period",
+      "Months": "Warranty months",
+      "StartDate": "Start date",
+      "EndDate": "End date",
+      "Notes": "Notes",
+      "Status": {
+        "Active": "Active",
+        "Expired": "Expired",
+        "Cancelled": "Cancelled",
+        "Suspended": "Suspended"
+      },
+      "CoverageType": {
+        "ManufacturerDefect": "Manufacturer defect",
+        "Installation": "Installation",
+        "FullService": "Full service",
+        "Limited": "Limited"
+      }
+    },
+    "ServiceTicket": {
+      "ListTitle": "Service tickets",
+      "New": "New ticket",
+      "NewTitle": "Open a new service ticket",
+      "Empty": "You have no service tickets.",
+      "FieldTitle": "Title",
+      "FieldType": "Type",
+      "FieldPriority": "Priority",
+      "FieldDescription": "Describe the issue",
+      "Submit": "Submit ticket",
+      "Description": "Description",
+      "Resolution": "Resolution",
+      "Status": {
+        "Open": "Open",
+        "Assigned": "Assigned",
+        "InProgress": "In progress",
+        "Resolved": "Resolved",
+        "Cancelled": "Cancelled"
+      },
+      "Priority": {
+        "Low": "Low",
+        "Normal": "Normal",
+        "High": "High",
+        "Urgent": "Urgent"
+      },
+      "Type": {
+        "PreventiveMaintenance": "Preventive maintenance",
+        "WarrantyClaim": "Warranty claim",
+        "OutOfWarrantyRepair": "Out-of-warranty repair",
+        "Inspection": "Inspection"
+      }
+    },
+    "Invoice": {
+      "ListTitle": "Invoices",
+      "Empty": "You have no invoices.",
+      "IssueDate": "Issue date",
+      "DueDate": "Due date",
+      "Total": "Total",
+      "Paid": "Paid",
+      "Due": "Outstanding",
+      "Download": "Download PDF",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Issued": "Issued",
+        "Sent": "Sent",
+        "PartiallyPaid": "Partially paid",
+        "Paid": "Paid",
+        "Overdue": "Overdue",
+        "Void": "Void",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Payment": {
+      "ListTitle": "Payments",
+      "New": "Pay an invoice",
+      "Empty": "No payments yet.",
+      "InitiateTitle": "Pay an invoice online",
+      "FieldInvoiceId": "Invoice ID",
+      "InvoiceIdHint": "Paste the invoice ID you want to pay. You can find it from the invoice detail page.",
+      "InvoiceIdRequired": "Invoice ID is required.",
+      "InitiateError": "Could not start the payment. Please try again.",
+      "PayNow": "Pay now",
+      "Status": {
+        "Draft": "Draft",
+        "Confirmed": "Confirmed",
+        "PartiallyApplied": "Partially applied",
+        "FullyApplied": "Fully applied",
+        "Refunded": "Refunded",
+        "Void": "Void"
+      },
+      "Method": {
+        "Cash": "Cash",
+        "BankTransfer": "Bank transfer",
+        "CreditCard": "Credit card",
+        "DebitCard": "Debit card",
+        "Check": "Check",
+        "PromissoryNote": "Promissory note",
+        "OnlineGateway": "Online",
+        "Other": "Other"
+      }
+    },
+    "Project": {
+      "ListTitle": "My projects",
+      "Empty": "No projects yet.",
+      "Code": "Code",
+      "Total": "Grand total",
+      "Panels": "Panels",
+      "SiteCity": "Site city",
+      "SiteDistrict": "Site district",
+      "LastUpdated": "Last updated",
+      "ValidUntil": "Quote valid until",
+      "ReadOnlyNotice": "Project details are read-only in the customer portal.",
+      "Status": {
+        "Draft": "Draft",
+        "InDesign": "In design",
+        "AwaitingApproval": "Awaiting approval",
+        "Approved": "Approved",
+        "InProduction": "In production",
+        "Shipped": "Shipped",
+        "Installed": "Installed",
+        "Closed": "Closed",
+        "Cancelled": "Cancelled"
+      }
+    },
+    "Profile": {
+      "Title": "Profile",
+      "Name": "Name",
+      "Email": "Email",
+      "Username": "Username",
+      "Tenant": "Account",
+      "NotificationPrefsTitle": "Notification preferences",
+      "NotificationPrefsHint": "Choose how we contact you about your warranties, tickets and invoices."
+    }
+  },
+  "Marketplace": {
+    "List": {
+      "Eyebrow": "Community",
+      "Title": "Template marketplace",
+      "Subtitle": "Browse community templates and install them into your workspace.",
+      "SubmitButton": "Submit a template",
+      "LoadFailed": "Failed to load templates",
+      "EmptyTitle": "No templates match these filters",
+      "EmptyDescription": "Try a different category or lower the minimum rating."
+    },
+    "Filters": {
+      "Category": "Category",
+      "AllCategories": "All categories",
+      "Sort": "Sort",
+      "MinRating": "Minimum rating",
+      "AnyRating": "Any",
+      "Sort.Popularity": "Popularity",
+      "Sort.Newest": "Newest",
+      "Sort.Rating": "Top rated",
+      "Sort.Alphabetical": "Alphabetical"
+    },
+    "Card": {
+      "NoPreview": "No preview"
+    },
+    "Detail": {
+      "Back": "Back to marketplace",
+      "Install": "Install template",
+      "Installing": "Installing...",
+      "Installed": "Template installed",
+      "InstallFailed": "Failed to install template",
+      "LoadFailed": "Failed to load template",
+      "MissingId": "Missing template id",
+      "NoPreview": "No preview available",
+      "NoDescription": "No description provided.",
+      "Specs": "Specifications",
+      "Subtype": "Subtype",
+      "GeometryMode": "Geometry",
+      "Mounting": "Mounting",
+      "Connector": "Connector",
+      "RunPresets": "Run presets",
+      "Downloads": "Downloads",
+      "PublishedAt": "Published"
+    },
+    "Reviews": {
+      "Title": "Reviews",
+      "Empty": "No reviews yet.",
+      "Loading": "Loading reviews...",
+      "User": "User",
+      "LeaveReview": "Leave a review",
+      "CommentPlaceholder": "Share your experience...",
+      "Submit": "Submit",
+      "Submitting": "Submitting...",
+      "Submitted": "Review submitted",
+      "SubmitFailed": "Failed to submit review",
+      "SelectRating": "Please select a rating"
+    },
+    "Submit": {
+      "Title": "Submit a template",
+      "Subtitle": "Share your private template with the community after approval.",
+      "TenantTemplateId": "Template ID",
+      "TenantTemplateIdRequired": "Template ID is required",
+      "Submit": "Submit",
+      "Submitting": "Submitting...",
+      "Submitted": "Submission sent for review",
+      "Failed": "Failed to submit template",
+      "Cancel": "Cancel"
+    },
+    "MySubmissions": {
+      "Eyebrow": "Marketplace",
+      "Title": "My submissions",
+      "Subtitle": "Track templates you submitted to the community marketplace.",
+      "New": "Submit another",
+      "LoadFailed": "Failed to load submissions",
+      "EmptyTitle": "No submissions yet",
+      "EmptyDescription": "Submit your own template to share with the community.",
+      "Code": "Code",
+      "Name": "Name",
+      "Status": "Status",
+      "SubmittedAt": "Submitted",
+      "PublishedAt": "Published",
+      "Downloads": "Downloads"
+    },
+    "Admin": {
+      "Eyebrow": "Platform admin",
+      "Title": "Marketplace review queue",
+      "Subtitle": "Approve or reject community submissions before publishing.",
+      "LoadFailed": "Failed to load pending submissions",
+      "EmptyTitle": "Queue is empty",
+      "EmptyDescription": "No pending marketplace submissions.",
+      "Code": "Code",
+      "Name": "Name",
+      "SubmittedAt": "Submitted",
+      "Actions": "Actions",
+      "Publish": "Publish",
+      "Published": "Template published",
+      "PublishFailed": "Failed to publish template",
+      "Reject": "Reject",
+      "Rejected": "Submission rejected",
+      "RejectFailed": "Failed to reject submission",
+      "Rejecting": "Rejecting...",
+      "RejectTitle": "Reject submission",
+      "RejectReason": "Rejection reason",
+      "RejectReasonRequired": "Rejection reason is required",
+      "ConfirmReject": "Reject",
+      "Cancel": "Cancel"
+    }
+  },
+  "Mrp": {
+    "Dashboard": {
+      "Title": "MRP Dashboard",
+      "Subtitle": "Material requirements planning and reorder suggestions.",
+      "TotalTracked": "Tracked products",
+      "ReorderCandidates": "Reorder candidates",
+      "PendingRequisitions": "Pending requisitions",
+      "OpenPurchaseOrders": "Open purchase orders",
+      "ViewRequisitions": "Manage requisitions",
+      "OpenWorkbench": "Open workbench"
+    },
+    "Workbench": {
+      "Title": "MRP Planner Workbench",
+      "Subtitle": "Time-phased material planning, exception triage, and planned-order release.",
+      "BucketKind": "Bucket",
+      "Horizon": "Horizon",
+      "HorizonDays": "{{days}} days",
+      "RunPreview": "Run preview",
+      "Commit": "Commit plan",
+      "ClassifyAbc": "Classify ABC",
+      "AsOf": "As of",
+      "ProductsEvaluated": "{{count}} products evaluated",
+      "Bucket": {
+        "Day": "Daily",
+        "Week": "Weekly"
+      },
+      "Tab": {
+        "grid": "Planning grid",
+        "queue": "Action queue",
+        "impact": "Change impact",
+        "distribution": "Distribution",
+        "capacity": "Capacity",
+        "runs": "Plan runs"
+      },
+      "Procurement": {
+        "Make": "Make",
+        "Buy": "Buy"
+      },
+      "Abc": {
+        "A": "A",
+        "B": "B",
+        "C": "C"
+      },
+      "Kpi": {
+        "StockoutRisk": "Stockout risk",
+        "ProjectedStockouts": "Projected stockouts",
+        "OpenExceptions": "Open exceptions",
+        "OnOrder": "On order"
+      },
+      "Grid": {
+        "Empty": "Run a preview to see the time-phased plan.",
+        "Row": {
+          "Gross": "Gross requirements",
+          "ScheduledReceipts": "Scheduled receipts",
+          "ProjectedOnHand": "Projected on-hand",
+          "Net": "Net requirements",
+          "PlannedReleases": "Planned releases"
+        }
+      },
+      "Chart": {
+        "NoData": "No time-phased data available.",
+        "ProjectedOnHand": "Projected on-hand",
+        "ScheduledReceipts": "Scheduled receipts",
+        "Demand": "Demand",
+        "Rop": "Reorder point"
+      },
+      "Queue": {
+        "Empty": "No open exceptions.",
+        "SelectAll": "Select all",
+        "SelectRow": "Select {{sku}}",
+        "SelectedCount": "{{count}} selected",
+        "ReleaseSelected": "Release selected",
+        "Severity": "Severity",
+        "Type": "Type",
+        "Product": "Product",
+        "Quantity": "Quantity",
+        "DaysToStockout": "Days to stockout",
+        "Message": "Message",
+        "Actions": "Actions",
+        "Release": "Release",
+        "Dismiss": "Dismiss",
+        "OpenInGrid": "Open in grid",
+        "CommitToRelease": "Commit the plan to release planned orders into requisitions."
+      },
+      "Drawer": {
+        "Title": "Plan for {{sku}}",
+        "OnHand": "On hand",
+        "SafetyStock": "Safety stock",
+        "ReorderPoint": "Reorder point",
+        "Policy": "Lot policy",
+        "PlannedOrders": "Planned orders",
+        "NoPlannedOrders": "No planned orders.",
+        "Pegging": "Pegging",
+        "NoPegging": "No pegged demand.",
+        "Release": "Release",
+        "Due": "Due",
+        "Quantity": "Quantity",
+        "Firm": "Firm",
+        "Firmed": "Firmed",
+        "Overridden": "Overridden",
+        "Released": "Released",
+        "CreateProductionOrder": "Create production order",
+        "ProductionOrderCreated": "Production order created",
+        "Complete": "Complete",
+        "Completed": "Completed",
+        "OrderCount": "{{count}} order",
+        "OrderCount_other": "{{count}} orders",
+        "CommitRequired": "Commit the plan to firm or release these planned orders."
+      },
+      "Runs": {
+        "Number": "Number",
+        "AsOf": "As of",
+        "Products": "Products",
+        "PlannedOrders": "Planned orders",
+        "Exceptions": "Exceptions",
+        "Empty": "No committed plan runs yet."
+      },
+      "Filter": {
+        "Type": "Exception type",
+        "Severity": "Severity",
+        "Supplier": "Supplier",
+        "Procurement": "Procurement"
+      },
+      "ChangeImpact": {
+        "Help": "Trace which planned orders depend on a demand source — see what would be affected if it is cancelled or changed.",
+        "CommitRequired": "Commit the plan to analyze change impact.",
+        "SourceKind": "Source type",
+        "Source": "Demand source",
+        "SelectSource": "Select a sales order…",
+        "Analyze": "Analyze impact",
+        "Prompt": "Select a demand source and run the analysis.",
+        "Empty": "No planned orders depend on this demand source.",
+        "Summary": "Cancelling {{source}} affects {{count}} planned order(s).",
+        "Type": "Type",
+        "Product": "Product",
+        "Level": "BOM level",
+        "Quantity": "Quantity",
+        "Due": "Due"
+      },
+      "Distribution": {
+        "Help": "Rebalance stock across warehouses by transferring surplus to shortfall sites before buying more.",
+        "Summary": "{{products}} products evaluated · {{transfers}} transfer(s) suggested.",
+        "NoSuggestions": "No transfers needed — every warehouse can cover its own demand.",
+        "From": "From",
+        "To": "To",
+        "Quantity": "Quantity",
+        "Transfer": "Transfer",
+        "TransferAria": "Transfer {{quantity}} {{sku}} from {{from}} to {{to}}",
+        "Execute": "Execute",
+        "Executing": "Executing…",
+        "Product": "Product",
+        "Warehouse": "Warehouse",
+        "Available": "Available",
+        "Demand": "Demand",
+        "Net": "Net",
+        "ExternalReplenishment": "External replenishment needed",
+        "ExternalRow": "{{sku}} at {{warehouse}}: {{quantity}} short with no surplus to transfer."
+      },
+      "Capacity": {
+        "Help": "Rough-cut capacity planning — compare the production load on each work center against its available capacity per bucket.",
+        "Summary": "{{count}} work center(s) with planned load.",
+        "WorkCenter": "Work center",
+        "DailyCapacity": "{{minutes}} min/day",
+        "Bucket": "Bucket",
+        "Load": "Load (min)",
+        "Capacity": "Capacity (min)",
+        "LoadVsCapacity": "Load vs capacity",
+        "WithinCapacity": "Within capacity",
+        "Overloaded": "Overloaded",
+        "OverloadedBuckets": "{{count}} overloaded",
+        "Unrouted": "Unrouted",
+        "UnroutedNote": "{{count}} production order(s) have no work center routing and are excluded from capacity.",
+        "BarAria": "Load {{load}} of {{capacity}} minutes",
+        "NoData": "No work centers or planned load — route Make products to a work center to see capacity."
+      },
+      "Severity": {
+        "Critical": "Critical",
+        "Warning": "Warning",
+        "Info": "Info"
+      },
+      "ActionType": {
+        "Release": "Release",
+        "RescheduleIn": "Reschedule in",
+        "RescheduleOut": "Reschedule out",
+        "Expedite": "Expedite",
+        "CancelSupply": "Cancel supply",
+        "BelowSafetyStock": "Below safety stock",
+        "ProjectedStockout": "Projected stockout"
+      },
+      "Policy": {
+        "LotForLot": "Lot-for-lot",
+        "FixedOrderQuantity": "Fixed order qty",
+        "MinMax": "Min/Max",
+        "EconomicOrderQuantity": "EOQ",
+        "PeriodOrderQuantity": "Period order qty"
+      },
+      "PegSource": {
+        "SalesOrder": "Sales order",
+        "PlannedOrder": "Planned order",
+        "Forecast": "Forecast"
+      }
+    },
+    "Convert": {
+      "Title": "Convert {{number}} to PO",
+      "Vendor": "Vendor",
+      "SelectVendor": "Select a vendor…",
+      "Currency": "Currency",
+      "ExpectedDate": "Expected delivery"
+    },
+    "Suggestions": {
+      "Title": "Reorder Suggestions",
+      "Empty": "No products below their reorder point.",
+      "Sku": "SKU",
+      "Product": "Product",
+      "OnHand": "On hand",
+      "OnOrder": "On order",
+      "Available": "Available",
+      "ReorderPoint": "Reorder point",
+      "Suggested": "Suggested",
+      "DaysUntilStockOut": "Days until stockout"
+    },
+    "Projection": {
+      "Title": "Stock Projection",
+      "Subtitle": "Projected balance for the next {{days}} days.",
+      "NoData": "No projection data available.",
+      "ReorderPoint": "Reorder point",
+      "ShouldReorder": "Reorder recommended",
+      "OnHand": "On hand",
+      "Reserved": "Reserved",
+      "OnOrder": "On order",
+      "Suggested": "Suggested"
+    },
+    "Forecast": {
+      "Title": "Demand Forecast",
+      "Window": "Window",
+      "AverageDaily": "Avg daily demand",
+      "TotalDemand": "Total demand",
+      "Peak": "Peak day"
+    },
+    "Requisition": {
+      "PageTitle": "Purchase Requisitions",
+      "PageSubtitle": "Review, approve, and convert requisitions into purchase orders.",
+      "NewRequisition": "New requisition",
+      "Empty": "No requisitions match the filters.",
+      "Notes": "Notes",
+      "Lines": "Lines",
+      "LineCount": "lines",
+      "AddLine": "Add line",
+      "RemoveLine": "Remove line",
+      "ProductId": "Product ID",
+      "Quantity": "Quantity",
+      "UnitCost": "Unit cost",
+      "EstimatedTotal": "Estimated total",
+      "ReasonPrompt": "Reason (optional)",
+      "RejectTitle": "Reject {{number}}",
+      "CancelTitle": "Cancel {{number}}",
+      "Status": {
+        "Draft": "Draft",
+        "Submitted": "Submitted",
+        "Approved": "Approved",
+        "Rejected": "Rejected",
+        "Converted": "Converted",
+        "Cancelled": "Cancelled"
+      },
+      "Reason": {
+        "Label": "Reason",
+        "MRPSuggestion": "MRP suggestion",
+        "Manual": "Manual",
+        "EmergencyOrder": "Emergency order",
+        "StockOut": "Stockout"
+      }
+    },
+    "Action": {
+      "Submit": "Submit",
+      "Approve": "Approve",
+      "Reject": "Reject",
+      "Convert": "Convert to PO",
+      "Cancel": "Cancel",
+      "Generate": "Run MRP"
+    }
+  },
+  "po": {
+    "form": {
+      "vendorRequired": "Please select a vendor.",
+      "linesRequired": "Add at least one valid line.",
+      "updated": "Purchase order updated.",
+      "created": "Purchase order created.",
+      "editTitle": "Purchase Order",
+      "newTitle": "New Purchase Order",
+      "vendor": "Vendor",
+      "selectVendor": "Select…",
+      "warehouse": "Receiving warehouse",
+      "selectWarehouse": "Select…",
+      "currency": "Currency",
+      "orderDate": "Order date",
+      "expectedDate": "Expected delivery",
+      "product": "Product",
+      "qty": "Qty",
+      "unitCost": "Unit cost",
+      "tax": "Tax %",
+      "addLine": "Add line",
+      "subtotal": "Subtotal",
+      "taxTotal": "Tax",
+      "total": "Total",
+      "notes": "Notes"
+    },
+    "receive": {
+      "nothing": "Enter a quantity to receive.",
+      "over": "Cannot receive more than the remaining quantity.",
+      "warehouseRequired": "Please select a warehouse.",
+      "done": "Receipt posted; stock updated.",
+      "title": "Goods Receipt",
+      "allReceived": "All lines have been received.",
+      "warehouse": "Receiving warehouse",
+      "selectWarehouse": "Select…",
+      "product": "Product",
+      "remaining": "Remaining",
+      "qty": "Received qty",
+      "notes": "Notes / delivery note #",
+      "submit": "Post receipt"
+    },
+    "cancelTitle": "Cancel Purchase Order",
+    "cancelConfirm": "Cancel {{po}}?",
+    "actionDone": "Action completed.",
+    "deleteTitle": "Delete Purchase Order",
+    "deleteConfirm": "Delete {{po}}?",
+    "deleted": "Purchase order deleted.",
+    "page": {
+      "title": "Purchase Orders",
+      "subtitle": "Create, approve, and track orders to vendors.",
+      "new": "New PO"
+    },
+    "filter": {
+      "all": "All",
+      "allStatuses": "All statuses",
+      "statusAria": "Filter by status",
+      "vendor": "Vendor",
+      "allVendors": "All vendors"
+    },
+    "status": {
+      "Draft": "Draft",
+      "Submitted": "Submitted",
+      "Approved": "Approved",
+      "PartiallyReceived": "Partially received",
+      "Received": "Received",
+      "Closed": "Closed",
+      "Cancelled": "Cancelled"
+    },
+    "count": "{{count}} purchase orders",
+    "resultCountLabel": "purchase orders",
+    "empty": "No purchase orders found.",
+    "cols": {
+      "number": "No.",
+      "vendor": "Vendor",
+      "date": "Date",
+      "status": "Status",
+      "total": "Amount"
+    },
+    "actions": {
+      "submit": "Submit",
+      "approve": "Approve",
+      "receive": "Receive",
+      "close": "Close",
+      "cancel": "Cancel"
+    }
+  },
+  "ap": {
+    "bill": {
+      "invalid": "Enter a vendor, bill number, and amount.",
+      "created": "Vendor bill created.",
+      "newTitle": "New Vendor Bill",
+      "vendor": "Vendor",
+      "selectVendor": "Select…",
+      "number": "Bill #",
+      "currency": "Currency",
+      "date": "Bill date",
+      "due": "Due date",
+      "subtotal": "Subtotal",
+      "tax": "Tax amount",
+      "total": "Total",
+      "notes": "Notes"
+    },
+    "pay": {
+      "invalid": "Enter a valid amount (cannot exceed the remaining balance).",
+      "done": "Payment recorded.",
+      "title": "Vendor Payment",
+      "due": "Remaining balance",
+      "amount": "Amount",
+      "date": "Date",
+      "method": "Payment method",
+      "bankTransfer": "Bank transfer / EFT",
+      "cash": "Cash",
+      "check": "Check",
+      "card": "Card",
+      "notes": "Notes",
+      "submit": "Make payment"
+    },
+    "cancelTitle": "Cancel Bill",
+    "cancelConfirm": "Cancel {{n}}?",
+    "actionDone": "Action completed.",
+    "page": {
+      "title": "Vendor Bills",
+      "subtitle": "Process and pay vendor bills; the vendor ledger updates automatically.",
+      "new": "New bill"
+    },
+    "tab": {
+      "bills": "Bills",
+      "payments": "Payments"
+    },
+    "filter": {
+      "allVendors": "All vendors",
+      "allStatuses": "All statuses"
+    },
+    "count": "{{count}} bills",
+    "paymentCount": "{{count}} payments",
+    "empty": "No vendor bills found.",
+    "cols": {
+      "number": "Bill #",
+      "vendor": "Vendor",
+      "date": "Date",
+      "total": "Amount",
+      "due": "Balance due",
+      "status": "Status"
+    },
+    "actions": {
+      "glEntry": "GL entry",
+      "post": "Post to ledger",
+      "pay": "Pay",
+      "cancel": "Cancel"
+    },
+    "payments": {
+      "empty": "No vendor payments found."
+    },
+    "payCols": {
+      "number": "Payment #",
+      "method": "Method",
+      "amount": "Amount"
+    },
+    "glEntryTitle": "GL Entry · {{n}}"
+  },
+  "BI": {
+    "Common": {
+      "Loading": "Loading..."
+    },
+    "Dashboard": {
+      "Title": "KPI Dashboard",
+      "Empty": "No widgets yet — add your first widget.",
+      "RemoveWidget": "Remove widget",
+      "WidgetError": "Failed to load widget data."
+    },
+    "Reports": {
+      "Title": "Saved Reports",
+      "Create": "New report",
+      "Name": "Name",
+      "DataSource": "Data source",
+      "Visibility": "Visibility",
+      "LastRun": "Last run",
+      "Actions": "Actions",
+      "Open": "Open",
+      "Delete": "Delete",
+      "Empty": "No saved reports yet."
+    },
+    "Builder": {
+      "Title": "Report Builder",
+      "DataSource": "Data source",
+      "GroupBy": "Group by",
+      "Aggregation": "Aggregation",
+      "MeasureField": "Measure field",
+      "FromDate": "From",
+      "ToDate": "To",
+      "Filters": "Filters",
+      "AddFilter": "Add filter",
+      "Field": "Field",
+      "Value": "Value",
+      "ReportName": "Report name",
+      "Public": "Visible to all tenant users",
+      "Preview": "Preview",
+      "PreviewResult": "Preview",
+      "PreviewFailed": "Preview failed",
+      "Save": "Save",
+      "Saved": "Report saved",
+      "SaveFailed": "Failed to save report",
+      "NameRequired": "Name is required"
+    },
+    "Export": {
+      "Button": "Export",
+      "Success": "Export downloaded",
+      "Failed": "Export failed"
+    }
+  },
+  "Audit": {
+    "Admin": {
+      "Action": "Action",
+      "AfterJson": "After (JSON)",
+      "AnyAction": "Any action",
+      "ApplyFilter": "Apply filters",
+      "ChangedAt": "Changed at",
+      "DetailTitle": "Audit entry details",
+      "EntityId": "Entity ID",
+      "EntityType": "Entity type",
+      "EntityTypePlaceholder": "e.g. Order, Invoice",
+      "EntityTypesFilter": "Entity types (comma separated)",
+      "ExportStarted": "Audit export started",
+      "Format": "Format",
+      "Frequency": "Frequency",
+      "FromDate": "From date",
+      "Id": "ID",
+      "LastRun": "Last run",
+      "LookbackDays": "Lookback (days)",
+      "NoResults": "No audit entries match the current filters.",
+      "PageTitle": "Audit Log",
+      "Recipients": "Recipients (comma separated emails)",
+      "Reset": "Reset",
+      "RollingHash": "Rolling hash",
+      "SaveSchedule": "Save schedule",
+      "ScheduleEnabled": "Scheduled export enabled",
+      "ScheduleSaved": "Export schedule saved",
+      "Sequence": "Sequence",
+      "Tab": {
+        "Log": "Log"
+      },
+      "ToDate": "To date",
+      "TotalRows": "{{count}} rows total",
+      "UserId": "User ID"
+    }
+  },
+  "Conflict": {
+    "AttemptedVersion": "Your version",
+    "ConflictingFields": "Conflicting fields",
+    "CurrentVersion": "Current version",
+    "Description": "This record was changed by someone else while you were editing. Review the differences before continuing.",
+    "OverwriteButton": "Overwrite anyway",
+    "OverwritePendingPhase": "Resubmitting your changes with overwrite...",
+    "OverwriteWarning": "Overwriting will discard the other user's changes.",
+    "ReloadButton": "Reload latest",
+    "Title": "Update conflict"
+  },
+  "Platform": {
+    "Tenants": {
+      "Archive": "Archive",
+      "Empty": "No tenants found.",
+      "Fields": {
+        "Dpo": "DPO",
+        "DpoEmail": "DPO email",
+        "DpoName": "DPO name",
+        "Name": "Name",
+        "Slug": "Slug",
+        "Status": "Status"
+      },
+      "IncludeArchived": "Include archived",
+      "Restore": "Restore",
+      "SearchPlaceholder": "Search tenants...",
+      "StatusActive": "Active",
+      "StatusArchived": "Archived",
+      "Title": "Tenants"
+    }
+  },
+  "consent": {
+    "banner": {
+      "acceptAll": "Accept all",
+      "alwaysOn": "Always on",
+      "categories": {
+        "analytics": {
+          "title": "Analytics cookies"
+        },
+        "essential": {
+          "title": "Essential cookies"
+        },
+        "marketing": {
+          "title": "Marketing cookies"
+        }
+      },
+      "categoriesAria": "Cookie categories",
+      "essentialOnly": "Essential only",
+      "managePreferences": "Manage preferences",
+      "savePreferences": "Save preferences",
+      "title": "Cookie preferences"
+    }
+  },
+  "legal": {
+    "aydinlatmaMetni": "KVKK Privacy Notice",
+    "cerezPolitikasi": "Cookie Policy",
+    "gizlilikPolitikasi": "Privacy Policy",
+    "kullanimKosullari": "Terms of Use",
+    "kvkkBasvuruFormu": "KVKK Application Form"
+  },
+  "quotes": {
+    "actions": {
+      "accept": "Accept",
+      "convertToOrder": "Convert to Order",
+      "delete": "Delete",
+      "reject": "Reject",
+      "send": "Send"
+    },
+    "columns": {
+      "actions": "Actions",
+      "quoteNumber": "Quote No",
+      "validUntil": "Valid Until"
+    },
+    "create": {
+      "addLine": "Add Line",
+      "noLinesYet": "No lines added yet",
+      "removeLine": "Remove line",
+      "selectCustomer": "Select a customer",
+      "selectProduct": "Select a product",
+      "submitting": "Creating...",
+      "title": "New Quote",
+      "validation": {
+        "customerRequired": "Please select a customer",
+        "linePositive": "Add at least one line with a product and a quantity greater than zero"
+      }
+    },
+    "detail": {
+      "grandTotal": "Grand Total",
+      "linesHeader": "Lines",
+      "subtotal": "Subtotal",
+      "tax": "Tax"
+    },
+    "empty": "No quotes found",
+    "eyebrow": "Sales · Quotes",
+    "fields": {
+      "currency": "Currency",
+      "customer": "Customer",
+      "notes": "Notes",
+      "quantity": "Quantity",
+      "quoteDate": "Quote Date",
+      "taxRate": "Tax Rate (%)",
+      "unitPrice": "Unit Price",
+      "validUntil": "Valid Until"
+    },
+    "newButton": "New Quote",
+    "resultCountLabel": "quotes",
+    "searchPlaceholder": "Search by number or customer...",
+    "title": "Quotes",
+    "toast": {
+      "accepted": "Quote accepted",
+      "convertedToOrder": "Quote converted to order",
+      "created": "Quote created",
+      "deleted": "Quote deleted",
+      "rejected": "Quote rejected",
+      "sent": "Quote sent"
+    }
+  },
+  "OrderTemplates": {
+    "Columns": {
+      "LastRun": "Last Run",
+      "Name": "Name"
+    },
+    "Empty": "No order templates yet.",
+    "Form": {
+      "Active": "Active",
+      "AddLine": "Add Line",
+      "Currency": "Currency",
+      "Customer": "Customer",
+      "Deleted": "Order template deleted.",
+      "Frequency": "Frequency",
+      "Lines": "Lines",
+      "Name": "Name",
+      "NextRunAt": "Next Run",
+      "Notes": "Notes",
+      "RunNow": "Run Now",
+      "Saved": "Order template saved.",
+      "Submit": "Save",
+      "TitleEdit": "Edit Order Template"
+    },
+    "New": "New Template",
+    "Title": "Order Templates"
+  },
+  "Returns": {
+    "actions": {
+      "receive": "Receive",
+      "reject": "Reject",
+      "view": "View"
+    },
+    "activity": {
+      "approved": "Approved",
+      "cancelled": "Cancelled",
+      "creditNoted": "Credit Note Issued",
+      "received": "Received",
+      "refunded": "Refunded",
+      "rejected": "Rejected",
+      "requested": "Requested",
+      "title": "Activity"
+    },
+    "backToList": "Back to Returns",
+    "empty": "No return requests found.",
+    "fields": {
+      "creditNote": "Credit Note",
+      "customer": "Customer",
+      "number": "Return No",
+      "order": "Order",
+      "product": "Product",
+      "quantity": "Quantity",
+      "requestedAt": "Requested At",
+      "status": "Status",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "unitPrice": "Unit Price"
+    },
+    "filters": {
+      "status": "Filter by status"
+    },
+    "receive": {
+      "autoIssueCreditNote": "Automatically issue credit note",
+      "title": "Receive Return",
+      "warehouseId": "Warehouse",
+      "warehousePlaceholder": "Select a warehouse"
+    },
+    "reject": {
+      "placeholder": "Reason for rejection (optional)",
+      "title": "Reject Return"
+    },
+    "searchPlaceholder": "Search by return no, order or customer...",
+    "title": "Returns",
+    "toast": {
+      "approved": "Return approved.",
+      "cancelled": "Return cancelled.",
+      "rejected": "Return rejected.",
+      "warehouseRequired": "Please select a warehouse first."
+    }
+  },
+  "Settings": {
+    "DiscountRules": {
+      "Code": "Code",
+      "Created": "Discount rule created",
+      "CustomerGroup": "Customer Group",
+      "DeleteTitle": "Delete Discount Rule",
+      "Deleted": "Discount rule deleted",
+      "Description": "Description",
+      "EditTitle": "Edit Discount Rule",
+      "Empty": "No discount rules defined yet",
+      "Errors": {
+        "InvalidValue": "Enter a valid discount value"
+      },
+      "MinQuantity": "Min. Quantity",
+      "Name": "Name",
+      "New": "New Rule",
+      "Priority": "Priority",
+      "Product": "Product",
+      "ProductCategory": "Product Category",
+      "Scope": "Scope",
+      "Status": "Status",
+      "Title": "Discount Rules",
+      "Updated": "Discount rule updated",
+      "ValidFrom": "Valid From",
+      "ValidUntil": "Valid Until",
+      "Validity": "Validity",
+      "Value": "Value",
+      "ValueType": "Value Type"
+    },
+    "ExchangeRates": {
+      "Currency": "Currency",
+      "CurrencyFilter": "Filter by Currency",
+      "Empty": "No exchange rates found",
+      "RateAgainstTry": "Rate Against TRY",
+      "Refresh": "Refresh Rates",
+      "Source": "Source",
+      "Title": "Exchange Rates",
+      "ValidOn": "Valid On"
+    },
+    "Imports": {
+      "Commit": "Import Valid Rows",
+      "CommittedToast": "{{count}} rows imported successfully",
+      "DropFile": "Drag and drop a file here, or click to browse (.csv, .xlsx)",
+      "Errors": "Errors",
+      "InvalidBlockToast": "{{count}} invalid rows found. Enable skipping invalid rows to continue.",
+      "InvalidRows": "Invalid Rows",
+      "Row": "Row",
+      "SkipInvalid": "Skip invalid rows",
+      "Title": "Data Imports",
+      "TotalRows": "Total Rows",
+      "ValidRows": "Valid Rows"
+    },
+    "PriceLists": {
+      "Empty": "No price lists defined yet",
+      "Lines": {
+        "Add": "Add Line",
+        "Added": "Price list line added",
+        "DiscountPercent": "Discount %",
+        "Empty": "No lines in this price list yet",
+        "Errors": {
+          "DiscountRange": "Discount must be between 0 and 100",
+          "MinExceedsMax": "Min. quantity cannot exceed max. quantity",
+          "PriceRequired": "Enter a valid price"
+        },
+        "MaxQuantity": "Max. Quantity",
+        "Product": "Product",
+        "RemoveTitle": "Remove Line",
+        "Removed": "Price list line removed",
+        "SelectProduct": "Select a product",
+        "Title": "Price List Lines",
+        "Updated": "Price list line updated"
+      },
+      "Title": "Price Lists"
+    },
+    "TaxRules": {
+      "Code": "Code",
+      "Created": "Tax rule created",
+      "DeleteTitle": "Delete Tax Rule",
+      "Deleted": "Tax rule deleted",
+      "Description": "Description",
+      "EditTitle": "Edit Tax Rule",
+      "Empty": "No tax rules defined yet",
+      "Errors": {
+        "RateRange": "Rate must be between 0 and 100"
+      },
+      "Fallback": "Fallback Tax Rate",
+      "Name": "Name",
+      "New": "New Rule",
+      "Priority": "Priority",
+      "Product": "Product",
+      "ProductCategory": "Product Category",
+      "ProductClass": "Product Class",
+      "Rate": "Rate (%)",
+      "RegionCode": "Region Code",
+      "Scope": "Scope",
+      "Status": "Status",
+      "Title": "Tax Rules",
+      "Updated": "Tax rule updated",
+      "ValidFrom": "Valid From",
+      "ValidUntil": "Valid Until"
+    }
+  },
+  "Inventory": {
+    "StockCounts": {
+      "allLinesRequired": "All lines must be entered.",
+      "backToList": "Back to counts",
+      "cancel": {
+        "title": "Cancel Count"
+      },
+      "cancelled": "Count cancelled.",
+      "cols": {
+        "lines": "Lines",
+        "number": "Count No",
+        "planned": "Planned",
+        "status": "Status",
+        "varianceCost": "Variance Cost",
+        "warehouse": "Warehouse"
+      },
+      "count": "{{count}} counts",
+      "empty": "No counts found.",
+      "filter": {
+        "allStatuses": "All statuses",
+        "allWarehouses": "All warehouses"
+      },
+      "lineCols": {
+        "counted": "Counted",
+        "expected": "Expected",
+        "sku": "SKU",
+        "variance": "Variance"
+      },
+      "navLabel": "Stock Counts",
+      "new": "New Count",
+      "plan": {
+        "notes": "Notes",
+        "snapshotHint": "When the plan is created, all stock items of the selected warehouse are written to the count lines as a snapshot.",
+        "submit": "Create Count",
+        "title": "Plan New Count",
+        "warehouse": "Warehouse"
+      },
+      "planned": "Count created.",
+      "post": {
+        "button": "Post Count",
+        "title": "Post Count"
+      },
+      "posted": "Count posted.",
+      "reconcile": "Reconcile",
+      "reconcileNotes": "Reconciliation Notes (optional)",
+      "reconciled": "Count reconciled.",
+      "recorded": "Count entries saved.",
+      "saveCounts": "Save Counts",
+      "start": "Start Count",
+      "started": "Count started.",
+      "subtitle": "Plan, enter, reconcile, and post warehouse-based count periods.",
+      "summary": {
+        "lines": "Line Count",
+        "varianceCost": "Variance Cost",
+        "varianceQty": "Variance Qty"
+      },
+      "title": "Stock Counts"
+    }
+  },
+  "Locale": {
+    "label": "Language"
+  },
+  "Products": {
+    "Images": {
+      "alt": "Alt text",
+      "delete": "Delete",
+      "empty": "No images yet",
+      "invalidType": "Unsupported file type",
+      "loading": "Loading images…",
+      "markPrimary": "Mark as primary",
+      "moveDown": "Move later",
+      "moveUp": "Move earlier",
+      "primary": "Primary",
+      "subtitle": "Up to {{max}} images, JPG/PNG/WebP, 5 MB each.",
+      "title": "Images",
+      "tooLarge": "File exceeds 5 MB",
+      "upload": "Upload",
+      "uploaded": "Image uploaded"
+    },
+    "Variants": {
+      "actions": "Actions",
+      "active": "Active",
+      "add": "Add variant",
+      "attributes": "Attributes (JSON)",
+      "attributesHint": "JSON object, e.g. {\"color\":\"red\",\"size\":\"L\"}",
+      "attributesInvalid": "Attributes must be a JSON object.",
+      "barcode": "Barcode",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this variant?",
+      "edit": "Edit",
+      "editTitle": "Edit variant",
+      "empty": "No variants yet.",
+      "loading": "Loading variants…",
+      "priceOverride": "Price override",
+      "save": "Save",
+      "saveFailed": "Save failed",
+      "sku": "SKU",
+      "skuRequired": "SKU is required.",
+      "stock": "Stock",
+      "subtitle": "Manage SKUs that share this product (e.g. color/size).",
+      "title": "Variants"
+    }
+  },
+  "Sso": {
+    "Admin": {
+      "AttributeMappings": "Attribute Mappings (JSON)",
+      "ClientSecret": "Client Secret",
+      "Created": "Provider created.",
+      "DeleteButton": "Delete",
+      "DeleteFailed": "Delete failed.",
+      "Deleted": "Provider deleted.",
+      "Empty": "No providers defined yet.",
+      "EntityIdOrClientId": "EntityId / ClientId",
+      "IsActive": "Active",
+      "Name": "Name",
+      "New": "New Provider",
+      "Protocol": "Protocol",
+      "SaveFailed": "Save failed.",
+      "Saved": "Provider updated.",
+      "SelectHint": "Select a provider or create a new one.",
+      "Subtitle": "Manage SAML 2.0 / OpenID Connect integrations.",
+      "TestButton": "Test Connection",
+      "TestFailed": "Test failed.",
+      "TestRequiresSave": "Save the provider first.",
+      "Title": "SSO Identity Providers",
+      "UpdateButton": "Update",
+      "Validation": {
+        "Required": "Fill in the required fields."
+      }
+    },
+    "Login": {
+      "Continue": "Continue",
+      "IdpName": "Provider Name",
+      "OpenButton": "Sign in with SSO",
+      "TenantSlug": "Tenant Code"
+    }
+  },
+  "TenantBranding": {
+    "current": "Current logo",
+    "dragDropHint": "Drag a PNG, JPG, or SVG here (max {{max}} KB) or click to browse.",
+    "invalidType": "Unsupported file type. Use PNG, JPG, or SVG.",
+    "noLogo": "No logo uploaded.",
+    "subtitle": "Upload the logo that appears on invoices, the portal header, and email templates.",
+    "title": "Brand & logo",
+    "tooLarge": "File exceeds {{max}} KB.",
+    "uploaded": "Logo updated.",
+    "uploading": "Uploading…"
+  },
+  "VendorBills": {
+    "threeWayMatch": {
+      "allVendors": "All vendors",
+      "cols": {
+        "billed": "Billed",
+        "billedAmount": "Billed Amount",
+        "expected": "Expected",
+        "flags": "Discrepancies",
+        "po": "PO No",
+        "product": "Product",
+        "received": "Received",
+        "vendor": "Vendor"
+      },
+      "count": "{{count}} lines",
+      "empty": "All PO–receipt–bill chains match.",
+      "subtitle": "Lists PO ↔ Receipt ↔ Bill discrepancies. Filter by discrepancy code.",
+      "title": "3-Way Match Report"
+    }
+  },
+  "VendorPayments": {
+    "applications": {
+      "amount": "Amount",
+      "date": "Date",
+      "empty": "No payments applied.",
+      "paymentNo": "Payment No",
+      "title": "Applied Payments"
+    },
+    "apply": {
+      "amount": "Amount",
+      "amountDue": "Amount Due",
+      "billTotal": "Bill Total",
+      "maxHint": "Maximum {{m}}",
+      "noEligible": "No applicable payments found for this vendor.",
+      "notes": "Notes",
+      "payment": "Payment",
+      "pickPayment": "Select payment…",
+      "submit": "Apply",
+      "subtitle": "Select the payment to apply to bill {{n}}.",
+      "title": "Apply Vendor Payment",
+      "unapplied": "unapplied"
+    },
+    "applyPayment": "Apply existing payment",
+    "applySuccess": "Payment applied to bill.",
+    "viewApplications": "Applied payments"
   }
 }

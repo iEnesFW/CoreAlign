@@ -1,0 +1,26 @@
+{
+  "runtime": "Net80",
+  "defaultVariables": null,
+  "documentGenerator": {
+    "aspNetCoreToOpenApi": {
+      "project": "server/src/CoreAlign.API/CoreAlign.API.csproj",
+      "msBuildProjectExtensionsPath": null,
+      "configuration": "Debug",
+      "targetFramework": "net10.0",
+      "noBuild": false,
+      "verbose": true,
+      "workingDirectory": null,
+      "requireParametersWithoutDefault": false,
+      "apiGroupNames": null,
+      "tagActionsBy": "controller",
+      "addMissingPathParameters": true,
+      "output": "openapi/v1.json",
+      "outputType": "OpenApi3",
+      "newLineBehavior": "Auto",
+      "useDocumentProvider": false,
+      "documentName": "v1",
+      "aspNetCoreEnvironment": "Development",
+      "allowNullableBodyParameters": true
+    }
+  }
+}

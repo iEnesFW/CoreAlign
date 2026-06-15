@@ -19,4 +19,11 @@ public interface ITenantContext
     /// IgnoreQueryFilters).
     /// </summary>
     void EnsureSameTenant(Guid resourceTenantId);
+
+    /// <summary>
+    /// Push a tenant scope onto the ambient context for background work (jobs, webhooks,
+    /// outbox handlers) that has no HTTP request. Dispose the returned token to restore
+    /// the previous scope. Nested pushes are supported.
+    /// </summary>
+    IDisposable PushScope(Guid tenantId);
 }

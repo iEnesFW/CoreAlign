@@ -1,8 +1,12 @@
 using CoreAlign.Application.Accounting.DTOs;
 using CoreAlign.Application.Common;
+using CoreAlign.Domain.Enums;
 using MediatR;
 
 namespace CoreAlign.Application.Accounting.Commands;
+
+public record ConfigureGLPostingMappingCommand(GLPostingKey Key, string AccountCode)
+    : IRequest<GLPostingMappingDto>, ITransactionalRequest;
 
 public record CreateAccountingPeriodCommand(int Year, int Month)
     : IRequest<AccountingPeriodDto>, ITransactionalRequest;

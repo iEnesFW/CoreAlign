@@ -87,6 +87,29 @@ public class StockItemRepository : IStockItemRepository
     public async Task<decimal> SumReservedAsync(Guid productId, CancellationToken ct = default) =>
         await _context.StockItems.Where(s => s.ProductId == productId).SumAsync(s => (decimal?)s.Reserved, ct) ?? 0m;
 
+    public async Task<IReadOnlyDictionary<Guid, (decimal OnHand, decimal Reserved)>> SumOnHandAndReservedByProductsAsync(
+        IEnumerable<Guid> productIds,
+        Guid? warehouseId,
+        CancellationToken cancellationToken = default)
+    {
+        var idArray = productIds?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idArray.Length == 0)
+        {
+            return new Dictionary<Guid, (decimal, decimal)>();
+        }
+        var query = _context.StockItems.AsNoTracking()
+            .Where(s => idArray.Contains(s.ProductId));
+        if (warehouseId.HasValue)
+        {
+            query = query.Where(s => s.WarehouseId == warehouseId.Value);
+        }
+        var rows = await query
+            .GroupBy(s => s.ProductId)
+            .Select(g => new { ProductId = g.Key, OnHand = g.Sum(s => s.OnHand), Reserved = g.Sum(s => s.Reserved) })
+            .ToListAsync(cancellationToken);
+        return rows.ToDictionary(r => r.ProductId, r => (r.OnHand, r.Reserved));
+    }
+
     public async Task<StockItem> GetOrCreateAsync(Guid productId, Guid warehouseId, Guid? lotId, CancellationToken ct = default)
     {
         var existing = await GetAsync(productId, warehouseId, lotId, ct);

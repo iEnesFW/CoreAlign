@@ -1,0 +1,258 @@
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useDesignerStore } from '../model/designerStore';
+import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
+import { minArcRadiusMm } from '../model/arcGeometry';
+import { RunArcSection } from './RunArcSection';
+import type {
+  ColorOptionDto,
+  GlassTypeDto,
+  InspectorSection,
+  ProfileSystemDto,
+} from '../model/glassEnclosure.types';
+
+interface RunInspectorProps {
+  profileSystems: ProfileSystemDto[];
+  colors: ColorOptionDto[];
+  glassTypes: GlassTypeDto[];
+  sections: InspectorSection[];
+}
+
+export function RunInspector({ profileSystems, colors, glassTypes, sections }: RunInspectorProps) {
+  const { t } = useTranslation();
+  const selection = useDesignerStore((s) => s.selection);
+  const runs = useDesignerStore((s) => s.scene.runs);
+  const updateRun = useDesignerStore((s) => s.updateRun);
+  const { persistRun, deleteRun, rebalance } = useRunEntityActions();
+
+  const run = useMemo(() => runs.find((r) => r.id === selection.runId), [runs, selection.runId]);
+  const [draft, setDraft] = useState<typeof run>(run);
+  const [panelCount, setPanelCount] = useState<number>(run?.panels.length || 1);
+  const [trackedRun, setTrackedRun] = useState<typeof run>(run);
+  if (run !== trackedRun) {
+    setTrackedRun(run);
+    setDraft(run);
+    setPanelCount(run?.panels.length || 1);
+  }
+
+  if (!run || !draft) return null;
+
+  const commit = (patch: Partial<typeof run>) => {
+    updateRun(run.id, patch);
+    void persistRun({ ...run, ...patch });
+  };
+  const defaultGlassTypeId = glassTypes.find((g) => g.isActive)?.id ?? glassTypes[0]?.id ?? '';
+  const show = (section: InspectorSection) => (sections ?? []).includes(section);
+  const minRadius = Math.max(100, minArcRadiusMm(draft.lengthMm));
+
+  return (
+    <section className="flex h-full flex-col gap-3 overflow-auto p-4">
+      <header className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+          {t('GlassEnclosure.Designer.RunInspector')}
+        </h3>
+        <button
+          type="button"
+          onClick={() => void deleteRun(run.id)}
+          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+        >
+          {t('GlassEnclosure.Designer.DeleteRun', { defaultValue: 'Delete run' })}
+        </button>
+      </header>
+
+      {show('general') && (
+        <>
+          <Field label={t('GlassEnclosure.Field.Label')}>
+            <input
+              type="text"
+              value={draft.label}
+              onChange={(e) => setDraft({ ...draft, label: e.target.value })}
+              onBlur={() => commit({ label: draft.label })}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t('GlassEnclosure.Field.ProfileSystem')}>
+            <select
+              value={draft.profileSystemId}
+              onChange={(e) => {
+                setDraft({ ...draft, profileSystemId: e.target.value });
+                commit({ profileSystemId: e.target.value });
+              }}
+              className={inputClass}
+            >
+              {profileSystems.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <Field label={t('GlassEnclosure.Field.Color')}>
+            <div className="grid grid-cols-6 gap-1.5">
+              {colors.map((color) => (
+                <button
+                  key={color.id}
+                  type="button"
+                  onClick={() => commit({ colorId: color.id })}
+                  title={color.name}
+                  className={`h-7 w-full rounded border ${
+                    draft.colorId === color.id
+                      ? 'border-blue-500 ring-2 ring-blue-400/60'
+                      : 'border-slate-300 dark:border-slate-600'
+                  }`}
+                  style={{ backgroundColor: color.hexColor }}
+                />
+              ))}
+            </div>
+          </Field>
+
+          <Field label={t('GlassEnclosure.Designer.PanelCountLabel')}>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={panelCount}
+                onChange={(e) => setPanelCount(Number(e.target.value))}
+                className={inputClass}
+              />
+              <button
+                type="button"
+                disabled={!defaultGlassTypeId}
+                onClick={() => {
+                  const firstPanel = run.panels[0];
+                  const glassTypeId = firstPanel?.glassTypeId ?? defaultGlassTypeId;
+                  const openingType = firstPanel?.openingType ?? 'Fixed';
+                  if (glassTypeId) void rebalance(run.id, panelCount, openingType, glassTypeId);
+                }}
+                className="shrink-0 rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {t('GlassEnclosure.Designer.Rebalance')}
+              </button>
+            </div>
+            <span className="text-[11px] text-slate-400">
+              {t('GlassEnclosure.Designer.PanelCountHint', {
+                defaultValue: 'Set how many glass panels this run splits into, then apply.',
+              })}
+            </span>
+          </Field>
+        </>
+      )}
+
+      {show('dimensions') && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={`${t('GlassEnclosure.Field.Length')} (mm)`}>
+              <input
+                type="number"
+                min={100}
+                max={20000}
+                value={draft.lengthMm}
+                onChange={(e) => setDraft({ ...draft, lengthMm: Number(e.target.value) })}
+                onBlur={() => commit({ lengthMm: draft.lengthMm })}
+                className={inputClass}
+              />
+            </Field>
+            <Field label={`${t('GlassEnclosure.Field.Height')} (mm)`}>
+              <input
+                type="number"
+                min={100}
+                max={5000}
+                value={draft.heightMm}
+                onChange={(e) => setDraft({ ...draft, heightMm: Number(e.target.value) })}
+                onBlur={() => commit({ heightMm: draft.heightMm })}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={`${t('GlassEnclosure.Field.OriginX')} (mm)`}>
+              <input
+                type="number"
+                value={draft.originX}
+                onChange={(e) => setDraft({ ...draft, originX: Number(e.target.value) })}
+                onBlur={() => commit({ originX: draft.originX })}
+                className={inputClass}
+              />
+            </Field>
+            <Field label={`${t('GlassEnclosure.Field.OriginY')} (mm)`}>
+              <input
+                type="number"
+                value={draft.originY}
+                onChange={(e) => setDraft({ ...draft, originY: Number(e.target.value) })}
+                onBlur={() => commit({ originY: draft.originY })}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+
+          <Field label={`${t('GlassEnclosure.Field.Rotation')} (°)`}>
+            <input
+              type="range"
+              min={-180}
+              max={180}
+              step={1}
+              value={draft.rotationDeg}
+              onChange={(e) => setDraft({ ...draft, rotationDeg: Number(e.target.value) })}
+              onMouseUp={() => commit({ rotationDeg: draft.rotationDeg })}
+              onTouchEnd={() => commit({ rotationDeg: draft.rotationDeg })}
+              className="w-full"
+            />
+            <div className="text-xs text-slate-500">{draft.rotationDeg}°</div>
+          </Field>
+
+          <RunArcSection
+            draft={draft}
+            panels={run.panels}
+            minRadius={minRadius}
+            onDraftRadius={(value) => setDraft({ ...draft, geomArcRadiusMm: value })}
+            commit={commit}
+          />
+        </>
+      )}
+
+      {show('hardware') && (
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.hasTopDrip}
+              onChange={(e) => commit({ hasTopDrip: e.target.checked })}
+            />
+            {t('GlassEnclosure.Field.TopDrip')}
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={draft.hasBottomThreshold}
+              onChange={(e) => commit({ hasBottomThreshold: e.target.checked })}
+            />
+            {t('GlassEnclosure.Field.BottomThreshold')}
+          </label>
+        </div>
+      )}
+
+      {show('glass') && (
+        <p className="rounded-md border border-dashed border-slate-300 p-3 text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.GlassPerPanelHint', {
+            defaultValue:
+              'Glass is chosen per panel. Select a panel in the layout to set its glass type.',
+          })}
+        </p>
+      )}
+    </section>
+  );
+}
+
+const inputClass =
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
+    <span className="text-xs uppercase tracking-wide">{label}</span>
+    {children}
+  </label>
+);

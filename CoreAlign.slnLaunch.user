@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "API + Frontend",
+    "Projects": [
+      {
+        "Path": "server\\src\\CoreAlign.API\\CoreAlign.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "https"
+      }
+    ]
+  }
+]

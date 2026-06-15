@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.HostedServices;
 using CoreAlign.API.Middleware;
 using CoreAlign.API.Options;
@@ -18,14 +19,20 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 // Kestrel limits tuned for ERP workload: HTTP/1.1 + HTTP/2 keep-alive, sane
-// header caps. Values overridable via Kestrel:* configuration.
+// header caps. Values overridable via Kestrel:* configuration. Default body
+// cap is 30 MB to match the generic-file-upload ceiling exposed by
+// FileStorageOptions.MaxBytesPerFile; per-endpoint stricter limits (5 MB for
+// product images, 1 MB for tenant logos) are enforced via
+// [RequestSizeLimit] attributes on the controllers.
 builder.WebHost.ConfigureKestrel((context, options) =>
 {
     var cfg = context.Configuration;
     options.Limits.MaxConcurrentConnections = cfg.GetValue<long?>("Kestrel:MaxConcurrentConnections") ?? 1000;
     options.Limits.MaxConcurrentUpgradedConnections = cfg.GetValue<long?>("Kestrel:MaxConcurrentUpgradedConnections") ?? 200;
-    options.Limits.MaxRequestBodySize = cfg.GetValue<long?>("Kestrel:MaxRequestBodyBytes") ?? 10 * 1024 * 1024;
+    options.Limits.MaxRequestBodySize = cfg.GetValue<long?>("Kestrel:MaxRequestBodyBytes") ?? 30_000_000L;
     options.Limits.MaxRequestHeadersTotalSize = cfg.GetValue<int?>("Kestrel:MaxRequestHeadersBytes") ?? 32 * 1024;
     options.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(cfg.GetValue<int?>("Kestrel:KeepAliveSeconds") ?? 120);
     options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(cfg.GetValue<int?>("Kestrel:RequestHeadersTimeoutSeconds") ?? 30);
@@ -123,6 +130,12 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddSwaggerGen(options =>
     {
         options.SwaggerDoc("v1", new OpenApiInfo { Title = "CoreAlign API", Version = "v1" });
+        // CustomerPortalController.GetInvoices ve MyInvoicesController.ListMy ayni route'a (api/v1/customer-portal/invoices)
+        // map ediyor; OpenAPI spec'inde tek action izinli. Conflict'i ilk action'i secerek cozuyoruz —
+        // route deduplication gercek fix; bu workaround sadece UI'in calismasini saglar.
+        options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+        // [FromForm] IFormFile parametreleri (4 controller'da var) Swagger'a [ApiExplorerSettings(IgnoreApi=true)]
+        // ile gizlendi — upload'lar Swagger UI'da test edilmez, gercek istemci kullanir.
 
         options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
         {
@@ -150,6 +163,53 @@ if (!builder.Environment.IsDevelopment()
 
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PersonaPolicies.Customer, p => p
+        .RequireAuthenticatedUser()
+        .RequireClaim(PersonaPolicies.PersonaClaimType, PersonaPolicies.CustomerPersonaValue));
+    options.AddPolicy(PersonaPolicies.Dealer, p => p
+        .RequireAuthenticatedUser()
+        .RequireClaim(PersonaPolicies.PersonaClaimType, PersonaPolicies.DealerPersonaValue));
+    options.AddPolicy(PersonaPolicies.Tenant, p => p
+        .RequireAuthenticatedUser()
+        .RequireClaim(PersonaPolicies.PersonaClaimType, PersonaPolicies.TenantPersonaValue));
+    options.AddPolicy(PersonaPolicies.PlatformAdmin, p => p
+        .RequireAuthenticatedUser()
+        .RequireRole(PersonaPolicies.PlatformAdminRole));
+    options.AddPolicy(CoreAlign.Application.Authorization.CustomerPortalPolicies.SelfService, p => p
+        .RequireAuthenticatedUser()
+        .RequireClaim(PersonaPolicies.PersonaClaimType, PersonaPolicies.CustomerPersonaValue));
+
+    options.AddPolicy(CoreAlign.Application.Authorization.AdminPolicies.ProviderConfig, p => p
+        .RequireAuthenticatedUser()
+        .RequireAssertion(ctx =>
+            ctx.User.IsInRole(CoreAlign.Application.Authorization.AdminPolicies.TenantAdminRole)
+            || ctx.User.HasClaim(
+                CoreAlign.Application.Authorization.AdminPolicies.PermissionClaimType,
+                CoreAlign.Application.Authorization.AdminPolicies.ProviderConfigPermission)));
+
+    options.AddPolicy(CoreAlign.Application.Authorization.PaymentPolicies.Charge, p => p
+        .RequireAuthenticatedUser());
+    options.AddPolicy(CoreAlign.Application.Authorization.PaymentPolicies.Refund, p => p
+        .RequireAuthenticatedUser()
+        .RequireRole(
+            CoreAlign.Application.Authorization.PaymentPolicies.TenantAdminRole,
+            CoreAlign.Application.Authorization.PaymentPolicies.FinanceManagerRole));
+
+    options.AddPolicy(CoreAlign.API.Controllers.FxRatesPolicies.AdminFxSync, p => p
+        .RequireAuthenticatedUser()
+        .RequireRole("TenantAdmin"));
+
+    foreach (var entry in CoreAlign.Application.GlassEnclosure.Authorization.GlassEnclosurePolicies.PolicyRoleMap)
+    {
+        var allowedRoles = entry.Value;
+        options.AddPolicy(entry.Key, p => p
+            .RequireAuthenticatedUser()
+            .RequireAssertion(ctx => allowedRoles.Any(r => ctx.User.IsInRole(r))));
+    }
+});
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -230,6 +290,13 @@ if (!string.Equals(configuredProvider, "Sqlite", StringComparison.OrdinalIgnoreC
 // thread. Channel is bounded so a misbehaving downstream DB can't OOM the host.
 builder.Services.AddSingleton<IActivityLogChannel, ActivityLogChannel>();
 builder.Services.AddHostedService<ActivityLogWorker>();
+
+// Demo seeding gate: DEMO_DATA=true env veya DemoData:Enabled config gerekir.
+// Production'da gate her zaman reddedilir (startup'ta throw — bkz. DemoDataSeeder.IsSeedingEnabled).
+// IsSeedingEnabled Production + flag kombinasyonunda exception firlatir, boylece yanlislikla deploy
+// edilen demo seed konfigurasyonu app'i hemen kapatir (silent run yerine fail-fast).
+CoreAlign.API.HostedServices.DemoDataSeeder.IsSeedingEnabled(builder.Configuration, builder.Environment);
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
 
 var app = builder.Build();
 
@@ -322,8 +389,10 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<EtagMiddleware>();
 app.UseOutputCache();
 app.UseMiddleware<ActivityLogMiddleware>();
+app.UseMiddleware<SubdomainTenantResolverMiddleware>();
 
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
 {

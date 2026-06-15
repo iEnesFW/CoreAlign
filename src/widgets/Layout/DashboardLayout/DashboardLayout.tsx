@@ -44,7 +44,7 @@ export const DashboardLayout: React.FC = () => {
         <Navbar toggleSidebar={toggleSidebar} />
 
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="mx-auto flex h-full w-full max-w-[1920px] flex-col px-2 sm:px-4 lg:px-6 2xl:px-8">
+          <div className="mx-auto flex h-full w-full flex-col px-2 sm:px-4 lg:px-6 2xl:px-8">
             <Suspense fallback={<RouteFallback />}>
               <Outlet />
             </Suspense>

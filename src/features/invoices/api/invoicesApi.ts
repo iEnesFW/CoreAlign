@@ -2,10 +2,12 @@ import { apiClient } from '@/shared/api/apiClient';
 import { cachedGet } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
 import type {
+  CreateStandaloneInvoiceInput,
   GenerateInvoiceRequest,
   Invoice,
   InvoiceListParams,
   InvoiceSummary,
+  IssueCreditNotePayload,
 } from '../model/invoice.types';
 
 const BASE = '/invoices';
@@ -32,4 +34,10 @@ export const invoicesApi = {
 
   getCreditNotes: (id: string) =>
     cachedGet<ApiResponse<InvoiceSummary[]>>(apiClient, `${BASE}/${id}/credit-notes`),
+
+  createStandalone: (input: CreateStandaloneInvoiceInput) =>
+    apiClient.post<ApiResponse<Invoice>>(`${BASE}/standalone`, input).then((r) => r.data),
+
+  issueCreditNote: (id: string, payload: IssueCreditNotePayload) =>
+    apiClient.post<ApiResponse<Invoice>>(`${BASE}/${id}/credit-notes`, payload).then((r) => r.data),
 };

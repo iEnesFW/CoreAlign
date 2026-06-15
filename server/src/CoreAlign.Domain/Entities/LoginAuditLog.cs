@@ -9,6 +9,8 @@ public class LoginAuditLog
     public string EmailAttempted { get; set; } = string.Empty;
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
+    public string? IpAddressHash { get; set; }
+    public string? UserAgentHash { get; set; }
     public LoginResultType LoginResult { get; set; }
     public string? FailureReason { get; set; }
     public DateTime AttemptedAtUtc { get; set; } = DateTime.UtcNow;

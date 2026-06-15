@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-import { Link, useNavigate } from 'react-router-dom';
-import { Lock, Mail } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Lock, Mail, KeyRound } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { Logo } from '@/shared/ui/Logo/Logo';
@@ -12,13 +13,38 @@ import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useLogin } from '../../hooks/useAuth';
 import { loginSchema, type LoginFormValues } from '../../model/loginSchema';
+import { SsoLoginFormView } from './SsoLoginFormView';
 import styles from './LoginForm.module.css';
 
 export const LoginForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const loginMutation = useLogin();
   const { executeRecaptcha } = useGoogleReCaptcha();
+  const [view, setView] = useState<'email' | 'sso'>('email');
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    if (error) {
+      if (error === 'InvalidSsoProviderOrTenant') {
+        toast.error(
+          'Hatalı Tenant Kodu veya Sağlayıcı Adı girdiniz. Sistemde böyle bir SSO bağlantısı bulunamadı.',
+        );
+      } else if (error === 'SsoConfigurationError') {
+        toast.error(
+          'SSO yönlendirmesi sırasında bir hata oluştu. Lütfen sistem yöneticinizle iletişime geçin.',
+        );
+      } else {
+        toast.error('Giriş başarısız oldu. Lütfen tekrar deneyin.');
+      }
+
+      // Remove error from URL without refreshing the page
+      searchParams.delete('error');
+      setSearchParams(searchParams, { replace: true });
+      setView('sso');
+    }
+  }, [searchParams, setSearchParams]);
 
   const {
     register,
@@ -62,7 +88,7 @@ export const LoginForm = () => {
   const isBusy = isSubmitting || loginMutation.isPending;
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
+    <div className={styles.formWrapper}>
       <div className={styles.header}>
         <div className={styles.logoWrapper}>
           <Logo size={42} />
@@ -70,43 +96,69 @@ export const LoginForm = () => {
         <p className={styles.subtitle}>{t('auth.login.subtitle')}</p>
       </div>
 
-      <div className={styles.fields}>
-        <Input
-          label={t('auth.login.emailLabel')}
-          placeholder={t('auth.login.emailPlaceholder')}
-          type="email"
-          autoComplete="email"
-          leftIcon={<Mail size={18} />}
-          error={translateError(errors.email?.message)}
-          {...register('email')}
-        />
+      <div className="relative overflow-hidden">
+        {view === 'email' ? (
+          <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+            <form className={styles.form} onSubmit={onSubmit} noValidate>
+              <div className={styles.fields}>
+                <Input
+                  label={t('auth.login.emailLabel')}
+                  placeholder={t('auth.login.emailPlaceholder')}
+                  type="email"
+                  autoComplete="email"
+                  leftIcon={<Mail size={18} />}
+                  error={translateError(errors.email?.message)}
+                  {...register('email')}
+                />
 
-        <Input
-          label={t('auth.login.passwordLabel')}
-          placeholder={t('auth.login.passwordPlaceholder')}
-          type="password"
-          autoComplete="current-password"
-          leftIcon={<Lock size={18} />}
-          error={translateError(errors.password?.message)}
-          {...register('password')}
-        />
+                <Input
+                  label={t('auth.login.passwordLabel')}
+                  placeholder={t('auth.login.passwordPlaceholder')}
+                  type="password"
+                  autoComplete="current-password"
+                  leftIcon={<Lock size={18} />}
+                  error={translateError(errors.password?.message)}
+                  {...register('password')}
+                />
+              </div>
+
+              <div className={styles.actions}>
+                <Link to="/forgot-password" className={styles.forgotPassword}>
+                  {t('auth.login.forgotPassword')}
+                </Link>
+                <Button type="submit" isLoading={isBusy} className={styles.submitButton}>
+                  {t('auth.login.submitButton')}
+                </Button>
+              </div>
+            </form>
+
+            <div className={styles.divider}>
+              <span className={styles.dividerText}>veya</span>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={() => setView('sso')}
+            >
+              <KeyRound size={16} className="mr-2 opacity-70" />
+              SSO ile Devam Et
+            </Button>
+          </div>
+        ) : (
+          <SsoLoginFormView onBack={() => setView('email')} />
+        )}
       </div>
 
-      <div className={styles.actions}>
-        <Link to="/forgot-password" className={styles.forgotPassword}>
-          {t('auth.login.forgotPassword')}
-        </Link>
-        <Button type="submit" isLoading={isBusy} className={styles.submitButton}>
-          {t('auth.login.submitButton')}
-        </Button>
-      </div>
-
-      <div className={styles.footer}>
-        {t('auth.login.noAccount')}{' '}
-        <Link to="/register" className={styles.link}>
-          {t('auth.login.registerLink')}
-        </Link>
-      </div>
-    </form>
+      {view === 'email' && (
+        <div className={styles.footer}>
+          {t('auth.login.noAccount')}{' '}
+          <Link to="/register" className={styles.link}>
+            {t('auth.login.registerLink')}
+          </Link>
+        </div>
+      )}
+    </div>
   );
 };

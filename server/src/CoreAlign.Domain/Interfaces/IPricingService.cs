@@ -34,6 +34,9 @@ public interface IPricingService
 {
     Task<PriceResolutionResult> ResolveAsync(PriceResolutionRequest request, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<PriceResolutionResult>> ResolveBatchAsync(IEnumerable<PriceResolutionRequest> requests, CancellationToken cancellationToken = default);
+    Task<decimal?> ResolveMinQuantityAsync(Guid productId, Guid customerId, CancellationToken cancellationToken = default);
+    Task<TaxResolutionResult> ResolveTaxAsync(TaxResolutionContext context, CancellationToken cancellationToken = default);
+    Task<DiscountResolutionResult> ResolveDiscountAsync(DiscountResolutionContext context, CancellationToken cancellationToken = default);
 }
 
 public interface IAccountingPeriodRepository
@@ -73,6 +76,7 @@ public interface IJournalEntryRepository
     Task<JournalEntry?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<JournalEntry?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> NumberExistsAsync(string number, Guid? excludeId, CancellationToken cancellationToken = default);
+    Task<bool> ExistsForSourceAsync(Domain.Enums.JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
 
     /// <summary>Search with paging — list view skips the lines collection.</summary>
     Task<(IReadOnlyList<JournalEntrySearchRow> Items, int Total)> SearchAsync(

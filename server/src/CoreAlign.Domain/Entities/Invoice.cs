@@ -14,6 +14,7 @@ public class Invoice : TenantEntity
     public Guid? OrderId { get; private set; }
     public Guid? OriginInvoiceId { get; private set; }
     public Guid? CreditNoteId { get; private set; }
+    public Guid? ReturnRequestId { get; private set; }
 
     public Guid CustomerId { get; private set; }
     public string CustomerNameSnapshot { get; private set; } = string.Empty;
@@ -32,6 +33,10 @@ public class Invoice : TenantEntity
 
     public string Currency { get; private set; } = "TRY";
     public decimal ExchangeRate { get; private set; } = 1m;
+
+    public decimal? FxRateSnapshot { get; private set; }
+    public string? FxSource { get; private set; }
+    public DateTime? FxLockedAtUtc { get; private set; }
 
     public Guid? PaymentTermsId { get; private set; }
     public int? PaymentTermsNetDaysSnapshot { get; private set; }
@@ -155,6 +160,69 @@ public class Invoice : TenantEntity
     {
         CreditNoteId = creditNoteId;
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public static Invoice IssueCreditNote(
+        Invoice origin,
+        string creditNumber,
+        DateTime nowUtc,
+        IEnumerable<InvoiceLine> lines,
+        string? reason,
+        Guid? approvedByUserId,
+        Guid? returnRequestId)
+    {
+        if (origin is null) throw new ArgumentNullException(nameof(origin));
+        if (string.IsNullOrWhiteSpace(creditNumber)) throw new ArgumentException("Credit note number is required.", nameof(creditNumber));
+
+        var creditNote = new Invoice(
+            creditNumber,
+            origin.CustomerId,
+            origin.CustomerNameSnapshot,
+            origin.Currency,
+            InvoiceType.CreditNote)
+        {
+            TenantId = origin.TenantId,
+        };
+        creditNote.IssueDate = nowUtc;
+        creditNote.DueDate = nowUtc;
+        creditNote.PostingDate = nowUtc.Date;
+        creditNote.ExchangeRate = origin.ExchangeRate;
+        creditNote.FxRateSnapshot = origin.FxRateSnapshot;
+        creditNote.FxSource = origin.FxSource;
+        creditNote.FxLockedAtUtc = origin.FxLockedAtUtc;
+        creditNote.PaymentTermsId = origin.PaymentTermsId;
+        creditNote.PaymentTermsNetDaysSnapshot = origin.PaymentTermsNetDaysSnapshot;
+        creditNote.CustomerSnapshot = origin.CustomerSnapshot;
+        creditNote.BillingAddressSnapshot = origin.BillingAddressSnapshot;
+        creditNote.ShippingAddressSnapshot = origin.ShippingAddressSnapshot;
+        creditNote.InternalNotes = reason;
+        creditNote.ApprovedByUserId = approvedByUserId;
+        creditNote.ReturnRequestId = returnRequestId;
+        creditNote.AttachOriginInvoice(origin.Id);
+
+        // Carry the origin's header-level charges so the credit note reverses the
+        // origin exactly. Percentage-based header discount pro-rates naturally with
+        // the credited lines; the absolute amounts (header discount, shipping,
+        // rounding) are scaled by the credited fraction of the origin's line net so
+        // a partial credit reverses only its share and a full credit reverses all.
+        creditNote.HeaderDiscountPercent = origin.HeaderDiscountPercent;
+        var fraction = CreditedFraction(origin, lines);
+        creditNote.HeaderDiscountAmount = Math.Round(origin.HeaderDiscountAmount * fraction, 4);
+        creditNote.ShippingCost = Math.Round(origin.ShippingCost * fraction, 4);
+        creditNote.RoundingAdjustment = Math.Round(origin.RoundingAdjustment * fraction, 4);
+
+        creditNote.ReplaceLines(lines);
+        creditNote.Issue(creditNumber);
+        return creditNote;
+    }
+
+    private static decimal CreditedFraction(Invoice origin, IEnumerable<InvoiceLine> creditLines)
+    {
+        var originNet = origin.Lines.Sum(l => l.LineNetAmount);
+        if (originNet <= 0m) return 0m;
+        var creditedNet = creditLines.Sum(l => l.LineNetAmount);
+        var fraction = creditedNet / originNet;
+        return fraction > 1m ? 1m : fraction;
     }
 
     public void Recalculate()
@@ -296,6 +364,13 @@ public class Invoice : TenantEntity
 
     public void MarkAsPaid(DateTime now)
     {
+        if (Status == InvoiceStatus.Void || Status == InvoiceStatus.Cancelled)
+        {
+            // A voided/cancelled invoice already had its AR reversed; flipping it to
+            // Paid would emit a phantom InvoicePaidEvent against AR that no longer
+            // exists. Reject the illegal terminal-state transition.
+            throw new InvoiceStatusTransitionException(Status.ToString(), "mark as paid");
+        }
         if (AmountPaid < Total)
         {
             AmountPaid = Total;
@@ -306,7 +381,24 @@ public class Invoice : TenantEntity
         AddDomainEvent(new InvoicePaidEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, now));
     }
 
-    public void RegisterEInvoice(string uuid, string status, string? pdfPath)
+    public void ApplyFxRateSnapshot(decimal rate, string source, DateTime lockedAtUtc)
+    {
+        if (rate <= 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(rate), "Exchange rate must be positive.");
+        }
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            throw new ArgumentException("Source is required.", nameof(source));
+        }
+        FxRateSnapshot = rate;
+        FxSource = source.Trim().ToUpperInvariant();
+        FxLockedAtUtc = DateTime.SpecifyKind(lockedAtUtc, DateTimeKind.Utc);
+        ExchangeRate = rate;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void RegisterEInvoice(string? uuid, string status, string? pdfPath)
     {
         EInvoiceUuid = uuid;
         EInvoiceStatus = status;

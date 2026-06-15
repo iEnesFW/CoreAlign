@@ -173,6 +173,10 @@ public class ApplyPaymentHandler : IRequestHandler<ApplyPaymentCommand, PaymentD
             {
                 throw new PaymentApplicationException("Invoice does not belong to this payment's customer.");
             }
+            if (payment.Applications.Any(a => a.InvoiceId == apply.InvoiceId))
+            {
+                continue;
+            }
             payment.Apply(apply.InvoiceId, apply.AppliedAmount, invoice.AmountDue);
             invoice.RecordPayment(apply.AppliedAmount, DateTime.UtcNow);
             // Tracked by GetByIdsAsync — no explicit Update needed.

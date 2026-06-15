@@ -9,6 +9,7 @@ interface Props {
   isLoading: boolean;
   selectedId?: string | null;
   onSelect?: (product: Product) => void;
+  onOpenDetails?: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   onCreate?: () => void;
@@ -37,6 +38,7 @@ export const ProductList = ({
   isLoading,
   selectedId,
   onSelect,
+  onOpenDetails,
   onEdit,
   onDelete,
   onCreate,
@@ -181,11 +183,11 @@ export const ProductList = ({
       }
       rowActions={(p) => (
         <>
-          {onSelect && (
+          {onOpenDetails && (
             <RowActionButton
               icon={<PanelRightOpen size={14} />}
               label={t('common.details', { defaultValue: 'Details' })}
-              onClick={() => onSelect(p)}
+              onClick={() => onOpenDetails(p)}
             />
           )}
           <RowActionButton

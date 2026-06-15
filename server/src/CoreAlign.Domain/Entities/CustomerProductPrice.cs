@@ -16,6 +16,8 @@ public class CustomerProductPrice : TenantEntity
     public string? Notes { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    public decimal? MinOrderQuantityOverride { get; private set; }
+
     public Customer Customer { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
@@ -78,5 +80,23 @@ public class CustomerProductPrice : TenantEntity
         Notes = notes;
         IsActive = isActive;
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetMinOrderQuantityOverride(decimal? value)
+    {
+        if (value is < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Minimum order quantity override cannot be negative.");
+        }
+        MinOrderQuantityOverride = value;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public bool IsCurrentlyValid(DateTime nowUtc)
+    {
+        if (!IsActive) return false;
+        if (ValidFromUtc is { } from && nowUtc < from) return false;
+        if (ValidUntilUtc is { } until && nowUtc > until) return false;
+        return true;
     }
 }

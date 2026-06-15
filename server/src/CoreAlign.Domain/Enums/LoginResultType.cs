@@ -6,5 +6,7 @@ public enum LoginResultType
     Failed,
     Locked,
     Disabled,
-    Unverified
+    Unverified,
+    TwoFactorSuccess,
+    TwoFactorFailed,
 }

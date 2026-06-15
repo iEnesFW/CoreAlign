@@ -22,6 +22,7 @@ interface Props {
   isLoading: boolean;
   selectedId?: string | null;
   onSelect?: (customer: Customer) => void;
+  onOpenDetails?: (customer: Customer) => void;
   onEdit: (customer: Customer) => void;
   onDelete: (customer: Customer) => void;
   onCreate?: () => void;
@@ -69,6 +70,7 @@ export const CustomerList = ({
   isLoading,
   selectedId,
   onSelect,
+  onOpenDetails,
   onEdit,
   onDelete,
   onCreate,
@@ -261,11 +263,11 @@ export const CustomerList = ({
       }
       rowActions={(c) => (
         <>
-          {onSelect && (
+          {onOpenDetails && (
             <RowActionButton
               icon={<PanelRightOpen size={14} />}
               label={t('common.details', { defaultValue: 'Details' })}
-              onClick={() => onSelect(c)}
+              onClick={() => onOpenDetails(c)}
             />
           )}
           <Link
