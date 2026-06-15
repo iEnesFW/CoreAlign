@@ -4,7 +4,7 @@ namespace CoreAlign.Domain.Common;
 
 public abstract class TenantEntity : ITenantOwned
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid TenantId { get; set; }
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
