@@ -3,6 +3,8 @@ using System.Text.Json;
 using CoreAlign.Application.Common;
 using CoreAlign.Domain.Exceptions;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CoreAlign.API.Middleware;
 
@@ -44,6 +46,9 @@ public class ExceptionHandlingMiddleware
             DomainException domainEx => (StatusCodes.Status400BadRequest, new List<string> { domainEx.Message }),
             ValidationException validationEx => (StatusCodes.Status400BadRequest, validationEx.Errors.Select(e => e.ErrorMessage).Distinct().ToList()),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, new List<string> { "Unauthorized." }),
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } } => (StatusCodes.Status409Conflict, new List<string> { "A record with the same unique value already exists." }),
+            DbUpdateException { InnerException: PostgresException { SqlState: PostgresErrorCodes.ForeignKeyViolation } } => (StatusCodes.Status409Conflict, new List<string> { "A referenced record does not exist or is still in use." }),
+            DbUpdateConcurrencyException => (StatusCodes.Status409Conflict, new List<string> { "The record was modified by another operation. Reload and retry." }),
             _ => (StatusCodes.Status500InternalServerError, new List<string> { "An unexpected error occurred." })
         };
 

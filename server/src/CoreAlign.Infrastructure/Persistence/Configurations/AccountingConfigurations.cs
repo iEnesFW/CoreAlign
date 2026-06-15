@@ -103,7 +103,8 @@ public class JournalLineConfiguration : IEntityTypeConfiguration<JournalLine>
         builder.Property(l => l.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
-        // Account lookup is by ID — Mizan aggregation groups on AccountId.
+        builder.HasOne<GLAccount>().WithMany().HasForeignKey(l => l.AccountId).OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(l => new { l.TenantId, l.AccountId });
         builder.HasIndex(l => new { l.TenantId, l.JournalEntryId, l.LineNumber }).IsUnique();
     }

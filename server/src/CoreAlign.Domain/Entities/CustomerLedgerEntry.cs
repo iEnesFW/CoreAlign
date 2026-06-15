@@ -3,7 +3,7 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Entities;
 
-public class CustomerLedgerEntry : TenantEntity
+public class CustomerLedgerEntry : TenantEntity, IXminConcurrency
 {
     public Guid CustomerId { get; private set; }
     public DateTime OccurredAtUtc { get; private set; } = DateTime.UtcNow;

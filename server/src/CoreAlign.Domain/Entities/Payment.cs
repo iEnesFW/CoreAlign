@@ -5,7 +5,7 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class Payment : TenantEntity
+public class Payment : TenantEntity, IXminConcurrency
 {
     public string PaymentNumber { get; private set; } = string.Empty;
     public PaymentDirection Direction { get; private set; } = PaymentDirection.CustomerReceipt;

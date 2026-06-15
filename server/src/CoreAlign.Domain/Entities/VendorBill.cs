@@ -4,7 +4,7 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class VendorBill : TenantEntity
+public class VendorBill : TenantEntity, IXminConcurrency
 {
     public Guid VendorId { get; private set; }
     public string VendorName { get; private set; } = string.Empty;

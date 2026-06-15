@@ -242,6 +242,7 @@ public class CoreAlignDbContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreAlignDbContext).Assembly);
         ApplyTenantQueryFilters(modelBuilder);
+        ApplyXminConcurrencyTokens(modelBuilder);
         modelBuilder.ApplySoftDeleteFilters();
         modelBuilder.ApplySnakeCaseNaming();
     }
@@ -296,6 +297,22 @@ public class CoreAlignDbContext : DbContext
             foreach (var ev in events)
             {
                 await _publisher.Publish(ev, cancellationToken);
+            }
+        }
+    }
+
+    private static void ApplyXminConcurrencyTokens(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(IXminConcurrency).IsAssignableFrom(entityType.ClrType))
+            {
+                modelBuilder.Entity(entityType.ClrType)
+                    .Property<uint>("xmin")
+                    .HasColumnName("xmin")
+                    .HasColumnType("xid")
+                    .ValueGeneratedOnAddOrUpdate()
+                    .IsConcurrencyToken();
             }
         }
     }

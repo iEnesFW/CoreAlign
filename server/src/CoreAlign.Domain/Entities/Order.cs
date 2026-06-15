@@ -28,7 +28,7 @@ public static class DealerOrderApprovalStatuses
     public const string Rejected = "Rejected";
 }
 
-public class Order : TenantEntity
+public class Order : TenantEntity, IXminConcurrency
 {
     public string OrderNumber { get; private set; } = string.Empty;
     public OrderType Type { get; private set; } = OrderType.Standard;

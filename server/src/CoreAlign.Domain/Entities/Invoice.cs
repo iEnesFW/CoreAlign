@@ -5,7 +5,7 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class Invoice : TenantEntity
+public class Invoice : TenantEntity, IXminConcurrency
 {
     public string InvoiceNumber { get; private set; } = string.Empty;
     public InvoiceType Type { get; private set; } = InvoiceType.SalesInvoice;

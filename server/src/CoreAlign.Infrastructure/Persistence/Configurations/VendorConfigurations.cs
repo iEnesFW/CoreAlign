@@ -126,7 +126,7 @@ public class VendorLedgerEntryConfiguration : IEntityTypeConfiguration<VendorLed
         builder.Property(e => e.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(e => e.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
-        builder.HasOne(e => e.Vendor).WithMany().HasForeignKey(e => e.VendorId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(e => e.Vendor).WithMany().HasForeignKey(e => e.VendorId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => new { e.TenantId, e.VendorId, e.OccurredAtUtc });
         builder.HasIndex(e => new { e.TenantId, e.VendorId, e.PostingDate });

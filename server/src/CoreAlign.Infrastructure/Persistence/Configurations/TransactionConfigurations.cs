@@ -18,7 +18,7 @@ public class CustomerTransactionConfiguration : IEntityTypeConfiguration<Custome
         builder.Property(t => t.Reference).HasMaxLength(64);
         builder.Property(t => t.Notes).HasMaxLength(500);
 
-        builder.HasOne(t => t.Customer).WithMany().HasForeignKey(t => t.CustomerId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(t => t.Customer).WithMany().HasForeignKey(t => t.CustomerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(t => t.Invoice).WithMany().HasForeignKey(t => t.InvoiceId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne(t => t.Order).WithMany().HasForeignKey(t => t.OrderId).OnDelete(DeleteBehavior.SetNull);
 
@@ -41,7 +41,7 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
         builder.Property(t => t.Reference).HasMaxLength(64);
         builder.Property(t => t.Notes).HasMaxLength(500);
 
-        builder.HasOne(t => t.Product).WithMany().HasForeignKey(t => t.ProductId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(t => t.Product).WithMany().HasForeignKey(t => t.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(t => t.Order).WithMany().HasForeignKey(t => t.OrderId).OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(t => new { t.TenantId, t.ProductId, t.OccurredAtUtc }).IsDescending(false, false, true);
