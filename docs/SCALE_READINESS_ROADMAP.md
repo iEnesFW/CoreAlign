@@ -135,7 +135,7 @@
 - **Fix:** İki translatable aggregation: (a) `GROUP BY product_id → SUM(qty), SUM(line_total) ORDER BY 2 DESC LIMIT @n` tamamen SQL'de; (b) sadece o top product'lar için ayrı `COUNT(DISTINCT invoice_id)` veya `FromSqlInterpolated`. Raw line'ları asla `ToListAsync` etme.
 - **Effort:** medium
 
-**C3. AR/AP aging — SQL-side CASE bucketing** `[medium/high]`
+**C3. AR/AP aging — SQL-side CASE bucketing** `[medium/high]` _(✅ AR server-side `SUM(CASE)` GROUP BY — Npgsql `ToQueryString`+execute ile doğrulandı; AP bilinçli in-memory: açık vendor-bill seti bounded + `VendorBill` server-side GroupBy EF Core 10'da translate olmuyor — koda not düşüldü)_
 
 - **Ne yavaşlıyor:** Tüm açık invoice/bill'ler (Take/limit yok) belleğe çekilip C#'ta bucket'lanıyor. Yoğun tenant 100k+ açık invoice taşıyabilir; dashboard tile'ı multi-second GC-heavy scan'e döner.
 - **Kanıt:** `ReportRepository.cs:266-311 GetAgingBucketsAsync` (AR), `AccountsPayableRepositories.cs:50-87 GetAgingBucketsAsync` (AP). İkisi de limit'siz `ToListAsync()`.

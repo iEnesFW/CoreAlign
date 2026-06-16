@@ -49,11 +49,17 @@ public class VendorBillRepository : IVendorBillRepository
 
     public async Task<IReadOnlyList<VendorAgingRow>> GetAgingBucketsAsync(DateTime asOfUtc, CancellationToken cancellationToken = default)
     {
-        // EF can't translate grouped conditional sums over a COALESCE'd due date,
-        // so pull the open items with a simple, translatable projection (the
-        // unpaid-payables set is small) and bucket them in memory. AmountDue is a
-        // computed property, hence (Total - AmountPaid); due date falls back to
-        // the bill date when none is set.
+        // In-memory bucketing over a SLIM, server-filtered projection (only open
+        // payables, 5 small fields). Kept in-memory deliberately: (1) the open
+        // vendor-bill set is bounded — a business owes a bounded number of vendors
+        // and bills get paid down, unlike the unbounded customer-invoice set (AR
+        // aging is server-side, see ReportRepository.GetAgingBucketsAsync); (2)
+        // server-side GroupBy on VendorBill does NOT translate in EF Core 10 /
+        // Npgsql — verified via ToQueryString, even a plain g.Sum(b => b.Total)
+        // over a VendorBill group throws, while the identical shape on Invoice
+        // translates. Don't re-attempt without first fixing that model quirk.
+        // AmountDue is a computed property, hence (Total - AmountPaid); due date
+        // falls back to the bill date when none is set.
         var open = await _context.VendorBills.AsNoTracking()
             .Where(b => (b.Status == VendorBillStatus.Posted || b.Status == VendorBillStatus.PartiallyPaid)
                 && b.Total - b.AmountPaid > 0m)

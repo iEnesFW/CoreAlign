@@ -291,47 +291,37 @@ public class ReportRepository : IReportRepository
         DateTime asOfUtc,
         CancellationToken cancellationToken = default)
     {
-        // Postgres-translatable date math via subtraction → days. Falls back to
-        // post-materialization bucketing only when the provider can't translate
-        // the conditional sums (e.g. SQLite dev fallback). Result rows include
-        // already-aggregated outstanding per (customer, currency, bucket).
-        var rows = await _context.Invoices
+        // Day-boundary thresholds (UTC midnight) so bucketing is pure column-vs-
+        // parameter date comparison — translatable on every provider, no DateDiff.
+        // Buckets match the original integer-day logic: current = due today/future;
+        // 1-30; 31-60; 61-90; 90+.
+        var d0 = DateTime.SpecifyKind(asOfUtc.Date, DateTimeKind.Utc);
+        var d30 = d0.AddDays(-30);
+        var d60 = d0.AddDays(-60);
+        var d90 = d0.AddDays(-90);
+
+        // Aggregated SERVER-SIDE via GROUP BY + SUM(CASE ...): the DB returns one
+        // row per (customer, currency), never the full open-invoice set (a heavy
+        // tenant carries 100k+ open invoices). The filtered aggregate is expressed
+        // as Sum(cond ? val : 0) — the form EF translates, unlike Where().Sum().
+        return await _context.Invoices
             .AsNoTracking()
             .Where(i => (i.Status == InvoiceStatus.Issued
                     || i.Status == InvoiceStatus.Sent
                     || i.Status == InvoiceStatus.PartiallyPaid
                     || i.Status == InvoiceStatus.Overdue)
                 && (i.Total - i.AmountPaid) > 0)
-            .Select(i => new
-            {
-                i.CustomerId,
-                i.CustomerNameSnapshot,
-                i.Currency,
-                Outstanding = i.Total - i.AmountPaid,
-                i.DueDate,
-            })
+            .GroupBy(i => new { i.CustomerId, i.CustomerNameSnapshot, i.Currency })
+            .Select(g => new AgingBucketRow(
+                g.Key.CustomerId,
+                g.Key.CustomerNameSnapshot,
+                g.Key.Currency,
+                g.Sum(i => i.DueDate >= d0 ? i.Total - i.AmountPaid : 0m),
+                g.Sum(i => i.DueDate < d0 && i.DueDate >= d30 ? i.Total - i.AmountPaid : 0m),
+                g.Sum(i => i.DueDate < d30 && i.DueDate >= d60 ? i.Total - i.AmountPaid : 0m),
+                g.Sum(i => i.DueDate < d60 && i.DueDate >= d90 ? i.Total - i.AmountPaid : 0m),
+                g.Sum(i => i.DueDate < d90 ? i.Total - i.AmountPaid : 0m)))
             .ToListAsync(cancellationToken);
-
-        // Bucket in memory — but only over rows that already passed the
-        // server-side open-invoice filter + projection, so we never materialize
-        // tax breakdowns, snapshots, or other heavy invoice columns.
-        return rows
-            .GroupBy(r => new { r.CustomerId, r.CustomerNameSnapshot, r.Currency })
-            .Select(g =>
-            {
-                decimal current = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0;
-                foreach (var inv in g)
-                {
-                    var days = (asOfUtc.Date - inv.DueDate.Date).TotalDays;
-                    if (days <= 0) current += inv.Outstanding;
-                    else if (days <= 30) b1 += inv.Outstanding;
-                    else if (days <= 60) b2 += inv.Outstanding;
-                    else if (days <= 90) b3 += inv.Outstanding;
-                    else b4 += inv.Outstanding;
-                }
-                return new AgingBucketRow(g.Key.CustomerId, g.Key.CustomerNameSnapshot, g.Key.Currency, current, b1, b2, b3, b4);
-            })
-            .ToList();
     }
 
     private static (string Key, DateTime Start) BucketKey(DateTime date, string bucket)
