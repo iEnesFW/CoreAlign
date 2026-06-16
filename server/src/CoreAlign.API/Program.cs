@@ -291,6 +291,12 @@ if (!string.Equals(configuredProvider, "Sqlite", StringComparison.OrdinalIgnoreC
 builder.Services.AddSingleton<IActivityLogChannel, ActivityLogChannel>();
 builder.Services.AddHostedService<ActivityLogWorker>();
 
+// Partition rollover: keeps the RANGE-partitioned leaf tables extended a few months
+// ahead so new rows stay in prunable monthly partitions instead of the DEFAULT one.
+// Self-contained (not a Hangfire job) so it runs even before the recurring-job host
+// is wired. No-ops on non-Postgres providers.
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.PartitionMaintenanceHostedService>();
+
 // Demo seeding gate: DEMO_DATA=true env veya DemoData:Enabled config gerekir.
 // Production'da gate her zaman reddedilir (startup'ta throw — bkz. DemoDataSeeder.IsSeedingEnabled).
 // IsSeedingEnabled Production + flag kombinasyonunda exception firlatir, boylece yanlislikla deploy
