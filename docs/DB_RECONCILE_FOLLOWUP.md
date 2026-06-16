@@ -1,70 +1,43 @@
-# DB Professionalization — Reconcile & Follow-up
+# DB Professionalization — Status & Follow-up
 
-> Bu dosya, DB profesyonelleştirme çalışmasının **eşzamanlı ajan penceresinde** yapılan kısmının takibini ve kalan işin (stable-model window gerektiren) planını tutar. Kaynak: `docs/DB_AUDIT_REPORT.md` (multi-agent verified audit). Kurallar: `CLAUDE.md` §4.
-
-## Bağlam
-
-Çalışma sırasında repoda birçok ajan aktifti ve model snapshot'ı (`CoreAlignDbContextModelSnapshot.cs`) sürekli değişiyordu (`dotnet ef migrations has-pending-model-changes` = evet; örn. `notification_rate_counters` başka bir ajan tarafından eklenmiş, henüz migrate edilmemiş). CLAUDE.md §12.9 gereği: snapshot'a dokunmadan, **el-yazımı idempotent raw-SQL migration**'lar ile ilerlendi. Aşağıdaki "Reconcile gerekenler" bu yüzden EF modeline (config) işlenmedi — model stabilize olunca işlenmeli.
+> DB profesyonelleştirme çalışmasının durumu ve kalan işin planı. Kaynak: `docs/DB_AUDIT_REPORT.md` (multi-agent verified audit). Kurallar: `CLAUDE.md` §4.
 
 ## ✅ Tamamlanan (validate + commit)
 
-| Commit    | İş                                                                                                                                 |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `291ed3f` | Wave 1a — `xmin` (8 finansal tablo), 3 ledger FK `Cascade→Restrict`, `journal_lines→gl_accounts` FK, 23505/23503/concurrency→409   |
-| `b0b7788` | Wave 1b — atomic `document_sequences` advisory lock, ledger running-balance advisory lock (customer+vendor) + concurrency testleri |
-| `179fa69` | Wave 2a — finansal CHECK constraint'ler (Phase78)                                                                                  |
-| `ad34cc6` | UUIDv7 PK (BaseEntity/TenantEntity)                                                                                                |
-| `85f40b0` | Wave 2b — hot-path FK index'leri (Phase79)                                                                                         |
-| `2ef622e` | Kurallar — CLAUDE.md §4 PostgreSQL standardı + audit raporu                                                                        |
+Tüm migration zinciri (`InitialSchema` → `Phase84`) **sıfırdan temiz apply** edildi (brand-new DB). Build yeşil; 343 finansal + 2 concurrency-guard testi yeşil.
 
-Doğrulama: 100+ migration zinciri sıfırdan temiz apply (throwaway DB `corealign_dbaudit`); 343 finansal test + 2 yeni concurrency-guard testi yeşil.
+| Commit    | İş                                                                                                                                                 |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2ef622e` | Kurallar — CLAUDE.md §4 PostgreSQL standardı + `docs/DB_AUDIT_REPORT.md`                                                                           |
+| `291ed3f` | Wave 1a — `xmin` (8 finansal tablo), 3 ledger FK `Cascade→Restrict`, `journal_lines→gl_accounts` FK, 23505/23503/concurrency→409 (Phase77)         |
+| `b0b7788` | Wave 1b — atomic `document_sequences` + ledger running-balance advisory lock (customer+vendor) + testler                                           |
+| `179fa69` | Wave 2a — finansal CHECK constraint'ler (Phase78)                                                                                                  |
+| `ad34cc6` | UUIDv7 PK (BaseEntity/TenantEntity)                                                                                                                |
+| `85f40b0` | Wave 2b — hot-path FK index'leri (Phase79)                                                                                                         |
+| `7fe8810` | Wave 3a — FX rate scale `18,8→18,6` unify (Phase82) + durdurulan ajan şema işinin checkpoint'i (Phase80/81)                                        |
+| `c1d54d6` | Wave 4a — 153 gerçek `tenant_id` FK (`ApplyTenantForeignKeys` convention loop, Phase83)                                                            |
+| `bf8511c` | Wave 2c — soft-delete-aware partial unique (glass_projects/purchase_requisitions/warranty_contracts) + pre-existing index-name drift fix (Phase84) |
 
-## 🔁 Reconcile gerekenler (model stabilize olunca config'e işle)
+## ⏳ Kalan iş
 
-- **Phase79 index'leri → EF config.** `OrderConfiguration`'a `HasIndex(o => new { o.TenantId, o.OriginDealerAccountId })` ve `HasIndex(o => new { o.TenantId, o.GlassProjectId })`; `GlassProjectConfiguration`'a `HasIndex(p => new { p.TenantId, p.AssignedSalespersonUserId })`. Sonra `migrations add` — EF `CreateIndex` üretir; raw-SQL ile aynı isimde olduğu için migration'ı idempotent yaz veya önce `DROP INDEX`. Amaç: snapshot bu index'leri görsün (drift kapansın).
-- **Phase78 CHECK constraint'leri → reconcile GEREKMEZ.** EF CHECK constraint'leri (HasCheckConstraint dışında) modellemez; raw-SQL idiomatic (Phase48 precedent). Drift değil.
-- **UUIDv7 straggler'ları.** `Guid.NewGuid()` ile kendi `Id`'sini set eden ~12 low-volume lookup entity (DataSubjectRequest, EmailVerificationToken, Module, ModulePricePlan, ClimateZone, WindZone, RetentionPolicy, ProcessedWebhookEvent, PasswordResetToken, UserDeviceToken, …) `Guid.CreateVersion7()`'ye çevrilmeli. Notifications altındakiler aktif churn'de olduğu için ertelendi.
+### Bilinçli olarak ertelenenler (ayrı, test edilmiş efor gerektirir — ajan resume'unu bloklamaz)
 
-## ⏳ Stable-model window gerektiren (kalan dalgalar)
+- **RLS — TEN-02 (defense-in-depth tenant izolasyonu).** `ENABLE/FORCE ROW LEVEL SECURITY` + `CREATE POLICY ... USING (tenant_id = current_setting('app.tenant_id')::uuid)`. **Neden ertelendi:** önkoşulu olan `DbConnection` interceptor (her bağlantıda `app.tenant_id` GUC'sini `TenantContextAccessor`'dan set eden) + non-owner DB rolü + **tüm** query path'lerinin (background job, webhook, health check, migration bağlantısı dahil) GUC set ettiğinin doğrulanması gerekir. GUC set edilmeyen tek bir path fail-closed boş sonuç döndürür. Ajan filosu resume olmadan önce aceleye getirilmesi riskli — kendi PR'ı + tam query-path testiyle yapılmalı.
+- **Partitioning + BRIN — Wave 5 (ölçek).** High-growth tabloları (audit/log, ledger, stock, outbox/webhook) RANGE partition + per-partition BRIN + pg_partman rollover + retention'ı `DROP PARTITION`'a çevirme. **Neden ertelendi:** mevcut tabloları partition'a çevirmek tablo-rewrite ister (create-partitioned + data-migrate + swap), downtime-aware planlama gerektirir. Invasive; ajan resume öncesi rush edilmemeli. Partition key her UNIQUE/PK'nın parçası olmalı (PK'yı `(id, <ts>)` yap). Notification retention'ı şimdiden batched/keyset yap (PART-02, OOM riski).
 
-Bunlar config-tabanlı `migrations add` ister (snapshot'a yazar); eşzamanlı ajanlar model değişikliklerini commit edip snapshot stabilize olunca yapılmalı.
+### Düşük-değerli polish (stable-model window'da config-based migration ile)
 
-### Wave 2 (kalan)
-
-- **IDX-04 / RIC-05 / SOFT-01:** Soft-deletable tablolardaki unique index'leri partial yap (`HasFilter("is_deleted = false")` / `"deleted_at_utc IS NULL"`). Mevcut full unique'i DROP + partial CREATE → EF-managed olduğu için config'den yapılmalı (raw-SQL DROP'u EF geri ekler).
-- **IDX-06:** 11 redundant non-unique prefix index'i düşür (daha uzun unique'in left-prefix'i). EF-managed → config'den.
-- **IDX-03:** Hot `(tenant_id, status)` index'lerine trailing `created_at_utc DESC` ekle, redundant bare'i düşür.
-- **IDX-08 / OUTBOX-01:** `outbox_messages` aktif-altküme partial index (`WHERE status IN (...)`) + `SKIP LOCKED` dispatch.
-- **IDX-02 (kalan):** invoices/return_requests/payment_transactions/quotes/service_tickets/warranty_contracts/journal_lines shadow `*_user_id`/`*_id` index triage (Phase79 sadece orders+glass_projects'i kapsadı).
-
-### Wave 3 — Types/precision
-
-- **DTS-05:** FX rate scale birle — `JournalLine.ExchangeRate`, `VendorLedgerEntry.ExchangeRate`, `GlassEnclosureProject.FxRateToBase` `numeric(18,8)` → master ile hizalı `numeric(18,6)`.
-- **DTS-03:** Unbounded `numeric` kolonları pinle (money→18,4, quantity→uygun scale).
-- **DTS-04:** JSON payload `varchar`→`jsonb`.
-- **DTS-06:** Tutarsız string tipleri (`AccountCode` unbounded text → varchar(32); `DealerApprovalStatus` → varchar(20)).
-- **DTS-08:** Calendar-date alanları (`valid_on_date`, due dates) `date`/`DateOnly`.
-
-### Wave 4 — Multi-tenant integrity
-
-- **RIC-01:** `tenant_id` için convention loop ile 154 gerçek FK (`HasOne<Tenant>()...OnDelete(Restrict)`), tek migration. Önce orphan data validate.
-- **TEN-02:** Defense-in-depth RLS (finansal/ledger/stock önce) — `ENABLE/FORCE ROW LEVEL SECURITY` + `CREATE POLICY ... USING (tenant_id = current_setting('app.tenant_id')::uuid)`. **Önkoşul:** `DbConnection` interceptor `app.tenant_id` GUC'sini `TenantContextAccessor`'dan set etmeli (app kodu) — bu olmadan RLS tüm erişimi bloklar. App + non-owner DB rolü koordineli yapılmalı.
-- **TEN-01:** `IGlobalReadable` semantiğini implement et (`e.TenantId == current || e.TenantId == Guid.Empty`) veya marker'ı sil + explicit `IgnoreQueryFilters` tek yol yap.
-
-### Wave 5 — Ölçek & Partitioning (strategic, invasive)
-
-- High-growth tabloları RANGE partition (ledger çeyreklik, stock/audit aylık, outbox/webhook haftalık-aylık) — `migrationBuilder.Sql()` + partition key'i PK/unique'e absorbe et + pg_partman/scheduled rollover. Mevcut tabloları partition'a çevirmek tablo-rewrite ister (create-partitioned + data-migrate + swap) → planlı, downtime-aware.
-- Append-only zaman kolonlarına per-partition BRIN.
-- Retention'ı `DROP/DETACH PARTITION`'a çevir; notification retention'ı şimdiden batched/keyset yap (PART-02, OOM riski).
-
-### Wave 6 — Drift reconcile & governance
-
-- **DRIFT-01:** 10 GIN/trigram (pg_trgm) index'i EF config'e `HasMethod("gin").HasOperators("gin_trgm_ops")` ile bildir (snapshot drift kapansın) veya `docs/RAW_SQL_INDEX_REGISTRY.md` + INVARIANTS kaydı.
-- Bu dosyadaki "Reconcile gerekenler"i config'e işle.
-- Migration governance: Phase## uniqueness CI check, `docs/MIGRATION_LOG.md`, scratch (`TempPendingProbe`) migration temizliği.
+- **GIN/trigram drift — DRIFT-01:** 10 `pg_trgm` GIN index'i (raw SQL'de, snapshot'ta yok) EF config'e `HasMethod("gin").HasOperators("gin_trgm_ops")` ile bildir veya `docs/RAW_SQL_INDEX_REGISTRY.md`'ye kaydet. Functional `lower(col)` index'leri EF'te temiz modellenemiyor → registry tercih edilebilir. (Benign drift: index'ler DB'de var, EF dokunmuyor.)
+- **Phase79 index reconcile:** `OrderConfiguration`/`GlassProjectConfiguration`'a `HasIndex` ekle (raw-SQL Phase79 ile aynı isim → migration'da redundant `CreateIndex`'i elle kaldır, snapshot güncellensin).
+- **IDX-06:** redundant non-unique prefix index'leri düşür. **IDX-03:** hot `(tenant_id, status)` index'lerine trailing `created_at_utc DESC`. **IDX-08:** outbox aktif-altküme partial + `SKIP LOCKED`. **IDX-02 (kalan):** invoices/return_requests/payment_transactions/quotes/service_tickets shadow `*_id` index triage.
+- **Soft-delete partial unique (kalan):** RetentionPolicy, TenantIdentityProvider, NotificationTemplate, NotificationMessage, GlassWorkOrder(Revision), FieldSurvey, InstallationAcceptance, PaymentTransaction, ServiceTicket, DataSubjectRequest, UserPreferences (yüksek-trafikli 3'ü yapıldı).
+- **DTS-03:** unbounded `numeric` pin. **DTS-04:** JSON `varchar`→`jsonb`. **DTS-06:** tutarsız string tipleri (`AccountCode`/`DealerApprovalStatus`). **DTS-08:** calendar-date → `date`/`DateOnly`.
+- **UUIDv7 straggler'ları:** kendi `Id`'sini `Guid.NewGuid()` ile set eden ~12 low-volume/lookup entity (auth entity'ler §5 gereği dikkatli). Base class'lar (yüksek-velocity tablolar) yapıldı.
+- **TEN-01:** `IGlobalReadable` semantiğini implement et veya marker'ı sil.
 
 ## Notlar
 
-- **Delete-handler follow-up:** RIC-03 sonrası `DeleteCustomer/Product/Vendor` handler'ları Restrict'e çarpıyor; middleware temiz 409 veriyor ama ideal olan handler'da önce dependent-check.
-- **Throwaway DB:** `corealign_dbaudit` (localhost:5432) validasyon için duruyor; `DROP DATABASE corealign_dbaudit` ile silinebilir.
-- **Eşzamanlı ajan:** `notification_rate_counters` (entity+config+DbSet eklenmiş, migration'ı YOK) başka bir ajanın işi — onların migrate etmesi gerekiyor; bana ait değil.
+- **Delete-handler follow-up:** RIC-03 sonrası `DeleteCustomer/Product/Vendor` Restrict'e çarpıyor; middleware temiz 409 veriyor, ideal olan handler'da önce dependent-check.
+- **Throwaway DB'ler:** `corealign_dbaudit`, `corealign_final_validate` (localhost:5432) validasyon için kaldı; `DROP DATABASE corealign_dbaudit; DROP DATABASE corealign_final_validate;` ile silinebilir.
+- **Migration ordering:** EF wall-clock ID'leri verir ama proje Phase## tarihlerini ileri-tarihli kullanıyor (Phase84 = 20260628). Yeni migration üretince ID'yi son Phase'den sonraya rename et (yoksa apply order bozulur).
+- **`migrations add --no-build` tuzağı:** config edit sonrası `--no-build` stale assembly kullanıp boş migration üretebilir; config değişiminden sonra build'li `migrations add` kullan.
