@@ -307,7 +307,7 @@ Tüm 45 repository uniform OFFSET kullanıyor; tek keyset sorgu yok (CLAUDE.md �
 
 - **Ne yavaşlıyor:** customer/vendor/dealer_commission_ledger_entries, journal_lines, report_runs hâlâ unpartitioned single-column PK; append-heavy monotonic büyüme; vacuum tüm heap'i tarar; retention DELETE'siz imkânsız.
 - **Kanıt:** snapshot `pk_customer_ledger_entries:1198`, `pk_journal_lines:6385`, `pk_report_runs:11037` — hepsi single `Id`.
-- **Fix:** Quarterly RANGE on occurred_at/posting_date (ledger'lar), monthly RANGE on ran_at_utc (report_runs), PK `(id, ts)`, `corealign_partition_leaf_table` yaklaşımı. `entity_audit_logs` dokümante exclusion (hash-chain). E2 rollover job'ına kaydet. _(İndeksler okumayı near-term ayakta tuttuğu için 6 tamamlanandan daha düşük aciliyet ama "zero slowdown"ı gerçekten kapatmak için gerekli.)_
+- **Fix:** Quarterly RANGE on occurred*at/posting_date (ledger'lar), monthly RANGE on ran_at_utc (report_runs), PK `(id, ts)`, `corealign_partition_leaf_table` yaklaşımı. `entity_audit_logs` dokümante exclusion (hash-chain). E2 rollover job'ına kaydet. *(İndeksler okumayı near-term ayakta tuttuğu için 6 tamamlanandan daha düşük aciliyet ama "zero slowdown"ı gerçekten kapatmak için gerekli.)\_
 - **Effort:** high
 
 ---
@@ -354,3 +354,25 @@ Aşağıdakiler ölçek davranışı veri-dağılımına bağlı olduğu için s
 - **Lens-dışı:** OPS-05 (retry) tamamlanmasa bile "no-slowdown" iddiası geçerlidir (resilience gap'i, satır-sayısı yavaşlaması değil) — ama production robustness için yine de kapatılmalı.
 
 Özetle: liste bittiğinde CoreAlign **query-shape ve index düzeyinde ölçek-kusursuz** olur; "kalıcı olarak kusursuz" demek için E2 rollover job'ının canlı olması ve E7 ledger partition dalgasının planlanmış olması gerekir.
+
+---
+
+## 📊 Empirik Doğrulama (EXPLAIN ANALYZE, sentetik veri)
+
+`corealign_perf` (şema replikası: partition'lar + index'ler + RLS) üzerinde sentetik veriyle ölçüldü.
+
+| Sorgu                           | Veri                                    | Plan                                                               | Süre        | Sonuç                                                   |
+| ------------------------------- | --------------------------------------- | ------------------------------------------------------------------ | ----------- | ------------------------------------------------------- |
+| **TrialBalance (C1 fix)**       | 2M journal_lines / 400k entry           | `GroupAggregate` → 50 satır (server-side, app'e 400k transfer YOK) | **132 ms**  | ✅ C1 düzeltmesi çalışıyor                              |
+| **Liste sığ sayfa (page 1)**    | 1M orders                               | `Index Scan` ix_orders_tenant_orderdate_id                         | **0.3 ms**  | ✅ index layer sığ sayfayı sub-ms yapıyor               |
+| **Deep OFFSET (page ~4000)**    | 1M orders                               | Index Scan ama 100k satır oku-at                                   | **225 ms**  | ⚠️ lineer büyür → keyset gerekli                        |
+| **Keyset (cursor)**             | 1M orders                               | Index range scan, 25 satır okur                                    | **0.47 ms** | ✅ derinlikten bağımsız sabit                           |
+| **Partition pruning (June)**    | 1M customer_transactions / 12 partition | sadece `_p202606` tarandı (1/12) + local index                     | **6.3 ms**  | ✅ partitioning + BRIN doğru çalışıyor                  |
+| **Arama (common term + LIMIT)** | 500k customers                          | Seq Scan + Filter, LIMIT short-circuit                             | **0.1 ms**  | ✅ yaygın terim hızlı                                   |
+| **Arama (ORDER BY name)**       | 500k customers                          | tüm match + sort                                                   | 166 ms      | ⚠️ sort maliyeti (covering index ile iyileştirilebilir) |
+
+### Data-backed verdict
+
+- **Yapısal temel + index layer ölçek-güvenli olduğu KANITLANDI:** sığ liste sayfaları sub-ms, report'lar server-side (whole-table-to-memory bitti), partition pruning 1/N partition'a iniyor.
+- **Tek gerçek kalan yavaşlama: deep-OFFSET** (page ~4000 = 225ms, lineer). Gerçek-dünyada nadir (kullanıcı filtreler, 4000. sayfaya gitmez) ve **keyset index'leri zaten yerinde (Phase88)** + keyset 0.47ms doğrulandı → kalan iş yalnızca append-only/infinite-scroll repo'larını keyset'e çevirmek (ledger/transaction/audit history; index'ler hazır).
+- C2 TopProducts C1 ile aynı pattern (join+GroupBy) → yüksek güven; uygulandığında aynı server-side kazanım.
