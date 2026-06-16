@@ -163,7 +163,7 @@
 - **Fix:** Keyset `(OccurredAtUtc DESC, Id DESC)` (bkz A-grubu) + 4 Include yerine slim `StockMovementSearchRow` projection (`StockItemRepository.SearchAsync` pattern'i, `InventoryRepositories.cs:53`).
 - **Effort:** medium
 
-**C7. PurchaseOrder/PurchaseRequisition list — AsSplitQuery veya slim projection** `[medium]`
+**C7. PurchaseOrder/PurchaseRequisition list — AsSplitQuery veya slim projection** `[medium]` _(✅ UYGULANDI — `.AsSplitQuery()` + `Id` tiebreaker; DTO contract korundu, cartesian kalktı)_
 
 - **Ne yavaşlıyor:** List sorguları `.Include(Lines)` (AsSplitQuery yok) → cartesian by line count; handler her line'ı map ediyor.
 - **Kanıt:** `PurchaseOrderRepository.cs:23-42` + `PurchaseOrderHandlers.cs:361-373`; `PurchaseRequisitionRepository.cs:23-49` + `MrpHandlers.cs:360-378`.

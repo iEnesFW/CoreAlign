@@ -29,9 +29,13 @@ public class PurchaseRequisitionRepository : IPurchaseRequisitionRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
+        // AsSplitQuery: header + lines fetched in two queries instead of one JOIN,
+        // so a page never returns header×line cartesian rows. Id tiebreaker makes
+        // the ordering deterministic (required for correct split-query pagination).
         var query = _context.PurchaseRequisitions
             .AsNoTracking()
             .Include(p => p.Lines)
+            .AsSplitQuery()
             .AsQueryable();
 
         if (status.HasValue) query = query.Where(p => p.Status == status.Value);
@@ -42,6 +46,7 @@ public class PurchaseRequisitionRepository : IPurchaseRequisitionRepository
         var total = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderByDescending(p => p.RequestedAtUtc)
+            .ThenByDescending(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

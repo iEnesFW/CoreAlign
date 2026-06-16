@@ -27,7 +27,10 @@ public class PurchaseOrderRepository : IPurchaseOrderRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.PurchaseOrders.AsNoTracking().Include(p => p.Lines).AsQueryable();
+        // AsSplitQuery: header + lines fetched in two queries instead of one JOIN,
+        // so a page never returns header×line cartesian rows. Id tiebreaker makes
+        // the ordering deterministic (required for correct split-query pagination).
+        var query = _context.PurchaseOrders.AsNoTracking().Include(p => p.Lines).AsSplitQuery().AsQueryable();
         if (vendorId.HasValue) query = query.Where(p => p.VendorId == vendorId.Value);
         if (status.HasValue) query = query.Where(p => p.Status == status.Value);
 
@@ -35,6 +38,7 @@ public class PurchaseOrderRepository : IPurchaseOrderRepository
         var items = await query
             .OrderByDescending(p => p.OrderDate)
             .ThenByDescending(p => p.CreatedAtUtc)
+            .ThenByDescending(p => p.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
