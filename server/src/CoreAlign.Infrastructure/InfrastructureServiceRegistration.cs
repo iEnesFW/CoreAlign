@@ -11,6 +11,7 @@ using CoreAlign.Application.Providers.EFatura;
 using CoreAlign.Infrastructure.EInvoice;
 using CoreAlign.Infrastructure.Options;
 using CoreAlign.Infrastructure.Persistence;
+using CoreAlign.Infrastructure.Persistence.Interceptors;
 using CoreAlign.Infrastructure.Providers;
 using CoreAlign.Infrastructure.Providers.EFatura;
 using CoreAlign.Application.Providers.Payment;
@@ -60,6 +61,7 @@ public static class InfrastructureServiceRegistration
         var provider = configuration["Database:Provider"] ?? "Postgres";
         var connection = configuration.GetConnectionString("DefaultConnection");
         var isSqlite = string.Equals(provider, "Sqlite", StringComparison.OrdinalIgnoreCase);
+        var enableRls = configuration.GetValue<bool?>("Database:EnableRls") ?? false;
 
         if (!isSqlite && string.IsNullOrWhiteSpace(connection))
         {
@@ -75,7 +77,7 @@ public static class InfrastructureServiceRegistration
             var maxPool = configuration.GetValue<int?>("Database:MaxPoolSize") ?? 100;
             var minPool = configuration.GetValue<int?>("Database:MinPoolSize") ?? 1;
             var cmdTimeout = configuration.GetValue<int?>("Database:CommandTimeoutSeconds") ?? 30;
-            var multiplex = configuration.GetValue<bool?>("Database:Multiplexing") ?? true;
+            var multiplex = configuration.GetValue<bool?>("Database:Multiplexing") ?? !enableRls;
 
             var builder = new NpgsqlConnectionStringBuilder(connection)
             {
@@ -90,7 +92,7 @@ public static class InfrastructureServiceRegistration
 
         var postgresConn = isSqlite ? null : BuildPostgresConnectionString();
 
-        void ConfigureDb(DbContextOptionsBuilder options)
+        void ConfigureDb(IServiceProvider sp, DbContextOptionsBuilder options)
         {
             if (isSqlite)
             {
@@ -102,6 +104,10 @@ public static class InfrastructureServiceRegistration
             else
             {
                 options.UseNpgsql(postgresConn);
+                if (enableRls)
+                {
+                    options.AddInterceptors(sp.GetRequiredService<TenantRlsConnectionInterceptor>());
+                }
             }
         }
 
@@ -109,6 +115,7 @@ public static class InfrastructureServiceRegistration
         // no longer have AddDbContext + AddDbContextFactory both building the model.
         // We can't use AddPooledDbContextFactory because the context constructor
         // depends on scoped services (ITenantContext, IPublisher).
+        services.AddScoped<TenantRlsConnectionInterceptor>();
         services.AddDbContextFactory<CoreAlignDbContext>(ConfigureDb, lifetime: ServiceLifetime.Scoped);
         services.AddScoped<CoreAlignDbContext>(sp => sp
             .GetRequiredService<IDbContextFactory<CoreAlignDbContext>>()
@@ -608,7 +615,7 @@ public static class InfrastructureServiceRegistration
         services.AddHttpClient();
 
         services.AddScoped<CoreAlign.Application.Notifications.Providers.IEmailProvider,
-            CoreAlign.Infrastructure.Notifications.Email.SmtpEmailProvider>();
+            CoreAlign.Infrastructure.Notifications.Email.TenantAwareSmtpEmailProvider>();
         services.AddScoped<CoreAlign.Application.Notifications.Providers.IEmailProvider,
             CoreAlign.Infrastructure.Notifications.Email.SendGridEmailProvider>();
         services.AddScoped<CoreAlign.Application.Notifications.Providers.ISmsProvider,
@@ -641,6 +648,12 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Infrastructure.Repositories.NotificationPreferenceRepository>();
         services.AddScoped<CoreAlign.Application.Notifications.Repositories.IUserDeviceTokenRepository,
             CoreAlign.Infrastructure.Repositories.UserDeviceTokenRepository>();
+        services.AddScoped<CoreAlign.Domain.Interfaces.INotificationRateCounterRepository,
+            CoreAlign.Infrastructure.Repositories.NotificationRateCounterRepository>();
+        services.AddOptions<CoreAlign.Application.Notifications.Delivery.NotificationDeliveryOptions>()
+            .Bind(configuration.GetSection(CoreAlign.Application.Notifications.Delivery.NotificationDeliveryOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         // F4.5 Whitelabel customization repository
         services.AddScoped<CoreAlign.Application.Whitelabel.ITenantThemeRepository,
