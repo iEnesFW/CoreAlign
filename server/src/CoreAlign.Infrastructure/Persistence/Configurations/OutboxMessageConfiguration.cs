@@ -15,10 +15,12 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(m => m.Result).HasMaxLength(64);
         builder.Property(m => m.LastError).HasMaxLength(2000);
         builder.Property(m => m.ProcessedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(m => m.NextAttemptUtc).HasColumnType("timestamp with time zone");
+        builder.Property(m => m.MaxAttempts).IsRequired();
         builder.Property(m => m.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(m => m.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
-        // Drain query: pending rows for a tenant, oldest first.
         builder.HasIndex(m => new { m.TenantId, m.Status, m.CreatedAtUtc });
+        builder.HasIndex(m => new { m.Status, m.NextAttemptUtc });
     }
 }

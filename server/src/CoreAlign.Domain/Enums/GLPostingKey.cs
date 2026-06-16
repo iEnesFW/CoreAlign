@@ -23,4 +23,5 @@ public enum GLPostingKey
     PurchaseExpense = 10,
     InventoryWriteOff = 11,
     WithholdingReceivable = 12,
+    PurchasePriceVariance = 13,
 }

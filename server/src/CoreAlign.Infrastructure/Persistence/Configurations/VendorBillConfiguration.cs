@@ -19,19 +19,53 @@ public class VendorBillConfiguration : IEntityTypeConfiguration<VendorBill>
         builder.Property(b => b.Total).HasColumnType("numeric(18,4)");
         builder.Property(b => b.AmountPaid).HasColumnType("numeric(18,4)");
         builder.Property(b => b.Notes).HasMaxLength(2000);
+        builder.Property(b => b.HoldReason).HasMaxLength(500);
         builder.Property(b => b.BillDate).HasColumnType("timestamp with time zone");
         builder.Property(b => b.DueDate).HasColumnType("timestamp with time zone");
         builder.Property(b => b.PostedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(b => b.HeldAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(b => b.ApprovedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(b => b.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(b => b.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasOne(b => b.Vendor).WithMany().HasForeignKey(b => b.VendorId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(b => b.Lines).WithOne(l => l.VendorBill).HasForeignKey(l => l.VendorBillId).OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(b => new { b.TenantId, b.VendorId, b.BillNumber }).IsUnique();
         builder.HasIndex(b => new { b.TenantId, b.Status });
         builder.HasIndex(b => new { b.TenantId, b.BillDate }).IsDescending(false, true);
 
         builder.Ignore(b => b.AmountDue);
+    }
+}
+
+public class VendorBillLineConfiguration : IEntityTypeConfiguration<VendorBillLine>
+{
+    public void Configure(EntityTypeBuilder<VendorBillLine> builder)
+    {
+        builder.HasKey(l => l.Id);
+        builder.Property(l => l.ProductSku).HasMaxLength(64).IsRequired();
+        builder.Property(l => l.ProductName).HasMaxLength(200).IsRequired();
+        builder.Property(l => l.UomCode).HasMaxLength(20);
+        builder.Property(l => l.Quantity).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.UnitPrice).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.PoUnitCost).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.TaxRatePercent).HasColumnType("numeric(6,3)");
+        builder.Property(l => l.TaxAmount).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.LineSubtotal).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.LineTotal).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.LineNotes).HasMaxLength(1000);
+        builder.Property(l => l.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasOne(l => l.Product).WithMany().HasForeignKey(l => l.ProductId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(l => l.VendorBillId);
+        builder.HasIndex(l => l.ProductId);
+        builder.HasIndex(l => l.PurchaseOrderLineId);
+
+        builder.Ignore(l => l.PriceVariance);
+        builder.Ignore(l => l.ReceiptClearingCost);
     }
 }
 

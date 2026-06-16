@@ -12,4 +12,5 @@ public enum OutboxStatus
     Processed = 1,
     Deferred = 2,
     Failed = 3,
+    DeadLetter = 4,
 }

@@ -115,7 +115,7 @@ public class VendorLedgerEntryConfiguration : IEntityTypeConfiguration<VendorLed
         builder.Property(e => e.EntryType).HasConversion<string>().HasMaxLength(8);
         builder.Property(e => e.Amount).HasColumnType("numeric(18,4)");
         builder.Property(e => e.Currency).HasMaxLength(3).IsRequired();
-        builder.Property(e => e.ExchangeRate).HasColumnType("numeric(18,8)");
+        builder.Property(e => e.ExchangeRate).HasColumnType("numeric(18,6)");
         builder.Property(e => e.AmountInBase).HasColumnType("numeric(18,4)");
         builder.Property(e => e.SourceType).HasConversion<string>().HasMaxLength(32);
         builder.Property(e => e.SourceDocumentNumber).HasMaxLength(64);

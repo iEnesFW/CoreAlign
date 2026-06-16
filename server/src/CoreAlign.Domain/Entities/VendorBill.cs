@@ -22,7 +22,14 @@ public class VendorBill : TenantEntity, IXminConcurrency
     public string? Notes { get; private set; }
     public DateTime? PostedAtUtc { get; private set; }
 
+    public bool RequiresApproval { get; private set; }
+    public DateTime? HeldAtUtc { get; private set; }
+    public string? HoldReason { get; private set; }
+    public Guid? ApprovedByUserId { get; private set; }
+    public DateTime? ApprovedAtUtc { get; private set; }
+
     public Vendor Vendor { get; set; } = null!;
+    public ICollection<VendorBillLine> Lines { get; private set; } = new List<VendorBillLine>();
 
     public decimal AmountDue => Math.Max(0m, Total - AmountPaid);
 
@@ -55,6 +62,33 @@ public class VendorBill : TenantEntity, IXminConcurrency
         Notes = notes;
     }
 
+    public void ReplaceLines(IEnumerable<VendorBillLine> newLines)
+    {
+        if (Status is not (VendorBillStatus.Draft or VendorBillStatus.PendingApproval))
+        {
+            throw new InvalidOrderStatusTransitionException(Status.ToString(), "EditLines");
+        }
+        Lines.Clear();
+        var i = 1;
+        foreach (var line in newLines)
+        {
+            line.SetLineNumber(i++);
+            Lines.Add(line);
+        }
+        if (Lines.Count > 0)
+        {
+            Recalculate();
+        }
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void Recalculate()
+    {
+        Subtotal = Math.Round(Lines.Sum(l => l.LineSubtotal), 4);
+        TaxAmount = Math.Round(Lines.Sum(l => l.TaxAmount), 4);
+        Total = Math.Round(Lines.Sum(l => l.LineTotal), 4);
+    }
+
     public void Post()
     {
         if (Status != VendorBillStatus.Draft)
@@ -63,6 +97,32 @@ public class VendorBill : TenantEntity, IXminConcurrency
         }
         Status = VendorBillStatus.Posted;
         PostedAtUtc = DateTime.UtcNow;
+        UpdatedAtUtc = PostedAtUtc.Value;
+    }
+
+    public void PlaceOnHold(string reason)
+    {
+        if (Status != VendorBillStatus.Draft)
+        {
+            throw new InvalidOrderStatusTransitionException(Status.ToString(), VendorBillStatus.PendingApproval.ToString());
+        }
+        Status = VendorBillStatus.PendingApproval;
+        RequiresApproval = true;
+        HeldAtUtc = DateTime.UtcNow;
+        HoldReason = reason;
+        UpdatedAtUtc = HeldAtUtc.Value;
+    }
+
+    public void ApproveAndPost(Guid approverUserId)
+    {
+        if (Status != VendorBillStatus.PendingApproval)
+        {
+            throw new InvalidOrderStatusTransitionException(Status.ToString(), VendorBillStatus.Posted.ToString());
+        }
+        ApprovedByUserId = approverUserId;
+        ApprovedAtUtc = DateTime.UtcNow;
+        Status = VendorBillStatus.Posted;
+        PostedAtUtc = ApprovedAtUtc.Value;
         UpdatedAtUtc = PostedAtUtc.Value;
     }
 

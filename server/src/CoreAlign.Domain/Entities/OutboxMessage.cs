@@ -18,15 +18,22 @@ public class OutboxMessage : TenantEntity
     public string? Result { get; private set; }
     public string? LastError { get; private set; }
     public DateTime? ProcessedAtUtc { get; private set; }
+    public DateTime? NextAttemptUtc { get; private set; }
+    public int MaxAttempts { get; private set; } = DefaultMaxAttempts;
+
+    public const int DefaultMaxAttempts = 8;
+
+    public bool HasExhaustedAttempts => Attempts + 1 >= MaxAttempts;
 
     protected OutboxMessage() { }
 
-    public OutboxMessage(string type, string payloadJson)
+    public OutboxMessage(string type, string payloadJson, int maxAttempts = DefaultMaxAttempts)
     {
         if (string.IsNullOrWhiteSpace(type)) throw new ArgumentException("Type is required.", nameof(type));
         if (string.IsNullOrWhiteSpace(payloadJson)) throw new ArgumentException("Payload is required.", nameof(payloadJson));
         Type = type.Trim();
         PayloadJson = payloadJson;
+        MaxAttempts = maxAttempts < 1 ? DefaultMaxAttempts : maxAttempts;
     }
 
     public void MarkProcessed(string result)
@@ -34,9 +41,36 @@ public class OutboxMessage : TenantEntity
         Status = OutboxStatus.Processed;
         Result = result;
         LastError = null;
+        NextAttemptUtc = null;
         ProcessedAtUtc = DateTime.UtcNow;
         Attempts++;
         UpdatedAtUtc = ProcessedAtUtc.Value;
+    }
+
+    public void ScheduleRetry(DateTime nextAttemptUtc, string lastError)
+    {
+        Status = OutboxStatus.Pending;
+        LastError = lastError;
+        NextAttemptUtc = nextAttemptUtc;
+        Attempts++;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void DeferUntil(DateTime nextAttemptUtc, string reason)
+    {
+        Status = OutboxStatus.Pending;
+        LastError = reason;
+        NextAttemptUtc = nextAttemptUtc;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void MarkDeadLetter(string error)
+    {
+        Status = OutboxStatus.DeadLetter;
+        LastError = error;
+        NextAttemptUtc = null;
+        Attempts++;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
     /// <summary>Blocked on a fixable condition (closed period / unmapped account) — replayable.</summary>
@@ -61,6 +95,7 @@ public class OutboxMessage : TenantEntity
     {
         Status = OutboxStatus.Pending;
         LastError = null;
+        NextAttemptUtc = null;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

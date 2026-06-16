@@ -155,6 +155,24 @@ public class PurchaseOrder : TenantEntity
         return line;
     }
 
+    // Advances the billed quantity on a line when a vendor bill is posted against it.
+    public void RecordLineBill(Guid lineId, decimal quantity)
+    {
+        var line = Lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new InvalidOrderLineException("Purchase order line not found.");
+        line.RecordBill(quantity);
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // Reverses a previously recorded bill quantity when its vendor bill is cancelled.
+    public void ReverseLineBill(Guid lineId, decimal quantity)
+    {
+        var line = Lines.FirstOrDefault(l => l.Id == lineId);
+        if (line is null) return;
+        line.ReverseBill(quantity);
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     private void EnsureDraft()
     {
         if (Status != PurchaseOrderStatus.Draft)

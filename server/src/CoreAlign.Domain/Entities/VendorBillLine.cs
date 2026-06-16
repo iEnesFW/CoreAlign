@@ -1,43 +1,46 @@
 using CoreAlign.Domain.Common;
-using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class PurchaseOrderLine : TenantEntity
+public class VendorBillLine : TenantEntity
 {
-    public Guid PurchaseOrderId { get; internal set; }
+    public Guid VendorBillId { get; internal set; }
     public int LineNumber { get; private set; }
     public Guid ProductId { get; private set; }
     public string ProductSku { get; private set; } = string.Empty;
     public string ProductName { get; private set; } = string.Empty;
 
+    public Guid? PurchaseOrderLineId { get; private set; }
+
     public Guid? UomId { get; private set; }
     public string? UomCode { get; private set; }
 
     public decimal Quantity { get; private set; }
-    public decimal QuantityReceived { get; private set; }
-    public decimal QuantityBilled { get; private set; }
+    public decimal UnitPrice { get; private set; }
+    public decimal PoUnitCost { get; private set; }
 
-    public decimal UnitCost { get; private set; }
     public decimal TaxRatePercent { get; private set; }
     public decimal TaxAmount { get; private set; }
     public decimal LineSubtotal { get; private set; }
     public decimal LineTotal { get; private set; }
     public string? LineNotes { get; private set; }
 
-    public PurchaseOrder PurchaseOrder { get; set; } = null!;
+    public VendorBill VendorBill { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
-    public decimal QuantityRemainingToReceive => Math.Max(0m, Quantity - QuantityReceived);
+    public decimal PriceVariance => Math.Round(Quantity * (UnitPrice - PoUnitCost), 4);
+    public decimal ReceiptClearingCost => Math.Round(Quantity * PoUnitCost, 4);
 
-    protected PurchaseOrderLine() { }
+    protected VendorBillLine() { }
 
-    public PurchaseOrderLine(
+    public VendorBillLine(
         Guid productId,
         string productSku,
         string productName,
         decimal quantity,
-        decimal unitCost,
+        decimal unitPrice,
+        decimal poUnitCost = 0m,
+        Guid? purchaseOrderLineId = null,
         decimal taxRatePercent = 0m,
         Guid? uomId = null,
         string? uomCode = null,
@@ -47,7 +50,9 @@ public class PurchaseOrderLine : TenantEntity
         ProductSku = productSku;
         ProductName = productName;
         Quantity = quantity;
-        UnitCost = unitCost;
+        UnitPrice = unitPrice;
+        PoUnitCost = purchaseOrderLineId is null ? unitPrice : poUnitCost;
+        PurchaseOrderLineId = purchaseOrderLineId;
         TaxRatePercent = taxRatePercent;
         UomId = uomId;
         UomCode = uomCode;
@@ -59,33 +64,8 @@ public class PurchaseOrderLine : TenantEntity
 
     public void Recalculate()
     {
-        LineSubtotal = Math.Round(Quantity * UnitCost, 4);
+        LineSubtotal = Math.Round(Quantity * UnitPrice, 4);
         TaxAmount = TaxRatePercent > 0 ? Math.Round(LineSubtotal * (TaxRatePercent / 100m), 4) : 0m;
         LineTotal = Math.Round(LineSubtotal + TaxAmount, 4);
-    }
-
-    public void RecordReceipt(decimal qty)
-    {
-        if (qty <= 0m)
-        {
-            throw new InvalidOrderLineException("Receipt quantity must be positive.");
-        }
-        if (QuantityReceived + qty > Quantity)
-        {
-            throw new InvalidOrderLineException("Receipt exceeds the line's remaining quantity.");
-        }
-        QuantityReceived += qty;
-    }
-
-    public void RecordBill(decimal qty)
-    {
-        if (qty <= 0m) return;
-        QuantityBilled += qty;
-    }
-
-    public void ReverseBill(decimal qty)
-    {
-        if (qty <= 0m) return;
-        QuantityBilled = Math.Max(0m, QuantityBilled - qty);
     }
 }

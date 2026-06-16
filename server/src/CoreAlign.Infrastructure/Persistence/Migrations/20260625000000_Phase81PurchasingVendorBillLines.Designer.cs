@@ -3,6 +3,7 @@ using System;
 using CoreAlign.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CoreAlign.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CoreAlignDbContext))]
-    partial class CoreAlignDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260625000000_Phase81PurchasingVendorBillLines")]
+    partial class Phase81PurchasingVendorBillLines
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3310,7 +3313,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("fx_rate_locked_at_utc");
 
                     b.Property<decimal>("FxRateToBase")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("fx_rate_to_base");
 
                     b.Property<string>("GeometryMode")
@@ -6340,7 +6343,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("description");
 
                     b.Property<decimal?>("ExchangeRate")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("exchange_rate");
 
                     b.Property<decimal?>("ForeignAmount")
@@ -15217,7 +15220,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("entry_type");
 
                     b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("exchange_rate");
 
                     b.Property<DateTime>("OccurredAtUtc")

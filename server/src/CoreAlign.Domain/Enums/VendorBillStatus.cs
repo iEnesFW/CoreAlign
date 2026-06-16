@@ -6,5 +6,6 @@ public enum VendorBillStatus
     Posted = 1,
     PartiallyPaid = 2,
     Paid = 3,
-    Cancelled = 4
+    Cancelled = 4,
+    PendingApproval = 5
 }

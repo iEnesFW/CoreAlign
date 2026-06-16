@@ -134,6 +134,7 @@ public class CoreAlignDbContext : DbContext
     public DbSet<PurchaseRequisition> PurchaseRequisitions => Set<PurchaseRequisition>();
     public DbSet<PurchaseRequisitionLine> PurchaseRequisitionLines => Set<PurchaseRequisitionLine>();
     public DbSet<VendorBill> VendorBills => Set<VendorBill>();
+    public DbSet<VendorBillLine> VendorBillLines => Set<VendorBillLine>();
     public DbSet<VendorPayment> VendorPayments => Set<VendorPayment>();
     public DbSet<VendorPaymentApplication> VendorPaymentApplications => Set<VendorPaymentApplication>();
 
@@ -222,6 +223,7 @@ public class CoreAlignDbContext : DbContext
     public DbSet<CoreAlign.Domain.Entities.Notifications.NotificationTemplate> NotificationTemplates => Set<CoreAlign.Domain.Entities.Notifications.NotificationTemplate>();
     public DbSet<CoreAlign.Domain.Entities.Notifications.NotificationPreference> NotificationPreferences => Set<CoreAlign.Domain.Entities.Notifications.NotificationPreference>();
     public DbSet<CoreAlign.Domain.Entities.Notifications.UserDeviceToken> UserDeviceTokens => Set<CoreAlign.Domain.Entities.Notifications.UserDeviceToken>();
+    public DbSet<CoreAlign.Domain.Entities.Notifications.NotificationRateCounter> NotificationRateCounters => Set<CoreAlign.Domain.Entities.Notifications.NotificationRateCounter>();
 
     // F4.5 Whitelabel customization (tenant theme + multi-asset references)
     public DbSet<CoreAlign.Domain.Entities.Whitelabel.TenantTheme> TenantThemes => Set<CoreAlign.Domain.Entities.Whitelabel.TenantTheme>();

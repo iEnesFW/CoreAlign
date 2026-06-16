@@ -99,7 +99,7 @@ public class JournalLineConfiguration : IEntityTypeConfiguration<JournalLine>
         builder.Property(l => l.Debit).HasColumnType("numeric(18,4)");
         builder.Property(l => l.Credit).HasColumnType("numeric(18,4)");
         builder.Property(l => l.ForeignAmount).HasColumnType("numeric(18,4)");
-        builder.Property(l => l.ExchangeRate).HasColumnType("numeric(18,8)");
+        builder.Property(l => l.ExchangeRate).HasColumnType("numeric(18,6)");
         builder.Property(l => l.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 

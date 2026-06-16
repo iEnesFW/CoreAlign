@@ -12,6 +12,8 @@ public interface IOutboxRepository
     /// <summary>Pending rows for the current tenant, oldest first, capped to <paramref name="max"/>.</summary>
     Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(int max, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<OutboxMessage>> GetDueAcrossTenantsAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default);
+
     /// <summary>Recent rows for an admin/ops view, optionally filtered by status.</summary>
     Task<IReadOnlyList<OutboxMessage>> ListAsync(OutboxStatus? status, int max, CancellationToken cancellationToken = default);
 }

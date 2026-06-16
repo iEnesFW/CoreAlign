@@ -27,7 +27,7 @@ public class GlassProjectConfiguration : IEntityTypeConfiguration<GlassProject>
         builder.Property(p => p.TaxTotal).HasColumnType("numeric(18,4)");
         builder.Property(p => p.GrandTotal).HasColumnType("numeric(18,4)");
         builder.Property(p => p.Currency).HasMaxLength(3).IsRequired();
-        builder.Property(p => p.FxRateToBase).HasColumnType("numeric(18,8)");
+        builder.Property(p => p.FxRateToBase).HasColumnType("numeric(18,6)");
         builder.Property(p => p.WindLoadPaCalculated).HasColumnType("numeric(10,2)");
         builder.Property(p => p.WeightedUValue).HasColumnType("numeric(6,3)");
         builder.Property(p => p.WeightedSoundDb).HasColumnType("numeric(6,2)");

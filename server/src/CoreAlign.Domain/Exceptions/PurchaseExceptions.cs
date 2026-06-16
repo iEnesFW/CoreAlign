@@ -26,6 +26,12 @@ public class DuplicateVendorBillNumberException : ConflictException
     public DuplicateVendorBillNumberException() : base("A bill with this number already exists for the vendor.") { }
 }
 
+public class PurchaseOrderLineNotFoundForBillException : NotFoundException
+{
+    public PurchaseOrderLineNotFoundForBillException()
+        : base("The referenced purchase order line was not found on the bill's purchase order.") { }
+}
+
 public class PurchaseRequisitionNotFoundException : NotFoundException
 {
     public PurchaseRequisitionNotFoundException() : base("Purchase requisition not found.") { }

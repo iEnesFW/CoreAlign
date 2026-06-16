@@ -3,6 +3,7 @@ using System;
 using CoreAlign.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CoreAlign.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CoreAlignDbContext))]
-    partial class CoreAlignDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624000000_Phase80NotificationDeliveryEngine")]
+    partial class Phase80NotificationDeliveryEngine
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3310,7 +3313,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("fx_rate_locked_at_utc");
 
                     b.Property<decimal>("FxRateToBase")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("fx_rate_to_base");
 
                     b.Property<string>("GeometryMode")
@@ -6340,7 +6343,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("description");
 
                     b.Property<decimal?>("ExchangeRate")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("exchange_rate");
 
                     b.Property<decimal?>("ForeignAmount")
@@ -14887,14 +14890,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("amount_paid");
 
-                    b.Property<DateTime?>("ApprovedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("approved_at_utc");
-
-                    b.Property<Guid?>("ApprovedByUserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("approved_by_user_id");
-
                     b.Property<DateTime>("BillDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("bill_date");
@@ -14923,15 +14918,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,6)")
                         .HasColumnName("exchange_rate");
 
-                    b.Property<DateTime?>("HeldAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("held_at_utc");
-
-                    b.Property<string>("HoldReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("hold_reason");
-
                     b.Property<string>("Notes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)")
@@ -14944,10 +14930,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("PurchaseOrderId")
                         .HasColumnType("uuid")
                         .HasColumnName("purchase_order_id");
-
-                    b.Property<bool>("RequiresApproval")
-                        .HasColumnType("boolean")
-                        .HasColumnName("requires_approval");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -15009,110 +14991,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_vendor_bills_tenant_id_vendor_id_bill_number");
 
                     b.ToTable("vendor_bills");
-                });
-
-            modelBuilder.Entity("CoreAlign.Domain.Entities.VendorBillLine", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<string>("LineNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)")
-                        .HasColumnName("line_notes");
-
-                    b.Property<int>("LineNumber")
-                        .HasColumnType("integer")
-                        .HasColumnName("line_number");
-
-                    b.Property<decimal>("LineSubtotal")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("line_subtotal");
-
-                    b.Property<decimal>("LineTotal")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("line_total");
-
-                    b.Property<decimal>("PoUnitCost")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("po_unit_cost");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("product_id");
-
-                    b.Property<string>("ProductName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("product_name");
-
-                    b.Property<string>("ProductSku")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("product_sku");
-
-                    b.Property<Guid?>("PurchaseOrderLineId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("purchase_order_line_id");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("quantity");
-
-                    b.Property<decimal>("TaxAmount")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("tax_amount");
-
-                    b.Property<decimal>("TaxRatePercent")
-                        .HasColumnType("numeric(6,3)")
-                        .HasColumnName("tax_rate_percent");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric(18,4)")
-                        .HasColumnName("unit_price");
-
-                    b.Property<string>("UomCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("uom_code");
-
-                    b.Property<Guid?>("UomId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("uom_id");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at_utc");
-
-                    b.Property<Guid>("VendorBillId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("vendor_bill_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_vendor_bill_lines");
-
-                    b.HasIndex("ProductId")
-                        .HasDatabaseName("ix_vendor_bill_lines_product_id");
-
-                    b.HasIndex("PurchaseOrderLineId")
-                        .HasDatabaseName("ix_vendor_bill_lines_purchase_order_line_id");
-
-                    b.HasIndex("VendorBillId")
-                        .HasDatabaseName("ix_vendor_bill_lines_vendor_bill_id");
-
-                    b.ToTable("vendor_bill_lines");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.VendorContact", b =>
@@ -15217,7 +15095,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("entry_type");
 
                     b.Property<decimal>("ExchangeRate")
-                        .HasColumnType("numeric(18,6)")
+                        .HasColumnType("numeric(18,8)")
                         .HasColumnName("exchange_rate");
 
                     b.Property<DateTime>("OccurredAtUtc")
@@ -17254,27 +17132,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("CoreAlign.Domain.Entities.VendorBillLine", b =>
-                {
-                    b.HasOne("CoreAlign.Domain.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_vendor_bill_lines_products_product_id");
-
-                    b.HasOne("CoreAlign.Domain.Entities.VendorBill", "VendorBill")
-                        .WithMany("Lines")
-                        .HasForeignKey("VendorBillId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_vendor_bill_lines_vendor_bills_vendor_bill_id");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("VendorBill");
-                });
-
             modelBuilder.Entity("CoreAlign.Domain.Entities.VendorContact", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Vendor", "Vendor")
@@ -17476,11 +17333,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("Subscriptions");
 
                     b.Navigation("UserRoles");
-                });
-
-            modelBuilder.Entity("CoreAlign.Domain.Entities.VendorBill", b =>
-                {
-                    b.Navigation("Lines");
                 });
 #pragma warning restore 612, 618
         }
