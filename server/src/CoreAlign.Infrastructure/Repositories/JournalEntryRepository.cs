@@ -110,29 +110,28 @@ public class JournalEntryRepository : IJournalEntryRepository
 
         // Posted entries only — Draft entries don't appear in the trial balance.
         // Reversed entries stay in the totals because their reversal is itself
-        // a posted entry that nets them out automatically.
-        var query = _context.JournalLines.AsNoTracking()
-            .Where(l => _context.JournalEntries
-                .Any(j => j.Id == l.JournalEntryId
-                    && j.Status == JournalEntryStatus.Posted
-                    && (!fromUtc.HasValue || j.PostingDate >= fromUtc.Value)
-                    && (!toUtc.HasValue || j.PostingDate <= toUtc.Value)));
-
-        // EF Core 10: subquery (Any) + GroupBy aggregate kombinasyonu translate edilemiyor.
-        // Flat fetch + in-memory group (trial balance icin acceptable, journal lines fazla buyuk degil).
-        var flat = await query
-            .Select(l => new { l.AccountId, l.AccountCode, l.AccountName, l.Debit, l.Credit })
-            .ToListAsync(cancellationToken);
-
-        return flat
-            .GroupBy(l => new { l.AccountId, l.AccountCode, l.AccountName })
-            .Select(g => new AccountBalanceRow(
+        // a posted entry that nets them out automatically. Aggregated server-side
+        // (join + GROUP BY/SUM) so the DB returns one row per account, never the
+        // full journal_lines set — scale-safe at millions of lines.
+        var grouped = await (
+            from l in _context.JournalLines.AsNoTracking()
+            join j in _context.JournalEntries on l.JournalEntryId equals j.Id
+            where j.Status == JournalEntryStatus.Posted
+                && (!fromUtc.HasValue || j.PostingDate >= fromUtc.Value)
+                && (!toUtc.HasValue || j.PostingDate <= toUtc.Value)
+            group new { l.Debit, l.Credit } by new { l.AccountId, l.AccountCode, l.AccountName } into g
+            orderby g.Key.AccountCode
+            select new
+            {
                 g.Key.AccountId,
                 g.Key.AccountCode,
                 g.Key.AccountName,
-                g.Sum(l => l.Debit),
-                g.Sum(l => l.Credit)))
-            .OrderBy(r => r.AccountCode)
+                Debit = g.Sum(x => x.Debit),
+                Credit = g.Sum(x => x.Credit),
+            }).ToListAsync(cancellationToken);
+
+        return grouped
+            .Select(r => new AccountBalanceRow(r.AccountId, r.AccountCode, r.AccountName, r.Debit, r.Credit))
             .ToList();
     }
 
