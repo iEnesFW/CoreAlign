@@ -376,3 +376,27 @@ Aşağıdakiler ölçek davranışı veri-dağılımına bağlı olduğu için s
 - **Yapısal temel + index layer ölçek-güvenli olduğu KANITLANDI:** sığ liste sayfaları sub-ms, report'lar server-side (whole-table-to-memory bitti), partition pruning 1/N partition'a iniyor.
 - **Tek gerçek kalan yavaşlama: deep-OFFSET** (page ~4000 = 225ms, lineer). Gerçek-dünyada nadir (kullanıcı filtreler, 4000. sayfaya gitmez) ve **keyset index'leri zaten yerinde (Phase88)** + keyset 0.47ms doğrulandı → kalan iş yalnızca append-only/infinite-scroll repo'larını keyset'e çevirmek (ledger/transaction/audit history; index'ler hazır).
 - C2 TopProducts C1 ile aynı pattern (join+GroupBy) → yüksek güven; uygulandığında aynı server-side kazanım.
+
+---
+
+## 🛠️ Operasyonel Açıklar (karar gerektirir — bu oturumda tespit edildi)
+
+Query-shape ve index katmanı ölçek-kusursuz; aşağıdakiler **şema değil, operasyonel/app-infra** katmanı ve bilinçli karar gerektiriyor.
+
+**O1. Hangfire tamamen pasif (recurring job'ların HİÇBİRİ çalışmıyor)** `[high — ops]`
+
+- **Tespit:** `Program.cs`'te `AddHangfire` / `UseHangfireServer` / `RecurringJobsRegistration.RegisterAll(...)` **çağrılmıyor**. `RecurringJobsRegistration.cs` 10 job tanımlıyor (`OutboxDrainJob`, `TokenCleanupJob`, `LogIpAnonymizationJob`, `QuoteExpiryJob`, `RecurringOrderJob`, `TcmbFxIngestJob`, `PostFxRevaluationJob`, `ReportScheduleJob`, `ScheduledAuditExportJob`, `RateCounterCleanupJob`) ama Hangfire host hiç ayağa kalkmıyor → hepsi ölü.
+- **DB etkisi:** `outbox_messages` drain edilmiyor (sonsuz büyür), expired token/log temizliği yok, FX rate ingest yok, rate-counter cleanup yok. Ölçekte tablo şişmesi + bayat veri.
+- **Öneri:** Ya Hangfire'ı tam wire et (server + storage + `RegisterAll`), ya da DB-kritik olanları (outbox drain, token/log cleanup, rate-counter cleanup) `BackgroundService`'e çevir (partition rollover'da yaptığımız gibi — Hangfire'dan bağımsız). **Karar kullanıcıya ait** (scaffold bilinçli yarım bırakılmış olabilir).
+
+**O2. Partition rollover — ÇÖZÜLDÜ (HostedService), SECURITY DEFINER takip işi** `[done + follow-up]`
+
+- `PartitionMaintenanceHostedService` startup + günlük `corealign_ensure_future_partitions`'ı 6 ay ileri çağırıyor (Hangfire'dan bağımsız). Fonksiyon idempotent, canlı doğrulandı.
+- **Follow-up:** RLS açıkken (`Database:EnableRls=true`) app non-owner `corealign_app` rolüyle bağlanır → `CREATE TABLE PARTITION OF` owner ister. Fonksiyonu **`SECURITY DEFINER` + `SET search_path=public,pg_temp`** yap. Migration olarak eklenmeli ama şu an model'de başka ajanların migrate edilmemiş değişikliği var (`has-pending-model-changes=yes`) → temiz `ef migrations add` bloke. Model temizlenince Phase89 olarak ekle; o zamana kadar default `EnableRls=false`'ta owner bağlantısıyla zaten çalışıyor.
+- **Ayrıca:** `corealign_ensure_future_partitions` DEFAULT partition'da hedef-ay satırı varsa `CREATE PARTITION` hata verir (split mantığı yok). Rollover düzenli koştuğu sürece DEFAULT'a hiç gelecek-ay satırı düşmez, sorun olmaz; ama rollover uzun süre durursa elle DEFAULT detach/split gerekir.
+
+**O3. Ertelenen query işleri (şema değil, contract/ölçek-marjinal)** `[deferred]`
+
+- **C6 stock_movements:** 4 Include hepsi to-one (Product/Warehouse/Lot/ReasonCode) → cartesian YOK; gerçek maliyet deep-OFFSET (keyset gerekir, API cursor contract'ı değişir) + geniş-entity materialization (slim projection, contract değişir). Frontend aktifken contract değişimi riskli → ertelendi.
+- **Keyset UI listeleri:** index'ler hazır (Phase88), ama offset→cursor API/UI contract cascade'i frontend ile koordinasyon ister → bilinçli ertelendi.
+- **Vendor payment-application N+1:** bill/payment başına application sayısı bounded, ölçek riski yok, repo batch metodu gerektirir → düşük öncelik.
