@@ -61,7 +61,7 @@ public class GlassProjectConfiguration : IEntityTypeConfiguration<GlassProject>
             .HasForeignKey(c => c.ProjectId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(p => new { p.TenantId, p.Code }).IsUnique();
+        builder.HasIndex(p => new { p.TenantId, p.Code }).IsUnique().HasFilter("is_deleted = false");
         builder.HasIndex(p => new { p.TenantId, p.CustomerId });
         builder.HasIndex(p => new { p.TenantId, p.Status });
         builder.HasIndex(p => new { p.TenantId, p.AssignedDesignerUserId });

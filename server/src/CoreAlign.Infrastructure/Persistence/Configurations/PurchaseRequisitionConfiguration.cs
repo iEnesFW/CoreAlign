@@ -31,7 +31,7 @@ public class PurchaseRequisitionConfiguration : IEntityTypeConfiguration<Purchas
             .HasForeignKey(l => l.RequisitionId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(p => new { p.TenantId, p.Number }).IsUnique();
+        builder.HasIndex(p => new { p.TenantId, p.Number }).IsUnique().HasFilter("is_deleted = false");
         builder.HasIndex(p => new { p.TenantId, p.Status });
         builder.HasIndex(p => new { p.TenantId, p.RequestedAtUtc }).IsDescending(false, true);
 

@@ -28,7 +28,8 @@ public class WarrantyContractConfiguration : IEntityTypeConfiguration<WarrantyCo
 
         builder.HasIndex(c => new { c.TenantId, c.Number })
             .HasDatabaseName("ux_warranty_contracts_tenant_number")
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("is_deleted = false");
 
         builder.HasIndex(c => new { c.TenantId, c.CustomerId })
             .HasDatabaseName("ix_warranty_contracts_tenant_customer");
