@@ -1,7 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { BadgeDollarSign, BookOpen, CheckCircle2, Link2, Plus, XCircle } from 'lucide-react';
+import {
+  BadgeDollarSign,
+  BookOpen,
+  CheckCircle2,
+  Link2,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  XCircle,
+} from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
@@ -16,6 +25,7 @@ import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import { VendorBillFormModal, VendorPaymentModal } from '@/features/purchasing/ui/VendorBillModals';
 import { ApplyVendorPaymentModal } from '@/pages/purchasing/components/ApplyVendorPaymentModal';
 import { SourceJournalEntriesModal } from '@/features/accounting/ui/SourceJournalEntriesModal';
+import { usePurchasingApprove } from '@/features/purchasing/hooks/usePurchasingApprove';
 import type { VendorBill, VendorBillStatus } from '@/features/purchasing/model/vendorBilling.types';
 
 const STATUS_TONE: Record<VendorBillStatus, string> = {
@@ -24,17 +34,35 @@ const STATUS_TONE: Record<VendorBillStatus, string> = {
   PartiallyPaid: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
   Paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
   Cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  PendingApproval: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300',
 };
 
-const STATUS_LABEL: Record<VendorBillStatus, string> = {
+const STATUS_LABEL_KEY: Record<VendorBillStatus, string> = {
+  Draft: 'VendorBills.Status.Draft',
+  Posted: 'VendorBills.Status.Posted',
+  PartiallyPaid: 'VendorBills.Status.PartiallyPaid',
+  Paid: 'VendorBills.Status.Paid',
+  Cancelled: 'VendorBills.Status.Cancelled',
+  PendingApproval: 'VendorBills.Status.PendingApproval',
+};
+
+const STATUS_LABEL_FALLBACK: Record<VendorBillStatus, string> = {
   Draft: 'Taslak',
   Posted: 'İşlendi',
   PartiallyPaid: 'Kısmi Ödendi',
   Paid: 'Ödendi',
   Cancelled: 'İptal',
+  PendingApproval: 'Onay Bekliyor',
 };
 
-const STATUSES: VendorBillStatus[] = ['Draft', 'Posted', 'PartiallyPaid', 'Paid', 'Cancelled'];
+const STATUSES: VendorBillStatus[] = [
+  'Draft',
+  'Posted',
+  'PartiallyPaid',
+  'Paid',
+  'Cancelled',
+  'PendingApproval',
+];
 
 const fmtDate = (iso: string | null, locale: string) => formatDate(iso, locale);
 
@@ -44,12 +72,20 @@ export const VendorBillsPage = () => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
   const confirm = useConfirm();
+  const canApprove = usePurchasingApprove();
+
+  const statusLabel = (s: VendorBillStatus) =>
+    t(STATUS_LABEL_KEY[s], { defaultValue: STATUS_LABEL_FALLBACK[s] });
+
+  const hasLedger = (s: VendorBillStatus) =>
+    s === 'Posted' || s === 'PartiallyPaid' || s === 'Paid';
 
   const [view, setView] = useState<View>('bills');
   const [status, setStatus] = useState<VendorBillStatus | ''>('');
   const [vendorId, setVendorId] = useState('');
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editBill, setEditBill] = useState<VendorBill | null>(null);
   const [payBill, setPayBill] = useState<VendorBill | null>(null);
   const [applyBill, setApplyBill] = useState<VendorBill | null>(null);
   const [appsBillId, setAppsBillId] = useState<string | null>(null);
@@ -81,7 +117,7 @@ export const VendorBillsPage = () => {
     setPage(1);
   };
 
-  const run = async (bill: VendorBill, act: 'post' | 'cancel') => {
+  const run = async (bill: VendorBill, act: 'post' | 'approve' | 'cancel') => {
     if (act === 'cancel') {
       const ok = await confirm({
         title: t('ap.cancelTitle', { defaultValue: 'Faturayı İptal Et' }),
@@ -91,6 +127,17 @@ export const VendorBillsPage = () => {
         }),
         confirmLabel: t('common.confirm', { defaultValue: 'Onayla' }),
         tone: 'danger',
+      });
+      if (!ok) return;
+    }
+    if (act === 'approve') {
+      const ok = await confirm({
+        title: t('ap.approveTitle', { defaultValue: 'Faturayı Onayla' }),
+        message: t('ap.approveConfirm', {
+          defaultValue: '{{n}} onaylanıp muhasebeleştirilsin mi?',
+          n: bill.billNumber,
+        }),
+        confirmLabel: t('common.confirm', { defaultValue: 'Onayla' }),
       });
       if (!ok) return;
     }
@@ -177,7 +224,7 @@ export const VendorBillsPage = () => {
             <option value="">{t('ap.filter.allStatuses', { defaultValue: 'Tüm durumlar' })}</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {STATUS_LABEL[s]}
+                {statusLabel(s)}
               </option>
             ))}
           </select>
@@ -243,13 +290,16 @@ export const VendorBillsPage = () => {
                     <td className="px-3 py-2 text-center">
                       <span
                         className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_TONE[b.status]}`}
+                        title={
+                          b.status === 'PendingApproval' && b.holdReason ? b.holdReason : undefined
+                        }
                       >
-                        {STATUS_LABEL[b.status]}
+                        {statusLabel(b.status)}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex items-center gap-1">
-                        {b.status !== 'Draft' && (
+                        {hasLedger(b.status) && (
                           <button
                             type="button"
                             onClick={() => setGlSource({ id: b.id, label: b.billNumber })}
@@ -257,6 +307,16 @@ export const VendorBillsPage = () => {
                             title={t('ap.actions.glEntry', { defaultValue: 'Muhasebe Fişi' })}
                           >
                             <BookOpen size={13} />
+                          </button>
+                        )}
+                        {(b.status === 'Draft' || b.status === 'PendingApproval') && (
+                          <button
+                            type="button"
+                            onClick={() => setEditBill(b)}
+                            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                            title={t('ap.actions.edit', { defaultValue: 'Düzenle' })}
+                          >
+                            <Pencil size={13} />
                           </button>
                         )}
                         {b.status === 'Draft' && (
@@ -268,6 +328,19 @@ export const VendorBillsPage = () => {
                             title={t('ap.actions.post', { defaultValue: 'İşle (cariye yaz)' })}
                           >
                             <CheckCircle2 size={13} />
+                          </button>
+                        )}
+                        {b.status === 'PendingApproval' && canApprove && (
+                          <button
+                            type="button"
+                            onClick={() => run(b, 'approve')}
+                            disabled={action.isPending}
+                            className="rounded p-1 text-orange-500 hover:bg-orange-50 disabled:opacity-40 dark:hover:bg-orange-500/10"
+                            title={t('ap.actions.approve', {
+                              defaultValue: 'Onayla ve muhasebeleştir',
+                            })}
+                          >
+                            <ShieldCheck size={13} />
                           </button>
                         )}
                         {(b.status === 'Posted' || b.status === 'PartiallyPaid') && (
@@ -292,7 +365,7 @@ export const VendorBillsPage = () => {
                             <Link2 size={13} />
                           </button>
                         )}
-                        {b.status !== 'Draft' && (
+                        {hasLedger(b.status) && (
                           <button
                             type="button"
                             onClick={() => setAppsBillId(b.id)}
@@ -406,6 +479,7 @@ export const VendorBillsPage = () => {
       )}
 
       {createOpen && <VendorBillFormModal onClose={() => setCreateOpen(false)} />}
+      {editBill && <VendorBillFormModal bill={editBill} onClose={() => setEditBill(null)} />}
       {payBill && <VendorPaymentModal bill={payBill} onClose={() => setPayBill(null)} />}
       {applyBill && <ApplyVendorPaymentModal bill={applyBill} onClose={() => setApplyBill(null)} />}
       {appsBillId && (

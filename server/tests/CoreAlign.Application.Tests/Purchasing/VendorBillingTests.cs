@@ -48,12 +48,15 @@ public class PostVendorBillHandlerTests
     private readonly IVendorLedgerRepository _ledger = Substitute.For<IVendorLedgerRepository>();
     private readonly IVendorRepository _vendors = Substitute.For<IVendorRepository>();
     private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IPurchaseOrderRepository _orders = Substitute.For<IPurchaseOrderRepository>();
+    private readonly ITolerancePolicyProvider _tolerance = Substitute.For<ITolerancePolicyProvider>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly PostVendorBillHandler _sut;
 
     public PostVendorBillHandlerTests()
     {
-        _sut = new PostVendorBillHandler(_bills, _ledger, _vendors, _outbox, _uow);
+        _tolerance.GetAsync(Arg.Any<CancellationToken>()).Returns(ThreeWayMatchTolerance.Disabled);
+        _sut = new PostVendorBillHandler(_bills, _ledger, _vendors, _outbox, _orders, _tolerance, _uow);
     }
 
     [Fact]
@@ -86,12 +89,13 @@ public class CancelVendorBillHandlerTests
     private readonly IVendorLedgerRepository _ledger = Substitute.For<IVendorLedgerRepository>();
     private readonly IVendorRepository _vendors = Substitute.For<IVendorRepository>();
     private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IPurchaseOrderRepository _orders = Substitute.For<IPurchaseOrderRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly CancelVendorBillHandler _sut;
 
     public CancelVendorBillHandlerTests()
     {
-        _sut = new CancelVendorBillHandler(_bills, _ledger, _vendors, _outbox, _uow);
+        _sut = new CancelVendorBillHandler(_bills, _ledger, _vendors, _outbox, _orders, _uow);
     }
 
     [Fact]

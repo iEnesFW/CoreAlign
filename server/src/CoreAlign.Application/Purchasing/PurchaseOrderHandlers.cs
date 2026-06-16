@@ -288,7 +288,7 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
                     new GLPostingLine(GLPostingKey.Inventory, movement.TotalCost, 0m),
                     new GLPostingLine(GLPostingKey.GoodsReceiptClearing, 0m, movement.TotalCost),
                 },
-                po.Currency), ct);
+                po.Currency, po.ExchangeRate), ct);
         }
 
         _orders.Update(po);

@@ -1,4 +1,24 @@
-export type VendorBillStatus = 'Draft' | 'Posted' | 'PartiallyPaid' | 'Paid' | 'Cancelled';
+export type VendorBillStatus =
+  | 'Draft'
+  | 'Posted'
+  | 'PartiallyPaid'
+  | 'Paid'
+  | 'Cancelled'
+  | 'PendingApproval';
+
+export interface VendorBillLine {
+  productId: string;
+  productSku: string;
+  productName: string;
+  purchaseOrderLineId?: string | null;
+  quantity: number;
+  unitPrice: number;
+  poUnitCost: number;
+  priceVariance: number;
+  taxAmount: number;
+  lineSubtotal: number;
+  lineTotal: number;
+}
 
 export interface VendorBill {
   id: string;
@@ -17,6 +37,11 @@ export interface VendorBill {
   purchaseOrderId: string | null;
   notes: string | null;
   createdAtUtc: string;
+  lines?: VendorBillLine[];
+  requiresApproval?: boolean;
+  heldAtUtc?: string | null;
+  holdReason?: string | null;
+  approvedAtUtc?: string | null;
 }
 
 export interface VendorPayment {
@@ -61,6 +86,7 @@ export interface UpdateVendorBillInput {
   exchangeRate?: number;
   purchaseOrderId?: string | null;
   notes?: string | null;
+  lines?: VendorBillLineInput[];
 }
 
 export interface UpdateVendorPaymentInput {
@@ -97,6 +123,18 @@ export interface ThreeWayMatchRow {
   discrepancies: string[];
 }
 
+export interface VendorBillLineInput {
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  taxRatePercent?: number;
+  purchaseOrderLineId?: string | null;
+  poUnitCost?: number;
+  uomId?: string | null;
+  uomCode?: string | null;
+  lineNotes?: string | null;
+}
+
 export interface CreateVendorBillInput {
   vendorId: string;
   billNumber: string;
@@ -108,6 +146,7 @@ export interface CreateVendorBillInput {
   exchangeRate?: number;
   purchaseOrderId?: string | null;
   notes?: string | null;
+  lines?: VendorBillLineInput[];
 }
 
 export interface CreateVendorPaymentInput {

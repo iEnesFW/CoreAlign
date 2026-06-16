@@ -51,6 +51,13 @@ public record VendorPaymentApplicationDto(
     Guid? AppliedByUserId,
     string? Notes);
 
+public record VendorBillLineInput(
+    Guid ProductId,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal TaxRatePercent = 0m,
+    Guid? PurchaseOrderLineId = null);
+
 public record CreateVendorBillCommand(
     Guid VendorId,
     string BillNumber,
@@ -61,9 +68,11 @@ public record CreateVendorBillCommand(
     DateTime? DueDate = null,
     decimal ExchangeRate = 1m,
     Guid? PurchaseOrderId = null,
-    string? Notes = null) : IRequest<VendorBillDto>, ITransactionalRequest;
+    string? Notes = null,
+    IReadOnlyList<VendorBillLineInput>? Lines = null) : IRequest<VendorBillDto>, ITransactionalRequest;
 
 public record PostVendorBillCommand(Guid Id) : IRequest<VendorBillDto>, ITransactionalRequest;
+public record ApproveVendorBillCommand(Guid Id) : IRequest<VendorBillDto>, ITransactionalRequest;
 public record CancelVendorBillCommand(Guid Id) : IRequest<VendorBillDto>, ITransactionalRequest;
 
 public record CreateVendorPaymentCommand(
@@ -86,7 +95,8 @@ public record UpdateVendorBillCommand(
     DateTime? DueDate = null,
     decimal ExchangeRate = 1m,
     Guid? PurchaseOrderId = null,
-    string? Notes = null) : IRequest<VendorBillDto>, ITransactionalRequest;
+    string? Notes = null,
+    IReadOnlyList<VendorBillLineInput>? Lines = null) : IRequest<VendorBillDto>, ITransactionalRequest;
 
 public record UpdateVendorPaymentCommand(
     Guid Id,

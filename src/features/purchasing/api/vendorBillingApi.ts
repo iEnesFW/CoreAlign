@@ -42,6 +42,9 @@ export const vendorBillingApi = {
 
   postBill: (id: string) => mutate(apiClient.post<ApiResponse<VendorBill>>(`${BILLS}/${id}/post`)),
 
+  approveBill: (id: string) =>
+    mutate(apiClient.post<ApiResponse<VendorBill>>(`${BILLS}/${id}/approve`)),
+
   cancelBill: (id: string) =>
     mutate(apiClient.post<ApiResponse<VendorBill>>(`${BILLS}/${id}/cancel`)),
 

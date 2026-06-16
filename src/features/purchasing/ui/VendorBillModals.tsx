@@ -1,31 +1,82 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { Plus, ShieldCheck, Trash2, X } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
+import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
+import { ProductPicker } from '@/features/orders/ui/ProductPicker';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
-import { useCreateVendorBill, useCreateVendorPayment } from '../hooks/useVendorBilling';
-import type { VendorBill } from '../model/vendorBilling.types';
+import { usePurchaseOrdersQuery } from '../hooks/usePurchaseOrders';
+import {
+  useCreateVendorBill,
+  useCreateVendorPayment,
+  useUpdateVendorBill,
+  useVendorBillAction,
+} from '../hooks/useVendorBilling';
+import { usePurchasingApprove } from '../hooks/usePurchasingApprove';
+import type { PurchaseOrder, PurchaseOrderLine } from '../model/purchaseOrder.types';
+import type { VendorBill, VendorBillLineInput } from '../model/vendorBilling.types';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 const inputClass =
   'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
+const cellInputClass =
+  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+
+interface BillLineState {
+  key: string;
+  productId: string;
+  quantity: string;
+  unitPrice: string;
+  taxRatePercent: string;
+  purchaseOrderLineId: string;
+  poUnitCost: number | null;
+}
+
+const newBillLine = (): BillLineState => ({
+  key: crypto.randomUUID(),
+  productId: '',
+  quantity: '1',
+  unitPrice: '',
+  taxRatePercent: '',
+  purchaseOrderLineId: '',
+  poUnitCost: null,
+});
+
+const billToLineState = (line: NonNullable<VendorBill['lines']>[number]): BillLineState => ({
+  key: crypto.randomUUID(),
+  productId: line.productId,
+  quantity: String(line.quantity),
+  unitPrice: line.unitPrice ? String(line.unitPrice) : '',
+  taxRatePercent:
+    line.lineSubtotal > 0 ? String(round2((line.taxAmount / line.lineSubtotal) * 100)) : '',
+  purchaseOrderLineId: line.purchaseOrderLineId ?? '',
+  poUnitCost: line.poUnitCost || null,
+});
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const Shell = ({
   title,
   onClose,
   children,
+  wide,
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  wide?: boolean;
 }) => {
   const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl dark:bg-slate-900">
+      <div
+        className={`flex max-h-[92vh] w-full flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900 ${
+          wide ? 'max-w-5xl' : 'max-w-2xl'
+        }`}
+      >
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
           <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
           <button
@@ -43,162 +94,516 @@ const Shell = ({
   );
 };
 
-export const VendorBillFormModal = ({ onClose }: { onClose: () => void }) => {
+export const VendorBillFormModal = ({
+  bill,
+  onClose,
+}: {
+  bill?: VendorBill | null;
+  onClose: () => void;
+}) => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
+  const isEdit = Boolean(bill);
+  const editable = !bill || bill.status === 'Draft' || bill.status === 'PendingApproval';
+  const canApprove = usePurchasingApprove();
+
   const vendorsQuery = useVendorsQuery({ page: 1, pageSize: 200 });
+  const productsQuery = useProductsQuery({ page: 1, pageSize: 200, isActive: true });
   const createMutation = useCreateVendorBill();
+  const updateMutation = useUpdateVendorBill();
+  const billAction = useVendorBillAction();
   const vendors = vendorsQuery.data?.data?.items ?? [];
+  const products = productsQuery.data?.data?.items ?? [];
 
-  const [vendorId, setVendorId] = useState('');
-  const [billNumber, setBillNumber] = useState('');
-  const [billDate, setBillDate] = useState(todayIso());
-  const [dueDate, setDueDate] = useState('');
-  const [currency, setCurrency] = useState('TRY');
-  const [subtotal, setSubtotal] = useState('');
-  const [taxAmount, setTaxAmount] = useState('');
-  const [notes, setNotes] = useState('');
-
-  const total = useMemo(
-    () => (Number(subtotal) || 0) + (Number(taxAmount) || 0),
-    [subtotal, taxAmount],
+  const [vendorId, setVendorId] = useState(bill?.vendorId ?? '');
+  const [billNumber, setBillNumber] = useState(bill?.billNumber ?? '');
+  const [billDate, setBillDate] = useState(bill?.billDate?.slice(0, 10) ?? todayIso());
+  const [dueDate, setDueDate] = useState(bill?.dueDate?.slice(0, 10) ?? '');
+  const [currency, setCurrency] = useState(bill?.currency ?? 'TRY');
+  const [subtotal, setSubtotal] = useState(
+    bill && !bill.lines?.length ? String(bill.subtotal) : '',
   );
+  const [taxAmount, setTaxAmount] = useState(
+    bill && !bill.lines?.length ? String(bill.taxAmount) : '',
+  );
+  const [notes, setNotes] = useState(bill?.notes ?? '');
+  const [purchaseOrderId, setPurchaseOrderId] = useState(bill?.purchaseOrderId ?? '');
+  const [lineMode, setLineMode] = useState(Boolean(bill?.lines?.length));
+  const [lines, setLines] = useState<BillLineState[]>(
+    bill?.lines?.length ? bill.lines.map(billToLineState) : [newBillLine()],
+  );
+
+  const posQuery = usePurchaseOrdersQuery({ vendorId: vendorId || undefined, pageSize: 100 });
+  const purchaseOrders = useMemo(() => posQuery.data?.data?.items ?? [], [posQuery.data]);
+  const selectedPo = useMemo<PurchaseOrder | undefined>(
+    () => purchaseOrders.find((p) => p.id === purchaseOrderId),
+    [purchaseOrders, purchaseOrderId],
+  );
+  const poLines = selectedPo?.lines ?? [];
+
+  const updateLine = (key: string, patch: Partial<BillLineState>) =>
+    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  const addLine = () => setLines((prev) => [...prev, newBillLine()]);
+  const removeLine = (key: string) =>
+    setLines((prev) => (prev.length === 1 ? prev : prev.filter((l) => l.key !== key)));
+
+  const selectPoLine = (key: string, poLineId: string) => {
+    const match = poLines.find((p) => p.id === poLineId);
+    updateLine(key, {
+      purchaseOrderLineId: poLineId,
+      productId: match ? match.productId : '',
+      poUnitCost: match ? match.unitCost : null,
+      unitPrice: match ? String(match.unitCost) : '',
+      taxRatePercent: match?.taxRatePercent ? String(match.taxRatePercent) : '',
+    });
+  };
+
+  const onSelectProduct = (key: string, productId: string) => {
+    const derived = derivePoLine(poLines, productId);
+    updateLine(key, {
+      productId,
+      purchaseOrderLineId: derived?.id ?? '',
+      poUnitCost: derived?.unitCost ?? null,
+    });
+  };
+
+  const loadFromPo = () => {
+    if (poLines.length === 0) return;
+    setLineMode(true);
+    setLines(
+      poLines.map((p) => ({
+        key: crypto.randomUUID(),
+        productId: p.productId,
+        quantity: String(
+          p.quantityRemainingToReceive > 0 ? p.quantityRemainingToReceive : p.quantity,
+        ),
+        unitPrice: String(p.unitCost),
+        taxRatePercent: p.taxRatePercent ? String(p.taxRatePercent) : '',
+        purchaseOrderLineId: p.id,
+        poUnitCost: p.unitCost,
+      })),
+    );
+  };
+
+  const lineTotals = useMemo(() => {
+    let sub = 0;
+    let tax = 0;
+    for (const l of lines) {
+      const net = (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0);
+      sub += net;
+      tax += net * ((Number(l.taxRatePercent) || 0) / 100);
+    }
+    return { subtotal: round2(sub), tax: round2(tax), total: round2(sub + tax) };
+  }, [lines]);
+
+  const headerSubtotal = lineMode ? lineTotals.subtotal : Number(subtotal) || 0;
+  const headerTax = lineMode ? lineTotals.tax : Number(taxAmount) || 0;
+  const total = headerSubtotal + headerTax;
+
+  const buildLines = (): VendorBillLineInput[] =>
+    lines
+      .filter((l) => l.productId && Number(l.quantity) > 0)
+      .map((l) => ({
+        productId: l.productId,
+        quantity: Number(l.quantity),
+        unitPrice: Number(l.unitPrice) || 0,
+        taxRatePercent: Number(l.taxRatePercent) || 0,
+        purchaseOrderLineId: l.purchaseOrderLineId || null,
+      }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!vendorId || !billNumber.trim() || (Number(subtotal) || 0) < 0) {
+    if (!editable) return;
+    if (!vendorId || !billNumber.trim()) {
       toast.error(t('ap.bill.invalid', { defaultValue: 'Tedarikçi, fatura no ve tutar giriniz.' }));
       return;
     }
+    const billLines = lineMode ? buildLines() : [];
+    if (lineMode && billLines.length === 0) {
+      toast.error(t('ap.bill.linesRequired', { defaultValue: 'En az bir geçerli satır ekleyin.' }));
+      return;
+    }
+    if (!lineMode && (Number(subtotal) || 0) < 0) {
+      toast.error(t('ap.bill.invalid', { defaultValue: 'Tedarikçi, fatura no ve tutar giriniz.' }));
+      return;
+    }
+    const payload = {
+      billNumber: billNumber.trim(),
+      billDate: new Date(billDate).toISOString(),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      currency: currency.toUpperCase(),
+      subtotal: headerSubtotal,
+      taxAmount: headerTax,
+      purchaseOrderId: purchaseOrderId || null,
+      notes: notes.trim() || null,
+      lines: lineMode ? billLines : undefined,
+    };
     try {
-      await createMutation.mutateAsync({
-        vendorId,
-        billNumber: billNumber.trim(),
-        billDate: new Date(billDate).toISOString(),
-        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-        currency: currency.toUpperCase(),
-        subtotal: Number(subtotal) || 0,
-        taxAmount: Number(taxAmount) || 0,
-        notes: notes.trim() || null,
-      });
-      toast.success(t('ap.bill.created', { defaultValue: 'Tedarikçi faturası oluşturuldu.' }));
+      if (bill) {
+        await updateMutation.mutateAsync({ id: bill.id, ...payload });
+        toast.success(t('ap.bill.updated', { defaultValue: 'Tedarikçi faturası güncellendi.' }));
+      } else {
+        await createMutation.mutateAsync({ vendorId, ...payload });
+        toast.success(t('ap.bill.created', { defaultValue: 'Tedarikçi faturası oluşturuldu.' }));
+      }
       onClose();
     } catch (err) {
       toastApiError(err);
     }
   };
 
+  const approve = async () => {
+    if (!bill) return;
+    try {
+      await billAction.mutateAsync({ id: bill.id, action: 'approve' });
+      toast.success(t('ap.actionDone', { defaultValue: 'İşlem tamamlandı.' }));
+      onClose();
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
+
+  const pending = createMutation.isPending || updateMutation.isPending;
+  const title = isEdit
+    ? `${t('ap.bill.editTitle', { defaultValue: 'Tedarikçi Faturası' })} ${bill?.billNumber}`
+    : t('ap.bill.newTitle', { defaultValue: 'Yeni Tedarikçi Faturası' });
+
   return (
-    <Shell
-      title={t('ap.bill.newTitle', { defaultValue: 'Yeni Tedarikçi Faturası' })}
-      onClose={onClose}
-    >
-      <form onSubmit={submit} className="dense-form space-y-3 p-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="col-span-2">
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.vendor', { defaultValue: 'Tedarikçi' })} *
-            </label>
-            <select
-              value={vendorId}
-              onChange={(e) => setVendorId(e.target.value)}
-              className={inputClass}
-            >
-              <option value="">{t('ap.bill.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
-              {vendors.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
+    <Shell title={title} onClose={onClose} wide={lineMode}>
+      <form onSubmit={submit} className="dense-form flex min-h-0 flex-1 flex-col">
+        <div className="space-y-3 overflow-y-auto p-4">
+          {bill?.status === 'PendingApproval' && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-300">
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck size={13} />
+                {bill.holdReason
+                  ? t('ap.bill.holdReason', {
+                      defaultValue: 'Onay bekliyor — {{r}}',
+                      r: bill.holdReason,
+                    })
+                  : t('ap.bill.pendingApproval', {
+                      defaultValue: 'Bu fatura onay bekliyor.',
+                    })}
+              </span>
+              {canApprove && (
+                <button
+                  type="button"
+                  onClick={approve}
+                  disabled={billAction.isPending}
+                  className="inline-flex items-center gap-1 rounded bg-orange-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
+                >
+                  <ShieldCheck size={12} />
+                  {t('ap.actions.approve', { defaultValue: 'Onayla ve muhasebeleştir' })}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.vendor', { defaultValue: 'Tedarikçi' })} *
+              </label>
+              <select
+                value={vendorId}
+                onChange={(e) => {
+                  setVendorId(e.target.value);
+                  setPurchaseOrderId('');
+                }}
+                disabled={!editable || isEdit}
+                className={inputClass}
+              >
+                <option value="">{t('ap.bill.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.purchaseOrder', { defaultValue: 'Satınalma Siparişi' })}
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={purchaseOrderId}
+                  onChange={(e) => setPurchaseOrderId(e.target.value)}
+                  disabled={!editable || !vendorId}
+                  className={inputClass}
+                >
+                  <option value="">
+                    {t('ap.bill.noPurchaseOrder', { defaultValue: 'Sipariş bağlama (opsiyonel)' })}
+                  </option>
+                  {purchaseOrders.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.poNumber} · {formatCurrency(p.total, locale, p.currency)}
+                    </option>
+                  ))}
+                </select>
+                {editable && selectedPo && poLines.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={loadFromPo}
+                    className="shrink-0 self-end rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    {t('ap.bill.loadFromPo', { defaultValue: 'Siparişten doldur' })}
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.number', { defaultValue: 'Fatura No' })} *
+              </label>
+              <input
+                value={billNumber}
+                onChange={(e) => setBillNumber(e.target.value)}
+                maxLength={64}
+                disabled={!editable}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.currency', { defaultValue: 'Para Birimi' })}
+              </label>
+              <input
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                maxLength={3}
+                disabled={!editable}
+                className={`${inputClass} uppercase`}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.date', { defaultValue: 'Fatura Tarihi' })}
+              </label>
+              <input
+                type="date"
+                value={billDate}
+                onChange={(e) => setBillDate(e.target.value)}
+                disabled={!editable}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                {t('ap.bill.due', { defaultValue: 'Vade Tarihi' })}
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                disabled={!editable}
+                className={inputClass}
+              />
+            </div>
+            {!lineMode && (
+              <>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })} *
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={subtotal}
+                    onChange={(e) => setSubtotal(e.target.value)}
+                    disabled={!editable}
+                    className={`${inputClass} text-right`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step="any"
+                    value={taxAmount}
+                    onChange={(e) => setTaxAmount(e.target.value)}
+                    disabled={!editable}
+                    className={`${inputClass} text-right`}
+                  />
+                </div>
+              </>
+            )}
           </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.number', { defaultValue: 'Fatura No' })} *
-            </label>
+
+          <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
             <input
-              value={billNumber}
-              onChange={(e) => setBillNumber(e.target.value)}
-              maxLength={64}
-              className={inputClass}
+              type="checkbox"
+              checked={lineMode}
+              onChange={(e) => setLineMode(e.target.checked)}
+              disabled={!editable}
+              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
             />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.currency', { defaultValue: 'Para Birimi' })}
-            </label>
-            <input
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-              maxLength={3}
-              className={`${inputClass} uppercase`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.date', { defaultValue: 'Fatura Tarihi' })}
-            </label>
-            <input
-              type="date"
-              value={billDate}
-              onChange={(e) => setBillDate(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.due', { defaultValue: 'Vade Tarihi' })}
-            </label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })} *
-            </label>
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={subtotal}
-              onChange={(e) => setSubtotal(e.target.value)}
-              className={`${inputClass} text-right`}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}
-            </label>
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={taxAmount}
-              onChange={(e) => setTaxAmount(e.target.value)}
-              className={`${inputClass} text-right`}
-            />
-          </div>
-        </div>
-        <div className="text-right text-sm font-bold text-slate-900 dark:text-slate-100">
-          {t('ap.bill.total', { defaultValue: 'Genel Toplam' })}:{' '}
-          {formatCurrency(total, locale, currency)}
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            {t('ap.bill.notes', { defaultValue: 'Açıklama' })}
+            {t('ap.bill.itemized', { defaultValue: 'Kalemli giriş (ürün satırları)' })}
           </label>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={200}
-            className={inputClass}
-          />
+
+          {lineMode && (
+            <div className="space-y-2">
+              <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+                    <tr>
+                      <th className="px-2 py-1.5 text-left">
+                        {t('ap.bill.lineProduct', { defaultValue: 'Ürün' })}
+                      </th>
+                      {selectedPo && (
+                        <th className="w-44 px-2 py-1.5 text-left">
+                          {t('ap.bill.linePoLine', { defaultValue: 'Sipariş Satırı' })}
+                        </th>
+                      )}
+                      <th className="w-24 px-2 py-1.5 text-right">
+                        {t('ap.bill.lineQty', { defaultValue: 'Miktar' })}
+                      </th>
+                      <th className="w-28 px-2 py-1.5 text-right">
+                        {t('ap.bill.lineUnitPrice', { defaultValue: 'Birim Fiyat' })}
+                      </th>
+                      <th className="w-20 px-2 py-1.5 text-right">
+                        {t('ap.bill.lineTax', { defaultValue: 'KDV %' })}
+                      </th>
+                      <th className="w-28 px-2 py-1.5 text-right">
+                        {t('ap.bill.lineTotal', { defaultValue: 'Satır Toplamı' })}
+                      </th>
+                      <th className="w-8 px-2 py-1.5" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lines.map((l) => {
+                      const net = (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0);
+                      const lineTotal = net * (1 + (Number(l.taxRatePercent) || 0) / 100);
+                      return (
+                        <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
+                          <td className="px-2 py-1.5">
+                            <ProductPicker
+                              products={products}
+                              value={l.productId}
+                              disabled={!editable}
+                              onSelect={(productId) => onSelectProduct(l.key, productId)}
+                            />
+                          </td>
+                          {selectedPo && (
+                            <td className="px-2 py-1.5">
+                              <select
+                                value={l.purchaseOrderLineId}
+                                onChange={(e) => selectPoLine(l.key, e.target.value)}
+                                disabled={!editable}
+                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                              >
+                                <option value="">
+                                  {t('ap.bill.noPoLine', { defaultValue: '— eşleşme yok —' })}
+                                </option>
+                                {poLines.map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {poLineLabel(p)}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          )}
+                          <td className="px-2 py-1.5">
+                            <input
+                              type="number"
+                              min={0}
+                              step="any"
+                              value={l.quantity}
+                              onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
+                              disabled={!editable}
+                              className={cellInputClass}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <input
+                              type="number"
+                              min={0}
+                              step="any"
+                              value={l.unitPrice}
+                              onChange={(e) => updateLine(l.key, { unitPrice: e.target.value })}
+                              disabled={!editable}
+                              className={cellInputClass}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <input
+                              type="number"
+                              min={0}
+                              max={100}
+                              step="any"
+                              value={l.taxRatePercent}
+                              onChange={(e) =>
+                                updateLine(l.key, { taxRatePercent: e.target.value })
+                              }
+                              disabled={!editable}
+                              className={cellInputClass}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                            {formatCurrency(round2(lineTotal), locale, currency)}
+                          </td>
+                          <td className="px-2 py-1.5 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeLine(l.key)}
+                              disabled={!editable || lines.length === 1}
+                              className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 dark:hover:bg-rose-500/10"
+                              aria-label={t('common.delete', { defaultValue: 'Sil' })}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {editable && (
+                <button
+                  type="button"
+                  onClick={addLine}
+                  className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                >
+                  <Plus size={12} />
+                  {t('ap.bill.addLine', { defaultValue: 'Satır ekle' })}
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-0.5 text-right text-sm">
+            <div className="text-slate-500 dark:text-slate-400">
+              {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
+              {formatCurrency(headerSubtotal, locale, currency)}
+            </div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}:{' '}
+              {formatCurrency(headerTax, locale, currency)}
+            </div>
+            <div className="font-bold text-slate-900 dark:text-slate-100">
+              {t('ap.bill.total', { defaultValue: 'Genel Toplam' })}:{' '}
+              {formatCurrency(total, locale, currency)}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.notes', { defaultValue: 'Açıklama' })}
+            </label>
+            <input
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              maxLength={200}
+              disabled={!editable}
+              className={inputClass}
+            />
+          </div>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
@@ -206,19 +611,29 @@ export const VendorBillFormModal = ({ onClose }: { onClose: () => void }) => {
           >
             {t('common.cancel', { defaultValue: 'İptal' })}
           </button>
-          <button
-            type="submit"
-            disabled={createMutation.isPending}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {createMutation.isPending
-              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-              : t('common.save', { defaultValue: 'Kaydet' })}
-          </button>
+          {editable && (
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {pending
+                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+                : t('common.save', { defaultValue: 'Kaydet' })}
+            </button>
+          )}
         </div>
       </form>
     </Shell>
   );
+};
+
+const poLineLabel = (p: PurchaseOrderLine) => `${p.productSku} · ${p.quantity} × ${p.unitCost}`;
+
+const derivePoLine = (poLines: PurchaseOrderLine[], productId: string) => {
+  if (!productId) return undefined;
+  const matches = poLines.filter((p) => p.productId === productId);
+  return matches.length === 1 ? matches[0] : undefined;
 };
 
 export const VendorPaymentModal = ({

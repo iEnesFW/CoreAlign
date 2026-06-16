@@ -38,6 +38,7 @@ public static class GLPostingDefaults
         GLPostingKey.PurchaseExpense => "632",
         GLPostingKey.InventoryWriteOff => "689",
         GLPostingKey.WithholdingReceivable => "193",
+        GLPostingKey.PurchasePriceVariance => "631",
         _ => null,
     };
 }
@@ -172,17 +173,25 @@ public class GLPostingService : IGLPostingService
                 r.Line.Description))
             .ToList();
 
-        if (foreign)
+        // Per-line rounding (foreign translation OR a caller that pre-rounded each
+        // term) can leave a sub-cent residual; push it onto the largest line of the
+        // heavier side so the entry always balances exactly — at any rate, including
+        // rate == 1 where a domestic caller could still hand us a cent of drift.
+        // Only a rounding-scale residual is absorbed: a genuinely lopsided basket
+        // exceeds the tolerance and is left to fail balance validation in Post().
+        // Each translated line can drift at most half a cent; the worst-case sum
+        // therefore scales with the line count and the rate, with a one-cent floor
+        // for the domestic (rate == 1) case.
+        var tolerance = Math.Max(0.01m, baseLines.Count * 0.0001m * rate);
+        var residual = Math.Round(baseLines.Sum(l => l.Debit) - baseLines.Sum(l => l.Credit), 4);
+        if (residual != 0m && Math.Abs(residual) <= tolerance)
         {
-            // Per-line rounding can leave a sub-cent residual; push it onto the
-            // largest line of the heavier side so the entry still balances exactly.
-            var residual = Math.Round(baseLines.Sum(l => l.Debit) - baseLines.Sum(l => l.Credit), 4);
             if (residual > 0m)
             {
                 var i = LargestIndex(baseLines, byCredit: true);
                 baseLines[i] = baseLines[i] with { Credit = baseLines[i].Credit + residual };
             }
-            else if (residual < 0m)
+            else
             {
                 var i = LargestIndex(baseLines, byCredit: false);
                 baseLines[i] = baseLines[i] with { Debit = baseLines[i].Debit - residual };

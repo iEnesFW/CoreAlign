@@ -48,11 +48,22 @@ export const useCreateVendorBill = () => {
   });
 };
 
+type VendorBillActionType = 'post' | 'approve' | 'cancel';
+
+const VENDOR_BILL_ACTIONS: Record<
+  VendorBillActionType,
+  (id: string) => ReturnType<typeof vendorBillingApi.postBill>
+> = {
+  post: (id) => vendorBillingApi.postBill(id),
+  approve: (id) => vendorBillingApi.approveBill(id),
+  cancel: (id) => vendorBillingApi.cancelBill(id),
+};
+
 export const useVendorBillAction = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, action }: { id: string; action: 'post' | 'cancel' }) =>
-      action === 'post' ? vendorBillingApi.postBill(id) : vendorBillingApi.cancelBill(id),
+    mutationFn: ({ id, action }: { id: string; action: VendorBillActionType }) =>
+      VENDOR_BILL_ACTIONS[action](id),
     onSuccess: () => invalidate(qc),
   });
 };

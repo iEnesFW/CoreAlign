@@ -62,6 +62,10 @@ public class VendorBillsController : ControllerBase
     public async Task<IActionResult> Post(Guid id, CancellationToken ct)
         => (await _mediator.Send(new PostVendorBillCommand(id), ct)).ToOk();
 
+    [HttpPost("{id:guid}/approve")]
+    public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new ApproveVendorBillCommand(id), ct)).ToOk();
+
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
         => (await _mediator.Send(new CancelVendorBillCommand(id), ct)).ToOk();

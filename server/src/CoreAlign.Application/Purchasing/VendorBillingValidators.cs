@@ -2,6 +2,17 @@ using FluentValidation;
 
 namespace CoreAlign.Application.Purchasing;
 
+public class VendorBillLineInputValidator : AbstractValidator<VendorBillLineInput>
+{
+    public VendorBillLineInputValidator()
+    {
+        RuleFor(x => x.ProductId).NotEmpty();
+        RuleFor(x => x.Quantity).GreaterThan(0m);
+        RuleFor(x => x.UnitPrice).GreaterThanOrEqualTo(0m);
+        RuleFor(x => x.TaxRatePercent).InclusiveBetween(0m, 100m);
+    }
+}
+
 public class CreateVendorBillCommandValidator : AbstractValidator<CreateVendorBillCommand>
 {
     public CreateVendorBillCommandValidator()
@@ -11,6 +22,7 @@ public class CreateVendorBillCommandValidator : AbstractValidator<CreateVendorBi
         RuleFor(x => x.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Subtotal).GreaterThanOrEqualTo(0m);
         RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0m);
+        RuleForEach(x => x.Lines).SetValidator(new VendorBillLineInputValidator());
     }
 }
 
@@ -34,6 +46,7 @@ public class UpdateVendorBillCommandValidator : AbstractValidator<UpdateVendorBi
         RuleFor(x => x.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Subtotal).GreaterThanOrEqualTo(0m);
         RuleFor(x => x.TaxAmount).GreaterThanOrEqualTo(0m);
+        RuleForEach(x => x.Lines).SetValidator(new VendorBillLineInputValidator());
     }
 }
 

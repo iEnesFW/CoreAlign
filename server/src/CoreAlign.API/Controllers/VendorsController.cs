@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
@@ -49,8 +50,11 @@ public class VendorsController : ControllerBase
 
     [HttpPost("{id:guid}/approve")]
     [Authorize(Roles = "TenantAdmin")]
-    public async Task<IActionResult> Approve(Guid id, [FromBody] ApproveVendorCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new ApproveVendorCommand(id, cmd?.ApprovedByUserId), ct)).ToOk();
+    public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
+    {
+        var approverId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+        return (await _mediator.Send(new ApproveVendorCommand(id, approverId), ct)).ToOk();
+    }
 
     [HttpPost("{id:guid}/block")]
     [Authorize(Roles = "TenantAdmin")]

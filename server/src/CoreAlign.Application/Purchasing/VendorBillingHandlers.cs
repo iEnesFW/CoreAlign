@@ -29,6 +29,160 @@ internal static class VendorGLLines
                 new GLPostingLine(GLPostingKey.AccountsPayable, 0m, total),
             };
     }
+
+    // PO-linked inventory bill with lines: split the debit into a GR/IR clearing
+    // leg at RECEIPT cost (qty * PoUnitCost) and a PurchasePriceVariance leg for the
+    // in-tolerance price difference, so 322 clears to exactly what the receipt
+    // credited regardless of the billed price. VAT + AP stay as today.
+    //
+    // Variance is DERIVED as Subtotal - clearing (not summed per line) so that
+    // clearing + variance == Subtotal exactly; with VAT == TaxAmount this makes
+    // total debits (clearing + variance + tax) == Total == credit by construction
+    // at any exchange rate, never throwing JournalEntryNotBalancedException.
+    public static IReadOnlyList<GLPostingLine> BillWithLines(VendorBill bill, bool reverse = false)
+    {
+        var clearing = Math.Round(bill.Lines.Sum(l => l.ReceiptClearingCost), 4);
+        var variance = Math.Round(bill.Subtotal - clearing, 4);
+        return BuildLineAwareLegs(clearing, variance, bill.TaxAmount, bill.Total, reverse);
+    }
+
+    // Shared leg builder for both posting (reverse:false) and cancel (reverse:true)
+    // so the void mirrors exactly what was posted. On reverse the debit/credit of
+    // every leg flips while the variance keeps its economic sign via the swap.
+    public static IReadOnlyList<GLPostingLine> BuildLineAwareLegs(
+        decimal clearing, decimal variance, decimal tax, decimal total, bool reverse)
+    {
+        var lines = new List<GLPostingLine>
+        {
+            reverse
+                ? new GLPostingLine(GLPostingKey.GoodsReceiptClearing, 0m, clearing)
+                : new GLPostingLine(GLPostingKey.GoodsReceiptClearing, clearing, 0m),
+        };
+        if (variance > 0m)
+        {
+            lines.Add(reverse
+                ? new GLPostingLine(GLPostingKey.PurchasePriceVariance, 0m, variance)
+                : new GLPostingLine(GLPostingKey.PurchasePriceVariance, variance, 0m));
+        }
+        else if (variance < 0m)
+        {
+            lines.Add(reverse
+                ? new GLPostingLine(GLPostingKey.PurchasePriceVariance, -variance, 0m)
+                : new GLPostingLine(GLPostingKey.PurchasePriceVariance, 0m, -variance));
+        }
+        lines.Add(reverse
+            ? new GLPostingLine(GLPostingKey.InputVat, 0m, tax)
+            : new GLPostingLine(GLPostingKey.InputVat, tax, 0m));
+        lines.Add(reverse
+            ? new GLPostingLine(GLPostingKey.AccountsPayable, total, 0m)
+            : new GLPostingLine(GLPostingKey.AccountsPayable, 0m, total));
+        return lines;
+    }
+
+    // A bill posts through the line-aware split only when it carries PO-linked
+    // lines; header-only and PO-less bills keep the verbatim single-debit path.
+    public static bool HasPoLinkedLines(VendorBill bill) =>
+        bill.Lines.Count > 0 && bill.Lines.Any(l => l.PurchaseOrderLineId is not null);
+
+    public static IReadOnlyList<GLPostingLine> BuildPostLines(VendorBill bill) =>
+        HasPoLinkedLines(bill)
+            ? BillWithLines(bill)
+            : Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.PurchaseOrderId is not null, reverse: false);
+
+    // Reversal legs for a cancelled line-aware bill, prorated to the still-open
+    // portion (factor = due / Total). The SAME line-aware split is reversed —
+    // clearing at receipt cost, variance = Subtotal - clearing — each scaled by
+    // the factor, so a FULL cancel (factor == 1) nets 322 and PPV to exactly
+    // zero against the original post. AP is reversed at the open amount directly;
+    // any sub-cent proration drift is absorbed by the GL residual nudge.
+    public static IReadOnlyList<GLPostingLine> BillWithLinesReversal(VendorBill bill, decimal due)
+    {
+        var factor = bill.Total == 0m ? 0m : due / bill.Total;
+        var fullClearing = Math.Round(bill.Lines.Sum(l => l.ReceiptClearingCost), 4);
+        var fullVariance = Math.Round(bill.Subtotal - fullClearing, 4);
+        var clearing = Math.Round(fullClearing * factor, 4);
+        var variance = Math.Round(fullVariance * factor, 4);
+        var tax = Math.Round(bill.TaxAmount * factor, 4);
+        return BuildLineAwareLegs(clearing, variance, tax, due, reverse: true);
+    }
+}
+
+// Builds VendorBillLine entities from the command input, resolving product
+// identity and SNAPSHOTting the matched PurchaseOrderLine.UnitCost into
+// PoUnitCost. PO-less lines force PoUnitCost = UnitPrice so PriceVariance is
+// zero and they post through the unchanged single-debit path.
+internal static class VendorBillLineFactory
+{
+    public static async Task<List<VendorBillLine>> BuildAsync(
+        IReadOnlyList<VendorBillLineInput> inputs,
+        Guid? purchaseOrderId,
+        IProductRepository products,
+        IPurchaseOrderRepository orders,
+        CancellationToken ct)
+    {
+        var productMap = await products.GetByIdsAsync(inputs.Select(l => l.ProductId).Distinct(), ct);
+
+        PurchaseOrder? po = null;
+        if (purchaseOrderId is { } poId && inputs.Any(l => l.PurchaseOrderLineId is not null))
+        {
+            po = await orders.GetByIdAsync(poId, ct);
+        }
+
+        var lines = new List<VendorBillLine>(inputs.Count);
+        foreach (var input in inputs)
+        {
+            productMap.TryGetValue(input.ProductId, out var product);
+            var sku = product?.Sku ?? string.Empty;
+            var name = product?.Name ?? string.Empty;
+
+            decimal poUnitCost = input.UnitPrice;
+            if (input.PurchaseOrderLineId is { } poLineId)
+            {
+                var poLine = po?.Lines.FirstOrDefault(l => l.Id == poLineId)
+                    ?? throw new PurchaseOrderLineNotFoundForBillException();
+                poUnitCost = poLine.UnitCost;
+            }
+
+            lines.Add(new VendorBillLine(
+                input.ProductId, sku, name, input.Quantity, input.UnitPrice,
+                poUnitCost: poUnitCost,
+                purchaseOrderLineId: input.PurchaseOrderLineId,
+                taxRatePercent: input.TaxRatePercent));
+        }
+        return lines;
+    }
+}
+
+internal static class ThreeWayMatchEvaluator
+{
+    // Evaluates the two per-line gates against the matched PO line. Lines without
+    // a PO link are never matched (nothing to compare). Returns a hold reason when
+    // any line breaches, otherwise null (post straight through).
+    public static string? Breach(VendorBill bill, PurchaseOrder? po, ThreeWayMatchTolerance policy)
+    {
+        if (!policy.Enabled || po is null) return null;
+
+        foreach (var line in bill.Lines)
+        {
+            if (line.PurchaseOrderLineId is not { } poLineId) continue;
+            var poLine = po.Lines.FirstOrDefault(l => l.Id == poLineId);
+            if (poLine is null) continue;
+
+            var qtyCeiling = poLine.QuantityReceived * (1m + policy.QtyTolerancePercent / 100m) + policy.QtyToleranceAbsolute;
+            if (poLine.QuantityBilled + line.Quantity > qtyCeiling)
+            {
+                return $"Quantity over-billed beyond tolerance on line {line.LineNumber}.";
+            }
+
+            var priceDelta = Math.Abs(line.UnitPrice - line.PoUnitCost);
+            var priceCeilingPct = Math.Abs(line.PoUnitCost) * (policy.PriceTolerancePercent / 100m);
+            if (priceDelta > priceCeilingPct && priceDelta > policy.PriceToleranceAbsolute)
+            {
+                return $"Unit price differs from PO beyond tolerance on line {line.LineNumber}.";
+            }
+        }
+        return null;
+    }
 }
 
 internal static class VendorBillingMapper
@@ -87,12 +241,21 @@ public class CreateVendorBillHandler : IRequestHandler<CreateVendorBillCommand, 
 {
     private readonly IVendorBillRepository _bills;
     private readonly IVendorRepository _vendors;
+    private readonly IProductRepository _products;
+    private readonly IPurchaseOrderRepository _orders;
     private readonly IUnitOfWork _uow;
 
-    public CreateVendorBillHandler(IVendorBillRepository bills, IVendorRepository vendors, IUnitOfWork uow)
+    public CreateVendorBillHandler(
+        IVendorBillRepository bills,
+        IVendorRepository vendors,
+        IProductRepository products,
+        IPurchaseOrderRepository orders,
+        IUnitOfWork uow)
     {
         _bills = bills;
         _vendors = vendors;
+        _products = products;
+        _orders = orders;
         _uow = uow;
     }
 
@@ -105,9 +268,58 @@ public class CreateVendorBillHandler : IRequestHandler<CreateVendorBillCommand, 
         }
         var bill = new VendorBill(vendor.Id, vendor.Name, c.BillNumber.Trim(), c.BillDate, c.Currency.ToUpperInvariant(),
             c.Subtotal, c.TaxAmount, c.DueDate, c.ExchangeRate, c.PurchaseOrderId, c.Notes);
+
+        if (c.Lines is { Count: > 0 })
+        {
+            var lines = await VendorBillLineFactory.BuildAsync(c.Lines, c.PurchaseOrderId, _products, _orders, ct);
+            bill.ReplaceLines(lines);
+        }
+
         await _bills.AddAsync(bill, ct);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+// Shared post-effects: the ledger credit + PPV-aware GL outbox enqueue + per-line
+// RecordBill against the linked PO. Runs once — at post time for clean bills, at
+// approval time for held bills — so GL + QuantityBilled commit atomically and
+// never twice. Extracted to honour SOLID across PostVendorBill / ApproveVendorBill.
+internal static class VendorBillPostEffects
+{
+    public static async Task ApplyAsync(
+        VendorBill bill,
+        IVendorLedgerRepository ledger,
+        IVendorRepository vendors,
+        IGLPostingOutbox outbox,
+        IPurchaseOrderRepository orders,
+        CancellationToken ct)
+    {
+        await VendorLedgerPoster.PostAsync(ledger, vendors, bill.VendorId, DateTime.UtcNow,
+            LedgerEntryType.Credit, bill.Total, bill.Currency, bill.ExchangeRate,
+            LedgerSourceType.Invoice, bill.Id, bill.BillNumber, $"Tedarikçi faturası {bill.BillNumber}", ct);
+
+        await outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.VendorBill, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
+            JournalEntryType.Mahsup, $"Tedarikçi faturası {bill.BillNumber}",
+            VendorGLLines.BuildPostLines(bill),
+            bill.Currency, bill.ExchangeRate), ct);
+
+        if (bill.PurchaseOrderId is { } poId && VendorGLLines.HasPoLinkedLines(bill))
+        {
+            var po = await orders.GetByIdAsync(poId, ct);
+            if (po is not null)
+            {
+                foreach (var line in bill.Lines)
+                {
+                    if (line.PurchaseOrderLineId is { } poLineId)
+                    {
+                        po.RecordLineBill(poLineId, line.Quantity);
+                    }
+                }
+                orders.Update(po);
+            }
+        }
     }
 }
 
@@ -117,29 +329,90 @@ public class PostVendorBillHandler : IRequestHandler<PostVendorBillCommand, Vend
     private readonly IVendorLedgerRepository _ledger;
     private readonly IVendorRepository _vendors;
     private readonly IGLPostingOutbox _outbox;
+    private readonly IPurchaseOrderRepository _orders;
+    private readonly ITolerancePolicyProvider _tolerance;
     private readonly IUnitOfWork _uow;
 
-    public PostVendorBillHandler(IVendorBillRepository bills, IVendorLedgerRepository ledger, IVendorRepository vendors, IGLPostingOutbox outbox, IUnitOfWork uow)
+    public PostVendorBillHandler(
+        IVendorBillRepository bills,
+        IVendorLedgerRepository ledger,
+        IVendorRepository vendors,
+        IGLPostingOutbox outbox,
+        IPurchaseOrderRepository orders,
+        ITolerancePolicyProvider tolerance,
+        IUnitOfWork uow)
     {
         _bills = bills;
         _ledger = ledger;
         _vendors = vendors;
         _outbox = outbox;
+        _orders = orders;
+        _tolerance = tolerance;
         _uow = uow;
     }
 
     public async Task<VendorBillDto> Handle(PostVendorBillCommand c, CancellationToken ct)
     {
         var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
+
+        if (bill.PurchaseOrderId is { } poId && VendorGLLines.HasPoLinkedLines(bill))
+        {
+            var policy = await _tolerance.GetAsync(ct);
+            if (policy.Enabled)
+            {
+                var po = await _orders.GetByIdAsync(poId, ct);
+                var reason = ThreeWayMatchEvaluator.Breach(bill, po, policy);
+                if (reason is not null)
+                {
+                    bill.PlaceOnHold(reason);
+                    _bills.Update(bill);
+                    await _uow.SaveChangesAsync(ct);
+                    return VendorBillingMapper.ToDto(bill);
+                }
+            }
+        }
+
         bill.Post();
-        await VendorLedgerPoster.PostAsync(_ledger, _vendors, bill.VendorId, DateTime.UtcNow,
-            LedgerEntryType.Credit, bill.Total, bill.Currency, bill.ExchangeRate,
-            LedgerSourceType.Invoice, bill.Id, bill.BillNumber, $"Tedarikçi faturası {bill.BillNumber}", ct);
-        await _outbox.EnqueueAsync(new GLPostingRequest(
-            JournalSourceType.VendorBill, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
-            JournalEntryType.Mahsup, $"Tedarikçi faturası {bill.BillNumber}",
-            VendorGLLines.Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.PurchaseOrderId is not null, reverse: false),
-            bill.Currency, bill.ExchangeRate), ct);
+        await VendorBillPostEffects.ApplyAsync(bill, _ledger, _vendors, _outbox, _orders, ct);
+        _bills.Update(bill);
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(bill);
+    }
+}
+
+public class ApproveVendorBillHandler : IRequestHandler<ApproveVendorBillCommand, VendorBillDto>
+{
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorLedgerRepository _ledger;
+    private readonly IVendorRepository _vendors;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IPurchaseOrderRepository _orders;
+    private readonly ICurrentUserAccessor _currentUser;
+    private readonly IUnitOfWork _uow;
+
+    public ApproveVendorBillHandler(
+        IVendorBillRepository bills,
+        IVendorLedgerRepository ledger,
+        IVendorRepository vendors,
+        IGLPostingOutbox outbox,
+        IPurchaseOrderRepository orders,
+        ICurrentUserAccessor currentUser,
+        IUnitOfWork uow)
+    {
+        _bills = bills;
+        _ledger = ledger;
+        _vendors = vendors;
+        _outbox = outbox;
+        _orders = orders;
+        _currentUser = currentUser;
+        _uow = uow;
+    }
+
+    public async Task<VendorBillDto> Handle(ApproveVendorBillCommand c, CancellationToken ct)
+    {
+        var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
+        bill.ApproveAndPost(_currentUser.UserIdOrThrow());
+        await VendorBillPostEffects.ApplyAsync(bill, _ledger, _vendors, _outbox, _orders, ct);
         _bills.Update(bill);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);
@@ -152,14 +425,16 @@ public class CancelVendorBillHandler : IRequestHandler<CancelVendorBillCommand, 
     private readonly IVendorLedgerRepository _ledger;
     private readonly IVendorRepository _vendors;
     private readonly IGLPostingOutbox _outbox;
+    private readonly IPurchaseOrderRepository _orders;
     private readonly IUnitOfWork _uow;
 
-    public CancelVendorBillHandler(IVendorBillRepository bills, IVendorLedgerRepository ledger, IVendorRepository vendors, IGLPostingOutbox outbox, IUnitOfWork uow)
+    public CancelVendorBillHandler(IVendorBillRepository bills, IVendorLedgerRepository ledger, IVendorRepository vendors, IGLPostingOutbox outbox, IPurchaseOrderRepository orders, IUnitOfWork uow)
     {
         _bills = bills;
         _ledger = ledger;
         _vendors = vendors;
         _outbox = outbox;
+        _orders = orders;
         _uow = uow;
     }
 
@@ -169,6 +444,23 @@ public class CancelVendorBillHandler : IRequestHandler<CancelVendorBillCommand, 
         var wasPosted = bill.PostedAtUtc is not null;
         var due = bill.AmountDue;
         bill.Cancel();
+
+        if (wasPosted && bill.PurchaseOrderId is { } poId && VendorGLLines.HasPoLinkedLines(bill))
+        {
+            var po = await _orders.GetByIdAsync(poId, ct);
+            if (po is not null)
+            {
+                foreach (var line in bill.Lines)
+                {
+                    if (line.PurchaseOrderLineId is { } poLineId)
+                    {
+                        po.ReverseLineBill(poLineId, line.Quantity);
+                    }
+                }
+                _orders.Update(po);
+            }
+        }
+
         if (wasPosted && due > 0m)
         {
             await VendorLedgerPoster.PostAsync(_ledger, _vendors, bill.VendorId, DateTime.UtcNow,
@@ -177,18 +469,28 @@ public class CancelVendorBillHandler : IRequestHandler<CancelVendorBillCommand, 
         }
         if (wasPosted && due > 0m)
         {
-            var factor = bill.Total == 0m ? 0m : due / bill.Total;
-            var reversedTax = Math.Round(bill.TaxAmount * factor, 4, MidpointRounding.ToEven);
-            var reversedSubtotal = due - reversedTax;
+            var reversalLines = VendorGLLines.HasPoLinkedLines(bill)
+                ? VendorGLLines.BillWithLinesReversal(bill, due)
+                : BuildHeaderReversal(bill, due);
             await _outbox.EnqueueAsync(new GLPostingRequest(
                 JournalSourceType.VendorBillReversal, bill.Id, bill.BillNumber, DateTime.UtcNow.Date,
                 JournalEntryType.Mahsup, $"Fatura iptali {bill.BillNumber}",
-                VendorGLLines.Bill(reversedSubtotal, reversedTax, due, bill.PurchaseOrderId is not null, reverse: true),
+                reversalLines,
                 bill.Currency, bill.ExchangeRate), ct);
         }
         _bills.Update(bill);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);
+    }
+
+    // Unchanged PO-less / header-only reversal: prorate tax to the open portion
+    // and credit the single debit account at the remaining subtotal.
+    private static IReadOnlyList<GLPostingLine> BuildHeaderReversal(VendorBill bill, decimal due)
+    {
+        var factor = bill.Total == 0m ? 0m : due / bill.Total;
+        var reversedTax = Math.Round(bill.TaxAmount * factor, 4, MidpointRounding.ToEven);
+        var reversedSubtotal = due - reversedTax;
+        return VendorGLLines.Bill(reversedSubtotal, reversedTax, due, bill.PurchaseOrderId is not null, reverse: true);
     }
 }
 
@@ -378,11 +680,19 @@ public class GetVendorPaymentByIdHandler : IRequestHandler<GetVendorPaymentByIdQ
 public class UpdateVendorBillHandler : IRequestHandler<UpdateVendorBillCommand, VendorBillDto>
 {
     private readonly IVendorBillRepository _bills;
+    private readonly IProductRepository _products;
+    private readonly IPurchaseOrderRepository _orders;
     private readonly IUnitOfWork _uow;
 
-    public UpdateVendorBillHandler(IVendorBillRepository bills, IUnitOfWork uow)
+    public UpdateVendorBillHandler(
+        IVendorBillRepository bills,
+        IProductRepository products,
+        IPurchaseOrderRepository orders,
+        IUnitOfWork uow)
     {
         _bills = bills;
+        _products = products;
+        _orders = orders;
         _uow = uow;
     }
 
@@ -395,6 +705,15 @@ public class UpdateVendorBillHandler : IRequestHandler<UpdateVendorBillCommand, 
         }
         bill.UpdateDraft(c.BillNumber.Trim(), c.BillDate, c.DueDate, c.Currency.ToUpperInvariant(),
             c.ExchangeRate, c.Subtotal, c.TaxAmount, c.PurchaseOrderId, c.Notes);
+
+        if (c.Lines is not null)
+        {
+            var lines = c.Lines.Count == 0
+                ? new List<VendorBillLine>()
+                : await VendorBillLineFactory.BuildAsync(c.Lines, c.PurchaseOrderId, _products, _orders, ct);
+            bill.ReplaceLines(lines);
+        }
+
         _bills.Update(bill);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);

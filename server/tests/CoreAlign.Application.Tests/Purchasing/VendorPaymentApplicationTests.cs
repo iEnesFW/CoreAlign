@@ -202,12 +202,14 @@ public class VendorBillReverseRecordedPaymentTests
 public class UpdateVendorBillHandlerTests
 {
     private readonly IVendorBillRepository _bills = Substitute.For<IVendorBillRepository>();
+    private readonly IProductRepository _products = Substitute.For<IProductRepository>();
+    private readonly IPurchaseOrderRepository _orders = Substitute.For<IPurchaseOrderRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly UpdateVendorBillHandler _sut;
 
     public UpdateVendorBillHandlerTests()
     {
-        _sut = new UpdateVendorBillHandler(_bills, _uow);
+        _sut = new UpdateVendorBillHandler(_bills, _products, _orders, _uow);
     }
 
     [Fact]

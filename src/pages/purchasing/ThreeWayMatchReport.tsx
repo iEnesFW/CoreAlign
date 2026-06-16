@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, ListChecks } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ListChecks } from 'lucide-react';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { formatCurrency } from '@/shared/lib/format';
 import { useThreeWayMatchQuery } from '@/features/purchasing/hooks/useVendorBilling';
@@ -111,6 +111,9 @@ const ThreeWayMatchReport = () => {
                     defaultValue: 'Fatura Tutarı',
                   })}
                 </th>
+                <th className="px-3 py-2 text-center">
+                  {t('VendorBills.threeWayMatch.cols.match', { defaultValue: 'Eşleşme' })}
+                </th>
                 <th className="px-3 py-2 text-left">
                   {t('VendorBills.threeWayMatch.cols.flags', { defaultValue: 'Uyumsuzluklar' })}
                 </th>
@@ -141,6 +144,19 @@ const ThreeWayMatchReport = () => {
                   </td>
                   <td className="px-3 py-2 text-right font-mono text-xs">
                     {formatCurrency(r.billedAmount, locale, r.currency)}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {r.discrepancies.length === 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                        <CheckCircle2 size={10} />
+                        {t('VendorBills.threeWayMatch.matched', { defaultValue: 'Uyumlu' })}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">
+                        <AlertTriangle size={10} />
+                        {t('VendorBills.threeWayMatch.mismatch', { defaultValue: 'Uyumsuz' })}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap items-center gap-1">

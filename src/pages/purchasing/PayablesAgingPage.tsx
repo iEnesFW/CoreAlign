@@ -68,7 +68,7 @@ export const PayablesAgingPage = () => {
           </p>
         </div>
         <Link
-          to="/dashboard/vendor-bills"
+          to="/dashboard/purchasing/vendor-bills"
           className="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
         >
           {t('apAging.toBills', { defaultValue: 'Tedarikçi Faturaları →' })}

@@ -12,7 +12,9 @@ public class VendorBillRepository : IVendorBillRepository
     public VendorBillRepository(CoreAlignDbContext context) => _context = context;
 
     public Task<VendorBill?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-        _context.VendorBills.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+        _context.VendorBills
+            .Include(b => b.Lines)
+            .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
     public Task<bool> BillNumberExistsAsync(Guid vendorId, string billNumber, Guid? excludeId, CancellationToken cancellationToken = default) =>
         _context.VendorBills.AnyAsync(
@@ -182,6 +184,19 @@ public class ThreeWayMatchReader : IThreeWayMatchReader
             .GroupBy(b => b.PurchaseOrderId!.Value)
             .ToDictionary(g => g.Key, g => g.Sum(b => b.Subtotal));
 
+        // Prefer authoritative per-line billed quantity when the bills carry
+        // VendorBillLine rows; legacy / PO-less bills have none and fall back to
+        // the subtotal-ratio proration below.
+        var billIds = bills.Select(b => b.Id).ToList();
+        var billedQtyByPoLine = billIds.Count == 0
+            ? new Dictionary<Guid, decimal>()
+            : (await _context.VendorBillLines.AsNoTracking()
+                .Where(l => l.PurchaseOrderLineId != null && billIds.Contains(l.VendorBillId))
+                .GroupBy(l => l.PurchaseOrderLineId!.Value)
+                .Select(g => new { PoLineId = g.Key, Qty = g.Sum(x => x.Quantity) })
+                .ToListAsync(cancellationToken))
+                .ToDictionary(x => x.PoLineId, x => x.Qty);
+
         var result = new List<ThreeWayMatchRow>();
         foreach (var po in pos)
         {
@@ -191,7 +206,9 @@ public class ThreeWayMatchReader : IThreeWayMatchReader
             {
                 var lineExpected = line.Quantity;
                 var lineReceived = line.QuantityReceived;
-                var lineBilledQty = Math.Round(lineExpected * billedRatio, 4);
+                var lineBilledQty = billedQtyByPoLine.TryGetValue(line.Id, out var realQty)
+                    ? Math.Round(realQty, 4)
+                    : Math.Round(lineExpected * billedRatio, 4);
 
                 var discrepancies = new List<string>();
                 if (lineReceived < lineExpected) discrepancies.Add("UnderReceived");
