@@ -32,6 +32,17 @@ public class PurchaseOrderLineNotFoundForBillException : NotFoundException
         : base("The referenced purchase order line was not found on the bill's purchase order.") { }
 }
 
+public class GoodsReceiptNotFoundException : NotFoundException
+{
+    public GoodsReceiptNotFoundException() : base("Goods receipt not found.") { }
+}
+
+public class GoodsReceiptAlreadyBilledException : ConflictException
+{
+    public GoodsReceiptAlreadyBilledException()
+        : base("This goods receipt cannot be reversed because some or all of its quantity has already been billed.") { }
+}
+
 public class PurchaseRequisitionNotFoundException : NotFoundException
 {
     public PurchaseRequisitionNotFoundException() : base("Purchase requisition not found.") { }

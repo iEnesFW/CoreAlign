@@ -9,8 +9,10 @@ namespace CoreAlign.Application.Tests.Purchasing;
 public class ReceivePurchaseOrderHandlerTests
 {
     private readonly IPurchaseOrderRepository _orders = Substitute.For<IPurchaseOrderRepository>();
+    private readonly IGoodsReceiptRepository _grns = Substitute.For<IGoodsReceiptRepository>();
     private readonly IAllocationService _allocation = Substitute.For<IAllocationService>();
     private readonly IWarehouseRepository _warehouses = Substitute.For<IWarehouseRepository>();
+    private readonly IDocumentSequenceRepository _sequences = Substitute.For<IDocumentSequenceRepository>();
     private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly ReceivePurchaseOrderHandler _sut;
@@ -32,7 +34,13 @@ public class ReceivePurchaseOrderHandlerTests
                     r.UnitCost, r.Quantity, r.UnitCost, DateTime.UtcNow, r.SourceDocumentType,
                     r.SourceDocumentId, r.SourceLineId, r.SourceReference) { Id = Guid.NewGuid() };
             });
-        _sut = new ReceivePurchaseOrderHandler(_orders, _allocation, _warehouses, _outbox, _uow);
+        _grns.GetByIdempotencyKeyAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((GoodsReceipt?)null);
+        _sequences.GetAsync(DocumentSequenceType.GoodsReceiptNumber, Arg.Any<CancellationToken>())
+            .Returns(_ => new DocumentSequence(DocumentSequenceType.GoodsReceiptNumber, "GRN", 2026, 1, 5));
+        _sequences.ConsumeAsync(DocumentSequenceType.GoodsReceiptNumber, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns("GRN-2026-00001");
+        _sut = new ReceivePurchaseOrderHandler(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _uow);
     }
 
     private static PurchaseOrder ApprovedPo()
@@ -56,7 +64,8 @@ public class ReceivePurchaseOrderHandlerTests
         _orders.GetByIdAsync(PoId, Arg.Any<CancellationToken>()).Returns(po);
 
         await _sut.Handle(
-            new ReceivePurchaseOrderCommand(PoId, new List<ReceiptLineInput> { new(LineId, 10m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(PoId, new List<ReceiptLineInput> { new(LineId, 10m) },
+                Guid.NewGuid().ToString("N"), WarehouseId),
             default);
 
         po.Lines.First().QuantityReceived.Should().Be(10m);
@@ -79,7 +88,8 @@ public class ReceivePurchaseOrderHandlerTests
         _orders.GetByIdAsync(PoId, Arg.Any<CancellationToken>()).Returns(po);
 
         await _sut.Handle(
-            new ReceivePurchaseOrderCommand(PoId, new List<ReceiptLineInput> { new(LineId, 4m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(PoId, new List<ReceiptLineInput> { new(LineId, 4m) },
+                Guid.NewGuid().ToString("N"), WarehouseId),
             default);
 
         po.Lines.First().QuantityReceived.Should().Be(4m);

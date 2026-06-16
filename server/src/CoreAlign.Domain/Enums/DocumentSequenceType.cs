@@ -20,4 +20,5 @@ public enum DocumentSequenceType
     StockCountNumber = 15,
     PurchaseRequisitionNumber = 16,
     MrpPlanRunNumber = 17,
+    GoodsReceiptNumber = 18,
 }

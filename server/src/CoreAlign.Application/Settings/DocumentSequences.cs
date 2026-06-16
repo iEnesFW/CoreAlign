@@ -42,6 +42,7 @@ internal static class DocumentSequenceDefaults
             [DocumentSequenceType.JournalNumber] = "JRN",
             [DocumentSequenceType.SubscriptionOrderNumber] = "SUB",
             [DocumentSequenceType.QuoteNumber] = "QUO",
+            [DocumentSequenceType.GoodsReceiptNumber] = "GRN",
         };
 
     public static string PrefixFor(DocumentSequenceType type) =>

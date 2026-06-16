@@ -18,6 +18,21 @@ public interface IPurchaseOrderRepository
     void Remove(PurchaseOrder purchaseOrder);
 }
 
+public interface IGoodsReceiptRepository
+{
+    Task<GoodsReceipt?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<GoodsReceipt?> GetByIdempotencyKeyAsync(string key, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<GoodsReceipt> Items, int Total)> SearchAsync(
+        Guid? purchaseOrderId,
+        Guid? vendorId,
+        GoodsReceiptStatus? status,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+    Task AddAsync(GoodsReceipt goodsReceipt, CancellationToken cancellationToken = default);
+    void Update(GoodsReceipt goodsReceipt);
+}
+
 public interface IVendorBillRepository
 {
     Task<VendorBill?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

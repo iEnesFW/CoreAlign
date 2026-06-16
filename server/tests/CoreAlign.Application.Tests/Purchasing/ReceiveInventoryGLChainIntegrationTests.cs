@@ -31,14 +31,18 @@ public class ReceiveInventoryGLChainIntegrationTests
     private readonly IWarehouseRepository _warehouses = Substitute.For<IWarehouseRepository>();
     private readonly IProductRepository _products = Substitute.For<IProductRepository>();
     private readonly IPurchaseOrderRepository _orders = Substitute.For<IPurchaseOrderRepository>();
+    private readonly IGoodsReceiptRepository _grns = Substitute.For<IGoodsReceiptRepository>();
+    private readonly IDocumentSequenceRepository _sequences = Substitute.For<IDocumentSequenceRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
     private readonly List<StockMovement> _writtenMovements = new();
+    private readonly List<GoodsReceipt> _writtenGrns = new();
     private readonly RecordingGLPostingService _gl = new();
     private readonly CapturingGLOutbox _outbox;
     private readonly AllocationService _allocation;
     private readonly StockItem _stockItem;
     private readonly Product _product;
+    private int _grnCounter;
 
     public ReceiveInventoryGLChainIntegrationTests()
     {
@@ -62,11 +66,23 @@ public class ReceiveInventoryGLChainIntegrationTests
             _stockItems, _movements, _allocations, _warehouses, _products,
             new StockOpeningBalanceBridge(_stockItems, _products, _movements));
 
+        _grns.GetByIdempotencyKeyAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((GoodsReceipt?)null);
+        _grns.AddAsync(Arg.Any<GoodsReceipt>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask)
+            .AndDoes(ci => _writtenGrns.Add(ci.Arg<GoodsReceipt>()));
+        _sequences.GetAsync(DocumentSequenceType.GoodsReceiptNumber, Arg.Any<CancellationToken>())
+            .Returns(_ => new DocumentSequence(DocumentSequenceType.GoodsReceiptNumber, "GRN", 2026, 1, 5));
+        _sequences.ConsumeAsync(DocumentSequenceType.GoodsReceiptNumber, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(_ => $"GRN-2026-{(++_grnCounter):00000}");
+
         _outbox = new CapturingGLOutbox(_gl);
     }
 
     private ReceivePurchaseOrderHandler ReceiveHandler() =>
-        new(_orders, _allocation, _warehouses, _outbox, _uow);
+        new(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _uow);
+
+    private static string NewKey() => Guid.NewGuid().ToString("N");
 
     private PurchaseOrder ApprovedPo(string currency, decimal exchangeRate, Guid lineId, decimal qty, decimal unitCost)
     {
@@ -93,7 +109,7 @@ public class ReceiveInventoryGLChainIntegrationTests
 
         // First receipt: 10 @ 4.
         await ReceiveHandler().Handle(
-            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, NewKey(), WarehouseId),
             default);
 
         _stockItem.OnHand.Should().Be(10m);
@@ -104,7 +120,7 @@ public class ReceiveInventoryGLChainIntegrationTests
         // (10 * 4 + 10 * 6) / 20 = 100 / 20 = 5.
         var po2 = ApprovedPo("TRY", 1m, lineId, qty: 10m, unitCost: 6m);
         await ReceiveHandler().Handle(
-            new ReceivePurchaseOrderCommand(po2.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(po2.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, NewKey(), WarehouseId),
             default);
 
         _stockItem.OnHand.Should().Be(20m);
@@ -118,10 +134,11 @@ public class ReceiveInventoryGLChainIntegrationTests
         receipts[0].TotalCost.Should().Be(40m);
         receipts[0].SourceDocumentType.Should().Be(StockSourceDocumentType.Purchase);
 
-        // Two GL entries, one per movement, each balanced DR 153 / CR 322 keyed by movement id.
+        // One GL entry per GRN (P2P-4 fix), each balanced DR 153 / CR 322 keyed by
+        // the GRN id rather than the movement id. Two receipts -> two GRNs -> two entries.
         _gl.PostedEntries.Should().HaveCount(2);
-        var firstMovementId = receipts[0].Id;
-        var entry = _gl.PostedEntries.Single(e => e.SourceDocumentId == firstMovementId);
+        var firstGrnId = _writtenGrns[0].Id;
+        var entry = _gl.PostedEntries.Single(e => e.SourceDocumentId == firstGrnId);
         entry.SourceType.Should().Be(JournalSourceType.GoodsReceipt);
         entry.TotalDebit.Should().Be(entry.TotalCredit, "the GL entry must balance");
         entry.TotalDebit.Should().Be(40m);
@@ -140,11 +157,12 @@ public class ReceiveInventoryGLChainIntegrationTests
         var po = ApprovedPo("USD", 30m, lineId, qty: 10m, unitCost: 50m);
 
         await ReceiveHandler().Handle(
-            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) }, NewKey(), WarehouseId),
             default);
 
         var entry = _gl.PostedEntries.Should().ContainSingle().Subject;
         entry.SourceType.Should().Be(JournalSourceType.GoodsReceipt);
+        entry.SourceDocumentId.Should().Be(_writtenGrns.Single().Id, "the GRN id is the GL idempotency key");
         entry.TotalDebit.Should().Be(15000m, "the foreign receipt is booked in base TRY at the PO rate, not rate=1");
         entry.TotalCredit.Should().Be(15000m);
         entry.Lines.Single(l => l.AccountCode == "153").Debit.Should().Be(15000m);
@@ -160,7 +178,7 @@ public class ReceiveInventoryGLChainIntegrationTests
         var po = ApprovedPo("TRY", 1m, lineId, qty: 10m, unitCost: 4m);
 
         await ReceiveHandler().Handle(
-            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 4m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 4m) }, NewKey(), WarehouseId),
             default);
 
         po.Status.Should().Be(PurchaseOrderStatus.PartiallyReceived);
@@ -170,7 +188,7 @@ public class ReceiveInventoryGLChainIntegrationTests
 
         // Receive the remaining 6 -> fully received, cumulative quantity 10.
         await ReceiveHandler().Handle(
-            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 6m) }, WarehouseId),
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 6m) }, NewKey(), WarehouseId),
             default);
 
         po.Status.Should().Be(PurchaseOrderStatus.Received);

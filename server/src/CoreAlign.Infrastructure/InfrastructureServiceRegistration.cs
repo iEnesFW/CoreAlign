@@ -262,6 +262,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPricingDiscountRuleRepository, PricingDiscountRuleRepository>();
         services.AddScoped<IProcessedWebhookEventRepository, ProcessedWebhookEventRepository>();
         services.AddScoped<IPurchaseOrderRepository, PurchaseOrderRepository>();
+        services.AddScoped<IGoodsReceiptRepository, GoodsReceiptRepository>();
         services.AddScoped<IQuoteRepository, QuoteRepository>();
         services.AddScoped<IReturnRequestRepository, ReturnRequestRepository>();
         services.AddScoped<IStockCountRepository, StockCountRepository>();

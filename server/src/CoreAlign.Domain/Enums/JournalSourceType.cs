@@ -22,4 +22,5 @@ public enum JournalSourceType
     VendorPaymentReversal = 11,
     CostOfGoodsSoldReversal = 12,
     PurchaseOrderClose = 13,
+    GoodsReceiptReversal = 14,
 }

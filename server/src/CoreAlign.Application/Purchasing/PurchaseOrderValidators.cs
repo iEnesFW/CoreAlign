@@ -19,6 +19,16 @@ public class CreatePurchaseOrderCommandValidator : AbstractValidator<CreatePurch
     }
 }
 
+public class ReceivePurchaseOrderCommandValidator : AbstractValidator<ReceivePurchaseOrderCommand>
+{
+    public ReceivePurchaseOrderCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.IdempotencyKey).NotEmpty().MaximumLength(80);
+        RuleFor(x => x.Lines).NotEmpty();
+    }
+}
+
 public class UpdatePurchaseOrderCommandValidator : AbstractValidator<UpdatePurchaseOrderCommand>
 {
     public UpdatePurchaseOrderCommandValidator()

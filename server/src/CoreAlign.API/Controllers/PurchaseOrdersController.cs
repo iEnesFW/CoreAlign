@@ -72,5 +72,31 @@ public class PurchaseOrdersController : ControllerBase
     [HttpPost("{id:guid}/receive")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Receive(Guid id, [FromBody] ReceivePurchaseOrderCommand cmd, CancellationToken ct)
-        => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
+    {
+        if (id != cmd.Id) return RouteIdMismatch();
+        var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : (Guid?)null;
+        return (await _mediator.Send(cmd with { ReceivedByUserId = cmd.ReceivedByUserId ?? userId }, ct)).ToOk();
+    }
+
+    [HttpGet("goods-receipts")]
+    public async Task<IActionResult> SearchGoodsReceipts(
+        [FromQuery] Guid? purchaseOrderId,
+        [FromQuery] Guid? vendorId,
+        [FromQuery] GoodsReceiptStatus? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken ct = default)
+        => (await _mediator.Send(new SearchGoodsReceiptsQuery(purchaseOrderId, vendorId, status, page, pageSize), ct)).ToOk();
+
+    [HttpGet("goods-receipts/{id:guid}")]
+    public async Task<IActionResult> GetGoodsReceiptById(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new GetGoodsReceiptByIdQuery(id), ct)).ToOk();
+
+    [HttpPost("goods-receipts/{id:guid}/reverse")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> ReverseGoodsReceipt(Guid id, [FromBody] ReverseGoodsReceiptCommand? cmd, CancellationToken ct)
+    {
+        var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+        return (await _mediator.Send(new ReverseGoodsReceiptCommand(id, cmd?.Reason, userId), ct)).ToOk();
+    }
 }

@@ -82,8 +82,10 @@ public record ReceiptLineInput(Guid OrderLineId, decimal Quantity);
 public record ReceivePurchaseOrderCommand(
     Guid Id,
     List<ReceiptLineInput> Lines,
+    string IdempotencyKey,
     Guid? WarehouseId = null,
-    string? Notes = null) : IRequest<PurchaseOrderDto>, ITransactionalRequest;
+    string? Notes = null,
+    Guid? ReceivedByUserId = null) : IRequest<PurchaseOrderDto>, ITransactionalRequest;
 
 public record GetPurchaseOrderByIdQuery(Guid Id) : IRequest<PurchaseOrderDto?>;
 public record SearchPurchaseOrdersQuery(
@@ -91,3 +93,49 @@ public record SearchPurchaseOrdersQuery(
     PurchaseOrderStatus? Status,
     int Page = 1,
     int PageSize = 25) : IRequest<PagedResult<PurchaseOrderDto>>;
+
+public record GoodsReceiptLineDto(
+    Guid Id,
+    int LineNumber,
+    Guid PurchaseOrderLineId,
+    Guid ProductId,
+    string ProductSku,
+    string ProductName,
+    decimal QuantityReceived,
+    decimal UnitCost,
+    decimal LineCost,
+    Guid? StockMovementId);
+
+public record GoodsReceiptDto(
+    Guid Id,
+    string GrnNumber,
+    Guid VendorId,
+    string VendorName,
+    Guid PurchaseOrderId,
+    string PoNumber,
+    DateTime ReceiptDateUtc,
+    Guid WarehouseId,
+    GoodsReceiptStatus Status,
+    Guid? ReceivedByUserId,
+    string? Notes,
+    string Currency,
+    decimal ExchangeRate,
+    decimal TotalCost,
+    DateTime? ReversedAtUtc,
+    Guid? ReversedByUserId,
+    string? ReversalReason,
+    IReadOnlyList<GoodsReceiptLineDto> Lines,
+    DateTime CreatedAtUtc);
+
+public record ReverseGoodsReceiptCommand(
+    Guid GrnId,
+    string? Reason = null,
+    Guid ReversedByUserId = default) : IRequest<GoodsReceiptDto>, ITransactionalRequest;
+
+public record GetGoodsReceiptByIdQuery(Guid Id) : IRequest<GoodsReceiptDto?>;
+public record SearchGoodsReceiptsQuery(
+    Guid? PurchaseOrderId,
+    Guid? VendorId,
+    GoodsReceiptStatus? Status,
+    int Page = 1,
+    int PageSize = 25) : IRequest<PagedResult<GoodsReceiptDto>>;

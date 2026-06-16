@@ -202,6 +202,7 @@ public class DemoDataSeeder : BackgroundService
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.QuoteNumber, "QUO", now.Year), ct);
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.ReturnRequestNumber, "RTN", now.Year), ct);
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.StockCountNumber, "STC", now.Year), ct);
+            await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.GoodsReceiptNumber, "GRN", now.Year), ct);
             await uow.SaveChangesAsync(ct);
 
             // Chart of accounts FIRST — GL auto-posting silently no-ops without it.
@@ -317,7 +318,8 @@ public class DemoDataSeeder : BackgroundService
                 await mediator.Send(new SubmitPurchaseOrderCommand(po.Id), ct);
                 await mediator.Send(new ApprovePurchaseOrderCommand(po.Id, adminId), ct);
                 await mediator.Send(new ReceivePurchaseOrderCommand(
-                    po.Id, new List<ReceiptLineInput> { new(po.Lines[0].Id, qty) }), ct);
+                    po.Id, new List<ReceiptLineInput> { new(po.Lines[0].Id, qty) },
+                    IdempotencyKey: Guid.NewGuid().ToString("N")), ct);
 
                 var bill = await mediator.Send(new CreateVendorBillCommand(
                     VendorId: vendors[i], BillNumber: $"VB-{now.Year}-{i + 1:D4}", BillDate: now.AddDays(-18 + i),
