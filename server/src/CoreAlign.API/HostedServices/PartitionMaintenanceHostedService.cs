@@ -20,13 +20,15 @@ public sealed class PartitionMaintenanceHostedService : BackgroundService
     private static readonly TimeSpan Interval = TimeSpan.FromHours(24);
     private const int MonthsAhead = 6;
 
-    // (table, timestamp partition-key column) — must mirror the Phase86 leaf tables.
+    // (table, timestamp partition-key column) — the CURRENTLY partitioned leaf tables.
+    // notification_messages was partitioned in Phase86 but Phase87 un-partitioned it to
+    // restore the (tenant_id, idempotency_hash) unique index, so it is intentionally NOT
+    // here — calling the function on a non-partitioned table throws.
     private static readonly (string Table, string TsColumn)[] PartitionedTables =
     {
         ("activity_logs", "created_at_utc"),
         ("login_audit_logs", "attempted_at_utc"),
         ("outbox_messages", "created_at_utc"),
-        ("notification_messages", "created_at_utc"),
         ("stock_movements", "occurred_at_utc"),
         ("customer_transactions", "occurred_at_utc"),
     };
@@ -72,17 +74,29 @@ public sealed class PartitionMaintenanceHostedService : BackgroundService
                 return;
             }
 
+            var succeeded = 0;
             foreach (var (table, tsColumn) in PartitionedTables)
             {
-                await db.Database.ExecuteSqlRawAsync(
-                    "SELECT corealign_ensure_future_partitions({0}, {1}, {2})",
-                    new object[] { table, tsColumn, MonthsAhead },
-                    ct);
+                // Per-table isolation: a failure on one table (mis-listed, transient,
+                // a stalled default-split) must not starve the tables listed after it.
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync(
+                        "SELECT corealign_ensure_future_partitions({0}, {1}, {2})",
+                        new object[] { table, tsColumn, MonthsAhead },
+                        ct);
+                    succeeded++;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Partition maintenance failed for {Table}; continuing with the rest.", table);
+                }
             }
 
             _logger.LogInformation(
-                "Partition maintenance ensured {Months} months ahead for {Count} partitioned tables.",
+                "Partition maintenance ensured {Months} months ahead for {Succeeded}/{Count} partitioned tables.",
                 MonthsAhead,
+                succeeded,
                 PartitionedTables.Length);
         }
         catch (Exception ex)
