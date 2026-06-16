@@ -245,6 +245,7 @@ public class CoreAlignDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreAlignDbContext).Assembly);
         ApplyTenantQueryFilters(modelBuilder);
         ApplyXminConcurrencyTokens(modelBuilder);
+        ApplyTenantForeignKeys(modelBuilder);
         modelBuilder.ApplySoftDeleteFilters();
         modelBuilder.ApplySnakeCaseNaming();
     }
@@ -316,6 +317,25 @@ public class CoreAlignDbContext : DbContext
                     .ValueGeneratedOnAddOrUpdate()
                     .IsConcurrencyToken();
             }
+        }
+    }
+
+    private static void ApplyTenantForeignKeys(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            var clrType = entityType.ClrType;
+            if (clrType == typeof(Tenant)) continue;
+            if (entityType.IsOwned()) continue;
+            if (entityType.FindPrimaryKey() is null) continue;
+            if (!typeof(TenantEntity).IsAssignableFrom(clrType)) continue;
+            if (entityType.GetForeignKeys().Any(fk => fk.PrincipalEntityType.ClrType == typeof(Tenant))) continue;
+
+            modelBuilder.Entity(clrType)
+                .HasOne(typeof(Tenant))
+                .WithMany()
+                .HasForeignKey("TenantId")
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 
