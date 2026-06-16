@@ -77,6 +77,12 @@ public class PurchaseOrderLine : TenantEntity
         QuantityReceived += qty;
     }
 
+    public void ReverseReceipt(decimal qty)
+    {
+        if (qty <= 0m) return;
+        QuantityReceived = Math.Max(0m, QuantityReceived - qty);
+    }
+
     public void RecordBill(decimal qty)
     {
         if (qty <= 0m) return;

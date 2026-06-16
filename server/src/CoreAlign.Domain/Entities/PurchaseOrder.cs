@@ -155,6 +155,21 @@ public class PurchaseOrder : TenantEntity
         return line;
     }
 
+    public void ReverseLineReceipt(Guid lineId, decimal quantity)
+    {
+        if (quantity <= 0m) return;
+        var line = Lines.FirstOrDefault(l => l.Id == lineId);
+        if (line is null) return;
+        line.ReverseReceipt(quantity);
+        if (Status is PurchaseOrderStatus.Received or PurchaseOrderStatus.PartiallyReceived)
+        {
+            Status = Lines.All(l => l.QuantityReceived <= 0m)
+                ? PurchaseOrderStatus.Approved
+                : PurchaseOrderStatus.PartiallyReceived;
+        }
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     // Advances the billed quantity on a line when a vendor bill is posted against it.
     public void RecordLineBill(Guid lineId, decimal quantity)
     {
