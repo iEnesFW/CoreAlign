@@ -15,6 +15,16 @@ public class OrderRepository : IOrderRepository
         _context = context;
     }
 
+    public async Task<IReadOnlyDictionary<Guid, Order>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idList.Length == 0) return new Dictionary<Guid, Order>();
+        return await _context.Orders
+            .AsNoTracking()
+            .Where(o => idList.Contains(o.Id))
+            .ToDictionaryAsync(o => o.Id, cancellationToken);
+    }
+
     public Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _context.Orders

@@ -161,12 +161,15 @@ public class ListDealerCustomerLinksHandler : IRequestHandler<ListDealerCustomer
 
         if (rows.Count == 0) return Array.Empty<DealerCustomerLinkDto>();
 
+        // Batch-load dealers and customers in one query each (was 2 sequential GetByIdAsync
+        // per link over an unpaginated tenant-wide list — 1+2N round-trips).
+        var dealerMap = await _dealers.GetByIdsAsync(rows.Select(l => l.DealerAccountId).Distinct(), cancellationToken);
+        var customerMap = await _customers.GetByIdsAsync(rows.Select(l => l.CustomerId).Distinct(), cancellationToken);
+
         var result = new List<DealerCustomerLinkDto>(rows.Count);
         foreach (var l in rows)
         {
-            var d = await _dealers.GetByIdAsync(l.DealerAccountId, cancellationToken);
-            var c = await _customers.GetByIdAsync(l.CustomerId, cancellationToken);
-            if (d is null || c is null) continue;
+            if (!dealerMap.TryGetValue(l.DealerAccountId, out var d) || !customerMap.TryGetValue(l.CustomerId, out var c)) continue;
             result.Add(B2BMappers.ToDto(l, d, c));
         }
         return result;

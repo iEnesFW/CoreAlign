@@ -69,6 +69,16 @@ public class DealerAccountRepository : IDealerAccountRepository
     public Task<DealerAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.DealerAccounts.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, DealerAccount>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idList.Length == 0) return new Dictionary<Guid, DealerAccount>();
+        return await _context.DealerAccounts
+            .AsNoTracking()
+            .Where(d => idList.Contains(d.Id))
+            .ToDictionaryAsync(d => d.Id, cancellationToken);
+    }
+
     public Task<DealerAccount?> GetByCodeAsync(string code, CancellationToken cancellationToken = default) =>
         _context.DealerAccounts.FirstOrDefaultAsync(d => d.Code == code, cancellationToken);
 

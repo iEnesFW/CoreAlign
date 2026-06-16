@@ -215,12 +215,16 @@ public class ListCustomerUsersHandler : IRequestHandler<ListCustomerUsersQuery, 
 
         if (memberships.Count == 0) return Array.Empty<CustomerUserDto>();
 
+        // Batch-load users and customers in one query each (was 2 sequential GetByIdAsync
+        // per membership over an unpaginated tenant-wide list — 1+2N round-trips).
+        var userMap = (await _users.ListByIdsAsync(memberships.Select(m => m.UserId).Distinct(), cancellationToken))
+            .ToDictionary(u => u.Id);
+        var customerMap = await _customers.GetByIdsAsync(memberships.Select(m => m.CustomerId).Distinct(), cancellationToken);
+
         var result = new List<CustomerUserDto>(memberships.Count);
         foreach (var m in memberships)
         {
-            var u = await _users.GetByIdAsync(m.UserId, cancellationToken);
-            var c = await _customers.GetByIdAsync(m.CustomerId, cancellationToken);
-            if (u is null || c is null) continue;
+            if (!userMap.TryGetValue(m.UserId, out var u) || !customerMap.TryGetValue(m.CustomerId, out var c)) continue;
             result.Add(B2BMappers.ToDto(m, u, c));
         }
         return result;

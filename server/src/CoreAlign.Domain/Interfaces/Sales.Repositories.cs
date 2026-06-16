@@ -129,6 +129,9 @@ public interface IStockTransactionRepository
 public interface IOrderRepository
 {
     Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>Batch-load orders by id (read-only, no includes) — one WHERE Id IN (...)
+    /// instead of N per-id loops. Missing ids are simply absent from the dictionary.</summary>
+    Task<IReadOnlyDictionary<Guid, Order>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<Order?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Order?> GetWithLinesAndShipmentsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Order?> GetWithLinesAndRevisionsAsync(Guid id, CancellationToken cancellationToken = default);
@@ -171,6 +174,9 @@ public interface IOrderRepository
 public interface IShipmentRepository
 {
     Task<Shipment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>Batch-load shipments by id (read-only, no includes) — one WHERE Id IN (...)
+    /// instead of N per-id loops. Missing ids are simply absent from the dictionary.</summary>
+    Task<IReadOnlyDictionary<Guid, Shipment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<Shipment?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Shipment>> GetByOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
     /// <summary>Slim list projection — see <see cref="ShipmentSearchRow"/>.</summary>

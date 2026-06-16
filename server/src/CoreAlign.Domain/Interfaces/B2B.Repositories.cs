@@ -20,6 +20,9 @@ public interface ICustomerUserRepository
 public interface IDealerAccountRepository
 {
     Task<DealerAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <summary>Batch-load dealer accounts by id (read-only) — one WHERE Id IN (...) instead
+    /// of N per-id loops. Missing ids are simply absent from the dictionary.</summary>
+    Task<IReadOnlyDictionary<Guid, DealerAccount>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<DealerAccount?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(string code, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DealerAccount>> ListAsync(CancellationToken cancellationToken = default);

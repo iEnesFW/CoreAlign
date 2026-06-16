@@ -21,37 +21,29 @@ public sealed class ServiceTicketDataSource : IBIDataSourceAggregator
     {
         ArgumentNullException.ThrowIfNull(config);
 
-        var statusCounts = await _db.ServiceTickets.AsNoTracking()
+        // Single server-side aggregation: COUNT(*) over all tickets per status, and the
+        // average resolution time as a conditional AVG over resolved tickets only
+        // (avg(CASE WHEN resolved THEN epoch_hours END) — AVG ignores the NULLs of
+        // unresolved rows). Never materializes the full ticket set into memory; the DB
+        // returns one row per status. Verified translatable on Npgsql via ToQueryString.
+        var grouped = await _db.ServiceTickets.AsNoTracking()
             .GroupBy(t => t.Status)
             .Select(g => new
             {
                 Status = g.Key,
                 Count = g.Count(),
+                AvgResolutionHours = g.Average(t => t.ResolvedAtUtc.HasValue
+                    ? (double?)(t.ResolvedAtUtc.Value - t.ReportedAtUtc).TotalHours
+                    : null),
             })
             .ToListAsync(cancellationToken);
 
-        var resolved = await _db.ServiceTickets.AsNoTracking()
-            .Where(t => t.ResolvedAtUtc.HasValue)
-            .Select(t => new
-            {
-                t.Status,
-                t.ReportedAtUtc,
-                ResolvedAtUtc = t.ResolvedAtUtc!.Value,
-            })
-            .ToListAsync(cancellationToken);
-
-        var avgByStatus = resolved
-            .GroupBy(r => r.Status)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Average(r => (r.ResolvedAtUtc - r.ReportedAtUtc).TotalHours));
-
-        var rows = statusCounts
+        var rows = grouped
             .Select(s => (IDictionary<string, object?>)new Dictionary<string, object?>
             {
                 ["status"] = s.Status.ToString(),
                 ["count"] = s.Count,
-                ["avgResolutionHours"] = avgByStatus.TryGetValue(s.Status, out var avg) ? avg : 0d,
+                ["avgResolutionHours"] = s.AvgResolutionHours ?? 0d,
             })
             .ToList();
 

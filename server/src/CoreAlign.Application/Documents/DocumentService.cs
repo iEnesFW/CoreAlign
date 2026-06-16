@@ -171,32 +171,16 @@ public sealed class DocumentService : IDocumentService
         var tenant = await LoadTenantAsync(dealer.TenantId, cancellationToken);
         var entries = await _commissionRepository.ListForStatementAsync(dealerAccountId, fromUtc, toUtc, cancellationToken);
 
-        var orderIds = entries.Select(e => e.OrderId).Distinct().ToList();
-        var orders = new Dictionary<Guid, Domain.Entities.Order>();
-        foreach (var oid in orderIds)
-        {
-            var ord = await _orderRepository.GetByIdAsync(oid, cancellationToken);
-            if (ord is not null) orders[oid] = ord;
-        }
-        var customerIds = entries.Select(e => e.CustomerId).Distinct().ToList();
-        var customers = new Dictionary<Guid, Domain.Entities.Customer>();
-        foreach (var cid in customerIds)
-        {
-            var cust = await _customerRepository.GetByIdAsync(cid, cancellationToken);
-            if (cust is not null) customers[cid] = cust;
-        }
-
-        var shipmentIds = entries
-            .Where(e => e.ShipmentId.HasValue)
-            .Select(e => e.ShipmentId!.Value)
-            .Distinct()
-            .ToList();
-        var shipments = new Dictionary<Guid, Domain.Entities.Shipment>();
-        foreach (var sid in shipmentIds)
-        {
-            var sh = await _shipmentRepository.GetByIdAsync(sid, cancellationToken);
-            if (sh is not null) shipments[sid] = sh;
-        }
+        // Batch-load orders, customers, and shipments in one query each. Was 3*N per-id
+        // round-trips over an unpaginated commission-ledger set — a high-volume dealer's
+        // statement could issue thousands of serial queries per PDF render and time out.
+        var orders = await _orderRepository.GetByIdsAsync(
+            entries.Select(e => e.OrderId).Distinct(), cancellationToken);
+        var customers = await _customerRepository.GetByIdsAsync(
+            entries.Select(e => e.CustomerId).Distinct(), cancellationToken);
+        var shipments = await _shipmentRepository.GetByIdsAsync(
+            entries.Where(e => e.ShipmentId.HasValue).Select(e => e.ShipmentId!.Value).Distinct(),
+            cancellationToken);
 
         var lines = entries.Select(e => new DealerCommissionStatementLine(
             AccruedAtUtc: e.AccruedAtUtc,

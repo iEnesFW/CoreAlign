@@ -15,6 +15,16 @@ public class ShipmentRepository : IShipmentRepository
             .Include(s => s.Warehouse)
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyDictionary<Guid, Shipment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids?.Distinct().ToArray() ?? Array.Empty<Guid>();
+        if (idList.Length == 0) return new Dictionary<Guid, Shipment>();
+        return await _context.Shipments
+            .AsNoTracking()
+            .Where(s => idList.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, cancellationToken);
+    }
+
     public Task<Shipment?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.Shipments
             .Include(s => s.Warehouse)
