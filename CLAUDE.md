@@ -249,6 +249,8 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 - **PG kuralı:** partition key her UNIQUE/PK'nin parçası olmalı → `id` PK'yi `(id, <ts>)` yap veya mevcut `(tenant_id, sequence)`/business-unique partition key'i absorbe etsin.
 - **BRIN her partition içinde** zaman kolonuna; selective `tenant_id`-equality için btree korunur.
 - **Retention = `DROP PARTITION`** (satır DELETE değil): O(1), WAL/vacuum yok. Finansal partition'lar silinmez → compressed/cold tablespace'e DETACH.
+- **Partition GÜVENLİK kontrolü (zorunlu, battle-tested):** Bir tabloyu partition'lamadan ÖNCE `pg_indexes`'te `CREATE UNIQUE INDEX` ara — **sadece `pg_constraint`'e bakmak yetmez**; EF `IsUnique()` index'leri constraint değil, ayrı unique index'tir. Partition key'i içermeyen bir unique index varsa (örn. `notification_messages` idempotency, `entity_audit_logs` hash-chain `(tenant_id, sequence)`) o tablo partition'a **UYGUN DEĞİL** — partition'lamak o uniqueness'i sessizce düşürür (**correctness regression**, bu oturumda yaşandı). Böyle tabloları hariç tut. `LIKE INCLUDING INDEXES` PK'nin unique index'ini kopyalayıp partition'da hata verir → `INCLUDING DEFAULTS INCLUDING IDENTITY` kullan + non-unique index'leri `pg_indexes`'ten EF isimleriyle yeniden oluştur (snapshot drift'i azalır). `bigint IDENTITY` / `tenant_id`'siz tablolarda RLS + tenant-FK adımlarını koşullu atla.
+- **Rollover ZORUNLU:** partition'lı tabloya scheduled rollover job'u (`corealign_ensure_future_partitions`) bağlanmadan partition migration teslim edilmez — yoksa pre-create penceresi bitince yeni satırlar tek `_pdefault` partition'ına düşer ve pruning bozulur (silent availability cliff).
 
 ### 4.10 PostgreSQL İşletme
 
@@ -256,6 +258,23 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 - **Bağlantı dayanıklılığı:** Npgsql `EnableRetryOnFailure` (transient) + bilinçli `CommandTimeout`; connection pooling (PgBouncer-uyumlu — prepared statement ayarına dikkat).
 - **Read disiplini:** read query'lerde `AsNoTracking`; koleksiyon include'larında `AsSplitQuery` veya projection (N+1 yok, §3.6/§11.3).
 - **Test parity uyarısı:** Sqlite test yolu (`EnsureCreated`) şemayı **modelden** kurar — raw-SQL-only index'ler (GIN/BRIN/partition) orada yok; bu nesnelere bağlı davranış Postgres integration test ile doğrulanır (§4.2 drift ile birleşir).
+
+### 4.11 Ölçek Sorgu Disiplini (her liste / report / yeni endpoint — empirik doğrulandı)
+
+- **Liste sayfaları index-backed:** sıralanan her liste sorgusu için `(tenant_id, <sort_col> DESC, id DESC)` composite index — trailing `id` tiebreaker olmadan keyset deterministik değil. (Validated: sığ sayfa Index Scan ile **sub-ms**.)
+- **Append-only / infinite-scroll = KEYSET (seek):** ledger, transaction history, audit, stream/export gibi büyüyen tablolarda `OFFSET`/`Skip()` **YASAK**. Keyset: `WHERE tenant_id=@t AND (sort_col < @cur OR (sort_col=@cur AND id < @curId)) ORDER BY sort_col DESC, id DESC LIMIT n`. Sebep: deep `OFFSET` N+M satır tarayıp atar (page 4000 ≈ **225ms**, lineer büyür) ve partition pruning'i yener; `Skip`-loop'lu stream **O(n²)**. (Validated: keyset **0.47ms sabit** vs OFFSET 225ms; audit export O(n²)→O(n).) Page-numaralı liste keyset'e geçince API/UI cursor'a döner — bilinçli yap.
+- **Report/aggregate SERVER-SIDE:** `SUM`/`GROUP BY`/`COUNT` **her zaman SQL'de**. Tüm tabloyu `ToListAsync()` edip C#'ta `GroupBy/Sum` **YASAK** (OOM + GC + lineer transfer). EF `Any`-subquery + GroupBy translate olmuyorsa **join + GROUP BY**'a çevir; olmuyorsa `FromSqlInterpolated`/`Database.SqlQuery<T>`. `COUNT(DISTINCT)` EF'te translate olmaz → raw SQL. (Validated: TrialBalance 2M satır → 50 satır, **132ms** server-side.)
+- **N+1 = batch-load:** loop içinde tek-tek `GetByIdAsync` **YASAK**; `GetByIdsAsync(IEnumerable<Guid>)` → tek `WHERE Id IN (...)` + in-memory dictionary. Koleksiyon listesinde `.Include(child)` yerine slim projection (`...SearchRow`) + `Lines.Count` scalar subquery; full include sadece detail'de.
+- **>10k beklenen yeni/değişen hot sorguda EXPLAIN ANALYZE** (gerçek veya sentetik milyon-satır veriyle): seq scan / disk-spill sort / kaçırılan partition pruning varsa düzelt; planı PR notuna yaz.
+
+### 4.12 Migration & EF Tuzakları (battle-tested — bir daha yaşama)
+
+- **Migration ID ordering:** proje Phase## tarihlerini **ileri-tarihli** kullanıyor; `dotnet ef migrations add` wall-clock ID verir (son Phase'den ÖNCE sıralanır → apply order bozulur). Yeni migration üretince ID'yi **son Phase'den sonraya rename et** (hem dosya adı hem `.Designer.cs`'teki `[Migration("...")]`).
+- **`migrations add --no-build` tuzağı:** config/entity edit sonrası `--no-build` stale assembly kullanır → BOŞ/yanlış migration üretir. Config değişiminden sonra build'li `migrations add`.
+- **Pending model değişikliği bloke eder:** başka ajan model'e entity ekleyip migrate etmediyse `has-pending-model-changes`=yes → `database update` `PendingModelChangesWarning` ile patlar ve `migrations add` onların değişikliğini seninkine bundle'lar. Önce kontrol et; kirliyse ya onların catch-up'ını üret ya da §12.9 el-yazımı idempotent raw-SQL + snapshot'a dokunma.
+- **`IGlobalReadable` tenant-FK istisnası:** `IGlobalReadable` entity'ler `tenant_id = Guid.Empty` (global, gerçek tenant değil) satır tutar → tenant-FK convention (`ApplyTenantForeignKeys`) bunları **HARİÇ tutmalı**, yoksa startup `MigrateAsync` `23503` ile patlar (bu oturumda yaşandı). Yeni `IGlobalReadable` entity = exclusion'ı doğrula.
+- **RLS yeni-tablo kapsamı:** RLS policy migration'ından SONRA eklenen tenant tablosu policy almaz → RLS application'ı re-runnable yap veya yeni tablo migration'ında policy'yi de uygula.
+- **Doğrula, varsayma:** her yapısal değişiklik (partition, FK, index, RLS, aggregation rewrite) ACTUAL DB'ye karşı **psql/EXPLAIN ile doğrulanır**, varsayılmaz. Bu oturumda partition'ın bir unique index'i sessizce düşürdüğü ancak adversarial doğrulamayla yakalandı.
 
 ---
 
