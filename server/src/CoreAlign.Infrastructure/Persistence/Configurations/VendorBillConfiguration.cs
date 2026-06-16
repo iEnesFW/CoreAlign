@@ -96,6 +96,7 @@ public class VendorPaymentConfiguration : IEntityTypeConfiguration<VendorPayment
 
         builder.Ignore(p => p.UnappliedAmount);
         builder.Ignore(p => p.IsDraft);
+        builder.Ignore(p => p.IsPosted);
     }
 }
 

@@ -591,6 +591,8 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
             PaymentGLLines.CashMovement(cashKey, GLPostingKey.AccountsPayable, c.Amount, cashIsDebit: false),
             c.Currency.ToUpperInvariant(), c.ExchangeRate), ct);
 
+        payment.Post();
+
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(payment);
     }
@@ -738,6 +740,10 @@ public class UpdateVendorPaymentHandler : IRequestHandler<UpdateVendorPaymentCom
             throw new StockMovementValidationException("Payment amount must be positive.");
         }
         var payment = await _payments.GetByIdAsync(c.Id, ct) ?? throw new VendorPaymentApplicationNotFoundException();
+        if (payment.IsVoided || payment.IsPosted)
+        {
+            throw new VendorPaymentImmutableException();
+        }
         payment.UpdateDraft(c.PaymentDate, c.Amount, c.Currency.ToUpperInvariant(), c.ExchangeRate, c.Method, c.Notes);
         _payments.Update(payment);
         await _uow.SaveChangesAsync(ct);

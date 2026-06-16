@@ -198,16 +198,52 @@ public class ApprovePurchaseOrderHandler : IRequestHandler<ApprovePurchaseOrderC
     }
 }
 
+// Received-but-never-billed quantity leaves an orphaned credit on the GR/IR
+// clearing account (322) that the vendor bill would otherwise have settled.
+// Closing or cancelling the PO writes that residual off so 322 returns to zero,
+// debiting the clearing leg and crediting purchase price variance. The residual
+// is exact at the PO line UnitCost — which is the cost the receipt credited (see
+// ReceivePurchaseOrderHandler). Per-receipt costing accuracy is deferred to the
+// GRN sprint. Idempotency key = po.Id so a double-close cannot double-post.
+internal static class GoodsReceiptClearingWriteOff
+{
+    public static async Task EnqueueAsync(IGLPostingOutbox outbox, PurchaseOrder po, string reason, CancellationToken ct)
+    {
+        var residual = Math.Round(po.Lines
+            .Where(l => l.QuantityReceived > l.QuantityBilled)
+            .Sum(l => Math.Round((l.QuantityReceived - l.QuantityBilled) * l.UnitCost, 4)), 4);
+        if (residual <= 0m) return;
+
+        await outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.PurchaseOrderClose, po.Id, po.PoNumber, DateTime.UtcNow.Date,
+            JournalEntryType.Mahsup, $"{reason} (PO {po.PoNumber})",
+            new[]
+            {
+                new GLPostingLine(GLPostingKey.GoodsReceiptClearing, residual, 0m),
+                new GLPostingLine(GLPostingKey.PurchasePriceVariance, 0m, residual),
+            },
+            po.Currency, po.ExchangeRate), ct);
+    }
+}
+
 public class CancelPurchaseOrderHandler : IRequestHandler<CancelPurchaseOrderCommand, PurchaseOrderDto>
 {
     private readonly IPurchaseOrderRepository _orders;
+    private readonly IGLPostingOutbox _outbox;
     private readonly IUnitOfWork _uow;
-    public CancelPurchaseOrderHandler(IPurchaseOrderRepository orders, IUnitOfWork uow) { _orders = orders; _uow = uow; }
+
+    public CancelPurchaseOrderHandler(IPurchaseOrderRepository orders, IGLPostingOutbox outbox, IUnitOfWork uow)
+    {
+        _orders = orders;
+        _outbox = outbox;
+        _uow = uow;
+    }
 
     public async Task<PurchaseOrderDto> Handle(CancelPurchaseOrderCommand c, CancellationToken ct)
     {
         var po = await _orders.GetByIdAsync(c.Id, ct) ?? throw new PurchaseOrderNotFoundException();
         po.Cancel(c.Reason);
+        await GoodsReceiptClearingWriteOff.EnqueueAsync(_outbox, po, "GR/IR iptal mahsubu", ct);
         _orders.Update(po);
         await _uow.SaveChangesAsync(ct);
         return PurchaseOrderMapper.ToDto(po);
@@ -217,13 +253,21 @@ public class CancelPurchaseOrderHandler : IRequestHandler<CancelPurchaseOrderCom
 public class ClosePurchaseOrderHandler : IRequestHandler<ClosePurchaseOrderCommand, PurchaseOrderDto>
 {
     private readonly IPurchaseOrderRepository _orders;
+    private readonly IGLPostingOutbox _outbox;
     private readonly IUnitOfWork _uow;
-    public ClosePurchaseOrderHandler(IPurchaseOrderRepository orders, IUnitOfWork uow) { _orders = orders; _uow = uow; }
+
+    public ClosePurchaseOrderHandler(IPurchaseOrderRepository orders, IGLPostingOutbox outbox, IUnitOfWork uow)
+    {
+        _orders = orders;
+        _outbox = outbox;
+        _uow = uow;
+    }
 
     public async Task<PurchaseOrderDto> Handle(ClosePurchaseOrderCommand c, CancellationToken ct)
     {
         var po = await _orders.GetByIdAsync(c.Id, ct) ?? throw new PurchaseOrderNotFoundException();
         po.Close();
+        await GoodsReceiptClearingWriteOff.EnqueueAsync(_outbox, po, "GR/IR kapanış mahsubu", ct);
         _orders.Update(po);
         await _uow.SaveChangesAsync(ct);
         return PurchaseOrderMapper.ToDto(po);

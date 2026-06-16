@@ -38,6 +38,77 @@ public class VendorPaymentDomainTests
         var act = () => p.UpdateDraft(DateTime.UtcNow, 999m, "TRY", 1m, null, null);
         act.Should().Throw<VendorPaymentImmutableException>();
     }
+
+    [Fact]
+    public void New_payment_is_not_posted_until_post_is_called()
+    {
+        var p = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY");
+        p.IsPosted.Should().BeFalse();
+
+        p.Post();
+        p.IsPosted.Should().BeTrue();
+    }
+}
+
+public class UpdateVendorPaymentHandlerTests
+{
+    private readonly IVendorPaymentRepository _payments = Substitute.For<IVendorPaymentRepository>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
+    private readonly UpdateVendorPaymentHandler _sut;
+
+    public UpdateVendorPaymentHandlerTests()
+    {
+        _sut = new UpdateVendorPaymentHandler(_payments, _uow);
+    }
+
+    [Fact]
+    public async Task Update_blocks_a_posted_payment()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY") { Id = Guid.NewGuid() };
+        payment.Post();
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+
+        Func<Task> act = () => _sut.Handle(
+            new UpdateVendorPaymentCommand(payment.Id, DateTime.UtcNow, 500m, "TRY"), default);
+
+        await act.Should().ThrowAsync<VendorPaymentImmutableException>();
+        await _uow.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Update_blocks_a_voided_payment()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY") { Id = Guid.NewGuid() };
+        payment.Void("test");
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+
+        Func<Task> act = () => _sut.Handle(
+            new UpdateVendorPaymentCommand(payment.Id, DateTime.UtcNow, 500m, "TRY"), default);
+
+        await act.Should().ThrowAsync<VendorPaymentImmutableException>();
+    }
+
+    [Fact]
+    public async Task Update_rejects_non_positive_amount()
+    {
+        Func<Task> act = () => _sut.Handle(
+            new UpdateVendorPaymentCommand(Guid.NewGuid(), DateTime.UtcNow, 0m, "TRY"), default);
+
+        await act.Should().ThrowAsync<StockMovementValidationException>();
+    }
+
+    [Fact]
+    public async Task Update_mutates_an_unposted_draft_payment()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY") { Id = Guid.NewGuid() };
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+
+        var dto = await _sut.Handle(
+            new UpdateVendorPaymentCommand(payment.Id, DateTime.UtcNow, 750m, "TRY"), default);
+
+        dto.Amount.Should().Be(750m);
+        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
 }
 
 public class ApplyVendorPaymentHandlerTests

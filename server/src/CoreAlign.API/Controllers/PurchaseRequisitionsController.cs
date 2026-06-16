@@ -37,10 +37,12 @@ public class PurchaseRequisitionsController : ControllerBase
         => (await _mediator.Send(new SubmitPurchaseRequisitionCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/approve")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
         => (await _mediator.Send(new ApprovePurchaseRequisitionCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/reject")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Reject(Guid id, [FromBody] RejectPurchaseRequisitionCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(new RejectPurchaseRequisitionCommand(id, cmd?.Reason), ct)).ToOk();
 

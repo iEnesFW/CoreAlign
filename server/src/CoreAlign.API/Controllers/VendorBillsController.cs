@@ -51,22 +51,27 @@ public class VendorBillsController : ControllerBase
         => (await _mediator.Send(new GetVendorBillApplicationsQuery(id), ct)).ToOk();
 
     [HttpPost]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateVendorBillCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVendorBillCommand cmd, CancellationToken ct)
         => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
 
     [HttpPost("{id:guid}/post")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Post(Guid id, CancellationToken ct)
         => (await _mediator.Send(new PostVendorBillCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/approve")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
         => (await _mediator.Send(new ApproveVendorBillCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
         => (await _mediator.Send(new CancelVendorBillCommand(id), ct)).ToOk();
 }
@@ -103,18 +108,22 @@ public class VendorPaymentsController : ControllerBase
         => (await _mediator.Send(new GetVendorPaymentApplicationsQuery(id), ct)).ToOk();
 
     [HttpPost]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateVendorPaymentCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateVendorPaymentCommand cmd, CancellationToken ct)
         => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
 
     [HttpPost("{id:guid}/void")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Void(Guid id, [FromBody] VoidVendorPaymentCommand cmd, CancellationToken ct)
         => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
 
     [HttpPost("apply")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Apply([FromBody] ApplyVendorPaymentCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
 }

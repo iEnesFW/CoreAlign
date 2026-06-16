@@ -52,6 +52,7 @@ public class PurchaseOrdersController : ControllerBase
         => (await _mediator.Send(new SubmitPurchaseOrderCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/approve")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Approve(Guid id, CancellationToken ct)
     {
         var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
@@ -59,14 +60,17 @@ public class PurchaseOrdersController : ControllerBase
     }
 
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelPurchaseOrderCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(new CancelPurchaseOrderCommand(id, cmd?.Reason), ct)).ToOk();
 
     [HttpPost("{id:guid}/close")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Close(Guid id, CancellationToken ct)
         => (await _mediator.Send(new ClosePurchaseOrderCommand(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/receive")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Receive(Guid id, [FromBody] ReceivePurchaseOrderCommand cmd, CancellationToken ct)
         => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
 }

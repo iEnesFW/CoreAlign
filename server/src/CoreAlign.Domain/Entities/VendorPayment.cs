@@ -22,8 +22,12 @@ public class VendorPayment : TenantEntity, IXminConcurrency
 
     public Vendor Vendor { get; set; } = null!;
 
+    private bool _isPosted = true;
+
     public decimal UnappliedAmount => Math.Max(0m, Math.Round(Amount - AppliedAmount, 4));
     public bool IsDraft => !IsVoided && AppliedAmount == 0m;
+
+    public bool IsPosted => _isPosted;
 
     protected VendorPayment() { }
 
@@ -49,7 +53,10 @@ public class VendorPayment : TenantEntity, IXminConcurrency
         Method = method;
         VendorBillId = vendorBillId;
         Notes = notes;
+        _isPosted = false;
     }
+
+    public void Post() => _isPosted = true;
 
     public void UpdateDraft(
         DateTime paymentDate,
