@@ -19,9 +19,19 @@ public class OutboxRepository : IOutboxRepository
     public Task<OutboxMessage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.OutboxMessages.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
 
-    public async Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(int max, CancellationToken cancellationToken = default) =>
+    public async Task<IReadOnlyList<OutboxMessage>> GetDueForCurrentTenantAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default) =>
         await _context.OutboxMessages
-            .Where(m => m.Status == OutboxStatus.Pending)
+            .Where(m => m.Status == OutboxStatus.Pending
+                && (m.NextAttemptUtc == null || m.NextAttemptUtc <= utcNow))
+            .OrderBy(m => m.CreatedAtUtc)
+            .Take(max)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<OutboxMessage>> GetDueAcrossTenantsAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default) =>
+        await _context.OutboxMessages
+            .IgnoreQueryFilters()
+            .Where(m => m.Status == OutboxStatus.Pending
+                && (m.NextAttemptUtc == null || m.NextAttemptUtc <= utcNow))
             .OrderBy(m => m.CreatedAtUtc)
             .Take(max)
             .ToListAsync(cancellationToken);
