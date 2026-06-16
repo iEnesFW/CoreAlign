@@ -79,6 +79,14 @@ public interface IJournalEntryRepository
     Task<bool> ExistsForSourceAsync(Domain.Enums.JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// The non-reversed entry (with lines) for a source key, or null when none
+    /// exists or the only match has been reversed. Lets the year-end close treat a
+    /// reversed Kapanis as "absent" so a corrected close can re-post under the same
+    /// deterministic id with a fresh number.
+    /// </summary>
+    Task<JournalEntry?> GetActiveBySourceAsync(Domain.Enums.JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Most-recent posted entry of a given source type with a posting date strictly
     /// before <paramref name="beforePostingDate"/>, including its lines. Used by the
     /// FX revaluation job to reverse the prior mark so consecutive runs net to the

@@ -113,3 +113,20 @@ public record ReverseJournalEntryCommand(Guid Id, DateTime? ReversalPostingDate,
     : IRequest<DTOs.JournalEntryDto>, ITransactionalRequest;
 
 public record DeleteJournalEntryCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
+
+// ---------- Year-End Close / Opening (Kapanış / Açılış) ----------
+
+/// <summary>Posts the statutory year-end closing fiş (Kapanış) for <paramref name="Year"/>.</summary>
+public record CloseFiscalYearCommand(int Year, Guid? PostedByUserId = null)
+    : IRequest<DTOs.YearEndEntryDto>, ITransactionalRequest;
+
+/// <summary>
+/// Posts the opening fiş (Açılış) that re-opens the books on Jan 1 of
+/// <paramref name="Year"/>+1. <paramref name="Year"/> is the year being CLOSED.
+/// </summary>
+public record OpenFiscalYearCommand(int Year, Guid? PostedByUserId = null)
+    : IRequest<DTOs.YearEndEntryDto>, ITransactionalRequest;
+
+/// <summary>Contra-reverses the year-end close of <paramref name="Year"/> while it is still un-consumed.</summary>
+public record ReverseFiscalYearCloseCommand(int Year, Guid? ReversedByUserId = null)
+    : IRequest<DTOs.YearEndEntryDto>, ITransactionalRequest;

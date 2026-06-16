@@ -145,6 +145,23 @@ public class AccountingController : ControllerBase
     public async Task<IActionResult> DeleteJournalEntry(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteJournalEntryCommand(id), ct)).ToOk();
 
+    // ---------- Year-End Close / Opening (Kapanış / Açılış) ----------
+
+    [HttpPost("fiscal-years/{year:int}/close")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> CloseFiscalYear(int year, [FromBody] CloseFiscalYearCommand? cmd, CancellationToken ct)
+        => (await _mediator.Send(new CloseFiscalYearCommand(year, cmd?.PostedByUserId), ct)).ToOk();
+
+    [HttpPost("fiscal-years/{year:int}/open-next")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> OpenNextFiscalYear(int year, [FromBody] OpenFiscalYearCommand? cmd, CancellationToken ct)
+        => (await _mediator.Send(new OpenFiscalYearCommand(year, cmd?.PostedByUserId), ct)).ToOk();
+
+    [HttpPost("fiscal-years/{year:int}/reverse-close")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> ReverseFiscalYearClose(int year, [FromBody] ReverseFiscalYearCloseCommand? cmd, CancellationToken ct)
+        => (await _mediator.Send(new ReverseFiscalYearCloseCommand(year, cmd?.ReversedByUserId), ct)).ToOk();
+
     // ---------- Mizan / Trial Balance ----------
 
     [HttpGet("trial-balance")]

@@ -1,3 +1,4 @@
+using CoreAlign.Application.Accounting.Commands;
 using CoreAlign.Application.Accounting.Handlers;
 using CoreAlign.Application.Accounting.Queries;
 using CoreAlign.Domain.Entities;
@@ -24,6 +25,7 @@ public sealed class FinancialStatementsTests : IDisposable
 {
     private readonly CoreAlignDbContext _db;
     private readonly Guid _tenantId = Guid.NewGuid();
+    private readonly ITenantContext _tenant;
 
     private readonly JournalEntryRepository _journals;
     private readonly GLAccountRepository _accounts;
@@ -31,6 +33,7 @@ public sealed class FinancialStatementsTests : IDisposable
     private readonly VendorLedgerRepository _vendorLedger;
 
     private readonly Dictionary<string, GLAccount> _chart = new();
+    private bool _sequenceSeeded;
 
     public FinancialStatementsTests()
     {
@@ -38,6 +41,7 @@ public sealed class FinancialStatementsTests : IDisposable
         tenant.CurrentTenantId.Returns(_tenantId);
         tenant.HasTenant.Returns(true);
         tenant.RequireTenantId().Returns(_tenantId);
+        _tenant = tenant;
 
         // EF InMemory: the Postgres-only xmin concurrency token and tenant FK have
         // no analog here, so we get a faithful round-trip of the real repository
@@ -77,8 +81,13 @@ public sealed class FinancialStatementsTests : IDisposable
             Account("320", "Satıcılar", AccountType.Liability),
             Account("391", "Hesaplanan KDV", AccountType.Liability),
             Account("500", "Sermaye", AccountType.Equity),
+            Account("570", "Geçmiş Yıllar Kârları", AccountType.Equity),
+            Account("580", "Geçmiş Yıllar Zararları (-)", AccountType.Equity),
+            Account("590", "Dönem Net Kârı", AccountType.Equity),
+            Account("591", "Dönem Net Zararı (-)", AccountType.Equity),
             Account("600", "Yurtiçi Satışlar", AccountType.Revenue),
             Account("621", "STMM", AccountType.CostOfGoodsSold),
+            Account("690", "Dönem Kârı veya Zararı", AccountType.Revenue),
             Account("770", "Genel Yönetim Gideri", AccountType.Expense));
         await SaveAsync();
     }
@@ -149,23 +158,56 @@ public sealed class FinancialStatementsTests : IDisposable
         return customer.Id;
     }
 
-    private GetBalanceSheetHandler BalanceSheetHandler() => new(_journals, _accounts);
+    private GetBalanceSheetHandler BalanceSheetHandler() => new(_journals, _accounts, _tenant);
     private GetIncomeStatementHandler IncomeStatementHandler() => new(_journals, _accounts);
 
     private GetSubledgerReconciliationHandler ReconciliationHandler() =>
         new(_journals, _customerLedger, _vendorLedger, _accounts);
 
-    public static IEnumerable<object[]> AsOfDates() => new[]
+    // ---- Year-end close / opening wiring (real repos over the in-memory store) ----
+
+    private async Task SeedJournalSequenceAsync()
+    {
+        if (_sequenceSeeded) return;
+        _db.DocumentSequences.Add(new DocumentSequence(DocumentSequenceType.JournalNumber, "YEV", 2025, 1, 5) { TenantId = _tenantId });
+        await SaveAsync();
+        _sequenceSeeded = true;
+    }
+
+    private CloseFiscalYearHandler CloseHandler() =>
+        new(_journals, _accounts, FakePeriods(), new DocumentSequenceRepository(_db), _tenant, new UnitOfWork(_db));
+
+    private OpenFiscalYearHandler OpenHandler() =>
+        new(_journals, _accounts, new DocumentSequenceRepository(_db), _tenant, new UnitOfWork(_db));
+
+    private static IAccountingPeriodRepository FakePeriods()
+    {
+        // No monthly periods configured → the close's soft year-ready gate is a no-op.
+        var periods = Substitute.For<IAccountingPeriodRepository>();
+        periods.ListAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>())
+            .Returns(System.Array.Empty<AccountingPeriod>());
+        return periods;
+    }
+
+    private async Task CloseAndOpenAsync(int year)
+    {
+        await SeedJournalSequenceAsync();
+        await CloseHandler().Handle(new CloseFiscalYearCommand(year), default);
+        await OpenHandler().Handle(new OpenFiscalYearCommand(year), default);
+    }
+
+    public static IEnumerable<object[]> PreCloseAsOfDates() => new[]
     {
         new object[] { new DateTime(2025, 3, 1, 0, 0, 0, DateTimeKind.Utc) },
         new object[] { new DateTime(2025, 12, 31, 0, 0, 0, DateTimeKind.Utc) },
-        new object[] { new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc) },
     };
 
     [Theory]
-    [MemberData(nameof(AsOfDates))]
-    public async Task Balance_sheet_balances_at_any_as_of(DateTime asOf)
+    [MemberData(nameof(PreCloseAsOfDates))]
+    public async Task Balance_sheet_balances_before_any_close(DateTime asOf)
     {
+        // BEFORE any year-end close: only the single open year (2025) has P&L, and
+        // the open-year fold captures it in full, so Assets == L + E + fold.
         await SeedLedgerAsync();
 
         var bs = await BalanceSheetHandler().Handle(new GetBalanceSheetQuery(asOf), default);
@@ -176,10 +218,35 @@ public sealed class FinancialStatementsTests : IDisposable
     }
 
     [Fact]
-    public async Task Balance_sheet_excludes_pnl_accounts_and_folds_lifetime_earnings()
+    public async Task Balance_sheet_balances_after_year_end_close_and_opening()
+    {
+        // AFTER closing 2025 and opening 2026: 2025 P&L (8000) is rolled into 570
+        // (equity), and the open-year fold for 2026 captures only the −5000 opex.
+        // Viewed mid-2026 the sheet must still balance with NO double count.
+        await SeedLedgerAsync();
+        await CloseAndOpenAsync(2025);
+
+        var asOf = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc);
+        var bs = await BalanceSheetHandler().Handle(new GetBalanceSheetQuery(asOf), default);
+
+        bs.IsBalanced.Should().BeTrue($"Assets {bs.Assets.Total} must equal L+E+earnings {bs.TotalLiabilitiesAndEquity} post-close");
+        Math.Abs(bs.Variance).Should().BeLessThan(0.01m);
+
+        // 2025 profit is now a REAL equity line (570 = 8000), not a synthetic plug.
+        bs.Equity.Lines.Should().Contain(l => l.AccountCode == "570" && Math.Abs(l.Amount - 8_000m) < 0.01m);
+        // 590/591 reopened empty.
+        bs.Equity.Lines.Should().NotContain(l => l.AccountCode == "590" || l.AccountCode == "591");
+        // Open-year fold = 2026 opex only.
+        bs.CurrentYearEarnings.Should().Be(-5_000m);
+        bs.RetainedPriorEarnings.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task Balance_sheet_excludes_pnl_accounts_and_folds_open_year_earnings()
     {
         await SeedLedgerAsync();
-        var asOf = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc);
+        // AsOf within the single open year so the fold equals lifetime P&L here.
+        var asOf = new DateTime(2025, 12, 31, 0, 0, 0, DateTimeKind.Utc);
 
         var bs = await BalanceSheetHandler().Handle(new GetBalanceSheetQuery(asOf), default);
 
@@ -188,12 +255,10 @@ public sealed class FinancialStatementsTests : IDisposable
         bs.Liabilities.Lines.Should().NotContain(l => l.AccountCode == "600");
         bs.Equity.Lines.Should().NotContain(l => l.AccountCode == "600");
 
-        // Lifetime earnings = Revenue(20000) − COGS(12000) − Opex(5000) = 3000,
-        // split into prior-year (2025: 20000−12000 = 8000) and current-year
-        // (2026: −5000 opex) = -5000.
-        bs.RetainedPriorEarnings.Should().Be(8_000m);
-        bs.CurrentYearEarnings.Should().Be(-5_000m);
-        (bs.CurrentYearEarnings + bs.RetainedPriorEarnings).Should().Be(3_000m);
+        // Open-year (2025) earnings = Revenue(20000) − COGS(12000) = 8000; no prior
+        // synthetic plug — 570/580 print as real lines once a year is closed.
+        bs.CurrentYearEarnings.Should().Be(8_000m);
+        bs.RetainedPriorEarnings.Should().Be(0m);
     }
 
     [Fact]

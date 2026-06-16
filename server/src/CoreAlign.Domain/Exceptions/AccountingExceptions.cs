@@ -82,3 +82,21 @@ public class JournalEntryInvalidTypeException : DomainException
 {
     public JournalEntryInvalidTypeException(string raw) : base($"Invalid JournalEntryType '{raw}'.") { }
 }
+
+public class YearNotReadyForCloseException : ConflictException
+{
+    public YearNotReadyForCloseException(int year)
+        : base($"Fiscal year {year} cannot be closed while one or more of its monthly periods is still Open.") { }
+}
+
+public class FiscalYearAlreadyOpenedException : ConflictException
+{
+    public FiscalYearAlreadyOpenedException(int year)
+        : base($"The year-end close of {year} has already been consumed by the {year + 1} opening entry and can no longer be reversed.") { }
+}
+
+public class FiscalYearCloseNotFoundException : ConflictException
+{
+    public FiscalYearCloseNotFoundException(int year)
+        : base($"The year-end close of {year} does not exist; the {year + 1} opening cannot precede it.") { }
+}

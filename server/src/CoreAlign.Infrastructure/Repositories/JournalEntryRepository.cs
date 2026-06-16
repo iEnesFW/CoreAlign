@@ -34,6 +34,23 @@ public class JournalEntryRepository : IJournalEntryRepository
             .AnyAsync(j => j.SourceType == sourceType && j.SourceDocumentId == sourceDocumentId, cancellationToken);
     }
 
+    public Task<JournalEntry?> GetActiveBySourceAsync(JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default)
+    {
+        if (sourceDocumentId == Guid.Empty) return Task.FromResult<JournalEntry?>(null);
+        // "Active" = Posted and not undone. A close-reversal keeps the original
+        // Posted (so the aggregate nets its sweep against the contra), so a stale
+        // close is detected by an existing reversal pointing at it — not by the
+        // original's own status.
+        return _context.JournalEntries
+            .Include(j => j.Lines)
+            .Where(j => j.SourceType == sourceType
+                && j.SourceDocumentId == sourceDocumentId
+                && j.Status == JournalEntryStatus.Posted
+                && !_context.JournalEntries.Any(r => r.ReversalOfId == j.Id))
+            .OrderByDescending(j => j.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task<JournalEntry?> GetMostRecentBySourceTypeBeforeAsync(
         JournalSourceType sourceType,
         DateTime beforePostingDate,

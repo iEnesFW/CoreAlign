@@ -80,42 +80,66 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
 {
     private readonly IJournalEntryRepository _journals;
     private readonly IGLAccountRepository _accounts;
+    private readonly ITenantContext _tenant;
 
-    public GetBalanceSheetHandler(IJournalEntryRepository journals, IGLAccountRepository accounts)
+    public GetBalanceSheetHandler(IJournalEntryRepository journals, IGLAccountRepository accounts, ITenantContext tenant)
     {
         _journals = journals;
         _accounts = accounts;
+        _tenant = tenant;
     }
 
     public async Task<BalanceSheetReportDto> Handle(GetBalanceSheetQuery q, CancellationToken ct)
     {
         var accounts = await _accounts.GetAllAsync(ct);
         var byId = accounts.ToDictionary(a => a.Id);
+        var tenantId = _tenant.RequireTenantId();
 
-        var aggregates = await _journals.GetAccountBalancesAsOfAsync(q.AsOf, ct);
+        // Each fiscal year's books begin at its açılış (opening fiş, dated Jan 1).
+        // If an opening exists for AsOf.Year, the balance sheet reads from that
+        // opening forward — the açılış already carries every account's true opening
+        // balance, so summing it together with the prior-year detail would
+        // double-count. Without an opening (the first/legacy year) the cumulative
+        // from-inception sum is the correct carry-forward.
+        var yearStart = new DateTime(q.AsOf.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var openId = YearEnd.OpenId(tenantId, q.AsOf.Year);
+        var openingExists = await _journals.ExistsForSourceAsync(JournalSourceType.Manual, openId, ct);
+
+        var aggregates = openingExists
+            ? await _journals.GetAccountBalancesAsync(yearStart, q.AsOf, ct)
+            : await _journals.GetAccountBalancesAsOfAsync(q.AsOf, ct);
         var rows = FinancialStatementMath.ToNaturalRows(aggregates, byId);
 
         var assets = FinancialStatementMath.SectionFor(rows, AccountType.Asset);
         var liabilities = FinancialStatementMath.SectionFor(rows, AccountType.Liability);
+        // Equity now naturally carries 570/580 (rolled retained, from the açılış)
+        // and 590/591 of any partially-closed year as REAL lines, so they are no
+        // longer a synthetic plug.
         var equity = FinancialStatementMath.SectionFor(rows, AccountType.Equity);
 
-        // Lifetime P&L over ALL history to AsOf is the retained-earnings plug that
-        // makes the sheet balance before any year-end close exists. Split into
-        // current-year vs prior (TDHP 590 / 570) by re-summing P&L through the
-        // prior year-end and subtracting — both read-only over the same history.
-        var lifetimeEarnings = FinancialStatementMath.ComputeNetIncome(rows);
+        // Fold ONLY the open (still-unclosed) current year's P&L: once a year is
+        // closed, its result sits in 590 → 570 inside equity.Total, so re-adding it
+        // would double-count. If a Kapanış already exists for AsOf.Year the result
+        // is already in equity, so the fold is zero; otherwise it is the movement
+        // from Jan 1 of AsOf.Year through AsOf (the same window the sections use when
+        // an opening exists, so a single aggregate would suffice — kept explicit for
+        // the no-opening cumulative branch). This keeps Assets == Liab + Equity
+        // exactly at the close boundary and forever after, ONCE every prior year is
+        // closed (prior P&L lands in 570/580 via close+open).
+        var closeId = YearEnd.CloseId(tenantId, q.AsOf.Year);
+        var closeExists = await _journals.GetActiveBySourceAsync(JournalSourceType.Manual, closeId, ct) is not null;
 
-        var priorYearEnd = new DateTime(q.AsOf.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(-1);
-        var retainedPrior = 0m;
-        if (q.AsOf > priorYearEnd)
+        var openYearEarnings = 0m;
+        if (!closeExists)
         {
-            var priorAggregates = await _journals.GetAccountBalancesAsOfAsync(priorYearEnd, ct);
-            var priorRows = FinancialStatementMath.ToNaturalRows(priorAggregates, byId);
-            retainedPrior = FinancialStatementMath.ComputeNetIncome(priorRows);
+            var openRows = openingExists
+                ? rows
+                : FinancialStatementMath.ToNaturalRows(
+                    await _journals.GetAccountBalancesAsync(yearStart, q.AsOf, ct), byId);
+            openYearEarnings = FinancialStatementMath.ComputeNetIncome(openRows);
         }
-        var currentYearEarnings = lifetimeEarnings - retainedPrior;
 
-        var totalLiabilitiesAndEquity = liabilities.Total + equity.Total + lifetimeEarnings;
+        var totalLiabilitiesAndEquity = liabilities.Total + equity.Total + openYearEarnings;
         var variance = Math.Round(assets.Total - totalLiabilitiesAndEquity, 4, MidpointRounding.ToEven);
         var isBalanced = Math.Abs(variance) < 0.01m;
 
@@ -124,8 +148,9 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
             assets,
             liabilities,
             equity,
-            Math.Round(currentYearEarnings, 4, MidpointRounding.ToEven),
-            Math.Round(retainedPrior, 4, MidpointRounding.ToEven),
+            Math.Round(openYearEarnings, 4, MidpointRounding.ToEven),
+            // 570/580 print as real equity lines now — no separate synthetic prior plug.
+            0m,
             Math.Round(totalLiabilitiesAndEquity, 4, MidpointRounding.ToEven),
             isBalanced,
             variance);

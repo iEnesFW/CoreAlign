@@ -102,6 +102,21 @@ public record IncomeStatementReportDto(
     decimal GrossProfit,
     decimal NetIncome);
 
+// ---------- Year-End Close / Opening ----------
+
+/// <summary>
+/// Outcome of a year-end close / opening / close-reversal. <see cref="AlreadyExisted"/>
+/// is true when the deterministic-id guard short-circuited (idempotent re-run) and the
+/// returned <see cref="Entry"/> is the pre-existing one rather than a freshly posted fiş.
+/// <see cref="NetResult"/> is the period net (590 credit if profit, −591 debit if loss)
+/// for a close, or the rolled retained-earnings amount for an opening.
+/// </summary>
+public record YearEndEntryDto(
+    int Year,
+    JournalEntryDto Entry,
+    decimal NetResult,
+    bool AlreadyExisted);
+
 // ---------- Subledger-to-GL Reconciliation ----------
 
 public record ReconciliationLineDto(
