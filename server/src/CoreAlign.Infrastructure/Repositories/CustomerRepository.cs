@@ -20,6 +20,15 @@ public class CustomerRepository : ICustomerRepository
         return _context.Customers.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
+    public async Task<Dictionary<Guid, Customer>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToArray();
+        if (idList.Length == 0) return new Dictionary<Guid, Customer>();
+        return await _context.Customers
+            .Where(c => idList.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<Customer> Items, int Total)> SearchAsync(
         string? search,
         bool? isActive,

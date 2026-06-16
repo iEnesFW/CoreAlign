@@ -9,6 +9,12 @@ public interface IStockItemRepository
     Task<StockItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StockItem>> GetByProductAsync(Guid productId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StockItem>> GetByWarehouseAsync(Guid warehouseId, CancellationToken cancellationToken = default);
+    /// <summary>Live OnHand keyed by (product, lot) for one warehouse, scoped to the
+    /// given products — one query instead of per-line GetAsync round-trips.</summary>
+    Task<IReadOnlyDictionary<(Guid ProductId, Guid? LotId), decimal>> GetOnHandByProductLotAsync(
+        Guid warehouseId,
+        IEnumerable<Guid> productIds,
+        CancellationToken cancellationToken = default);
     /// <summary>Slim list projection — see <see cref="StockItemSearchRow"/>.</summary>
     Task<IReadOnlyList<StockItemSearchRow>> SearchAsync(
         Guid? productId,

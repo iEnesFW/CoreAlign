@@ -128,7 +128,7 @@
 - **Fix:** `journal_lines` ⋈ filtered `journal_entries` (Status==Posted + date) üzerinde server-side `GroupBy(AccountId, AccountCode, AccountName)` → `g.Sum(Debit)/g.Sum(Credit)`. EF translate edemezse `FromSqlInterpolated` ile `SUM/GROUP BY`. DB account başına 1 satır döner, line başına değil.
 - **Effort:** medium
 
-**C2. TopProducts — invoice_lines'ı SQL-side aggregate + LIMIT** `[high]`
+**C2. TopProducts — invoice_lines'ı SQL-side aggregate + LIMIT** `[high]` _(✅ UYGULANDI — Npgsql `ToQueryString` + execute ile doğrulandı)_
 
 - **Ne yavaşlıyor:** Sadece top-10/100 dönen sorgu, önce window'daki **TÜM invoice_lines'ı** indiriyor (Take aggregate'ten sonra). 5M invoice_lines'da OOM + latency.
 - **Kanıt:** `ReportRepository.cs:208-240 GetTopProductsGlobalAsync`; yorum (:222) "GroupBy içinde nested Distinct().Count() translate edilemiyor. Flat fetch ... Raw SQL'e geçmek lazım".
@@ -149,7 +149,7 @@
 - **Fix:** `SearchAsync`'ten `.Include(c=>c.Lines)` çıkar, slim `StockCountSearchRow` project et (Id, CountNumber, WarehouseId/Name, Status, PlannedAtUtc, `c.Lines.Count` scalar subquery) — `OrderRepository.SearchAsync` pattern'i. `.Include(Lines)` sadece `GetWithLinesAsync` detail'de kalsın.
 - **Effort:** low
 
-**C5. PostStockCount N+1 — batch-load stock_items** `[high]`
+**C5. PostStockCount N+1 — batch-load stock_items** `[high]` _(✅ UYGULANDI — `GetOnHandByProductLotAsync` tek query)_
 
 - **Ne yavaşlıyor:** Hot inventory write'ında her counted line için tek `StockItem` SELECT loop'ta → N sequential round-trip (N = warehouse'taki stock item sayısı). 10k line = 10k awaited query, açık transaction tüm süre lock tutuyor.
 - **Kanıt:** `StockCountHandlers.cs:200-221` (`foreach ... await _stockItems.GetAsync(...)`); `GetAsync` `InventoryRepositories.cs:14-16` tek `FirstOrDefaultAsync`.
@@ -170,7 +170,7 @@
 - **Fix:** (a) ucuz: `.AsSplitQuery()` ekle; (b) iyi: slim `PurchaseOrderSearchRow`/`PurchaseRequisitionSearchRow` (header + `Lines.Count` + `Lines.Sum(...)` SQL subquery). Full `.Include(Lines)` sadece `GetByIdAsync`'te.
 - **Effort:** low
 
-**C8. ListDealerAllowedCustomers N+1 — GetByIdsAsync** `[medium]`
+**C8. ListDealerAllowedCustomers N+1 — GetByIdsAsync** `[medium]` _(✅ UYGULANDI — `GetByIdsAsync` + price-list `ListAsync` lookup)_
 
 - **Ne yavaşlıyor:** Her allowed customer id için tek SELECT loop'ta → dealer'ın customer tabanıyla büyüyen N×RTT, portal-facing endpoint.
 - **Kanıt:** `DealerPortalHandlers.cs:124-148` (`foreach ... await _customers.GetByIdAsync(id)`).

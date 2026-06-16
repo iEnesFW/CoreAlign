@@ -219,23 +219,47 @@ public class ReportRepository : IReportRepository
         if (fromUtc.HasValue) query = query.Where(l => l.Invoice!.IssueDate >= fromUtc.Value);
         if (toUtc.HasValue) query = query.Where(l => l.Invoice!.IssueDate <= toUtc.Value);
 
-        // EF Core 10: GroupBy icinde nested Distinct().Count() server-side translate edilemiyor.
-        // Flat fetch + in-memory group (production'da bir sure sonra Raw SQL'e gecmek lazim).
-        var flat = await query
-            .Select(l => new { l.ProductId, l.ProductSku, l.ProductName, l.Quantity, l.LineTotal, l.InvoiceId })
-            .ToListAsync(cancellationToken);
-
-        return flat
+        // Top-N by revenue via server-side GROUP BY — never materializes the full
+        // invoice_lines set (was a flat-fetch + in-memory group: a memory bomb at
+        // millions of lines). InvoiceCount = distinct invoices per product is the
+        // one aggregate EF Core 10 can't nest inside GroupBy, so it's a second
+        // server-side pass (DISTINCT projection -> GROUP BY COUNT) scoped to just
+        // the N winning products. Two small, fully DB-aggregated result sets.
+        var sums = await query
             .GroupBy(l => new { l.ProductId, l.ProductSku, l.ProductName })
-            .Select(g => new TopProductRow(
+            .Select(g => new
+            {
                 g.Key.ProductId,
                 g.Key.ProductSku,
                 g.Key.ProductName,
-                g.Sum(x => x.Quantity),
-                g.Sum(x => x.LineTotal),
-                g.Select(x => x.InvoiceId).Distinct().Count()))
-            .OrderByDescending(t => t.Revenue)
+                Quantity = g.Sum(x => x.Quantity),
+                Revenue = g.Sum(x => x.LineTotal),
+            })
+            .OrderByDescending(x => x.Revenue)
             .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        if (sums.Count == 0) return Array.Empty<TopProductRow>();
+
+        var topProductIds = sums.Select(s => s.ProductId).ToList();
+        var invoiceCounts = await query
+            .Where(l => topProductIds.Contains(l.ProductId))
+            .Select(l => new { l.ProductId, l.InvoiceId })
+            .Distinct()
+            .GroupBy(x => x.ProductId)
+            .Select(g => new { ProductId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        // Both sets are <= limit (<=100) rows; a linear match avoids a Dictionary
+        // (Guid? can't be a notnull key) and preserves the null-ProductId bucket.
+        return sums
+            .Select(s => new TopProductRow(
+                s.ProductId,
+                s.ProductSku,
+                s.ProductName,
+                s.Quantity,
+                s.Revenue,
+                invoiceCounts.FirstOrDefault(ic => ic.ProductId == s.ProductId)?.Count ?? 0))
             .ToList();
     }
 

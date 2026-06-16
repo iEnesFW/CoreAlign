@@ -35,6 +35,19 @@ public class StockItemRepository : IStockItemRepository
             .OrderBy(s => s.Product.Name)
             .ToListAsync(ct);
 
+    public async Task<IReadOnlyDictionary<(Guid ProductId, Guid? LotId), decimal>> GetOnHandByProductLotAsync(
+        Guid warehouseId, IEnumerable<Guid> productIds, CancellationToken ct = default)
+    {
+        var ids = productIds.Distinct().ToArray();
+        if (ids.Length == 0) return new Dictionary<(Guid, Guid?), decimal>();
+        var rows = await _context.StockItems
+            .AsNoTracking()
+            .Where(s => s.WarehouseId == warehouseId && ids.Contains(s.ProductId))
+            .Select(s => new { s.ProductId, s.LotId, s.OnHand })
+            .ToListAsync(ct);
+        return rows.ToDictionary(r => (r.ProductId, r.LotId), r => r.OnHand);
+    }
+
     public async Task<IReadOnlyList<StockItemSearchRow>> SearchAsync(
         Guid? productId, Guid? warehouseId, bool onlyBelowReorder, int page, int pageSize, CancellationToken ct = default)
     {

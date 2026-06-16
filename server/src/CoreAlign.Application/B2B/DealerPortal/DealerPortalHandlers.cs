@@ -118,24 +118,22 @@ public class ListDealerAllowedCustomersHandler : IRequestHandler<ListDealerAllow
         var allowed = await _scope.GetDealerAllowedCustomerIdsAsync(cancellationToken);
         if (allowed.Count == 0) return Array.Empty<DealerAllowedCustomerDto>();
 
-        var result = new List<DealerAllowedCustomerDto>(allowed.Count);
-        var priceListCache = new Dictionary<Guid, string?>();
+        // Batch-load customers (one IN query) and resolve price-list names from a
+        // single lookup, so DB round-trips stay O(1) regardless of how many
+        // customers the dealer is allowed to see — was N+1 (per-id GetByIdAsync).
+        var customers = await _customers.GetByIdsAsync(allowed, cancellationToken);
+        var priceListNames = (await _priceLists.ListAsync(null, cancellationToken))
+            .ToDictionary(p => p.Id, p => p.Name);
 
+        var result = new List<DealerAllowedCustomerDto>(customers.Count);
         foreach (var id in allowed)
         {
-            var customer = await _customers.GetByIdAsync(id, cancellationToken);
-            if (customer is null) continue;
+            if (!customers.TryGetValue(id, out var customer)) continue;
 
-            string? priceListName = null;
-            if (customer.PriceListId is Guid plId)
-            {
-                if (!priceListCache.TryGetValue(plId, out priceListName))
-                {
-                    var pl = await _priceLists.GetByIdAsync(plId, cancellationToken);
-                    priceListName = pl?.Name;
-                    priceListCache[plId] = priceListName;
-                }
-            }
+            var priceListName = customer.PriceListId is Guid plId
+                && priceListNames.TryGetValue(plId, out var name)
+                ? name
+                : null;
 
             result.Add(new DealerAllowedCustomerDto(
                 CustomerId: customer.Id,

@@ -5,6 +5,7 @@ namespace CoreAlign.Domain.Interfaces;
 public interface ICustomerRepository
 {
     Task<Customer?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, Customer>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<Customer> Items, int Total)> SearchAsync(
         string? search,
         bool? isActive,

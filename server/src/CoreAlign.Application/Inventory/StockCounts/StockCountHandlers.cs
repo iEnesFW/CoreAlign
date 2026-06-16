@@ -196,11 +196,19 @@ public class PostStockCountHandler : IRequestHandler<PostStockCountCommand, Stoc
         // the count window, and a blind stale delta would silently lose or invent
         // units. Delta = Counted − live OnHand; the GL scrap value is recomputed
         // from this live delta so the journal matches the real movement.
+        // Live warehouse balances for every counted line fetched in ONE query
+        // (keyed by product+lot) instead of a GetAsync round-trip per line — a
+        // full-warehouse count of thousands of lines stays a single DB hit. Each
+        // line targets a distinct (product, lot), so reading all balances up-front
+        // is equivalent to reading each just-in-time.
+        var countedLines = entity.Lines.Where(l => l.CountedQuantity.HasValue).ToList();
+        var liveOnHandByKey = await _stockItems.GetOnHandByProductLotAsync(
+            entity.WarehouseId, countedLines.Select(l => l.ProductId), ct);
+
         var netVarianceCost = 0m;
-        foreach (var line in entity.Lines.Where(l => l.CountedQuantity.HasValue))
+        foreach (var line in countedLines)
         {
-            var liveItem = await _stockItems.GetAsync(line.ProductId, entity.WarehouseId, line.LotId, ct);
-            var liveOnHand = liveItem?.OnHand ?? 0m;
+            var liveOnHand = liveOnHandByKey.TryGetValue((line.ProductId, line.LotId), out var oh) ? oh : 0m;
             var delta = Math.Round(line.CountedQuantity!.Value - liveOnHand, 4);
             if (delta == 0m) continue;
 
