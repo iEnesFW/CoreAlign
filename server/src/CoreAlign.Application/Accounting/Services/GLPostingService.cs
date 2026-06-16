@@ -4,7 +4,15 @@ using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Accounting.Services;
 
-public sealed record GLPostingLine(GLPostingKey Key, decimal Debit, decimal Credit, string? Description = null);
+/// <summary>
+/// A posting leg. <see cref="Key"/> resolves to an account through the tenant's
+/// role→account mapping; set <see cref="AccountCodeOverride"/> to instead target
+/// an exact GL account code, bypassing the mapping. The override exists so a
+/// reversal can mirror the precise account a prior entry actually booked to —
+/// even when the tenant has since remapped that role — instead of re-resolving
+/// (and possibly losing) the leg.
+/// </summary>
+public sealed record GLPostingLine(GLPostingKey Key, decimal Debit, decimal Credit, string? Description = null, string? AccountCodeOverride = null);
 
 public sealed record GLPostingRequest(
     JournalSourceType SourceType,
@@ -144,7 +152,7 @@ public class GLPostingService : IGLPostingService
             var credit = Math.Round(line.Credit, 4, MidpointRounding.ToEven);
             if (debit <= 0m && credit <= 0m) continue; // zero line (e.g. tax-free) — drop it
 
-            var account = Resolve(line.Key, overrides, accountsByCode);
+            var account = Resolve(line, overrides, accountsByCode);
             if (account is null) return GLPostingResult.SkippedUnmapped;
 
             resolved.Add((line with { Debit = debit, Credit = credit }, account));
@@ -238,11 +246,16 @@ public class GLPostingService : IGLPostingService
     }
 
     private static GLAccount? Resolve(
-        GLPostingKey key,
+        GLPostingLine line,
         IReadOnlyDictionary<GLPostingKey, string> overrides,
         IReadOnlyDictionary<string, GLAccount> accountsByCode)
     {
-        var code = overrides.TryGetValue(key, out var ov) ? ov : GLPostingDefaults.CodeFor(key);
+        // An explicit account override (e.g. a reversal mirroring the exact account
+        // a prior entry booked) wins over the role→account mapping; otherwise resolve
+        // the key through the tenant override, falling back to the standard code.
+        var code = !string.IsNullOrWhiteSpace(line.AccountCodeOverride)
+            ? line.AccountCodeOverride
+            : overrides.TryGetValue(line.Key, out var ov) ? ov : GLPostingDefaults.CodeFor(line.Key);
         if (string.IsNullOrWhiteSpace(code)) return null;
         if (!accountsByCode.TryGetValue(code, out var account)) return null;
         return account.IsPostable && account.IsActive ? account : null;

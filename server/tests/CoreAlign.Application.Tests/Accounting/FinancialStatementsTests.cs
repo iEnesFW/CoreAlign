@@ -218,6 +218,29 @@ public sealed class FinancialStatementsTests : IDisposable
     }
 
     [Fact]
+    public async Task Balance_sheet_balances_at_current_year_when_a_prior_year_was_never_closed()
+    {
+        // ACC-2 regression: 2025 earned net income (rev 20000 − cogs 12000 = 8000)
+        // but was NEVER closed, so its P&L still lives on the 6xx accounts with no
+        // 590/570 equity counterpart. Viewed at a 2026 as-of (with 2026 opex too),
+        // the from-inception fold must capture EVERY unclosed year's result — both
+        // 2025's +8000 and 2026's −5000 — or the 2025 net income is stranded on the
+        // asset side and the sheet is unbalanced.
+        await SeedLedgerAsync();
+
+        var asOf = new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc);
+        var bs = await BalanceSheetHandler().Handle(new GetBalanceSheetQuery(asOf), default);
+
+        bs.IsBalanced.Should().BeTrue(
+            $"Assets {bs.Assets.Total} must equal L+E+earnings {bs.TotalLiabilitiesAndEquity} with an unclosed prior year");
+        Math.Abs(bs.Variance).Should().BeLessThan(0.01m);
+        // No close exists for 2026, so the fold runs over the from-inception rows and
+        // equals lifetime P&L: 8000 (2025) − 5000 (2026 opex) = 3000.
+        bs.CurrentYearEarnings.Should().Be(3_000m);
+        bs.Equity.Lines.Should().NotContain(l => l.AccountCode == "570" || l.AccountCode == "590");
+    }
+
+    [Fact]
     public async Task Balance_sheet_balances_after_year_end_close_and_opening()
     {
         // AFTER closing 2025 and opening 2026: 2025 P&L (8000) is rolled into 570

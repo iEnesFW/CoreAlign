@@ -171,28 +171,32 @@ public sealed class PostFxRevaluationJob
         return true;
     }
 
-    // Mirror every line of the prior FX entry: a debit becomes a credit on the same
-    // account role and vice versa, valued at the originally-booked TRY amount. The
-    // account is matched back to a posting role by its code so the reversal resolves
-    // through the same mapping the engine used to book it.
+    // Mirror every line of the prior FX entry at its ACTUAL account: a debit becomes
+    // a credit on the same account and vice versa, valued at the originally-booked TRY
+    // amount. Each reversal leg carries the prior line's real account code as an
+    // explicit override, so it reverses what was actually booked rather than what the
+    // current role→account mapping would re-resolve to. This keeps the net-delta entry
+    // balanced and never drops a leg even when the tenant has remapped FxGain/FxLoss/
+    // AR/AP via GLPostingMapping after the prior mark was posted.
     private static IEnumerable<GLPostingLine> BuildReversalLines(JournalEntry prior)
     {
+        var desc = $"FX reval reversal {prior.Number}";
         foreach (var line in prior.Lines)
         {
-            var key = KeyForCode(line.AccountCode);
-            if (key is null) continue;
-            var desc = $"FX reval reversal {prior.Number}";
+            var key = KeyForCode(line.AccountCode) ?? GLPostingKey.FxGain;
             if (line.Debit > 0m)
             {
-                yield return new GLPostingLine(key.Value, 0m, line.Debit, desc);
+                yield return new GLPostingLine(key, 0m, line.Debit, desc, line.AccountCode);
             }
             else
             {
-                yield return new GLPostingLine(key.Value, line.Credit, 0m, desc);
+                yield return new GLPostingLine(key, line.Credit, 0m, desc, line.AccountCode);
             }
         }
     }
 
+    // Best-effort posting-role label for a reversal leg; resolution itself targets the
+    // line's explicit account code, so an unrecognized (overridden) code is harmless.
     private static GLPostingKey? KeyForCode(string code) => code switch
     {
         FxRevaluation.GainAccountCode => GLPostingKey.FxGain,

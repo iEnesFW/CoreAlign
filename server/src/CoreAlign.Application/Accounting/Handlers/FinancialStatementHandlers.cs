@@ -117,27 +117,19 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
         // longer a synthetic plug.
         var equity = FinancialStatementMath.SectionFor(rows, AccountType.Equity);
 
-        // Fold ONLY the open (still-unclosed) current year's P&L: once a year is
-        // closed, its result sits in 590 → 570 inside equity.Total, so re-adding it
-        // would double-count. If a Kapanış already exists for AsOf.Year the result
-        // is already in equity, so the fold is zero; otherwise it is the movement
-        // from Jan 1 of AsOf.Year through AsOf (the same window the sections use when
-        // an opening exists, so a single aggregate would suffice — kept explicit for
-        // the no-opening cumulative branch). This keeps Assets == Liab + Equity
-        // exactly at the close boundary and forever after, ONCE every prior year is
-        // closed (prior P&L lands in 570/580 via close+open).
+        // Fold the net income of EVERY still-unclosed year: a closed year's result
+        // is in 590 → 570/580 inside equity.Total (and its 6xx are swept to 0), so it
+        // never contributes here; an unclosed year's P&L still lives on its 6xx
+        // accounts with no equity counterpart, so it must be folded or the sheet
+        // strands that net income on the asset side. `rows` already carries the
+        // correct scope: the year window when an açılış exists (prior years rolled to
+        // 570/580), else the from-inception cumulative (closed years' 6xx = 0). So
+        // ComputeNetIncome(rows) is exactly the unclosed-P&L fold in both branches —
+        // keeping Assets == Liab + Equity at ANY as-of, before and after any close.
         var closeId = YearEnd.CloseId(tenantId, q.AsOf.Year);
         var closeExists = await _journals.GetActiveBySourceAsync(JournalSourceType.Manual, closeId, ct) is not null;
 
-        var openYearEarnings = 0m;
-        if (!closeExists)
-        {
-            var openRows = openingExists
-                ? rows
-                : FinancialStatementMath.ToNaturalRows(
-                    await _journals.GetAccountBalancesAsync(yearStart, q.AsOf, ct), byId);
-            openYearEarnings = FinancialStatementMath.ComputeNetIncome(openRows);
-        }
+        var openYearEarnings = closeExists ? 0m : FinancialStatementMath.ComputeNetIncome(rows);
 
         var totalLiabilitiesAndEquity = liabilities.Total + equity.Total + openYearEarnings;
         var variance = Math.Round(assets.Total - totalLiabilitiesAndEquity, 4, MidpointRounding.ToEven);
