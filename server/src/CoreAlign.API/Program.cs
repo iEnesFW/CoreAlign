@@ -3,12 +3,15 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using CoreAlign.API.Authorization;
+using CoreAlign.API.Hangfire;
 using CoreAlign.API.HostedServices;
 using CoreAlign.API.Middleware;
 using CoreAlign.API.Options;
 using CoreAlign.Application;
 using CoreAlign.Infrastructure;
 using CoreAlign.Infrastructure.Persistence;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -304,6 +307,23 @@ builder.Services.AddHostedService<CoreAlign.API.HostedServices.PartitionMaintena
 CoreAlign.API.HostedServices.DemoDataSeeder.IsSeedingEnabled(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
 
+// Hangfire recurring-job host. Real environments use PostgreSQL storage (Hangfire
+// creates its own "hangfire" schema). Skipped under the test flag
+// (Hangfire:UseMemoryStorage) — the integration tests drive the outbox via the inline
+// OutboxDrainBehavior, not the background server, and there is no in-memory storage
+// package wired for tests. RecurringJobsRegistration.RegisterAll runs after Build.
+var hangfireEnabled = !builder.Configuration.GetValue<bool>("Hangfire:UseMemoryStorage");
+if (hangfireEnabled)
+{
+    builder.Services.AddHangfire(cfg => cfg
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(
+            builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty)));
+    builder.Services.AddHangfireServer();
+}
+
 var app = builder.Build();
 
 // Migrations are run out-of-band by default (CI/CD step or one-off job). The
@@ -394,6 +414,17 @@ app.UseCors("AllowFrontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (hangfireEnabled)
+{
+    // Dashboard behind the existing role-based authorization filter; RegisterAll
+    // schedules the recurring jobs (outbox drain, token/log cleanup, FX ingest, etc.).
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+    });
+    RecurringJobsRegistration.RegisterAll(app.Services);
+}
 
 app.UseMiddleware<EtagMiddleware>();
 app.UseOutputCache();
