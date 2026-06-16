@@ -88,7 +88,8 @@ public class StockConservationBugHuntTests
 
         // Real AllocationService applies the delta to the CURRENT live item, and the
         // handler re-reads the live on-hand to reconcile to the counted absolute.
-        _stockItems.GetAsync(ProductId, WarehouseId, line.LotId, Arg.Any<CancellationToken>()).Returns(liveItem);
+        _stockItems.GetOnHandByProductLotAsync(WarehouseId, Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<(Guid ProductId, Guid? LotId), decimal> { { (ProductId, line.LotId), currentOnHand } });
         _stockItems.GetOrCreateAsync(ProductId, WarehouseId, line.LotId, Arg.Any<CancellationToken>()).Returns(liveItem);
 
         var sut = new PostStockCountHandler(counts, BuildService(), _stockItems, reasons, outbox, user, _uow);

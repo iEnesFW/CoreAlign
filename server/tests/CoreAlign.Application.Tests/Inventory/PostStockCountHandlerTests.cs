@@ -41,11 +41,13 @@ public class PostStockCountHandlerTests
 
         // No movement inside the count window: the live warehouse on-hand still
         // equals the snapshot expected, so reconcile-to-counted reproduces the
-        // classic (counted − expected) variance the assertions encode.
-        var liveItem = new StockItem(line.ProductId, WarehouseId) { TenantId = TenantId };
-        liveItem.SeedOpeningBalance(expected, unitCost, DateTime.UtcNow);
-        _stockItems.GetAsync(line.ProductId, WarehouseId, line.LotId, Arg.Any<CancellationToken>())
-            .Returns(liveItem);
+        // classic (counted − expected) variance the assertions encode. The handler
+        // batch-loads live on-hand via GetOnHandByProductLotAsync (keyed by product+lot).
+        _stockItems.GetOnHandByProductLotAsync(WarehouseId, Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<(Guid ProductId, Guid? LotId), decimal>
+            {
+                { (line.ProductId, line.LotId), expected },
+            });
         return c;
     }
 

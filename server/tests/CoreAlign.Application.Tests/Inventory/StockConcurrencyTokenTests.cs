@@ -40,6 +40,10 @@ public class StockConcurrencyTokenTests
             .Options;
         var db = new CoreAlignDbContext(options, tenant, Substitute.For<IPublisher>());
         db.Database.EnsureCreated();
+        // Seed the parent Tenant row: TenantEntity rows now carry a tenant_id FK to
+        // tenants(id) (ApplyTenantForeignKeys), which SQLite enforces.
+        db.Tenants.Add(new Tenant("Test", "test") { Id = tenantId });
+        db.SaveChanges();
         return (db, conn);
     }
 
