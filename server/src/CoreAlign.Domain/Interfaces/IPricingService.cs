@@ -78,6 +78,17 @@ public interface IJournalEntryRepository
     Task<bool> NumberExistsAsync(string number, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<bool> ExistsForSourceAsync(Domain.Enums.JournalSourceType sourceType, Guid sourceDocumentId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Most-recent posted entry of a given source type with a posting date strictly
+    /// before <paramref name="beforePostingDate"/>, including its lines. Used by the
+    /// FX revaluation job to reverse the prior mark so consecutive runs net to the
+    /// current position instead of accumulating.
+    /// </summary>
+    Task<JournalEntry?> GetMostRecentBySourceTypeBeforeAsync(
+        Domain.Enums.JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Search with paging — list view skips the lines collection.</summary>
     Task<(IReadOnlyList<JournalEntrySearchRow> Items, int Total)> SearchAsync(
         string? search,

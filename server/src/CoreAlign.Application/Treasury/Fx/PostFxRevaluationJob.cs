@@ -1,3 +1,6 @@
+using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -31,36 +34,66 @@ public static class FxRevaluation
         }
         return rows;
     }
+
+    /// <summary>
+    /// Stable idempotency key for a tenant's revaluation as of a given date: one
+    /// entry per (tenant, calendar day). A re-run for the same asOf resolves to the
+    /// same key, so <see cref="IGLPostingService"/> dedupes it instead of double
+    /// posting the unrealized mark.
+    /// </summary>
+    public static Guid SourceKey(Guid tenantId, DateTime asOfUtc) =>
+        DeterministicGuid.From($"FXREVAL|{tenantId:N}|{asOfUtc:yyyyMMdd}");
+
+    /// <summary>
+    /// GL legs for one revaluation row, amount already in TRY (DeltaTry). Receivable
+    /// gain debits AR and credits FxGain; receivable loss debits FxLoss and credits
+    /// AR; payable gain debits AP and credits FxGain; payable loss debits FxLoss and
+    /// credits AP. Mirrors <see cref="Compute"/>'s IsGain semantics.
+    /// </summary>
+    public static IReadOnlyList<GLPostingLine> Legs(FxRevaluationRow row)
+    {
+        var amount = row.DeltaTry;
+        var subjectKey = row.IsReceivable ? GLPostingKey.AccountsReceivable : GLPostingKey.AccountsPayable;
+        var pnlKey = row.IsGain ? GLPostingKey.FxGain : GLPostingKey.FxLoss;
+        var desc = $"FX reval {row.Currency} {(row.IsGain ? "gain" : "loss")}";
+        return row.IsGain
+            ? new[]
+            {
+                new GLPostingLine(subjectKey, amount, 0m, desc),
+                new GLPostingLine(pnlKey, 0m, amount, desc),
+            }
+            : new[]
+            {
+                new GLPostingLine(pnlKey, amount, 0m, desc),
+                new GLPostingLine(subjectKey, 0m, amount, desc),
+            };
+    }
 }
 
 public sealed class PostFxRevaluationJob
 {
+    private const string SourceReference = "FX-REVAL";
+
     private readonly IExchangeRateRepository _rates;
     private readonly IJournalEntryRepository _journals;
-    private readonly IGLAccountRepository _accounts;
-    private readonly IDocumentSequenceRepository _sequences;
     private readonly IFxOpenBalanceReader _openBalances;
     private readonly ITenantContext _tenantContext;
-    private readonly IUnitOfWork _uow;
+    private readonly IGLPostingOutbox _outbox;
     private readonly ILogger<PostFxRevaluationJob> _logger;
 
     public PostFxRevaluationJob(
         IExchangeRateRepository rates,
         IJournalEntryRepository journals,
-        IGLAccountRepository accounts,
-        IDocumentSequenceRepository sequences,
         IFxOpenBalanceReader openBalances,
         ITenantContext tenantContext,
-        IUnitOfWork uow,
+        IGLPostingOutbox outbox,
         ILogger<PostFxRevaluationJob> logger)
     {
         _rates = rates;
         _journals = journals;
-        _accounts = accounts;
-        _sequences = sequences;
         _openBalances = openBalances;
         _tenantContext = tenantContext;
-        _uow = uow;
+        _outbox = outbox;
         _logger = logger;
     }
 
@@ -81,62 +114,93 @@ public sealed class PostFxRevaluationJob
             return 0;
         }
 
-        var totalRows = 0;
+        var totalTenants = 0;
         foreach (var byTenant in balances.GroupBy(b => b.TenantId).Where(g => g.Key != Guid.Empty))
         {
             var revaluations = FxRevaluation.Compute(byTenant, rateMap);
-            if (revaluations.Count == 0) continue;
 
             using (_tenantContext.PushScope(byTenant.Key))
             {
-                totalRows += await PostForTenantAsync(byTenant.Key, asOfUtc, revaluations, cancellationToken);
+                if (await EnqueueForTenantAsync(byTenant.Key, asOfUtc, revaluations, cancellationToken))
+                {
+                    totalTenants++;
+                }
             }
         }
 
-        _logger.LogInformation("PostFxRevaluationJob posted {Count} FX revaluation rows across all tenants at {AsOf:o}.", totalRows, asOfUtc);
-        return totalRows;
+        _logger.LogInformation("PostFxRevaluationJob enqueued FX revaluation for {Count} tenants at {AsOf:o}.", totalTenants, asOfUtc);
+        return totalTenants;
     }
 
-    private async Task<int> PostForTenantAsync(Guid tenantId, DateTime asOfUtc, IReadOnlyList<FxRevaluationRow> revaluations, CancellationToken cancellationToken)
+    private async Task<bool> EnqueueForTenantAsync(Guid tenantId, DateTime asOfUtc, IReadOnlyList<FxRevaluationRow> revaluations, CancellationToken cancellationToken)
     {
-        var allAccounts = await _accounts.ListAsync(null, null, null, null, cancellationToken);
-        var byCode = allAccounts.ToDictionary(a => a.Code, StringComparer.Ordinal);
-        if (!byCode.TryGetValue(FxRevaluation.GainAccountCode, out var gain) ||
-            !byCode.TryGetValue(FxRevaluation.LossAccountCode, out var loss) ||
-            !byCode.TryGetValue(FxRevaluation.ArAccountCode, out var ar) ||
-            !byCode.TryGetValue(FxRevaluation.ApAccountCode, out var ap))
-        {
-            _logger.LogWarning("PostFxRevaluationJob: required GL accounts missing (120/320/646/656) for tenant {TenantId}; skipping.", tenantId);
-            return 0;
-        }
+        // Net-delta (design B): reverse the immediately-prior FX revaluation mark
+        // and rebook the current one in the SAME balanced entry, so consecutive
+        // month-ends net to the latest position rather than accumulating. Both
+        // legs commit atomically; routing through the outbox/GLPostingService
+        // gives idempotency (one entry per tenant+asOf) and the closed-period gate
+        // for free.
+        var lines = new List<GLPostingLine>();
 
-        var number = await _sequences.ConsumeAsync(DocumentSequenceType.JournalNumber, asOfUtc, cancellationToken);
-        var entry = new JournalEntry(number, asOfUtc, asOfUtc, JournalEntryType.Mahsup, "FX revaluation", "FX-REVAL");
+        var prior = await _journals.GetMostRecentBySourceTypeBeforeAsync(
+            JournalSourceType.FxRevaluation, asOfUtc.Date, cancellationToken);
+        if (prior is not null)
+        {
+            lines.AddRange(BuildReversalLines(prior));
+        }
 
         foreach (var row in revaluations)
         {
-            var amount = row.DeltaTry;
-            var subjectAccount = row.IsReceivable ? ar : ap;
-            var pnlAccount = row.IsGain ? gain : loss;
+            lines.AddRange(FxRevaluation.Legs(row));
+        }
 
-            if (row.IsGain)
+        // Nothing to book and nothing to reverse — a flat period with no prior mark.
+        if (lines.Count == 0) return false;
+
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.FxRevaluation,
+            FxRevaluation.SourceKey(tenantId, asOfUtc),
+            SourceReference,
+            asOfUtc.Date,
+            JournalEntryType.Mahsup,
+            $"FX revaluation {asOfUtc:yyyy-MM-dd}",
+            lines,
+            Currency: "TRY",
+            ExchangeRate: 1m), cancellationToken);
+
+        return true;
+    }
+
+    // Mirror every line of the prior FX entry: a debit becomes a credit on the same
+    // account role and vice versa, valued at the originally-booked TRY amount. The
+    // account is matched back to a posting role by its code so the reversal resolves
+    // through the same mapping the engine used to book it.
+    private static IEnumerable<GLPostingLine> BuildReversalLines(JournalEntry prior)
+    {
+        foreach (var line in prior.Lines)
+        {
+            var key = KeyForCode(line.AccountCode);
+            if (key is null) continue;
+            var desc = $"FX reval reversal {prior.Number}";
+            if (line.Debit > 0m)
             {
-                entry.AddLine(subjectAccount.Id, subjectAccount.Code, subjectAccount.Name, debit: amount, credit: 0m, currency: row.Currency, foreignAmount: row.ForeignAmount, exchangeRate: row.CurrentRate);
-                entry.AddLine(pnlAccount.Id, pnlAccount.Code, pnlAccount.Name, debit: 0m, credit: amount);
+                yield return new GLPostingLine(key.Value, 0m, line.Debit, desc);
             }
             else
             {
-                entry.AddLine(pnlAccount.Id, pnlAccount.Code, pnlAccount.Name, debit: amount, credit: 0m);
-                entry.AddLine(subjectAccount.Id, subjectAccount.Code, subjectAccount.Name, debit: 0m, credit: amount, currency: row.Currency, foreignAmount: row.ForeignAmount, exchangeRate: row.CurrentRate);
+                yield return new GLPostingLine(key.Value, line.Credit, 0m, desc);
             }
         }
-
-        entry.AssignSource(JournalSourceType.Manual, entry.Id, "FX-REVAL");
-        await _journals.AddAsync(entry, cancellationToken);
-        await _uow.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("PostFxRevaluationJob posted {Count} FX revaluation rows for tenant {TenantId} at {AsOf:o}.", revaluations.Count, tenantId, asOfUtc);
-        return revaluations.Count;
     }
+
+    private static GLPostingKey? KeyForCode(string code) => code switch
+    {
+        FxRevaluation.GainAccountCode => GLPostingKey.FxGain,
+        FxRevaluation.LossAccountCode => GLPostingKey.FxLoss,
+        FxRevaluation.ArAccountCode => GLPostingKey.AccountsReceivable,
+        FxRevaluation.ApAccountCode => GLPostingKey.AccountsPayable,
+        _ => null,
+    };
 }
 
 public interface IFxOpenBalanceReader

@@ -24,4 +24,6 @@ public enum GLPostingKey
     InventoryWriteOff = 11,
     WithholdingReceivable = 12,
     PurchasePriceVariance = 13,
+    FxGain = 14,
+    FxLoss = 15,
 }

@@ -1,3 +1,5 @@
+using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Inventory.Commands;
 using CoreAlign.Application.Inventory.DTOs;
 using CoreAlign.Application.Inventory.Mapping;
@@ -11,13 +13,28 @@ namespace CoreAlign.Application.Inventory.Handlers;
 public class AdjustStockHandler : IRequestHandler<AdjustStockCommand, StockMovementDto>
 {
     private readonly IAllocationService _allocation;
+    private readonly IStockReasonCodeRepository _reasons;
+    private readonly IGLPostingOutbox _outbox;
     private readonly IUnitOfWork _uow;
 
-    public AdjustStockHandler(IAllocationService allocation, IUnitOfWork uow)
+    public AdjustStockHandler(
+        IAllocationService allocation,
+        IStockReasonCodeRepository reasons,
+        IGLPostingOutbox outbox,
+        IUnitOfWork uow)
     {
         _allocation = allocation;
+        _reasons = reasons;
+        _outbox = outbox;
         _uow = uow;
     }
+
+    private static readonly HashSet<StockReasonCategory> WriteOffCategories = new()
+    {
+        StockReasonCategory.DamageWriteOff,
+        StockReasonCategory.Expired,
+        StockReasonCategory.Loss,
+    };
 
     public async Task<StockMovementDto> Handle(AdjustStockCommand c, CancellationToken ct)
     {
@@ -31,8 +48,47 @@ public class AdjustStockHandler : IRequestHandler<AdjustStockCommand, StockMovem
             ReasonCodeId: c.ReasonCodeId,
             Notes: c.Notes,
             LotId: c.LotId), ct);
+
+        await EnqueueWriteOffIfApplicableAsync(c.ReasonCodeId, c.Delta, movement, ct);
+
         await _uow.SaveChangesAsync(ct);
         return InventoryMapper.ToDto(movement);
+    }
+
+    // Operator-declared damage / expiry / loss disposals are an extraordinary,
+    // non-operating loss of value and book to 689 (Diğer Olağan Dışı Gider ve
+    // Zararlar) against inventory 153. Routine shrinkage (generic Adjustment,
+    // Found, cycle-count variance) keeps its current behaviour and is never routed
+    // here. Keyed by the movement id so a replayed command dedupes.
+    private async Task EnqueueWriteOffIfApplicableAsync(Guid? reasonCodeId, decimal delta, StockMovement movement, CancellationToken ct)
+    {
+        if (reasonCodeId is null) return;
+        var reason = await _reasons.GetByIdAsync(reasonCodeId.Value, ct);
+        if (reason is null || !reason.AffectsCost || !WriteOffCategories.Contains(reason.Category)) return;
+
+        var amount = Math.Round(movement.Quantity * movement.UnitCost, 4);
+        if (amount <= 0m) return;
+
+        var lines = delta < 0m
+            ? new[]
+            {
+                new GLPostingLine(GLPostingKey.InventoryWriteOff, amount, 0m),
+                new GLPostingLine(GLPostingKey.Inventory, 0m, amount),
+            }
+            : new[]
+            {
+                new GLPostingLine(GLPostingKey.Inventory, amount, 0m),
+                new GLPostingLine(GLPostingKey.InventoryWriteOff, 0m, amount),
+            };
+
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.InventoryWriteOff,
+            movement.Id,
+            reason.Code,
+            movement.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            $"Stok değer düşüklüğü / imha ({reason.Code})",
+            lines), ct);
     }
 }
 

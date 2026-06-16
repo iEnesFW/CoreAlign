@@ -34,6 +34,22 @@ public class JournalEntryRepository : IJournalEntryRepository
             .AnyAsync(j => j.SourceType == sourceType && j.SourceDocumentId == sourceDocumentId, cancellationToken);
     }
 
+    public Task<JournalEntry?> GetMostRecentBySourceTypeBeforeAsync(
+        JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default)
+    {
+        var bound = DateTime.SpecifyKind(beforePostingDate, DateTimeKind.Utc);
+        return _context.JournalEntries
+            .Include(j => j.Lines)
+            .Where(j => j.SourceType == sourceType
+                && j.Status == JournalEntryStatus.Posted
+                && j.PostingDate < bound)
+            .OrderByDescending(j => j.PostingDate)
+            .ThenByDescending(j => j.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<JournalEntrySearchRow> Items, int Total)> SearchAsync(
         string? search,
         JournalEntryType? type,

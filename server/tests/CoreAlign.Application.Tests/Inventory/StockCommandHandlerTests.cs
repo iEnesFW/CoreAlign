@@ -9,6 +9,8 @@ namespace CoreAlign.Application.Tests.Inventory;
 public class StockCommandHandlerTests
 {
     private readonly IAllocationService _allocation = Substitute.For<IAllocationService>();
+    private readonly IStockReasonCodeRepository _reasons = Substitute.For<IStockReasonCodeRepository>();
+    private readonly CoreAlign.Application.Common.Outbox.IGLPostingOutbox _outbox = Substitute.For<CoreAlign.Application.Common.Outbox.IGLPostingOutbox>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
     private static readonly Guid ProductId = Guid.NewGuid();
@@ -22,7 +24,7 @@ public class StockCommandHandlerTests
     {
         _allocation.AdjustAsync(Arg.Any<StockAdjustmentRequest>(), Arg.Any<CancellationToken>())
             .Returns(Stub(StockMovementType.AdjustmentPositive, 5m));
-        var sut = new AdjustStockHandler(_allocation, _uow);
+        var sut = new AdjustStockHandler(_allocation, _reasons, _outbox, _uow);
 
         await sut.Handle(new AdjustStockCommand(ProductId, WarehouseId, 5m, 10m, null, null, "test"), default);
 

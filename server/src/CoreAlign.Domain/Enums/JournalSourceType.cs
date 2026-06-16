@@ -23,4 +23,6 @@ public enum JournalSourceType
     CostOfGoodsSoldReversal = 12,
     PurchaseOrderClose = 13,
     GoodsReceiptReversal = 14,
+    FxRevaluation = 15,
+    InventoryWriteOff = 16,
 }

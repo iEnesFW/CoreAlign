@@ -26,11 +26,16 @@ public class NegativeStockRejectionTests
     private readonly IStockAllocationRepository _allocations = Substitute.For<IStockAllocationRepository>();
     private readonly IWarehouseRepository _warehouses = Substitute.For<IWarehouseRepository>();
     private readonly IProductRepository _products = Substitute.For<IProductRepository>();
+    private readonly CoreAlign.Domain.Interfaces.IStockReasonCodeRepository _reasons = Substitute.For<CoreAlign.Domain.Interfaces.IStockReasonCodeRepository>();
+    private readonly CoreAlign.Application.Common.Outbox.IGLPostingOutbox _outbox = Substitute.For<CoreAlign.Application.Common.Outbox.IGLPostingOutbox>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
     private AllocationService BuildService() =>
         new(_stockItems, _movements, _allocations, _warehouses, _products,
             new StockOpeningBalanceBridge(_stockItems, _products, _movements));
+
+    private AdjustStockHandler BuildAdjustHandler() =>
+        new(BuildService(), _reasons, _outbox, _uow);
 
     private static IssueStockCommand IssueCommand(decimal quantity) =>
         new(ProductId, WarehouseId, quantity, null, null, null, null, null);
@@ -91,7 +96,7 @@ public class NegativeStockRejectionTests
     {
         var item = StockWith(onHand: 3m);
         _stockItems.GetOrCreateAsync(ProductId, WarehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
-        var handler = new AdjustStockHandler(BuildService(), _uow);
+        var handler = BuildAdjustHandler();
 
         Func<Task> act = () => handler.Handle(AdjustCommand(-5m), default);
 
@@ -105,7 +110,7 @@ public class NegativeStockRejectionTests
     {
         var item = StockWith(onHand: 5m);
         _stockItems.GetOrCreateAsync(ProductId, WarehouseId, null, Arg.Any<CancellationToken>()).Returns(item);
-        var handler = new AdjustStockHandler(BuildService(), _uow);
+        var handler = BuildAdjustHandler();
 
         await handler.Handle(AdjustCommand(-5m), default);
 

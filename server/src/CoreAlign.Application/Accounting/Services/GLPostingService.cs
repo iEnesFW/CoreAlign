@@ -39,6 +39,8 @@ public static class GLPostingDefaults
         GLPostingKey.InventoryWriteOff => "689",
         GLPostingKey.WithholdingReceivable => "193",
         GLPostingKey.PurchasePriceVariance => "631",
+        GLPostingKey.FxGain => "646",
+        GLPostingKey.FxLoss => "656",
         _ => null,
     };
 }

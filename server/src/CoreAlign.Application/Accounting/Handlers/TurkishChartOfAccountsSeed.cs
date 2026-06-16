@@ -8,9 +8,9 @@ namespace CoreAlign.Application.Accounting.Handlers;
 /// leaves; tenants extend it as needed. Codes follow the canonical pattern:
 ///   1 → 1xx → 1xx.xx → 1xx.xx.xxx (deeper levels are tenant-specific).
 /// </summary>
-internal static class TurkishChartOfAccountsSeed
+public static class TurkishChartOfAccountsSeed
 {
-    internal sealed record Entry(string Code, string Name, AccountType Type, int Level, bool IsPostable);
+    public sealed record Entry(string Code, string Name, AccountType Type, int Level, bool IsPostable);
 
     /// <summary>
     /// Returns the parent code by stripping the last segment of a dotted code.
@@ -99,6 +99,7 @@ internal static class TurkishChartOfAccountsSeed
 
         new("32",     "Ticari Borçlar",                                AccountType.Liability, 2, false),
         new("320",    "Satıcılar",                                     AccountType.Liability, 3, true),
+        new("322",    "Satıcılar - Mal/Hizmet Alış Tahakkukları (GR-IR)", AccountType.Liability, 3, true),
         new("321",    "Borç Senetleri",                                AccountType.Liability, 3, true),
         new("326",    "Alınan Depozito ve Teminatlar",                 AccountType.Liability, 3, true),
         new("329",    "Diğer Ticari Borçlar",                          AccountType.Liability, 3, true),
