@@ -177,7 +177,7 @@
 - **Fix:** `ICustomerRepository.GetByIdsAsync(IEnumerable<Guid>)` (Invoice/Product'ta zaten var pattern) → tek `WHERE Id IN (...)`, in-memory dictionary'den DTO. Price-list isimlerini de batch'le.
 - **Effort:** low
 
-**C9. (Opportunistic) Vendor payment-application N+1; GlassProject AsSplitQuery** `[low]`
+**C9. (Opportunistic) Vendor payment-application N+1; GlassProject AsSplitQuery** `[low]` _(✅ GlassProject `GetByIdWithRunsAsync` `.AsSplitQuery()` uygulandı — Runs.Panels × Connections cartesian kalktı; vendor payment-application N+1 bilinçli ertelendi: bill başına application sayısı bounded, scale riski yok, repo batch metodu gerektirir)_
 
 - `VendorBillingHandlers.cs:914-921 / :946-953`: distinct payment/bill id'leri toplayıp `GetByIdsAsync` ile batch'le (repo'lar batch metod kazanınca).
 - `GlassEnclosureProjectRepositories.cs:17-21 GetByIdWithRunsAsync`: iki sibling collection (Panels + Connections) cross-join → `.AsSplitQuery()` ekle (tek satır, diğer aggregate-root repo'ların disiplini).

@@ -16,6 +16,10 @@ public class GlassProjectRepository : IGlassProjectRepository
 
     public Task<GlassProject?> GetByIdWithRunsAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.GlassProjects
+            // AsSplitQuery: Runs.Panels and Connections are sibling collections — a
+            // single JOIN cross-joins them (panels × connections rows). Split into
+            // separate queries so a large project doesn't materialize the product.
+            .AsSplitQuery()
             .Include(p => p.Runs).ThenInclude(r => r.Panels)
             .Include(p => p.Connections)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
