@@ -329,6 +329,8 @@ public class CoreAlignDbContext : DbContext
             if (entityType.IsOwned()) continue;
             if (entityType.FindPrimaryKey() is null) continue;
             if (!typeof(TenantEntity).IsAssignableFrom(clrType)) continue;
+            // WHY: IGlobalReadable rows use tenant_id = Guid.Empty (global, not a real tenant) — a tenant FK would reject them.
+            if (typeof(IGlobalReadable).IsAssignableFrom(clrType)) continue;
             if (entityType.GetForeignKeys().Any(fk => fk.PrincipalEntityType.ClrType == typeof(Tenant))) continue;
 
             modelBuilder.Entity(clrType)

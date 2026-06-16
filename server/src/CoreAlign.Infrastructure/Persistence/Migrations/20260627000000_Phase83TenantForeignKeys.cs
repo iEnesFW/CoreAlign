@@ -258,14 +258,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "fk_exchange_rates_tenants_tenant_id",
-                table: "exchange_rates",
-                column: "tenant_id",
-                principalTable: "tenants",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
                 name: "fk_external_user_bindings_tenants_tenant_id",
                 table: "external_user_bindings",
                 column: "tenant_id",
@@ -842,22 +834,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                 onDelete: ReferentialAction.Restrict);
 
             migrationBuilder.AddForeignKey(
-                name: "fk_project_template_run_preset_tenants_tenant_id",
-                table: "project_template_run_preset",
-                column: "tenant_id",
-                principalTable: "tenants",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
-                name: "fk_project_templates_tenants_tenant_id",
-                table: "project_templates",
-                column: "tenant_id",
-                principalTable: "tenants",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Restrict);
-
-            migrationBuilder.AddForeignKey(
                 name: "fk_provider_webhook_inbox_tenants_tenant_id",
                 table: "provider_webhook_inbox",
                 column: "tenant_id",
@@ -1390,10 +1366,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                 table: "entity_audit_logs");
 
             migrationBuilder.DropForeignKey(
-                name: "fk_exchange_rates_tenants_tenant_id",
-                table: "exchange_rates");
-
-            migrationBuilder.DropForeignKey(
                 name: "fk_external_user_bindings_tenants_tenant_id",
                 table: "external_user_bindings");
 
@@ -1680,14 +1652,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
             migrationBuilder.DropForeignKey(
                 name: "fk_project_template_reviews_tenants_tenant_id",
                 table: "project_template_reviews");
-
-            migrationBuilder.DropForeignKey(
-                name: "fk_project_template_run_preset_tenants_tenant_id",
-                table: "project_template_run_preset");
-
-            migrationBuilder.DropForeignKey(
-                name: "fk_project_templates_tenants_tenant_id",
-                table: "project_templates");
 
             migrationBuilder.DropForeignKey(
                 name: "fk_provider_webhook_inbox_tenants_tenant_id",

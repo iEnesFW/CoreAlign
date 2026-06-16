@@ -16853,16 +16853,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_glass_profile_systems_tenants_tenant_id");
                 });
 
-            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.ProjectTemplate", b =>
-                {
-                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_project_templates_tenants_tenant_id");
-                });
-
             modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.ProjectTemplateInstall", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -16891,13 +16881,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_project_template_run_preset_project_templates_template_id");
-
-                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_project_template_run_preset_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.RunConnection", b =>
@@ -18306,16 +18289,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_tenant_settings_store_tenants_tenant_id");
                 });
 
-            modelBuilder.Entity("CoreAlign.Domain.Entities.Treasury.ExchangeRate", b =>
-                {
-                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_exchange_rates_tenants_tenant_id");
-                });
-
             modelBuilder.Entity("CoreAlign.Domain.Entities.TwoFactorBackupCode", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -18845,3 +18818,4 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
         }
     }
 }
+
