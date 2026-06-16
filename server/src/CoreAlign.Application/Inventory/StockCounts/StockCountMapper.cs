@@ -1,9 +1,31 @@
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Inventory.StockCounts;
 
 internal static class StockCountMapper
 {
+    // List rows carry no lines (loaded only in the detail view); totals are already
+    // aggregated server-side on the row, so Lines is intentionally empty here.
+    public static StockCountDto ToDto(StockCountSearchRow r) => new(
+        r.Id,
+        r.CountNumber,
+        r.WarehouseId,
+        r.WarehouseCode,
+        r.WarehouseName,
+        r.Status,
+        r.PlannedAtUtc,
+        r.CountingStartedAtUtc,
+        r.ReconciledAtUtc,
+        r.PostedAtUtc,
+        r.PlannedByUserId,
+        r.PostedByUserId,
+        r.Notes,
+        r.TotalVarianceQuantity,
+        r.TotalVarianceCost,
+        System.Array.Empty<StockCountLineDto>(),
+        r.CreatedAtUtc);
+
     public static StockCountLineDto ToDto(StockCountLine l) => new(
         l.Id,
         l.ProductId,

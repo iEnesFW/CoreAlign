@@ -96,7 +96,7 @@ public interface IStockCountRepository
     Task<StockCount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<StockCount?> GetWithLinesAsync(Guid id, CancellationToken cancellationToken = default);
     Task<bool> CountNumberExistsAsync(string countNumber, Guid? excludeId, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<StockCount> Items, int Total)> SearchAsync(
+    Task<(IReadOnlyList<StockCountSearchRow> Items, int Total)> SearchAsync(
         Guid? warehouseId,
         StockCountStatus? status,
         int page,
@@ -106,6 +106,28 @@ public interface IStockCountRepository
     void Update(StockCount stockCount);
     void Remove(StockCount stockCount);
 }
+
+/// <summary>Slim list row — header + totals computed via correlated SUM subqueries,
+/// so the list never joins/materializes stock_count_lines (a warehouse-wide count
+/// carries ~20k lines). Full lines load only in the detail (GetWithLinesAsync).</summary>
+public record StockCountSearchRow(
+    Guid Id,
+    string CountNumber,
+    Guid WarehouseId,
+    string WarehouseCode,
+    string WarehouseName,
+    StockCountStatus Status,
+    DateTime PlannedAtUtc,
+    DateTime? CountingStartedAtUtc,
+    DateTime? ReconciledAtUtc,
+    DateTime? PostedAtUtc,
+    Guid? PlannedByUserId,
+    Guid? PostedByUserId,
+    string? Notes,
+    decimal TotalVarianceQuantity,
+    decimal TotalVarianceCost,
+    int LineCount,
+    DateTime CreatedAtUtc);
 
 public interface ILotRepository
 {

@@ -142,7 +142,7 @@
 - **Fix:** `due = COALESCE(due_date, issue/bill_date)`, `SUM(CASE WHEN asOf - due <= 0 THEN outstanding ELSE 0 END) AS current` vb. `GROUP BY (customer/vendor, currency)`. LINQ conditional-sum projection (`CustomerLedgerRepository.GetCurrentBalanceAsync` pattern'i gibi) veya `FromSqlInterpolated`. Party başına 1 satır. Açık-AR filtresi için `(tenant_id, status, due_date)` index (bkz B-grubu) ekle.
 - **Effort:** medium
 
-**C4. StockCount list — `.Include(Lines)` kaldır, slim projection** `[high]` _(verdict: confirmed, critical→**high**)_
+**C4. StockCount list — `.Include(Lines)` kaldır, slim projection** `[high]` _(verdict: confirmed, critical→**high**)_ _(✅ UYGULANDI — `StockCountSearchRow` slim projection; totals correlated SUM subquery; gerçek repo Npgsql'de doğrulandı)_
 
 - **Ne yavaşlıyor:** List endpoint `stock_counts` ⋈ `stock_count_lines` (AsSplitQuery yok, projection yok); handler her line'ı DTO'ya map ediyor. Warehouse-wide count ~20k line; pageSize 25 → ~500k satır/sayfa cartesian. _(Not: severity high — tek child collection, pageSize cap'li (default 25, max 200), bu tablo partition'lı 6'dan değil; "OOM" abartı ama multi-hundred-ms-to-multi-second gerçek.)_
 - **Kanıt:** `AccountsPayableRepositories.cs:261-283 SearchAsync` (`Include(c=>c.Lines)`, no AsSplitQuery); `StockCountHandlers.cs:303-315` → `StockCountMapper.cs:40` (`c.Lines...Select(ToDto).ToList()`). Index `ix_stock_count_lines_stock_count_id` var (snapshot:12534) — join seekable ama satır sayısını bound'lamıyor.

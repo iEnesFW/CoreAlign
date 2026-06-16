@@ -264,26 +264,46 @@ public class StockCountRepository : IStockCountRepository
             c => c.CountNumber == countNumber && (excludeId == null || c.Id != excludeId),
             cancellationToken);
 
-    public async Task<(IReadOnlyList<StockCount> Items, int Total)> SearchAsync(
+    public async Task<(IReadOnlyList<StockCountSearchRow> Items, int Total)> SearchAsync(
         Guid? warehouseId,
         Domain.Enums.StockCountStatus? status,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.StockCounts
-            .Include(c => c.Lines)
-            .AsNoTracking()
-            .AsQueryable();
+        var query = _context.StockCounts.AsNoTracking().AsQueryable();
         if (warehouseId.HasValue) query = query.Where(c => c.WarehouseId == warehouseId.Value);
         if (status.HasValue) query = query.Where(c => c.Status == status.Value);
 
         var total = await query.CountAsync(cancellationToken);
+
+        // Slim projection: totals via correlated SUM subqueries on the lines, so the
+        // list never joins/materializes stock_count_lines (warehouse-wide count ~20k
+        // lines × pageSize would be a cartesian blow-up). TotalVariance* are computed
+        // properties on the entity (Lines.Sum), inlined here so they translate.
         var items = await query
             .OrderByDescending(c => c.PlannedAtUtc)
             .ThenByDescending(c => c.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(c => new StockCountSearchRow(
+                c.Id,
+                c.CountNumber,
+                c.WarehouseId,
+                c.WarehouseCode,
+                c.WarehouseName,
+                c.Status,
+                c.PlannedAtUtc,
+                c.CountingStartedAtUtc,
+                c.ReconciledAtUtc,
+                c.PostedAtUtc,
+                c.PlannedByUserId,
+                c.PostedByUserId,
+                c.Notes,
+                c.Lines.Sum(l => l.VarianceQuantity),
+                c.Lines.Sum(l => l.VarianceCost),
+                c.Lines.Count,
+                c.CreatedAtUtc))
             .ToListAsync(cancellationToken);
         return (items, total);
     }
