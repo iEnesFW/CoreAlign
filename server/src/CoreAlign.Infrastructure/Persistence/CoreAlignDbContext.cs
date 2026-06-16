@@ -246,7 +246,14 @@ public class CoreAlignDbContext : DbContext
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreAlignDbContext).Assembly);
         ApplyTenantQueryFilters(modelBuilder);
-        ApplyXminConcurrencyTokens(modelBuilder);
+        // xmin is a PostgreSQL system column (Npgsql maps to it with no DDL). On other
+        // providers (e.g. the SQLite test provider) EnsureCreated would materialize a real
+        // non-null xmin column with no default and break every insert, so apply it only on
+        // Npgsql. Non-Npgsql concurrency is covered by the app-managed IHasConcurrencyToken.
+        if (Database.IsNpgsql())
+        {
+            ApplyXminConcurrencyTokens(modelBuilder);
+        }
         ApplyTenantForeignKeys(modelBuilder);
         modelBuilder.ApplySoftDeleteFilters();
         modelBuilder.ApplySnakeCaseNaming();
