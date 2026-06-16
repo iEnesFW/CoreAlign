@@ -48,3 +48,14 @@ public record ListGLPostingMappingsQuery() : IRequest<IReadOnlyList<GLPostingMap
 public record GetTrialBalanceQuery(
     DateTime? FromDate = null,
     DateTime? ToDate = null) : IRequest<TrialBalanceReportDto>;
+
+// ---------- Financial Statements ----------
+
+/// <summary>Server-authoritative balance sheet (Bilanço) at a cumulative as-of cutoff.</summary>
+public record GetBalanceSheetQuery(DateTime AsOf) : IRequest<BalanceSheetReportDto>;
+
+/// <summary>Income statement (Gelir Tablosu) over a posting-date range — movement only.</summary>
+public record GetIncomeStatementQuery(DateTime FromDate, DateTime ToDate) : IRequest<IncomeStatementReportDto>;
+
+/// <summary>Subledger-to-GL reconciliation (AR 120 / AP 320 / cash 100+102) at a cumulative as-of.</summary>
+public record GetSubledgerReconciliationQuery(DateTime AsOf) : IRequest<ReconciliationReportDto>;

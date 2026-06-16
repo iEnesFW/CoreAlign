@@ -106,6 +106,16 @@ public interface IJournalEntryRepository
         DateTime? toDate,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Cumulative as-of variant: sums ALL posted history up to and including
+    /// <paramref name="asOf"/> (no lower bound). Full history is the carry-forward,
+    /// so this returns true account positions — the backbone of the balance sheet
+    /// and the subledger-to-GL reconciliation control figures.
+    /// </summary>
+    Task<IReadOnlyList<AccountBalanceRow>> GetAccountBalancesAsOfAsync(
+        DateTime asOf,
+        CancellationToken ct = default);
+
     Task AddAsync(JournalEntry entry, CancellationToken cancellationToken = default);
     void Update(JournalEntry entry);
     void Remove(JournalEntry entry);
@@ -202,6 +212,13 @@ public interface IVendorLedgerRepository
         CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentBalanceAsync(Guid vendorId, CancellationToken cancellationToken = default);
     Task<decimal> GetLastRunningBalanceAsync(Guid vendorId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Aggregate as-of balance across ALL vendors (Σ credit − Σ debit, the
+    /// "we owe" convention) where PostingDate &lt;= asOf. Used by the
+    /// subledger-to-GL reconciliation to compare against control account 320.
+    /// </summary>
+    Task<decimal> GetTotalBalanceAsOfAsync(DateTime asOf, CancellationToken cancellationToken = default);
 }
 
 public interface ICustomerProductPriceRepository

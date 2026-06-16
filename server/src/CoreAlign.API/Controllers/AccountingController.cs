@@ -153,6 +153,23 @@ public class AccountingController : ControllerBase
         [FromQuery] DateTime? toDate,
         CancellationToken ct)
         => (await _mediator.Send(new GetTrialBalanceQuery(fromDate, toDate), ct)).ToOk();
+
+    // ---------- Financial Statements (Bilanço / Gelir Tablosu / Mutabakat) ----------
+
+    [HttpGet("balance-sheet")]
+    public async Task<IActionResult> GetBalanceSheet([FromQuery] DateTime asOf, CancellationToken ct)
+        => (await _mediator.Send(new GetBalanceSheetQuery(asOf), ct)).ToOk();
+
+    [HttpGet("income-statement")]
+    public async Task<IActionResult> GetIncomeStatement(
+        [FromQuery] DateTime fromDate,
+        [FromQuery] DateTime toDate,
+        CancellationToken ct)
+        => (await _mediator.Send(new GetIncomeStatementQuery(fromDate, toDate), ct)).ToOk();
+
+    [HttpGet("reconciliation")]
+    public async Task<IActionResult> GetReconciliation([FromQuery] DateTime asOf, CancellationToken ct)
+        => (await _mediator.Send(new GetSubledgerReconciliationQuery(asOf), ct)).ToOk();
 }
 
 [ApiController]

@@ -230,4 +230,24 @@ public class VendorLedgerRepository : IVendorLedgerRepository
             .FirstOrDefaultAsync(ct);
         return last?.RunningBalanceAfter ?? 0m;
     }
+
+    public async Task<decimal> GetTotalBalanceAsOfAsync(DateTime asOf, CancellationToken cancellationToken = default)
+    {
+        // Aggregate over ALL vendors (no per-vendor Where). Filters on PostingDate
+        // to align with the GL's PostingDate cutoff for a true as-of reconciliation.
+        // Vendor convention: balance "we owe" = Σ credit − Σ debit.
+        var asOfUtc = DateTime.SpecifyKind(asOf, DateTimeKind.Utc);
+        var row = await _context.VendorLedgerEntries
+            .AsNoTracking()
+            .Where(e => e.PostingDate <= asOfUtc)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Debit = g.Sum(e => e.EntryType == LedgerEntryType.Debit ? e.Amount : 0m),
+                Credit = g.Sum(e => e.EntryType == LedgerEntryType.Credit ? e.Amount : 0m),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null) return 0m;
+        return Math.Round(row.Credit - row.Debit, 4);
+    }
 }

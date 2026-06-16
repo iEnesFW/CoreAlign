@@ -151,6 +151,39 @@ public class JournalEntryRepository : IJournalEntryRepository
             .ToList();
     }
 
+    public async Task<IReadOnlyList<AccountBalanceRow>> GetAccountBalancesAsOfAsync(
+        DateTime asOf,
+        CancellationToken ct = default)
+    {
+        // Cumulative variant of GetAccountBalancesAsync: drops the lower bound and
+        // sums ALL posted history up to and including asOf. Full history IS the
+        // opening-balance carry-forward, so asset/liability positions reflect their
+        // true balance — not just the period movement. Reversals self-net because
+        // each reversal is itself a Posted entry with PostingDate <= asOf.
+        // asOf is a calendar cutoff; include the whole day (end-of-day) so same-day
+        // time-stamped postings (e.g. a reversal booked at UtcNow) are not silently
+        // dropped when asOf arrives at midnight.
+        var asOfUtc = DateTime.SpecifyKind(asOf.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+        var grouped = await (
+            from l in _context.JournalLines.AsNoTracking()
+            join j in _context.JournalEntries on l.JournalEntryId equals j.Id
+            where j.Status == JournalEntryStatus.Posted && j.PostingDate <= asOfUtc
+            group new { l.Debit, l.Credit } by new { l.AccountId, l.AccountCode, l.AccountName } into g
+            orderby g.Key.AccountCode
+            select new
+            {
+                g.Key.AccountId,
+                g.Key.AccountCode,
+                g.Key.AccountName,
+                Debit = g.Sum(x => x.Debit),
+                Credit = g.Sum(x => x.Credit),
+            }).ToListAsync(ct);
+
+        return grouped
+            .Select(r => new AccountBalanceRow(r.AccountId, r.AccountCode, r.AccountName, r.Debit, r.Credit))
+            .ToList();
+    }
+
     public async Task AddAsync(JournalEntry entry, CancellationToken cancellationToken = default) =>
         await _context.JournalEntries.AddAsync(entry, cancellationToken);
 

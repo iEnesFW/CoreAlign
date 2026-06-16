@@ -214,6 +214,27 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
         return Math.Round(row.Debit - row.Credit, 4);
     }
 
+    public async Task<decimal> GetTotalBalanceAsOfAsync(DateTime asOf, CancellationToken cancellationToken = default)
+    {
+        // Aggregate over ALL customers (no per-customer Where). Filters on
+        // PostingDate to align with the GL's PostingDate cutoff for a true as-of
+        // reconciliation. Customer convention: balance = Σ debit − Σ credit.
+        var asOfUtc = DateTime.SpecifyKind(asOf, DateTimeKind.Utc);
+        var row = await _context.CustomerLedgerEntries
+            .AsNoTracking()
+            .Where(e => e.PostingDate <= asOfUtc)
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null) return 0m;
+        return Math.Round(row.Debit - row.Credit, 4);
+    }
+
     public async Task<int> CountByCustomerAsync(Guid customerId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken = default)
     {
         var query = _context.CustomerLedgerEntries.AsNoTracking().Where(e => e.CustomerId == customerId);

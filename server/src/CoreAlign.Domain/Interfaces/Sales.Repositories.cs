@@ -436,5 +436,13 @@ public interface ICustomerLedgerRepository
     Task<decimal> GetCurrentBalanceAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<decimal> GetLastRunningBalanceAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<decimal> GetBalanceAsOfAsync(Guid customerId, DateTime? cutoffUtc, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Aggregate as-of balance across ALL customers (Σ debit − Σ credit) where
+    /// PostingDate &lt;= asOf. Used by the subledger-to-GL reconciliation to
+    /// compare against control account 120.
+    /// </summary>
+    Task<decimal> GetTotalBalanceAsOfAsync(DateTime asOf, CancellationToken cancellationToken = default);
+
     Task<int> CountByCustomerAsync(Guid customerId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken = default);
 }

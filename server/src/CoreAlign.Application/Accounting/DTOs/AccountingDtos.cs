@@ -75,3 +75,45 @@ public class ResolvedPriceDto
     public Guid? TaxRateId { get; set; }
     public Guid? AppliedRecordId { get; set; }
 }
+
+// ---------- Financial Statements (Bilanço / Gelir Tablosu) ----------
+
+public record StatementLineDto(Guid AccountId, string AccountCode, string AccountName, decimal Amount);
+
+public record StatementSectionDto(List<StatementLineDto> Lines, decimal Total);
+
+public record BalanceSheetReportDto(
+    DateTime AsOf,
+    StatementSectionDto Assets,
+    StatementSectionDto Liabilities,
+    StatementSectionDto Equity,
+    decimal CurrentYearEarnings,
+    decimal RetainedPriorEarnings,
+    decimal TotalLiabilitiesAndEquity,
+    bool IsBalanced,
+    decimal Variance);
+
+public record IncomeStatementReportDto(
+    DateTime FromDate,
+    DateTime ToDate,
+    StatementSectionDto Revenue,
+    StatementSectionDto Cogs,
+    StatementSectionDto Opex,
+    decimal GrossProfit,
+    decimal NetIncome);
+
+// ---------- Subledger-to-GL Reconciliation ----------
+
+public record ReconciliationLineDto(
+    string ControlCode,
+    string ControlName,
+    string Subledger,
+    decimal GlBalance,
+    decimal SubledgerBalance,
+    decimal Variance,
+    bool IsReconciled);
+
+public record ReconciliationReportDto(
+    DateTime AsOf,
+    List<ReconciliationLineDto> Lines,
+    bool AllReconciled);
