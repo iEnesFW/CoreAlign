@@ -160,22 +160,40 @@ public sealed class EntityAuditLogRepository : IEntityAuditLogRepository
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
     {
         if (batchSize <= 0) batchSize = 500;
-        var orderedQuery = BuildAdvancedQuery(tenantId, criteria)
-            .OrderBy(a => a.ChangedAtUtc)
-            .ThenBy(a => a.Sequence);
 
-        var skip = 0;
+        // Keyset (seek) paging on (ChangedAtUtc, Sequence) — each batch reads only
+        // batchSize rows from the last cursor position (index ix_entity_audit_logs_
+        // tenant_id_changed_at), so a multi-million-row export is O(n), not the
+        // O(n^2) that OFFSET/Skip incurs (batch k scanning+discarding k*batchSize rows).
+        DateTime? cursorTs = null;
+        long cursorSeq = 0;
         while (true)
         {
             ct.ThrowIfCancellationRequested();
-            var batch = await orderedQuery.Skip(skip).Take(batchSize).ToListAsync(ct);
+            var query = BuildAdvancedQuery(tenantId, criteria);
+            if (cursorTs.HasValue)
+            {
+                var ts = cursorTs.Value;
+                var seq = cursorSeq;
+                query = query.Where(a => a.ChangedAtUtc > ts || (a.ChangedAtUtc == ts && a.Sequence > seq));
+            }
+
+            var batch = await query
+                .OrderBy(a => a.ChangedAtUtc)
+                .ThenBy(a => a.Sequence)
+                .Take(batchSize)
+                .ToListAsync(ct);
+
             if (batch.Count == 0) yield break;
             foreach (var row in batch)
             {
                 yield return row;
             }
             if (batch.Count < batchSize) yield break;
-            skip += batchSize;
+
+            var last = batch[^1];
+            cursorTs = last.ChangedAtUtc;
+            cursorSeq = last.Sequence;
         }
     }
 
