@@ -1,3 +1,4 @@
+using CoreAlign.Application.Accounting.Services;
 using CoreAlign.Application.Reports.Common;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Infrastructure.Persistence;
@@ -62,35 +63,64 @@ public sealed class ReportDataReader : IReportDataReader
         DateTime toUtc,
         CancellationToken cancellationToken = default)
     {
-        var customerInflows = await _context.Payments.AsNoTracking()
+        // Section is driven by the COUNTERPART (non-cash) leg of each movement:
+        // a customer receipt relieves Accounts Receivable (TDHP 120), a vendor
+        // payment relieves Accounts Payable (TDHP 320) — both day-to-day trade,
+        // hence Operating. The sectionizer keeps the rule in one place so other
+        // counterparts (loan repayments, capital, asset purchases) classify
+        // consistently if those payment streams gain a counterpart code.
+        var customerReceiptSection = CashFlowSectionizer.SectionForCounterpart(
+            GLPostingDefaults.CodeFor(GLPostingKey.AccountsReceivable));
+        var vendorPaymentSection = CashFlowSectionizer.SectionForCounterpart(
+            GLPostingDefaults.CodeFor(GLPostingKey.AccountsPayable));
+
+        var customerInflows = (await _context.Payments.AsNoTracking()
             .Where(p => p.Direction == PaymentDirection.CustomerReceipt
                 && p.Status != PaymentStatus.Draft
                 && p.Status != PaymentStatus.Void
                 && p.PaymentDate >= fromUtc
                 && p.PaymentDate <= toUtc)
+            .Select(p => new
+            {
+                p.PaymentDate,
+                p.CustomerNameSnapshot,
+                p.PaymentNumber,
+                p.Amount,
+                p.Currency,
+            })
+            .ToListAsync(cancellationToken))
             .Select(p => new CashFlowRow(
                 p.PaymentDate,
-                "Operating",
+                customerReceiptSection,
                 "Customer receipts",
                 p.CustomerNameSnapshot,
                 p.PaymentNumber,
                 p.Amount,
                 p.Currency))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
-        var vendorOutflows = await _context.VendorPayments.AsNoTracking()
+        var vendorOutflows = (await _context.VendorPayments.AsNoTracking()
             .Where(p => !p.IsVoided
                 && p.PaymentDate >= fromUtc
                 && p.PaymentDate <= toUtc)
+            .Select(p => new
+            {
+                p.PaymentDate,
+                p.VendorName,
+                p.PaymentNumber,
+                p.Amount,
+                p.Currency,
+            })
+            .ToListAsync(cancellationToken))
             .Select(p => new CashFlowRow(
                 p.PaymentDate,
-                "Operating",
+                vendorPaymentSection,
                 "Vendor payments",
                 p.VendorName,
                 p.PaymentNumber,
                 -p.Amount,
                 p.Currency))
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return customerInflows.Concat(vendorOutflows)
             .OrderBy(r => r.OccurredAtUtc)

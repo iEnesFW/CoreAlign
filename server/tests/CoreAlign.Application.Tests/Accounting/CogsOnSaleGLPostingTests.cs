@@ -3,6 +3,8 @@ using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Orders.EventHandlers;
 using CoreAlign.Application.Returns.EventHandlers;
+using CoreAlign.Application.Shipments.Commands;
+using CoreAlign.Application.Shipments.Handlers;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Events;
@@ -224,5 +226,106 @@ public class CogsGLPostingIdempotencyTests
 
         result.Should().Be(GLPostingResult.SkippedDuplicate);
         await _journals.DidNotReceive().AddAsync(Arg.Any<JournalEntry>(), Arg.Any<CancellationToken>());
+    }
+}
+
+/// <summary>
+/// FIN-P2-010 (REFUTED): the confirm-path and the WMS reserve→ship path are
+/// FSM-disjoint, so COGS is recognized exactly once. A Draft→Confirmed order
+/// books COGS at confirm via <see cref="OrderConfirmedStockHandler"/>. That
+/// confirmed order holds no stock allocations, so when its shipment is later
+/// dispatched <c>ConsumeForOrderLineAsync</c> issues nothing and returns cost 0;
+/// the dispatch handler only enqueues a COGS posting when cogsCost &gt; 0, so no
+/// second COGS is booked.
+/// </summary>
+public class ConfirmThenShipDoesNotDoubleCountCogsTests
+{
+    private static readonly Guid TenantId = Guid.NewGuid();
+    private static readonly Guid ProductId = Guid.NewGuid();
+    private static readonly Guid WarehouseId = Guid.NewGuid();
+
+    private const decimal AvgCost = 7m;
+    private const decimal Qty = 4m;
+    private const decimal ExpectedCogs = Qty * AvgCost; // 28
+
+    [Fact]
+    public async Task Confirm_books_cogs_once_and_subsequent_dispatch_of_allocationless_order_books_no_more()
+    {
+        var orderId = Guid.NewGuid();
+
+        var products = Substitute.For<IProductRepository>();
+        var components = Substitute.For<IProductComponentRepository>();
+        var stockTxns = Substitute.For<IStockTransactionRepository>();
+        var warehouses = Substitute.For<IWarehouseRepository>();
+        var stockItems = Substitute.For<IStockItemRepository>();
+        var movements = Substitute.For<IStockMovementRepository>();
+        var openingBalance = Substitute.For<IStockOpeningBalanceBridge>();
+        var confirmOutbox = Substitute.For<IGLPostingOutbox>();
+
+        components.GetTreeForProductsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, IReadOnlyList<(Guid, decimal)>>());
+        warehouses.GetDefaultAsync(Arg.Any<CancellationToken>())
+            .Returns(new Warehouse("WH-DEF", "Default", isDefault: true) { Id = WarehouseId, TenantId = TenantId });
+        products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product>
+            {
+                [ProductId] = new("SKU-A", "Widget", "pcs", 10m, "TRY", initialStock: 100m) { Id = ProductId, TenantId = TenantId },
+            });
+        stockItems.GetOrCreateAsync(ProductId, WarehouseId, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                var item = new StockItem(ProductId, WarehouseId) { Id = Guid.NewGuid(), TenantId = TenantId };
+                item.SeedOpeningBalance(100m, AvgCost, DateTime.UtcNow);
+                return item;
+            });
+
+        var confirmHandler = new OrderConfirmedStockHandler(
+            products, components, stockTxns, warehouses, stockItems, movements, confirmOutbox, openingBalance);
+
+        GLPostingRequest? confirmPosting = null;
+        await confirmOutbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => confirmPosting = r), Arg.Any<CancellationToken>());
+
+        await confirmHandler.Handle(
+            new OrderConfirmedEvent(TenantId, orderId, "ORD-1",
+                new[] { new OrderLineSnapshot(ProductId, Qty) }, DateTime.UtcNow),
+            default);
+
+        // Confirm posts COGS exactly once.
+        await confirmOutbox.Received(1).EnqueueAsync(Arg.Any<GLPostingRequest>(), Arg.Any<CancellationToken>());
+        confirmPosting!.SourceType.Should().Be(JournalSourceType.CostOfGoodsSold);
+        confirmPosting.Lines.Single(l => l.Key == GLPostingKey.CostOfGoodsSold).Debit.Should().Be(ExpectedCogs);
+
+        // The confirmed order holds no allocations, so dispatch issues nothing.
+        var shipments = Substitute.For<IShipmentRepository>();
+        var orders = Substitute.For<IOrderRepository>();
+        var allocator = Substitute.For<IAllocationService>();
+        var dispatchOutbox = Substitute.For<IGLPostingOutbox>();
+        var uow = Substitute.For<IUnitOfWork>();
+
+        var order = new Order("ORD-1", Guid.NewGuid(), DateTime.UtcNow, "TRY") { Id = orderId, TenantId = TenantId };
+        var orderLine = new OrderLine(ProductId, "SKU-A", "Widget", Qty, 10m);
+        order.ReplaceLines(new[] { orderLine });
+        order.ChangeStatus(OrderStatus.Confirmed);
+
+        var shipment = new Shipment("SHP-1", orderId, order.CustomerId, WarehouseId, shippingAddressSnapshot: null)
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+        };
+        shipment.AddLine(new ShipmentLine(orderLine.Id, ProductId, "SKU-A", "Widget", Qty, AvgCost));
+        shipment.MarkPicked(null);
+        shipment.MarkPacked();
+
+        shipments.GetWithLinesAsync(shipment.Id, Arg.Any<CancellationToken>()).Returns(shipment);
+        orders.GetWithLinesAndShipmentsAsync(orderId, Arg.Any<CancellationToken>()).Returns(order);
+        // Allocation-less order: nothing to consume, zero issue cost.
+        allocator.ConsumeForOrderLineAsync(orderId, orderLine.Id, Qty, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(new OrderLineConsumption(0m, 0m));
+
+        var dispatchHandler = new DispatchShipmentHandler(shipments, orders, allocator, dispatchOutbox, uow);
+        await dispatchHandler.Handle(new DispatchShipmentCommand(shipment.Id, "Carrier", "TRK", null, null), default);
+
+        // No second COGS posting from the dispatch (cogsCost == 0 path).
+        await dispatchOutbox.DidNotReceiveWithAnyArgs().EnqueueAsync(default!, default);
     }
 }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Accounting.Commands;
@@ -17,6 +18,9 @@ public class AccountingController : ControllerBase
     private readonly IMediator _mediator;
     public AccountingController(IMediator mediator) => _mediator = mediator;
 
+    private Guid CurrentUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+
     [HttpGet("periods")]
     public async Task<IActionResult> ListPeriods([FromQuery] int? year, CancellationToken ct)
         => (await _mediator.Send(new ListAccountingPeriodsQuery(year), ct)).ToOk();
@@ -32,17 +36,17 @@ public class AccountingController : ControllerBase
     [HttpPost("periods/{id:guid}/close")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> ClosePeriod(Guid id, [FromBody] ClosePeriodCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new ClosePeriodCommand(id, cmd?.ClosedByUserId, cmd?.Notes), ct)).ToOk();
+        => (await _mediator.Send(new ClosePeriodCommand(id, CurrentUserId, cmd?.Notes), ct)).ToOk();
 
     [HttpPost("periods/{id:guid}/reopen")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> ReopenPeriod(Guid id, [FromBody] ReopenPeriodCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new ReopenPeriodCommand(id, cmd?.ReopenedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new ReopenPeriodCommand(id, CurrentUserId), ct)).ToOk();
 
     [HttpPost("periods/{id:guid}/lock")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> LockPeriod(Guid id, [FromBody] LockPeriodCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new LockPeriodCommand(id, cmd?.LockedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new LockPeriodCommand(id, CurrentUserId), ct)).ToOk();
 
     // ---------- Chart of Accounts (Hesap Planı) ----------
 
