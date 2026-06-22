@@ -2665,7 +2665,9 @@
         "Elevation": "Elevation",
         "Rotation": "Rotation",
         "DeleteFloor": "Delete floor",
-        "DeleteRoof": "Delete roof"
+        "DeleteRoof": "Delete roof",
+        "BarrelTitle": "Barrel (curved) roof",
+        "ArcRise": "Curve rise"
       },
       "Transform": {
         "Title": "Transform",

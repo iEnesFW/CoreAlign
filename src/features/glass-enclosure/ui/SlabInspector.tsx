@@ -176,6 +176,23 @@ export function SlabInspector() {
         />
       </div>
 
+      {slab.kind === 'roof' && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.Slab.BarrelTitle', {
+              defaultValue: 'Beşik (kavisli) çatı',
+            })}
+          </p>
+          <NumberField
+            label={`${t('GlassEnclosure.Designer.Slab.ArcRise', { defaultValue: 'Kavis yüksekliği' })} (mm)`}
+            value={draft.arcRiseMm ?? 0}
+            min={0}
+            onCommit={(v) => commit({ arcRiseMm: v > 0 ? Math.round(v) : null })}
+            onDraft={(v) => setDraft({ ...draft, arcRiseMm: v })}
+          />
+        </div>
+      )}
+
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.Corner.Title', { defaultValue: 'Köşe ovalliği (mm)' })}

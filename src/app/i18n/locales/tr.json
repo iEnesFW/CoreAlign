@@ -2665,7 +2665,9 @@
         "Elevation": "Kot",
         "Rotation": "Dönüş",
         "DeleteFloor": "Zemini sil",
-        "DeleteRoof": "Çatıyı sil"
+        "DeleteRoof": "Çatıyı sil",
+        "BarrelTitle": "Beşik (kavisli) çatı",
+        "ArcRise": "Kavis yüksekliği"
       },
       "Transform": {
         "Title": "Dönüşüm",

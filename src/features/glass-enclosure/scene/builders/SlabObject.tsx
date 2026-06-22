@@ -28,6 +28,7 @@ import {
   restElevationMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
+import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanMoveDelta } from '../interaction/planSnap';
 import { useDesignerStore } from '../../model/designerStore';
@@ -111,6 +112,16 @@ const buildSlabGeometries = (
 ): { body: ExtrudeGeometry; featureItems: SlabFeatureItem[] } => {
   const thicknessMm = slab.thicknessMm;
   const thicknessM = thicknessMm / 1000;
+
+  // Barrel (single-curvature) roof: a curved sheet, already in the slab's oriented
+  // frame. Surface features are not projected onto the curve in this version (#6b).
+  if (slab.kind === 'roof' && slab.arcRiseMm && slab.arcRiseMm > 0) {
+    return {
+      body: buildBarrelRoofGeometry(slab.lengthMm, slab.depthMm, slab.arcRiseMm, slab.thicknessMm),
+      featureItems: [],
+    };
+  }
+
   const radii = slab.cornerRadiiMm ?? {};
   const shape = filletedShapeMm(
     [
@@ -196,7 +207,9 @@ export function SlabObject({
   const thicknessM = slab.thicknessMm / 1000;
   const elevationM = slab.elevationMm / 1000;
 
-  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked;
+  const isBarrelRoof = slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0;
+  // Length/depth stretch assumes a flat slab; a barrel roof is resized via its rise.
+  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
   const { body, featureItems } = useMemo(
     () => buildSlabGeometries(slab, !stretchActive),
     [slab, stretchActive],

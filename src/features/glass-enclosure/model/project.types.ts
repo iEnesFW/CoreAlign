@@ -452,6 +452,7 @@ export interface SceneSlabState {
   depthMm: number;
   thicknessMm: number;
   elevationMm: number;
+  arcRiseMm?: number | null;
   colorHex?: string | null;
   materialKey?: string | null;
   cornerRadiiMm?: CornerRadiiMm;
