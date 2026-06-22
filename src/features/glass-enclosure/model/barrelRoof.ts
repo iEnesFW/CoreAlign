@@ -22,7 +22,7 @@ export const barrelArcProfilePoints = (
   const radius = rise / 2 + (length * length) / (8 * rise);
   const cx = length / 2;
   const cy = rise - radius;
-  const n = Math.max(2, Math.round(segments));
+  const n = 2 * Math.max(1, Math.round(segments / 2)); // even → a sample lands on the ridge
   const points: BarrelPoint[] = [];
   for (let i = 0; i <= n; i += 1) {
     const x = (length * i) / n;

@@ -566,7 +566,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       pts.map((p) => ({ x: p.x, z: p.z })),
       FREE_SIMPLIFY_TOLERANCE_MM,
     );
-    if (pts.length < 3) return;
+    if (pts.length < 3) {
+      queueToast({
+        dedupeKey: 'glass-pen-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Pen.TooSmall', {
+          defaultValue: 'Çizilen şekil çok küçük veya geçersiz.',
+        }),
+      });
+      return;
+    }
     if (polygonSelfIntersects(pts.map((p) => ({ x: p.x, y: p.z })))) {
       queueToast({
         dedupeKey: 'glass-pen-self-intersect',
@@ -587,11 +596,22 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const centerZMm = Math.round((minZ + maxZ) / 2);
     const widthMm = Math.round(maxX - minX);
     const heightMm = Math.round(maxZ - minZ);
-    if (widthMm < PEN_FACE_MIN_MM || heightMm < PEN_FACE_MIN_MM) return;
+    if (widthMm < PEN_FACE_MIN_MM || heightMm < PEN_FACE_MIN_MM) {
+      queueToast({
+        dedupeKey: 'glass-pen-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Pen.TooSmall', {
+          defaultValue: 'Çizilen şekil çok küçük veya geçersiz.',
+        }),
+      });
+      return;
+    }
     const feature = {
       id: crypto.randomUUID(),
       shape: 'free' as const,
-      mode: 'recess' as const,
+      // A pen-drawn shape on a face is a through aperture (a shaped window/hole) by
+      // default so it visibly applies; switch to recess/protrude in the inspector.
+      mode: 'hole' as const,
       side: session.side,
       offsetMm,
       centerZMm,
@@ -604,7 +624,27 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const outline = featureOutlineMm(feature);
     if (session.hostKind === 'wall') {
       const wall = (scene.walls ?? []).find((w) => w.id === session.hostId);
-      if (!wall || !featureFitsWall(wall, outline)) return;
+      if (!wall) return;
+      if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+        queueToast({
+          dedupeKey: 'glass-arc-no-feature',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
+            defaultValue: 'Kavisli duvara henüz açıklık/şekil çizilemiyor.',
+          }),
+        });
+        return;
+      }
+      if (!featureFitsWall(wall, outline)) {
+        queueToast({
+          dedupeKey: 'glass-pen-no-fit',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DoesNotFit', {
+            defaultValue: 'Şekil yüzeye sığmıyor — kenarlardan biraz içeride çizin.',
+          }),
+        });
+        return;
+      }
       addWallFeature(wall.id, feature);
       setSelection({
         kind: 'wallFeature',
@@ -618,8 +658,27 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
     } else {
       const slab = (scene.slabs ?? []).find((s) => s.id === session.hostId);
-      if (!slab || !outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM))
+      if (!slab) return;
+      if (slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0) {
+        queueToast({
+          dedupeKey: 'glass-arc-no-feature',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
+            defaultValue: 'Kavisli yüzeye henüz açıklık/şekil çizilemiyor.',
+          }),
+        });
         return;
+      }
+      if (!outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM)) {
+        queueToast({
+          dedupeKey: 'glass-pen-no-fit',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DoesNotFit', {
+            defaultValue: 'Şekil yüzeye sığmıyor — kenarlardan biraz içeride çizin.',
+          }),
+        });
+        return;
+      }
       addSlabFeature(slab.id, feature);
       setSelection({
         kind: 'slabFeature',

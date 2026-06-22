@@ -2740,7 +2740,14 @@
         "DoesNotFit": "Alan duvar sınırlarına sığmıyor.",
         "Overlaps": "Alan mevcut bir boşluk veya katmanla çakışıyor.",
         "DoesNotFitSlab": "Alan zemin/çatı sınırlarına sığmıyor.",
-        "SlabTitle": "Zemin/çatı katmanı"
+        "SlabTitle": "Zemin/çatı katmanı",
+        "TooSmall": "Çizilen şekil çok küçük."
+      },
+      "Pen": {
+        "SelfIntersect": "Çizim kendisiyle kesişiyor; geçerli bir alan oluşturulamadı.",
+        "TooSmall": "Çizilen şekil çok küçük veya geçersiz.",
+        "DoesNotFit": "Şekil yüzeye sığmıyor — kenarlardan biraz içeride çizin.",
+        "ArcNoFeature": "Kavisli duvara henüz açıklık/şekil çizilemiyor."
       },
       "CollisionBlocked": "Bu değer başka bir nesneyle çakışıyor — uygulanmadı.",
       "PastePlaceHint": "Yapıştır: konuma tıkla · Esc iptal",

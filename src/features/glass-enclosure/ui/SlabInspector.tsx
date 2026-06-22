@@ -44,6 +44,9 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
+  // A barrel roof defers surface features (they aren't projected onto the curve, #6b).
+  const isBarrelRoof = slab.kind === 'roof' && (draft.arcRiseMm ?? 0) > 0;
+
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
     const alreadyColliding = penetratesAny(
@@ -225,60 +228,62 @@ export function SlabInspector() {
         </div>
       </div>
 
-      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
-        </p>
-        {(slab.features ?? []).length === 0 ? (
-          <p className="text-[11px] text-slate-400">
-            {t('GlassEnclosure.Designer.WallFeature.None', {
-              defaultValue: "Katman yok — üstteki 'Yüzeye çiz' aracıyla yüzeye şekil çizin.",
-            })}
+      {!isBarrelRoof && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
           </p>
-        ) : (
-          (slab.features ?? []).map((feature) => {
-            const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
-            const modeLabel = wallFeatureModeLabelKey(feature.mode);
-            return (
-              <div
-                key={feature.id}
-                className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelection({
-                      kind: 'slabFeature',
-                      runId: null,
-                      panelId: null,
-                      connectionId: null,
-                      hardwareId: null,
-                      wallId: null,
-                      slabId: slab.id,
-                      featureId: feature.id,
-                    })
-                  }
-                  className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+          {(slab.features ?? []).length === 0 ? (
+            <p className="text-[11px] text-slate-400">
+              {t('GlassEnclosure.Designer.WallFeature.None', {
+                defaultValue: "Katman yok — üstteki 'Yüzeye çiz' aracıyla yüzeye şekil çizin.",
+              })}
+            </p>
+          ) : (
+            (slab.features ?? []).map((feature) => {
+              const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
+              const modeLabel = wallFeatureModeLabelKey(feature.mode);
+              return (
+                <div
+                  key={feature.id}
+                  className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
                 >
-                  {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
-                  {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
-                  {feature.heightMm}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeSlabFeature(slab.id, feature.id)}
-                  className="text-slate-400 hover:text-danger-500"
-                  aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
-                    defaultValue: 'Katmanı sil',
-                  })}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            );
-          })
-        )}
-      </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setSelection({
+                        kind: 'slabFeature',
+                        runId: null,
+                        panelId: null,
+                        connectionId: null,
+                        hardwareId: null,
+                        wallId: null,
+                        slabId: slab.id,
+                        featureId: feature.id,
+                      })
+                    }
+                    className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+                  >
+                    {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
+                    {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
+                    {feature.heightMm}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSlabFeature(slab.id, feature.id)}
+                    className="text-slate-400 hover:text-danger-500"
+                    aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
+                      defaultValue: 'Katmanı sil',
+                    })}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </section>
   );
 }

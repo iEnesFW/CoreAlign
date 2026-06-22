@@ -345,7 +345,26 @@ export function SlabObject({
   });
 
   const commitDraft = (spec: DraftFeature) => {
-    if (spec.widthMm < MIN_FEATURE_SIZE_MM || spec.heightMm < MIN_FEATURE_SIZE_MM) return;
+    if (isBarrelRoof) {
+      queueToast({
+        dedupeKey: 'glass-arc-no-feature',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
+          defaultValue: 'Kavisli yüzeye henüz açıklık/şekil çizilemiyor.',
+        }),
+      });
+      return;
+    }
+    if (spec.widthMm < MIN_FEATURE_SIZE_MM || spec.heightMm < MIN_FEATURE_SIZE_MM) {
+      queueToast({
+        dedupeKey: 'glass-slab-feature-fit',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.WallFeature.TooSmall', {
+          defaultValue: 'Çizilen şekil çok küçük.',
+        }),
+      });
+      return;
+    }
     let points: SceneWallFeaturePoint[] | undefined;
     let offsetMm = spec.offsetMm;
     let centerZMm = spec.centerZMm;
@@ -372,7 +391,9 @@ export function SlabObject({
     const feature: SceneWallFeature = {
       id: crypto.randomUUID(),
       shape: spec.shape,
-      mode: 'recess',
+      // Default a drawn shape to a through cutout (skylight/opening) so it visibly
+      // applies; switch to recess/protrude (with depth) in the inspector.
+      mode: 'hole',
       side: spec.side,
       offsetMm: Math.round(offsetMm),
       centerZMm: Math.round(centerZMm),
