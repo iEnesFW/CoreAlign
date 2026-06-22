@@ -15,6 +15,7 @@ import type {
   SceneWallState,
 } from './project.types';
 import type { GlassOpeningType } from './glassEnclosure.types';
+import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import type { QualityPreset } from '@/shared/three-engine';
 
@@ -142,6 +143,7 @@ interface DesignerState {
   paintColor: PaintColor | null;
   paintMaterial: string | null;
   drawShape: WallDrawShape;
+  cornerFillMode: CornerFillMode;
   multiSelection: MultiSelection;
   penFace: PenFaceSession | null;
 
@@ -150,6 +152,7 @@ interface DesignerState {
   setPaintColor: (color: PaintColor | null) => void;
   setPaintMaterial: (materialKey: string | null) => void;
   setDrawShape: (shape: WallDrawShape) => void;
+  setCornerFillMode: (mode: CornerFillMode) => void;
   toggleMultiSelect: (kind: MultiSelectKind, id: string) => void;
   setMultiSelect: (selection: MultiSelection) => void;
   clearMultiSelect: () => void;
@@ -480,6 +483,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   paintColor: null,
   paintMaterial: null,
   drawShape: 'rect',
+  cornerFillMode: 'auto',
   multiSelection: EMPTY_MULTI_SELECTION,
   penFace: null,
 
@@ -500,6 +504,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   setPaintColor: (paintColor) => set({ paintColor, paintMaterial: null }),
   setPaintMaterial: (paintMaterial) => set({ paintMaterial, paintColor: null }),
   setDrawShape: (drawShape) => set({ drawShape }),
+  setCornerFillMode: (cornerFillMode) => set({ cornerFillMode }),
   toggleMultiSelect: (kind, id) =>
     set((s) => {
       const key = kind === 'run' ? 'runIds' : kind === 'wall' ? 'wallIds' : 'slabIds';

@@ -7,6 +7,9 @@ export interface OpenEdge {
   lengthMm: number;
   heightMm?: number;
   geomZ?: number;
+  geomArcRadiusMm?: number;
+  geomArcSweepDeg?: number;
+  arcGlassBent?: boolean;
 }
 
 const ENDPOINT_TOLERANCE_MM = 150;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeMultiWallGapRuns } from './multiAutofill';
+import { arcEndLocal } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
 const wall = (
@@ -155,6 +156,45 @@ describe('computeMultiWallGapRuns', () => {
   it('returns nothing for fewer than two walls', () => {
     const a = wall('a', 0, 0, 2000, 0);
     expect(computeMultiWallGapRuns([a], [a], [])).toHaveLength(0);
+  });
+
+  it("'straight' mode bridges a perpendicular corner with one direct run, not L legs", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 2500, 500, 2000, 90);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'straight');
+    expect(edges).toHaveLength(1);
+    expect(edges[0].cornerGroup).toBeUndefined();
+    expect(edges[0].geomArcRadiusMm ?? null).toBeNull();
+  });
+
+  it("'L' mode does not fall back to a straight run on a collinear gap (skips the pair)", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 3000, 0, 2000, 0);
+    expect(computeMultiWallGapRuns([a, b], [a, b], [], 'L')).toHaveLength(0);
+  });
+
+  it("'arc' mode emits one bent run whose far end lands on the second gap endpoint", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 2500, 500, 2000, 90);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'arc');
+    expect(edges).toHaveLength(1);
+    const edge = edges[0];
+    expect(edge.geomArcRadiusMm ?? 0).toBeGreaterThan(0);
+    expect(Math.abs(edge.geomArcSweepDeg ?? 0)).toBeGreaterThan(0);
+    expect(edge.arcGlassBent).toBe(true);
+    const local = arcEndLocal(edge.lengthMm, edge.geomArcRadiusMm ?? 0, edge.geomArcSweepDeg ?? 0);
+    const rad = (edge.rotationDeg * Math.PI) / 180;
+    const endX = edge.originX + local.xMm * Math.cos(rad) - local.yMm * Math.sin(rad);
+    const endY = edge.originY + local.xMm * Math.sin(rad) + local.yMm * Math.cos(rad);
+    const gapEnds = [
+      { x: 2000, y: 0 },
+      { x: 2500, y: 500 },
+    ];
+    const near = (px: number, py: number) =>
+      gapEnds.some((g) => Math.hypot(g.x - px, g.y - py) < 20);
+    expect(near(edge.originX, edge.originY)).toBe(true);
+    expect(near(endX, endY)).toBe(true);
+    expect(Math.hypot(endX - edge.originX, endY - edge.originY)).toBeGreaterThan(100);
   });
 
   it('lifts the gap run to the shared base elevation when both walls are raised', () => {

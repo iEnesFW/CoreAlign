@@ -1,11 +1,19 @@
 import { RUN_PLAN_THICKNESS_MM, penetratesAny } from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
+import { deriveArcFromChordSagitta } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 import type { OpenEdge } from './wallAutofill';
 
 export interface GapEdge extends OpenEdge {
   cornerGroup?: number;
 }
+
+// How a corner gap between two free wall ends is bridged:
+// - 'auto'     L legs around the corner, falling back to a straight connector;
+// - 'straight' a single straight run end-to-end;
+// - 'L'        L legs only (skip the pair if they don't fit);
+// - 'arc'      a single curved run bulging around the outside corner.
+export type CornerFillMode = 'auto' | 'straight' | 'L' | 'arc';
 
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
@@ -279,6 +287,36 @@ const cornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null 
   return legs.length > 0 ? legs : null;
 };
 
+// A single curved run from A to B that bulges toward the outside corner (the
+// intersection of the two walls' outward rays). The run-arc convention (arcGeometry):
+// a run placed at A heading `rotationDeg` whose local chord subtends `dir·sweep/2`,
+// so rotationDeg = chordAngle − dir·sweep/2 lands the far end exactly on B.
+const arcCornerEdge = (a: WallEndpoint, b: WallEndpoint): GapEdge | null => {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const chordMm = Math.hypot(dx, dy);
+  if (chordMm < MIN_RUN_MM) return null;
+  const chordDeg = normalizeDeg(Math.atan2(dy, dx) * RAD2DEG);
+  const corner = lineIntersection(a, a.outwardDeg, b, b.outwardDeg);
+  const nx = -dy / chordMm;
+  const ny = dx / chordMm;
+  const signed = corner ? (corner.x - a.x) * nx + (corner.y - a.y) * ny : chordMm * 0.35;
+  const dir = signed >= 0 ? 1 : -1;
+  const sagittaMm = Math.min(Math.max(Math.abs(signed), chordMm * 0.1), chordMm * 0.5);
+  const derived = deriveArcFromChordSagitta(chordMm, sagittaMm);
+  return {
+    originX: Math.round(a.x),
+    originY: Math.round(a.y),
+    rotationDeg: roundDeg(normalizeDeg(chordDeg - dir * (derived.sweepDeg / 2))),
+    lengthMm: derived.arcLengthMm,
+    heightMm: Math.round(Math.min(a.heightMm, b.heightMm)),
+    geomZ: Math.round(Math.min(a.baseZMm, b.baseZMm)),
+    geomArcRadiusMm: derived.radiusMm,
+    geomArcSweepDeg: roundDeg(dir * derived.sweepDeg),
+    arcGlassBent: true,
+  };
+};
+
 const connectorLeavesOutward = (a: WallEndpoint, b: WallEndpoint): boolean => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -295,6 +333,7 @@ export const computeMultiWallGapRuns = (
   selectedWalls: SceneWallState[],
   allWalls: SceneWallState[],
   existingRuns: SceneRunState[],
+  mode: CornerFillMode = 'auto',
 ): GapEdge[] => {
   if (selectedWalls.length < 2) return [];
   const allEndpoints = allWalls.flatMap(wallEndpoints);
@@ -328,6 +367,30 @@ export const computeMultiWallGapRuns = (
     if (used.has(pair.i) || used.has(pair.j)) continue;
     const a = free[pair.i];
     const b = free[pair.j];
+
+    if (mode === 'arc') {
+      // A bent-glass run rounding the corner; bulge sits in empty space outside the
+      // walls, so it is placed directly (no trim) and blocked by its straight chord.
+      const arcEdge = arcCornerEdge(a, b);
+      if (!arcEdge) continue;
+      used.add(pair.i);
+      used.add(pair.j);
+      gapRunBlockers.push(
+        capsuleFootprint(
+          `gap-run-${edges.length}`,
+          a.x,
+          a.y,
+          Math.hypot(b.x - a.x, b.y - a.y),
+          normalizeDeg(Math.atan2(b.y - a.y, b.x - a.x) * RAD2DEG),
+          RUN_PLAN_THICKNESS_MM / 2,
+          arcEdge.geomZ ?? 0,
+          (arcEdge.geomZ ?? 0) + Math.max(1, arcEdge.heightMm ?? 1),
+        ),
+      );
+      edges.push(arcEdge);
+      continue;
+    }
+
     // Corner legs use each wall's own height (set inside cornerCandidates); the
     // straight single-run fallback can only carry one height, so it uses the shorter.
     const straightHeightMm = Math.round(Math.min(a.heightMm, b.heightMm));
@@ -339,12 +402,14 @@ export const computeMultiWallGapRuns = (
       ...wallBlockers.filter((w) => w.ownerId !== ownWallId),
       ...gapRunBlockers,
     ];
-    const corner = cornerCandidates(a, b);
+    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first.
+    const corner = mode === 'straight' ? null : cornerCandidates(a, b);
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
       .map((leg) => trimEdge(leg.edge, legBlockers(leg.ownWallId)))
       .filter((candidate): candidate is EdgeCandidate => candidate !== null);
-    if (trimmed.length === 0) {
+    // 'L' forces legs only — no straight fallback (skip the pair if legs don't fit).
+    if (trimmed.length === 0 && mode !== 'L') {
       isCorner = false;
       // A flat connector run can only carry one elevation; bridge the pair at the
       // lower of the two wall bases so it still reaches both ends.

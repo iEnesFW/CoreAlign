@@ -2762,6 +2762,13 @@
         "EqualHeights": "Match heights",
         "EqualLengths": "Match lengths",
         "FillGaps": "Fill gaps with glass",
+        "CornerFill": "Corner fill",
+        "CornerFillMode": {
+          "auto": "Auto",
+          "straight": "Straight",
+          "L": "L corner",
+          "arc": "Arc"
+        },
         "SkippedCollision": "{{count}} items skipped due to collision.",
         "NeedTwo": "Select at least two items for this action."
       },

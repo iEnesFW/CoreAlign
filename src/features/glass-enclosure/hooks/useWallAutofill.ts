@@ -46,6 +46,9 @@ export const useWallAutofill = () => {
               originY: edge.originY,
               rotationDeg: edge.rotationDeg,
               geomZ: edge.geomZ ?? null,
+              geomArcRadiusMm: edge.geomArcRadiusMm ?? null,
+              geomArcSweepDeg: edge.geomArcSweepDeg ?? null,
+              arcGlassBent: edge.arcGlassBent ?? null,
               panelCount: panelCountForWidth(edge.lengthMm, maxPanelWidthMm),
               label: `${runPrefix} ${state.scene.runs.length + created.length + 1}`,
               colorId: colorsQuery.data?.data?.[0]?.id ?? null,
@@ -106,7 +109,12 @@ export const useWallAutofill = () => {
     const multiWallIds = state.multiSelection.wallIds;
     if (multiWallIds.length >= 2) {
       const selectedWalls = walls.filter((wall) => multiWallIds.includes(wall.id));
-      const edges = computeMultiWallGapRuns(selectedWalls, walls, state.scene.runs);
+      const edges = computeMultiWallGapRuns(
+        selectedWalls,
+        walls,
+        state.scene.runs,
+        state.cornerFillMode,
+      );
       if (edges.length === 0) {
         queueToast({
           dedupeKey: 'glass-autofill-no-gaps',

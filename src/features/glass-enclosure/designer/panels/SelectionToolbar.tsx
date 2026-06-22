@@ -13,11 +13,13 @@ import {
   LockOpen,
   Plus,
   Ruler,
+  Spline,
   Trash2,
   Ungroup,
   UnfoldVertical,
   Wand2,
 } from 'lucide-react';
+import type { CornerFillMode } from '@/features/glass-enclosure/model/multiAutofill';
 import type { CornerRadiiMm } from '@/features/glass-enclosure/model/project.types';
 import { cn } from '@/shared/lib/cn';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -43,6 +45,7 @@ interface SelectionToolbarProps {
 const ARRAY_COUNT = 3;
 const ARRAY_GAP_MM = 200;
 const DEG2RAD = Math.PI / 180;
+const CORNER_FILL_ORDER: CornerFillMode[] = ['auto', 'straight', 'L', 'arc'];
 
 export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const { t } = useTranslation();
@@ -66,6 +69,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const { createPanel, deletePanel, deleteRun } = useDesignerEntityActions();
   const { autofill } = useWallAutofill();
   const multiSelection = useDesignerStore((s) => s.multiSelection);
+  const cornerFillMode = useDesignerStore((s) => s.cornerFillMode);
+  const setCornerFillMode = useDesignerStore((s) => s.setCornerFillMode);
   const applyScenePatch = useDesignerStore((s) => s.applyScenePatch);
   const { deleteMultiSelection } = useMultiSelectionDelete();
 
@@ -147,6 +152,21 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           />
           {multiSelection.wallIds.length >= 2 && (
             <>
+              <ToolbarButton
+                icon={<Spline size={13} />}
+                label={`${t('GlassEnclosure.Designer.MultiSelect.CornerFill', {
+                  defaultValue: 'Köşe dolgusu',
+                })}: ${t(`GlassEnclosure.Designer.MultiSelect.CornerFillMode.${cornerFillMode}`, {
+                  defaultValue: cornerFillMode,
+                })}`}
+                onClick={() =>
+                  setCornerFillMode(
+                    CORNER_FILL_ORDER[
+                      (CORNER_FILL_ORDER.indexOf(cornerFillMode) + 1) % CORNER_FILL_ORDER.length
+                    ],
+                  )
+                }
+              />
               <ToolbarButton
                 icon={<GroupIcon size={13} />}
                 label={t('GlassEnclosure.Designer.MultiSelect.Group', {

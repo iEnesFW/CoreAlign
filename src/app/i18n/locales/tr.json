@@ -2762,6 +2762,13 @@
         "EqualHeights": "Yükseklikleri eşitle",
         "EqualLengths": "Uzunlukları eşitle",
         "FillGaps": "Araları camla doldur",
+        "CornerFill": "Köşe dolgusu",
+        "CornerFillMode": {
+          "auto": "Otomatik",
+          "straight": "Düz",
+          "L": "L köşe",
+          "arc": "Yay"
+        },
         "SkippedCollision": "{{count}} öğe çakışma nedeniyle atlandı.",
         "NeedTwo": "Bu işlem için en az iki öğe seçin."
       },
