@@ -301,7 +301,10 @@ const arcCornerEdge = (a: WallEndpoint, b: WallEndpoint): GapEdge | null => {
   const nx = -dy / chordMm;
   const ny = dx / chordMm;
   const signed = corner ? (corner.x - a.x) * nx + (corner.y - a.y) * ny : chordMm * 0.35;
-  const dir = signed >= 0 ? 1 : -1;
+  // WHY: arcEndLocal bulges local +y for dir=+1, but the chord normal used for `signed`
+  // is rotated −dir·sweep/2 relative to that, so matching the outside corner needs the
+  // opposite sign (verified by the apex-side test, not intuition).
+  const dir = signed >= 0 ? -1 : 1;
   const sagittaMm = Math.min(Math.max(Math.abs(signed), chordMm * 0.1), chordMm * 0.5);
   const derived = deriveArcFromChordSagitta(chordMm, sagittaMm);
   return {

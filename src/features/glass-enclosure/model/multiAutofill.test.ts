@@ -197,6 +197,28 @@ describe('computeMultiWallGapRuns', () => {
     expect(Math.hypot(endX - edge.originX, endY - edge.originY)).toBeGreaterThan(100);
   });
 
+  it("'arc' mode bulges toward the outside corner, not into the room", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 2500, 500, 2000, 90);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'arc');
+    expect(edges).toHaveLength(1);
+    const edge = edges[0];
+    // Outside corner = intersection of the two walls' outward rays (a-end +X, b-start -Y).
+    const cornerC = { x: 2500, y: 0 };
+    const apexLocal = arcEndLocal(
+      edge.lengthMm / 2,
+      edge.geomArcRadiusMm ?? 0,
+      edge.geomArcSweepDeg ?? 0,
+    );
+    const rad = (edge.rotationDeg * Math.PI) / 180;
+    const apexX = edge.originX + apexLocal.xMm * Math.cos(rad) - apexLocal.yMm * Math.sin(rad);
+    const apexY = edge.originY + apexLocal.xMm * Math.sin(rad) + apexLocal.yMm * Math.cos(rad);
+    const chordMid = { x: 2250, y: 250 };
+    const apexToCorner = Math.hypot(apexX - cornerC.x, apexY - cornerC.y);
+    const midToCorner = Math.hypot(chordMid.x - cornerC.x, chordMid.y - cornerC.y);
+    expect(apexToCorner).toBeLessThan(midToCorner);
+  });
+
   it('lifts the gap run to the shared base elevation when both walls are raised', () => {
     const a = { ...wall('a', 0, 0, 2000, 0), geomZ: 900 };
     const b = { ...wall('b', 3000, 0, 2000, 0), geomZ: 900 };
