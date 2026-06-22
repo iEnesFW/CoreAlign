@@ -2642,6 +2642,7 @@
         "HeightEnd": "Uç yükseklik / eğim (mm)",
         "ArcTitle": "Kavis (yay)",
         "ArcRadius": "Kavis yarıçapı",
+        "ArcDropsFeatures": "Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.",
         "Arc": { "straight": "Düz", "left": "Sol kavis", "right": "Sağ kavis" },
         "Openings": "Boşluklar",
         "AddWindow": "Pencere",
@@ -2667,7 +2668,8 @@
         "DeleteFloor": "Zemini sil",
         "DeleteRoof": "Çatıyı sil",
         "BarrelTitle": "Beşik (kavisli) çatı",
-        "ArcRise": "Kavis yüksekliği"
+        "ArcRise": "Kavis yüksekliği",
+        "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı."
       },
       "Transform": {
         "Title": "Dönüşüm",

@@ -71,6 +71,23 @@ export function SlabInspector() {
     updateSlab(slab.id, patch);
   };
 
+  // Barrel roofs can't carry surface features yet (#6b); converting to a curve drops
+  // them rather than leaving data that vanishes from the 3D view but lingers.
+  const commitArcRise = (v: number) => {
+    const rise = v > 0 ? Math.round(v) : null;
+    const dropFeatures = rise !== null && (slab.features ?? []).length > 0;
+    commit({ arcRiseMm: rise, ...(dropFeatures ? { features: [] } : {}) });
+    if (dropFeatures) {
+      queueToast({
+        dedupeKey: 'glass-arc-drops-features',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Slab.BarrelDropsFeatures', {
+          defaultValue: 'Kavise çevirince bu çatının şekilleri kaldırıldı.',
+        }),
+      });
+    }
+  };
+
   const handleDelete = () => {
     removeSlab(slab.id);
     setSelection({
@@ -190,7 +207,7 @@ export function SlabInspector() {
             label={`${t('GlassEnclosure.Designer.Slab.ArcRise', { defaultValue: 'Kavis yüksekliği' })} (mm)`}
             value={draft.arcRiseMm ?? 0}
             min={0}
-            onCommit={(v) => commit({ arcRiseMm: v > 0 ? Math.round(v) : null })}
+            onCommit={(v) => commitArcRise(v)}
             onDraft={(v) => setDraft({ ...draft, arcRiseMm: v })}
           />
         </div>

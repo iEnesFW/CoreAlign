@@ -77,6 +77,27 @@ export function WallInspector() {
     updateWall(wall.id, patch);
   };
 
+  // Curved walls can't carry openings/surface features yet (#6a/#7), so converting a
+  // straight wall to an arc drops them rather than leaving orphaned data that vanishes
+  // from the 3D view but lingers in the model.
+  const commitArc = (sweep: number) => {
+    const hasExtras = (wall.openings ?? []).length > 0 || (wall.features ?? []).length > 0;
+    commit({
+      geomArcRadiusMm: (draft.geomArcRadiusMm ?? 0) > 0 ? draft.geomArcRadiusMm : draft.lengthMm,
+      geomArcSweepDeg: sweep,
+      ...(hasExtras ? { openings: [], features: [] } : {}),
+    });
+    if (hasExtras) {
+      queueToast({
+        dedupeKey: 'glass-arc-drops-features',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Wall.ArcDropsFeatures', {
+          defaultValue: 'Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.',
+        }),
+      });
+    }
+  };
+
   const handleDelete = () => {
     removeWall(wall.id);
     setSelection({
@@ -241,11 +262,7 @@ export function WallInspector() {
                 onClick={() =>
                   key === 'straight'
                     ? commit({ geomArcRadiusMm: null, geomArcSweepDeg: null })
-                    : commit({
-                        geomArcRadiusMm:
-                          (draft.geomArcRadiusMm ?? 0) > 0 ? draft.geomArcRadiusMm : draft.lengthMm,
-                        geomArcSweepDeg: sweep,
-                      })
+                    : commitArc(sweep ?? 90)
                 }
                 className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
                   active

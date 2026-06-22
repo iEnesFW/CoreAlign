@@ -2642,6 +2642,7 @@
         "HeightEnd": "End height / slope (mm)",
         "ArcTitle": "Curve (arc)",
         "ArcRadius": "Curve radius",
+        "ArcDropsFeatures": "Converting to a curve removed this wall's openings/shapes.",
         "Arc": { "straight": "Straight", "left": "Curve left", "right": "Curve right" },
         "Openings": "Openings",
         "AddWindow": "Window",
@@ -2667,7 +2668,8 @@
         "DeleteFloor": "Delete floor",
         "DeleteRoof": "Delete roof",
         "BarrelTitle": "Barrel (curved) roof",
-        "ArcRise": "Curve rise"
+        "ArcRise": "Curve rise",
+        "BarrelDropsFeatures": "Converting to a curve removed this roof's shapes."
       },
       "Transform": {
         "Title": "Transform",
