@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useUxMode } from '@/features/persona/hooks/useUxMode';
+import { useUxMode } from '@/shared/lib/persona';
 import { useWizardStore } from '../model/wizardStore';
 import { useSystemTemplatesQuery } from '../hooks/useSystemTemplatesQuery';
 import { TemplateCard } from './TemplateCard';
@@ -49,13 +49,13 @@ export const Step2Template = () => {
           onClick={() => handlePick(null)}
           className={cn(
             'group flex h-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-3 text-center transition-all',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
             templateId === null && templatesQuery.isSuccess
-              ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-500/10'
-              : 'border-slate-300 bg-white hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-700',
+              ? 'border-primary-500 bg-primary-50/60 dark:bg-primary-500/10'
+              : 'border-slate-300 bg-white hover:border-primary-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-primary-700',
           )}
         >
-          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-success-500 to-teal-600 text-white shadow-md shadow-success-500/20">
             <Sparkles size={22} />
           </span>
           <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">

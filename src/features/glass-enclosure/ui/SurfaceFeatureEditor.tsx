@@ -56,7 +56,7 @@ export function SurfaceFeatureEditor({
         <button
           type="button"
           onClick={onRemove}
-          className="inline-flex items-center gap-1 rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="inline-flex items-center gap-1 rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           <Trash2 size={12} />
           {t('Common.Delete', { defaultValue: 'Sil' })}
@@ -91,7 +91,7 @@ export function SurfaceFeatureEditor({
                 className={cn(
                   'rounded border px-1.5 py-1.5 text-[11px] font-medium transition',
                   feature.mode === mode
-                    ? 'border-blue-600 bg-blue-600 text-white'
+                    ? 'border-primary-600 bg-primary-600 text-white'
                     : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800',
                 )}
               >
@@ -181,7 +181,7 @@ export function SurfaceFeatureEditor({
               className={cn(
                 'h-6 w-6 rounded border',
                 feature.colorHex === color.hexColor
-                  ? 'border-blue-500 ring-2 ring-blue-400/60'
+                  ? 'border-primary-500 ring-2 ring-primary-400/60'
                   : 'border-slate-300 dark:border-slate-600',
               )}
               style={{ backgroundColor: color.hexColor }}

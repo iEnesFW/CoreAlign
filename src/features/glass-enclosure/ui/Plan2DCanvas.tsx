@@ -600,7 +600,7 @@ export function Plan2DCanvas({
         {Math.round(viewport.zoom * 1000) / 10}% · snap {SNAP_MM}mm
       </div>
       {tool === 'draw' && (
-        <div className="absolute bottom-3 right-3 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow">
+        <div className="absolute bottom-3 right-3 rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white shadow">
           {t('GlassEnclosure.Plan2D.DrawHint')}
         </div>
       )}
@@ -782,7 +782,7 @@ function ToolButton({
       onClick={onClick}
       className={`rounded p-1.5 transition ${
         active
-          ? 'bg-blue-600 text-white'
+          ? 'bg-primary-600 text-white'
           : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800'
       }`}
       aria-pressed={active}

@@ -5,6 +5,19 @@ import type {
   CuttingReportDto,
   CuttingSheet2DDto,
 } from '../model/engineering.types';
+import {
+  panelShapeToken,
+  placedPanelPolygonPoints,
+  type PanelShapeToken,
+} from '../cutting/placedPanelOutline';
+
+const SHAPE_KEY: Record<PanelShapeToken, string> = {
+  raked: 'GlassEnclosure.Cutting.Shape.Raked',
+  arched: 'GlassEnclosure.Cutting.Shape.Arched',
+  rounded: 'GlassEnclosure.Cutting.Shape.Rounded',
+  ellipse: 'GlassEnclosure.Cutting.Shape.Ellipse',
+  polygon: 'GlassEnclosure.Cutting.Shape.Polygon',
+};
 
 interface CuttingReportViewProps {
   report: CuttingReportDto | null;
@@ -36,7 +49,7 @@ export function CuttingReportView({ report, onRegenerate, isGenerating }: Cuttin
           type="button"
           onClick={onRegenerate}
           disabled={isGenerating}
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
         >
           <RotateCw size={14} className={isGenerating ? 'animate-spin' : ''} />
           {t('GlassEnclosure.Cutting.Regenerate')}
@@ -70,7 +83,7 @@ const ProfileSection = ({ report }: { report: CuttingReportDto }) => {
         </h3>
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline"
           onClick={() => downloadCsv(r, 'profile-cutting-plan')}
         >
           <FileDown size={12} />
@@ -108,7 +121,7 @@ const BarVisualizer = ({ pattern }: { pattern: CuttingPattern1DDto }) => {
         <span className="font-mono">
           Bar #{pattern.barIndex} · {total} mm
         </span>
-        <span className="text-amber-600 dark:text-amber-400">↳ {pattern.wasteMm} mm fire</span>
+        <span className="text-warning-600 dark:text-warning-400">↳ {pattern.wasteMm} mm fire</span>
       </div>
       <div className="relative h-7 w-full overflow-hidden rounded bg-slate-100 dark:bg-slate-900">
         {(pattern.cuts ?? []).map((cut) => {
@@ -117,7 +130,7 @@ const BarVisualizer = ({ pattern }: { pattern: CuttingPattern1DDto }) => {
           return (
             <div
               key={`${cut.label}-${cut.offsetMm}`}
-              className="absolute top-0 h-full border-r border-slate-300 bg-gradient-to-b from-blue-400/40 to-blue-500/60 px-1 text-[10px] font-mono text-blue-900 dark:from-blue-400/30 dark:to-blue-500/50 dark:text-blue-100"
+              className="absolute top-0 h-full border-r border-slate-300 bg-gradient-to-b from-primary-400/40 to-primary-500/60 px-1 text-[10px] font-mono text-primary-900 dark:from-primary-400/30 dark:to-primary-500/50 dark:text-primary-100"
               style={{ left: `${left}%`, width: `${width}%` }}
               title={`${cut.label} · ${cut.lengthMm}mm`}
             >
@@ -146,7 +159,7 @@ const GlassSection = ({ report }: { report: CuttingReportDto }) => {
         </h3>
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+          className="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline"
           onClick={() => downloadDxf(r)}
         >
           <FileDown size={12} />
@@ -173,7 +186,7 @@ const GlassSection = ({ report }: { report: CuttingReportDto }) => {
       />
 
       {(r.unplaced?.length ?? 0) > 0 && (
-        <div className="rounded border border-red-500/40 bg-red-50 p-2 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-300">
+        <div className="rounded border border-danger-500/40 bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-950/30 dark:text-danger-300">
           {t('GlassEnclosure.Cutting.UnplacedWarning', {
             count: r.unplaced?.length ?? 0,
             defaultValue: `${r.unplaced?.length ?? 0} unplaced`,
@@ -197,6 +210,7 @@ const GlassSection = ({ report }: { report: CuttingReportDto }) => {
 };
 
 const SheetVisualizer = ({ sheet }: { sheet: CuttingSheet2DDto }) => {
+  const { t } = useTranslation();
   const wasteM2 = sheet.wasteMm2 / 1_000_000;
   return (
     <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
@@ -204,7 +218,9 @@ const SheetVisualizer = ({ sheet }: { sheet: CuttingSheet2DDto }) => {
         <span className="font-mono">
           Jumbo #{sheet.sheetIndex} · {sheet.widthMm} × {sheet.heightMm} mm
         </span>
-        <span className="text-amber-600 dark:text-amber-400">↳ {wasteM2.toFixed(2)} m² fire</span>
+        <span className="text-warning-600 dark:text-warning-400">
+          ↳ {wasteM2.toFixed(2)} m² fire
+        </span>
       </div>
       <svg
         viewBox={`0 0 ${sheet.widthMm} ${sheet.heightMm}`}
@@ -212,31 +228,63 @@ const SheetVisualizer = ({ sheet }: { sheet: CuttingSheet2DDto }) => {
         preserveAspectRatio="xMidYMid meet"
         style={{ aspectRatio: `${sheet.widthMm} / ${sheet.heightMm}` }}
       >
-        {(sheet.placements ?? []).map((p, i) => (
-          <g key={`${p.label}-${i}`}>
-            <rect
-              x={p.x}
-              y={p.y}
-              width={p.widthMm}
-              height={p.heightMm}
-              fill="rgba(59, 130, 246, 0.45)"
-              stroke="#1e3a8a"
-              strokeWidth={6}
-            />
-            <text
-              x={p.x + p.widthMm / 2}
-              y={p.y + p.heightMm / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize={Math.max(80, Math.min(p.widthMm, p.heightMm) / 8)}
-              fill="#0c1f4a"
-              fontFamily="ui-monospace, monospace"
-            >
-              {p.widthMm} × {p.heightMm}
-              {p.rotated && ' ⟲'}
-            </text>
-          </g>
-        ))}
+        {(sheet.placements ?? []).map((p, i) => {
+          const fontSize = Math.max(80, Math.min(p.widthMm, p.heightMm) / 8);
+          const polygon = placedPanelPolygonPoints(p);
+          const token = panelShapeToken(p.shape);
+          return (
+            <g key={`${p.label}-${i}`}>
+              {token && p.shape && (
+                <title>
+                  {t(SHAPE_KEY[token])} · {(p.shape.netAreaMm2 / 1_000_000).toFixed(3)} m²
+                </title>
+              )}
+              {polygon ? (
+                <polygon
+                  points={polygon}
+                  fill="rgba(59, 130, 246, 0.45)"
+                  stroke="#1e3a8a"
+                  strokeWidth={6}
+                />
+              ) : (
+                <rect
+                  x={p.x}
+                  y={p.y}
+                  width={p.widthMm}
+                  height={p.heightMm}
+                  fill="rgba(59, 130, 246, 0.45)"
+                  stroke="#1e3a8a"
+                  strokeWidth={6}
+                />
+              )}
+              <text
+                x={p.x + p.widthMm / 2}
+                y={p.y + p.heightMm / 2}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={fontSize}
+                fill="#0c1f4a"
+                fontFamily="ui-monospace, monospace"
+              >
+                {p.widthMm} × {p.heightMm}
+                {p.rotated && ' ⟲'}
+              </text>
+              {token && (
+                <text
+                  x={p.x + p.widthMm / 2}
+                  y={p.y + p.heightMm / 2 + fontSize * 1.25}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={fontSize * 0.8}
+                  fill="#0c1f4a"
+                  fontFamily="ui-monospace, monospace"
+                >
+                  {t(SHAPE_KEY[token])}
+                </text>
+              )}
+            </g>
+          );
+        })}
       </svg>
     </div>
   );

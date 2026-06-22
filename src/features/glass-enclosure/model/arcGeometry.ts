@@ -81,8 +81,6 @@ export const computeArcLayout = (
   panelWidthsM: number[],
 ): ArcLayout => {
   const direction: 1 | -1 = sweepSign < 0 ? -1 : 1;
-  // Guard against zero/NaN radius which would otherwise feed Infinity/NaN
-  // vertices into the geometry and silently produce a broken/invisible mesh.
   const safeRadiusM = Math.max(0.001, Number.isFinite(radiusM) ? radiusM : 0.001);
   const sweepRad = Math.min(lengthM / safeRadiusM, MAX_SWEEP_RAD);
   const totalWidth = panelWidthsM.reduce((sum, w) => sum + w, 0);
@@ -155,7 +153,6 @@ export const deriveArcFromSweep = (arcLengthMm: number, sweepDeg: number): ArcDe
 };
 
 export const deriveArcFromChordSagitta = (chordMm: number, sagittaMm: number): ArcDerived => {
-  // Guard a zero sagitta (a straight chord) which would divide by zero.
   const sagitta = Math.max(0.001, Math.abs(sagittaMm));
   const radius = sagitta / 2 + (chordMm * chordMm) / (8 * sagitta);
   const sweepRad = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));

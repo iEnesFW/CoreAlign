@@ -86,6 +86,20 @@ export interface CuttingResult1DDto {
   patterns: CuttingPattern1DDto[];
 }
 
+export interface PanelCutShapeDto {
+  topShape: string | null;
+  nominalHeightMm: number;
+  topRightHeightMm: number | null;
+  archRiseMm: number | null;
+  cornerRadiusTlMm: number | null;
+  cornerRadiusTrMm: number | null;
+  cornerRadiusBrMm: number | null;
+  cornerRadiusBlMm: number | null;
+  netAreaMm2: number;
+  shapeKind?: string | null;
+  shapePointsJson?: string | null;
+}
+
 export interface CuttingPlacement2DDto {
   label: string;
   x: number;
@@ -93,6 +107,7 @@ export interface CuttingPlacement2DDto {
   widthMm: number;
   heightMm: number;
   rotated: boolean;
+  shape?: PanelCutShapeDto | null;
 }
 
 export interface CuttingSheet2DDto {
@@ -165,6 +180,7 @@ export interface Glass2DPlacedPanelDto {
   widthMm: number;
   heightMm: number;
   rotated: boolean;
+  shape?: PanelCutShapeDto | null;
 }
 
 export interface Glass2DPlacedSheetDto {

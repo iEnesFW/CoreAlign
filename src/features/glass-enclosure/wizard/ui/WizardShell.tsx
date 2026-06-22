@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useUxMode } from '@/features/persona/hooks/useUxMode';
+import { useUxMode } from '@/shared/lib/persona';
 import { useWizardStore, type WizardStep } from '../model/wizardStore';
 import { WizardStepIndicator } from './WizardStepIndicator';
 
@@ -80,7 +80,7 @@ export const WizardShell = ({
       >
         <header className="flex items-start gap-3 border-b border-slate-200/80 bg-slate-50/40 px-4 py-3 dark:border-slate-800/80 dark:bg-slate-900/40 sm:px-6">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-300">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-600 dark:text-primary-300">
               {headerLabel}
             </p>
             <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 sm:text-base">
@@ -101,7 +101,7 @@ export const WizardShell = ({
           <WizardStepIndicator />
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-primary-500 to-purple-600 transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -138,7 +138,7 @@ export const WizardShell = ({
               onClick={onNext}
               disabled={nextDisabled || nextLoading}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20',
+                'inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r from-primary-600 to-purple-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md shadow-primary-500/20',
                 'transition-opacity hover:opacity-95',
                 'disabled:cursor-not-allowed disabled:opacity-50',
               )}

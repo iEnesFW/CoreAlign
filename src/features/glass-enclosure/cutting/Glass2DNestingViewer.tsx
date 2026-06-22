@@ -1,6 +1,19 @@
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Printer } from 'lucide-react';
 import type { Glass2DNestingReportDto, Glass2DPlacedSheetDto } from '../model/engineering.types';
+import {
+  panelShapeToken,
+  placedPanelPolygonPoints,
+  type PanelShapeToken,
+} from './placedPanelOutline';
+
+const SHAPE_KEY: Record<PanelShapeToken, string> = {
+  raked: 'GlassEnclosure.Cutting.Shape.Raked',
+  arched: 'GlassEnclosure.Cutting.Shape.Arched',
+  rounded: 'GlassEnclosure.Cutting.Shape.Rounded',
+  ellipse: 'GlassEnclosure.Cutting.Shape.Ellipse',
+  polygon: 'GlassEnclosure.Cutting.Shape.Polygon',
+};
 
 interface Glass2DNestingViewerProps {
   report: Glass2DNestingReportDto | null;
@@ -98,7 +111,7 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
 const UnplacedList = ({ unplaced }: { unplaced: Glass2DNestingReportDto['unplacedPanels'] }) => {
   const { t } = useTranslation();
   return (
-    <div className="rounded border border-red-500/40 bg-red-50 p-2 text-xs text-red-700 dark:bg-red-950/30 dark:text-red-300">
+    <div className="rounded border border-danger-500/40 bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-950/30 dark:text-danger-300">
       <div className="mb-1 flex items-center gap-1 font-semibold">
         <AlertTriangle size={12} />
         {t('GlassEnclosure.Cutting.Nesting.UnplacedPanels', { count: unplaced.length })}
@@ -115,6 +128,7 @@ const UnplacedList = ({ unplaced }: { unplaced: Glass2DNestingReportDto['unplace
 };
 
 const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
+  const { t } = useTranslation();
   const wasteM2 = sheet.wasteAreaMm2 / 1_000_000;
   return (
     <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
@@ -123,10 +137,10 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
           #{sheet.sheetIndex} · {sheet.sheetWidthMm}×{sheet.sheetHeightMm} mm
         </span>
         <span className="flex items-center gap-2">
-          <span className="font-mono text-emerald-600 dark:text-emerald-400">
+          <span className="font-mono text-success-600 dark:text-success-400">
             {sheet.utilizationPercent.toFixed(1)}%
           </span>
-          <span className="font-mono text-amber-600 dark:text-amber-400">
+          <span className="font-mono text-warning-600 dark:text-warning-400">
             ↳ {wasteM2.toFixed(2)} m²
           </span>
         </span>
@@ -140,18 +154,35 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
         {sheet.panels.map((p, i) => {
           const fill = colorForPanel(p.panelId);
           const fontSize = Math.max(60, Math.min(p.widthMm, p.heightMm) / 8);
+          const polygon = placedPanelPolygonPoints(p);
+          const token = panelShapeToken(p.shape);
           return (
             <g key={`${p.panelId}-${i}`}>
-              <rect
-                x={p.x}
-                y={p.y}
-                width={p.widthMm}
-                height={p.heightMm}
-                fill={fill}
-                fillOpacity={0.5}
-                stroke={fill}
-                strokeWidth={6}
-              />
+              {token && p.shape && (
+                <title>
+                  {t(SHAPE_KEY[token])} · {(p.shape.netAreaMm2 / 1_000_000).toFixed(3)} m²
+                </title>
+              )}
+              {polygon ? (
+                <polygon
+                  points={polygon}
+                  fill={fill}
+                  fillOpacity={0.5}
+                  stroke={fill}
+                  strokeWidth={6}
+                />
+              ) : (
+                <rect
+                  x={p.x}
+                  y={p.y}
+                  width={p.widthMm}
+                  height={p.heightMm}
+                  fill={fill}
+                  fillOpacity={0.5}
+                  stroke={fill}
+                  strokeWidth={6}
+                />
+              )}
               <text
                 x={p.x + p.widthMm / 2}
                 y={p.y + p.heightMm / 2}
@@ -164,6 +195,19 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
                 {p.widthMm}×{p.heightMm}
                 {p.rotated && ' ⟲'}
               </text>
+              {token && (
+                <text
+                  x={p.x + p.widthMm / 2}
+                  y={p.y + p.heightMm / 2 + fontSize * 1.25}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={fontSize * 0.8}
+                  fill="#0c1f4a"
+                  fontFamily="ui-monospace, monospace"
+                >
+                  {t(SHAPE_KEY[token])}
+                </text>
+              )}
             </g>
           );
         })}

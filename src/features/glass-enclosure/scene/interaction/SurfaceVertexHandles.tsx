@@ -31,8 +31,6 @@ const turnDeg = (
   return Math.abs(((((a2 - a1) * 180) / Math.PI + 540) % 360) - 180);
 };
 
-// Indices of the true corners (sharp turns); smooth arc samples are skipped so
-// a curved span keeps only its endpoints as handles.
 const cornerIndices = (points: SceneSurfacePoint[]): number[] => {
   if (points.length < 3) return points.map((_, i) => i);
   const result: number[] = [];
@@ -109,8 +107,6 @@ function VertexHandle({
         topM,
         (next.y - centroidYMm) / MM,
       );
-      // Only rebuild the surface when the snapped vertex actually crosses to a
-      // new grid cell, so a steady drag does not rebuild geometry every frame.
       if (next.x === lastRef.current.x && next.y === lastRef.current.y) return;
       lastRef.current = next;
       onPreview(index, next.x, next.y);
@@ -122,7 +118,6 @@ function VertexHandle({
         topM,
         (point.y - centroidYMm) / MM,
       );
-      // Always notify so the parent clears the preview, even on a no-move click.
       onCommit(index, next.x, next.y);
     },
   });

@@ -1,8 +1,24 @@
+using CoreAlign.Application.GlassEnclosure.Cutting;
+
 namespace CoreAlign.Application.GlassEnclosure.Services;
 
-public record CuttingRequest2D(string Label, int WidthMm, int HeightMm, int Quantity);
+public record CuttingRequest2D(
+    string Label,
+    int WidthMm,
+    int HeightMm,
+    int Quantity,
+    PanelCutShape? Shape = null,
+    int? NominalHeightMm = null);
 
-public record CuttingPlacement2D(string Label, int X, int Y, int WidthMm, int HeightMm, bool Rotated);
+public record CuttingPlacement2D(
+    string Label,
+    int X,
+    int Y,
+    int WidthMm,
+    int HeightMm,
+    bool Rotated,
+    PanelCutShape? Shape = null,
+    int? NominalHeightMm = null);
 
 public record CuttingSheet2D(
     int SheetIndex,
@@ -116,7 +132,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             }
             for (var i = 0; i < req.Quantity; i++)
             {
-                yield return new CuttingRequest2D(req.Label, req.WidthMm, req.HeightMm, 1);
+                yield return new CuttingRequest2D(req.Label, req.WidthMm, req.HeightMm, 1, req.Shape, req.NominalHeightMm);
             }
         }
     }
@@ -173,7 +189,8 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             var placedHeight = bestRotated ? rect.WidthMm : rect.HeightMm;
             var placedX = bestFit.X;
             var placedY = bestFit.Y;
-            _placements.Add(new CuttingPlacement2D(rect.Label, placedX, placedY, placedWidth, placedHeight, bestRotated));
+            _placements.Add(new CuttingPlacement2D(
+                rect.Label, placedX, placedY, placedWidth, placedHeight, bestRotated, rect.Shape, rect.NominalHeightMm));
 
             if (guillotineOnly)
             {

@@ -17,10 +17,10 @@ const CHANNEL_ICON: Record<string, React.ReactNode> = {
 
 const STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
-  Sent: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  Delivered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  Sent: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
+  Delivered: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300',
   Read: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  Failed: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  Failed: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
 };
 
 export function NotificationHistory({ logs, isLoading }: NotificationHistoryProps) {
@@ -75,7 +75,7 @@ export function NotificationHistory({ logs, isLoading }: NotificationHistoryProp
           </div>
           {log.errorMessage && (
             <p
-              className="mt-1 truncate text-[10px] text-red-600 dark:text-red-400"
+              className="mt-1 truncate text-[10px] text-danger-600 dark:text-danger-400"
               title={log.errorMessage}
             >
               {log.errorMessage}

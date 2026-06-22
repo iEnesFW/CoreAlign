@@ -25,6 +25,13 @@ export interface GlassProjectPanelDto {
   hasLock: boolean;
   hasBrushSeal: boolean;
   notes: string | null;
+  heightMm?: number | null;
+  topShape?: PanelTopShape | null;
+  topRightHeightMm?: number | null;
+  archRiseMm?: number | null;
+  cornerRadiiMm?: CornerRadiiMm | null;
+  shapeKind?: PanelShapeKind | null;
+  shapePointsJson?: string | null;
 }
 
 export interface GlassProjectRunDto {
@@ -210,6 +217,13 @@ export interface AddPanelInput {
   hasLock: boolean;
   hasBrushSeal: boolean;
   notes?: string | null;
+  heightMm?: number | null;
+  topShape?: PanelTopShape | null;
+  topRightHeightMm?: number | null;
+  archRiseMm?: number | null;
+  cornerRadiiMm?: CornerRadiiMm | null;
+  shapeKind?: PanelShapeKind | null;
+  shapePointsJson?: string | null;
 }
 
 export type UpdatePanelInput = AddPanelInput;
@@ -335,6 +349,9 @@ export interface SceneWallState {
   heightMm: number;
   heightEndMm?: number | null;
   thicknessMm: number;
+  geomZ?: number | null; // base elevation (mm) so a wall can rest on top of others
+  geomArcRadiusMm?: number | null;
+  geomArcSweepDeg?: number | null;
   colorHex?: string | null;
   materialKey?: string | null;
   groupId?: string | null;
@@ -442,6 +459,10 @@ export interface SceneSlabState {
   locked?: boolean;
 }
 
+export type PanelTopShape = 'flat' | 'raked' | 'arched';
+
+export type PanelShapeKind = 'ellipse' | 'polygon';
+
 export interface ScenePanelState {
   id: string;
   panelIndex: number;
@@ -452,6 +473,13 @@ export interface ScenePanelState {
   hasLock: boolean;
   hasBrushSeal: boolean;
   hardware: SceneHardwareItem[];
+  heightMm?: number | null;
+  topShape?: PanelTopShape | null;
+  topRightHeightMm?: number | null;
+  archRiseMm?: number | null;
+  cornerRadiiMm?: CornerRadiiMm;
+  shapeKind?: PanelShapeKind | null;
+  shapePointsJson?: string | null;
 }
 
 export interface SceneConnectionState {

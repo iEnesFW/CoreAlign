@@ -133,7 +133,7 @@ export function ToolPalette() {
   const withShortcut = (text: string, shortcut: string) => `${text} (${shortcut})`;
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-3 z-20 flex -translate-x-1/2 flex-col items-center gap-1.5">
+    <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col items-start gap-1.5">
       <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
         {TOOLS.map(({ tool, labelKey, defaultLabel, shortcut, Icon }) => (
           <PaletteButton
@@ -195,8 +195,8 @@ export function ToolPalette() {
         </div>
       )}
       {activeTool === 'paint' && !placement && (
-        <div className="pointer-events-auto flex flex-col items-center gap-1">
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+        <div className="pointer-events-auto flex flex-col items-start gap-1">
+          <div className="flex max-w-[18rem] flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
             {colors.map((color) => (
               <button
                 key={color.id}
@@ -207,7 +207,7 @@ export function ToolPalette() {
                 className={cn(
                   'h-6 w-6 rounded border',
                   paintColor?.hex === color.hexColor
-                    ? 'border-blue-500 ring-2 ring-blue-400/60'
+                    ? 'border-primary-500 ring-2 ring-primary-400/60'
                     : 'border-slate-300 dark:border-slate-600',
                 )}
                 style={{ backgroundColor: color.hexColor }}
@@ -219,7 +219,7 @@ export function ToolPalette() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+          <div className="flex max-w-[18rem] flex-wrap items-center gap-1 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
             {PROCEDURAL_MATERIAL_KEYS.map((key) => (
               <button
                 key={key}
@@ -229,7 +229,7 @@ export function ToolPalette() {
                 className={cn(
                   'rounded border px-2 py-1 text-[11px] font-medium transition',
                   paintMaterial === key
-                    ? 'border-blue-600 bg-blue-600 text-white'
+                    ? 'border-primary-600 bg-primary-600 text-white'
                     : 'border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800',
                 )}
               >
@@ -263,7 +263,7 @@ const PaletteButton = ({
     className={cn(
       'inline-flex h-8 w-8 items-center justify-center rounded-md transition',
       active
-        ? 'bg-blue-600 text-white'
+        ? 'bg-primary-600 text-white'
         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
     )}
   >

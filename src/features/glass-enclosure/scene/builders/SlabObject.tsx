@@ -245,22 +245,26 @@ export function SlabObject({
     corner(0, slab.depthMm),
   ];
 
-  // A single roof rests ON TOP of whatever it overlaps (rest-on-top stacking); a
-  // floor is a base that walls stand on, and a grouped roof translates with its
-  // group, so both of those keep lateral collision instead of climbing.
-  const isRoof = slab.kind === 'roof';
   const isMultiMember = multiSelectionHas(multiSelection, 'slab', slab.id);
-  const roofClimbs = isRoof && !isMultiMember;
+  const canStack = !isMultiMember;
   const supportFootprints = supports ?? EMPTY_OBSTACLES;
-  // Fallback rest elevation is captured at gesture start, so dragging a roof off
-  // a support returns it to where the drag began rather than floating up high.
-  const baseElevationRef = useRef(slab.elevationMm);
+  // Alt-drag rests the slab on whatever it overlaps; a plain drag keeps the slab's
+  // current elevation and moves laterally. Ground (0) fallback so an unsupported
+  // Alt-drop returns to the floor instead of ratcheting up from its own elevation.
   const restElevationAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(
-      buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
-      supportFootprints,
-      baseElevationRef.current,
-    );
+    restElevationMm(buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg), supportFootprints, 0);
+
+  // While co-moving a multi-selection, sibling members travel with this slab, so
+  // their footprints must not register as collisions during the drag.
+  const gestureObstacles = useMemo(() => {
+    if (!isMultiMember) return planObstacles;
+    const coMoving = new Set<string>([
+      ...multiSelection.slabIds,
+      ...multiSelection.runIds,
+      ...multiSelection.wallIds,
+    ]);
+    return planObstacles.filter((o) => !coMoving.has(o.ownerId));
+  }, [planObstacles, isMultiMember, multiSelection]);
 
   const adapter: PlanGestureAdapter = {
     originXMm: slab.originX,
@@ -271,7 +275,7 @@ export function SlabObject({
     centerYMm: slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX,
     moveProbes,
     footprintAt: (dxMm, dyMm, rotationDeg) => buildSlabFootprint(slab, dxMm, dyMm, rotationDeg),
-    liftYMAt: roofClimbs ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
+    altLiftYMAt: canStack ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -280,28 +284,25 @@ export function SlabObject({
     enabled: interactive && !slab.locked,
     selectedForDrag: isSelected && !slab.locked,
     snapTargets: filteredTargets,
-    // A climbing roof rises onto supports (rest-on-top) instead of blocking
-    // laterally; everything else keeps its lateral obstacles.
-    obstacles: roofClimbs ? EMPTY_OBSTACLES : planObstacles,
+    obstacles: gestureObstacles,
     onPick: () => onSelect(slab.id),
     onGestureStart: () => {
-      baseElevationRef.current = slab.elevationMm;
       multiSiblingsRef.current = isMultiMember
         ? captureMultiSnapshots(sceneRef, multiSelection, { kind: 'slab', id: slab.id })
         : [];
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta) => {
-      if (!roofClimbs) {
-        onCommitMove?.(slab.id, delta);
+    onMoveCommit: (delta, meta) => {
+      if (canStack && meta.alt) {
+        updateSlab(slab.id, {
+          originX: Math.round(slab.originX + delta.dxMm),
+          originY: Math.round(slab.originY + delta.dyMm),
+          elevationMm: Math.round(restElevationAt(delta.dxMm, delta.dyMm)),
+        });
         return;
       }
-      updateSlab(slab.id, {
-        originX: Math.round(slab.originX + delta.dxMm),
-        originY: Math.round(slab.originY + delta.dyMm),
-        elevationMm: Math.round(restElevationAt(delta.dxMm, delta.dyMm)),
-      });
+      onCommitMove?.(slab.id, delta);
     },
     onRotateCommit: (commit) =>
       updateSlab(slab.id, {
@@ -608,8 +609,6 @@ export function SlabObject({
     bodyRef.current?.scale.set(1, 1, 1);
     bodyRef.current?.position.set(0, 0, 0);
   };
-  // Clear the stretch preview only after the rebuilt slab mounts at its new
-  // size/elevation, so the committed slab never flashes at its old dimensions.
   useLayoutEffect(
     () => resetBody(),
     [slab.lengthMm, slab.depthMm, slab.thicknessMm, slab.elevationMm],

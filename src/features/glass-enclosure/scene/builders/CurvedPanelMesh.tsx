@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { Billboard, Edges, Text } from '@react-three/drei';
-import { ExtrudeGeometry, Shape } from 'three';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
+import { buildCurvedBandGeometry } from './curvedExtrude';
 import { arcPointAt, type ArcChord } from '../../model/arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { GlassOpeningType, GlassStructure } from '../../model/glassEnclosure.types';
@@ -44,34 +44,6 @@ const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
   Guillotine: '▲',
 };
 
-const CURVE_STEP_RAD = 0.08;
-
-const buildCurvedGlassGeometry = (
-  radiusM: number,
-  direction: 1 | -1,
-  phiStart: number,
-  phiEnd: number,
-  thicknessM: number,
-  heightM: number,
-) => {
-  // Guard degenerate inputs (0/NaN radius or zero-width span) that would feed
-  // NaN/empty geometry into the extruder.
-  const radius = Math.max(0.001, Number.isFinite(radiusM) ? radiusM : 0.001);
-  const span = Math.max(1e-4, phiEnd - phiStart);
-  const endPhi = phiStart + span;
-  const centerY = -direction * radius;
-  const outer = radius + thicknessM / 2;
-  const inner = Math.max(0.001, radius - thicknessM / 2);
-  const toAngle = (phi: number) => (direction === 1 ? Math.PI / 2 - phi : phi - Math.PI / 2);
-  const outerClockwise = direction === 1;
-  const shape = new Shape();
-  shape.absarc(0, centerY, outer, toAngle(phiStart), toAngle(endPhi), outerClockwise);
-  shape.absarc(0, centerY, inner, toAngle(endPhi), toAngle(phiStart), !outerClockwise);
-  shape.closePath();
-  const curveSegments = Math.max(8, Math.ceil(span / CURVE_STEP_RAD));
-  return new ExtrudeGeometry(shape, { depth: heightM, bevelEnabled: false, curveSegments });
-};
-
 export function CurvedPanelMesh({
   radiusM,
   direction,
@@ -104,7 +76,7 @@ export function CurvedPanelMesh({
   const thicknessM = thicknessMm / 1000;
 
   const geometry = useMemo(
-    () => buildCurvedGlassGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM),
+    () => buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM),
     [radiusM, direction, phiStart, phiEnd, thicknessM, heightM],
   );
   useEffect(() => () => geometry.dispose(), [geometry]);

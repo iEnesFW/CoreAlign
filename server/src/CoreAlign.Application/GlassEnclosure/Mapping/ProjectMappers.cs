@@ -7,7 +7,17 @@ public static class ProjectMappers
 {
     public static GlassProjectPanelDto ToDto(GlassProjectPanel panel) => new(
         panel.Id, panel.RunId, panel.PanelIndex, panel.WidthMm, panel.OpeningType,
-        panel.GlassTypeId, panel.HasHandle, panel.HasLock, panel.HasBrushSeal, panel.Notes);
+        panel.GlassTypeId, panel.HasHandle, panel.HasLock, panel.HasBrushSeal, panel.Notes,
+        panel.HeightMm, panel.TopShape, panel.TopRightHeightMm, panel.ArchRiseMm,
+        ToCornerRadii(panel), panel.ShapeKind, panel.ShapePointsJson);
+
+    private static PanelCornerRadiiDto? ToCornerRadii(GlassProjectPanel panel) =>
+        panel.CornerRadiusTlMm is null && panel.CornerRadiusTrMm is null
+        && panel.CornerRadiusBrMm is null && panel.CornerRadiusBlMm is null
+            ? null
+            : new PanelCornerRadiiDto(
+                panel.CornerRadiusTlMm, panel.CornerRadiusTrMm,
+                panel.CornerRadiusBrMm, panel.CornerRadiusBlMm);
 
     public static GlassProjectRunDto ToDto(GlassProjectRun run) => new(
         run.Id, run.ProjectId, run.OrderIndex, run.Label, run.LengthMm, run.HeightMm,

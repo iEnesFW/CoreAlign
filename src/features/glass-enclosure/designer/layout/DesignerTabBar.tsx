@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode } from '@/shared/lib/persona';
 
 export type DesignerTabKey = 'runs' | 'canvas' | 'inspector' | 'bom';
 
@@ -60,13 +60,13 @@ export const DesignerTabBar = ({
                     'rounded-md',
                     isSimple ? 'h-14 w-14' : 'h-12 w-12',
                     active
-                      ? 'bg-blue-600 text-white shadow-sm'
+                      ? 'bg-primary-600 text-white shadow-sm'
                       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
                   )
                 : cn(
                     'flex-1 flex-col gap-0.5 border-t-2',
                     active
-                      ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                      ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                       : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
                   ),
             )}

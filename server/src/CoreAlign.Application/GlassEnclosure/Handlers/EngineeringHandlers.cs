@@ -332,18 +332,35 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         var glassIds = project.Runs.SelectMany(r => r.Panels).Select(p => p.GlassTypeId).Distinct().ToList();
         var glassMap = await _glassRepo.GetByIdsAsync(glassIds, cancellationToken);
 
-        var groups = new Dictionary<(string Label, int WidthMm, int HeightMm), int>();
+        var groups = new Dictionary<string, (string Label, int WidthMm, int BlankHeightMm, PanelCutShape? Shape, int NominalHeightMm, int Count)>();
         foreach (var run in project.Runs)
         {
             foreach (var panel in run.Panels)
             {
                 if (!glassMap.TryGetValue(panel.GlassTypeId, out var glass)) continue;
-                var key = ($"{glass.Code}-{panel.WidthMm}x{run.HeightMm}", panel.WidthMm, run.HeightMm);
-                groups[key] = groups.TryGetValue(key, out var existing) ? existing + 1 : 1;
+                var nominalHeight = panel.HeightMm ?? run.HeightMm;
+                var shape = PanelCutShapeMapper.FromPanel(panel);
+                // WHY: integer cutting optimiser needs whole-mm blanks; ceil keeps the blank ≥ silhouette.
+                var blankHeight = (int)Math.Ceiling(PanelCutGeometry.BoundingHeightMm(nominalHeight, shape));
+                var key = $"{glass.Code}|{panel.WidthMm}|{nominalHeight}|{PanelCutGeometry.Signature(shape)}";
+                if (groups.TryGetValue(key, out var existing))
+                {
+                    groups[key] = (existing.Label, existing.WidthMm, existing.BlankHeightMm, existing.Shape, existing.NominalHeightMm, existing.Count + 1);
+                }
+                else
+                {
+                    groups[key] = (
+                        $"{glass.Code} {panel.WidthMm}×{blankHeight}",
+                        panel.WidthMm,
+                        blankHeight,
+                        shape,
+                        nominalHeight,
+                        1);
+                }
             }
         }
-        return groups
-            .Select(kv => new CuttingRequest2D(kv.Key.Label, kv.Key.WidthMm, kv.Key.HeightMm, kv.Value))
+        return groups.Values
+            .Select(g => new CuttingRequest2D(g.Label, g.WidthMm, g.BlankHeightMm, g.Count, g.Shape, g.NominalHeightMm))
             .ToList();
     }
 
@@ -359,7 +376,9 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         r.TotalSheets, r.TotalUsedMm2, r.TotalWasteMm2, r.UtilizationPercent,
         r.Sheets.Select(s => new CuttingSheet2DDto(
             s.SheetIndex, s.WidthMm, s.HeightMm,
-            s.Placements.Select(p => new CuttingPlacement2DDto(p.Label, p.X, p.Y, p.WidthMm, p.HeightMm, p.Rotated)).ToList(),
+            s.Placements.Select(p => new CuttingPlacement2DDto(
+                p.Label, p.X, p.Y, p.WidthMm, p.HeightMm, p.Rotated,
+                PanelCutShapeMapper.ToDto(p.Shape, (decimal?)p.NominalHeightMm, p.WidthMm, p.HeightMm, p.Rotated))).ToList(),
             s.WasteMm2)).ToList(),
         r.Unplaced);
 }
@@ -548,30 +567,42 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
 
     private static List<GlassPanelRequest> BuildPanelRequests(GlassProject project, bool allowRotation)
     {
-        var groups = new Dictionary<(int W, int H), (Guid Id, string Label, int Count)>();
+        var groups = new Dictionary<string, (Guid Id, string Label, decimal WidthMm, decimal BlankHeightMm, PanelCutShape? Shape, decimal NominalHeightMm, int Count)>();
         foreach (var run in project.Runs)
         {
             foreach (var panel in run.Panels)
             {
-                var key = (panel.WidthMm, run.HeightMm);
+                var nominalHeight = (decimal)(panel.HeightMm ?? run.HeightMm);
+                var shape = PanelCutShapeMapper.FromPanel(panel);
+                var blankHeight = PanelCutGeometry.BoundingHeightMm(nominalHeight, shape);
+                var key = $"{panel.WidthMm}|{nominalHeight}|{PanelCutGeometry.Signature(shape)}";
                 if (groups.TryGetValue(key, out var existing))
                 {
-                    groups[key] = (existing.Id, existing.Label, existing.Count + 1);
+                    groups[key] = (existing.Id, existing.Label, existing.WidthMm, existing.BlankHeightMm, existing.Shape, existing.NominalHeightMm, existing.Count + 1);
                 }
                 else
                 {
-                    groups[key] = (panel.Id, $"{panel.WidthMm}x{run.HeightMm}", 1);
+                    groups[key] = (
+                        panel.Id,
+                        $"{panel.WidthMm}×{(int)Math.Ceiling(blankHeight)}",
+                        panel.WidthMm,
+                        blankHeight,
+                        shape,
+                        nominalHeight,
+                        1);
                 }
             }
         }
-        return groups
-            .Select(kv => new GlassPanelRequest(
-                kv.Value.Id,
-                kv.Value.Label,
-                kv.Key.W,
-                kv.Key.H,
-                kv.Value.Count,
-                allowRotation))
+        return groups.Values
+            .Select(g => new GlassPanelRequest(
+                g.Id,
+                g.Label,
+                g.WidthMm,
+                g.BlankHeightMm,
+                g.Count,
+                allowRotation,
+                g.Shape,
+                g.NominalHeightMm))
             .ToList();
     }
 
@@ -591,7 +622,8 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
                 s.SheetWidthMm,
                 s.SheetHeightMm,
                 s.Panels.Select(p => new Glass2DPlacedPanelDto(
-                    p.PanelId, p.Label, p.X, p.Y, p.WidthMm, p.HeightMm, p.Rotated)).ToList(),
+                    p.PanelId, p.Label, p.X, p.Y, p.WidthMm, p.HeightMm, p.Rotated,
+                    PanelCutShapeMapper.ToDto(p.Shape, p.NominalHeightMm, p.WidthMm, p.HeightMm, p.Rotated))).ToList(),
                 s.UsedAreaMm2,
                 s.WasteAreaMm2,
                 s.UtilizationPercent)).ToList(),

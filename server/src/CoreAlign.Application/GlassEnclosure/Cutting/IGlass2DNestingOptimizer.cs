@@ -6,7 +6,9 @@ public sealed record GlassPanelRequest(
     decimal WidthMm,
     decimal HeightMm,
     int Quantity,
-    bool AllowRotation = true);
+    bool AllowRotation = true,
+    PanelCutShape? Shape = null,
+    decimal? NominalHeightMm = null);
 
 public sealed record GlassSheet(
     Guid SheetId,
@@ -29,7 +31,9 @@ public sealed record PlacedPanel(
     decimal Y,
     decimal WidthMm,
     decimal HeightMm,
-    bool Rotated);
+    bool Rotated,
+    PanelCutShape? Shape = null,
+    decimal? NominalHeightMm = null);
 
 public sealed record PlacedSheet(
     Guid SheetId,

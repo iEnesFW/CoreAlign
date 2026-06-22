@@ -123,6 +123,9 @@ public class GlassProjectPanelConfiguration : IEntityTypeConfiguration<GlassProj
         builder.Property(p => p.OpeningType).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.PanelKind).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.Notes).HasMaxLength(1000);
+        builder.Property(p => p.TopShape).HasMaxLength(16);
+        builder.Property(p => p.ShapeKind).HasMaxLength(16);
+        builder.Property(p => p.ShapePointsJson).HasMaxLength(8000);
         builder.Property(p => p.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 

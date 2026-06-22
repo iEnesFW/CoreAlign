@@ -102,7 +102,7 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
         />
       </dl>
       {summary.curvedRuns.length > 0 && (
-        <div className="rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+        <div className="rounded border border-warning-300 bg-warning-50 p-2 text-xs text-warning-800 dark:border-warning-700 dark:bg-warning-950/30 dark:text-warning-300">
           <span className="font-semibold">
             {t('GlassEnclosure.Designer.CurvedRunsTitle', { defaultValue: 'Kavisli hatlar' })}:
           </span>{' '}

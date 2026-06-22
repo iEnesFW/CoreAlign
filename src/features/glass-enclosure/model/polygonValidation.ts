@@ -13,7 +13,6 @@ const segmentsCross = (a1: Point2D, a2: Point2D, b1: Point2D, b2: Point2D): bool
   return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 };
 
-// True if any two non-adjacent edges of the closed polygon cross (a bow-tie).
 export const polygonSelfIntersects = (pts: Point2D[]): boolean => {
   const n = pts.length;
   if (n < 4) return false;

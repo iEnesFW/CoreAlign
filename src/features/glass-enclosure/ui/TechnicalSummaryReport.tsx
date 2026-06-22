@@ -42,11 +42,11 @@ export function TechnicalSummaryReport({ summary }: TechnicalSummaryReportProps)
                       {p.currentThicknessMm}mm → {p.requiredMinThicknessMm}mm
                     </span>
                     {p.isSufficient ? (
-                      <span className="text-emerald-600 dark:text-emerald-400">
+                      <span className="text-success-600 dark:text-success-400">
                         <Check size={14} />
                       </span>
                     ) : (
-                      <span className="text-red-600 dark:text-red-400">
+                      <span className="text-danger-600 dark:text-danger-400">
                         <AlertTriangle size={14} />
                       </span>
                     )}

@@ -59,8 +59,6 @@ const signedAreaMm = (outline: FeatureOutlinePoint[]): number => {
   return area / 2;
 };
 
-// Guarantee a consistent counter-clockwise winding so ExtrudeGeometry produces
-// outward-facing normals (a CW free-drawn polygon would otherwise be invisible).
 const ensureCcw = (outline: FeatureOutlinePoint[]): FeatureOutlinePoint[] =>
   signedAreaMm(outline) < 0 ? [...outline].reverse() : outline;
 

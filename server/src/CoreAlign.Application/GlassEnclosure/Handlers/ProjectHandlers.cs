@@ -402,6 +402,12 @@ public class AddPanelCommandHandler : IRequestHandler<AddPanelCommand, GlassProj
             run.Id, panelIndex,
             request.Data.WidthMm, request.Data.OpeningType, request.Data.GlassTypeId,
             request.Data.HasHandle, request.Data.HasLock, request.Data.HasBrushSeal, request.Data.Notes);
+        panel.UpdateShape(
+            request.Data.HeightMm, request.Data.TopShape, request.Data.TopRightHeightMm,
+            request.Data.ArchRiseMm,
+            request.Data.CornerRadiiMm?.Tl, request.Data.CornerRadiiMm?.Tr,
+            request.Data.CornerRadiiMm?.Br, request.Data.CornerRadiiMm?.Bl,
+            request.Data.ShapeKind, request.Data.ShapePointsJson);
         await _panelRepo.AddAsync(panel, cancellationToken);
         await _bomStaleSignal.SignalStaleAsync(run.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
         return ProjectMappers.ToDto(panel);
@@ -426,6 +432,12 @@ public class UpdatePanelCommandHandler : IRequestHandler<UpdatePanelCommand, Gla
         panel.Update(
             request.Data.WidthMm, request.Data.OpeningType, request.Data.GlassTypeId,
             request.Data.HasHandle, request.Data.HasLock, request.Data.HasBrushSeal, request.Data.Notes);
+        panel.UpdateShape(
+            request.Data.HeightMm, request.Data.TopShape, request.Data.TopRightHeightMm,
+            request.Data.ArchRiseMm,
+            request.Data.CornerRadiiMm?.Tl, request.Data.CornerRadiiMm?.Tr,
+            request.Data.CornerRadiiMm?.Br, request.Data.CornerRadiiMm?.Bl,
+            request.Data.ShapeKind, request.Data.ShapePointsJson);
         _panelRepo.Update(panel);
         await _bomStaleSignal.SignalStaleAsync(request.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
         return ProjectMappers.ToDto(panel);

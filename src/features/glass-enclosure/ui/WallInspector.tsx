@@ -49,6 +49,10 @@ export function WallInspector() {
 
   if (!wall || !draft) return null;
 
+  // Curved walls defer openings / surface features / autofill (#6a): those still assume
+  // a straight chord, so their editors are hidden until an arc-aware version lands.
+  const isArc = (draft.geomArcRadiusMm ?? 0) > 0;
+
   const commit = (patch: Partial<typeof wall>) => {
     const candidate: SceneWallState = { ...wall, ...patch };
     const alreadyColliding = penetratesAny(
@@ -128,7 +132,7 @@ export function WallInspector() {
         <button
           type="button"
           onClick={handleDelete}
-          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           {t('GlassEnclosure.Designer.Wall.Delete', { defaultValue: 'Duvarı sil' })}
         </button>
@@ -216,158 +220,217 @@ export function WallInspector() {
       </div>
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {t('GlassEnclosure.Designer.Wall.Openings', { defaultValue: 'Boşluklar' })}
-          </p>
-          <div className="flex gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleAddOpening('window')}
-              className="inline-flex items-center gap-1 rounded border border-blue-500/40 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-            >
-              <RectangleHorizontal size={12} />
-              {t('GlassEnclosure.Designer.Wall.AddWindow', { defaultValue: 'Pencere' })}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddOpening('door')}
-              className="inline-flex items-center gap-1 rounded border border-blue-500/40 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-            >
-              <DoorOpen size={12} />
-              {t('GlassEnclosure.Designer.Wall.AddDoor', { defaultValue: 'Kapı' })}
-            </button>
-          </div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.Wall.ArcTitle', { defaultValue: 'Kavis (yay)' })}
+        </p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {(
+            [
+              ['straight', null],
+              ['left', 90],
+              ['right', -90],
+            ] as const
+          ).map(([key, sweep]) => {
+            const curved = (draft.geomArcRadiusMm ?? 0) > 0;
+            const side = (draft.geomArcSweepDeg ?? 1) >= 0 ? 'left' : 'right';
+            const active = key === 'straight' ? !curved : curved && side === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() =>
+                  key === 'straight'
+                    ? commit({ geomArcRadiusMm: null, geomArcSweepDeg: null })
+                    : commit({
+                        geomArcRadiusMm:
+                          (draft.geomArcRadiusMm ?? 0) > 0 ? draft.geomArcRadiusMm : draft.lengthMm,
+                        geomArcSweepDeg: sweep,
+                      })
+                }
+                className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                  active
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                    : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                }`}
+              >
+                {t(`GlassEnclosure.Designer.Wall.Arc.${key}` as never, {
+                  defaultValue: { straight: 'Düz', left: 'Sol kavis', right: 'Sağ kavis' }[key],
+                })}
+              </button>
+            );
+          })}
         </div>
-        {(wall.openings ?? []).length === 0 ? (
-          <p className="text-[11px] text-slate-400">
-            {t('GlassEnclosure.Designer.Wall.NoOpenings', {
-              defaultValue: 'Boşluk yok — pencere veya kapı ekleyin.',
-            })}
-          </p>
-        ) : (
-          (wall.openings ?? []).map((opening) => (
-            <div
-              key={opening.id}
-              className="space-y-1 rounded border border-slate-200 p-2 dark:border-slate-700"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-                  {opening.kind === 'door'
-                    ? t('GlassEnclosure.Designer.Wall.Door', { defaultValue: 'Kapı' })
-                    : t('GlassEnclosure.Designer.Wall.Window', { defaultValue: 'Pencere' })}
-                </span>
+        {(draft.geomArcRadiusMm ?? 0) > 0 && (
+          <NumberField
+            label={`${t('GlassEnclosure.Designer.Wall.ArcRadius', { defaultValue: 'Kavis yarıçapı' })} (mm)`}
+            value={draft.geomArcRadiusMm ?? draft.lengthMm}
+            min={Math.ceil(draft.lengthMm / Math.PI)}
+            onCommit={(v) =>
+              commit({ geomArcRadiusMm: Math.max(Math.ceil(draft.lengthMm / Math.PI), v) })
+            }
+            onDraft={(v) => setDraft({ ...draft, geomArcRadiusMm: v })}
+          />
+        )}
+      </div>
+
+      {!isArc && (
+        <>
+          <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('GlassEnclosure.Designer.Wall.Openings', { defaultValue: 'Boşluklar' })}
+              </p>
+              <div className="flex gap-1.5">
                 <button
                   type="button"
-                  onClick={() => removeWallOpening(wall.id, opening.id)}
-                  className="text-slate-400 hover:text-red-500"
-                  aria-label={t('GlassEnclosure.Designer.Wall.RemoveOpening', {
-                    defaultValue: 'Boşluğu sil',
-                  })}
+                  onClick={() => handleAddOpening('window')}
+                  className="inline-flex items-center gap-1 rounded border border-primary-500/40 px-2 py-0.5 text-xs text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30"
                 >
-                  <Trash2 size={12} />
+                  <RectangleHorizontal size={12} />
+                  {t('GlassEnclosure.Designer.Wall.AddWindow', { defaultValue: 'Pencere' })}
                 </button>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                <OpeningField
-                  label={t('GlassEnclosure.Designer.Wall.OpeningOffset', {
-                    defaultValue: 'Konum',
-                  })}
-                  value={opening.offsetMm}
-                  onCommit={(v) => updateWallOpening(wall.id, opening.id, { offsetMm: v })}
-                />
-                <OpeningField
-                  label={t('GlassEnclosure.Designer.Wall.OpeningSill', { defaultValue: 'Alt' })}
-                  value={opening.sillMm}
-                  onCommit={(v) => updateWallOpening(wall.id, opening.id, { sillMm: v })}
-                />
-                <OpeningField
-                  label={t('GlassEnclosure.Field.Width', { defaultValue: 'Genişlik' })}
-                  value={opening.widthMm}
-                  onCommit={(v) => updateWallOpening(wall.id, opening.id, { widthMm: v })}
-                />
-                <OpeningField
-                  label={t('GlassEnclosure.Field.Height', { defaultValue: 'Yükseklik' })}
-                  value={opening.heightMm}
-                  onCommit={(v) => updateWallOpening(wall.id, opening.id, { heightMm: v })}
-                />
+                <button
+                  type="button"
+                  onClick={() => handleAddOpening('door')}
+                  className="inline-flex items-center gap-1 rounded border border-primary-500/40 px-2 py-0.5 text-xs text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30"
+                >
+                  <DoorOpen size={12} />
+                  {t('GlassEnclosure.Designer.Wall.AddDoor', { defaultValue: 'Kapı' })}
+                </button>
               </div>
             </div>
-          ))
-        )}
-      </div>
+            {(wall.openings ?? []).length === 0 ? (
+              <p className="text-[11px] text-slate-400">
+                {t('GlassEnclosure.Designer.Wall.NoOpenings', {
+                  defaultValue: 'Boşluk yok — pencere veya kapı ekleyin.',
+                })}
+              </p>
+            ) : (
+              (wall.openings ?? []).map((opening) => (
+                <div
+                  key={opening.id}
+                  className="space-y-1 rounded border border-slate-200 p-2 dark:border-slate-700"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                      {opening.kind === 'door'
+                        ? t('GlassEnclosure.Designer.Wall.Door', { defaultValue: 'Kapı' })
+                        : t('GlassEnclosure.Designer.Wall.Window', { defaultValue: 'Pencere' })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeWallOpening(wall.id, opening.id)}
+                      className="text-slate-400 hover:text-danger-500"
+                      aria-label={t('GlassEnclosure.Designer.Wall.RemoveOpening', {
+                        defaultValue: 'Boşluğu sil',
+                      })}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    <OpeningField
+                      label={t('GlassEnclosure.Designer.Wall.OpeningOffset', {
+                        defaultValue: 'Konum',
+                      })}
+                      value={opening.offsetMm}
+                      onCommit={(v) => updateWallOpening(wall.id, opening.id, { offsetMm: v })}
+                    />
+                    <OpeningField
+                      label={t('GlassEnclosure.Designer.Wall.OpeningSill', { defaultValue: 'Alt' })}
+                      value={opening.sillMm}
+                      onCommit={(v) => updateWallOpening(wall.id, opening.id, { sillMm: v })}
+                    />
+                    <OpeningField
+                      label={t('GlassEnclosure.Field.Width', { defaultValue: 'Genişlik' })}
+                      value={opening.widthMm}
+                      onCommit={(v) => updateWallOpening(wall.id, opening.id, { widthMm: v })}
+                    />
+                    <OpeningField
+                      label={t('GlassEnclosure.Field.Height', { defaultValue: 'Yükseklik' })}
+                      value={opening.heightMm}
+                      onCommit={(v) => updateWallOpening(wall.id, opening.id, { heightMm: v })}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
 
-      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
-        </p>
-        {(wall.features ?? []).length === 0 ? (
+          <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
+            </p>
+            {(wall.features ?? []).length === 0 ? (
+              <p className="text-[11px] text-slate-400">
+                {t('GlassEnclosure.Designer.WallFeature.None', {
+                  defaultValue:
+                    "Katman yok — üstteki 'Yüzeye çiz' aracıyla duvar üzerine şekil çizin.",
+                })}
+              </p>
+            ) : (
+              (wall.features ?? []).map((feature) => {
+                const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
+                const modeLabel = wallFeatureModeLabelKey(feature.mode);
+                return (
+                  <div
+                    key={feature.id}
+                    className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelection({
+                          kind: 'wallFeature',
+                          runId: null,
+                          panelId: null,
+                          connectionId: null,
+                          hardwareId: null,
+                          wallId: wall.id,
+                          slabId: null,
+                          featureId: feature.id,
+                        })
+                      }
+                      className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+                    >
+                      {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
+                      {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
+                      {feature.heightMm}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeWallFeature(wall.id, feature.id)}
+                      className="text-slate-400 hover:text-danger-500"
+                      aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
+                        defaultValue: 'Katmanı sil',
+                      })}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleAutofill()}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          >
+            <Wand2 size={14} />
+            {t('GlassEnclosure.Designer.Wall.Autofill', {
+              defaultValue: 'Boşlukları camla doldur',
+            })}
+          </button>
           <p className="text-[11px] text-slate-400">
-            {t('GlassEnclosure.Designer.WallFeature.None', {
-              defaultValue: "Katman yok — üstteki 'Yüzeye çiz' aracıyla duvar üzerine şekil çizin.",
+            {t('GlassEnclosure.Designer.Wall.AutofillHint', {
+              defaultValue:
+                'Seçili duvarın pencere/kapı boşluklarını ve deliklerini cam hattıyla doldurur.',
             })}
           </p>
-        ) : (
-          (wall.features ?? []).map((feature) => {
-            const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
-            const modeLabel = wallFeatureModeLabelKey(feature.mode);
-            return (
-              <div
-                key={feature.id}
-                className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelection({
-                      kind: 'wallFeature',
-                      runId: null,
-                      panelId: null,
-                      connectionId: null,
-                      hardwareId: null,
-                      wallId: wall.id,
-                      slabId: null,
-                      featureId: feature.id,
-                    })
-                  }
-                  className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
-                >
-                  {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
-                  {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
-                  {feature.heightMm}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeWallFeature(wall.id, feature.id)}
-                  className="text-slate-400 hover:text-red-500"
-                  aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
-                    defaultValue: 'Katmanı sil',
-                  })}
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => void handleAutofill()}
-        className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
-      >
-        <Wand2 size={14} />
-        {t('GlassEnclosure.Designer.Wall.Autofill', {
-          defaultValue: 'Boşlukları camla doldur',
-        })}
-      </button>
-      <p className="text-[11px] text-slate-400">
-        {t('GlassEnclosure.Designer.Wall.AutofillHint', {
-          defaultValue:
-            'Seçili duvarın pencere/kapı boşluklarını ve deliklerini cam hattıyla doldurur.',
-        })}
-      </p>
+        </>
+      )}
     </section>
   );
 }
@@ -440,7 +503,7 @@ const OpeningField = ({
           const parsed = Number(draft);
           if (!Number.isNaN(parsed)) onCommit(parsed);
         }}
-        className="w-full rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+        className="w-full rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
       />
     </label>
   );
@@ -467,7 +530,7 @@ export const NumberField = ({
       value={value}
       onChange={(e) => onDraft(Number(e.target.value))}
       onBlur={(e) => onCommit(Number(e.target.value))}
-      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
     />
   </label>
 );

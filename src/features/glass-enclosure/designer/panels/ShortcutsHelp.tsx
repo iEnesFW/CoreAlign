@@ -19,7 +19,7 @@ interface ShortcutsHelpProps {
 }
 
 const DEFAULT_TRIGGER_CLASS =
-  'inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
+  'inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 
 const HelpSection = ({ group }: { group: HelpGroup }) => (
   <section>
@@ -118,6 +118,13 @@ export const ShortcutsHelp = ({ triggerClassName, iconSize = 14 }: ShortcutsHelp
           keys: 'V / M / R / S',
           text: t('GlassEnclosure.Designer.Help.Tools.Basic', {
             defaultValue: 'Seç · Taşı · Döndür · Genişlet',
+          }),
+        },
+        {
+          keys: 'Alt + Taşı',
+          text: t('GlassEnclosure.Designer.Help.Tools.AltStack', {
+            defaultValue:
+              'Taşırken Alt basılı tutun: obje çarpışmadan, altındaki objenin üstüne oturur (üst üste yığma). Alt’sız taşıma yan yana hizalar.',
           }),
         },
         {
@@ -250,7 +257,7 @@ export const ShortcutsHelp = ({ triggerClassName, iconSize = 14 }: ShortcutsHelp
         aria-haspopup="dialog"
         className={cn(
           triggerClassName ?? DEFAULT_TRIGGER_CLASS,
-          open && 'text-blue-600 dark:text-blue-400',
+          open && 'text-primary-600 dark:text-primary-400',
         )}
         aria-label={t('GlassEnclosure.Designer.Help.Open', {
           defaultValue: 'Usage and shortcuts',

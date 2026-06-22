@@ -54,7 +54,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
         <button
           type="button"
           onClick={() => void deleteRun(run.id)}
-          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           {t('GlassEnclosure.Designer.DeleteRun', { defaultValue: 'Delete run' })}
         </button>
@@ -99,7 +99,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                   title={color.name}
                   className={`h-7 w-full rounded border ${
                     draft.colorId === color.id
-                      ? 'border-blue-500 ring-2 ring-blue-400/60'
+                      ? 'border-primary-500 ring-2 ring-primary-400/60'
                       : 'border-slate-300 dark:border-slate-600'
                   }`}
                   style={{ backgroundColor: color.hexColor }}
@@ -127,7 +127,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                   const openingType = firstPanel?.openingType ?? 'Fixed';
                   if (glassTypeId) void rebalance(run.id, panelCount, openingType, glassTypeId);
                 }}
-                className="shrink-0 rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                className="shrink-0 rounded bg-primary-600 px-3 py-1 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
               >
                 {t('GlassEnclosure.Designer.Rebalance')}
               </button>
@@ -248,7 +248,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
 }
 
 const inputClass =
-  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">

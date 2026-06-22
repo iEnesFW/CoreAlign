@@ -6,9 +6,6 @@ import { safeRequest } from '@/shared/lib/safeRequest';
 
 const AUTOSAVE_DELAY_MS = 1200;
 
-// Debounced full-scene autosave: every store mutation flips isDirty, so this
-// flushes the whole snapshot (walls/slabs/surfaces/features + camera) to the
-// server shortly after edits settle, giving them the same durability as runs.
 export function useSceneAutosave(projectId: string | null) {
   const saveMutation = useSaveSceneMutation();
   const isDirty = useDesignerStore((s) => s.isDirty);
@@ -21,7 +18,6 @@ export function useSceneAutosave(projectId: string | null) {
     if (!state.isDirty) return;
     const scene = state.exportScene();
     savingRef.current = true;
-    // Optimistically clear dirty; edits made during the save re-set it.
     state.markSaved();
     const [, error] = await safeRequest(
       enqueuePersist(() =>
@@ -39,8 +35,6 @@ export function useSceneAutosave(projectId: string | null) {
     if (error) {
       useDesignerStore.getState().commitTransaction();
     } else if (useDesignerStore.getState().isDirty) {
-      // Edits arrived during the save — explicitly reschedule rather than rely
-      // on an incidental re-render to re-arm the debounce.
       window.setTimeout(() => void flushRef.current(), AUTOSAVE_DELAY_MS);
     }
   }, [projectId, saveMutation]);
@@ -55,8 +49,6 @@ export function useSceneAutosave(projectId: string | null) {
     return () => window.clearTimeout(timer);
   }, [projectId, isDirty, flush]);
 
-  // Best-effort flush when the designer unmounts (in-app navigation / view
-  // switch) so edits inside the debounce window are not dropped on route change.
   useEffect(
     () => () => {
       if (useDesignerStore.getState().isDirty) void flushRef.current();
@@ -64,7 +56,6 @@ export function useSceneAutosave(projectId: string | null) {
     [],
   );
 
-  // Warn before the tab closes / reloads while there is unsaved work.
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!useDesignerStore.getState().isDirty) return;

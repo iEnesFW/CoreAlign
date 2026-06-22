@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useUxMode } from '@/features/persona/hooks/useUxMode';
+import { useUxMode } from '@/shared/lib/persona';
 import { useWizardStore } from '../model/wizardStore';
 import { useEnclosurePresetsQuery } from '../hooks/useEnclosurePresetsQuery';
 import { ENCLOSURE_PRESET_CATALOG, type EnclosurePresetEntry } from '../model/presetCatalog';
@@ -84,7 +84,7 @@ const renderIconBlock = (entry: EnclosurePresetEntry, mode: 'Simple' | 'Pro') =>
   }
   const Icon = ICON_MAP[entry.iconKey] ?? Home;
   return (
-    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20">
+    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 text-white shadow-md shadow-primary-500/20">
       <Icon size={22} />
     </span>
   );
@@ -146,10 +146,10 @@ export const Step1Category = () => {
                 onClick={() => handlePick(entry.category)}
                 className={cn(
                   'group flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-all',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
                   isActive
-                    ? 'border-indigo-500 bg-indigo-50/60 ring-2 ring-indigo-500/40 dark:bg-indigo-500/10'
-                    : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-700',
+                    ? 'border-primary-500 bg-primary-50/60 ring-2 ring-primary-500/40 dark:bg-primary-500/10'
+                    : 'border-slate-200 bg-white hover:border-primary-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:hover:border-primary-700',
                 )}
               >
                 {renderIconBlock(entry, mode)}

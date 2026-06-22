@@ -70,7 +70,7 @@ function ConnectionInspectorBody({
         <button
           type="button"
           onClick={() => removeConnection(connection.id)}
-          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           {t('Common.Delete')}
         </button>
@@ -148,7 +148,7 @@ function ConnectionInspectorBody({
       )}
 
       {(draft.mitreCutDeg < 10 || draft.mitreCutDeg > 80) && (
-        <div className="rounded border border-amber-500/60 bg-amber-50 p-2 text-xs text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300">
+        <div className="rounded border border-warning-500/60 bg-warning-50 p-2 text-xs text-warning-700 dark:border-warning-500/40 dark:bg-warning-950/30 dark:text-warning-300">
           {t('GlassEnclosure.Validation.ConnectionAngleInvalid')}
         </div>
       )}
@@ -157,7 +157,7 @@ function ConnectionInspectorBody({
 }
 
 const inputClass =
-  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">

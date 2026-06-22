@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode } from '@/shared/lib/persona';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import type { SceneRunState } from '@/features/glass-enclosure/model/project.types';
 
@@ -63,7 +63,7 @@ export const RunsPanel = ({ onAddRun, isAdding, className, embedded }: RunsPanel
             onClick={onAddRun}
             disabled={isAdding}
             className={cn(
-              'inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500',
+              'inline-flex w-full items-center justify-center gap-1.5 rounded-md bg-primary-600 font-medium text-white transition hover:bg-primary-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary-500',
               isSimple ? 'h-12 text-base' : 'h-9 text-sm',
             )}
             aria-label={addLabel}
@@ -121,7 +121,7 @@ const RunListItem = ({ run, active, isSimple, onSelect }: RunListItemProps) => {
         className={cn(
           'flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2 text-left transition-colors dark:border-slate-800',
           active
-            ? 'bg-blue-50 dark:bg-blue-950/40'
+            ? 'bg-primary-50 dark:bg-primary-950/40'
             : 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
         )}
       >
@@ -130,7 +130,9 @@ const RunListItem = ({ run, active, isSimple, onSelect }: RunListItemProps) => {
           <div
             className={cn(
               'truncate font-medium',
-              active ? 'text-blue-700 dark:text-blue-300' : 'text-slate-900 dark:text-slate-100',
+              active
+                ? 'text-primary-700 dark:text-primary-300'
+                : 'text-slate-900 dark:text-slate-100',
               isSimple ? 'text-base' : 'text-sm',
             )}
           >
@@ -187,7 +189,7 @@ const RunThumbnail = ({ run, active, isSimple }: RunThumbnailProps) => {
       className={cn(
         'shrink-0 rounded border',
         active
-          ? 'border-blue-400 bg-blue-50 dark:border-blue-500/60 dark:bg-blue-900/30'
+          ? 'border-primary-400 bg-primary-50 dark:border-primary-500/60 dark:bg-primary-900/30'
           : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800',
       )}
     >
@@ -199,7 +201,7 @@ const RunThumbnail = ({ run, active, isSimple }: RunThumbnailProps) => {
         fill="none"
         stroke="currentColor"
         strokeWidth={1.25}
-        className={active ? 'text-blue-500' : 'text-slate-400 dark:text-slate-500'}
+        className={active ? 'text-primary-500' : 'text-slate-400 dark:text-slate-500'}
       />
       {Array.from({ length: panelCount - 1 }).map((_, i) => {
         const x = offsetX + panelWidth * (i + 1);
@@ -212,7 +214,7 @@ const RunThumbnail = ({ run, active, isSimple }: RunThumbnailProps) => {
             y2={offsetY + drawH}
             stroke="currentColor"
             strokeWidth={0.75}
-            className={active ? 'text-blue-400' : 'text-slate-300 dark:text-slate-600'}
+            className={active ? 'text-primary-400' : 'text-slate-300 dark:text-slate-600'}
           />
         );
       })}

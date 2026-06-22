@@ -4,6 +4,7 @@ import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { DoubleSide, ExtrudeGeometry, Path, ShapeGeometry, Vector3 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
+import { buildCurvedBandGeometry } from './curvedExtrude';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, Texture } from 'three';
 import {
@@ -16,6 +17,7 @@ import {
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
+import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
@@ -26,13 +28,15 @@ import {
   previewSnapshotsMove,
   previewSnapshotsRotation,
 } from '../interaction/attachedRunPreview';
-import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
+import { EMPTY_SNAP_TARGETS, filterSnapTargets, lineProbePoints } from '../interaction/planSnap';
 import {
   buildRunFootprint,
   buildWallFootprint,
   clampPlanStretch,
+  restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
+import { effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -66,6 +70,7 @@ interface WallObjectProps {
   onSelect: (wallId: string) => void;
   snapTargets?: PlanSnapTargets;
   obstacles?: PlanFootprint[];
+  supports?: PlanFootprint[];
   interactive?: boolean;
   onCommitMove?: (
     wallId: string,
@@ -73,6 +78,7 @@ interface WallObjectProps {
     attachedRunIds: string[],
     groupWallIds: string[],
   ) => void;
+  onStackWall?: (wallId: string, delta: PlanMoveDelta, geomZMm: number) => void;
   onCommitRotate?: (
     wallId: string,
     commit: PlanRotationCommit,
@@ -130,12 +136,20 @@ interface WallFeatureItem extends ComposedFeature {
   geometry: ExtrudeGeometry | null;
 }
 
-const buildOpeningPath = (
+export interface OpeningFrameRect {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+  hasSill: boolean;
+}
+
+const clampedOpeningRectM = (
   opening: SceneWallOpening,
   lengthM: number,
   heightStartM: number,
   heightEndM: number,
-): Path | null => {
+): OpeningFrameRect | null => {
   const halfW = opening.widthMm / 2000;
   const centerX = opening.offsetMm / 1000;
   const x0 = Math.max(SIDE_MARGIN_M, centerX - halfW);
@@ -146,11 +160,15 @@ const buildOpeningPath = (
   const y0 = Math.max(BOTTOM_MARGIN_M, opening.sillMm / 1000);
   const y1 = Math.min(topLimit, (opening.sillMm + opening.heightMm) / 1000);
   if (y1 - y0 < MIN_HOLE_M) return null;
+  return { x0, x1, y0, y1, hasSill: opening.sillMm > 0 };
+};
+
+const buildOpeningPath = (rect: OpeningFrameRect): Path => {
   const path = new Path();
-  path.moveTo(x0, y0);
-  path.lineTo(x1, y0);
-  path.lineTo(x1, y1);
-  path.lineTo(x0, y1);
+  path.moveTo(rect.x0, rect.y0);
+  path.lineTo(rect.x1, rect.y0);
+  path.lineTo(rect.x1, rect.y1);
+  path.lineTo(rect.x0, rect.y1);
   path.closePath();
   return path;
 };
@@ -158,12 +176,34 @@ const buildOpeningPath = (
 const buildWallGeometries = (
   wall: SceneWallState,
   cutFeatures = true,
-): { body: ExtrudeGeometry; featureItems: WallFeatureItem[] } => {
+): {
+  body: ExtrudeGeometry;
+  featureItems: WallFeatureItem[];
+  openingFrames: OpeningFrameRect[];
+} => {
+  const thicknessMm = wall.thicknessMm;
+  const thicknessM = thicknessMm / 1000;
+
+  // Curved (arc-in-plan) wall: a single annular band, constant height. Openings and
+  // surface features are not projected onto the curve in this version (#6a).
+  if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+    const radiusM = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm) / 1000;
+    const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+    const sweep = Math.min(wall.lengthMm / (radiusM * 1000), Math.PI * 2);
+    const body = buildCurvedBandGeometry(
+      radiusM,
+      direction,
+      0,
+      sweep,
+      thicknessM,
+      wall.heightMm / 1000,
+    );
+    return { body, featureItems: [], openingFrames: [] };
+  }
+
   const lengthM = wall.lengthMm / 1000;
   const heightStartM = wall.heightMm / 1000;
   const heightEndM = (wall.heightEndMm ?? wall.heightMm) / 1000;
-  const thicknessMm = wall.thicknessMm;
-  const thicknessM = thicknessMm / 1000;
   const radii = wall.cornerRadiiMm ?? {};
   const shape = filletedShapeMm(
     [
@@ -175,14 +215,15 @@ const buildWallGeometries = (
     [radii.bl ?? 0, radii.br ?? 0, radii.tr ?? 0, radii.tl ?? 0],
   );
   const openingBounds = [];
+  const openingFrames: OpeningFrameRect[] = [];
   const sorted = [...(wall.openings ?? [])].sort((a, b) => a.offsetMm - b.offsetMm);
   let lastRightMm = Number.NEGATIVE_INFINITY;
   for (const opening of sorted) {
     const leftMm = opening.offsetMm - opening.widthMm / 2;
     if (leftMm < lastRightMm + FEATURE_GAP_MM) continue;
-    const hole = buildOpeningPath(opening, lengthM, heightStartM, heightEndM);
-    if (!hole) continue;
-    shape.holes.push(hole);
+    const rect = clampedOpeningRectM(opening, lengthM, heightStartM, heightEndM);
+    if (!rect) continue;
+    shape.holes.push(buildOpeningPath(rect));
     lastRightMm = opening.offsetMm + opening.widthMm / 2;
     openingBounds.push({
       minX: leftMm,
@@ -190,6 +231,7 @@ const buildWallGeometries = (
       minZ: opening.sillMm,
       maxZ: opening.sillMm + opening.heightMm,
     });
+    openingFrames.push(rect);
   }
   const composed = composeSurfaceFeatures(
     wall.features ?? [],
@@ -199,9 +241,6 @@ const buildWallGeometries = (
   );
   const featureItems: WallFeatureItem[] = [];
   for (const baseItem of composed) {
-    // During a body stretch we keep HOLE-cutting features as fixed outlines so the
-    // body can scale without the holes scaling with it; protrusions are separate
-    // solid siblings (they never scale) so they stay rendered.
     const item =
       cutFeatures || baseItem.kind === 'protrude'
         ? baseItem
@@ -230,7 +269,7 @@ const buildWallGeometries = (
   }
   const body = new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false });
   body.translate(0, 0, -thicknessM / 2);
-  return { body, featureItems };
+  return { body, featureItems, openingFrames };
 };
 
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -241,8 +280,10 @@ export function WallObject({
   onSelect,
   snapTargets,
   obstacles,
+  supports,
   interactive = true,
   onCommitMove,
+  onStackWall,
   onCommitRotate,
   penActive = false,
   onPenFaceClick,
@@ -251,6 +292,7 @@ export function WallObject({
 }: WallObjectProps) {
   const { t } = useTranslation();
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const quality = useDesignerStore((s) => s.quality);
   const penFace = useDesignerStore((s) => s.penFace);
   const setPenFaceCursor = useDesignerStore((s) => s.setPenFaceCursor);
   const drawShape = useDesignerStore((s) => s.drawShape);
@@ -264,11 +306,15 @@ export function WallObject({
   const splitWall = useDesignerStore((s) => s.splitWall);
   const setSelection = useDesignerStore((s) => s.setSelection);
 
-  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked;
-  const { body: geometry, featureItems } = useMemo(
-    () => buildWallGeometries(wall, !stretchActive),
-    [wall, stretchActive],
-  );
+  const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
+  // Length/height stretch handles assume a straight body; an arc wall is resized via
+  // its radius/sweep in the inspector instead (#6a).
+  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
+  const {
+    body: geometry,
+    featureItems,
+    openingFrames,
+  } = useMemo(() => buildWallGeometries(wall, !stretchActive), [wall, stretchActive]);
   useEffect(
     () => () => {
       geometry.dispose();
@@ -315,10 +361,13 @@ export function WallObject({
   const centerXMm = wall.originX + (wall.lengthMm / 2) * dirX;
   const centerYMm = wall.originY + (wall.lengthMm / 2) * dirY;
 
-  const moveProbes: PlanPoint[] = [
-    { x: wall.originX, y: wall.originY },
-    { x: wall.originX + wall.lengthMm * dirX, y: wall.originY + wall.lengthMm * dirY },
-  ];
+  const moveProbes: PlanPoint[] = lineProbePoints(
+    wall.originX,
+    wall.originY,
+    wall.lengthMm,
+    wall.rotationDeg,
+    wall.thicknessMm / 2,
+  );
 
   const coMove = useMemo(() => {
     const groupWalls = wall.groupId
@@ -341,11 +390,25 @@ export function WallObject({
     return planObstacles.filter((o) => !movingIds.has(o.ownerId));
   }, [planObstacles, wall.id, coMove]);
 
+  // Default drag is lateral: the wall (plus any grouped walls / attached runs it
+  // carries) collides side-to-side so it can butt flush against a neighbour. Holding
+  // Alt instead rests a bare wall on top of whatever it overlaps. Only a wall that
+  // carries no group/runs is Alt-stackable; ground (0) fallback prevents self-ratchet.
+  const baseWallElevMm = wall.geomZ ?? 0;
+  const stackSupports = useMemo(
+    () => (supports ?? EMPTY_OBSTACLES).filter((o) => o.ownerId !== wall.id),
+    [supports, wall.id],
+  );
+  const canStack =
+    Boolean(onStackWall) && coMove.groupWalls.length === 0 && coMove.runs.length === 0;
+  const restElevAt = (dxMm: number, dyMm: number) =>
+    restElevationMm(buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg), stackSupports, 0);
+
   const adapter: PlanGestureAdapter = {
     originXMm: wall.originX,
     originYMm: wall.originY,
     rotationDeg: wall.rotationDeg,
-    baseYM: 0,
+    baseYM: baseWallElevMm / 1000,
     centerXMm,
     centerYMm,
     moveProbes,
@@ -358,6 +421,7 @@ export function WallObject({
         ...coMove.runs.map((r) => buildRunFootprint(r, dxMm, dyMm, r.rotationDeg)),
       ];
     },
+    altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -394,13 +458,20 @@ export function WallObject({
     onMovePreview: (delta) => previewSnapshotsMove(attachedRef.current, delta.dxMm, delta.dyMm),
     onRotatePreview: (sweepDeg) =>
       previewSnapshotsRotation(attachedRef.current, centerXMm, centerYMm, sweepDeg),
-    onMoveCommit: (delta) =>
+    onMoveCommit: (delta, meta) => {
+      // Alt-drag a bare wall to drop it at its resting elevation (stack-on-top); a
+      // plain drag stays lateral so it can butt flush and carry any group/runs.
+      if (canStack && onStackWall && meta.alt) {
+        onStackWall(wall.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+        return;
+      }
       onCommitMove?.(
         wall.id,
         delta,
         coMove.runs.map((r) => r.id),
         coMove.groupWalls.map((w) => w.id),
-      ),
+      );
+    },
     onRotateCommit: (commit) =>
       onCommitRotate?.(
         wall.id,
@@ -423,8 +494,6 @@ export function WallObject({
 
   const clampDrawPoint = (xMm: number, zMm: number): SceneWallFeaturePoint => {
     const x = clampValue(xMm, FEATURE_EDGE_MARGIN_MM, wall.lengthMm - FEATURE_EDGE_MARGIN_MM);
-    // Clamp against the GLOBAL top limit (lower of the two extreme-x heights), the
-    // same limit featureFitsWall uses, so sloped-wall polygons are never rejected.
     const topLimit =
       Math.min(wallHeightAtMm(wall, 0), wallHeightAtMm(wall, wall.lengthMm)) -
       FEATURE_EDGE_MARGIN_MM;
@@ -624,7 +693,6 @@ export function WallObject({
     const session = useDesignerStore.getState().penFace;
     const local = penFacePoint(e.point);
     if (!session || !local) return;
-    // Only suppress the trailing click once the arc actually commits.
     penSuppressClickRef.current = true;
     const anchor = session.points[session.points.length - 1];
     const m = { x: anchor.x, y: anchor.z };
@@ -723,8 +791,6 @@ export function WallObject({
     bodyRef.current?.scale.set(1, 1, 1);
     bodyRef.current?.position.set(0, 0, 0);
   };
-  // Clear the stretch preview only once the rebuilt wall mounts at its new
-  // dimensions, so the committed wall never flashes back to its old size.
   useLayoutEffect(
     () => resetBody(),
     [wall.lengthMm, wall.heightMm, wall.heightEndMm, wall.thicknessMm],
@@ -970,13 +1036,14 @@ export function WallObject({
   return (
     <group
       ref={setGroupRef}
-      position={[wall.originX / 1000, 0, wall.originY / 1000]}
+      position={[wall.originX / 1000, (wall.geomZ ?? 0) / 1000, wall.originY / 1000]}
       rotation={[0, -wall.rotationDeg * DEG2RAD, 0]}
     >
       <group ref={drawAnchorRef} />
       <group ref={bodyRef}>
         <mesh
           geometry={geometry}
+          rotation={isArcWall ? [-Math.PI / 2, 0, 0] : undefined}
           castShadow
           receiveShadow
           {...wallHandlers}
@@ -1012,6 +1079,13 @@ export function WallObject({
           presentation={presentation}
         />
       ))}
+      {openingFrames.length > 0 && (
+        <WallOpeningFrames
+          frames={openingFrames}
+          thicknessMm={wall.thicknessMm}
+          quality={quality}
+        />
+      )}
       {drawActive && drawIsSplit && (
         <mesh ref={splitHoverRef} visible={false} raycast={() => null}>
           <boxGeometry args={[SPLIT_PREVIEW_WIDTH_M, 1, thicknessM + 0.02]} />

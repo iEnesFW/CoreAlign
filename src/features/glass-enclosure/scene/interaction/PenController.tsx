@@ -56,6 +56,11 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
   const suppressClickRef = useRef(false);
   const [arcPreview, setArcPreview] = useState<PlanPoint[] | null>(null);
   const getThree = useThree((s) => s.get);
+  const keyActionsRef = useRef<{
+    finish: () => void;
+    cancelArc: () => void;
+    setOrbitEnabled: (value: boolean) => void;
+  } | null>(null);
 
   const setOrbitEnabled = (value: boolean) => {
     const controls = getThree().controls as unknown as { enabled: boolean } | null;
@@ -105,11 +110,13 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
         target?.isContentEditable
       )
         return;
+      const actions = keyActionsRef.current;
+      if (!actions) return;
       if (e.key === 'Enter') {
         e.preventDefault();
-        finish();
+        actions.finish();
       } else if (e.key === 'Escape') {
-        cancelArc();
+        actions.cancelArc();
         pointsRef.current = [];
         setPoints([]);
         setCursor(null);
@@ -124,9 +131,8 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
     return () => {
       window.removeEventListener('keydown', onKey);
       clearSnapGuides();
-      if (arcRef.current?.active) setOrbitEnabled(true);
+      if (arcRef.current?.active) keyActionsRef.current?.setOrbitEnabled(true);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
@@ -161,6 +167,10 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
     setOrbitEnabled(true);
   };
 
+  useEffect(() => {
+    keyActionsRef.current = { finish, cancelArc, setOrbitEnabled };
+  });
+
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     const arc = arcRef.current;
     arcRef.current = null;
@@ -182,7 +192,6 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
       suppressClickRef.current = false;
       return;
     }
-    // Ignore the 2nd click of a double-click (handled by onDoubleClick).
     if (e.nativeEvent.detail > 1) return;
     const { point } = resolve(e.point.x * MM, e.point.z * MM);
     const pts = pointsRef.current;

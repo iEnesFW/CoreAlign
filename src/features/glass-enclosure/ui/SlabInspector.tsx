@@ -100,7 +100,7 @@ export function SlabInspector() {
         <button
           type="button"
           onClick={handleDelete}
-          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           {deleteLabel}
         </button>
@@ -118,7 +118,7 @@ export function SlabInspector() {
               onClick={() => commit({ kind })}
               className={
                 slab.kind === kind
-                  ? 'flex-1 rounded border border-blue-500 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600 dark:bg-blue-950/30 dark:text-blue-400'
+                  ? 'flex-1 rounded border border-primary-500 bg-primary-50 px-2 py-1 text-xs font-medium text-primary-600 dark:bg-primary-950/30 dark:text-primary-400'
                   : 'flex-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
               }
             >
@@ -241,7 +241,7 @@ export function SlabInspector() {
                       featureId: feature.id,
                     })
                   }
-                  className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                  className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
                 >
                   {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
                   {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
@@ -250,7 +250,7 @@ export function SlabInspector() {
                 <button
                   type="button"
                   onClick={() => removeSlabFeature(slab.id, feature.id)}
-                  className="text-slate-400 hover:text-red-500"
+                  className="text-slate-400 hover:text-danger-500"
                   aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
                     defaultValue: 'Katmanı sil',
                   })}
@@ -287,7 +287,7 @@ const NumberField = ({
       value={value}
       onChange={(e) => onDraft(Number(e.target.value))}
       onBlur={(e) => onCommit(Number(e.target.value))}
-      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
     />
   </label>
 );

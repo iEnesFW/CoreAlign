@@ -38,7 +38,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
             key={kind}
             type="button"
             onClick={() => handleAdd(kind)}
-            className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:border-blue-400 hover:text-blue-600 dark:border-slate-600 dark:text-slate-300 dark:hover:border-blue-500"
+            className="inline-flex items-center gap-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:border-primary-400 hover:text-primary-600 dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary-500"
           >
             <Plus size={12} />
             {kindLabel(kind)}
@@ -60,7 +60,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
               <button
                 type="button"
                 onClick={() => selectHardware(hw.id)}
-                className="flex items-center gap-2 text-xs text-slate-700 hover:text-blue-600 dark:text-slate-200 dark:hover:text-blue-400"
+                className="flex items-center gap-2 text-xs text-slate-700 hover:text-primary-600 dark:text-slate-200 dark:hover:text-primary-400"
               >
                 <span
                   className="inline-block h-3 w-3 rounded-sm border border-black/10"
@@ -71,7 +71,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
               <button
                 type="button"
                 onClick={() => removeHardware(runId, panel.id, hw.id)}
-                className="text-slate-400 hover:text-red-500"
+                className="text-slate-400 hover:text-danger-500"
                 aria-label={t('Common.Delete')}
               >
                 <Trash2 size={13} />

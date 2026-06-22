@@ -3,7 +3,7 @@ import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
-import { computeOpeningEdges, suggestedPanelCount } from '../model/wallAutofill';
+import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns } from '../model/multiAutofill';
 import { useAddConnectionMutation, useAddRunMutation } from './useGlassProjectQueries';
 import { useColorOptionsQuery, useProfileSystemsQuery } from './useGlassEnclosureQueries';
@@ -27,6 +27,7 @@ export const useWallAutofill = () => {
   const createRuns = async (
     projectId: string,
     profileSystemId: string,
+    maxPanelWidthMm: number | undefined,
     edges: OpenEdge[],
   ): Promise<{ id: string; edge: OpenEdge }[]> => {
     const state = useDesignerStore.getState();
@@ -45,7 +46,7 @@ export const useWallAutofill = () => {
               originY: edge.originY,
               rotationDeg: edge.rotationDeg,
               geomZ: edge.geomZ ?? null,
-              panelCount: suggestedPanelCount(edge.lengthMm),
+              panelCount: panelCountForWidth(edge.lengthMm, maxPanelWidthMm),
               label: `${runPrefix} ${state.scene.runs.length + created.length + 1}`,
               colorId: colorsQuery.data?.data?.[0]?.id ?? null,
               hasTopDrip: true,
@@ -97,7 +98,9 @@ export const useWallAutofill = () => {
     const state = useDesignerStore.getState();
     const projectId = state.projectId;
     const walls = state.scene.walls ?? [];
-    const profileSystemId = profileSystemsQuery.data?.data?.[0]?.id;
+    const profileSystem = profileSystemsQuery.data?.data?.[0];
+    const profileSystemId = profileSystem?.id;
+    const maxPanelWidthMm = profileSystem?.maxPanelWidthMm;
     if (!projectId || !profileSystemId || walls.length === 0) return 0;
 
     const multiWallIds = state.multiSelection.wallIds;
@@ -115,7 +118,7 @@ export const useWallAutofill = () => {
         });
         return 0;
       }
-      const created = (await createRuns(projectId, profileSystemId, edges)) as {
+      const created = (await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges)) as {
         id: string;
         edge: GapEdge;
       }[];
@@ -141,7 +144,7 @@ export const useWallAutofill = () => {
       return 0;
     }
     const edges = computeOpeningEdges([selectedWall]);
-    const created = await createRuns(projectId, profileSystemId, edges);
+    const created = await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges);
     return created.length;
   };
 

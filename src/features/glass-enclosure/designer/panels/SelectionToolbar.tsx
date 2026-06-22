@@ -6,16 +6,29 @@ import {
   AlignHorizontalSpaceAround,
   AlignVerticalSpaceAround,
   Copy,
+  FlipHorizontal2,
+  Group as GroupIcon,
   Link2,
   Lock,
   LockOpen,
   Plus,
   Ruler,
   Trash2,
+  Ungroup,
   UnfoldVertical,
   Wand2,
 } from 'lucide-react';
+import type { CornerRadiiMm } from '@/features/glass-enclosure/model/project.types';
 import { cn } from '@/shared/lib/cn';
+import { queueToast } from '@/shared/api/toastQueue';
+import type { PlanFootprint } from '@/shared/three-engine';
+import {
+  buildRunFootprint,
+  buildSlabFootprint,
+  buildSurfaceFootprint,
+  buildWallFootprint,
+  penetratesAny,
+} from '@/features/glass-enclosure/scene/interaction/planCollision';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
@@ -26,6 +39,10 @@ import type { GlassTypeDto } from '@/features/glass-enclosure/model/glassEnclosu
 interface SelectionToolbarProps {
   glassTypes: GlassTypeDto[];
 }
+
+const ARRAY_COUNT = 3;
+const ARRAY_GAP_MM = 200;
+const DEG2RAD = Math.PI / 180;
 
 export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const { t } = useTranslation();
@@ -49,7 +66,17 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const { createPanel, deletePanel, deleteRun } = useDesignerEntityActions();
   const { autofill } = useWallAutofill();
   const multiSelection = useDesignerStore((s) => s.multiSelection);
+  const applyScenePatch = useDesignerStore((s) => s.applyScenePatch);
   const { deleteMultiSelection } = useMultiSelectionDelete();
+
+  const groupWalls = (groupId: string | null) => {
+    const ids = new Set(multiSelection.wallIds);
+    if (ids.size === 0) return;
+    applyScenePatch((s) => ({
+      ...s,
+      walls: (s.walls ?? []).map((w) => (ids.has(w.id) ? { ...w, groupId } : w)),
+    }));
+  };
   const { alignCenters, distributeEvenly, joinEndToEnd, equalizeHeights, equalizeLengths } =
     useMultiAlignActions();
 
@@ -58,8 +85,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
 
   if (multiCount > 0) {
     return (
-      <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end">
-        <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
+      <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex justify-end">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur lg:max-w-[calc(100%-34rem)] dark:border-slate-700 dark:bg-slate-900/90">
           <span className="px-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             {t('GlassEnclosure.Designer.MultiSelect.Count', {
               defaultValue: '{{count}} öğe seçili',
@@ -118,6 +145,24 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
             })}
             onClick={() => void autofill()}
           />
+          {multiSelection.wallIds.length >= 2 && (
+            <>
+              <ToolbarButton
+                icon={<GroupIcon size={13} />}
+                label={t('GlassEnclosure.Designer.MultiSelect.Group', {
+                  defaultValue: 'Grupla (birlikte taşınır)',
+                })}
+                onClick={() => groupWalls(crypto.randomUUID())}
+              />
+              <ToolbarButton
+                icon={<Ungroup size={13} />}
+                label={t('GlassEnclosure.Designer.MultiSelect.Ungroup', {
+                  defaultValue: 'Grubu çöz',
+                })}
+                onClick={() => groupWalls(null)}
+              />
+            </>
+          )}
           <ToolbarButton
             icon={<Trash2 size={13} />}
             label={t('GlassEnclosure.Designer.MultiSelect.DeleteAll', {
@@ -158,6 +203,78 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
       onClick={onToggle}
     />
   );
+
+  const mirrorButton = (onMirror: () => void): ReactNode => (
+    <ToolbarButton
+      icon={<FlipHorizontal2 size={13} />}
+      label={t('GlassEnclosure.Designer.Mirror', { defaultValue: 'Yatay aynala' })}
+      onClick={onMirror}
+    />
+  );
+  const arrayButton = (onArray: () => void): ReactNode => (
+    <ToolbarButton
+      icon={<Copy size={13} />}
+      label={t('GlassEnclosure.Designer.Array', { defaultValue: 'Dizi (3×)' })}
+      onClick={onArray}
+    />
+  );
+  const swapRadii = (r?: CornerRadiiMm): CornerRadiiMm => ({
+    tl: r?.tr,
+    tr: r?.tl,
+    bl: r?.br,
+    br: r?.bl,
+  });
+
+  const solidObstaclesExcluding = (excludeId: string): PlanFootprint[] => {
+    const s = useDesignerStore.getState().scene;
+    return [
+      ...(s.walls ?? [])
+        .filter((w) => w.id !== excludeId)
+        .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
+      ...s.runs
+        .filter((r) => r.id !== excludeId)
+        .map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
+      ...(s.slabs ?? [])
+        .filter((sl) => sl.id !== excludeId)
+        .map((sl) => buildSlabFootprint(sl, 0, 0, sl.rotationDeg)),
+    ];
+  };
+
+  const surfaceObstaclesExcluding = (excludeId: string): PlanFootprint[] => {
+    const s = useDesignerStore.getState().scene;
+    return (s.surfaces ?? [])
+      .filter((su) => su.id !== excludeId)
+      .map((su) => buildSurfaceFootprint(su));
+  };
+
+  const acceptArraySlots = (
+    obstacles: PlanFootprint[],
+    footprintAt: (k: number) => PlanFootprint,
+  ): number[] => {
+    const accepted: number[] = [];
+    let skipped = 0;
+    for (let k = 1; k < ARRAY_COUNT; k += 1) {
+      const footprint = footprintAt(k);
+      if (penetratesAny(footprint, obstacles)) {
+        skipped += 1;
+        continue;
+      }
+      obstacles.push({ ...footprint, ownerId: `${footprint.ownerId}#arr${k}` });
+      accepted.push(k);
+    }
+    if (skipped > 0) {
+      queueToast({
+        dedupeKey: 'glass-array-overlap',
+        variant: accepted.length > 0 ? 'warning' : 'error',
+        description: t('GlassEnclosure.Designer.ArrayOverlap', {
+          defaultValue: '{{placed}} kopya eklendi, {{skipped}} tanesi çakışma nedeniyle atlandı.',
+          placed: accepted.length,
+          skipped,
+        }),
+      });
+    }
+    return accepted;
+  };
 
   const renderActions = (): ReactNode => {
     if (selection.kind === 'run' && run) {
@@ -252,6 +369,64 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(wallObj?.locked), () =>
             updateWall(selection.wallId as string, { locked: !wallObj?.locked }),
           )}
+          {wallObj &&
+            mirrorButton(() => {
+              const heightEnd = wallObj.heightEndMm;
+              const slopeSwap =
+                heightEnd !== null && heightEnd !== undefined
+                  ? { heightMm: heightEnd, heightEndMm: wallObj.heightMm }
+                  : {};
+              updateWall(wallObj.id, {
+                cornerRadiiMm: swapRadii(wallObj.cornerRadiiMm),
+                ...slopeSwap,
+                openings: (wallObj.openings ?? []).map((o) => ({
+                  ...o,
+                  offsetMm: wallObj.lengthMm - o.offsetMm,
+                })),
+                features: (wallObj.features ?? []).map((f) => ({
+                  ...f,
+                  offsetMm: wallObj.lengthMm - f.offsetMm,
+                  points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
+                })),
+              });
+            })}
+          {wallObj &&
+            arrayButton(() => {
+              const dx = Math.cos(wallObj.rotationDeg * DEG2RAD);
+              const dy = Math.sin(wallObj.rotationDeg * DEG2RAD);
+              const step = wallObj.lengthMm + ARRAY_GAP_MM;
+              const offsetAt = (k: number) => ({
+                offX: Math.round(wallObj.originX + dx * step * k) - wallObj.originX,
+                offY: Math.round(wallObj.originY + dy * step * k) - wallObj.originY,
+              });
+              const cloneAt = (k: number) => {
+                const { offX, offY } = offsetAt(k);
+                return {
+                  ...structuredClone(wallObj),
+                  id: crypto.randomUUID(),
+                  groupId: null,
+                  originX: wallObj.originX + offX,
+                  originY: wallObj.originY + offY,
+                  openings: (wallObj.openings ?? []).map((o) => ({
+                    ...o,
+                    id: crypto.randomUUID(),
+                  })),
+                  features: (wallObj.features ?? []).map((f) => ({
+                    ...f,
+                    id: crypto.randomUUID(),
+                  })),
+                };
+              };
+              const accepted = acceptArraySlots(solidObstaclesExcluding(wallObj.id), (k) => {
+                const { offX, offY } = offsetAt(k);
+                return buildWallFootprint(wallObj, offX, offY, wallObj.rotationDeg);
+              });
+              if (accepted.length > 0)
+                applyScenePatch((s) => ({
+                  ...s,
+                  walls: [...(s.walls ?? []), ...accepted.map(cloneAt)],
+                }));
+            })}
           <ToolbarButton
             icon={<Wand2 size={13} />}
             label={t('GlassEnclosure.Designer.Wall.Autofill', {
@@ -322,6 +497,46 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(slab?.locked), () =>
             updateSlab(selection.slabId as string, { locked: !slab?.locked }),
           )}
+          {slab &&
+            mirrorButton(() =>
+              updateSlab(slab.id, {
+                cornerRadiiMm: swapRadii(slab.cornerRadiiMm),
+                features: (slab.features ?? []).map((f) => ({
+                  ...f,
+                  offsetMm: slab.lengthMm - f.offsetMm,
+                  points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
+                })),
+              }),
+            )}
+          {slab &&
+            arrayButton(() => {
+              const dx = Math.cos(slab.rotationDeg * DEG2RAD);
+              const dy = Math.sin(slab.rotationDeg * DEG2RAD);
+              const step = slab.lengthMm + ARRAY_GAP_MM;
+              const offsetAt = (k: number) => ({
+                offX: Math.round(slab.originX + dx * step * k) - slab.originX,
+                offY: Math.round(slab.originY + dy * step * k) - slab.originY,
+              });
+              const cloneAt = (k: number) => {
+                const { offX, offY } = offsetAt(k);
+                return {
+                  ...structuredClone(slab),
+                  id: crypto.randomUUID(),
+                  originX: slab.originX + offX,
+                  originY: slab.originY + offY,
+                  features: (slab.features ?? []).map((f) => ({ ...f, id: crypto.randomUUID() })),
+                };
+              };
+              const accepted = acceptArraySlots(solidObstaclesExcluding(slab.id), (k) => {
+                const { offX, offY } = offsetAt(k);
+                return buildSlabFootprint(slab, offX, offY, slab.rotationDeg);
+              });
+              if (accepted.length > 0)
+                applyScenePatch((s) => ({
+                  ...s,
+                  slabs: [...(s.slabs ?? []), ...accepted.map(cloneAt)],
+                }));
+            })}
           <ToolbarButton
             icon={<Trash2 size={13} />}
             label={
@@ -346,6 +561,36 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(surfaceObj?.locked), () =>
             updateSurface(selection.surfaceId as string, { locked: !surfaceObj?.locked }),
           )}
+          {surfaceObj &&
+            surfaceObj.points.length > 0 &&
+            mirrorButton(() => {
+              const cx =
+                surfaceObj.points.reduce((sum, p) => sum + p.x, 0) / surfaceObj.points.length;
+              updateSurface(surfaceObj.id, {
+                points: surfaceObj.points.map((p) => ({ x: Math.round(2 * cx - p.x), y: p.y })),
+              });
+            })}
+          {surfaceObj &&
+            surfaceObj.points.length > 0 &&
+            arrayButton(() => {
+              const xs = surfaceObj.points.map((p) => p.x);
+              const step = Math.max(...xs) - Math.min(...xs) + ARRAY_GAP_MM;
+              const pointsAt = (k: number) =>
+                surfaceObj.points.map((p) => ({ x: p.x + step * k, y: p.y }));
+              const cloneAt = (k: number) => ({
+                ...structuredClone(surfaceObj),
+                id: crypto.randomUUID(),
+                points: pointsAt(k),
+              });
+              const accepted = acceptArraySlots(surfaceObstaclesExcluding(surfaceObj.id), (k) =>
+                buildSurfaceFootprint({ ...surfaceObj, points: pointsAt(k) }),
+              );
+              if (accepted.length > 0)
+                applyScenePatch((s) => ({
+                  ...s,
+                  surfaces: [...(s.surfaces ?? []), ...accepted.map(cloneAt)],
+                }));
+            })}
           <ToolbarButton
             icon={<Trash2 size={13} />}
             label={t('GlassEnclosure.Designer.Surface.Delete', { defaultValue: 'Yüzeyi sil' })}
@@ -380,8 +625,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   if (!actions) return null;
 
   return (
-    <div className="pointer-events-none absolute right-3 top-3 z-10 flex justify-end">
-      <div className="pointer-events-auto flex items-center gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
+    <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex justify-end">
+      <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur lg:max-w-[calc(100%-34rem)] dark:border-slate-700 dark:bg-slate-900/90">
         {actions}
       </div>
     </div>
@@ -404,7 +649,7 @@ const ToolbarButton = ({ icon, label, onClick, danger }: ToolbarButtonProps) => 
     className={cn(
       'inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs font-medium transition',
       danger
-        ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30'
+        ? 'text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30'
         : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
     )}
   >

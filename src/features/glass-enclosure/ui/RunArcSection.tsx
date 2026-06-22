@@ -147,7 +147,7 @@ export function RunArcSection({
           <button
             type="button"
             onClick={applyChordSagitta}
-            className="h-[30px] shrink-0 rounded bg-blue-600 px-3 text-xs font-medium text-white hover:bg-blue-700"
+            className="h-[30px] shrink-0 rounded bg-primary-600 px-3 text-xs font-medium text-white hover:bg-primary-700"
           >
             {t('GlassEnclosure.Designer.Arc.Apply', { defaultValue: 'Uygula' })}
           </button>
@@ -230,7 +230,7 @@ export function RunArcSection({
 }
 
 const inputClass =
-  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
@@ -240,7 +240,7 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 const Warning = ({ text }: { text: string }) => (
-  <p className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+  <p className="rounded border border-warning-300 bg-warning-50 px-2 py-1 text-[11px] text-warning-800 dark:border-warning-700 dark:bg-warning-950/30 dark:text-warning-300">
     {text}
   </p>
 );

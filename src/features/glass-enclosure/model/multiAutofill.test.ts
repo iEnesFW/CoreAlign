@@ -156,4 +156,31 @@ describe('computeMultiWallGapRuns', () => {
     const a = wall('a', 0, 0, 2000, 0);
     expect(computeMultiWallGapRuns([a], [a], [])).toHaveLength(0);
   });
+
+  it('lifts the gap run to the shared base elevation when both walls are raised', () => {
+    const a = { ...wall('a', 0, 0, 2000, 0), geomZ: 900 };
+    const b = { ...wall('b', 3000, 0, 2000, 0), geomZ: 900 };
+    const edges = computeMultiWallGapRuns([a, b], [a, b], []);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].geomZ).toBe(900);
+  });
+
+  it('bridges walls at different elevations at the lower base so the run reaches both', () => {
+    const a = { ...wall('a', 0, 0, 2000, 0), geomZ: 900 };
+    const b = { ...wall('b', 3000, 0, 2000, 0), geomZ: 0 };
+    const edges = computeMultiWallGapRuns([a, b], [a, b], []);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].geomZ).toBe(0);
+  });
+
+  it('keeps each corner leg at its own wall height for a mixed-height corner', () => {
+    const a = wall('a', 0, 0, 2000, 0, 2400);
+    const b = wall('b', 2500, 500, 2000, 90, 2000);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], []);
+    expect(edges).toHaveLength(2);
+    const legA = edges.find((e) => Math.round(e.rotationDeg) % 180 === 0);
+    const legB = edges.find((e) => Math.round(e.rotationDeg) % 180 === 90);
+    expect(legA?.heightMm).toBe(2400);
+    expect(legB?.heightMm).toBe(2000);
+  });
 });

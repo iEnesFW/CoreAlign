@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Boxes, ClipboardList, FileSpreadsheet, SlidersHorizontal } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/shared/lib/persona';
 import { ScreenPersonaMenu } from '@/features/persona/ui/ScreenPersonaMenu';
 import { DesignerTabBar, type DesignerTabItem, type DesignerTabKey } from './DesignerTabBar';
 
@@ -153,7 +153,7 @@ export const MobileLayout = ({
               onActiveTabChange('inspector');
             }}
             className={cn(
-              'absolute bottom-4 right-4 z-20 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg',
+              'absolute bottom-4 right-4 z-20 rounded-full bg-primary-600 px-4 py-2 text-xs font-semibold text-white shadow-lg',
               mode === 'Simple' && 'px-5 py-3 text-sm',
             )}
           >

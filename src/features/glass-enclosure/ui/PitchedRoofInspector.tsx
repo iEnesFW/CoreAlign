@@ -78,11 +78,11 @@ export function PitchedRoofInspector({ className }: PitchedRoofInspectorProps) {
     <section
       className={
         className ??
-        'space-y-3 rounded-md border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/20'
+        'space-y-3 rounded-md border border-success-200 bg-success-50/60 p-3 dark:border-success-900/50 dark:bg-success-950/20'
       }
       aria-label={t('GlassEnclosure.Designer.Greenhouse.PitchParam.SectionTitle')}
     >
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+      <h4 className="text-xs font-semibold uppercase tracking-wide text-success-700 dark:text-success-300">
         {t('GlassEnclosure.Designer.Greenhouse.PitchParam.SectionTitle')}
       </h4>
 
@@ -164,12 +164,12 @@ const PitchedField = ({
         max={max}
         step={step}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
       />
       <span className="text-[10px] text-slate-500 dark:text-slate-400">{suffix}</span>
     </div>
     {error ? (
-      <span className="block text-[10px] text-red-600 dark:text-red-400">{error}</span>
+      <span className="block text-[10px] text-danger-600 dark:text-danger-400">{error}</span>
     ) : null}
   </label>
 );

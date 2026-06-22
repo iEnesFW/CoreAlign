@@ -15,6 +15,7 @@ import type {
   SceneWallState,
 } from './project.types';
 import type { GlassOpeningType } from './glassEnclosure.types';
+import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -178,7 +179,7 @@ interface DesignerState {
   addSurface: (surface: SceneSurfaceState) => void;
   updateSurface: (surfaceId: string, patch: Partial<SceneSurfaceState>) => void;
   removeSurface: (surfaceId: string) => void;
-  resizePanelPair: (runId: string, panelId: string, neighborId: string, deltaMm: number) => void;
+  resizePanelEdge: (runId: string, panelId: string, neighborId: string, deltaMm: number) => void;
 
   loadProject: (project: GlassProjectDto) => void;
   applyScene: (scene: SceneState) => void;
@@ -198,6 +199,11 @@ interface DesignerState {
     run: Omit<SceneRunState, 'orderIndex' | 'panels'> & { panels?: ScenePanelState[] },
   ) => void;
   updateRun: (runId: string, patch: Partial<SceneRunState>) => void;
+  applyRunPatches: (
+    patches: Array<
+      { id: string } & Partial<Pick<SceneRunState, 'lengthMm' | 'heightMm' | 'originX' | 'originY'>>
+    >,
+  ) => void;
   removeRun: (runId: string) => void;
   reorderRuns: (orderedRunIds: string[]) => void;
 
@@ -270,7 +276,6 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
   }
   return {
     metadata: { schemaVersion: SCHEMA_VERSION, savedAt: project.updatedAtUtc },
-    // Keep the camera across refetches so the saved viewpoint is not lost.
     camera: prev?.camera ?? null,
     walls: prev?.walls ?? [],
     slabs: prev?.slabs ?? [],
@@ -279,7 +284,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       id: run.id,
       orderIndex: run.orderIndex,
       label: run.label,
-      lengthMm: run.lengthMm,
+      lengthMm: Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
       heightMm: run.heightMm,
       originX: run.originX,
       originY: run.originY,
@@ -302,9 +307,16 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
           hasHandle: panel.hasHandle,
           hasLock: panel.hasLock,
           hasBrushSeal: panel.hasBrushSeal,
+          heightMm: panel.heightMm ?? null,
+          topShape: panel.topShape ?? null,
+          topRightHeightMm: panel.topRightHeightMm ?? null,
+          archRiseMm: panel.archRiseMm ?? null,
+          cornerRadiiMm: panel.cornerRadiiMm ?? undefined,
+          shapeKind: panel.shapeKind ?? null,
+          shapePointsJson: panel.shapePointsJson ?? null,
           hardware: prevHardware.get(panel.id) ?? [],
         })),
-        run.lengthMm,
+        Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
       ),
     })),
     connections: project.connections.map((c) => ({
@@ -331,21 +343,32 @@ export const distributePanelWidths = (
 ): ScenePanelState[] => {
   const count = panels.length;
   if (count === 0) return panels;
-  const rawTotal = panels.reduce((sum, panel) => sum + panel.widthMm, 0);
-  if (rawTotal <= 0) {
-    const base = Math.floor(lengthMm / count);
-    return panels.map((panel, index) => ({
-      ...panel,
-      widthMm: index === count - 1 ? lengthMm - base * (count - 1) : base,
-    }));
+  if (lengthMm <= count * MIN_PANEL_MM) {
+    return panels.map((panel) =>
+      panel.widthMm === MIN_PANEL_MM ? panel : { ...panel, widthMm: MIN_PANEL_MM },
+    );
   }
-  let allocated = 0;
-  return panels.map((panel, index) => {
-    if (index === count - 1) return { ...panel, widthMm: lengthMm - allocated };
-    const widthMm = Math.round((panel.widthMm / rawTotal) * lengthMm);
-    allocated += widthMm;
-    return { ...panel, widthMm };
+  const rawTotal = panels.reduce((sum, panel) => sum + panel.widthMm, 0);
+  const widths = panels.map((panel, index) => {
+    if (index === count - 1) return 0;
+    const share = rawTotal > 0 ? panel.widthMm / rawTotal : 1 / count;
+    return Math.max(MIN_PANEL_MM, Math.round(share * lengthMm));
   });
+  widths[count - 1] = lengthMm - widths.reduce((a, b) => a + b, 0);
+  while (widths[count - 1] < MIN_PANEL_MM) {
+    let widest = 0;
+    for (let i = 1; i < count - 1; i += 1) if (widths[i] > widths[widest]) widest = i;
+    const take = Math.min(MIN_PANEL_MM - widths[count - 1], widths[widest] - MIN_PANEL_MM);
+    if (take <= 0) break;
+    widths[widest] -= take;
+    widths[count - 1] += take;
+  }
+  return panels.map((panel, index) => ({ ...panel, widthMm: widths[index] }));
+};
+
+const withClampedRunLength = (run: SceneRunState, lengthMm: number): SceneRunState => {
+  const clamped = Math.max(run.panels.length * MIN_PANEL_MM, Math.round(lengthMm));
+  return { ...run, lengthMm: clamped, panels: distributePanelWidths(run.panels, clamped) };
 };
 
 const normalizePanelWidths = (panels: ScenePanelState[], lengthMm: number): ScenePanelState[] => {
@@ -803,27 +826,26 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set(pushHistory(current, next));
   },
 
-  resizePanelPair: (runId, panelId, neighborId, deltaMm) => {
+  resizePanelEdge: (runId, panelId, neighborId, deltaMm) => {
     const current = get();
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {
         if (run.id !== runId) return run;
-        const panel = run.panels.find((p) => p.id === panelId);
-        const neighbor = run.panels.find((p) => p.id === neighborId);
-        if (!panel || !neighbor) return run;
-        const applied = Math.max(
-          100 - panel.widthMm,
-          Math.min(neighbor.widthMm - 100, Math.round(deltaMm)),
+        const i = run.panels.findIndex((p) => p.id === panelId);
+        const j = run.panels.findIndex((p) => p.id === neighborId);
+        if (i < 0 || j < 0) return run;
+        const widths = cascadePanelWidths(
+          run.panels.map((p) => p.widthMm),
+          i,
+          j,
+          deltaMm,
         );
-        if (applied === 0) return run;
         return {
           ...run,
-          panels: run.panels.map((p) => {
-            if (p.id === panelId) return { ...p, widthMm: p.widthMm + applied };
-            if (p.id === neighborId) return { ...p, widthMm: p.widthMm - applied };
-            return p;
-          }),
+          panels: run.panels.map((p, k) =>
+            widths[k] !== p.widthMm ? { ...p, widthMm: widths[k] } : p,
+          ),
         };
       }),
     };
@@ -844,9 +866,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         selection: selectionStillValid(current.selection, nextScene)
           ? current.selection
           : { kind: null, runId: null, panelId: null, connectionId: null },
-        // Preserve the dirty flag: walls/slabs/surfaces persist only via the
-        // full-scene autosave, and typedSceneEqual ignores them, so a run-only
-        // refetch must not silently mark unsaved scene edits as saved.
         isDirty: current.isDirty,
       });
       return;
@@ -878,8 +897,6 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   setSelection: (selection) =>
     set((s) => {
-      // A single selection and a multi-selection are mutually exclusive, so the
-      // Delete key never acts on a stale, off-screen multi-selection set.
       const hasMulti =
         s.multiSelection.runIds.length +
           s.multiSelection.wallIds.length +
@@ -925,7 +942,25 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (run.id !== runId) return run;
         const merged = { ...run, ...patch };
         if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
-          return { ...merged, panels: distributePanelWidths(merged.panels, merged.lengthMm) };
+          return withClampedRunLength(merged, merged.lengthMm);
+        }
+        return merged;
+      }),
+    };
+    set(pushHistory(current, next));
+  },
+
+  applyRunPatches: (patches) => {
+    const current = get();
+    const map = new Map(patches.map((p) => [p.id, p]));
+    const next: SceneState = {
+      ...current.scene,
+      runs: current.scene.runs.map((run) => {
+        const patch = map.get(run.id);
+        if (!patch) return run;
+        const merged = { ...run, ...patch };
+        if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
+          return withClampedRunLength(merged, merged.lengthMm);
         }
         return merged;
       }),

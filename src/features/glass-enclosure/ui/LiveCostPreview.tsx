@@ -81,7 +81,7 @@ export function LiveCostPreview({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.LiveCost')}
         </h3>
-        <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+        <span className="rounded bg-success-500/10 px-1.5 py-0.5 text-[10px] font-medium text-success-700 dark:bg-success-500/20 dark:text-success-300">
           {t('GlassEnclosure.Designer.LivePreview')}
         </span>
       </header>
@@ -170,7 +170,7 @@ const Row = ({
     <dd
       className={`font-mono ${
         accent
-          ? 'text-base font-semibold text-emerald-700 dark:text-emerald-300'
+          ? 'text-base font-semibold text-success-700 dark:text-success-300'
           : bold
             ? 'font-semibold text-slate-900 dark:text-slate-100'
             : muted

@@ -1,10 +1,23 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Billboard, Text } from '@react-three/drei';
+import type { Group } from 'three';
 import { CurvedPanelMesh } from './CurvedPanelMesh';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { computeArcLayout, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { arcEndLocal, computeArcLayout, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { useObjectGestures } from '../interaction/useObjectGestures';
+import { registerSceneRef } from '../interaction/sceneRefs';
+import { buildRunFootprint, restElevationMm } from '../interaction/planCollision';
+import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
+import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
+import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
+import { useDesignerStore } from '../../model/designerStore';
+import { findAttachedWallIds } from '../../model/wallAttachment';
+import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { HardwareDragDelta } from './HardwareObject';
+import type { PlanGestureAdapter, PlanRotationCommit } from '../interaction/useObjectGestures';
+import type { PlanFootprint } from '../interaction/planCollision';
+import type { PlanMoveDelta, PlanSnapTargets } from '../interaction/planSnap';
 import type {
   ColorOptionDto,
   GlassTypeDto,
@@ -33,9 +46,16 @@ interface ArcRunGroupProps {
     hardwareId: string,
     delta: HardwareDragDelta,
   ) => void;
+  onMoveRun?: (runId: string, delta: PlanMoveDelta) => void;
+  onRotateRun?: (runId: string, commit: PlanRotationCommit) => void;
+  onStackRun?: (runId: string, delta: PlanMoveDelta, geomZMm: number) => void;
+  snapTargets?: PlanSnapTargets;
+  obstacles?: PlanFootprint[];
+  supports?: PlanFootprint[];
 }
 
 const PROFILE_CROSS_SECTION = { width: 50, height: 60 };
+const EMPTY_OBSTACLES: PlanFootprint[] = [];
 const MULLION_CROSS_SECTION = { width: 30, height: 40 };
 const DEFAULT_HEX_COLOR = '#cfd5d9';
 
@@ -54,6 +74,12 @@ export function ArcRunGroup({
   onSelectPanel,
   onSelectHardware,
   onDragHardware,
+  onMoveRun,
+  onRotateRun,
+  onStackRun,
+  snapTargets,
+  obstacles,
+  supports,
 }: ArcRunGroupProps) {
   const lengthM = run.lengthMm / 1000;
   const heightM = run.heightMm / 1000;
@@ -77,13 +103,104 @@ export function ArcRunGroup({
 
   const isRunSelected = selectedRunId === run.id;
 
+  const activeTool = useDesignerStore((s) => s.activeTool);
+  const sceneState = useDesignerStore((s) => s.scene);
+  const multiSelection = useDesignerStore((s) => s.multiSelection);
+  const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
+  const multiSiblingsRef = useRef<AttachedRunSnapshot[]>([]);
+  const groupRef = useRef<Group>(null);
+  const setGroupRef = (group: Group | null) => {
+    groupRef.current = group;
+    registerSceneRef(run.id, group);
+  };
+
+  const gestureObstacles = useMemo(() => {
+    const all = obstacles ?? EMPTY_OBSTACLES;
+    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
+    return attached.size === 0 ? all : all.filter((o) => !attached.has(o.ownerId));
+  }, [obstacles, run, sceneState.walls]);
+
+  const filteredTargets = useMemo<PlanSnapTargets>(
+    () => (snapTargets ? filterSnapTargets(snapTargets, run.id) : EMPTY_SNAP_TARGETS),
+    [snapTargets, run.id],
+  );
+
+  const radR = (run.rotationDeg * Math.PI) / 180;
+  const cosR = Math.cos(radR);
+  const sinR = Math.sin(radR);
+  const end = arcEndLocal(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  const endWorldX = run.originX + end.xMm * cosR - end.yMm * sinR;
+  const endWorldY = run.originY + end.xMm * sinR + end.yMm * cosR;
+
+  const stackSupports = useMemo(() => {
+    const all = supports ?? EMPTY_OBSTACLES;
+    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
+    return all.filter((o) => o.ownerId !== run.id && !attached.has(o.ownerId));
+  }, [supports, run, sceneState.walls]);
+  // Alt-drag stacking (plain drag stays lateral); ground (0) fallback so a stacked
+  // arc run dropped off support returns to the floor instead of ratcheting up.
+  const restElevAt = (dx: number, dy: number) =>
+    restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, 0);
+  const canStack = Boolean(onStackRun) && !isMultiMember;
+
+  const adapter: PlanGestureAdapter = {
+    originXMm: run.originX,
+    originYMm: run.originY,
+    rotationDeg: run.rotationDeg,
+    baseYM: (run.geomZ ?? 0) / 1000,
+    centerXMm: (run.originX + endWorldX) / 2,
+    centerYMm: (run.originY + endWorldY) / 2,
+    moveProbes: [
+      { x: run.originX, y: run.originY },
+      { x: endWorldX, y: endWorldY },
+    ],
+    footprintAt: (dx, dy, rotationDeg) => buildRunFootprint(run, dx, dy, rotationDeg),
+    altLiftYMAt: canStack ? (dx, dy) => restElevAt(dx, dy) / 1000 : undefined,
+  };
+
+  const gestures = useObjectGestures({
+    adapter,
+    groupRef,
+    enabled: Boolean(onMoveRun && onRotateRun) && !run.locked,
+    selectedForDrag: isRunSelected && !run.locked,
+    snapTargets: filteredTargets,
+    obstacles: gestureObstacles,
+    onPick: () => onSelectRun(run.id),
+    onGestureStart: () => {
+      multiSiblingsRef.current = isMultiMember
+        ? captureMultiSnapshots(sceneState, multiSelection, { kind: 'run', id: run.id })
+        : [];
+    },
+    onMovePreview: (delta) =>
+      previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
+    onMoveCommit: (delta, meta) => {
+      if (canStack && onStackRun && meta.alt) {
+        onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+        return;
+      }
+      onMoveRun?.(run.id, delta);
+    },
+    onRotateCommit: (commit) => onRotateRun?.(run.id, commit),
+  });
+
   return (
     <group
+      ref={setGroupRef}
       position={[run.originX / 1000, (run.geomZ ?? 0) / 1000, run.originY / 1000]}
       rotation={[0, (-run.rotationDeg * Math.PI) / 180, 0]}
+      {...gestures.handlers}
       onClick={(e) => {
         e.stopPropagation();
+        if (gestures.consumeClick()) return;
         onSelectRun(run.id);
+      }}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        const canDrag = activeTool === 'move' || (activeTool === 'select' && isRunSelected);
+        document.body.style.cursor = canDrag && !run.locked ? 'grab' : 'pointer';
+      }}
+      onPointerOut={() => {
+        document.body.style.cursor = 'auto';
       }}
     >
       {layout.barSegments.map((seg, i) => (

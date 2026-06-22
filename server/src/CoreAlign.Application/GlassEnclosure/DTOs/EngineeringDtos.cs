@@ -74,7 +74,27 @@ public record CuttingResult1DDto(
     decimal UtilizationPercent,
     IReadOnlyList<CuttingPattern1DDto> Patterns);
 
-public record CuttingPlacement2DDto(string Label, int X, int Y, int WidthMm, int HeightMm, bool Rotated);
+public record PanelCutShapeDto(
+    string? TopShape,
+    decimal NominalHeightMm,
+    decimal? TopRightHeightMm,
+    decimal? ArchRiseMm,
+    decimal? CornerRadiusTlMm,
+    decimal? CornerRadiusTrMm,
+    decimal? CornerRadiusBrMm,
+    decimal? CornerRadiusBlMm,
+    decimal NetAreaMm2,
+    string? ShapeKind = null,
+    string? ShapePointsJson = null);
+
+public record CuttingPlacement2DDto(
+    string Label,
+    int X,
+    int Y,
+    int WidthMm,
+    int HeightMm,
+    bool Rotated,
+    PanelCutShapeDto? Shape = null);
 
 public record CuttingSheet2DDto(
     int SheetIndex,
@@ -108,7 +128,8 @@ public record Glass2DPlacedPanelDto(
     decimal Y,
     decimal WidthMm,
     decimal HeightMm,
-    bool Rotated);
+    bool Rotated,
+    PanelCutShapeDto? Shape = null);
 
 public record Glass2DPlacedSheetDto(
     Guid SheetId,

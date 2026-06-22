@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/shared/lib/persona';
 import { ScreenPersonaMenu } from '@/features/persona/ui/ScreenPersonaMenu';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import { SidePanelRail } from './SidePanelRail';
@@ -139,7 +139,7 @@ export const DesktopLayout = ({
                     className={cn(
                       'inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors',
                       leftTab === 'runs'
-                        ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                        ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                         : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
                     )}
                   >
@@ -157,7 +157,7 @@ export const DesktopLayout = ({
                       className={cn(
                         'border-b-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors',
                         leftTab === 'bom'
-                          ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                          ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                           : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
                       )}
                     >
@@ -226,7 +226,7 @@ export const DesktopLayout = ({
         <button
           type="button"
           onClick={() => setInspectorModalOpen(true)}
-          className="fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-blue-700"
+          className="fixed bottom-6 right-6 z-20 inline-flex items-center gap-2 rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-primary-700"
         >
           <SlidersHorizontal size={16} />
           {t('GlassEnclosure.Designer.Shell.OpenInspector', { defaultValue: 'Detay' })}

@@ -6,6 +6,22 @@ import type { SceneSlabState, SceneState } from './project.types';
 const RUN_THICKNESS_MM = 50;
 const DEG2RAD = Math.PI / 180;
 
+const escapeXml = (value: string): string =>
+  value.replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&#39;';
+    }
+  });
+
 interface Pt {
   x: number;
   y: number;
@@ -92,20 +108,10 @@ export const scenePlanShapes = (scene: SceneState): PlanShape[] => {
   return shapes;
 };
 
-// Minimal DXF R12 (ASCII) with a closed POLYLINE per plan shape, in millimetres.
 export const sceneToDxf = (scene: SceneState): string => {
   const lines: string[] = ['0', 'SECTION', '2', 'ENTITIES'];
   for (const shape of scenePlanShapes(scene)) {
-    lines.push(
-      '0',
-      'POLYLINE',
-      '8',
-      shape.layer,
-      '66',
-      '1',
-      '70',
-      '1', // closed
-    );
+    lines.push('0', 'POLYLINE', '8', shape.layer, '66', '1', '70', '1');
     for (const p of shape.points) {
       lines.push('0', 'VERTEX', '8', shape.layer, '10', String(p.x), '20', String(p.y), '30', '0');
     }
@@ -139,7 +145,6 @@ const LAYER_FILL: Record<string, string> = {
   SURFACES: '#ddd6fe',
 };
 
-// Scaled SVG plan (mm) for print-to-PDF; SVG y is flipped so north is up.
 export const sceneToPlanSvg = (scene: SceneState, title: string): string => {
   const shapes = scenePlanShapes(scene);
   const { minX, minY, maxX, maxY } = planBounds(shapes);
@@ -155,7 +160,7 @@ export const sceneToPlanSvg = (scene: SceneState, title: string): string => {
     })
     .join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%">
-    <text x="${pad}" y="${pad / 2}" font-size="120" font-family="sans-serif" fill="#0f172a">${title}</text>
+    <text x="${pad}" y="${pad / 2}" font-size="120" font-family="sans-serif" fill="#0f172a">${escapeXml(title)}</text>
     ${polys}
   </svg>`;
 };
@@ -174,13 +179,20 @@ export const printPlanSvg = (svg: string) => {
   const win = window.open('', '_blank');
   if (!win) return;
   win.document.write(
-    `<!doctype html><html><head><title>Plan</title><style>@media print{body{margin:0}}body{margin:0;padding:12px}</style></head><body>${svg}<script>window.onload=function(){window.print();}</script></body></html>`,
+    `<!doctype html><html><head><title>Plan</title><style>@media print{body{margin:0}}body{margin:0;padding:12px}</style></head><body>${svg}</body></html>`,
   );
   win.document.close();
+  const triggerPrint = () => {
+    win.focus();
+    win.print();
+  };
+  if (win.document.readyState === 'complete') {
+    triggerPrint();
+  } else {
+    win.addEventListener('load', triggerPrint);
+  }
 };
 
-// The live three.js group holding only the enclosure content, registered from
-// inside the Canvas so the glTF export excludes lights/grid/helpers.
 let exportRoot: Object3D | null = null;
 
 export const registerExportRoot = (root: Object3D | null) => {

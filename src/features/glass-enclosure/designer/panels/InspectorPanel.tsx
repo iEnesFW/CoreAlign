@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode } from '@/shared/lib/persona';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import { RunInspector } from '@/features/glass-enclosure/ui/RunInspector';
 import { PanelInspector } from '@/features/glass-enclosure/ui/PanelInspector';
@@ -141,7 +141,7 @@ export const InspectorPanel = ({
                 'whitespace-nowrap border-b-2 px-3 transition-colors',
                 isSimple ? 'h-11 text-sm font-semibold' : 'h-9 text-xs font-medium',
                 active
-                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
               )}
             >

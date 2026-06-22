@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Billboard, Edges, Text } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
+import { buildPanelGlassGeometry, type PanelGlassSpec } from './panelGeometry';
+import { panelIsShaped } from '../../model/panelOutline';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { GlassOpeningType, GlassStructure } from '../../model/glassEnclosure.types';
 import type { SceneHardwareItem } from '../../model/project.types';
@@ -29,6 +31,7 @@ interface PanelMeshProps {
   panelIndex: number;
   isSelected: boolean;
   onSelect: () => void;
+  shapeSpec?: PanelGlassSpec | null;
 }
 
 const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
@@ -60,6 +63,7 @@ export function PanelMesh({
   panelIndex,
   isSelected,
   onSelect,
+  shapeSpec,
 }: PanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -69,29 +73,73 @@ export function PanelMesh({
   });
   const thicknessM = useMemo(() => thicknessMm / 1000, [thicknessMm]);
 
+  const shaped = Boolean(shapeSpec && panelIsShaped(shapeSpec));
+  const sw = shapeSpec?.widthMm;
+  const sh = shapeSpec?.heightMm;
+  const st = shapeSpec?.topShape;
+  const str = shapeSpec?.topRightHeightMm;
+  const sa = shapeSpec?.archRiseMm;
+  const sc = shapeSpec?.cornerRadiiMm;
+  const sk = shapeSpec?.shapeKind;
+  const sp = shapeSpec?.points;
+  const shapedGeometry = useMemo(() => {
+    if (!shaped || sw === undefined || sh === undefined) return null;
+    return buildPanelGlassGeometry(
+      {
+        widthMm: sw,
+        heightMm: sh,
+        topShape: st,
+        topRightHeightMm: str,
+        archRiseMm: sa,
+        cornerRadiiMm: sc,
+        shapeKind: sk,
+        points: sp,
+      },
+      thicknessM,
+    );
+  }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
+  useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
+
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     onSelect();
   };
+  const onPointerOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    document.body.style.cursor = 'pointer';
+  };
+  const onPointerOut = () => {
+    document.body.style.cursor = 'auto';
+  };
 
   return (
     <group position={[centerX, baseY + heightM / 2, 0]}>
-      <mesh
-        material={material}
-        castShadow
-        receiveShadow
-        onClick={handleClick}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          document.body.style.cursor = 'auto';
-        }}
-      >
-        <boxGeometry args={[widthM, heightM, thicknessM]} />
-        <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
-      </mesh>
+      {shapedGeometry ? (
+        <mesh
+          geometry={shapedGeometry}
+          position={[0, -heightM / 2, 0]}
+          material={material}
+          castShadow
+          receiveShadow
+          onClick={handleClick}
+          onPointerOver={onPointerOver}
+          onPointerOut={onPointerOut}
+        >
+          <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
+        </mesh>
+      ) : (
+        <mesh
+          material={material}
+          castShadow
+          receiveShadow
+          onClick={handleClick}
+          onPointerOver={onPointerOver}
+          onPointerOut={onPointerOut}
+        >
+          <boxGeometry args={[widthM, heightM, thicknessM]} />
+          <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
+        </mesh>
+      )}
 
       <PanelFittings
         widthM={widthM}

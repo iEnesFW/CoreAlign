@@ -9,6 +9,7 @@ import {
 } from '@/shared/three-engine';
 import { RunGroup } from './builders/RunGroup';
 import { ArcRunGroup } from './builders/ArcRunGroup';
+import { ConnectionPosts } from './builders/ConnectionPosts';
 import { WallObject } from './builders/WallObject';
 import { SlabObject } from './builders/SlabObject';
 import { PolygonSurfaceObject } from './builders/PolygonSurfaceObject';
@@ -23,6 +24,8 @@ import { MeasureController } from './interaction/MeasureController';
 import { pointInPolygonMm } from './interaction/pointInPolygon';
 import { multiSelectionHas } from './interaction/multiMove';
 import { parsePolygonVertices } from '../model/polygonGeometry';
+import { arcEndLocal, arcPointAt, effectiveArcRadiusMm } from '../model/arcGeometry';
+import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -37,9 +40,13 @@ import {
   buildSlabFootprint,
   buildSurfaceFootprint,
   buildWallFootprint,
+  isFloating,
   normalizePlanAngleDeg,
+  penetratesAny,
   RUN_PLAN_THICKNESS_MM,
 } from './interaction/planCollision';
+import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
+import { findAttachedWallIds } from '../model/wallAttachment';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -81,6 +88,8 @@ interface DesignerCanvasProps {
 
 const SNAP_GRID_MM = 5;
 const STICKY_SNAP_MM = 25;
+const FLOATING_GAP_MM = 50;
+const MIN_RUN_LENGTH_MM = 100;
 const DEG2RAD = Math.PI / 180;
 const PANEL_TARGET_WIDTH_MM = 600;
 const PEN_FACE_CLOSE_MM = 200;
@@ -138,6 +147,28 @@ const buildPlanSnapTargets = (
     );
   }
   for (const run of runs) {
+    if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
+      const rad = run.rotationDeg * DEG2RAD;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const dir = (run.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+      const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm);
+      const sweepRad = Math.min(run.lengthMm / radius, Math.PI * 2);
+      const e = arcEndLocal(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
+      const apex = arcPointAt(radius, dir, sweepRad / 2);
+      const toWorld = (lx: number, ly: number) => ({
+        x: run.originX + lx * cos - ly * sin,
+        y: run.originY + lx * sin + ly * cos,
+      });
+      const end = toWorld(e.xMm, e.yMm);
+      const mid = toWorld(apex.x, apex.z);
+      points.push(
+        { ownerId: run.id, x: run.originX, y: run.originY },
+        { ownerId: run.id, x: end.x, y: end.y },
+        { ownerId: run.id, x: mid.x, y: mid.y },
+      );
+      continue;
+    }
     addLineTargets(
       run.id,
       run.originX,
@@ -210,8 +241,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setPasteArmed = useDesignerStore((s) => s.setPasteArmed);
   const project = useDesignerStore((s) => s.project);
   const projectId = useDesignerStore((s) => s.projectId);
-  const resizePanelPair = useDesignerStore((s) => s.resizePanelPair);
+  const resizePanelEdge = useDesignerStore((s) => s.resizePanelEdge);
   const updateRun = useDesignerStore((s) => s.updateRun);
+  const applyRunPatches = useDesignerStore((s) => s.applyRunPatches);
   const updateWall = useDesignerStore((s) => s.updateWall);
   const updateSlab = useDesignerStore((s) => s.updateSlab);
   const setCamera = useDesignerStore((s) => s.setCamera);
@@ -232,6 +264,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const toggleMultiSelect = useDesignerStore((s) => s.toggleMultiSelect);
   const setMultiSelect = useDesignerStore((s) => s.setMultiSelect);
   const setPlacement = useDesignerStore((s) => s.setPlacement);
+  const onPenFaceFinishRef = useRef<() => void>(() => {});
   const { appearance } = useViewerAppearance();
   const { createPanelFrom, persistPanel, deletePanel } = usePanelEntityActions();
   const { persistRun, deleteRun } = useRunEntityActions();
@@ -270,12 +303,11 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         setPlacement(null);
       } else if (e.key === 'Enter' && placement === 'pen') {
         e.preventDefault();
-        onPenFaceFinish();
+        onPenFaceFinishRef.current();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placement, setPlacement]);
 
   useEffect(() => {
@@ -284,8 +316,6 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
 
   useEffect(() => trackModifierKeys(), []);
 
-  // An interrupted gesture (lost pointer capture, window blur) can leave the
-  // body cursor stuck on 'grab'/'crosshair'; reset it defensively.
   useEffect(() => {
     const resetCursor = () => {
       document.body.style.cursor = 'auto';
@@ -310,7 +340,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       buildPlanSnapTargets(scene.walls ?? [], scene.runs, scene.slabs ?? [], scene.surfaces ?? []),
     [scene.walls, scene.runs, scene.slabs, scene.surfaces],
   );
-  const planObstacles = useMemo<PlanFootprint[]>(
+  const solidFootprints = useMemo<PlanFootprint[]>(
     () => [
       ...(scene.walls ?? []).map((wall) => buildWallFootprint(wall, 0, 0, wall.rotationDeg)),
       ...scene.runs.map((run) => buildRunFootprint(run, 0, 0, run.rotationDeg)),
@@ -318,31 +348,37 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     ],
     [scene.walls, scene.runs, scene.slabs],
   );
-  // Everything a moved object can rest on (adds pen-drawn surfaces), used by the
-  // stacking law so slabs climb onto supports instead of passing through them.
+  const planObstacles = solidFootprints;
   const supportFootprints = useMemo<PlanFootprint[]>(
-    () => [...planObstacles, ...(scene.surfaces ?? []).map((s) => buildSurfaceFootprint(s))],
-    [planObstacles, scene.surfaces],
+    () => [...solidFootprints, ...(scene.surfaces ?? []).map((s) => buildSurfaceFootprint(s))],
+    [solidFootprints, scene.surfaces],
   );
   const placementObstacles = planObstacles;
-  // Glass runs are meant to sit in front of / on a wall surface, so a run does
-  // not collide with walls (only with other runs and slabs). Walls-vs-walls and
-  // run-vs-run stay strict.
-  const runObstacles = useMemo<PlanFootprint[]>(
-    () => [
-      ...scene.runs.map((run) => buildRunFootprint(run, 0, 0, run.rotationDeg)),
-      ...(scene.slabs ?? []).map((slab) => buildSlabFootprint(slab, 0, 0, slab.rotationDeg)),
-    ],
-    [scene.runs, scene.slabs],
-  );
-  // Symmetrically, walls ignore glass runs (a run sits against a wall), so a wall
-  // can still be nudged after a run is placed in front of it. Wall-wall stays strict.
-  const wallObstacles = useMemo<PlanFootprint[]>(
-    () => [
-      ...(scene.walls ?? []).map((wall) => buildWallFootprint(wall, 0, 0, wall.rotationDeg)),
-      ...(scene.slabs ?? []).map((slab) => buildSlabFootprint(slab, 0, 0, slab.rotationDeg)),
-    ],
-    [scene.walls, scene.slabs],
+  const runObstacles = planObstacles;
+  const wallObstacles = planObstacles;
+  const floatingCount = useMemo(() => {
+    let count = 0;
+    for (const slab of scene.slabs ?? []) {
+      if (
+        isFloating(
+          buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
+          supportFootprints,
+          FLOATING_GAP_MM,
+        )
+      )
+        count += 1;
+    }
+    for (const surface of scene.surfaces ?? []) {
+      if (isFloating(buildSurfaceFootprint(surface), supportFootprints, FLOATING_GAP_MM))
+        count += 1;
+    }
+    return count;
+  }, [scene.slabs, scene.surfaces, supportFootprints]);
+
+  const catalogViolations = useMemo(
+    () =>
+      scene.runs.reduce((c, run) => c + (runViolatesCatalog(run, systemMap, glassMap) ? 1 : 0), 0),
+    [scene.runs, systemMap, glassMap],
   );
 
   const interactionsEnabled = !pasteArmed && !placement;
@@ -521,7 +557,6 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const commitPenFace = (session: NonNullable<typeof penFace>) => {
     setPenFace(null);
     let pts = session.points;
-    // Drop a trailing vertex coincident with the first, then collinear-simplify.
     if (pts.length > 1) {
       const f = pts[0];
       const l = pts[pts.length - 1];
@@ -644,6 +679,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     if (session) commitPenFace(session);
   };
 
+  useEffect(() => {
+    onPenFaceFinishRef.current = onPenFaceFinish;
+  });
+
   const handlePenFinish = (pointsMm: { x: number; y: number }[]) => {
     setPlacement(null);
     if (polygonSelfIntersects(pointsMm)) {
@@ -660,7 +699,6 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       id: crypto.randomUUID(),
       kind: 'floor',
       points: pointsMm.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })),
-      // Sit ON the ground (bottom at 0, body above) so it is visible from above.
       elevationMm: 0,
       thicknessMm: 120,
       colorHex: null,
@@ -715,12 +753,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     if (index < 0) return;
     const neighbor = run.panels[index + 1] ?? run.panels[index - 1];
     if (!neighbor) return;
-    resizePanelPair(runId, panelId, neighbor.id, snapMm(deltaMm));
+    const before = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+    resizePanelEdge(runId, panelId, neighbor.id, snapMm(deltaMm));
     const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
-    const freshPanel = freshRun?.panels.find((p) => p.id === panelId);
-    const freshNeighbor = freshRun?.panels.find((p) => p.id === neighbor.id);
-    if (freshPanel) void persistPanel(runId, freshPanel);
-    if (freshNeighbor) void persistPanel(runId, freshNeighbor);
+    for (const p of freshRun?.panels ?? []) {
+      if (before.get(p.id) !== p.widthMm) void persistPanel(runId, p);
+    }
   };
 
   const commitGroupMove = (
@@ -773,6 +811,17 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     persistFreshRun(runId);
   };
 
+  const onStackRun = (runId: string, delta: PlanMoveDelta, geomZMm: number) => {
+    const run = scene.runs.find((r) => r.id === runId);
+    if (!run) return;
+    updateRun(runId, {
+      originX: Math.round(run.originX + delta.dxMm),
+      originY: Math.round(run.originY + delta.dyMm),
+      geomZ: geomZMm,
+    });
+    persistFreshRun(runId);
+  };
+
   const onMoveSlab = (slabId: string, delta: PlanMoveDelta) => {
     if (delta.dxMm === 0 && delta.dyMm === 0) return;
     if (multiSelectionHas(useDesignerStore.getState().multiSelection, 'slab', slabId)) {
@@ -799,6 +848,69 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const onStretchRun = (runId: string, patch: RunStretchPatch) => {
     updateRun(runId, patch);
     persistFreshRun(runId);
+  };
+
+  const onPushStretchRun = (
+    runId: string,
+    face: 'start' | 'end',
+    targetMm: number,
+    clampedMm: number,
+    blockerId: string,
+  ): boolean => {
+    const run = scene.runs.find((r) => r.id === runId);
+    const blocker = scene.runs.find((r) => r.id === blockerId);
+    if (!run || !blocker) return false;
+    const toBody = (r: SceneRunState): StretchBody => ({
+      id: r.id,
+      originX: r.originX,
+      originY: r.originY,
+      rotationDeg: r.rotationDeg,
+      lengthMm: r.lengthMm,
+      minLengthMm: MIN_RUN_LENGTH_MM,
+    });
+    const res = computeNeighbourShrink(toBody(run), face, toBody(blocker), targetMm, clampedMm);
+    let selfGrow = res.selfGrowMm;
+    let neighbour = res.neighbour ?? null;
+    const rad = run.rotationDeg * DEG2RAD;
+    const dirX = Math.cos(rad);
+    const dirY = Math.sin(rad);
+    if (neighbour) {
+      const attachedWalls = new Set(findAttachedWallIds(run, scene.walls ?? []));
+      const others = solidFootprints.filter(
+        (o) => o.ownerId !== runId && o.ownerId !== blockerId && !attachedWalls.has(o.ownerId),
+      );
+      const aGrown = buildRunFootprint(
+        { ...run, lengthMm: run.lengthMm + selfGrow },
+        face === 'start' ? -selfGrow * dirX : 0,
+        face === 'start' ? -selfGrow * dirY : 0,
+        run.rotationDeg,
+      );
+      if (penetratesAny(aGrown, others)) {
+        selfGrow = clampedMm;
+        neighbour = null;
+      }
+    }
+    const newLen = Math.max(MIN_RUN_LENGTH_MM, Math.round(run.lengthMm + selfGrow));
+    if (newLen === run.lengthMm) return false;
+    const aPatch: { id: string } & RunStretchPatch = { id: runId, lengthMm: newLen };
+    if (face === 'start') {
+      const shift = newLen - run.lengthMm;
+      aPatch.originX = Math.round(run.originX - shift * dirX);
+      aPatch.originY = Math.round(run.originY - shift * dirY);
+    }
+    const patches: Array<{ id: string } & RunStretchPatch> = [aPatch];
+    if (neighbour) {
+      patches.push({
+        id: neighbour.id,
+        lengthMm: neighbour.newLengthMm,
+        originX: neighbour.newOriginX,
+        originY: neighbour.newOriginY,
+      });
+    }
+    applyRunPatches(patches);
+    persistFreshRun(runId);
+    if (neighbour) persistFreshRun(neighbour.id);
+    return true;
   };
 
   const onCommitWallMove = (
@@ -838,6 +950,24 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       ),
     }));
     for (const runId of attachedRunIds) persistFreshRun(runId);
+  };
+
+  // Bare wall stack-on-top: move it and write the resting elevation so it can sit
+  // on top of another wall/body instead of interpenetrating.
+  const onStackWall = (wallId: string, delta: PlanMoveDelta, geomZMm: number) => {
+    useDesignerStore.getState().applyScenePatch((s) => ({
+      ...s,
+      walls: (s.walls ?? []).map((w) =>
+        w.id === wallId
+          ? {
+              ...w,
+              originX: Math.round(w.originX + delta.dxMm),
+              originY: Math.round(w.originY + delta.dyMm),
+              geomZ: geomZMm,
+            }
+          : w,
+      ),
+    }));
   };
 
   const onCommitWallRotate = (
@@ -1019,14 +1149,14 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       };
     }
     if (clipboard.kind === 'wall') {
+      const zMin = clipboard.wall.geomZ ?? 0;
       return {
         lengthMm: clipboard.wall.lengthMm,
         halfWidthMm: clipboard.wall.thicknessMm / 2,
-        zMinMm: 0,
-        zMaxMm: Math.max(
-          clipboard.wall.heightMm,
-          clipboard.wall.heightEndMm ?? clipboard.wall.heightMm,
-        ),
+        zMinMm: zMin,
+        zMaxMm:
+          zMin +
+          Math.max(clipboard.wall.heightMm, clipboard.wall.heightEndMm ?? clipboard.wall.heightMm),
         rotationDeg: clipboard.wall.rotationDeg,
       };
     }
@@ -1217,7 +1347,19 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onDragHardware,
       };
       if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
-        return <ArcRunGroup key={run.id} radiusMm={run.geomArcRadiusMm} {...sharedProps} />;
+        return (
+          <ArcRunGroup
+            key={run.id}
+            radiusMm={run.geomArcRadiusMm}
+            {...sharedProps}
+            onMoveRun={interactionsEnabled ? onMoveRun : undefined}
+            onRotateRun={interactionsEnabled ? onRotateRun : undefined}
+            onStackRun={interactionsEnabled ? onStackRun : undefined}
+            snapTargets={snapTargets}
+            obstacles={runObstacles}
+            supports={supportFootprints}
+          />
+        );
       }
       return (
         <RunGroup
@@ -1227,8 +1369,11 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           onMoveRun={interactionsEnabled ? onMoveRun : undefined}
           onRotateRun={interactionsEnabled ? onRotateRun : undefined}
           onStretchRun={interactionsEnabled ? onStretchRun : undefined}
+          onPushStretchRun={interactionsEnabled ? onPushStretchRun : undefined}
+          onStackRun={interactionsEnabled ? onStackRun : undefined}
           snapTargets={snapTargets}
           obstacles={runObstacles}
+          supports={supportFootprints}
         />
       );
     });
@@ -1246,8 +1391,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onSelect={onSelectWall}
         snapTargets={snapTargets}
         obstacles={wallObstacles}
+        supports={supportFootprints}
         interactive={interactionsEnabled}
         onCommitMove={onCommitWallMove}
+        onStackWall={interactionsEnabled ? onStackWall : undefined}
         onCommitRotate={onCommitWallRotate}
         penActive={placement === 'pen'}
         onPenFaceClick={onPenFaceClick}
@@ -1264,6 +1411,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         isSelected={selection.kind === 'surface' && selection.surfaceId === surface.id}
         interactive={interactionsEnabled}
         penActive={placement === 'pen'}
+        supports={supportFootprints}
         onSelect={onSelectSurface}
       />
     ));
@@ -1328,6 +1476,14 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       >
         <group ref={registerExportRoot}>
           {layerVisibility.runs && renderGeometry()}
+          {layerVisibility.runs && scene.connections.length > 0 && (
+            <ConnectionPosts
+              connections={scene.connections}
+              runs={scene.runs}
+              colors={colorMap}
+              quality={quality}
+            />
+          )}
           {layerVisibility.walls && renderWalls()}
           {layerVisibility.slabs && renderSlabs()}
           {layerVisibility.surfaces && renderSurfaces()}
@@ -1365,13 +1521,33 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       </SceneViewport>
       {pasteArmed && cursor && (
         <div
-          className="pointer-events-none absolute z-20 rounded-md bg-blue-600/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg"
+          className="pointer-events-none absolute z-20 rounded-md bg-primary-600/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg"
           style={{ left: cursor.x + 14, top: cursor.y + 14 }}
         >
           {pasteHint}
         </div>
       )}
       <DragReadoutOverlay />
+      {(floatingCount > 0 || catalogViolations > 0) && (
+        <div className="pointer-events-none absolute bottom-3 left-3 z-20 flex flex-col gap-1.5">
+          {floatingCount > 0 && (
+            <div className="rounded-md bg-warning-500/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg">
+              {t('GlassEnclosure.Designer.FloatingWarning', {
+                defaultValue: '⚠ {{count}} nesne desteksiz (boşlukta)',
+                count: floatingCount,
+              })}
+            </div>
+          )}
+          {catalogViolations > 0 && (
+            <div className="rounded-md bg-danger-600/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg">
+              {t('GlassEnclosure.Designer.CatalogWarning', {
+                defaultValue: '⚠ {{count}} hat katalog limitini aşıyor (panel ölçü/ağırlık)',
+                count: catalogViolations,
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

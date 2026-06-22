@@ -7,6 +7,19 @@ import {
   useRunEntityActions,
 } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { snapAngleDeg } from '@/features/glass-enclosure/model/angleSnap';
+import { queueToast } from '@/shared/api/toastQueue';
+import type { PlanFootprint } from '@/shared/three-engine';
+import {
+  buildRunFootprint,
+  buildSlabFootprint,
+  buildWallFootprint,
+  footprintsPenetrate,
+  penetratesAny,
+} from '@/features/glass-enclosure/scene/interaction/planCollision';
+import {
+  findAttachedRunIds,
+  findAttachedWallIds,
+} from '@/features/glass-enclosure/model/wallAttachment';
 import type {
   SceneHardwareItem,
   ScenePanelState,
@@ -16,6 +29,39 @@ import type {
 } from '@/features/glass-enclosure/model/project.types';
 
 const clampMm = (value: number, limit: number) => Math.min(limit, Math.max(-limit, value));
+
+const solidObstaclesExcept = (excludeIds: Set<string>): PlanFootprint[] => {
+  const s = useDesignerStore.getState().scene;
+  return [
+    ...(s.walls ?? [])
+      .filter((w) => !excludeIds.has(w.id))
+      .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
+    ...s.runs
+      .filter((r) => !excludeIds.has(r.id))
+      .map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
+    ...(s.slabs ?? [])
+      .filter((sl) => !excludeIds.has(sl.id))
+      .map((sl) => buildSlabFootprint(sl, 0, 0, sl.rotationDeg)),
+  ];
+};
+
+const transformAllowed = (
+  currentFp: PlanFootprint,
+  candidateFp: PlanFootprint,
+  obstacles: PlanFootprint[],
+  blockedMessage: string,
+): boolean => {
+  const fresh = obstacles.filter(
+    (o) => o.ownerId !== currentFp.ownerId && !footprintsPenetrate(currentFp, o),
+  );
+  if (!penetratesAny(candidateFp, fresh)) return true;
+  queueToast({
+    dedupeKey: 'glass-collision-blocked',
+    variant: 'warning',
+    description: blockedMessage,
+  });
+  return false;
+};
 
 interface NumericFieldProps {
   label: string;
@@ -56,7 +102,7 @@ const NumericField = ({ label, unit, value, onCommit }: NumericFieldProps) => {
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={handleKeyDown}
-        className="h-7 w-16 rounded border border-slate-300 bg-white px-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+        className="h-7 w-16 rounded border border-slate-300 bg-white px-1.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
         aria-label={`${label} (${unit})`}
       />
     </label>
@@ -69,8 +115,23 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
   const { persistRun } = useRunEntityActions();
 
   const commit = (patch: Partial<SceneRunState>) => {
+    const candidate = { ...run, ...patch };
+    const attached = findAttachedWallIds(run, useDesignerStore.getState().scene.walls ?? []);
+    const obstacles = solidObstaclesExcept(new Set([run.id, ...attached]));
+    if (
+      !transformAllowed(
+        buildRunFootprint(run, 0, 0, run.rotationDeg),
+        buildRunFootprint(candidate, 0, 0, candidate.rotationDeg),
+        obstacles,
+        t('GlassEnclosure.Designer.CollisionBlocked', {
+          defaultValue: 'Bu değer başka bir nesneyle çakışıyor — uygulanmadı.',
+        }),
+      )
+    ) {
+      return;
+    }
     updateRun(run.id, patch);
-    void persistRun({ ...run, ...patch });
+    void persistRun(candidate);
   };
 
   return (
@@ -143,7 +204,24 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
   const { t } = useTranslation();
   const updateWall = useDesignerStore((s) => s.updateWall);
 
-  const commit = (patch: Partial<SceneWallState>) => updateWall(wall.id, patch);
+  const commit = (patch: Partial<SceneWallState>) => {
+    const candidate = { ...wall, ...patch };
+    const attached = findAttachedRunIds(wall, useDesignerStore.getState().scene.runs);
+    const obstacles = solidObstaclesExcept(new Set([wall.id, ...attached]));
+    if (
+      !transformAllowed(
+        buildWallFootprint(wall, 0, 0, wall.rotationDeg),
+        buildWallFootprint(candidate, 0, 0, candidate.rotationDeg),
+        obstacles,
+        t('GlassEnclosure.Designer.CollisionBlocked', {
+          defaultValue: 'Bu değer başka bir nesneyle çakışıyor — uygulanmadı.',
+        }),
+      )
+    ) {
+      return;
+    }
+    updateWall(wall.id, patch);
+  };
 
   return (
     <>
@@ -197,7 +275,23 @@ const SlabFields = ({ slab }: { slab: SceneSlabState }) => {
   const { t } = useTranslation();
   const updateSlab = useDesignerStore((s) => s.updateSlab);
 
-  const commit = (patch: Partial<SceneSlabState>) => updateSlab(slab.id, patch);
+  const commit = (patch: Partial<SceneSlabState>) => {
+    const candidate = { ...slab, ...patch };
+    const obstacles = solidObstaclesExcept(new Set([slab.id]));
+    if (
+      !transformAllowed(
+        buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
+        buildSlabFootprint(candidate, 0, 0, candidate.rotationDeg),
+        obstacles,
+        t('GlassEnclosure.Designer.CollisionBlocked', {
+          defaultValue: 'Bu değer başka bir nesneyle çakışıyor — uygulanmadı.',
+        }),
+      )
+    ) {
+      return;
+    }
+    updateSlab(slab.id, patch);
+  };
 
   return (
     <>

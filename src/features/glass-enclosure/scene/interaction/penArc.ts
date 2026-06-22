@@ -7,7 +7,6 @@ const MAX_ARC_SEGMENTS = 96;
 const MIN_BULGE_MM = 10;
 const SEGMENT_ARC_LEN_MM = 50;
 
-// Signed perpendicular distance of M from the directed chord A->B (the bulge).
 export const chordBulgeMm = (a: ArcPoint, b: ArcPoint, m: ArcPoint): number => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -16,9 +15,6 @@ export const chordBulgeMm = (a: ArcPoint, b: ArcPoint, m: ArcPoint): number => {
   return ((m.x - a.x) * -dy + (m.y - a.y) * dx) / len;
 };
 
-// True circular arc from A to B with sagitta `bulgeMm` at the midpoint. Returns
-// the interior + end points (A is assumed already placed). Segment count scales
-// with arc length so the curve stays smooth without over-tessellating.
 export const tessellateArc = (a: ArcPoint, b: ArcPoint, bulgeMm: number): ArcPoint[] => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -41,8 +37,6 @@ export const tessellateArc = (a: ArcPoint, b: ArcPoint, bulgeMm: number): ArcPoi
     while (v > Math.PI) v -= 2 * Math.PI;
     return v;
   };
-  // Route the sweep through the apex (the bulge-side midpoint), so a major arc
-  // (|bulge| >= chord/2) goes the long way instead of reflecting to the wrong side.
   const apexAngle = Math.atan2(ny, nx);
   const delta = wrap(apexAngle - a0) + wrap(Math.atan2(b.y - cy, b.x - cx) - apexAngle);
   const arcLen = Math.abs(delta) * radius;

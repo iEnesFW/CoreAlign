@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
+import { presetPolygonPoints, serializePanelPolygonPoints } from '../model/panelPolygon';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { HardwareManager } from './HardwareManager';
+import { PanelPolygonEditor } from './PanelPolygonEditor';
 import type {
   GlassOpeningType,
   GlassTypeDto,
@@ -58,6 +60,24 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
   };
   const show = (section: InspectorSection) => (sections ?? []).includes(section);
 
+  const isEllipse = (draft.shapeKind ?? null) === 'ellipse';
+  const isPolygon = (draft.shapeKind ?? null) === 'polygon';
+  const isRect = !draft.shapeKind;
+  const shapeKindValue = isPolygon
+    ? 'polygon'
+    : isEllipse
+      ? (draft.heightMm ?? 0) === draft.widthMm
+        ? 'round'
+        : 'oval'
+      : 'rect';
+  const applyPolygonPreset = (sides: number) =>
+    commit({
+      shapeKind: 'polygon',
+      shapePointsJson: serializePanelPolygonPoints(
+        presetPolygonPoints(sides, draft.widthMm, draft.heightMm ?? run.heightMm),
+      ),
+    });
+
   const selectRun = () =>
     setSelection({
       kind: 'run',
@@ -88,7 +108,7 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
           <button
             type="button"
             onClick={() => void handleAddPanel()}
-            className="inline-flex items-center gap-1 rounded border border-blue-500/40 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+            className="inline-flex items-center gap-1 rounded border border-primary-500/40 px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/30"
           >
             <Plus size={12} />
             {t('GlassEnclosure.Designer.AddPanel', { defaultValue: 'Add panel' })}
@@ -96,7 +116,7 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
           <button
             type="button"
             onClick={handleDeletePanel}
-            className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
           >
             {t('GlassEnclosure.Designer.DeletePanel', { defaultValue: 'Delete panel' })}
           </button>
@@ -113,7 +133,7 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
                 onClick={() => commit({ openingType: kind })}
                 className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
                   draft.openingType === kind
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
                     : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
                 }`}
               >
@@ -125,17 +145,203 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
       )}
 
       {show('dimensions') && (
-        <Field label={`${t('GlassEnclosure.Field.Width')} (mm)`}>
-          <input
-            type="number"
-            min={100}
-            max={3000}
-            value={draft.widthMm}
-            onChange={(e) => setDraft({ ...draft, widthMm: Number(e.target.value) })}
-            onBlur={() => commit({ widthMm: draft.widthMm })}
-            className={inputClass}
-          />
-        </Field>
+        <>
+          <Field label={`${t('GlassEnclosure.Field.Width')} (mm)`}>
+            <input
+              type="number"
+              min={100}
+              max={3000}
+              value={draft.widthMm}
+              onChange={(e) => setDraft({ ...draft, widthMm: Number(e.target.value) })}
+              onBlur={() => commit({ widthMm: draft.widthMm })}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field
+            label={`${t('GlassEnclosure.Designer.Panel.Height', { defaultValue: 'Panel yüksekliği' })} (mm)`}
+          >
+            <input
+              type="number"
+              min={100}
+              value={draft.heightMm ?? ''}
+              placeholder={t('GlassEnclosure.Designer.Panel.FullHeight', {
+                defaultValue: 'Tam yükseklik (hat)',
+              })}
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  heightMm: e.target.value === '' ? null : Number(e.target.value),
+                })
+              }
+              onBlur={() => commit({ heightMm: draft.heightMm ?? null })}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label={t('GlassEnclosure.Designer.Panel.Shape', { defaultValue: 'Panel şekli' })}>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['rect', 'round', 'oval'] as const).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() =>
+                    commit(
+                      k === 'rect'
+                        ? { shapeKind: null }
+                        : k === 'round'
+                          ? { shapeKind: 'ellipse', heightMm: draft.widthMm }
+                          : { shapeKind: 'ellipse' },
+                    )
+                  }
+                  className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                    shapeKindValue === k
+                      ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                      : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {t(`GlassEnclosure.Designer.Panel.Kind.${k}` as never, {
+                    defaultValue: { rect: 'Dikdörtgen', round: 'Yuvarlak', oval: 'Oval' }[k],
+                  })}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          <Field
+            label={t('GlassEnclosure.Designer.Panel.Polygon', { defaultValue: 'Çokgen (ön ayar)' })}
+          >
+            <div className="grid grid-cols-3 gap-1.5">
+              {([3, 5, 6] as const).map((sides) => (
+                <button
+                  key={sides}
+                  type="button"
+                  onClick={() => applyPolygonPreset(sides)}
+                  className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                    isPolygon
+                      ? 'border-primary-400 text-primary-600 hover:bg-primary-50 dark:text-primary-300'
+                      : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {t(`GlassEnclosure.Designer.Panel.Poly.${sides}` as never, {
+                    defaultValue: { 3: 'Üçgen', 5: 'Beşgen', 6: 'Altıgen' }[sides],
+                  })}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          {isPolygon && (
+            <PanelPolygonEditor
+              widthMm={draft.widthMm}
+              heightMm={draft.heightMm ?? run.heightMm}
+              pointsJson={draft.shapePointsJson}
+              onPreview={(json) =>
+                updatePanel(run.id, panel.id, { shapeKind: 'polygon', shapePointsJson: json })
+              }
+              onCommit={(json) => commit({ shapeKind: 'polygon', shapePointsJson: json })}
+            />
+          )}
+
+          {isRect && (
+            <>
+              <Field
+                label={t('GlassEnclosure.Designer.Panel.TopShape', { defaultValue: 'Üst kenar' })}
+              >
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(['flat', 'raked', 'arched'] as const).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => commit({ topShape: s })}
+                      className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                        (draft.topShape ?? 'flat') === s
+                          ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                          : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {t(`GlassEnclosure.Designer.Panel.Top.${s}` as never, {
+                        defaultValue: { flat: 'Düz', raked: 'Eğimli', arched: 'Kemerli' }[s],
+                      })}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              {draft.topShape === 'raked' && (
+                <Field
+                  label={`${t('GlassEnclosure.Designer.Panel.TopRightHeight', { defaultValue: 'Sağ üst yükseklik' })} (mm)`}
+                >
+                  <input
+                    type="number"
+                    min={100}
+                    value={draft.topRightHeightMm ?? ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        topRightHeightMm: e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
+                    onBlur={() => commit({ topRightHeightMm: draft.topRightHeightMm ?? null })}
+                    className={inputClass}
+                  />
+                </Field>
+              )}
+
+              {draft.topShape === 'arched' && (
+                <Field
+                  label={`${t('GlassEnclosure.Designer.Panel.ArchRise', { defaultValue: 'Kemer yüksekliği' })} (mm)`}
+                >
+                  <input
+                    type="number"
+                    min={0}
+                    value={draft.archRiseMm ?? ''}
+                    onChange={(e) =>
+                      setDraft({
+                        ...draft,
+                        archRiseMm: e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
+                    onBlur={() => commit({ archRiseMm: draft.archRiseMm ?? null })}
+                    className={inputClass}
+                  />
+                </Field>
+              )}
+
+              <Field
+                label={t('GlassEnclosure.Designer.Panel.CornerRadii', {
+                  defaultValue: 'Köşe ovalliği (mm)',
+                })}
+              >
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
+                    <input
+                      key={k}
+                      type="number"
+                      min={0}
+                      placeholder={k.toUpperCase()}
+                      value={draft.cornerRadiiMm?.[k] ?? ''}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          cornerRadiiMm: {
+                            ...draft.cornerRadiiMm,
+                            [k]:
+                              e.target.value === ''
+                                ? undefined
+                                : Math.max(0, Number(e.target.value)),
+                          },
+                        })
+                      }
+                      onBlur={() => commit({ cornerRadiiMm: draft.cornerRadiiMm })}
+                      className={inputClass}
+                    />
+                  ))}
+                </div>
+              </Field>
+            </>
+          )}
+        </>
       )}
 
       {show('glass') && (
@@ -183,7 +389,7 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
 }
 
 const inputClass =
-  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">

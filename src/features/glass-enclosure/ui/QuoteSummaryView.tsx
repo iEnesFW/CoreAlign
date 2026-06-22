@@ -228,7 +228,7 @@ export function QuoteSummaryView({
           type="button"
           onClick={onRecompute}
           disabled={isRecomputing}
-          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
         >
           <RotateCw size={14} className={isRecomputing ? 'animate-spin' : ''} />
           {t('GlassEnclosure.Quote.Recompute')}
@@ -267,7 +267,7 @@ export function QuoteSummaryView({
           <button
             type="button"
             onClick={() => setShowAddForm((prev) => !prev)}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border border-success-300 bg-success-50 px-3 py-1.5 text-sm font-medium text-success-700 hover:bg-success-100 dark:border-success-700/50 dark:bg-success-950/40 dark:text-success-300 dark:hover:bg-success-900/40"
           >
             <Plus size={14} />
             {t('GlassEnclosure.Quote.AddCustomLine', { defaultValue: 'Add custom line' })}
@@ -275,7 +275,7 @@ export function QuoteSummaryView({
           <button
             type="button"
             onClick={() => exportQuoteCsv(bom, project)}
-            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
           >
             <FileDown size={14} />
             {t('GlassEnclosure.Quote.ExportCsv')}
@@ -438,7 +438,7 @@ export function QuoteSummaryView({
         </dl>
       </section>
 
-      <footer className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <footer className="rounded-lg border border-success-200 bg-success-50 p-3 text-xs text-success-700 dark:border-success-700/40 dark:bg-success-950/30 dark:text-success-300">
         <CheckCircle2 size={14} className="mr-1 inline" />
         {t('GlassEnclosure.Quote.SourceNote')}
       </footer>
@@ -514,7 +514,7 @@ const BomLineRow = ({
               if (e.key === 'Escape') onCancelEdit();
             }}
             autoFocus
-            className="w-28 rounded border border-blue-400 bg-white px-2 py-0.5 text-right font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-blue-600 dark:bg-slate-900 dark:text-slate-100"
+            className="w-28 rounded border border-primary-400 bg-white px-2 py-0.5 text-right font-mono text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-primary-600 dark:bg-slate-900 dark:text-slate-100"
             aria-label={t('GlassEnclosure.Quote.EditPrice', { defaultValue: 'Edit unit price' })}
           />
         ) : (
@@ -644,11 +644,11 @@ const AddManualLineForm = ({ isPending, onSubmit, onCancel }: AddManualLineFormP
   };
 
   const inputClass =
-    'rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+    'rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-success-500 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
   return (
-    <section className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-700/40 dark:bg-emerald-950/20">
-      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+    <section className="rounded-lg border border-success-200 bg-success-50/50 p-3 dark:border-success-700/40 dark:bg-success-950/20">
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-success-700 dark:text-success-300">
         {t('GlassEnclosure.Quote.AddCustomLine', { defaultValue: 'Add custom line' })}
       </h3>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-5 xl:grid-cols-6">
@@ -712,7 +712,7 @@ const AddManualLineForm = ({ isPending, onSubmit, onCancel }: AddManualLineFormP
           type="button"
           onClick={submit}
           disabled={isPending || !isValid}
-          className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-success-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
         >
           <Plus size={14} />
           {t('GlassEnclosure.Quote.AddLine', { defaultValue: 'Add line' })}
@@ -732,7 +732,7 @@ const Chip = ({
   <span
     className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-medium ${
       variant === 'amber'
-        ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-300'
+        ? 'border-warning-300 bg-warning-50 text-warning-700 dark:border-warning-700/50 dark:bg-warning-950/40 dark:text-warning-300'
         : 'border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700/50 dark:bg-violet-950/40 dark:text-violet-300'
     }`}
   >
@@ -761,11 +761,11 @@ const IconButton = ({
     aria-label={label}
     className={`rounded p-1 transition disabled:opacity-40 ${
       variant === 'danger'
-        ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40'
+        ? 'text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-950/40'
         : variant === 'accent'
-          ? 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40'
+          ? 'text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/40'
           : variant === 'confirm'
-            ? 'text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40'
+            ? 'text-success-600 hover:bg-success-50 dark:text-success-400 dark:hover:bg-success-950/40'
             : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
     }`}
   >
@@ -838,7 +838,7 @@ const TotalRow = ({
     <dd
       className={`font-mono ${
         accent
-          ? 'text-lg font-bold text-emerald-700 dark:text-emerald-300'
+          ? 'text-lg font-bold text-success-700 dark:text-success-300'
           : bold
             ? 'font-semibold text-slate-900 dark:text-slate-100'
             : muted

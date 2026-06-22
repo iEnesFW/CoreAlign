@@ -1,5 +1,6 @@
 export {
   applyPlanMoveSnap,
+  lineProbePoints,
   snapDimensionMm,
   stickyDimensionMm,
   filterSnapTargets,

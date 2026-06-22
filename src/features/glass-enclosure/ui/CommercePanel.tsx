@@ -62,7 +62,7 @@ export function CommercePanel({ project }: CommercePanelProps) {
                 { successMessage: t('GlassEnclosure.Commerce.ShareLinkCreated') },
               );
             }}
-            className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md bg-primary-600 px-2 py-1 text-xs font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             <Link2 size={12} />
             {t('GlassEnclosure.Commerce.CreateShareLink')}
@@ -90,10 +90,10 @@ export function CommercePanel({ project }: CommercePanelProps) {
                     <span
                       className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                         token.acceptedAtUtc
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'
+                          ? 'bg-success-100 text-success-700 dark:bg-success-950/40 dark:text-success-300'
                           : token.rejectedAtUtc
-                            ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300'
+                            ? 'bg-danger-100 text-danger-700 dark:bg-danger-950/40 dark:text-danger-300'
+                            : 'bg-warning-100 text-warning-700 dark:bg-warning-950/40 dark:text-warning-300'
                       }`}
                     >
                       v{token.sceneVersion} · {status}
@@ -101,7 +101,7 @@ export function CommercePanel({ project }: CommercePanelProps) {
                     <button
                       type="button"
                       onClick={() => copyShareUrl(token.publicUrl)}
-                      className="text-blue-600 hover:underline"
+                      className="text-primary-600 hover:underline"
                       title={t('GlassEnclosure.Commerce.CopyUrl')}
                     >
                       <Copy size={12} />
@@ -135,7 +135,7 @@ export function CommercePanel({ project }: CommercePanelProps) {
               successMessage: t('GlassEnclosure.Commerce.OrderConverted'),
             });
           }}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-success-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
         >
           <ShoppingCart size={14} />
           {t('GlassEnclosure.Commerce.ConvertToOrder')}
@@ -174,7 +174,7 @@ export function CommercePanel({ project }: CommercePanelProps) {
                 successMessage: t('GlassEnclosure.Commerce.Released'),
               });
             }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             <Factory size={14} />
             {t('GlassEnclosure.Commerce.ReleaseToProduction')}

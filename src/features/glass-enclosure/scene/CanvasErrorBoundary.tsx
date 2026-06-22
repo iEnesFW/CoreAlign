@@ -12,8 +12,6 @@ interface CanvasErrorBoundaryState {
   remountKey: number;
 }
 
-// Keeps a single bad geometry/render from white-screening the whole designer and
-// losing the in-memory scene; the user can retry without reloading the page.
 export class CanvasErrorBoundary extends Component<
   CanvasErrorBoundaryProps,
   CanvasErrorBoundaryState
@@ -43,7 +41,7 @@ export class CanvasErrorBoundary extends Component<
           <button
             type="button"
             onClick={this.handleRetry}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700"
+            className="rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-700"
           >
             {this.props.retryLabel}
           </button>

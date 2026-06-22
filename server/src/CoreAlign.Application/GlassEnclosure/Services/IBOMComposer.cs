@@ -1,4 +1,5 @@
 using CoreAlign.Application.Catalog.Linker;
+using CoreAlign.Application.GlassEnclosure.Cutting;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -178,7 +179,9 @@ public class BOMComposer : IBOMComposer
             {
                 var glass = await _glassRepo.GetByIdAsync(panel.GlassTypeId, cancellationToken);
                 if (glass is null) continue;
-                var areaM2 = (decimal)panel.WidthMm * run.HeightMm / 1_000_000m;
+                var shape = PanelCutShapeMapper.FromPanel(panel);
+                var nominalHeight = panel.HeightMm ?? run.HeightMm;
+                var areaM2 = PanelCutGeometry.NetAreaMm2(panel.WidthMm, nominalHeight, shape) / 1_000_000m;
                 totalArea += areaM2;
                 totalPanels += 1;
                 totalWeightKg += areaM2 * glass.WeightKgPerM2;

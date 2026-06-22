@@ -122,7 +122,7 @@ export function PolygonInspector({ project }: PolygonInspectorProps) {
                   type="button"
                   onClick={() => removeRow(index)}
                   disabled={rows.length <= MIN_VERTEX_ROWS}
-                  className="rounded px-1.5 py-0.5 text-[10px] text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-red-400 dark:hover:bg-red-950/30"
+                  className="rounded px-1.5 py-0.5 text-[10px] text-danger-600 hover:bg-danger-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-danger-400 dark:hover:bg-danger-950/30"
                 >
                   {t('GlassEnclosure.Designer.Polygon.RemoveVertex', { defaultValue: 'Remove' })}
                 </button>
@@ -144,14 +144,14 @@ export function PolygonInspector({ project }: PolygonInspectorProps) {
           type="button"
           onClick={save}
           disabled={!isValid || configureMutation.isPending}
-          className="rounded bg-blue-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded bg-primary-600 px-3 py-1 text-[11px] font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {t('GlassEnclosure.Designer.Polygon.Save', { defaultValue: 'Save polygon' })}
         </button>
       </div>
 
       {!isValid ? (
-        <p className="text-[10px] text-red-600 dark:text-red-400">
+        <p className="text-[10px] text-danger-600 dark:text-danger-400">
           {t('GlassEnclosure.Designer.Polygon.Invalid', {
             defaultValue: 'At least 3 vertices with non-zero edges are required',
           })}
@@ -179,6 +179,6 @@ const VertexInput = ({ value, onChange }: VertexInputProps) => (
     value={value}
     step={50}
     onChange={(e) => onChange(e.target.value)}
-    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+    className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
   />
 );

@@ -1,4 +1,5 @@
 import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine';
+import { effectiveArcRadiusMm } from '../../model/arcGeometry';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
   SceneRunState,
@@ -11,8 +12,11 @@ export {
   buildPlanFootprint,
   buildPolygonFootprint,
   restElevationMm,
+  isFloating,
   normalizePlanAngleDeg,
   penetratesAny,
+  firstPenetratingOwner,
+  footprintsPenetrate,
   clampPlanMove,
   slidePlanMove,
   clampPlanStretch,
@@ -25,22 +29,104 @@ const DEG2RAD = Math.PI / 180;
 
 export const RUN_PLAN_THICKNESS_MM = 50;
 
+const ARC_FOOTPRINT_STEP_RAD = 0.25;
+
+const buildArcWallFootprint = (
+  wall: SceneWallState,
+  dxMm: number,
+  dyMm: number,
+  rotationDeg: number,
+): PlanFootprint => {
+  const zMin = wall.geomZ ?? 0;
+  const zMax = zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
+  const radius = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm ?? 0);
+  const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+  const sweep = Math.min(wall.lengthMm / radius, Math.PI * 2);
+  const half = wall.thicknessMm / 2;
+  const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
+  const rad = rotationDeg * DEG2RAD;
+  const cosR = Math.cos(rad);
+  const sinR = Math.sin(rad);
+  const toWorld = (lx: number, ly: number) => ({
+    x: wall.originX + dxMm + lx * cosR - ly * sinR,
+    y: wall.originY + dyMm + lx * sinR + ly * cosR,
+  });
+  const outer: { x: number; y: number }[] = [];
+  const inner: { x: number; y: number }[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const phi = (sweep * i) / steps;
+    const px = radius * Math.sin(phi);
+    const py = direction * radius * (1 - Math.cos(phi));
+    const tangent = Math.atan2(direction * Math.sin(phi), Math.cos(phi));
+    const nx = -Math.sin(tangent);
+    const ny = Math.cos(tangent);
+    outer.push(toWorld(px + nx * half, py + ny * half));
+    inner.push(toWorld(px - nx * half, py - ny * half));
+  }
+  return buildPolygonFootprint(wall.id, [...outer, ...inner.reverse()], zMin, zMax, half);
+};
+
 export const buildWallFootprint = (
   wall: SceneWallState,
   dxMm: number,
   dyMm: number,
   rotationDeg: number,
-): PlanFootprint =>
-  buildPlanFootprint(
+): PlanFootprint => {
+  if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+    return buildArcWallFootprint(wall, dxMm, dyMm, rotationDeg);
+  }
+  const zMin = wall.geomZ ?? 0;
+  return buildPlanFootprint(
     wall.id,
     wall.originX + dxMm,
     wall.originY + dyMm,
     wall.lengthMm,
     rotationDeg,
     wall.thicknessMm / 2,
-    0,
-    Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm),
+    zMin,
+    zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm),
   );
+};
+
+const buildArcRunFootprint = (
+  run: SceneRunState,
+  dxMm: number,
+  dyMm: number,
+  rotationDeg: number,
+): PlanFootprint => {
+  const zMin = run.geomZ ?? 0;
+  const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
+  const direction = (run.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+  const sweep = Math.min(run.lengthMm / radius, Math.PI * 2);
+  const half = RUN_PLAN_THICKNESS_MM / 2;
+  const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
+  const rad = rotationDeg * DEG2RAD;
+  const cosR = Math.cos(rad);
+  const sinR = Math.sin(rad);
+  const toWorld = (lx: number, ly: number) => ({
+    x: run.originX + dxMm + lx * cosR - ly * sinR,
+    y: run.originY + dyMm + lx * sinR + ly * cosR,
+  });
+  const outer: { x: number; y: number }[] = [];
+  const inner: { x: number; y: number }[] = [];
+  for (let i = 0; i <= steps; i += 1) {
+    const phi = (sweep * i) / steps;
+    const px = radius * Math.sin(phi);
+    const py = direction * radius * (1 - Math.cos(phi));
+    const tangent = Math.atan2(direction * Math.sin(phi), Math.cos(phi));
+    const nx = -Math.sin(tangent);
+    const ny = Math.cos(tangent);
+    outer.push(toWorld(px + nx * half, py + ny * half));
+    inner.push(toWorld(px - nx * half, py - ny * half));
+  }
+  return buildPolygonFootprint(
+    run.id,
+    [...outer, ...inner.reverse()],
+    zMin,
+    zMin + run.heightMm,
+    half,
+  );
+};
 
 export const buildRunFootprint = (
   run: SceneRunState,
@@ -48,6 +134,9 @@ export const buildRunFootprint = (
   dyMm: number,
   rotationDeg: number,
 ): PlanFootprint => {
+  if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
+    return buildArcRunFootprint(run, dxMm, dyMm, rotationDeg);
+  }
   const zMin = run.geomZ ?? 0;
   return buildPlanFootprint(
     run.id,

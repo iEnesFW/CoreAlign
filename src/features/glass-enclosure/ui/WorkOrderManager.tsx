@@ -33,12 +33,12 @@ const STATUS_LABEL_KEYS: Record<string, string> = {
 
 const STATUS_BADGE: Record<string, string> = {
   Pending: 'bg-slate-200 text-slate-700',
-  Cutting: 'bg-amber-100 text-amber-700',
-  Assembling: 'bg-blue-100 text-blue-700',
+  Cutting: 'bg-warning-100 text-warning-700',
+  Assembling: 'bg-primary-100 text-primary-700',
   Ready: 'bg-teal-100 text-teal-700',
-  InTransit: 'bg-orange-100 text-orange-700',
-  Installed: 'bg-emerald-100 text-emerald-700',
-  Defective: 'bg-red-100 text-red-700',
+  InTransit: 'bg-warning-100 text-warning-700',
+  Installed: 'bg-success-100 text-success-700',
+  Defective: 'bg-danger-100 text-danger-700',
 };
 
 export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
@@ -106,13 +106,13 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
               {dateFormatter.format(new Date(wo.scheduledEndDate))}
             </div>
             {wo.recutCount > 0 && (
-              <div className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+              <div className="mt-1 text-[10px] text-warning-600 dark:text-warning-400">
                 recut: {wo.recutCount}
               </div>
             )}
             {wo.defectNotes && (
               <p
-                className="mt-1 truncate text-[10px] text-red-600 dark:text-red-400"
+                className="mt-1 truncate text-[10px] text-danger-600 dark:text-danger-400"
                 title={wo.defectNotes}
               >
                 {wo.defectNotes}
@@ -125,7 +125,7 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
                   type="button"
                   onClick={() => handleAdvance(wo.id, s)}
                   disabled={updateStatus.isPending}
-                  className="inline-flex items-center gap-1 rounded border border-blue-600 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 hover:bg-blue-50 disabled:opacity-50 dark:border-blue-500/40 dark:text-blue-300 dark:hover:bg-blue-950/30"
+                  className="inline-flex items-center gap-1 rounded border border-primary-600 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:border-primary-500/40 dark:text-primary-300 dark:hover:bg-primary-950/30"
                 >
                   {s === 'Ready' ? (
                     <PackageCheck size={10} />
@@ -144,7 +144,7 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
                     setDefectingId(wo.id === defectingId ? null : wo.id);
                     setDefectNotes('');
                   }}
-                  className="inline-flex items-center gap-1 rounded border border-red-500/50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="inline-flex items-center gap-1 rounded border border-danger-500/50 px-1.5 py-0.5 text-[10px] font-medium text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
                 >
                   <AlertOctagon size={10} />
                   {t('GlassEnclosure.WorkOrder.Defect')}
@@ -164,7 +164,7 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
                   type="button"
                   onClick={() => handleSubmitDefect(wo.id)}
                   disabled={!defectNotes.trim() || recordDefect.isPending}
-                  className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md bg-danger-600 px-2 py-1 text-[10px] font-medium text-white hover:bg-danger-700 disabled:opacity-50"
                 >
                   <Hammer size={10} />
                   {t('GlassEnclosure.WorkOrder.DefectSubmit')}

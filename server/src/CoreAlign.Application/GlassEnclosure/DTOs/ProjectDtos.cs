@@ -2,6 +2,8 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Application.GlassEnclosure.DTOs;
 
+public record PanelCornerRadiiDto(int? Tl, int? Tr, int? Br, int? Bl);
+
 public record GlassProjectPanelDto(
     Guid Id,
     Guid RunId,
@@ -12,7 +14,14 @@ public record GlassProjectPanelDto(
     bool HasHandle,
     bool HasLock,
     bool HasBrushSeal,
-    string? Notes);
+    string? Notes,
+    int? HeightMm = null,
+    string? TopShape = null,
+    int? TopRightHeightMm = null,
+    int? ArchRiseMm = null,
+    PanelCornerRadiiDto? CornerRadiiMm = null,
+    string? ShapeKind = null,
+    string? ShapePointsJson = null);
 
 public record GlassProjectRunDto(
     Guid Id,
@@ -206,7 +215,14 @@ public record AddPanelDto(
     bool HasHandle,
     bool HasLock,
     bool HasBrushSeal,
-    string? Notes);
+    string? Notes,
+    int? HeightMm = null,
+    string? TopShape = null,
+    int? TopRightHeightMm = null,
+    int? ArchRiseMm = null,
+    PanelCornerRadiiDto? CornerRadiiMm = null,
+    string? ShapeKind = null,
+    string? ShapePointsJson = null);
 
 public record UpdatePanelDto(
     int WidthMm,
@@ -215,7 +231,14 @@ public record UpdatePanelDto(
     bool HasHandle,
     bool HasLock,
     bool HasBrushSeal,
-    string? Notes);
+    string? Notes,
+    int? HeightMm = null,
+    string? TopShape = null,
+    int? TopRightHeightMm = null,
+    int? ArchRiseMm = null,
+    PanelCornerRadiiDto? CornerRadiiMm = null,
+    string? ShapeKind = null,
+    string? ShapePointsJson = null);
 
 public record BulkRebalancePanelsDto(
     int PanelCount,

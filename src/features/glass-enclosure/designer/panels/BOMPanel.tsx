@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, RotateCw, Scissors } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Modal } from '@/shared/ui/Modal/Modal';
-import { useDesignerUxMode } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode } from '@/shared/lib/persona';
 import { QuoteSummaryView } from '@/features/glass-enclosure/ui/QuoteSummaryView';
 import { Optimize2DButton } from '@/features/glass-enclosure/cutting/Optimize2DButton';
 import { Glass2DNestingViewer } from '@/features/glass-enclosure/cutting/Glass2DNestingViewer';
@@ -76,7 +76,7 @@ export const BOMPanel = ({
             <span
               role="status"
               className={cn(
-                'inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-300',
+                'inline-flex items-center gap-1 rounded-full border border-warning-300 bg-warning-50 px-2 py-0.5 font-medium text-warning-700 dark:border-warning-700/50 dark:bg-warning-950/40 dark:text-warning-300',
                 isSimple ? 'text-xs' : 'text-[10px]',
               )}
               title={project.bomStaleReason ?? undefined}
@@ -122,7 +122,7 @@ export const BOMPanel = ({
             onClick={onRecompute}
             disabled={isRecomputing}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500',
+              'inline-flex items-center gap-1.5 rounded-md bg-primary-600 font-medium text-white transition hover:bg-primary-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary-500',
               isSimple ? 'h-11 px-4 text-sm' : 'h-8 px-3 text-xs',
             )}
             aria-label={t('GlassEnclosure.Quote.Recompute', { defaultValue: 'Recompute' })}
@@ -185,7 +185,7 @@ const Badge = ({ label, value, isSimple, accent }: BadgeProps) => (
     className={cn(
       'flex items-center gap-1.5 rounded-md border px-2 py-1',
       accent
-        ? 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700/40 dark:bg-emerald-950/30 dark:text-emerald-200'
+        ? 'border-success-300 bg-success-50 text-success-800 dark:border-success-700/40 dark:bg-success-950/30 dark:text-success-200'
         : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
     )}
   >
@@ -201,7 +201,7 @@ const Badge = ({ label, value, isSimple, accent }: BadgeProps) => (
       className={cn(
         'font-mono font-semibold',
         isSimple ? 'text-sm' : 'text-xs',
-        accent && 'text-emerald-700 dark:text-emerald-300',
+        accent && 'text-success-700 dark:text-success-300',
       )}
     >
       {value}

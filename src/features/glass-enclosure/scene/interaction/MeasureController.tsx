@@ -43,8 +43,6 @@ const snapToCorner = (x: number, y: number, targets: PlanSnapTargets): PlanPoint
   return best ?? { x: snapGrid(x), y: snapGrid(y) };
 };
 
-// Two-click measurement: shows the live distance and angle between points,
-// snapping to object corners for precise dimensions.
 export function MeasureController({ snapTargets }: MeasureControllerProps) {
   const [points, setPoints] = useState<PlanPoint[]>([]);
   const [cursor, setCursor] = useState<PlanPoint | null>(null);

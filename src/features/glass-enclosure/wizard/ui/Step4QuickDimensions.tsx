@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutTemplate, Ruler, SkipForward } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useUxMode } from '@/features/persona/hooks/useUxMode';
+import { useUxMode } from '@/shared/lib/persona';
 import { useWizardStore, type QuickRunDimensions } from '../model/wizardStore';
 
 const fieldCls =
-  'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 const labelCls = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300';
 
 const DEFAULT_RUN: QuickRunDimensions = { widthMm: 0, heightMm: 0, panelCount: 3 };
@@ -157,10 +157,10 @@ export const Step4QuickDimensions = ({ onSubmit, isSubmitting }: Step4QuickDimen
               onClick={() => applyQuickLayout(preset)}
               disabled={isSubmitting}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700',
-                'transition-colors hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+                'inline-flex items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700',
+                'transition-colors hover:bg-primary-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
                 'disabled:cursor-not-allowed disabled:opacity-50',
-                'dark:border-indigo-800 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20',
+                'dark:border-primary-800 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20',
               )}
             >
               <LayoutTemplate size={13} />
@@ -199,7 +199,7 @@ export const Step4QuickDimensions = ({ onSubmit, isSubmitting }: Step4QuickDimen
             className="rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-semibold text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-purple-600 text-xs font-semibold text-white">
                 {idx + 1}
               </span>
               <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -302,7 +302,7 @@ export const Step4QuickDimensions = ({ onSubmit, isSubmitting }: Step4QuickDimen
           onClick={handleSubmitDims}
           disabled={!dimsValid || isSubmitting}
           className={cn(
-            'inline-flex items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20',
+            'inline-flex items-center justify-center gap-1.5 rounded-md bg-gradient-to-r from-primary-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-primary-500/20',
             'transition-opacity hover:opacity-95',
             'disabled:cursor-not-allowed disabled:opacity-50',
           )}

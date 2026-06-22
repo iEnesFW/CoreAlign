@@ -111,10 +111,6 @@ const distanceToSpineMm = (
   return Math.hypot(originX + t * vx - xMm, originY + t * vy - yMm);
 };
 
-// Roof sits on the top of whichever object the cursor is physically over,
-// measured by perpendicular distance to each footprint (not its center, which
-// would let a far long wall whose midpoint happens to be near win). Runs win
-// ties so the roof prefers landing on glass it is drawn against.
 const roofElevationAt = (
   runs: SceneRunState[],
   walls: SceneWallState[],
@@ -171,6 +167,7 @@ export function PlacementController({
   const posRef = useRef<PlanPoint | null>(null);
   const blockedRef = useRef(false);
   const downRef = useRef({ x: 0, y: 0 });
+  const rotationRef = useRef(0);
 
   const isLine = placement === 'wall' || placement === 'run';
 
@@ -178,6 +175,7 @@ export function PlacementController({
     freeRef.current = null;
     posRef.current = null;
     blockedRef.current = false;
+    rotationRef.current = 0;
     const ghost = ghostRef.current;
     if (ghost) ghost.visible = false;
     clearSnapGuides();
@@ -202,15 +200,24 @@ export function PlacementController({
         { x: -SLAB_LENGTH_MM / 2, y: SLAB_DEPTH_MM / 2 },
       ];
 
+  const lineStart = (xMm: number, yMm: number) => {
+    const rad = rotationRef.current * DEG2RAD;
+    return {
+      x: xMm - (LINE_LENGTH_MM / 2) * Math.cos(rad),
+      y: yMm - (LINE_LENGTH_MM / 2) * Math.sin(rad),
+    };
+  };
+
   const ghostFootprintAt = (xMm: number, yMm: number, heightMm: number): PlanFootprint => {
     if (isLine) {
       const halfWidthMm = placement === 'wall' ? WALL_THICKNESS_MM / 2 : RUN_PLAN_THICKNESS_MM / 2;
+      const start = lineStart(xMm, yMm);
       return buildPlanFootprint(
         GHOST_ID,
-        xMm - LINE_LENGTH_MM / 2,
-        yMm,
+        start.x,
+        start.y,
         LINE_LENGTH_MM,
-        0,
+        rotationRef.current,
         halfWidthMm,
         0,
         heightMm,
@@ -237,6 +244,7 @@ export function PlacementController({
     if (!ghost || !mesh || !mat) return;
     ghost.visible = true;
     ghost.position.set(xMm / MM, 0, yMm / MM);
+    ghost.rotation.y = isLine ? -rotationRef.current * DEG2RAD : 0;
     if (isLine) {
       const heightM = heightMm / MM;
       const thickM = (placement === 'wall' ? WALL_THICKNESS_MM : RUN_PLAN_THICKNESS_MM) / MM;
@@ -251,12 +259,13 @@ export function PlacementController({
     mat.color.set(blocked ? BLOCKED_COLOR : GHOST_COLOR);
   };
 
-  const followPointer = (e: ThreeEvent<PointerEvent>) => {
-    const gridX = snapToPlaceGrid(e.point.x * MM);
-    const gridY = snapToPlaceGrid(e.point.z * MM);
-    const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
-    let x = stuck.dxMm;
-    let y = stuck.dyMm;
+  const applyAt = (
+    targetX: number,
+    targetY: number,
+    guides: ReturnType<typeof applyPlanMoveSnap>['guides'],
+  ) => {
+    let x = targetX;
+    let y = targetY;
     const heightMm = isLine ? lineHeightAt(x, y) : 0;
     const blocked = penetratesAny(ghostFootprintAt(x, y, heightMm), obstacles);
     if (blocked && freeRef.current) {
@@ -274,9 +283,35 @@ export function PlacementController({
     if (!stillBlocked) freeRef.current = { x, y };
     posRef.current = { x, y };
     blockedRef.current = stillBlocked;
-    setSnapGuides(stillBlocked ? [] : stuck.guides);
+    setSnapGuides(stillBlocked ? [] : guides);
     applyGhost(x, y, heightMm, stillBlocked);
   };
+
+  const followPointer = (e: ThreeEvent<PointerEvent>) => {
+    const gridX = snapToPlaceGrid(e.point.x * MM);
+    const gridY = snapToPlaceGrid(e.point.z * MM);
+    const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
+    applyAt(stuck.dxMm, stuck.dyMm, stuck.guides);
+  };
+
+  const applyAtRef = useRef(applyAt);
+  useEffect(() => {
+    applyAtRef.current = applyAt;
+  });
+
+  useEffect(() => {
+    if (!placement || !isLine) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const step = e.deltaY > 0 ? 90 : -90;
+      rotationRef.current = (((rotationRef.current + step) % 360) + 360) % 360;
+      const pos = posRef.current;
+      if (pos) applyAtRef.current(pos.x, pos.y, []);
+    };
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => window.removeEventListener('wheel', onWheel, true);
+  }, [placement, isLine]);
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     downRef.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };
@@ -290,11 +325,12 @@ export function PlacementController({
     const pos = posRef.current;
     if (!pos || blockedRef.current) return;
     clearSnapGuides();
+    const start = lineStart(pos.x, pos.y);
     if (placement === 'wall') {
       onPlaceWall({
-        originX: Math.round(pos.x - LINE_LENGTH_MM / 2),
-        originY: Math.round(pos.y),
-        rotationDeg: 0,
+        originX: Math.round(start.x),
+        originY: Math.round(start.y),
+        rotationDeg: rotationRef.current,
         lengthMm: LINE_LENGTH_MM,
         heightMm: lineHeightAt(pos.x, pos.y),
         thicknessMm: WALL_THICKNESS_MM,
@@ -303,9 +339,9 @@ export function PlacementController({
     }
     if (placement === 'run') {
       onPlaceRun({
-        originX: Math.round(pos.x - LINE_LENGTH_MM / 2),
-        originY: Math.round(pos.y),
-        rotationDeg: 0,
+        originX: Math.round(start.x),
+        originY: Math.round(start.y),
+        rotationDeg: rotationRef.current,
         lengthMm: LINE_LENGTH_MM,
         heightMm: RUN_HEIGHT_MM,
       });

@@ -10,8 +10,6 @@ export type {
 } from '@/shared/three-engine';
 
 type DesignerObjectGestureOptions = Omit<UseObjectGesturesOptions, 'mode'> & {
-  // When true, the already-selected object can be grabbed and dragged directly
-  // in the default Select tool (no need to switch to the Move tool first).
   selectedForDrag?: boolean;
 };
 

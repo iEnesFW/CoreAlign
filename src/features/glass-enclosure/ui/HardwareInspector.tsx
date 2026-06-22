@@ -45,7 +45,7 @@ export function HardwareInspector() {
         <button
           type="button"
           onClick={handleRemove}
-          className="rounded border border-red-500/40 px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          className="rounded border border-danger-500/40 px-2 py-1 text-xs text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
         >
           {t('Common.Delete')}
         </button>
@@ -125,7 +125,7 @@ export function HardwareInspector() {
 }
 
 const inputClass =
-  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100';
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">

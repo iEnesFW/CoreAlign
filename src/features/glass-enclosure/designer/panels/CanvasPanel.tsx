@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Grid3X3, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode } from '@/shared/lib/persona';
 import { DesignerCanvas } from '@/features/glass-enclosure/scene/DesignerCanvas';
 import { CanvasErrorBoundary } from '@/features/glass-enclosure/scene/CanvasErrorBoundary';
 import { SelectionToolbar } from '@/features/glass-enclosure/designer/panels/SelectionToolbar';
@@ -78,7 +78,7 @@ export const CanvasPanel = ({
   const btnClass = useMemo(
     () =>
       cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
+        'inline-flex items-center justify-center gap-1.5 rounded-md border border-slate-300 bg-white font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
         isSimple ? 'h-12 px-3 text-sm' : 'h-8 px-2 text-xs',
       ),
     [isSimple],
@@ -141,7 +141,7 @@ export const CanvasPanel = ({
           type="button"
           onClick={toggleAnnotations}
           aria-pressed={showAnnotations}
-          className={cn(btnClass, showAnnotations && 'text-blue-600 dark:text-blue-400')}
+          className={cn(btnClass, showAnnotations && 'text-primary-600 dark:text-primary-400')}
           aria-label={t('GlassEnclosure.Designer.Annotations', { defaultValue: 'Toggle grid' })}
         >
           <Grid3X3 size={iconSize} />

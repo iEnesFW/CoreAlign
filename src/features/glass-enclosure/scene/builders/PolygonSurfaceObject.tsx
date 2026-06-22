@@ -6,6 +6,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Texture } from 'three';
 import {
   getProceduralTexture,
+  isAltPressed,
   isProceduralMaterialKey,
   stickyDimensionMm,
   useDrag3D,
@@ -13,8 +14,10 @@ import {
 import { StretchFaces } from '../interaction/StretchFaces';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
+import { buildSurfaceFootprint, restElevationMm } from '../interaction/planCollision';
 import { polygonSelfIntersects } from '../../model/polygonValidation';
 import { useDesignerStore } from '../../model/designerStore';
+import type { PlanFootprint } from '../interaction/planCollision';
 import type { StretchFaceDef } from '../interaction/StretchFaces';
 import type { SceneSurfacePoint, SceneSurfaceState } from '../../model/project.types';
 
@@ -23,8 +26,11 @@ interface PolygonSurfaceObjectProps {
   isSelected: boolean;
   interactive: boolean;
   penActive?: boolean;
+  supports?: PlanFootprint[];
   onSelect: (surfaceId: string) => void;
 }
+
+const EMPTY_SUPPORTS: PlanFootprint[] = [];
 
 const IGNORE_RAYCAST = () => null;
 
@@ -35,8 +41,6 @@ const EDGE_COLOR = '#64748b';
 const MM = 1000;
 const FACE_LIFT_M = 0.002;
 const MIN_THICKNESS_MM = 20;
-// Faces meeting below this angle are smooth-shaded (curved spans); sharp polygon
-// corners stay above it and keep a hard edge.
 const SMOOTH_CREASE_RAD = Math.PI / 6;
 const EDGE_THRESHOLD_DEG = 25;
 
@@ -54,6 +58,16 @@ const boundsOf = (points: SceneSurfacePoint[]) => {
   return { minX, maxX, minY, maxY };
 };
 
+const signedAreaMm = (points: SceneSurfacePoint[]): number => {
+  let area = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    area += a.x * b.y - b.x * a.y;
+  }
+  return area / 2;
+};
+
 const buildGeometry = (
   points: SceneSurfacePoint[],
   thicknessMm: number,
@@ -61,8 +75,9 @@ const buildGeometry = (
   cy: number,
 ): BufferGeometry | null => {
   if (points.length < 3) return null;
+  const ccw = signedAreaMm(points) < 0 ? [...points].reverse() : points;
   const shape = new Shape();
-  points.forEach((p, i) => {
+  ccw.forEach((p, i) => {
     const x = (p.x - cx) / MM;
     const y = (p.y - cy) / MM;
     if (i === 0) shape.moveTo(x, y);
@@ -72,9 +87,7 @@ const buildGeometry = (
   const thicknessM = thicknessMm / MM;
   const extrude = new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false });
   extrude.rotateX(Math.PI / 2);
-  // rotateX maps extrude depth to -y, so lift it to span [0, +thickness] upward.
   extrude.translate(0, thicknessM, 0);
-  // Smooth-shade the curved spans while keeping sharp polygon corners hard.
   const geometry = toCreasedNormals(extrude, SMOOTH_CREASE_RAD);
   extrude.dispose();
   return geometry;
@@ -85,6 +98,7 @@ export function PolygonSurfaceObject({
   isSelected,
   interactive,
   penActive = false,
+  supports,
   onSelect,
 }: PolygonSurfaceObjectProps) {
   const activeTool = useDesignerStore((s) => s.activeTool);
@@ -95,8 +109,6 @@ export function PolygonSurfaceObject({
   const updateSurface = useDesignerStore((s) => s.updateSurface);
   const removeSurface = useDesignerStore((s) => s.removeSurface);
 
-  // Committed centroid keeps the group anchored while a vertex preview rebuilds
-  // the geometry around it, so dragging a corner never shifts the whole shape.
   const centroid = useMemo(() => {
     const cx = surface.points.reduce((sum, p) => sum + p.x, 0) / surface.points.length;
     const cy = surface.points.reduce((sum, p) => sum + p.y, 0) / surface.points.length;
@@ -114,25 +126,40 @@ export function PolygonSurfaceObject({
 
   const groupRef = useRef<Group>(null);
   const lastDeltaRef = useRef({ x: 0, y: 0 });
+  const altLatchRef = useRef(false);
+  const supportFootprints = supports ?? EMPTY_SUPPORTS;
+  // Alt-drag rests the surface on whatever it overlaps (ground fallback); a plain
+  // drag keeps its current elevation and just slides in plan. restElevationMm skips
+  // this surface's own footprint by ownerId, so it never rests on itself.
+  const restElevationAt = (dxMm: number, dyMm: number) =>
+    restElevationMm(buildSurfaceFootprint(surface, dxMm, dyMm), supportFootprints, 0);
 
   const moveEnabled = interactive && activeTool === 'move' && !surface.locked;
   const drag = useDrag3D({
     constraint: { mode: 'ground' },
     enabled: moveEnabled,
     onMove: (delta) => {
-      lastDeltaRef.current = { x: Math.round(delta.x), y: Math.round(delta.z) };
+      const dx = Math.round(delta.x);
+      const dy = Math.round(delta.z);
+      lastDeltaRef.current = { x: dx, y: dy };
+      const alt = isAltPressed();
+      altLatchRef.current = alt;
+      const elevMm = alt ? restElevationAt(dx, dy) : surface.elevationMm;
       groupRef.current?.position.set(
         (centroid.cx + delta.x) / MM,
-        surface.elevationMm / MM,
+        elevMm / MM,
         (centroid.cy + delta.z) / MM,
       );
     },
     onCommit: () => {
       const d = lastDeltaRef.current;
+      const alt = altLatchRef.current;
       lastDeltaRef.current = { x: 0, y: 0 };
+      altLatchRef.current = false;
       if (d.x !== 0 || d.y !== 0) {
         updateSurface(surface.id, {
           points: surface.points.map((p) => ({ x: p.x + d.x, y: p.y + d.y })),
+          ...(alt ? { elevationMm: Math.round(restElevationAt(d.x, d.y)) } : {}),
         });
       } else {
         groupRef.current?.position.set(
@@ -187,7 +214,6 @@ export function PolygonSurfaceObject({
     const cur = surface.points[index];
     if (!cur || (cur.x === xMm && cur.y === yMm)) return;
     const nextPoints = surface.points.map((p, i) => (i === index ? { x: xMm, y: yMm } : p));
-    // Reject a move that folds the outline into a self-intersecting bow-tie.
     if (polygonSelfIntersects(nextPoints)) return;
     updateSurface(surface.id, { points: nextPoints });
   };
@@ -241,9 +267,6 @@ export function PolygonSurfaceObject({
         geometry={geometry}
         castShadow
         receiveShadow
-        // While the pen tool is active the surface stays click-through, so a pen
-        // click lands on whatever is behind it (a face to draw on or the ground
-        // draw-plane) instead of the surface swallowing it.
         raycast={penActive ? IGNORE_RAYCAST : undefined}
         {...drag.handlers}
         onPointerDown={handlePointerDown}

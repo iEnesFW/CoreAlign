@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useUxMode } from '@/features/persona/hooks/useUxMode';
+import { useUxMode } from '@/shared/lib/persona';
 import { useWizardStore, type WizardStep } from '../model/wizardStore';
 
 interface StepDescriptor {
@@ -75,8 +75,8 @@ export const WizardStepIndicator = () => {
                 className={cn(
                   'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold transition-colors',
                   isActive &&
-                    'border-indigo-500 bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-500/30',
-                  isCompleted && 'border-emerald-500 bg-emerald-500 text-white',
+                    'border-primary-500 bg-gradient-to-br from-primary-500 to-purple-600 text-white shadow-sm shadow-primary-500/30',
+                  isCompleted && 'border-success-500 bg-success-500 text-white',
                   !isActive &&
                     !isCompleted &&
                     'border-slate-300 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400',
@@ -89,7 +89,7 @@ export const WizardStepIndicator = () => {
                   className={cn(
                     'truncate text-[11px] font-semibold uppercase tracking-wider',
                     isActive
-                      ? 'text-indigo-600 dark:text-indigo-300'
+                      ? 'text-primary-600 dark:text-primary-300'
                       : 'text-slate-500 dark:text-slate-400',
                   )}
                 >
@@ -107,7 +107,7 @@ export const WizardStepIndicator = () => {
                 className={cn(
                   'hidden h-px flex-1 sm:block',
                   isCompleted
-                    ? 'bg-emerald-400 dark:bg-emerald-500'
+                    ? 'bg-success-400 dark:bg-success-500'
                     : 'bg-slate-200 dark:bg-slate-800',
                 )}
                 aria-hidden

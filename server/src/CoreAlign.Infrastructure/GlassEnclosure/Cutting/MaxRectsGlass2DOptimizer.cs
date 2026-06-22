@@ -126,7 +126,14 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
 
             for (var i = 0; i < panel.Quantity; i++)
             {
-                items.Add(new NestingItem(panel.PanelId, panel.Label, panel.WidthMm, panel.HeightMm, panel.AllowRotation));
+                items.Add(new NestingItem(
+                    panel.PanelId,
+                    panel.Label,
+                    panel.WidthMm,
+                    panel.HeightMm,
+                    panel.AllowRotation,
+                    panel.Shape,
+                    panel.NominalHeightMm));
             }
         }
 
@@ -146,7 +153,9 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
         string Label,
         decimal Width,
         decimal Height,
-        bool AllowRotation);
+        bool AllowRotation,
+        PanelCutShape? Shape,
+        decimal? NominalHeightMm);
 
     private sealed class MaxRectsSheet
     {
@@ -186,7 +195,9 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
                 return false;
             }
 
-            var placed = new PlacedPanel(item.PanelId, item.Label, bestRect.X, bestRect.Y, bestWidth, bestHeight, rotated);
+            var placed = new PlacedPanel(
+                item.PanelId, item.Label, bestRect.X, bestRect.Y, bestWidth, bestHeight, rotated,
+                item.Shape, item.NominalHeightMm);
             _placements.Add(placed);
 
             if (guillotineOnly)

@@ -14,6 +14,7 @@ import {
 import type {
   AddPanelInput,
   AddRunInput,
+  CornerRadiiMm,
   GlassProjectDto,
   GlassProjectPanelDto,
   GlassProjectRunDto,
@@ -50,7 +51,20 @@ const toPanelInput = (panel: ScenePanelState): AddPanelInput => ({
   hasLock: panel.hasLock,
   hasBrushSeal: panel.hasBrushSeal,
   notes: null,
+  heightMm: panel.heightMm ?? null,
+  topShape: panel.topShape ?? null,
+  topRightHeightMm: panel.topRightHeightMm ?? null,
+  archRiseMm: panel.archRiseMm ?? null,
+  cornerRadiiMm: panel.cornerRadiiMm ?? null,
+  shapeKind: panel.shapeKind ?? null,
+  shapePointsJson: panel.shapePointsJson ?? null,
 });
+
+const cornerRadiiDiffer = (a?: CornerRadiiMm | null, b?: CornerRadiiMm | null) =>
+  (a?.tl ?? null) !== (b?.tl ?? null) ||
+  (a?.tr ?? null) !== (b?.tr ?? null) ||
+  (a?.br ?? null) !== (b?.br ?? null) ||
+  (a?.bl ?? null) !== (b?.bl ?? null);
 
 const runDiffers = (server: GlassProjectRunDto, target: SceneRunState) =>
   server.label !== target.label ||
@@ -74,7 +88,14 @@ const panelDiffers = (server: GlassProjectPanelDto, target: ScenePanelState) =>
   server.glassTypeId !== target.glassTypeId ||
   server.hasHandle !== target.hasHandle ||
   server.hasLock !== target.hasLock ||
-  server.hasBrushSeal !== target.hasBrushSeal;
+  server.hasBrushSeal !== target.hasBrushSeal ||
+  (server.heightMm ?? null) !== (target.heightMm ?? null) ||
+  (server.topShape ?? null) !== (target.topShape ?? null) ||
+  (server.topRightHeightMm ?? null) !== (target.topRightHeightMm ?? null) ||
+  (server.archRiseMm ?? null) !== (target.archRiseMm ?? null) ||
+  (server.shapeKind ?? null) !== (target.shapeKind ?? null) ||
+  (server.shapePointsJson ?? null) !== (target.shapePointsJson ?? null) ||
+  cornerRadiiDiffer(server.cornerRadiiMm, target.cornerRadiiMm);
 
 const connectionDiffers = (server: RunConnectionDto, target: SceneConnectionState) =>
   server.jointAngleDeg !== target.jointAngleDeg ||

@@ -311,7 +311,7 @@ export function FieldSurveyForm({
               type="button"
               onClick={handleCreate}
               disabled={createMutation.isPending}
-              className="inline-flex items-center gap-1.5 rounded-md border border-blue-500 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 dark:hover:bg-blue-950/30"
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary-500 px-2 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 disabled:opacity-50 dark:hover:bg-primary-950/30"
             >
               <Plus size={12} />
               {t('GlassEnclosure.Survey.New')}
@@ -322,7 +322,7 @@ export function FieldSurveyForm({
             type="button"
             onClick={handleCreate}
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             <Plus size={14} />
             {t('GlassEnclosure.Survey.New')}
@@ -339,7 +339,7 @@ export function FieldSurveyForm({
               onClick={() => setSelectedSurveyId(s.id)}
               className={`rounded border px-2 py-0.5 text-[10px] ${
                 s.id === activeSurveyId
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                  ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
                   : 'border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300'
               }`}
             >
@@ -448,7 +448,7 @@ export function FieldSurveyForm({
                 </button>
               )}
             </div>
-            <p className="mb-2 rounded bg-blue-50 px-2 py-1 text-[11px] text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+            <p className="mb-2 rounded bg-primary-50 px-2 py-1 text-[11px] text-primary-700 dark:bg-primary-950/40 dark:text-primary-300">
               {t('GlassEnclosure.Survey.ObstaclesInfo', {
                 defaultValue: 'Recorded for reference only — not applied to the drawing or cost.',
               })}
@@ -487,7 +487,7 @@ export function FieldSurveyForm({
                       <button
                         type="button"
                         onClick={() => removeObstacle(o.id)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-danger-600 hover:text-danger-700"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -549,7 +549,7 @@ export function FieldSurveyForm({
                             photoUrls: d.photoUrls.filter((u) => u !== url),
                           }))
                         }
-                        className="absolute end-1 top-1 rounded-full bg-red-600 p-0.5 text-white"
+                        className="absolute end-1 top-1 rounded-full bg-danger-600 p-0.5 text-white"
                       >
                         <X size={10} />
                       </button>
@@ -591,7 +591,7 @@ export function FieldSurveyForm({
                     type="button"
                     onClick={handleSubmit}
                     disabled={submitMutation.isPending}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
                   >
                     <ClipboardCheck size={14} />
                     {t('GlassEnclosure.Survey.Submit')}
@@ -605,7 +605,7 @@ export function FieldSurveyForm({
                   type="button"
                   onClick={() => handleApprove(true)}
                   disabled={approveMutation.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-success-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
                 >
                   <Check size={14} />
                   {t('GlassEnclosure.Survey.ApproveAndApply')}
@@ -614,7 +614,7 @@ export function FieldSurveyForm({
                   type="button"
                   onClick={() => handleApprove(false)}
                   disabled={approveMutation.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-success-500 px-3 py-1.5 text-sm font-medium text-success-700 hover:bg-success-50 dark:hover:bg-success-950/30"
                 >
                   {t('GlassEnclosure.Survey.ApproveOnly')}
                 </button>
@@ -622,7 +622,7 @@ export function FieldSurveyForm({
                   type="button"
                   onClick={handleReject}
                   disabled={rejectMutation.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-red-500 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-danger-500 px-3 py-1.5 text-sm font-medium text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-950/30"
                 >
                   <X size={14} />
                   {t('GlassEnclosure.Survey.Reject')}
@@ -679,10 +679,10 @@ const SlopeField = ({
 const StatusBadge = ({ status }: { status: FieldSurveyDto['status'] }) => {
   const { t } = useTranslation();
   const map: Record<FieldSurveyDto['status'], string> = {
-    InProgress: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300',
-    Submitted: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
-    Approved: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300',
-    Rejected: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300',
+    InProgress: 'bg-warning-100 text-warning-700 dark:bg-warning-950/40 dark:text-warning-300',
+    Submitted: 'bg-primary-100 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300',
+    Approved: 'bg-success-100 text-success-700 dark:bg-success-950/40 dark:text-success-300',
+    Rejected: 'bg-danger-100 text-danger-700 dark:bg-danger-950/40 dark:text-danger-300',
   };
   return (
     <span className={`rounded px-2 py-0.5 text-xs font-medium ${map[status]}`}>

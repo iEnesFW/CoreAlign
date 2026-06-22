@@ -9,7 +9,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/features/persona/hooks/useDesignerUxMode';
+import { useDesignerUxMode, DESIGNER_SCREEN_KEY } from '@/shared/lib/persona';
 import { ScreenPersonaMenu } from '@/features/persona/ui/ScreenPersonaMenu';
 import { DesignerTabBar, type DesignerTabItem, type DesignerTabKey } from './DesignerTabBar';
 

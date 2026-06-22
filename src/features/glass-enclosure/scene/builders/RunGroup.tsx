@@ -10,13 +10,22 @@ import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
-import { EMPTY_SNAP_TARGETS, filterSnapTargets, stickyDimensionMm } from '../interaction/planSnap';
+import {
+  EMPTY_SNAP_TARGETS,
+  filterSnapTargets,
+  lineProbePoints,
+  stickyDimensionMm,
+} from '../interaction/planSnap';
 import {
   RUN_PLAN_THICKNESS_MM,
   buildRunFootprint,
   clampPlanStretch,
+  firstPenetratingOwner,
+  restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
+import { parsePanelPolygonPoints } from '../../model/panelPolygon';
+import { findAttachedWallIds } from '../../model/wallAttachment';
 import type { HardwareDragDelta } from './HardwareObject';
 import type {
   ColorOptionDto,
@@ -58,8 +67,17 @@ interface RunGroupProps {
   onMoveRun?: (runId: string, delta: PlanMoveDelta) => void;
   onRotateRun?: (runId: string, commit: PlanRotationCommit) => void;
   onStretchRun?: (runId: string, patch: RunStretchPatch) => void;
+  onPushStretchRun?: (
+    runId: string,
+    face: 'start' | 'end',
+    targetMm: number,
+    clampedMm: number,
+    blockerId: string,
+  ) => boolean;
+  onStackRun?: (runId: string, delta: PlanMoveDelta, geomZMm: number) => void;
   snapTargets?: PlanSnapTargets;
   obstacles?: PlanFootprint[];
+  supports?: PlanFootprint[];
 }
 
 const DEFAULT_PROFILE_CROSS_SECTION = { width: 50, height: 60 };
@@ -91,8 +109,11 @@ export function RunGroup({
   onMoveRun,
   onRotateRun,
   onStretchRun,
+  onPushStretchRun,
+  onStackRun,
   snapTargets,
   obstacles,
+  supports,
 }: RunGroupProps) {
   const activeTool = useDesignerStore((s) => s.activeTool);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
@@ -127,6 +148,12 @@ export function RunGroup({
   const groupRef = useRef<Group>(null);
   const bodyRef = useRef<Group>(null);
   const planObstacles = obstacles ?? EMPTY_OBSTACLES;
+  const gestureObstacles = useMemo(() => {
+    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
+    return attached.size === 0
+      ? planObstacles
+      : planObstacles.filter((o) => !attached.has(o.ownerId));
+  }, [planObstacles, run, sceneState.walls]);
 
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
@@ -143,10 +170,28 @@ export function RunGroup({
   const dirX = Math.cos(rad);
   const dirY = Math.sin(rad);
 
-  const moveProbes: PlanPoint[] = [
-    { x: run.originX, y: run.originY },
-    { x: run.originX + run.lengthMm * dirX, y: run.originY + run.lengthMm * dirY },
-  ];
+  const moveProbes: PlanPoint[] = lineProbePoints(
+    run.originX,
+    run.originY,
+    run.lengthMm,
+    run.rotationDeg,
+    RUN_PLAN_THICKNESS_MM / 2,
+  );
+
+  const stackSupports = useMemo(() => {
+    const all = supports ?? EMPTY_OBSTACLES;
+    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
+    return all.filter((o) => o.ownerId !== run.id && !attached.has(o.ownerId));
+  }, [supports, run, sceneState.walls]);
+  // Stacking is an explicit Alt-drag (default drag stays lateral so runs still butt
+  // flush / sit side by side). The rest elevation falls back to the GROUND (0), not
+  // the run's current geomZ, so dragging a stacked run off its support drops it back
+  // to the floor instead of ratcheting upward.
+  const restElevAt = (dxMm: number, dyMm: number) =>
+    restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, 0);
+
+  const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
+  const canStack = Boolean(onStackRun) && !isMultiMember;
 
   const adapter: PlanGestureAdapter = {
     originXMm: run.originX,
@@ -157,9 +202,8 @@ export function RunGroup({
     centerYMm: run.originY + (run.lengthMm / 2) * dirY,
     moveProbes,
     footprintAt: (dxMm, dyMm, rotationDeg) => buildRunFootprint(run, dxMm, dyMm, rotationDeg),
+    altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
   };
-
-  const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
 
   const gestures = useObjectGestures({
     adapter,
@@ -167,7 +211,7 @@ export function RunGroup({
     enabled: Boolean(onMoveRun && onRotateRun) && !run.locked,
     selectedForDrag: isRunSelected && !run.locked,
     snapTargets: filteredTargets,
-    obstacles: planObstacles,
+    obstacles: gestureObstacles,
     onPick: () => onSelectRun(run.id),
     onGestureStart: () => {
       multiSiblingsRef.current = isMultiMember
@@ -176,7 +220,15 @@ export function RunGroup({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta) => onMoveRun?.(run.id, delta),
+    onMoveCommit: (delta, meta) => {
+      // Alt-drag stacks the run onto whatever it overlaps (rest-on-top); a plain
+      // drag stays lateral so it can butt flush against neighbours.
+      if (canStack && onStackRun && meta.alt) {
+        onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+        return;
+      }
+      onMoveRun?.(run.id, delta);
+    },
     onRotateCommit: (commit) => onRotateRun?.(run.id, commit),
   });
 
@@ -184,8 +236,6 @@ export function RunGroup({
     bodyRef.current?.scale.set(1, 1, 1);
     bodyRef.current?.position.set(0, 0, 0);
   };
-  // Clear the stretch preview only once the rebuilt run mounts at its new size,
-  // so the committed run never flashes back to its previous dimensions.
   useLayoutEffect(() => resetBody(), [run.lengthMm, run.heightMm]);
 
   const previewLength = (deltaMm: number, fromStart: boolean) => {
@@ -206,17 +256,23 @@ export function RunGroup({
       return;
     }
     const target = stickyDelta(run.lengthMm, deltaMm);
-    const clamped = clampPlanStretch(
-      (d) =>
-        buildRunFootprint(
-          { ...run, lengthMm: run.lengthMm + d },
-          fromStart ? -d * dirX : 0,
-          fromStart ? -d * dirY : 0,
-          run.rotationDeg,
-        ),
-      planObstacles,
-      target,
-    );
+    const footprintAt = (d: number) =>
+      buildRunFootprint(
+        { ...run, lengthMm: run.lengthMm + d },
+        fromStart ? -d * dirX : 0,
+        fromStart ? -d * dirY : 0,
+        run.rotationDeg,
+      );
+    const clamped = clampPlanStretch(footprintAt, gestureObstacles, target);
+    if (target > 0 && clamped < target && onPushStretchRun) {
+      const blockerId = firstPenetratingOwner(footprintAt(clamped + 1), gestureObstacles);
+      if (
+        blockerId &&
+        onPushStretchRun(run.id, fromStart ? 'start' : 'end', target, clamped, blockerId)
+      ) {
+        return;
+      }
+    }
     const next = Math.max(MIN_RUN_LENGTH_MM, Math.round(run.lengthMm + clamped));
     if (next === run.lengthMm) {
       resetBody();
@@ -383,6 +439,22 @@ export function RunGroup({
             })}
           {panelLayout.map(({ panel, centerX, widthM }) => {
             const glass = glassTypes.get(panel.glassTypeId);
+            const glassWidthMm = Math.round(Math.max(0.05, widthM - 0.012) * 1000);
+            const runGlassHeightMm = Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
+            const panelGlassHeightMm = panel.heightMm ?? runGlassHeightMm;
+            const shapeSpec = {
+              widthMm: glassWidthMm,
+              heightMm: panelGlassHeightMm,
+              topShape: panel.topShape,
+              topRightHeightMm: panel.topRightHeightMm,
+              archRiseMm: panel.archRiseMm,
+              cornerRadiiMm: panel.cornerRadiiMm,
+              shapeKind: panel.shapeKind,
+              points:
+                panel.shapeKind === 'polygon'
+                  ? parsePanelPolygonPoints(panel.shapePointsJson)
+                  : null,
+            };
             return (
               <PanelMesh
                 key={panel.id}
@@ -390,7 +462,8 @@ export function RunGroup({
                 centerX={centerX}
                 baseY={profileHalf}
                 widthM={Math.max(0.05, widthM - 0.012)}
-                heightM={Math.max(0.05, heightM - 2 * profileHalf)}
+                heightM={panelGlassHeightMm / 1000}
+                shapeSpec={shapeSpec}
                 thicknessMm={glass?.thicknessMm ?? 8}
                 glassStructure={glass?.structure}
                 openingType={panel.openingType}

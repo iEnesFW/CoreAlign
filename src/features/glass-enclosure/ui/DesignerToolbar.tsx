@@ -86,7 +86,7 @@ export function DesignerToolbar({
       <button
         type="button"
         onClick={toggleAnnotations}
-        className={`${btnSecondary} ${showAnnotations ? 'text-blue-600' : ''}`}
+        className={`${btnSecondary} ${showAnnotations ? 'text-primary-600' : ''}`}
         aria-label={t('GlassEnclosure.Designer.Annotations')}
         aria-pressed={showAnnotations}
       >
@@ -146,7 +146,7 @@ export function DesignerToolbar({
       <button type="button" onClick={onSave} disabled={isSaving} className={btnPrimary}>
         <Save size={16} /> {t('GlassEnclosure.Designer.Save')}
         {isDirty && (
-          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden />
+          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-warning-400" aria-hidden />
         )}
       </button>
     </div>
@@ -154,6 +154,6 @@ export function DesignerToolbar({
 }
 
 const btnPrimary =
-  'inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500';
+  'inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary-500';
 const btnSecondary =
-  'inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
+  'inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';

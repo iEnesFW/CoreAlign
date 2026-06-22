@@ -25,6 +25,7 @@ interface WallEndpoint {
   y: number;
   outwardDeg: number;
   heightMm: number;
+  baseZMm: number;
 }
 
 interface EdgeCandidate {
@@ -33,6 +34,7 @@ interface EdgeCandidate {
   rotationDeg: number;
   lengthMm: number;
   heightMm: number;
+  baseZMm: number;
 }
 
 const roundDeg = (deg: number) => Math.round(deg * 100) / 100;
@@ -70,17 +72,19 @@ const capsuleFootprint = (
   };
 };
 
-const wallBlocker = (wall: SceneWallState): PlanFootprint =>
-  capsuleFootprint(
+const wallBlocker = (wall: SceneWallState): PlanFootprint => {
+  const zMin = wall.geomZ ?? 0;
+  return capsuleFootprint(
     wall.id,
     wall.originX,
     wall.originY,
     wall.lengthMm,
     wall.rotationDeg,
     wall.thicknessMm / 2,
-    0,
-    Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm),
+    zMin,
+    zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm),
   );
+};
 
 const runBlocker = (run: SceneRunState): PlanFootprint => {
   const zMin = run.geomZ ?? 0;
@@ -98,6 +102,7 @@ const runBlocker = (run: SceneRunState): PlanFootprint => {
 
 const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
   const rad = wall.rotationDeg * DEG2RAD;
+  const baseZMm = wall.geomZ ?? 0;
   return [
     {
       wall,
@@ -105,6 +110,7 @@ const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
       y: wall.originY,
       outwardDeg: normalizeDeg(wall.rotationDeg + 180),
       heightMm: wall.heightMm,
+      baseZMm,
     },
     {
       wall,
@@ -112,6 +118,7 @@ const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
       y: wall.originY + wall.lengthMm * Math.sin(rad),
       outwardDeg: normalizeDeg(wall.rotationDeg),
       heightMm: wall.heightEndMm ?? wall.heightMm,
+      baseZMm,
     },
   ];
 };
@@ -141,8 +148,8 @@ const edgeFootprint = (edge: EdgeCandidate, startTrimMm: number, endTrimMm: numb
     edge.lengthMm - startTrimMm - endTrimMm,
     edge.rotationDeg,
     RUN_PLAN_THICKNESS_MM / 2,
-    0,
-    Math.max(1, edge.heightMm),
+    edge.baseZMm,
+    edge.baseZMm + Math.max(1, edge.heightMm),
   );
 };
 
@@ -194,6 +201,7 @@ const buildTrimmed = (
     rotationDeg: edge.rotationDeg,
     lengthMm,
     heightMm: edge.heightMm,
+    baseZMm: edge.baseZMm,
   };
   if (edgePenetrates(trimmed, 0, 0, blockers)) return null;
   return trimmed;
@@ -225,6 +233,7 @@ const edgeBetween = (
   from: { x: number; y: number },
   to: { x: number; y: number },
   heightMm: number,
+  baseZMm: number,
 ): EdgeCandidate | null => {
   const lengthMm = Math.hypot(to.x - from.x, to.y - from.y);
   if (lengthMm < MIN_RUN_MM) return null;
@@ -234,6 +243,7 @@ const edgeBetween = (
     rotationDeg: roundDeg(normalizeDeg(Math.atan2(to.y - from.y, to.x - from.x) * RAD2DEG)),
     lengthMm,
     heightMm,
+    baseZMm,
   };
 };
 
@@ -242,11 +252,7 @@ interface CornerLeg {
   ownWallId: string;
 }
 
-const cornerCandidates = (
-  a: WallEndpoint,
-  b: WallEndpoint,
-  heightMm: number,
-): CornerLeg[] | null => {
+const cornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null => {
   if (angleDiffDeg(a.wall.rotationDeg, b.wall.rotationDeg) < 90 - CORNER_ANGLE_TOLERANCE_DEG) {
     return null;
   }
@@ -262,12 +268,13 @@ const cornerCandidates = (
     (corner.x - b.x) * Math.cos(b.outwardDeg * DEG2RAD) +
     (corner.y - b.y) * Math.sin(b.outwardDeg * DEG2RAD);
   if (outwardA < -OUTWARD_TOLERANCE_MM || outwardB < -OUTWARD_TOLERANCE_MM) return null;
+  // Each corner leg extends its OWN wall outward, so it inherits that wall's top
+  // height and base elevation — a leg must reach the top of the wall it belongs to,
+  // not the shorter of the pair (which would leave a mixed-height corner misaligned).
   const legs: CornerLeg[] = [];
-  const legA = edgeBetween(a, corner, heightMm);
-  // Each leg only touches its OWN wall; the other wall stays an obstacle so the
-  // two legs never interpenetrate the opposite wall at the corner.
+  const legA = edgeBetween(a, corner, a.heightMm, a.baseZMm);
   if (legA) legs.push({ edge: legA, ownWallId: a.wall.id });
-  const legB = edgeBetween(corner, b, heightMm);
+  const legB = edgeBetween(corner, b, b.heightMm, b.baseZMm);
   if (legB) legs.push({ edge: legB, ownWallId: b.wall.id });
   return legs.length > 0 ? legs : null;
 };
@@ -321,25 +328,28 @@ export const computeMultiWallGapRuns = (
     if (used.has(pair.i) || used.has(pair.j)) continue;
     const a = free[pair.i];
     const b = free[pair.j];
-    const heightMm = Math.round(Math.min(a.heightMm, b.heightMm));
-    // The straight bridge touches BOTH walls it connects, so both are excluded.
+    // Corner legs use each wall's own height (set inside cornerCandidates); the
+    // straight single-run fallback can only carry one height, so it uses the shorter.
+    const straightHeightMm = Math.round(Math.min(a.heightMm, b.heightMm));
     const straightBlockers: PlanFootprint[] = [
       ...wallBlockers.filter((w) => w.ownerId !== a.wall.id && w.ownerId !== b.wall.id),
       ...gapRunBlockers,
     ];
-    // Each corner leg only touches its OWN wall; the opposite wall stays a blocker.
     const legBlockers = (ownWallId: string): PlanFootprint[] => [
       ...wallBlockers.filter((w) => w.ownerId !== ownWallId),
       ...gapRunBlockers,
     ];
-    const corner = cornerCandidates(a, b, heightMm);
+    const corner = cornerCandidates(a, b);
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
       .map((leg) => trimEdge(leg.edge, legBlockers(leg.ownWallId)))
       .filter((candidate): candidate is EdgeCandidate => candidate !== null);
     if (trimmed.length === 0) {
       isCorner = false;
-      const straight = edgeBetween(a, b, heightMm);
+      // A flat connector run can only carry one elevation; bridge the pair at the
+      // lower of the two wall bases so it still reaches both ends.
+      const straightBaseZ = Math.min(a.baseZMm, b.baseZMm);
+      const straight = edgeBetween(a, b, straightHeightMm, straightBaseZ);
       const trimmedStraight = straight ? trimEdge(straight, straightBlockers) : null;
       trimmed = trimmedStraight ? [trimmedStraight] : [];
     }
@@ -356,8 +366,8 @@ export const computeMultiWallGapRuns = (
           candidate.lengthMm,
           candidate.rotationDeg,
           RUN_PLAN_THICKNESS_MM / 2,
-          0,
-          Math.max(1, candidate.heightMm),
+          candidate.baseZMm,
+          candidate.baseZMm + Math.max(1, candidate.heightMm),
         ),
       );
       edges.push({
@@ -366,6 +376,7 @@ export const computeMultiWallGapRuns = (
         rotationDeg: candidate.rotationDeg,
         lengthMm: Math.round(candidate.lengthMm),
         heightMm: candidate.heightMm,
+        geomZ: Math.round(candidate.baseZMm),
         cornerGroup: group,
       });
     }

@@ -15,6 +15,23 @@ public class GlassProjectPanel : TenantEntity, IHasConcurrencyToken
     public bool HasLock { get; private set; }
     public bool HasBrushSeal { get; private set; }
     public string? Notes { get; private set; }
+
+    // Optional shape geometry (null = a plain rectangle). Persisted so custom panel
+    // shapes survive a reload and feed the server-side cutting list.
+    public int? HeightMm { get; private set; }
+    public string? TopShape { get; private set; }
+    public int? TopRightHeightMm { get; private set; }
+    public int? ArchRiseMm { get; private set; }
+    public int? CornerRadiusTlMm { get; private set; }
+    public int? CornerRadiusTrMm { get; private set; }
+    public int? CornerRadiusBrMm { get; private set; }
+    public int? CornerRadiusBlMm { get; private set; }
+
+    // Silhouette kind beyond a top-edge variation: null = rectangular (use TopShape),
+    // "ellipse" = round/oval bounded by Width × Height, "polygon" = free outline in ShapePointsJson.
+    public string? ShapeKind { get; private set; }
+    public string? ShapePointsJson { get; private set; }
+
     public long ConcurrencyToken { get; private set; }
 
     void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
@@ -59,6 +76,31 @@ public class GlassProjectPanel : TenantEntity, IHasConcurrencyToken
         HasLock = hasLock;
         HasBrushSeal = hasBrushSeal;
         Notes = notes;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void UpdateShape(
+        int? heightMm,
+        string? topShape,
+        int? topRightHeightMm,
+        int? archRiseMm,
+        int? cornerRadiusTlMm,
+        int? cornerRadiusTrMm,
+        int? cornerRadiusBrMm,
+        int? cornerRadiusBlMm,
+        string? shapeKind = null,
+        string? shapePointsJson = null)
+    {
+        HeightMm = heightMm;
+        TopShape = string.IsNullOrWhiteSpace(topShape) ? null : topShape;
+        TopRightHeightMm = topRightHeightMm;
+        ArchRiseMm = archRiseMm;
+        CornerRadiusTlMm = cornerRadiusTlMm;
+        CornerRadiusTrMm = cornerRadiusTrMm;
+        CornerRadiusBrMm = cornerRadiusBrMm;
+        CornerRadiusBlMm = cornerRadiusBlMm;
+        ShapeKind = string.IsNullOrWhiteSpace(shapeKind) ? null : shapeKind;
+        ShapePointsJson = string.IsNullOrWhiteSpace(shapePointsJson) ? null : shapePointsJson;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

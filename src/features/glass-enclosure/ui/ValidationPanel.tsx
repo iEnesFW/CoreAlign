@@ -5,15 +5,15 @@ import { useDesignerStore } from '../model/designerStore';
 import type { GlassValidationSeverity } from '../model/project.types';
 
 const SEVERITY_ICON: Record<GlassValidationSeverity, ReactNode> = {
-  Error: <AlertCircle size={16} className="text-red-600" />,
-  Warning: <AlertTriangle size={16} className="text-amber-600" />,
-  Info: <Info size={16} className="text-blue-600" />,
+  Error: <AlertCircle size={16} className="text-danger-600" />,
+  Warning: <AlertTriangle size={16} className="text-warning-600" />,
+  Info: <Info size={16} className="text-primary-600" />,
 };
 
 const SEVERITY_BG: Record<GlassValidationSeverity, string> = {
-  Error: 'border-red-500/60 bg-red-50 dark:border-red-500/40 dark:bg-red-950/30',
-  Warning: 'border-amber-500/60 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-950/30',
-  Info: 'border-blue-500/60 bg-blue-50 dark:border-blue-500/40 dark:bg-blue-950/30',
+  Error: 'border-danger-500/60 bg-danger-50 dark:border-danger-500/40 dark:bg-danger-950/30',
+  Warning: 'border-warning-500/60 bg-warning-50 dark:border-warning-500/40 dark:bg-warning-950/30',
+  Info: 'border-primary-500/60 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-950/30',
 };
 
 export function ValidationPanel() {
@@ -23,7 +23,7 @@ export function ValidationPanel() {
 
   if (findings.length === 0) {
     return (
-      <section className="flex items-center gap-2 rounded-md border border-emerald-500/60 bg-emerald-50 p-3 text-sm text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <section className="flex items-center gap-2 rounded-md border border-success-500/60 bg-success-50 p-3 text-sm text-success-700 dark:border-success-500/40 dark:bg-success-950/30 dark:text-success-300">
         <CheckCircle2 size={16} />
         {t('GlassEnclosure.Validation.AllGood')}
       </section>
