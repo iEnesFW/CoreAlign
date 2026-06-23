@@ -1,4 +1,11 @@
-import type { SceneWallState } from './project.types';
+import {
+  RUN_PLAN_THICKNESS_MM,
+  buildPlanFootprint,
+  buildRunFootprint,
+  penetratesAny,
+} from '../scene/interaction/planCollision';
+import type { PlanFootprint } from '../scene/interaction/planCollision';
+import type { SceneRunState, SceneWallState } from './project.types';
 
 export interface OpenEdge {
   originX: number;
@@ -91,7 +98,13 @@ export const panelCountForWidth = (lengthMm: number, maxPanelWidthMm?: number): 
   return Math.max(1, Math.min(MAX_AUTOFILL_PANELS, Math.ceil(lengthMm / DEFAULT_PANEL_TARGET_MM)));
 };
 
-export const computeOpeningEdges = (walls: SceneWallState[]): OpenEdge[] => {
+export const computeOpeningEdges = (
+  walls: SceneWallState[],
+  existingRuns: SceneRunState[] = [],
+): OpenEdge[] => {
+  // Skip an opening/hole that an existing glass run already covers, so re-running
+  // autofill is idempotent (no stacked duplicate panels).
+  const runFootprints = existingRuns.map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg));
   const edges: OpenEdge[] = [];
   for (const wall of walls) {
     const radians = (wall.rotationDeg * Math.PI) / 180;
@@ -102,13 +115,27 @@ export const computeOpeningEdges = (walls: SceneWallState[]): OpenEdge[] => {
     const wallBaseZ = wall.geomZ ?? 0;
     const pushEdge = (startMm: number, widthMm: number, sillMm: number, heightMm: number) => {
       if (widthMm < MIN_EDGE_MM || heightMm < MIN_EDGE_MM) return;
+      const originX = Math.round(wall.originX + startMm * cos);
+      const originY = Math.round(wall.originY + startMm * sin);
+      const geomZ = Math.round(wallBaseZ + sillMm);
+      const footprint: PlanFootprint = buildPlanFootprint(
+        'opening-edge',
+        originX,
+        originY,
+        Math.round(widthMm),
+        wall.rotationDeg,
+        RUN_PLAN_THICKNESS_MM / 2,
+        geomZ,
+        geomZ + Math.round(heightMm),
+      );
+      if (penetratesAny(footprint, runFootprints)) return;
       edges.push({
-        originX: Math.round(wall.originX + startMm * cos),
-        originY: Math.round(wall.originY + startMm * sin),
+        originX,
+        originY,
         rotationDeg: wall.rotationDeg,
         lengthMm: Math.round(widthMm),
         heightMm: Math.round(heightMm),
-        geomZ: Math.round(wallBaseZ + sillMm),
+        geomZ,
       });
     };
     for (const opening of wall.openings ?? []) {

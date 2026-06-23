@@ -151,7 +151,7 @@ export const useWallAutofill = () => {
       });
       return 0;
     }
-    const edges = computeOpeningEdges([selectedWall]);
+    const edges = computeOpeningEdges([selectedWall], state.scene.runs);
     const created = await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges);
     return created.length;
   };
