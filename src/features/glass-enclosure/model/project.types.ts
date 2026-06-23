@@ -340,6 +340,16 @@ export interface CornerRadiiMm {
   bl?: number;
 }
 
+export type WallEdge = 'top' | 'bottom' | 'left' | 'right';
+
+export interface WallEdgeNotch {
+  id: string;
+  edge: WallEdge;
+  offsetMm: number;
+  widthMm: number;
+  depthMm: number;
+}
+
 export interface SceneWallState {
   id: string;
   originX: number;
@@ -357,6 +367,7 @@ export interface SceneWallState {
   groupId?: string | null;
   cornerRadiiMm?: CornerRadiiMm;
   cornerNotchMm?: CornerRadiiMm;
+  edgeNotchMm?: WallEdgeNotch[];
   openings?: SceneWallOpening[];
   features?: SceneWallFeature[];
   locked?: boolean;

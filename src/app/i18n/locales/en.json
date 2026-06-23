@@ -2791,6 +2791,22 @@
       "CornerNotch": {
         "Title": "Corner notch (mm)"
       },
+      "Edge": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      },
+      "EdgeNotch": {
+        "Title": "Edge indentations (top/bottom/side face)",
+        "Add": "Add",
+        "Remove": "Remove",
+        "Edge": "Edge",
+        "Offset": "Offset",
+        "Width": "Width",
+        "Depth": "Depth",
+        "Hint": "Cut a rectangular indentation inward from an edge (visible from the front/back and that edge's face)."
+      },
       "Surface": {
         "Title": "Drawn surface",
         "Delete": "Delete surface",

@@ -2791,6 +2791,22 @@
       "CornerNotch": {
         "Title": "Köşe girintisi (mm)"
       },
+      "Edge": {
+        "top": "Üst",
+        "bottom": "Alt",
+        "left": "Sol",
+        "right": "Sağ"
+      },
+      "EdgeNotch": {
+        "Title": "Kenar girintileri (üst/alt/yan yüz)",
+        "Add": "Ekle",
+        "Remove": "Sil",
+        "Edge": "Kenar",
+        "Offset": "Konum",
+        "Width": "En",
+        "Depth": "Derinlik",
+        "Hint": "Bir kenardan içeri dikdörtgen girinti aç (ön/arka + o kenarın yüzünden görünür)."
+      },
       "Surface": {
         "Title": "Çizilen yüzey",
         "Delete": "Yüzeyi sil",

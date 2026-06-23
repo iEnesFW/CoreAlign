@@ -11,7 +11,8 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
-import type { SceneWallOpening, SceneWallState } from '../model/project.types';
+import { newOperationId } from '@/shared/lib/operationId';
+import type { SceneWallOpening, SceneWallState, WallEdge } from '../model/project.types';
 
 export function WallInspector() {
   const { t } = useTranslation();
@@ -76,6 +77,27 @@ export function WallInspector() {
     }
     updateWall(wall.id, patch);
   };
+
+  const edgeNotches = wall.edgeNotchMm ?? [];
+  const addEdgeNotch = () =>
+    updateWall(wall.id, {
+      edgeNotchMm: [
+        ...edgeNotches,
+        {
+          id: newOperationId(),
+          edge: 'top',
+          offsetMm: Math.round(wall.lengthMm * 0.25),
+          widthMm: Math.round(wall.lengthMm * 0.2),
+          depthMm: Math.round(wall.heightMm * 0.15),
+        },
+      ],
+    });
+  const updateEdgeNotch = (id: string, patch: Partial<(typeof edgeNotches)[number]>) =>
+    updateWall(wall.id, {
+      edgeNotchMm: edgeNotches.map((n) => (n.id === id ? { ...n, ...patch } : n)),
+    });
+  const removeEdgeNotch = (id: string) =>
+    updateWall(wall.id, { edgeNotchMm: edgeNotches.filter((n) => n.id !== id) });
 
   // Curved walls can't carry openings/surface features yet (#6a/#7), so converting a
   // straight wall to an arc drops them rather than leaving orphaned data that vanishes
@@ -269,6 +291,102 @@ export function WallInspector() {
           ))}
         </div>
       </div>
+
+      {!isArc && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t('GlassEnclosure.Designer.EdgeNotch.Title', {
+                defaultValue: 'Kenar girintileri (üst/alt/yan yüz)',
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={addEdgeNotch}
+              className="rounded bg-primary-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-primary-700"
+            >
+              {t('GlassEnclosure.Designer.EdgeNotch.Add', { defaultValue: 'Ekle' })}
+            </button>
+          </div>
+          {edgeNotches.length === 0 ? (
+            <p className="text-[10px] leading-snug text-slate-400 dark:text-slate-500">
+              {t('GlassEnclosure.Designer.EdgeNotch.Hint', {
+                defaultValue:
+                  'Bir kenardan içeri dikdörtgen girinti aç (ön/arka + o kenarın yüzünden görünür).',
+              })}
+            </p>
+          ) : (
+            edgeNotches.map((notch) => (
+              <div key={notch.id} className="flex items-end gap-1.5">
+                <label className="flex flex-1 flex-col gap-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  {t('GlassEnclosure.Designer.EdgeNotch.Edge', { defaultValue: 'Kenar' })}
+                  <select
+                    value={notch.edge}
+                    onChange={(e) =>
+                      updateEdgeNotch(notch.id, { edge: e.target.value as WallEdge })
+                    }
+                    className="rounded border border-slate-300 bg-white px-1 py-0.5 text-xs dark:border-slate-600 dark:bg-slate-800"
+                  >
+                    {(['top', 'bottom', 'left', 'right'] as const).map((edge) => (
+                      <option key={edge} value={edge}>
+                        {t(`GlassEnclosure.Designer.Edge.${edge}` as never, {
+                          defaultValue: { top: 'Üst', bottom: 'Alt', left: 'Sol', right: 'Sağ' }[
+                            edge
+                          ],
+                        })}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {(
+                  [
+                    [
+                      'offsetMm',
+                      t('GlassEnclosure.Designer.EdgeNotch.Offset', { defaultValue: 'Konum' }),
+                    ],
+                    [
+                      'widthMm',
+                      t('GlassEnclosure.Designer.EdgeNotch.Width', { defaultValue: 'En' }),
+                    ],
+                    [
+                      'depthMm',
+                      t('GlassEnclosure.Designer.EdgeNotch.Depth', { defaultValue: 'Derinlik' }),
+                    ],
+                  ] as const
+                ).map(([field, fieldLabel]) => (
+                  <label
+                    key={field}
+                    className="flex w-14 flex-col gap-0.5 text-[10px] text-slate-500 dark:text-slate-400"
+                  >
+                    {fieldLabel}
+                    <input
+                      type="number"
+                      min={0}
+                      value={notch[field]}
+                      onChange={(e) =>
+                        updateEdgeNotch(notch.id, {
+                          [field]: Math.max(0, Math.round(Number(e.target.value))),
+                        })
+                      }
+                      className="rounded border border-slate-300 bg-white px-1 py-0.5 text-xs dark:border-slate-600 dark:bg-slate-800"
+                    />
+                  </label>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => removeEdgeNotch(notch.id)}
+                  aria-label={t('GlassEnclosure.Designer.EdgeNotch.Remove', {
+                    defaultValue: 'Sil',
+                  })}
+                  className="mb-0.5 rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
