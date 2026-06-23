@@ -43,6 +43,10 @@ export function RunArcSection({
     (p) => p.openingType === 'SlidingLeft' || p.openingType === 'SlidingRight',
   );
 
+  // Turning a straight run into an arc auto-enables bent glass so the panes follow the
+  // curve (the expected look); already-curved runs keep the user's bent/faceted choice.
+  const bentOnArc = (): { arcGlassBent?: boolean } => (isArc ? {} : { arcGlassBent: true });
+
   const commitRadius = (raw: number) => {
     if (raw > 0) {
       const next = deriveArcFromRadius(draft.lengthMm, Math.max(minRadius, raw));
@@ -50,6 +54,7 @@ export function RunArcSection({
       commit({
         geomArcRadiusMm: next.radiusMm,
         geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+        ...bentOnArc(),
       });
     } else {
       commit({ geomArcRadiusMm: null, geomArcSweepDeg: null });
@@ -64,6 +69,7 @@ export function RunArcSection({
     commit({
       geomArcRadiusMm: next.radiusMm,
       geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+      ...bentOnArc(),
     });
     setSweepDraft('');
   };
@@ -78,6 +84,7 @@ export function RunArcSection({
       lengthMm: next.arcLengthMm,
       geomArcRadiusMm: next.radiusMm,
       geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+      ...bentOnArc(),
     });
     setChordDraft('');
     setSagittaDraft('');

@@ -142,6 +142,10 @@ export function RunGroup({
   }, [panels, lengthM]);
 
   const isRunSelected = selectedRunId === run.id;
+  // A single shaped pane (e.g. an autofilled oval/polygon hole) draws its own shape-matched
+  // frame band (PanelMesh), so the rectangular run perimeter is suppressed — otherwise a
+  // square frame boxes in the shaped glass ("panel kare gibi").
+  const isSingleShapedPanel = panels.length === 1 && Boolean(panels[0]?.shapeKind);
   const halfWidth = lengthM / 2;
   const profileHalf = DEFAULT_PROFILE_CROSS_SECTION.height / 1000 / 2;
 
@@ -373,40 +377,44 @@ export function RunGroup({
     >
       <group ref={bodyRef}>
         <group position={[halfWidth, 0, 0]}>
-          <ProfileBar
-            lengthM={lengthM}
-            crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[0, heightM, 0]}
-          />
-          <ProfileBar
-            lengthM={lengthM}
-            crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[0, 0, 0]}
-          />
-          <ProfileBar
-            lengthM={heightM}
-            crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[-halfWidth, heightM / 2, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-          />
-          <ProfileBar
-            lengthM={heightM}
-            crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[halfWidth, heightM / 2, 0]}
-            rotation={[0, 0, Math.PI / 2]}
-          />
+          {!isSingleShapedPanel && (
+            <>
+              <ProfileBar
+                lengthM={lengthM}
+                crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[0, heightM, 0]}
+              />
+              <ProfileBar
+                lengthM={lengthM}
+                crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[0, 0, 0]}
+              />
+              <ProfileBar
+                lengthM={heightM}
+                crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[-halfWidth, heightM / 2, 0]}
+                rotation={[0, 0, Math.PI / 2]}
+              />
+              <ProfileBar
+                lengthM={heightM}
+                crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[halfWidth, heightM / 2, 0]}
+                rotation={[0, 0, Math.PI / 2]}
+              />
+            </>
+          )}
           {panelLayout.length > 1 &&
             panelLayout.slice(0, -1).map((layout, i) => {
               const dividerX = layout.centerX + layout.widthM / 2;
