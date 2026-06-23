@@ -107,7 +107,11 @@ export function PanelMesh({
     // and the raked / arched top edges (panelOutlinePointsMm carries those). A pure
     // rounded-rect (cornerRadii only) keeps the plain cell frame — its outline stays a
     // sharp rectangle so a band would not match the rounded glass.
-    const frameShaped = sk === 'ellipse' || sk === 'polygon' || Boolean(st && st !== 'flat');
+    // Must stay a SUBSET of panelIsShaped (which gates the glass mesh): an arched top
+    // only counts once it has a positive rise, else a 0-rise arched pane would suppress
+    // the rect frame yet render no band (panelIsShaped=false → no shaped glass) = bare glass.
+    const frameShaped =
+      sk === 'ellipse' || sk === 'polygon' || st === 'raked' || (st === 'arched' && (sa ?? 0) > 0);
     if (!frameShaped || sw === undefined || sh === undefined) return null;
     return buildPanelFrameGeometry(
       {

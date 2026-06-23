@@ -146,9 +146,15 @@ export function RunGroup({
   // frame band (PanelMesh), so the rectangular run perimeter is suppressed — otherwise a
   // square frame boxes in the shaped glass ("panel kare gibi").
   const firstPanel = panels[0];
+  // Matches PanelMesh's frameShaped (a subset of panelIsShaped): arched needs a positive
+  // rise, else suppressing the rect frame would leave the pane with no frame at all.
   const isSingleShapedPanel =
     panels.length === 1 &&
-    Boolean(firstPanel?.shapeKind || (firstPanel?.topShape && firstPanel.topShape !== 'flat'));
+    Boolean(
+      firstPanel?.shapeKind ||
+      firstPanel?.topShape === 'raked' ||
+      (firstPanel?.topShape === 'arched' && (firstPanel.archRiseMm ?? 0) > 0),
+    );
   // Per-edge frame visibility (frameless / silicone-joined designs); missing = all on.
   const fe = run.frameEdges;
   const showTopRail = fe ? fe.top : true;
