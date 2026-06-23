@@ -77,11 +77,13 @@ describe('wallNotchedOutlineMm', () => {
 });
 
 describe('hasEdgeNotch', () => {
-  it('is true only when a notch has positive width and depth', () => {
+  it('is true only when a notch has width and depth at/above the minimum bite', () => {
     expect(hasEdgeNotch(null)).toBe(false);
     expect(hasEdgeNotch([])).toBe(false);
     expect(hasEdgeNotch([notch('top', 100, 0, 200)])).toBe(false);
     expect(hasEdgeNotch([notch('top', 100, 200, 0)])).toBe(false);
+    // sub-millimetre notch is treated as no notch (so the wall keeps its filleted path)
+    expect(hasEdgeNotch([notch('top', 100, 0.5, 0.5)])).toBe(false);
     expect(hasEdgeNotch([notch('top', 100, 200, 200)])).toBe(true);
   });
 });
@@ -130,5 +132,30 @@ describe('wallProfileOutlineMm edge notches', () => {
     expect(pts).toContainEqual({ x: 300, z: 2600 });
     // bottom bite still present
     expect(pts).toContainEqual({ x: 1000, z: 300 });
+  });
+
+  it('falls back to the corner-only outline when two perpendicular deep notches would overlap', () => {
+    // a deep bottom bite at the corner + a deep left bite reaching the same corner overlap into a
+    // self-intersecting (garbled) polygon → the builder drops the edge notches for this wall.
+    const pts = wallProfileOutlineMm(2000, 2000, 2000, null, [
+      notch('bottom', 0, 800, 800),
+      notch('left', 1200, 800, 800),
+    ]);
+    expect(pts).toEqual([
+      { x: 0, z: 0 },
+      { x: 2000, z: 0 },
+      { x: 2000, z: 2000 },
+      { x: 0, z: 2000 },
+    ]);
+  });
+
+  it('keeps non-overlapping notches on perpendicular edges', () => {
+    // shallow bites far from the shared corner do not overlap → both are applied
+    const pts = wallProfileOutlineMm(4000, 2600, 2600, null, [
+      notch('bottom', 2000, 400, 300),
+      notch('left', 1000, 400, 300),
+    ]);
+    expect(pts).toContainEqual({ x: 2000, z: 300 });
+    expect(pts).toContainEqual({ x: 300, z: 1600 });
   });
 });
