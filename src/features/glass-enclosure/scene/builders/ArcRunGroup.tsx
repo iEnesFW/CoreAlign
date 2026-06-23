@@ -311,6 +311,7 @@ export function ArcRunGroup({
           topRightHeightMm: panel.topRightHeightMm,
           archRiseMm: panel.archRiseMm,
           cornerRadiiMm: panel.cornerRadiiMm,
+          cornerNotchMm: panel.cornerNotchMm,
           shapeKind: panel.shapeKind,
           points:
             panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,

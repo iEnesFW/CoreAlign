@@ -2478,6 +2478,7 @@
         "TopRightHeight": "Sağ üst yükseklik",
         "ArchRise": "Kemer yüksekliği",
         "CornerRadii": "Köşe ovalliği (mm)",
+        "CornerNotch": "Köşe girintisi (mm) — ovalliği geçersiz kılar",
         "Polygon": "Çokgen (ön ayar)",
         "Poly": { "3": "Üçgen", "5": "Beşgen", "6": "Altıgen" },
         "PolygonHint": "Tıkla: nokta ekle · Sürükle: taşı · Çift tık: sil"

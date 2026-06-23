@@ -25,6 +25,7 @@ import {
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
+import { panelIsShaped } from '../../model/panelOutline';
 import { findAttachedWallIds } from '../../model/wallAttachment';
 import type { HardwareDragDelta } from './HardwareObject';
 import type {
@@ -148,15 +149,10 @@ export function RunGroup({
   const firstPanel = panels[0];
   // Matches PanelMesh's frameShaped (a subset of panelIsShaped): arched needs a positive
   // rise, else suppressing the rect frame would leave the pane with no frame at all.
-  const fcr = firstPanel?.cornerRadiiMm;
+  // Single shaped pane drops the rect perimeter for its matching shaped band — one source of
+  // truth (panelIsShaped) so suppression tracks the glass + frame gate (shape / radii / notch).
   const isSingleShapedPanel =
-    panels.length === 1 &&
-    Boolean(
-      firstPanel?.shapeKind ||
-      firstPanel?.topShape === 'raked' ||
-      (firstPanel?.topShape === 'arched' && (firstPanel.archRiseMm ?? 0) > 0) ||
-      (fcr && ((fcr.tl ?? 0) > 0 || (fcr.tr ?? 0) > 0 || (fcr.bl ?? 0) > 0 || (fcr.br ?? 0) > 0)),
-    );
+    panels.length === 1 && Boolean(firstPanel && panelIsShaped(firstPanel));
   // Per-edge frame visibility (frameless / silicone-joined designs); missing = all on.
   const fe = run.frameEdges;
   const showTopRail = fe ? fe.top : true;
@@ -484,6 +480,7 @@ export function RunGroup({
               topRightHeightMm: panel.topRightHeightMm,
               archRiseMm: panel.archRiseMm,
               cornerRadiiMm: panel.cornerRadiiMm,
+              cornerNotchMm: panel.cornerNotchMm,
               shapeKind: panel.shapeKind,
               points:
                 panel.shapeKind === 'polygon'

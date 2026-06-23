@@ -352,6 +352,38 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
                   ))}
                 </div>
               </Field>
+
+              <Field
+                label={t('GlassEnclosure.Designer.Panel.CornerNotch', {
+                  defaultValue: 'Köşe girintisi (mm) — ovalliği geçersiz kılar',
+                })}
+              >
+                <div className="grid grid-cols-4 gap-1.5">
+                  {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
+                    <input
+                      key={k}
+                      type="number"
+                      min={0}
+                      placeholder={k.toUpperCase()}
+                      value={draft.cornerNotchMm?.[k] ?? ''}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          cornerNotchMm: {
+                            ...draft.cornerNotchMm,
+                            [k]:
+                              e.target.value === ''
+                                ? undefined
+                                : Math.max(0, Number(e.target.value)),
+                          },
+                        })
+                      }
+                      onBlur={() => commit({ cornerNotchMm: draft.cornerNotchMm })}
+                      className={inputClass}
+                    />
+                  ))}
+                </div>
+              </Field>
             </>
           )}
         </>

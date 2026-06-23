@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type {
+  CornerRadiiMm,
   GlassProjectDto,
   GlassValidationFindingDto,
   RunFrameEdges,
@@ -273,6 +274,7 @@ const cloneScene = (scene: SceneState): SceneState => structuredClone(scene);
 
 const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState => {
   const prevHardware = new Map<string, SceneHardwareItem[]>();
+  const prevNotch = new Map<string, CornerRadiiMm>();
   const prevBent = new Map<string, boolean>();
   const prevFrame = new Map<string, RunFrameEdges>();
   const prevMullions = new Map<string, boolean>();
@@ -285,6 +287,9 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       if (r.hasMullions === false) prevMullions.set(r.id, false);
       for (const p of r.panels) {
         if (p.hardware?.length) prevHardware.set(p.id, p.hardware);
+        // cornerNotchMm is a blob-only panel field (not on the DTO), so carry it across a
+        // structured re-fetch from the previous scene like hardware does.
+        if (p.cornerNotchMm) prevNotch.set(p.id, p.cornerNotchMm);
       }
     }
   }
@@ -328,6 +333,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
           topRightHeightMm: panel.topRightHeightMm ?? null,
           archRiseMm: panel.archRiseMm ?? null,
           cornerRadiiMm: panel.cornerRadiiMm ?? undefined,
+          cornerNotchMm: prevNotch.get(panel.id) ?? undefined,
           shapeKind: panel.shapeKind ?? null,
           shapePointsJson: panel.shapePointsJson ?? null,
           hardware: prevHardware.get(panel.id) ?? [],
@@ -1167,6 +1173,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   mergeHardwareFromScene: (scene) => {
     const current = get();
     const hwByPanel = new Map<string, SceneHardwareItem[]>();
+    const notchByPanel = new Map<string, CornerRadiiMm>();
     const bentByRun = new Map<string, boolean>();
     const frameByRun = new Map<string, RunFrameEdges>();
     const mullionsByRun = new Map<string, boolean>();
@@ -1176,6 +1183,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       if (r.hasMullions === false) mullionsByRun.set(r.id, false);
       for (const p of r.panels) {
         if (p.hardware?.length) hwByPanel.set(p.id, p.hardware);
+        if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
       }
     }
     const snapshotWalls = scene.walls ?? [];
@@ -1183,6 +1191,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const snapshotSurfaces = scene.surfaces ?? [];
     if (
       hwByPanel.size === 0 &&
+      notchByPanel.size === 0 &&
       bentByRun.size === 0 &&
       frameByRun.size === 0 &&
       mullionsByRun.size === 0 &&
@@ -1203,7 +1212,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         hasMullions: mullionsByRun.has(run.id) ? false : (run.hasMullions ?? true),
         panels: run.panels.map((panel) => {
           const hw = hwByPanel.get(panel.id);
-          return hw ? { ...panel, hardware: hw } : panel;
+          const notch = notchByPanel.get(panel.id);
+          if (!hw && !notch) return panel;
+          return {
+            ...panel,
+            ...(hw ? { hardware: hw } : {}),
+            ...(notch ? { cornerNotchMm: notch } : {}),
+          };
         }),
       })),
     };

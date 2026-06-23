@@ -2478,6 +2478,7 @@
         "TopRightHeight": "Top-right height",
         "ArchRise": "Arch rise",
         "CornerRadii": "Corner radii (mm)",
+        "CornerNotch": "Corner notch (mm) — overrides radius",
         "Polygon": "Polygon (preset)",
         "Poly": { "3": "Triangle", "5": "Pentagon", "6": "Hexagon" },
         "PolygonHint": "Click: add point · Drag: move · Double-click: delete"

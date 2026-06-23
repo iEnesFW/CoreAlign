@@ -9,6 +9,7 @@ export interface PanelOutlineSpec {
   shapeKind?: PanelShapeKind | null;
   points?: PanelPoint[] | null;
   cornerRadiiMm?: CornerRadiiMm | null;
+  cornerNotchMm?: CornerRadiiMm | null;
 }
 
 export interface PanelPoint {
@@ -21,8 +22,36 @@ const ELLIPSE_SEGMENTS = 48;
 const CORNER_ARC_SEGMENTS = 10;
 const MIN_FILLET_MM = 0.5;
 
-const hasCornerRadii = (r?: CornerRadiiMm | null): boolean =>
+const hasCornerValue = (r?: CornerRadiiMm | null): boolean =>
   Boolean(r && ((r.tl ?? 0) > 0 || (r.tr ?? 0) > 0 || (r.bl ?? 0) > 0 || (r.br ?? 0) > 0));
+
+// A rectangular notch (free indentation) cut from each corner of the quad, each corner
+// independent. Mirrors wallNotchedOutlineMm in panel coords (x bottom-centred, y up); the
+// square is clamped to 45% of either dimension so the polygon stays simple. CCW bl→br→tr→tl.
+const notchedQuadPoints = (
+  x0: number,
+  x1: number,
+  hL: number,
+  hR: number,
+  notch: CornerRadiiMm,
+): PanelPoint[] => {
+  const w = x1 - x0;
+  const cap = (n: number, h: number) => Math.max(0, Math.min(n, w * 0.45, h * 0.45));
+  const bl = cap(notch.bl ?? 0, hL);
+  const br = cap(notch.br ?? 0, hR);
+  const tr = cap(notch.tr ?? 0, hR);
+  const tl = cap(notch.tl ?? 0, hL);
+  const pts: PanelPoint[] = [];
+  if (bl > 0) pts.push({ x: x0, y: bl }, { x: x0 + bl, y: bl }, { x: x0 + bl, y: 0 });
+  else pts.push({ x: x0, y: 0 });
+  if (br > 0) pts.push({ x: x1 - br, y: 0 }, { x: x1 - br, y: br }, { x: x1, y: br });
+  else pts.push({ x: x1, y: 0 });
+  if (tr > 0) pts.push({ x: x1, y: hR - tr }, { x: x1 - tr, y: hR - tr }, { x: x1 - tr, y: hR });
+  else pts.push({ x: x1, y: hR });
+  if (tl > 0) pts.push({ x: x0 + tl, y: hL }, { x: x0 + tl, y: hL - tl }, { x: x0, y: hL - tl });
+  else pts.push({ x: x0, y: hL });
+  return pts;
+};
 
 // Round each corner of a quad to match the glass silhouette, sampling the same
 // pIn → corner → pOut quadratic that filletedShapeMm draws so the glass face and the
@@ -130,11 +159,17 @@ export const panelOutlinePointsMm = (spec: PanelOutlineSpec): PanelPoint[] => {
 
   pts.push({ x: x0, y: hL });
 
-  // Round the corners of a plain (flat / raked) quad to match the rounded glass; the arch
-  // curve owns the top edge so it is left sharp at the springline. pts order is bl, br, tr, tl.
-  if (shape !== 'arched' && pts.length === 4 && hasCornerRadii(spec.cornerRadiiMm)) {
-    const r = spec.cornerRadiiMm ?? {};
-    return filletedOutlinePoints(pts, [r.bl ?? 0, r.br ?? 0, r.tr ?? 0, r.tl ?? 0]);
+  // Corner treatments on a plain (flat / raked) quad — the arch curve owns the top edge so
+  // it is left untouched at the springline. A notch (rectangular bite) takes precedence over
+  // a radius on the same panel. Both let the glass face and frame band share one silhouette.
+  if (shape !== 'arched' && pts.length === 4) {
+    if (hasCornerValue(spec.cornerNotchMm)) {
+      return notchedQuadPoints(x0, x1, hL, hR, spec.cornerNotchMm ?? {});
+    }
+    if (hasCornerValue(spec.cornerRadiiMm)) {
+      const r = spec.cornerRadiiMm ?? {};
+      return filletedOutlinePoints(pts, [r.bl ?? 0, r.br ?? 0, r.tr ?? 0, r.tl ?? 0]);
+    }
   }
   return pts;
 };
@@ -142,13 +177,13 @@ export const panelOutlinePointsMm = (spec: PanelOutlineSpec): PanelPoint[] => {
 export const panelIsShaped = (spec: {
   topShape?: PanelTopShape | null;
   archRiseMm?: number | null;
-  cornerRadiiMm?: { tl?: number; tr?: number; bl?: number; br?: number } | null;
+  cornerRadiiMm?: CornerRadiiMm | null;
+  cornerNotchMm?: CornerRadiiMm | null;
   shapeKind?: PanelShapeKind | null;
 }): boolean => {
   if (spec.shapeKind) return true;
   const shape = spec.topShape ?? 'flat';
   if (shape === 'raked') return true;
   if (shape === 'arched' && (spec.archRiseMm ?? 0) > 0) return true;
-  const r = spec.cornerRadiiMm;
-  return Boolean(r && (r.tl || r.tr || r.bl || r.br));
+  return hasCornerValue(spec.cornerRadiiMm) || hasCornerValue(spec.cornerNotchMm);
 };

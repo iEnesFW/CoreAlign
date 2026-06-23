@@ -83,6 +83,7 @@ export function PanelMesh({
   const str = shapeSpec?.topRightHeightMm;
   const sa = shapeSpec?.archRiseMm;
   const sc = shapeSpec?.cornerRadiiMm;
+  const sn = shapeSpec?.cornerNotchMm;
   const sk = shapeSpec?.shapeKind;
   const sp = shapeSpec?.points;
   const shapedGeometry = useMemo(() => {
@@ -95,28 +96,29 @@ export function PanelMesh({
         topRightHeightMm: str,
         archRiseMm: sa,
         cornerRadiiMm: sc,
+        cornerNotchMm: sn,
         shapeKind: sk,
         points: sp,
       },
       thicknessM,
     );
-  }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
+  }, [shaped, sw, sh, st, str, sa, sc, sn, sk, sp, thicknessM]);
   useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
   const frameGeometry = useMemo(() => {
-    // The wrapping frame band follows any silhouette the outline reflects: oval / polygon
-    // and the raked / arched top edges (panelOutlinePointsMm carries those). A pure
-    // rounded-rect (cornerRadii only) keeps the plain cell frame — its outline stays a
-    // sharp rectangle so a band would not match the rounded glass.
+    // The wrapping frame band follows whatever silhouette panelOutlinePointsMm emits:
+    // oval / polygon, raked / arched top edges, rounded corners and corner notches.
     // Must stay a SUBSET of panelIsShaped (which gates the glass mesh): an arched top
     // only counts once it has a positive rise, else a 0-rise arched pane would suppress
     // the rect frame yet render no band (panelIsShaped=false → no shaped glass) = bare glass.
-    // Rounded corners count too — the band follows the filleted silhouette panelOutlinePointsMm emits.
+    const anyCorner = (c?: typeof sc) =>
+      Boolean(c && ((c.tl ?? 0) > 0 || (c.tr ?? 0) > 0 || (c.bl ?? 0) > 0 || (c.br ?? 0) > 0));
     const frameShaped =
       sk === 'ellipse' ||
       sk === 'polygon' ||
       st === 'raked' ||
       (st === 'arched' && (sa ?? 0) > 0) ||
-      Boolean(sc && ((sc.tl ?? 0) > 0 || (sc.tr ?? 0) > 0 || (sc.bl ?? 0) > 0 || (sc.br ?? 0) > 0));
+      anyCorner(sc) ||
+      anyCorner(sn);
     if (!frameShaped || sw === undefined || sh === undefined) return null;
     return buildPanelFrameGeometry(
       {
@@ -126,13 +128,14 @@ export function PanelMesh({
         topRightHeightMm: str,
         archRiseMm: sa,
         cornerRadiiMm: sc,
+        cornerNotchMm: sn,
         shapeKind: sk,
         points: sp,
       },
       35,
       Math.max(thicknessM * 1.6, 0.02),
     );
-  }, [sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
+  }, [sw, sh, st, str, sa, sc, sn, sk, sp, thicknessM]);
   useEffect(() => () => frameGeometry?.dispose(), [frameGeometry]);
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {

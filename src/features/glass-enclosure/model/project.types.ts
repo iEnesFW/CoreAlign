@@ -492,6 +492,7 @@ export interface ScenePanelState {
   topRightHeightMm?: number | null;
   archRiseMm?: number | null;
   cornerRadiiMm?: CornerRadiiMm;
+  cornerNotchMm?: CornerRadiiMm;
   shapeKind?: PanelShapeKind | null;
   shapePointsJson?: string | null;
 }

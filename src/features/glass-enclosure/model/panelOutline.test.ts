@@ -137,6 +137,45 @@ describe('panelOutlinePointsMm', () => {
     expect(pts[0]).toEqual({ x: -500, y: 0 });
     expect(pts[1]).toEqual({ x: 500, y: 0 });
   });
+
+  it('cuts a rectangular notch from each corner', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      cornerNotchMm: { tl: 100, tr: 100, br: 100, bl: 100 },
+    });
+    expect(pts).toHaveLength(12);
+    // the sharp corners are gone, replaced by L-shaped cuts
+    expect(pts.some((p) => p.x === -500 && p.y === 0)).toBe(false);
+    // bottom-left notch inner corner is present
+    expect(pts.some((p) => p.x === -400 && p.y === 100)).toBe(true);
+    // stays in the cell
+    expect(Math.max(...pts.map((p) => p.x))).toBe(500);
+    expect(Math.min(...pts.map((p) => p.x))).toBe(-500);
+  });
+
+  it('a notch overrides a corner radius on the same panel', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      cornerRadiiMm: { tl: 100, tr: 100, br: 100, bl: 100 },
+      cornerNotchMm: { tl: 100, tr: 100, br: 100, bl: 100 },
+    });
+    // notched outline (12 sharp L points), not a sampled fillet arc
+    expect(pts).toHaveLength(12);
+    expect(pts.some((p) => p.x === -400 && p.y === 100)).toBe(true);
+  });
+
+  it('clamps an oversized notch to the half-dimension', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      cornerNotchMm: { tl: 5000, tr: 5000, br: 5000, bl: 5000 },
+    });
+    expect(pts).toHaveLength(12);
+    expect(Math.max(...pts.map((p) => p.x))).toBeLessThanOrEqual(500);
+    expect(Math.min(...pts.map((p) => p.x))).toBeGreaterThanOrEqual(-500);
+  });
 });
 
 describe('panelIsShaped', () => {
@@ -146,9 +185,10 @@ describe('panelIsShaped', () => {
     expect(panelIsShaped({ topShape: 'arched', archRiseMm: 0 })).toBe(false);
   });
 
-  it('raked / arched-with-rise / any fillet are shaped', () => {
+  it('raked / arched-with-rise / any fillet / any notch are shaped', () => {
     expect(panelIsShaped({ topShape: 'raked' })).toBe(true);
     expect(panelIsShaped({ topShape: 'arched', archRiseMm: 200 })).toBe(true);
     expect(panelIsShaped({ cornerRadiiMm: { tl: 50 } })).toBe(true);
+    expect(panelIsShaped({ cornerNotchMm: { br: 80 } })).toBe(true);
   });
 });
