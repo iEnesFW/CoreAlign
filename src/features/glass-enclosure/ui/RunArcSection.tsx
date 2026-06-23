@@ -14,6 +14,9 @@ interface RunArcSectionProps {
   draft: SceneRunState;
   panels: ScenePanelState[];
   minRadius: number;
+  // The PERSISTED (pre-edit) radius — the radius input mutates draft live, so the
+  // straight→arc decision must come from the committed run, not the draft.
+  committedArcRadiusMm: number;
   onDraftRadius: (value: number | null) => void;
   commit: (patch: Partial<SceneRunState>) => void;
 }
@@ -25,6 +28,7 @@ export function RunArcSection({
   draft,
   panels,
   minRadius,
+  committedArcRadiusMm,
   onDraftRadius,
   commit,
 }: RunArcSectionProps) {
@@ -45,7 +49,8 @@ export function RunArcSection({
 
   // Turning a straight run into an arc auto-enables bent glass so the panes follow the
   // curve (the expected look); already-curved runs keep the user's bent/faceted choice.
-  const bentOnArc = (): { arcGlassBent?: boolean } => (isArc ? {} : { arcGlassBent: true });
+  const bentOnArc = (): { arcGlassBent?: boolean } =>
+    committedArcRadiusMm > 0 ? {} : { arcGlassBent: true };
 
   const commitRadius = (raw: number) => {
     if (raw > 0) {

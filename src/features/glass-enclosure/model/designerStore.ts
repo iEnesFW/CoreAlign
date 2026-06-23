@@ -274,9 +274,15 @@ const cloneScene = (scene: SceneState): SceneState => structuredClone(scene);
 const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState => {
   const prevHardware = new Map<string, SceneHardwareItem[]>();
   const prevBent = new Map<string, boolean>();
+  const prevFrame = new Map<string, RunFrameEdges>();
+  const prevMullions = new Map<string, boolean>();
   if (prev) {
     for (const r of prev.runs) {
       if (r.arcGlassBent) prevBent.set(r.id, true);
+      // frameEdges / hasMullions live only in the blob (not the run DTO), so they must
+      // be carried across a structured re-fetch from the previous scene, like arcGlassBent.
+      if (r.frameEdges) prevFrame.set(r.id, r.frameEdges);
+      if (r.hasMullions === false) prevMullions.set(r.id, false);
       for (const p of r.panels) {
         if (p.hardware?.length) prevHardware.set(p.id, p.hardware);
       }
@@ -305,6 +311,8 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       geomArcRadiusMm: run.geomArcRadiusMm ?? null,
       geomArcSweepDeg: run.geomArcSweepDeg ?? null,
       arcGlassBent: run.arcGlassBent ?? prevBent.get(run.id) ?? false,
+      frameEdges: prevFrame.get(run.id) ?? null,
+      hasMullions: prevMullions.has(run.id) ? false : null,
       panels: normalizePanelWidths(
         run.panels.map((panel) => ({
           id: panel.id,
@@ -402,6 +410,8 @@ const typedRunKey = (run: SceneRunState) =>
     run.geomArcRadiusMm ?? null,
     run.geomArcSweepDeg ?? null,
     run.arcGlassBent ?? false,
+    run.frameEdges ?? null,
+    run.hasMullions ?? null,
     run.panels.map((p) => [
       p.id,
       p.panelIndex,

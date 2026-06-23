@@ -299,6 +299,9 @@ export function PlacementController({
     raycaster.set(e.ray.origin, e.ray.direction);
     for (const hit of raycaster.intersectObjects(scene.children, true)) {
       if (hit.point.y * MM <= STRUCTURE_MIN_Y_MM) continue;
+      // Skip floating dimension labels (troika <Text> carries a string `text` prop) so a
+      // label hovering above a structure can't hijack the placement XZ.
+      if (typeof (hit.object as { text?: unknown }).text === 'string') continue;
       let o: Object3D | null = hit.object;
       let owned = false;
       while (o) {

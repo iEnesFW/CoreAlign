@@ -209,6 +209,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
             draft={draft}
             panels={run.panels}
             minRadius={minRadius}
+            committedArcRadiusMm={run.geomArcRadiusMm ?? 0}
             onDraftRadius={(value) => setDraft({ ...draft, geomArcRadiusMm: value })}
             commit={commit}
           />
