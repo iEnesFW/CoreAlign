@@ -268,6 +268,21 @@ export function ArcRunGroup({
         const chord = layout.panelChords[i];
         if (!panel || !chord) return null;
         const glass = glassTypes.get(panel.glassTypeId);
+        const facetWidthMm = Math.round(Math.max(0.05, chord.chordM - 0.012) * 1000);
+        const facetHeightMm =
+          panel.heightMm ?? Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
+        const shapeSpec = {
+          widthMm: facetWidthMm,
+          heightMm: facetHeightMm,
+          topShape: panel.topShape,
+          topRightHeightMm: panel.topRightHeightMm,
+          archRiseMm: panel.archRiseMm,
+          cornerRadiiMm: panel.cornerRadiiMm,
+          cornerNotchMm: panel.cornerNotchMm,
+          shapeKind: panel.shapeKind,
+          points:
+            panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
+        };
         if (run.arcGlassBent) {
           return (
             <CurvedPanelMesh
@@ -298,24 +313,10 @@ export function ArcRunGroup({
               panelIndex={panel.panelIndex}
               isSelected={selectedPanelId === panel.id}
               onSelect={() => onSelectPanel(run.id, panel.id)}
+              shapeSpec={shapeSpec}
             />
           );
         }
-        const facetWidthMm = Math.round(Math.max(0.05, chord.chordM - 0.012) * 1000);
-        const facetHeightMm =
-          panel.heightMm ?? Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
-        const shapeSpec = {
-          widthMm: facetWidthMm,
-          heightMm: facetHeightMm,
-          topShape: panel.topShape,
-          topRightHeightMm: panel.topRightHeightMm,
-          archRiseMm: panel.archRiseMm,
-          cornerRadiiMm: panel.cornerRadiiMm,
-          cornerNotchMm: panel.cornerNotchMm,
-          shapeKind: panel.shapeKind,
-          points:
-            panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
-        };
         return (
           <group
             key={panel.id}

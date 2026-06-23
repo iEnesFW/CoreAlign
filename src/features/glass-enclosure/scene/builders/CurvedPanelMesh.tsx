@@ -4,8 +4,10 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
-import { buildCurvedBandGeometry } from './curvedExtrude';
+import { buildCurvedBandGeometry, bendGeometryToArc } from './curvedExtrude';
+import { buildPanelGlassGeometry, type PanelGlassSpec } from './panelGeometry';
 import { arcPointAt, type ArcChord } from '../../model/arcGeometry';
+import { panelIsShaped } from '../../model/panelOutline';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { GlassOpeningType, GlassStructure } from '../../model/glassEnclosure.types';
 import type { SceneHardwareItem } from '../../model/project.types';
@@ -33,6 +35,7 @@ interface CurvedPanelMeshProps {
   panelIndex: number;
   isSelected: boolean;
   onSelect: () => void;
+  shapeSpec?: PanelGlassSpec | null;
 }
 
 const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
@@ -66,6 +69,7 @@ export function CurvedPanelMesh({
   panelIndex,
   isSelected,
   onSelect,
+  shapeSpec,
 }: CurvedPanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -75,10 +79,53 @@ export function CurvedPanelMesh({
   });
   const thicknessM = thicknessMm / 1000;
 
-  const geometry = useMemo(
-    () => buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM),
-    [radiusM, direction, phiStart, phiEnd, thicknessM, heightM],
-  );
+  const shaped = Boolean(shapeSpec && panelIsShaped(shapeSpec));
+  const st = shapeSpec?.topShape ?? null;
+  const str = shapeSpec?.topRightHeightMm ?? null;
+  const sa = shapeSpec?.archRiseMm ?? null;
+  const sc = shapeSpec?.cornerRadiiMm ?? null;
+  const sn = shapeSpec?.cornerNotchMm ?? null;
+  const sk = shapeSpec?.shapeKind ?? null;
+  const sp = shapeSpec?.points ?? null;
+
+  const geometry = useMemo(() => {
+    if (shaped) {
+      // Build the flat shaped pane sized to the arc length × height, then bend it onto the
+      // cylinder so the silhouette is preserved while the glass follows the curve.
+      const arcLenM = Math.max(0.001, radiusM * Math.max(1e-4, phiEnd - phiStart));
+      const flat = buildPanelGlassGeometry(
+        {
+          widthMm: arcLenM * 1000,
+          heightMm: heightM * 1000,
+          topShape: st,
+          topRightHeightMm: str,
+          archRiseMm: sa,
+          cornerRadiiMm: sc,
+          cornerNotchMm: sn,
+          shapeKind: sk,
+          points: sp,
+        },
+        thicknessM,
+      );
+      return bendGeometryToArc(flat, radiusM, direction, phiStart, phiEnd, arcLenM);
+    }
+    return buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM);
+  }, [
+    shaped,
+    st,
+    str,
+    sa,
+    sc,
+    sn,
+    sk,
+    sp,
+    radiusM,
+    direction,
+    phiStart,
+    phiEnd,
+    thicknessM,
+    heightM,
+  ]);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   const annotationAnchor = useMemo(
