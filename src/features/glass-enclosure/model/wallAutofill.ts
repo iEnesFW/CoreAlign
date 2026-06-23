@@ -5,7 +5,14 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
-import type { SceneRunState, SceneWallState } from './project.types';
+import { featureOutlineMm } from './wallFeatureGeometry';
+import { serializePanelPolygonPoints } from './panelPolygon';
+import type {
+  PanelShapeKind,
+  SceneRunState,
+  SceneWallFeature,
+  SceneWallState,
+} from './project.types';
 
 export interface OpenEdge {
   originX: number;
@@ -17,7 +24,37 @@ export interface OpenEdge {
   geomArcRadiusMm?: number;
   geomArcSweepDeg?: number;
   arcGlassBent?: boolean;
+  shapeKind?: PanelShapeKind | null;
+  shapePointsJson?: string | null;
 }
+
+// Map a shaped wall hole (the feature silhouette) onto a glass PANEL shape so the
+// fill glass matches the hole instead of being a rectangle that overflows the wall.
+const featurePanelShape = (
+  feature: SceneWallFeature,
+): { shapeKind: PanelShapeKind; shapePointsJson: string | null } | null => {
+  if (feature.shape === 'rect') return null;
+  if (feature.shape === 'circle' || feature.shape === 'ellipse') {
+    return { shapeKind: 'ellipse', shapePointsJson: null };
+  }
+  const outline = featureOutlineMm({
+    shape: feature.shape,
+    offsetMm: feature.offsetMm,
+    centerZMm: feature.centerZMm,
+    widthMm: feature.widthMm,
+    heightMm: feature.heightMm,
+    sides: feature.sides,
+    points: feature.points,
+  });
+  // Feature outline is absolute (around offset/centerZ); a panel polygon is local,
+  // bottom-centred, y-up — shift x to centre, z (+up) to [0, height].
+  const hh = feature.heightMm / 2;
+  const pts = outline.map((p) => ({
+    x: Math.round(p.x - feature.offsetMm),
+    y: Math.round(p.z - feature.centerZMm + hh),
+  }));
+  return { shapeKind: 'polygon', shapePointsJson: serializePanelPolygonPoints(pts) };
+};
 
 const ENDPOINT_TOLERANCE_MM = 150;
 const MIN_EDGE_MM = 300;
@@ -113,7 +150,13 @@ export const computeOpeningEdges = (
     // The opening's sill is measured from the wall's own base, so a raised wall
     // lifts the fill panel by the wall's geomZ on top of the local sill height.
     const wallBaseZ = wall.geomZ ?? 0;
-    const pushEdge = (startMm: number, widthMm: number, sillMm: number, heightMm: number) => {
+    const pushEdge = (
+      startMm: number,
+      widthMm: number,
+      sillMm: number,
+      heightMm: number,
+      shape?: { shapeKind: PanelShapeKind; shapePointsJson: string | null } | null,
+    ) => {
       if (widthMm < MIN_EDGE_MM || heightMm < MIN_EDGE_MM) return;
       const originX = Math.round(wall.originX + startMm * cos);
       const originY = Math.round(wall.originY + startMm * sin);
@@ -136,6 +179,8 @@ export const computeOpeningEdges = (
         lengthMm: Math.round(widthMm),
         heightMm: Math.round(heightMm),
         geomZ,
+        shapeKind: shape?.shapeKind ?? null,
+        shapePointsJson: shape?.shapePointsJson ?? null,
       });
     };
     for (const opening of wall.openings ?? []) {
@@ -156,6 +201,7 @@ export const computeOpeningEdges = (
         feature.widthMm,
         feature.centerZMm - feature.heightMm / 2,
         feature.heightMm,
+        featurePanelShape(feature),
       );
     }
   }

@@ -93,4 +93,64 @@ describe('computeOpeningEdges (raised-wall aware)', () => {
     const elsewhere = fillRun(1000, 1000, 5000, 1500);
     expect(computeOpeningEdges([wall], [elsewhere])).toHaveLength(1);
   });
+
+  it('glazes a shaped (ellipse) wall hole with an ellipse panel, not a rectangle', () => {
+    const wall: SceneWallState = {
+      ...wallWithOpening(0, 800),
+      openings: [],
+      features: [
+        {
+          id: 'f',
+          shape: 'ellipse',
+          mode: 'hole',
+          side: 1,
+          offsetMm: 1500,
+          centerZMm: 1200,
+          widthMm: 900,
+          heightMm: 1400,
+          depthMm: 0,
+          points: undefined,
+          colorHex: null,
+        },
+      ],
+    };
+    const edges = computeOpeningEdges([wall]);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].shapeKind).toBe('ellipse');
+    expect(edges[0].shapePointsJson ?? null).toBeNull();
+  });
+
+  it('glazes a free-drawn wall hole with a polygon panel whose points fill the hole bounds', () => {
+    const wall: SceneWallState = {
+      ...wallWithOpening(0, 800),
+      openings: [],
+      features: [
+        {
+          id: 'f',
+          shape: 'free',
+          mode: 'hole',
+          side: 1,
+          offsetMm: 1500,
+          centerZMm: 1200,
+          widthMm: 800,
+          heightMm: 1000,
+          depthMm: 0,
+          // a triangle in feature-local coords (+z up), spanning the bounds
+          points: [
+            { x: -400, z: -500 },
+            { x: 400, z: -500 },
+            { x: 0, z: 500 },
+          ],
+          colorHex: null,
+        },
+      ],
+    };
+    const edges = computeOpeningEdges([wall]);
+    expect(edges).toHaveLength(1);
+    expect(edges[0].shapeKind).toBe('polygon');
+    const pts = JSON.parse(edges[0].shapePointsJson ?? '[]') as { x: number; y: number }[];
+    // bottom-centred, y-up: apex at top-centre (y≈height), base at y≈0
+    expect(pts).toContainEqual({ x: 0, y: 1000 });
+    expect(pts.some((p) => p.y === 0)).toBe(true);
+  });
 });

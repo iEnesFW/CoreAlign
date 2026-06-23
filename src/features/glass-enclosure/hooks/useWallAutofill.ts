@@ -5,7 +5,11 @@ import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns } from '../model/multiAutofill';
-import { useAddConnectionMutation, useAddRunMutation } from './useGlassProjectQueries';
+import {
+  useAddConnectionMutation,
+  useAddRunMutation,
+  useUpdatePanelMutation,
+} from './useGlassProjectQueries';
 import { useColorOptionsQuery, useProfileSystemsQuery } from './useGlassEnclosureQueries';
 import type { GapEdge } from '../model/multiAutofill';
 import type { OpenEdge } from '../model/wallAutofill';
@@ -21,6 +25,7 @@ export const useWallAutofill = () => {
   const { t } = useTranslation();
   const addRunMutation = useAddRunMutation();
   const addConnectionMutation = useAddConnectionMutation();
+  const updatePanelMutation = useUpdatePanelMutation();
   const profileSystemsQuery = useProfileSystemsQuery();
   const colorsQuery = useColorOptionsQuery();
 
@@ -49,7 +54,8 @@ export const useWallAutofill = () => {
               geomArcRadiusMm: edge.geomArcRadiusMm ?? null,
               geomArcSweepDeg: edge.geomArcSweepDeg ?? null,
               arcGlassBent: edge.arcGlassBent ?? null,
-              panelCount: panelCountForWidth(edge.lengthMm, maxPanelWidthMm),
+              // A shaped hole is glazed by a single shape-matched panel, not a strip.
+              panelCount: edge.shapeKind ? 1 : panelCountForWidth(edge.lengthMm, maxPanelWidthMm),
               label: `${runPrefix} ${state.scene.runs.length + created.length + 1}`,
               colorId: colorsQuery.data?.data?.[0]?.id ?? null,
               hasTopDrip: true,
@@ -60,7 +66,35 @@ export const useWallAutofill = () => {
         ),
         { showSuccessNotification: false },
       );
-      if (response?.data) created.push({ id: response.data.id, edge });
+      if (!response?.data) continue;
+      const runData = response.data;
+      created.push({ id: runData.id, edge });
+      // Shape the glazing panel to the hole silhouette so it fills the opening
+      // instead of overflowing the wall as a rectangle.
+      const panel = runData.panels[0];
+      if (edge.shapeKind && panel) {
+        await safeRequestWithNotify(
+          enqueuePersist(() =>
+            updatePanelMutation.mutateAsync({
+              id: projectId,
+              runId: runData.id,
+              panelId: panel.id,
+              input: {
+                widthMm: panel.widthMm,
+                openingType: panel.openingType,
+                glassTypeId: panel.glassTypeId,
+                hasHandle: panel.hasHandle,
+                hasLock: panel.hasLock,
+                hasBrushSeal: panel.hasBrushSeal,
+                heightMm: panel.heightMm ?? null,
+                shapeKind: edge.shapeKind,
+                shapePointsJson: edge.shapePointsJson ?? null,
+              },
+            }),
+          ),
+          { showSuccessNotification: false },
+        );
+      }
     }
     return created;
   };
