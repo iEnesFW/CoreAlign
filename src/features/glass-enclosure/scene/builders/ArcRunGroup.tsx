@@ -104,6 +104,15 @@ export function ArcRunGroup({
 
   const isRunSelected = selectedRunId === run.id;
 
+  // Per-edge frame visibility (frameless / silicone-joined designs); missing = all on.
+  // Mirrors RunGroup: left = arc start post, right = arc end post, inner boundaries = mullions.
+  const fe = run.frameEdges;
+  const showTopRail = fe ? fe.top : true;
+  const showBottomRail = fe ? fe.bottom : true;
+  const showLeftRail = fe ? fe.left : true;
+  const showRightRail = fe ? fe.right : true;
+  const showMullions = run.hasMullions !== false;
+
   const activeTool = useDesignerStore((s) => s.activeTool);
   const sceneState = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
@@ -210,27 +219,35 @@ export function ArcRunGroup({
           position={[seg.midX, 0, seg.midZ]}
           rotation={[0, -seg.yawRad, 0]}
         >
-          <ProfileBar
-            lengthM={seg.chordM * 1.02}
-            crossSectionMm={PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[0, heightM, 0]}
-          />
-          <ProfileBar
-            lengthM={seg.chordM * 1.02}
-            crossSectionMm={PROFILE_CROSS_SECTION}
-            hexColor={profileColor}
-            finish={finish}
-            quality={quality}
-            position={[0, 0, 0]}
-          />
+          {showTopRail && (
+            <ProfileBar
+              lengthM={seg.chordM * 1.02}
+              crossSectionMm={PROFILE_CROSS_SECTION}
+              hexColor={profileColor}
+              finish={finish}
+              quality={quality}
+              position={[0, heightM, 0]}
+            />
+          )}
+          {showBottomRail && (
+            <ProfileBar
+              lengthM={seg.chordM * 1.02}
+              crossSectionMm={PROFILE_CROSS_SECTION}
+              hexColor={profileColor}
+              finish={finish}
+              quality={quality}
+              position={[0, 0, 0]}
+            />
+          )}
         </group>
       ))}
 
       {layout.boundaries.map((b, i) => {
-        const isOuter = i === 0 || i === layout.boundaries.length - 1;
+        const isFirst = i === 0;
+        const isLast = i === layout.boundaries.length - 1;
+        const isOuter = isFirst || isLast;
+        const visible = isOuter ? (isFirst ? showLeftRail : showRightRail) : showMullions;
+        if (!visible) return null;
         return (
           <group key={`arcpost-${i}`} position={[b.x, 0, b.z]} rotation={[0, -b.tangentRad, 0]}>
             <ProfileBar
