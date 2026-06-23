@@ -355,10 +355,12 @@ public class RemoveRunCommandHandler : IRequestHandler<RemoveRunCommand, Unit>
 public class BulkRebalancePanelsCommandHandler : IRequestHandler<BulkRebalancePanelsCommand, GlassProjectRunDto>
 {
     private readonly IGlassProjectRunRepository _runRepo;
+    private readonly IGlassProjectPanelRepository _panelRepo;
     private readonly IBomStaleSignal _bomStaleSignal;
-    public BulkRebalancePanelsCommandHandler(IGlassProjectRunRepository runRepo, IBomStaleSignal bomStaleSignal)
+    public BulkRebalancePanelsCommandHandler(IGlassProjectRunRepository runRepo, IGlassProjectPanelRepository panelRepo, IBomStaleSignal bomStaleSignal)
     {
         _runRepo = runRepo;
+        _panelRepo = panelRepo;
         _bomStaleSignal = bomStaleSignal;
     }
 
@@ -370,11 +372,17 @@ public class BulkRebalancePanelsCommandHandler : IRequestHandler<BulkRebalancePa
         var count = Math.Max(1, request.Data.PanelCount);
         var widthMm = run.LengthMm / count;
 
+        foreach (var existing in run.Panels.ToList()) _panelRepo.Remove(existing);
+
         var newPanels = Enumerable.Range(0, count).Select(i =>
             new GlassProjectPanel(
                 run.Id, i, widthMm, request.Data.DefaultOpeningType, request.Data.DefaultGlassTypeId)).ToList();
         run.ReplacePanels(newPanels);
-        _runRepo.Update(run);
+        // WHY: insert/delete the panels explicitly through the DbSet. A graph-walk over the tracked
+        // run (DetectChanges or _context.Update) marks new panels with a pre-set Guid PK as Modified,
+        // not Added → UPDATE on non-existent rows → DbUpdateConcurrencyException.
+        foreach (var panel in newPanels) await _panelRepo.AddAsync(panel, cancellationToken);
+
         await _bomStaleSignal.SignalStaleAsync(run.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
         return ProjectMappers.ToDto(run);
     }
