@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { DoubleSide } from 'three';
+import { useEffect, useMemo, useRef } from 'react';
+import { DoubleSide, Raycaster } from 'three';
+import { useThree } from '@react-three/fiber';
 import { clearSnapGuides, setSnapGuides } from '@/shared/three-engine';
 import { applyPlanMoveSnap } from './planSnap';
 import {
@@ -9,7 +10,7 @@ import {
   penetratesAny,
 } from './planCollision';
 import type { ThreeEvent } from '@react-three/fiber';
-import type { Group, Mesh, MeshBasicMaterial } from 'three';
+import type { Group, Mesh, MeshBasicMaterial, Object3D } from 'three';
 import type { PlanFootprint } from './planCollision';
 import type { PlanPoint, PlanSnapTargets } from './planSnap';
 import type { PlacementKind } from '../../model/designerStore';
@@ -71,6 +72,7 @@ const ROOF_FALLBACK_ELEVATION_MM = 2450;
 const CLICK_SLOP_PX = 5;
 const PLANE_SIZE_M = 400;
 const DEG2RAD = Math.PI / 180;
+const STRUCTURE_MIN_Y_MM = 200;
 
 const snapToPlaceGrid = (valueMm: number) => Math.round(valueMm / PLACE_GRID_MM) * PLACE_GRID_MM;
 
@@ -160,7 +162,10 @@ export function PlacementController({
   onPlaceRun,
   onPlaceSlab,
 }: PlacementControllerProps) {
+  const scene = useThree((s) => s.scene);
+  const raycaster = useMemo(() => new Raycaster(), []);
   const ghostRef = useRef<Group>(null);
+  const planeMeshRef = useRef<Mesh>(null);
   const meshRef = useRef<Mesh>(null);
   const matRef = useRef<MeshBasicMaterial>(null);
   const freeRef = useRef<PlanPoint | null>(null);
@@ -287,14 +292,39 @@ export function PlacementController({
     applyGhost(x, y, heightMm, stillBlocked);
   };
 
+  // The XZ of the structure the cursor points at (run/wall/slab top), so a roof lands
+  // where you POINT — not on the cursor's ground projection, which parallaxes away in a
+  // perspective view ("mouse treated as ground"). Ground disk / grid (y≈0) are ignored.
+  const pickStructureXZ = (e: ThreeEvent<PointerEvent>): PlanPoint | null => {
+    raycaster.set(e.ray.origin, e.ray.direction);
+    for (const hit of raycaster.intersectObjects(scene.children, true)) {
+      if (hit.point.y * MM <= STRUCTURE_MIN_Y_MM) continue;
+      let o: Object3D | null = hit.object;
+      let owned = false;
+      while (o) {
+        if (o === ghostRef.current || o === planeMeshRef.current) {
+          owned = true;
+          break;
+        }
+        o = o.parent;
+      }
+      if (owned) continue;
+      return { x: hit.point.x * MM, y: hit.point.z * MM };
+    }
+    return null;
+  };
+
   const followPointer = (e: ThreeEvent<PointerEvent>) => {
     const gridX = snapToPlaceGrid(e.point.x * MM);
     const gridY = snapToPlaceGrid(e.point.z * MM);
     // A slab (roof/floor) is large; snapping its footprint probes to every wall/run
-    // corner yanks it far off the cursor. Slabs follow the cursor on the grid only;
-    // walls/runs keep full corner/edge snapping (they butt against neighbours).
+    // corner yanks it far off the cursor. Slabs follow the cursor on the grid; a roof
+    // additionally lands on the structure under the cursor so it's easy to position.
     if (!isLine) {
-      applyAt(gridX, gridY, []);
+      const hit = placement === 'roof' ? pickStructureXZ(e) : null;
+      const x = hit ? snapToPlaceGrid(hit.x) : gridX;
+      const y = hit ? snapToPlaceGrid(hit.y) : gridY;
+      applyAt(x, y, []);
       return;
     }
     const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
@@ -368,6 +398,7 @@ export function PlacementController({
   return (
     <>
       <mesh
+        ref={planeMeshRef}
         rotation={[-Math.PI / 2, 0, 0]}
         onPointerDown={handlePointerDown}
         onPointerMove={followPointer}
