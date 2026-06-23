@@ -56,6 +56,25 @@ describe('panelOutlinePointsMm', () => {
     ]);
   });
 
+  it('scales a polygon to fill the panel cell (tracks resize, no stale gap)', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      shapeKind: 'polygon',
+      // a small triangle authored in a 200×200 box
+      points: [
+        { x: -100, y: 0 },
+        { x: 100, y: 0 },
+        { x: 0, y: 200 },
+      ],
+    });
+    expect(pts).toEqual([
+      { x: -500, y: 0 },
+      { x: 500, y: 0 },
+      { x: 0, y: 2000 },
+    ]);
+  });
+
   it('an ellipse samples a closed oval bounded by width x height', () => {
     const pts = panelOutlinePointsMm({ widthMm: 1000, heightMm: 2000, shapeKind: 'ellipse' });
     expect(pts.length).toBeGreaterThan(8);

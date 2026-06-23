@@ -5,6 +5,7 @@ import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
 import { buildPanelGlassGeometry, type PanelGlassSpec } from './panelGeometry';
+import { buildPanelFrameGeometry } from './panelFrameGeometry';
 import { panelIsShaped } from '../../model/panelOutline';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { GlassOpeningType, GlassStructure } from '../../model/glassEnclosure.types';
@@ -99,6 +100,24 @@ export function PanelMesh({
     );
   }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
   useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
+  const frameGeometry = useMemo(() => {
+    if (!shaped || sw === undefined || sh === undefined) return null;
+    return buildPanelFrameGeometry(
+      {
+        widthMm: sw,
+        heightMm: sh,
+        topShape: st,
+        topRightHeightMm: str,
+        archRiseMm: sa,
+        cornerRadiiMm: sc,
+        shapeKind: sk,
+        points: sp,
+      },
+      35,
+      Math.max(thicknessM * 1.6, 0.02),
+    );
+  }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
+  useEffect(() => () => frameGeometry?.dispose(), [frameGeometry]);
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
@@ -115,18 +134,29 @@ export function PanelMesh({
   return (
     <group position={[centerX, baseY + heightM / 2, 0]}>
       {shapedGeometry ? (
-        <mesh
-          geometry={shapedGeometry}
-          position={[0, -heightM / 2, 0]}
-          material={material}
-          castShadow
-          receiveShadow
-          onClick={handleClick}
-          onPointerOver={onPointerOver}
-          onPointerOut={onPointerOut}
-        >
-          <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
-        </mesh>
+        <>
+          <mesh
+            geometry={shapedGeometry}
+            position={[0, -heightM / 2, 0]}
+            material={material}
+            castShadow
+            receiveShadow
+            onClick={handleClick}
+            onPointerOver={onPointerOver}
+            onPointerOut={onPointerOut}
+          >
+            <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
+          </mesh>
+          {frameGeometry && (
+            <mesh geometry={frameGeometry} position={[0, -heightM / 2, 0]} castShadow receiveShadow>
+              <meshStandardMaterial
+                color={isSelected ? '#3b82f6' : '#aab4ba'}
+                metalness={0.5}
+                roughness={0.5}
+              />
+            </mesh>
+          )}
+        </>
       ) : (
         <mesh
           material={material}

@@ -24,7 +24,28 @@ export const panelOutlinePointsMm = (spec: PanelOutlineSpec): PanelPoint[] => {
   const x1 = w / 2;
 
   if (spec.shapeKind === 'polygon' && spec.points && spec.points.length >= 3) {
-    return spec.points;
+    // Scale the authored polygon so its bounding box fills the panel cell (w × h).
+    // This makes the glass track panel resizes and fill the cell — no stale gap when
+    // the panel is widened/narrowed after the shape was drawn.
+    const pts = spec.points;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const p of pts) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+    const bw = maxX - minX;
+    const bh = maxY - minY;
+    if (bw <= 0 || bh <= 0) return pts;
+    const hM = Math.max(1, spec.heightMm);
+    const sx = w / bw;
+    const sy = hM / bh;
+    const cxp = (minX + maxX) / 2;
+    return pts.map((p) => ({ x: (p.x - cxp) * sx, y: (p.y - minY) * sy }));
   }
 
   if (spec.shapeKind === 'ellipse') {
