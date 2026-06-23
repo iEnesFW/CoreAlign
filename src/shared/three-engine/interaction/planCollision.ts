@@ -9,8 +9,6 @@ export interface PlanFootprint {
   halfWidthMm: number;
   zMinMm: number;
   zMaxMm: number;
-  // When set, collision uses this true plan outline (world mm) instead of the
-  // spine +/- halfWidth rectangle, so curved/polygon objects collide by shape.
   polygon?: Vec[];
 }
 
@@ -50,13 +48,12 @@ interface Vec {
   y: number;
 }
 
-// Footprint whose collision shape is an arbitrary plan outline (world mm),
-// used for curved runs and pen-drawn polygon surfaces.
 export const buildPolygonFootprint = (
   ownerId: string,
   polygon: Vec[],
   zMinMm: number,
   zMaxMm: number,
+  bandMm = 0,
 ): PlanFootprint => {
   let minX = Infinity;
   let minY = Infinity;
@@ -74,14 +71,13 @@ export const buildPolygonFootprint = (
     y1: minY,
     x2: maxX,
     y2: maxY,
-    halfWidthMm: 0,
+    halfWidthMm: bandMm,
     zMinMm,
     zMaxMm,
     polygon,
   };
 };
 
-// The 4 corners of the oriented rectangle (full centerline +/- halfWidth).
 const footprintCorners = (f: PlanFootprint): Vec[] => {
   let dx = f.x2 - f.x1;
   let dy = f.y2 - f.y1;
@@ -121,11 +117,6 @@ const projectOverlap = (a: Vec[], b: Vec[], axisX: number, axisY: number): numbe
   return Math.min(aMax, bMax) - Math.max(aMin, bMin);
 };
 
-// Largest overlap extent of the intersection region across both rectangles'
-// edge axes (SAT). Returns 0 when separated. A genuine corner butt-joint is
-// small on every axis, so the max stays within a half width; a deep slice is
-// large on the axis it cuts along, so the max exposes it even when the SAT
-// minimum collapses to a thin sliver.
 const obbOverlapExtent = (ca: Vec[], cb: Vec[]): number => {
   const axes: Vec[] = [];
   for (const corners of [ca, cb]) {
@@ -196,8 +187,6 @@ const segmentsCross = (a1: Vec, a2: Vec, b1: Vec, b2: Vec): boolean => {
   return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 };
 
-// True if two simple plan polygons overlap with area (a shared edge or vertex
-// touch is not an overlap). Handles non-convex outlines, unlike the SAT path.
 const polygonsOverlap = (a: Vec[], b: Vec[]): boolean => {
   for (let i = 0; i < a.length; i += 1) {
     const a1 = a[i];
@@ -206,36 +195,28 @@ const polygonsOverlap = (a: Vec[], b: Vec[]): boolean => {
       if (segmentsCross(a1, a2, b[j], b[(j + 1) % b.length])) return true;
     }
   }
-  // Containment with no edge crossing: probe every vertex, so an overlap is not
-  // missed when one polygon's first corner happens to land on the other's edge.
   for (const p of a) if (pointInPolygon(p.x, p.y, b)) return true;
   for (const p of b) if (pointInPolygon(p.x, p.y, a)) return true;
   return false;
 };
 
-const footprintsPenetrate = (a: PlanFootprint, b: PlanFootprint) => {
+export const footprintsPenetrate = (a: PlanFootprint, b: PlanFootprint) => {
   if (a.zMaxMm <= b.zMinMm + CONTACT_EPS_MM || b.zMaxMm <= a.zMinMm + CONTACT_EPS_MM) return false;
   if (a.polygon || b.polygon) {
     if (aabbSeparated(a, b)) return false;
     return polygonsOverlap(footprintOutline(a), footprintOutline(b));
   }
   const extent = obbOverlapExtent(footprintCorners(a), footprintCorners(b));
-  // Allow a true corner butt-joint (a small square bounded by the thinner half
-  // width) but block any overlap that runs deeper along either body axis.
   const jointTolerance = Math.min(a.halfWidthMm, b.halfWidthMm) + CONTACT_EPS_MM;
   return extent > jointTolerance;
 };
 
-// 2D (z-agnostic) overlap test, used by the stacking law to decide which
-// supports a moved object rests on.
 const footprintsOverlapXY = (a: PlanFootprint, b: PlanFootprint): boolean => {
   if (aabbSeparated(a, b)) return false;
   if (a.polygon || b.polygon) return polygonsOverlap(footprintOutline(a), footprintOutline(b));
   return obbOverlapExtent(footprintCorners(a), footprintCorners(b)) > CONTACT_EPS_MM;
 };
 
-// Elevation (mm) a moved footprint rests at: the highest top among supports it
-// overlaps in plan, or the given fallback when it rests on nothing.
 export const restElevationMm = (
   moved: PlanFootprint,
   supports: PlanFootprint[],
@@ -249,6 +230,24 @@ export const restElevationMm = (
   return top;
 };
 
+export const isFloating = (
+  moved: PlanFootprint,
+  supports: PlanFootprint[],
+  gapMm: number,
+  groundMm = 0,
+): boolean => {
+  if (moved.zMinMm <= groundMm + gapMm) return false;
+  let topBelow = groundMm;
+  for (const s of supports) {
+    if (s.ownerId === moved.ownerId) continue;
+    if (!footprintsOverlapXY(moved, s)) continue;
+    if (s.zMaxMm < moved.zMinMm - gapMm) continue;
+    const top = Math.min(s.zMaxMm, moved.zMinMm);
+    if (top > topBelow) topBelow = top;
+  }
+  return moved.zMinMm - topBelow > gapMm;
+};
+
 export type PlanFootprintSet = PlanFootprint | PlanFootprint[];
 
 export const penetratesAny = (moved: PlanFootprintSet, obstacles: PlanFootprint[]) => {
@@ -256,6 +255,19 @@ export const penetratesAny = (moved: PlanFootprintSet, obstacles: PlanFootprint[
   return footprints.some((footprint) =>
     obstacles.some((o) => o.ownerId !== footprint.ownerId && footprintsPenetrate(footprint, o)),
   );
+};
+
+export const firstPenetratingOwner = (
+  moved: PlanFootprintSet,
+  obstacles: PlanFootprint[],
+): string | null => {
+  const footprints = Array.isArray(moved) ? moved : [moved];
+  for (const footprint of footprints) {
+    for (const o of obstacles) {
+      if (o.ownerId !== footprint.ownerId && footprintsPenetrate(footprint, o)) return o.ownerId;
+    }
+  }
+  return null;
 };
 
 export const clampPlanMove = (
@@ -279,16 +291,12 @@ export const clampPlanMove = (
 const SWEEP_MIN_STEPS = 24;
 const SWEEP_MAX_STEPS = 4096;
 
-// Smallest obstacle "thickness" band along the sweep, so the step length stays
-// below it and a thin obstacle can never be straddled between two samples.
 const minObstacleBandMm = (obstacles: PlanFootprint[]): number => {
   let min = Number.POSITIVE_INFINITY;
   for (const o of obstacles) min = Math.min(min, o.halfWidthMm);
   return Number.isFinite(min) ? Math.max(2, min) : 2;
 };
 
-// When the destination is clear but the straight path crosses an obstacle, stop
-// the moved object flush at the near face instead of letting it teleport behind.
 const sweptBoundary = (
   footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
   obstacles: PlanFootprint[],
@@ -296,7 +304,6 @@ const sweptBoundary = (
   dyMm: number,
 ): PlanMoveDelta | null => {
   const pathLen = Math.hypot(dxMm, dyMm);
-  // Resolve sweep step below the thinnest obstacle band so we cannot tunnel.
   const steps = Math.min(
     SWEEP_MAX_STEPS,
     Math.max(SWEEP_MIN_STEPS, Math.ceil(pathLen / minObstacleBandMm(obstacles))),
@@ -325,16 +332,23 @@ export const slidePlanMove = (
   dxMm: number,
   dyMm: number,
 ): PlanMoveDelta => {
-  if (penetratesAny(footprintAt(0, 0), obstacles)) return { dxMm, dyMm };
-  if (!penetratesAny(footprintAt(dxMm, dyMm), obstacles)) {
-    return sweptBoundary(footprintAt, obstacles, dxMm, dyMm) ?? { dxMm, dyMm };
+  // If the body already overlaps something at the start, exclude only those obstacles
+  // so it can slide free of an existing overlap — but KEEP every other obstacle active
+  // so it still can't tunnel through a fresh object. (Previously a start-overlap freed
+  // the whole move, which let a flush/overlapping body pass straight through others.)
+  const startFp = footprintAt(0, 0);
+  const active = penetratesAny(startFp, obstacles)
+    ? obstacles.filter((o) => !penetratesAny(startFp, [o]))
+    : obstacles;
+  if (!penetratesAny(footprintAt(dxMm, dyMm), active)) {
+    return sweptBoundary(footprintAt, active, dxMm, dyMm) ?? { dxMm, dyMm };
   }
-  const alongX = clampPlanMove(footprintAt, obstacles, dxMm, 0);
-  const alongY = clampPlanMove(footprintAt, obstacles, 0, dyMm);
-  if (!penetratesAny(footprintAt(alongX.dxMm, alongY.dyMm), obstacles)) {
+  const alongX = clampPlanMove(footprintAt, active, dxMm, 0);
+  const alongY = clampPlanMove(footprintAt, active, 0, dyMm);
+  if (!penetratesAny(footprintAt(alongX.dxMm, alongY.dyMm), active)) {
     return { dxMm: alongX.dxMm, dyMm: alongY.dyMm };
   }
-  return clampPlanMove(footprintAt, obstacles, dxMm, dyMm);
+  return clampPlanMove(footprintAt, active, dxMm, dyMm);
 };
 
 export const clampPlanStretch = (

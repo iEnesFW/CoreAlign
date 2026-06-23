@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPlanFootprint,
   buildPolygonFootprint,
+  isFloating,
   penetratesAny,
   restElevationMm,
   slidePlanMove,
 } from './planCollision';
 import type { PlanFootprint } from './planCollision';
 
-// Wall footprint: 200mm-thick (halfWidth 100) horizontal wall.
 const wall = (id: string, startX: number, lengthMm: number, rot = 0): PlanFootprint =>
   buildPlanFootprint(id, startX, 0, lengthMm, rot, 100, 0, 2600);
 
@@ -21,39 +21,36 @@ describe('footprint penetration (oriented-rectangle SAT)', () => {
 
   it('blocks a deep body-into-body overlap of two collinear walls', () => {
     const a = wall('a', 0, 2000);
-    const b = wall('b', 1500, 2000); // 500mm overlap
+    const b = wall('b', 1500, 2000);
     expect(penetratesAny(a, [b])).toBe(true);
   });
 
   it('allows a perpendicular corner butt-joint (overlap within one half width)', () => {
-    const a = wall('a', 0, 2000, 0); // ends at (2000, 0)
-    const b = buildPlanFootprint('b', 2000, 0, 2000, 90, 100, 0, 2600); // starts at corner
+    const a = wall('a', 0, 2000, 0);
+    const b = buildPlanFootprint('b', 2000, 0, 2000, 90, 100, 0, 2600);
     expect(penetratesAny(a, [b])).toBe(false);
   });
 
   it('blocks a perpendicular wall that slices deep along another wall end face', () => {
-    const a = wall('a', 0, 2000, 0); // body x[0,2000], y[-100,100]
-    const b = buildPlanFootprint('b', 2000, 100, 2000, 270, 100, 0, 2600); // slices down A's end
+    const a = wall('a', 0, 2000, 0);
+    const b = buildPlanFootprint('b', 2000, 100, 2000, 270, 100, 0, 2600);
     expect(penetratesAny(a, [b])).toBe(true);
   });
 
   it('blocks two parallel walls overlapping side by side along their length', () => {
-    const a = wall('a', 0, 2000, 0); // body y[-100,100]
-    const b = buildPlanFootprint('b', 0, 150, 2000, 0, 100, 0, 2600); // body y[50,250]
+    const a = wall('a', 0, 2000, 0);
+    const b = buildPlanFootprint('b', 0, 150, 2000, 0, 100, 0, 2600);
     expect(penetratesAny(a, [b])).toBe(true);
   });
 });
 
-// Mover: a 50mm-thick run centered on a horizontal segment at the origin.
 const moverAt = (dxMm: number, dyMm: number): PlanFootprint =>
   buildPlanFootprint('mover', -500 + dxMm, -60 + dyMm, 1000, 0, 25, 0, 2400);
 
 describe('slidePlanMove swept collision', () => {
   it('stops a long drag flush at the near face of a thin obstacle (no tunneling)', () => {
-    // A 50mm run lying across the path at y=0.
     const obstacle = buildPlanFootprint('run', -500, 0, 1000, 0, 25, 0, 2400);
     const result = slidePlanMove(moverAt, [obstacle], 0, 3000);
-    // Must NOT return the full 3000mm move (which would teleport behind).
     expect(result.dyMm).toBeLessThan(200);
     expect(result.dyMm).toBeGreaterThanOrEqual(0);
   });
@@ -69,9 +66,22 @@ describe('slidePlanMove swept collision', () => {
     const result = slidePlanMove(moverAt, [obstacle], 0, 120);
     expect(result.dyMm).toBeLessThan(60);
   });
+
+  it('escapes an existing overlap but still cannot tunnel through a different object (B1)', () => {
+    const overlapping = buildPlanFootprint('a', -500, -60, 1000, 0, 25, 0, 2400); // overlaps the mover at start
+    const ahead = buildPlanFootprint('b', -500, 1000, 1000, 0, 25, 0, 2400); // a fresh object in the path
+    const result = slidePlanMove(moverAt, [overlapping, ahead], 0, 3000);
+    expect(result.dyMm).toBeGreaterThan(500); // moved free of the overlap
+    expect(result.dyMm).toBeLessThan(1100); // but stopped at B, did not pass through to 3000
+  });
+
+  it('moves freely out of an existing overlap when nothing else is in the path (B1)', () => {
+    const overlapping = buildPlanFootprint('a', -500, -60, 1000, 0, 25, 0, 2400);
+    const result = slidePlanMove(moverAt, [overlapping], 0, 3000);
+    expect(result.dyMm).toBe(3000);
+  });
 });
 
-// An L-shaped (non-convex) plan polygon at z [0, 2600].
 const lShape: PlanFootprint = buildPolygonFootprint(
   'poly',
   [
@@ -88,12 +98,12 @@ const lShape: PlanFootprint = buildPolygonFootprint(
 
 describe('polygon footprint penetration', () => {
   it('flags a rectangle that pokes into a non-convex polygon body', () => {
-    const r = buildPlanFootprint('r', 2000, 200, 600, 0, 200, 0, 2600); // inside the L base arm
+    const r = buildPlanFootprint('r', 2000, 200, 600, 0, 200, 0, 2600);
     expect(penetratesAny(r, [lShape])).toBe(true);
   });
 
   it('does not flag a rectangle sitting in the polygon notch (the missing corner)', () => {
-    const r = buildPlanFootprint('r', 1500, 1500, 1000, 0, 200, 0, 2600); // in the cut-out notch
+    const r = buildPlanFootprint('r', 1500, 1500, 1000, 0, 200, 0, 2600);
     expect(penetratesAny(r, [lShape])).toBe(false);
   });
 
@@ -114,7 +124,6 @@ describe('polygon footprint penetration', () => {
       0,
       2600,
     );
-    // Inside the square but with one corner exactly on its right edge (x=2000).
     const r = buildPlanFootprint('r', 2000, 1000, 600, 180, 300, 0, 2600);
     expect(penetratesAny(r, [square])).toBe(true);
   });
@@ -141,5 +150,29 @@ describe('restElevationMm (stacking)', () => {
 
   it('never rests a footprint on itself', () => {
     expect(restElevationMm(wallTop, [wallTop], 0)).toBe(0);
+  });
+});
+
+describe('isFloating', () => {
+  const wallTop = buildPlanFootprint('wall', 0, 0, 2000, 0, 100, 0, 2600);
+
+  it('flags a roof hanging far above the wall it should rest on', () => {
+    const roof = buildPlanFootprint('roof', 0, -200, 2000, 0, 400, 3000, 3150);
+    expect(isFloating(roof, [wallTop], 50)).toBe(true);
+  });
+
+  it('does not flag a roof resting on the wall top', () => {
+    const roof = buildPlanFootprint('roof', 0, -200, 2000, 0, 400, 2600, 2750);
+    expect(isFloating(roof, [wallTop], 50)).toBe(false);
+  });
+
+  it('does not flag an object at/near the ground', () => {
+    const floor = buildPlanFootprint('floor', 0, 0, 2000, 0, 400, 0, 150);
+    expect(isFloating(floor, [wallTop], 50)).toBe(false);
+  });
+
+  it('does not flag a roof embedded in a wall taller than its base', () => {
+    const roof = buildPlanFootprint('roof', 0, -200, 2000, 0, 400, 2000, 2150);
+    expect(isFloating(roof, [wallTop], 50)).toBe(false);
   });
 });
