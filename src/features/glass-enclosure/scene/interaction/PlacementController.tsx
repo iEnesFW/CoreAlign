@@ -290,6 +290,13 @@ export function PlacementController({
   const followPointer = (e: ThreeEvent<PointerEvent>) => {
     const gridX = snapToPlaceGrid(e.point.x * MM);
     const gridY = snapToPlaceGrid(e.point.z * MM);
+    // A slab (roof/floor) is large; snapping its footprint probes to every wall/run
+    // corner yanks it far off the cursor. Slabs follow the cursor on the grid only;
+    // walls/runs keep full corner/edge snapping (they butt against neighbours).
+    if (!isLine) {
+      applyAt(gridX, gridY, []);
+      return;
+    }
     const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
     applyAt(stuck.dxMm, stuck.dyMm, stuck.guides);
   };
