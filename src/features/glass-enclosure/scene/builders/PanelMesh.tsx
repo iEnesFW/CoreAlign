@@ -110,8 +110,13 @@ export function PanelMesh({
     // Must stay a SUBSET of panelIsShaped (which gates the glass mesh): an arched top
     // only counts once it has a positive rise, else a 0-rise arched pane would suppress
     // the rect frame yet render no band (panelIsShaped=false → no shaped glass) = bare glass.
+    // Rounded corners count too — the band follows the filleted silhouette panelOutlinePointsMm emits.
     const frameShaped =
-      sk === 'ellipse' || sk === 'polygon' || st === 'raked' || (st === 'arched' && (sa ?? 0) > 0);
+      sk === 'ellipse' ||
+      sk === 'polygon' ||
+      st === 'raked' ||
+      (st === 'arched' && (sa ?? 0) > 0) ||
+      Boolean(sc && ((sc.tl ?? 0) > 0 || (sc.tr ?? 0) > 0 || (sc.bl ?? 0) > 0 || (sc.br ?? 0) > 0));
     if (!frameShaped || sw === undefined || sh === undefined) return null;
     return buildPanelFrameGeometry(
       {

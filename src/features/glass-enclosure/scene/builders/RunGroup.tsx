@@ -148,12 +148,14 @@ export function RunGroup({
   const firstPanel = panels[0];
   // Matches PanelMesh's frameShaped (a subset of panelIsShaped): arched needs a positive
   // rise, else suppressing the rect frame would leave the pane with no frame at all.
+  const fcr = firstPanel?.cornerRadiiMm;
   const isSingleShapedPanel =
     panels.length === 1 &&
     Boolean(
       firstPanel?.shapeKind ||
       firstPanel?.topShape === 'raked' ||
-      (firstPanel?.topShape === 'arched' && (firstPanel.archRiseMm ?? 0) > 0),
+      (firstPanel?.topShape === 'arched' && (firstPanel.archRiseMm ?? 0) > 0) ||
+      (fcr && ((fcr.tl ?? 0) > 0 || (fcr.tr ?? 0) > 0 || (fcr.bl ?? 0) > 0 || (fcr.br ?? 0) > 0)),
     );
   // Per-edge frame visibility (frameless / silicone-joined designs); missing = all on.
   const fe = run.frameEdges;

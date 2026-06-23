@@ -85,6 +85,58 @@ describe('panelOutlinePointsMm', () => {
     expect(Math.max(...ys)).toBeCloseTo(2000, 0);
     expect(Math.min(...ys)).toBeCloseTo(0, 0);
   });
+
+  it('rounds the corners of a plain rect into arcs that stay in the cell', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      cornerRadiiMm: { tl: 100, tr: 100, br: 100, bl: 100 },
+    });
+    expect(pts.length).toBeGreaterThan(4);
+    expect(Math.max(...pts.map((p) => p.x))).toBeLessThanOrEqual(500.001);
+    expect(Math.min(...pts.map((p) => p.x))).toBeGreaterThanOrEqual(-500.001);
+    expect(Math.max(...pts.map((p) => p.y))).toBeLessThanOrEqual(2000.001);
+    expect(Math.min(...pts.map((p) => p.y))).toBeGreaterThanOrEqual(-0.001);
+    // the sharp corner vertices are replaced by fillet arcs
+    expect(pts.some((p) => p.x === -500 && p.y === 0)).toBe(false);
+    expect(pts.some((p) => p.x === 500 && p.y === 2000)).toBe(false);
+  });
+
+  it('a rect with no / zero radii stays a sharp 4-point rectangle', () => {
+    expect(panelOutlinePointsMm({ widthMm: 1000, heightMm: 2000, cornerRadiiMm: {} })).toHaveLength(
+      4,
+    );
+    expect(
+      panelOutlinePointsMm({
+        widthMm: 1000,
+        heightMm: 2000,
+        cornerRadiiMm: { tl: 0, tr: 0, br: 0, bl: 0 },
+      }),
+    ).toHaveLength(4);
+  });
+
+  it('clamps an oversized corner radius to the half-dimension (no overflow)', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      cornerRadiiMm: { tl: 5000, tr: 5000, br: 5000, bl: 5000 },
+    });
+    expect(pts.length).toBeGreaterThan(4);
+    expect(Math.max(...pts.map((p) => p.x))).toBeLessThanOrEqual(500.001);
+    expect(Math.min(...pts.map((p) => p.x))).toBeGreaterThanOrEqual(-500.001);
+  });
+
+  it('an arched head ignores corner radii (the crown owns the top edge)', () => {
+    const pts = panelOutlinePointsMm({
+      widthMm: 1000,
+      heightMm: 2000,
+      topShape: 'arched',
+      archRiseMm: 300,
+      cornerRadiiMm: { tl: 100, tr: 100, br: 100, bl: 100 },
+    });
+    expect(pts[0]).toEqual({ x: -500, y: 0 });
+    expect(pts[1]).toEqual({ x: 500, y: 0 });
+  });
 });
 
 describe('panelIsShaped', () => {
