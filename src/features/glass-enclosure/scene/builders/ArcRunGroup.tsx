@@ -311,6 +311,7 @@ export function ArcRunGroup({
               widthM={Math.max(0.05, chord.chordM - 0.012)}
               heightM={facetHeightMm / 1000}
               shapeSpec={shapeSpec}
+              frameColor={profileColor}
               thicknessMm={glass?.thicknessMm ?? 8}
               glassStructure={glass?.structure}
               openingType={panel.openingType}

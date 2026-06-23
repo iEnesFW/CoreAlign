@@ -488,6 +488,7 @@ export function RunGroup({
                 widthM={Math.max(0.05, widthM - 0.012)}
                 heightM={panelGlassHeightMm / 1000}
                 shapeSpec={shapeSpec}
+                frameColor={profileColor}
                 thicknessMm={glass?.thicknessMm ?? 8}
                 glassStructure={glass?.structure}
                 openingType={panel.openingType}

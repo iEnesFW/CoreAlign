@@ -33,6 +33,7 @@ interface PanelMeshProps {
   isSelected: boolean;
   onSelect: () => void;
   shapeSpec?: PanelGlassSpec | null;
+  frameColor?: string;
 }
 
 const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
@@ -65,6 +66,7 @@ export function PanelMesh({
   isSelected,
   onSelect,
   shapeSpec,
+  frameColor,
 }: PanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -152,7 +154,7 @@ export function PanelMesh({
           {frameGeometry && (
             <mesh geometry={frameGeometry} position={[0, -heightM / 2, 0]} castShadow receiveShadow>
               <meshStandardMaterial
-                color={isSelected ? '#3b82f6' : '#aab4ba'}
+                color={isSelected ? '#3b82f6' : (frameColor ?? '#aab4ba')}
                 metalness={0.5}
                 roughness={0.5}
               />
