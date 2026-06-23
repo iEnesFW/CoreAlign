@@ -103,9 +103,12 @@ export function PanelMesh({
   }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
   useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
   const frameGeometry = useMemo(() => {
-    // Only the true silhouette shapes (oval / polygon) get a wrapping frame band; raked
-    // / arched / rounded-rect top shapes keep the normal rectangular cell frame.
-    if ((sk !== 'ellipse' && sk !== 'polygon') || sw === undefined || sh === undefined) return null;
+    // The wrapping frame band follows any silhouette the outline reflects: oval / polygon
+    // and the raked / arched top edges (panelOutlinePointsMm carries those). A pure
+    // rounded-rect (cornerRadii only) keeps the plain cell frame — its outline stays a
+    // sharp rectangle so a band would not match the rounded glass.
+    const frameShaped = sk === 'ellipse' || sk === 'polygon' || Boolean(st && st !== 'flat');
+    if (!frameShaped || sw === undefined || sh === undefined) return null;
     return buildPanelFrameGeometry(
       {
         widthMm: sw,

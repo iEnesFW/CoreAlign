@@ -39,13 +39,18 @@ export function PanelPolygonEditor({
   const toSvgY = (y: number) => h - y;
 
   const toPanel = (clientX: number, clientY: number): PanelPoint => {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect || rect.width === 0 || rect.height === 0) return { x: 0, y: 0 };
-    const fx = (clientX - rect.left) / rect.width;
-    const fy = (clientY - rect.top) / rect.height;
+    const svg = svgRef.current;
+    const ctm = svg?.getScreenCTM();
+    if (!svg || !ctm) return { x: 0, y: 0 };
+    // Map the click through the SVG's own screen matrix so it lands exactly under the
+    // cursor regardless of preserveAspectRatio letterboxing (a manual rect ratio drifts).
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const local = pt.matrixTransform(ctm.inverse());
     return {
-      x: clamp(snap(fx * w - w / 2), -w / 2, w / 2),
-      y: clamp(snap(h - fy * h), 0, h),
+      x: clamp(snap(local.x - w / 2), -w / 2, w / 2),
+      y: clamp(snap(h - local.y), 0, h),
     };
   };
 

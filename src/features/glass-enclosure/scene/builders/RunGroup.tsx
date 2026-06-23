@@ -145,7 +145,10 @@ export function RunGroup({
   // A single shaped pane (e.g. an autofilled oval/polygon hole) draws its own shape-matched
   // frame band (PanelMesh), so the rectangular run perimeter is suppressed — otherwise a
   // square frame boxes in the shaped glass ("panel kare gibi").
-  const isSingleShapedPanel = panels.length === 1 && Boolean(panels[0]?.shapeKind);
+  const firstPanel = panels[0];
+  const isSingleShapedPanel =
+    panels.length === 1 &&
+    Boolean(firstPanel?.shapeKind || (firstPanel?.topShape && firstPanel.topShape !== 'flat'));
   // Per-edge frame visibility (frameless / silicone-joined designs); missing = all on.
   const fe = run.frameEdges;
   const showTopRail = fe ? fe.top : true;
