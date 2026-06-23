@@ -2779,6 +2779,14 @@
         "BL": "Sol alt",
         "BR": "Sağ alt"
       },
+      "Frame": {
+        "Title": "Profil kenarları",
+        "top": "Üst",
+        "bottom": "Alt",
+        "left": "Sol",
+        "right": "Sağ",
+        "Mullions": "Ara dikmeler (kapalıyken camlar macunla birleşir)"
+      },
       "Surface": {
         "Title": "Çizilen yüzey",
         "Delete": "Yüzeyi sil",

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type {
   GlassProjectDto,
   GlassValidationFindingDto,
+  RunFrameEdges,
   SceneCameraState,
   SceneConnectionState,
   SceneHardwareItem,
@@ -162,6 +163,10 @@ interface DesignerState {
   setClipboard: (clipboard: DesignerClipboard | null) => void;
   setPasteArmed: (armed: boolean) => void;
   setRunGlassBent: (runId: string, bent: boolean) => void;
+  setRunFrame: (
+    runId: string,
+    patch: { frameEdges?: RunFrameEdges | null; hasMullions?: boolean | null },
+  ) => void;
 
   addWall: (wall: SceneWallState) => void;
   updateWall: (wallId: string, patch: Partial<SceneWallState>) => void;
@@ -565,6 +570,23 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       runs: current.scene.runs.map((run) =>
         run.id === runId ? { ...run, arcGlassBent: bent } : run,
+      ),
+    };
+    set(pushHistory(current, next));
+  },
+
+  setRunFrame: (runId, patch) => {
+    const current = get();
+    const next: SceneState = {
+      ...current.scene,
+      runs: current.scene.runs.map((run) =>
+        run.id === runId
+          ? {
+              ...run,
+              frameEdges: patch.frameEdges !== undefined ? patch.frameEdges : run.frameEdges,
+              hasMullions: patch.hasMullions !== undefined ? patch.hasMullions : run.hasMullions,
+            }
+          : run,
       ),
     };
     set(pushHistory(current, next));
@@ -1136,8 +1158,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const hwByPanel = new Map<string, SceneHardwareItem[]>();
     const bentByRun = new Map<string, boolean>();
+    const frameByRun = new Map<string, RunFrameEdges>();
+    const mullionsByRun = new Map<string, boolean>();
     for (const r of scene.runs) {
       if (r.arcGlassBent) bentByRun.set(r.id, true);
+      if (r.frameEdges) frameByRun.set(r.id, r.frameEdges);
+      if (r.hasMullions === false) mullionsByRun.set(r.id, false);
       for (const p of r.panels) {
         if (p.hardware?.length) hwByPanel.set(p.id, p.hardware);
       }
@@ -1148,6 +1174,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     if (
       hwByPanel.size === 0 &&
       bentByRun.size === 0 &&
+      frameByRun.size === 0 &&
+      mullionsByRun.size === 0 &&
       snapshotWalls.length === 0 &&
       snapshotSlabs.length === 0 &&
       snapshotSurfaces.length === 0
@@ -1161,6 +1189,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       runs: current.scene.runs.map((run) => ({
         ...run,
         arcGlassBent: bentByRun.get(run.id) ?? run.arcGlassBent ?? false,
+        frameEdges: frameByRun.get(run.id) ?? run.frameEdges ?? null,
+        hasMullions: mullionsByRun.has(run.id) ? false : (run.hasMullions ?? true),
         panels: run.panels.map((panel) => {
           const hw = hwByPanel.get(panel.id);
           return hw ? { ...panel, hardware: hw } : panel;

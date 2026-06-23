@@ -438,8 +438,20 @@ export interface SceneRunState {
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
   arcGlassBent?: boolean;
+  frameEdges?: RunFrameEdges | null;
+  hasMullions?: boolean | null;
   locked?: boolean;
   panels: ScenePanelState[];
+}
+
+// Per-edge frame visibility for frameless / structural-glazing designs (e.g. only a
+// bottom rail, glass top + sides; or no mullions, glasses joined with silicone).
+// Persisted in the sceneJson blob (reconciled on load like arcGlassBent) — no migration.
+export interface RunFrameEdges {
+  top: boolean;
+  bottom: boolean;
+  left: boolean;
+  right: boolean;
 }
 
 export interface SceneSlabState {

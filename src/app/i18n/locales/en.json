@@ -2779,6 +2779,14 @@
         "BL": "Bottom left",
         "BR": "Bottom right"
       },
+      "Frame": {
+        "Title": "Profile edges",
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right",
+        "Mullions": "Mullions (off = glasses joined with silicone)"
+      },
       "Surface": {
         "Title": "Drawn surface",
         "Delete": "Delete surface",

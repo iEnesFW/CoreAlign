@@ -23,6 +23,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   const selection = useDesignerStore((s) => s.selection);
   const runs = useDesignerStore((s) => s.scene.runs);
   const updateRun = useDesignerStore((s) => s.updateRun);
+  const setRunFrame = useDesignerStore((s) => s.setRunFrame);
   const { persistRun, deleteRun, rebalance } = useRunEntityActions();
 
   const run = useMemo(() => runs.find((r) => r.id === selection.runId), [runs, selection.runId]);
@@ -231,6 +232,43 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
               onChange={(e) => commit({ hasBottomThreshold: e.target.checked })}
             />
             {t('GlassEnclosure.Field.BottomThreshold')}
+          </label>
+        </div>
+      )}
+
+      {show('hardware') && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.Frame.Title', { defaultValue: 'Profil kenarları' })}
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {(['top', 'bottom', 'left', 'right'] as const).map((edge) => {
+              const fe = run.frameEdges ?? { top: true, bottom: true, left: true, right: true };
+              return (
+                <label key={edge} className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={fe[edge]}
+                    onChange={(e) =>
+                      setRunFrame(run.id, { frameEdges: { ...fe, [edge]: e.target.checked } })
+                    }
+                  />
+                  {t(`GlassEnclosure.Designer.Frame.${edge}` as never, {
+                    defaultValue: { top: 'Üst', bottom: 'Alt', left: 'Sol', right: 'Sağ' }[edge],
+                  })}
+                </label>
+              );
+            })}
+          </div>
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={run.hasMullions !== false}
+              onChange={(e) => setRunFrame(run.id, { hasMullions: e.target.checked })}
+            />
+            {t('GlassEnclosure.Designer.Frame.Mullions', {
+              defaultValue: 'Ara dikmeler (kapalıyken camlar macunla birleşir)',
+            })}
           </label>
         </div>
       )}
