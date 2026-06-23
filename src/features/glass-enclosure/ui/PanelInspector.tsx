@@ -70,12 +70,33 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
         ? 'round'
         : 'oval'
       : 'rect';
+  // Switching shape resets the other shape fields so no orphaned data survives the
+  // transition (a leftover polygon JSON or top-shape under a rectangle was the R1 crash).
+  const clearedShapeFields = {
+    shapePointsJson: null,
+    topShape: null,
+    topRightHeightMm: null,
+    archRiseMm: null,
+  } as const;
+
+  const selectShapeKind = (k: 'rect' | 'round' | 'oval') =>
+    commit(
+      k === 'rect'
+        ? { shapeKind: null, ...clearedShapeFields }
+        : k === 'round'
+          ? { shapeKind: 'ellipse', heightMm: draft.widthMm, ...clearedShapeFields }
+          : { shapeKind: 'ellipse', ...clearedShapeFields },
+    );
+
   const applyPolygonPreset = (sides: number) =>
     commit({
       shapeKind: 'polygon',
       shapePointsJson: serializePanelPolygonPoints(
         presetPolygonPoints(sides, draft.widthMm, draft.heightMm ?? run.heightMm),
       ),
+      topShape: null,
+      topRightHeightMm: null,
+      archRiseMm: null,
     });
 
   const selectRun = () =>
@@ -185,15 +206,7 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
                 <button
                   key={k}
                   type="button"
-                  onClick={() =>
-                    commit(
-                      k === 'rect'
-                        ? { shapeKind: null }
-                        : k === 'round'
-                          ? { shapeKind: 'ellipse', heightMm: draft.widthMm }
-                          : { shapeKind: 'ellipse' },
-                    )
-                  }
+                  onClick={() => selectShapeKind(k)}
                   className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
                     shapeKindValue === k
                       ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'

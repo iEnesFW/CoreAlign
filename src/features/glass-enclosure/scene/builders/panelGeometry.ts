@@ -7,8 +7,22 @@ export interface PanelGlassSpec extends PanelOutlineSpec {
   cornerRadiiMm?: CornerRadiiMm | null;
 }
 
+const rectShapeMm = (widthMm: number, heightMm: number): Shape => {
+  const w = Math.max(1, widthMm) / 1000;
+  const h = Math.max(1, heightMm) / 1000;
+  const shape = new Shape();
+  shape.moveTo(-w / 2, 0);
+  shape.lineTo(w / 2, 0);
+  shape.lineTo(w / 2, h);
+  shape.lineTo(-w / 2, h);
+  shape.closePath();
+  return shape;
+};
+
 const panelFaceShape = (spec: PanelGlassSpec): Shape => {
   const pts = panelOutlinePointsMm(spec);
+  // Never extrude a degenerate outline (a transient/empty shape would throw in three).
+  if (pts.length < 3) return rectShapeMm(spec.widthMm, spec.heightMm);
   const top = spec.topShape ?? 'flat';
   if (!spec.shapeKind && top !== 'arched' && pts.length === 4) {
     const r = spec.cornerRadiiMm ?? {};

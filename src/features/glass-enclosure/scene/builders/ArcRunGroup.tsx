@@ -5,6 +5,7 @@ import { CurvedPanelMesh } from './CurvedPanelMesh';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import { arcEndLocal, computeArcLayout, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { buildRunFootprint, restElevationMm } from '../interaction/planCollision';
@@ -283,6 +284,20 @@ export function ArcRunGroup({
             />
           );
         }
+        const facetWidthMm = Math.round(Math.max(0.05, chord.chordM - 0.012) * 1000);
+        const facetHeightMm =
+          panel.heightMm ?? Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
+        const shapeSpec = {
+          widthMm: facetWidthMm,
+          heightMm: facetHeightMm,
+          topShape: panel.topShape,
+          topRightHeightMm: panel.topRightHeightMm,
+          archRiseMm: panel.archRiseMm,
+          cornerRadiiMm: panel.cornerRadiiMm,
+          shapeKind: panel.shapeKind,
+          points:
+            panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
+        };
         return (
           <group
             key={panel.id}
@@ -294,7 +309,8 @@ export function ArcRunGroup({
               centerX={0}
               baseY={profileHalf}
               widthM={Math.max(0.05, chord.chordM - 0.012)}
-              heightM={Math.max(0.05, heightM - 2 * profileHalf)}
+              heightM={facetHeightMm / 1000}
+              shapeSpec={shapeSpec}
               thicknessMm={glass?.thicknessMm ?? 8}
               glassStructure={glass?.structure}
               openingType={panel.openingType}
