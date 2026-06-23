@@ -40,12 +40,50 @@ export interface PlanSnapResult extends PlanMoveDelta {
 }
 
 const PLAN_GRID_MM = 5;
-const FACE_SNAP_MM = 120;
-const CORNER_SNAP_MM = 150;
-const AXIS_SNAP_MM = 60;
+const FACE_SNAP_MM = 110;
+// A tighter corner radius so a body only snaps when its corner is genuinely close —
+// the old 150mm grabbed from far away and felt like it deflected to the wrong spot.
+const CORNER_SNAP_MM = 100;
+const AXIS_SNAP_MM = 50;
 const DIMENSION_STEP_MM = 10;
 
 export const EMPTY_SNAP_TARGETS: PlanSnapTargets = { points: [], segments: [] };
+
+const DEG_TO_RAD = Math.PI / 180;
+
+// Salient snap probes for a straight, rectangular body (wall / run): the two
+// centerline ends, the four face corners, and the two side-edge midpoints. Snapping
+// by the face corners — not just the centerline — is what lets a body butt FLUSH
+// against a neighbour's face instead of overlapping it by half its thickness; the
+// side-edge midpoints add the "middle of the edge" tick so an edge can line up to a
+// neighbour's edge midpoint. Mirrors the target points buildPlanSnapTargets emits.
+export const lineProbePoints = (
+  originXMm: number,
+  originYMm: number,
+  lengthMm: number,
+  rotationDeg: number,
+  halfWidthMm: number,
+): PlanPoint[] => {
+  const rad = rotationDeg * DEG_TO_RAD;
+  const dirX = Math.cos(rad);
+  const dirY = Math.sin(rad);
+  const endX = originXMm + lengthMm * dirX;
+  const endY = originYMm + lengthMm * dirY;
+  const midX = originXMm + (lengthMm / 2) * dirX;
+  const midY = originYMm + (lengthMm / 2) * dirY;
+  const nx = -dirY * halfWidthMm;
+  const ny = dirX * halfWidthMm;
+  return [
+    { x: originXMm, y: originYMm },
+    { x: endX, y: endY },
+    { x: originXMm + nx, y: originYMm + ny },
+    { x: originXMm - nx, y: originYMm - ny },
+    { x: endX + nx, y: endY + ny },
+    { x: endX - nx, y: endY - ny },
+    { x: midX + nx, y: midY + ny },
+    { x: midX - nx, y: midY - ny },
+  ];
+};
 
 export const snapDimensionMm = (value: number) =>
   Math.round(value / DIMENSION_STEP_MM) * DIMENSION_STEP_MM;
