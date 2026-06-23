@@ -20,6 +20,7 @@ const MM = 1000;
 const PLANE_SIZE_M = 400;
 const GRID_MM = 10;
 const CORNER_SNAP_MM = 200;
+const GROUND_EPS_MM = 5;
 const LINE_COLOR = '#0ea5e9';
 const POINT_COLOR = '#0284c7';
 
@@ -82,14 +83,19 @@ export function MeasureController({ snapTargets }: MeasureControllerProps) {
       }
       return true;
     });
-    if (surface) {
+    // A hit at (near) the ground — the viewport floor disk / grid — is treated as a
+    // ground pick so it still snaps to plan corners; real structure surfaces (y>0) are
+    // picked exactly in 3D for vertical / diagonal measurement.
+    if (surface && surface.point.y * MM > GROUND_EPS_MM) {
       return {
         x: Math.round(surface.point.x * MM),
         y: Math.round(surface.point.y * MM),
         z: Math.round(surface.point.z * MM),
       };
     }
-    const ground = groundCornerSnap(e.point.x * MM, e.point.z * MM, snapTargets);
+    const gx = surface ? surface.point.x * MM : e.point.x * MM;
+    const gz = surface ? surface.point.z * MM : e.point.z * MM;
+    const ground = groundCornerSnap(gx, gz, snapTargets);
     return { x: ground.x, y: 0, z: ground.y };
   };
 

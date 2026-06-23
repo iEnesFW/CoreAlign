@@ -101,7 +101,9 @@ export function PanelMesh({
   }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
   useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
   const frameGeometry = useMemo(() => {
-    if (!shaped || sw === undefined || sh === undefined) return null;
+    // Only the true silhouette shapes (oval / polygon) get a wrapping frame band; raked
+    // / arched / rounded-rect top shapes keep the normal rectangular cell frame.
+    if ((sk !== 'ellipse' && sk !== 'polygon') || sw === undefined || sh === undefined) return null;
     return buildPanelFrameGeometry(
       {
         widthMm: sw,
@@ -116,7 +118,7 @@ export function PanelMesh({
       35,
       Math.max(thicknessM * 1.6, 0.02),
     );
-  }, [shaped, sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
+  }, [sw, sh, st, str, sa, sc, sk, sp, thicknessM]);
   useEffect(() => () => frameGeometry?.dispose(), [frameGeometry]);
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {

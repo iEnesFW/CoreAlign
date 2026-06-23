@@ -64,14 +64,9 @@ public static class PanelCutGeometry
         var hL = Math.Max(1m, nominalHeightMm);
         if (shape is null) return hL;
 
-        if (shape.ShapeKind == "polygon")
-        {
-            var pts = ParsePolygonPoints(shape.PointsJson);
-            if (pts.Count < 3) return hL;
-            var maxY = pts[0].Y;
-            foreach (var p in pts) maxY = Math.Max(maxY, p.Y);
-            return Math.Max(hL, maxY);
-        }
+        // A polygon is scaled to fill the cell at render (panelOutline.ts), so its blank
+        // is exactly the nominal height — no extra crown above the head line.
+        if (shape.ShapeKind == "polygon") return hL;
 
         var top = shape.TopShape ?? "flat";
         var hR = top == "flat" ? hL : Math.Max(1m, shape.TopRightHeightMm ?? hL);
@@ -95,7 +90,9 @@ public static class PanelCutGeometry
 
         if (shape.ShapeKind == "polygon")
         {
-            var pts = ParsePolygonPoints(shape.PointsJson);
+            // Scale the authored polygon to fill the cell (w × hL) exactly as the renderer
+            // does (panelOutline.ts), so the costed/cut net area matches the drawn glass.
+            var pts = ScaleToCell(ParsePolygonPoints(shape.PointsJson), w, hL);
             return pts.Count >= 3 ? ShoelaceAreaMm2(pts) : w * hL;
         }
 
@@ -127,6 +124,36 @@ public static class PanelCutGeometry
             Fmt(shape.CornerRadiusBrMm),
             Fmt(shape.CornerRadiusBlMm),
             shape.ShapeKind == "polygon" ? shape.PointsJson ?? "" : "");
+    }
+
+    // Mirror panelOutline.ts: map the authored polygon's bounding box onto the panel
+    // cell (x → [-w/2, w/2] centred, y → [0, h]) so area/blank match the rendered glass.
+    private static List<(decimal X, decimal Y)> ScaleToCell(
+        List<(decimal X, decimal Y)> pts,
+        decimal widthMm,
+        decimal heightMm)
+    {
+        if (pts.Count < 3) return pts;
+        var minX = pts[0].X;
+        var maxX = pts[0].X;
+        var minY = pts[0].Y;
+        var maxY = pts[0].Y;
+        foreach (var p in pts)
+        {
+            minX = Math.Min(minX, p.X);
+            maxX = Math.Max(maxX, p.X);
+            minY = Math.Min(minY, p.Y);
+            maxY = Math.Max(maxY, p.Y);
+        }
+        var bw = maxX - minX;
+        var bh = maxY - minY;
+        if (bw <= 0m || bh <= 0m) return pts;
+        var sx = widthMm / bw;
+        var sy = heightMm / bh;
+        var cxp = (minX + maxX) / 2m;
+        var scaled = new List<(decimal X, decimal Y)>(pts.Count);
+        foreach (var p in pts) scaled.Add(((p.X - cxp) * sx, (p.Y - minY) * sy));
+        return scaled;
     }
 
     private static List<(decimal X, decimal Y)> ParsePolygonPoints(string? json)

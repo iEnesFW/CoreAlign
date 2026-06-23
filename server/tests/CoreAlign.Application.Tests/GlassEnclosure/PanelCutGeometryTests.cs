@@ -130,11 +130,25 @@ public class PanelCutGeometryTests
     }
 
     [Fact]
-    public void Polygon_bounding_height_grows_for_a_vertex_above_the_nominal_box()
+    public void Polygon_is_scaled_to_fill_the_cell_so_the_blank_is_the_nominal_height()
     {
+        // The renderer scales the authored polygon to fill the cell (panelOutline.ts),
+        // so a vertex authored above the nominal box is scaled down — the blank never
+        // overflows the nominal height.
         const string tall = "[{\"x\":-500,\"y\":0},{\"x\":500,\"y\":0},{\"x\":0,\"y\":2400}]";
         var poly = PanelCutShape.From(null, null, null, null, null, null, null, "polygon", tall);
-        PanelCutGeometry.BoundingHeightMm(2000m, poly).Should().Be(2400m);
+        PanelCutGeometry.BoundingHeightMm(2000m, poly).Should().Be(2000m);
+    }
+
+    [Fact]
+    public void Polygon_net_area_scales_a_sub_cell_outline_to_fill_the_cell()
+    {
+        // A small triangle (200×200 bbox) authored inside a 1000×2000 cell must be costed
+        // at the SCALED area that fills the cell (½·1000·2000 = 1,000,000), not the raw
+        // authored area (20,000) — matching the rendered + cut silhouette.
+        const string smallTri = "[{\"x\":-100,\"y\":0},{\"x\":100,\"y\":0},{\"x\":0,\"y\":200}]";
+        var poly = PanelCutShape.From(null, null, null, null, null, null, null, "polygon", smallTri);
+        PanelCutGeometry.NetAreaMm2(1000m, 2000m, poly).Should().Be(1_000_000m);
     }
 
     [Fact]
