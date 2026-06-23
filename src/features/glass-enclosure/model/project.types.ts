@@ -356,6 +356,7 @@ export interface SceneWallState {
   materialKey?: string | null;
   groupId?: string | null;
   cornerRadiiMm?: CornerRadiiMm;
+  cornerNotchMm?: CornerRadiiMm;
   openings?: SceneWallOpening[];
   features?: SceneWallFeature[];
   locked?: boolean;

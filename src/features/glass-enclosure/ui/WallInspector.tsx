@@ -242,6 +242,36 @@ export function WallInspector() {
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.CornerNotch.Title', { defaultValue: 'Köşe girintisi (mm)' })}
+        </p>
+        <div className="grid grid-cols-4 gap-1.5">
+          {(
+            [
+              ['tl', t('GlassEnclosure.Designer.Corner.TL', { defaultValue: 'Sol üst' })],
+              ['tr', t('GlassEnclosure.Designer.Corner.TR', { defaultValue: 'Sağ üst' })],
+              ['bl', t('GlassEnclosure.Designer.Corner.BL', { defaultValue: 'Sol alt' })],
+              ['br', t('GlassEnclosure.Designer.Corner.BR', { defaultValue: 'Sağ alt' })],
+            ] as const
+          ).map(([key, cornerLabel]) => (
+            <OpeningField
+              key={key}
+              label={cornerLabel}
+              value={wall.cornerNotchMm?.[key] ?? 0}
+              onCommit={(v) =>
+                commit({
+                  cornerNotchMm: {
+                    ...wall.cornerNotchMm,
+                    [key]: Math.max(0, Math.round(v)),
+                  },
+                })
+              }
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.Wall.ArcTitle', { defaultValue: 'Kavis (yay)' })}
         </p>
         <div className="grid grid-cols-3 gap-1.5">

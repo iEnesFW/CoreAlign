@@ -2787,6 +2787,9 @@
         "right": "Sağ",
         "Mullions": "Ara dikmeler (kapalıyken camlar macunla birleşir)"
       },
+      "CornerNotch": {
+        "Title": "Köşe girintisi (mm)"
+      },
       "Surface": {
         "Title": "Çizilen yüzey",
         "Delete": "Yüzeyi sil",

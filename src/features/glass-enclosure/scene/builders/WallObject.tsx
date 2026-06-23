@@ -4,6 +4,7 @@ import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { DoubleSide, ExtrudeGeometry, Path, ShapeGeometry, Vector3 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
+import { hasWallNotch, wallNotchedOutlineMm } from '../../model/wallOutline';
 import { buildCurvedBandGeometry } from './curvedExtrude';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, Texture } from 'three';
@@ -205,15 +206,27 @@ const buildWallGeometries = (
   const heightStartM = wall.heightMm / 1000;
   const heightEndM = (wall.heightEndMm ?? wall.heightMm) / 1000;
   const radii = wall.cornerRadiiMm ?? {};
-  const shape = filletedShapeMm(
-    [
-      { x: 0, z: 0 },
-      { x: wall.lengthMm, z: 0 },
-      { x: wall.lengthMm, z: wall.heightEndMm ?? wall.heightMm },
-      { x: 0, z: wall.heightMm },
-    ],
-    [radii.bl ?? 0, radii.br ?? 0, radii.tr ?? 0, radii.tl ?? 0],
-  );
+  // A per-corner rectangular notch (free corner indentation) modifies the face outline
+  // directly — a real cut, not a hole. Notches and fillet radii don't combine, so a
+  // notched wall uses sharp corners; plain walls keep the filleted-rectangle path.
+  const shape = hasWallNotch(wall.cornerNotchMm)
+    ? outlineToShape(
+        wallNotchedOutlineMm(
+          wall.lengthMm,
+          wall.heightMm,
+          wall.heightEndMm ?? wall.heightMm,
+          wall.cornerNotchMm,
+        ),
+      )
+    : filletedShapeMm(
+        [
+          { x: 0, z: 0 },
+          { x: wall.lengthMm, z: 0 },
+          { x: wall.lengthMm, z: wall.heightEndMm ?? wall.heightMm },
+          { x: 0, z: wall.heightMm },
+        ],
+        [radii.bl ?? 0, radii.br ?? 0, radii.tr ?? 0, radii.tl ?? 0],
+      );
   const openingBounds = [];
   const openingFrames: OpeningFrameRect[] = [];
   const sorted = [...(wall.openings ?? [])].sort((a, b) => a.offsetMm - b.offsetMm);

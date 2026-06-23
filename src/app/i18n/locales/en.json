@@ -2787,6 +2787,9 @@
         "right": "Right",
         "Mullions": "Mullions (off = glasses joined with silicone)"
       },
+      "CornerNotch": {
+        "Title": "Corner notch (mm)"
+      },
       "Surface": {
         "Title": "Drawn surface",
         "Delete": "Delete surface",
