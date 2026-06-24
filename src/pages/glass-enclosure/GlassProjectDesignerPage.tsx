@@ -59,6 +59,13 @@ import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDe
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
 import { enqueuePersist } from '@/features/glass-enclosure/model/persistQueue';
+import {
+  buildRunFootprint,
+  buildWallFootprint,
+  buildSlabFootprint,
+  buildSurfaceFootprint,
+  penetratesAny,
+} from '@/features/glass-enclosure/scene/interaction/planCollision';
 import type { DesignerTool, PlacementKind } from '@/features/glass-enclosure/model/designerStore';
 import type { SceneState } from '@/features/glass-enclosure/model/project.types';
 
@@ -334,32 +341,71 @@ export function GlassProjectDesignerPage() {
     (dxMm: number, dyMm: number) => {
       const state = useDesignerStore.getState();
       const sel = state.selection;
+      const scene = state.scene;
+      const runs = scene.runs;
+      const walls = scene.walls ?? [];
+      const slabs = scene.slabs ?? [];
+      const surfaces = scene.surfaces ?? [];
+      // WHY: a nudge may only block when it would CREATE a new overlap; an object that
+      // already overlaps (e.g. a glass run autofilled into a wall opening) must stay free to
+      // move out. Slabs/surfaces are floors that underlie walls/runs, so they never act as
+      // obstacles for them (only same-kind bodies do) — mirrors the drag obstacle set.
+      const blocks = (
+        footprintAt: (dx: number, dy: number) => Parameters<typeof penetratesAny>[0],
+        obstacles: Parameters<typeof penetratesAny>[1],
+      ) =>
+        penetratesAny(footprintAt(dxMm, dyMm), obstacles) &&
+        !penetratesAny(footprintAt(0, 0), obstacles);
       if (sel.kind === 'run' && sel.runId) {
-        const run = state.scene.runs.find((r) => r.id === sel.runId);
+        const run = runs.find((r) => r.id === sel.runId);
         if (!run) return;
+        const obstacles = [
+          ...walls.map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
+          ...runs
+            .filter((r) => r.id !== run.id)
+            .map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
+        ];
+        if (blocks((dx, dy) => buildRunFootprint(run, dx, dy, run.rotationDeg), obstacles)) return;
         state.updateRun(sel.runId, { originX: run.originX + dxMm, originY: run.originY + dyMm });
         const updated = useDesignerStore.getState().scene.runs.find((r) => r.id === sel.runId);
         if (updated) void persistRun(updated);
       } else if (sel.kind === 'wall' && sel.wallId) {
-        const wall = (state.scene.walls ?? []).find((w) => w.id === sel.wallId);
-        if (wall)
-          state.updateWall(sel.wallId, {
-            originX: wall.originX + dxMm,
-            originY: wall.originY + dyMm,
-          });
+        const wall = walls.find((w) => w.id === sel.wallId);
+        if (!wall) return;
+        const obstacles = [
+          ...walls
+            .filter((w) => w.id !== wall.id)
+            .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
+          ...runs.map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
+        ];
+        if (blocks((dx, dy) => buildWallFootprint(wall, dx, dy, wall.rotationDeg), obstacles))
+          return;
+        state.updateWall(sel.wallId, {
+          originX: wall.originX + dxMm,
+          originY: wall.originY + dyMm,
+        });
       } else if (sel.kind === 'slab' && sel.slabId) {
-        const slab = (state.scene.slabs ?? []).find((s) => s.id === sel.slabId);
-        if (slab)
-          state.updateSlab(sel.slabId, {
-            originX: slab.originX + dxMm,
-            originY: slab.originY + dyMm,
-          });
+        const slab = slabs.find((s) => s.id === sel.slabId);
+        if (!slab) return;
+        const obstacles = slabs
+          .filter((s) => s.id !== slab.id)
+          .map((s) => buildSlabFootprint(s, 0, 0, s.rotationDeg));
+        if (blocks((dx, dy) => buildSlabFootprint(slab, dx, dy, slab.rotationDeg), obstacles))
+          return;
+        state.updateSlab(sel.slabId, {
+          originX: slab.originX + dxMm,
+          originY: slab.originY + dyMm,
+        });
       } else if (sel.kind === 'surface' && sel.surfaceId) {
-        const surface = (state.scene.surfaces ?? []).find((s) => s.id === sel.surfaceId);
-        if (surface)
-          state.updateSurface(sel.surfaceId, {
-            points: surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
-          });
+        const surface = surfaces.find((s) => s.id === sel.surfaceId);
+        if (!surface) return;
+        const obstacles = surfaces
+          .filter((s) => s.id !== surface.id)
+          .map((s) => buildSurfaceFootprint(s, 0, 0));
+        if (blocks((dx, dy) => buildSurfaceFootprint(surface, dx, dy), obstacles)) return;
+        state.updateSurface(sel.surfaceId, {
+          points: surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
+        });
       }
     },
     [persistRun],
@@ -474,8 +520,8 @@ export function GlassProjectDesignerPage() {
       } else if (e.key === 'Delete') {
         e.preventDefault();
         handleDeleteSelection();
-      } else if (!meta && !e.altKey && e.key.startsWith('Arrow')) {
-        const step = e.shiftKey ? 1 : 10;
+      } else if (!meta && e.key.startsWith('Arrow')) {
+        const step = e.altKey ? 1 : e.shiftKey ? 100 : 10;
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           handleNudge(-step, 0);
