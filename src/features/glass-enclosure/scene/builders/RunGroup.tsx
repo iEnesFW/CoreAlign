@@ -497,6 +497,7 @@ export function RunGroup({
                 heightM={panelGlassHeightMm / 1000}
                 shapeSpec={shapeSpec}
                 frameColor={profileColor}
+                showFrameBand={isSingleShapedPanel}
                 thicknessMm={glass?.thicknessMm ?? 8}
                 glassStructure={glass?.structure}
                 openingType={panel.openingType}

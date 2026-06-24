@@ -34,6 +34,7 @@ interface PanelMeshProps {
   onSelect: () => void;
   shapeSpec?: PanelGlassSpec | null;
   frameColor?: string;
+  showFrameBand?: boolean;
 }
 
 const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
@@ -67,6 +68,7 @@ export function PanelMesh({
   onSelect,
   shapeSpec,
   frameColor,
+  showFrameBand = false,
 }: PanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -105,8 +107,10 @@ export function PanelMesh({
   }, [shaped, sw, sh, st, str, sa, sc, sn, sk, sp, thicknessM]);
   useEffect(() => () => shapedGeometry?.dispose(), [shapedGeometry]);
   const frameGeometry = useMemo(() => {
-    // The wrapping frame band follows whatever silhouette panelOutlinePointsMm emits:
-    // oval / polygon, raked / arched top edges, rounded corners and corner notches.
+    // The wrapping band is only the panel's OWN frame when the run's rectangular rails are
+    // suppressed (a single shaped pane). In a multi-panel run the cell rails already frame the
+    // pane, so adding the band on top reads as a "panel inside a panel" — skip it there.
+    if (!showFrameBand) return null;
     // Must stay a SUBSET of panelIsShaped (which gates the glass mesh): an arched top
     // only counts once it has a positive rise, else a 0-rise arched pane would suppress
     // the rect frame yet render no band (panelIsShaped=false → no shaped glass) = bare glass.
@@ -135,7 +139,7 @@ export function PanelMesh({
       35,
       Math.max(thicknessM * 1.6, 0.02),
     );
-  }, [sw, sh, st, str, sa, sc, sn, sk, sp, thicknessM]);
+  }, [showFrameBand, sw, sh, st, str, sa, sc, sn, sk, sp, thicknessM]);
   useEffect(() => () => frameGeometry?.dispose(), [frameGeometry]);
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
