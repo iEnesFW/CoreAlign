@@ -24,14 +24,14 @@ export const QueryError = ({
     <div
       className={cn(
         variant === 'card'
-          ? 'rounded-xl border border-dashed border-rose-300 bg-rose-50/50 px-6 py-10 dark:border-rose-500/30 dark:bg-rose-500/5'
+          ? 'rounded-xl border border-dashed border-danger-300 bg-danger-50/50 px-6 py-10 dark:border-danger-500/30 dark:bg-danger-500/5'
           : 'px-6 py-10',
         'flex flex-col items-center justify-center text-center',
         className,
       )}
       role="alert"
     >
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-500 ring-1 ring-rose-200/60 dark:text-rose-300 dark:ring-rose-500/30">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-danger-500/10 text-danger-500 ring-1 ring-danger-200/60 dark:text-danger-300 dark:ring-danger-500/30">
         <AlertTriangle size={22} />
       </div>
       <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -48,7 +48,7 @@ export const QueryError = ({
           type="button"
           onClick={onRetry}
           disabled={isRetrying}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-danger-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-danger-700 disabled:opacity-50"
         >
           <RefreshCw size={13} className={isRetrying ? 'animate-spin' : undefined} />
           {t('errorState.retry', { defaultValue: 'Retry' })}

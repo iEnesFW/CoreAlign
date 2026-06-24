@@ -1,8 +1,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Lock, LockOpen, Plus, RefreshCcw, ShieldAlert } from 'lucide-react';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  LockOpen,
+  Plus,
+  RefreshCcw,
+  ShieldAlert,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { Button } from '@/shared/ui/Button/Button';
+import { Badge } from '@/shared/ui/Badge/Badge';
+import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
 import {
   useAccountingPeriods,
   useClosePeriod,
@@ -15,11 +29,11 @@ import type {
   AccountingPeriodStatus,
 } from '@/features/pricing/model/pricing.types';
 
-const STATUS_STYLES: Record<AccountingPeriodStatus, string> = {
-  Open: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Closing: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Closed: 'bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Locked: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+const STATUS_VARIANTS: Record<AccountingPeriodStatus, BadgeVariant> = {
+  Open: 'success',
+  Closing: 'warning',
+  Closed: 'neutral',
+  Locked: 'danger',
 };
 
 const fmtDate = (iso: string, locale: string) => {
@@ -103,37 +117,40 @@ export const AccountingPeriodsPage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('accounting.periods.title', { defaultValue: 'Accounting periods' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('accounting.periods.subtitle', {
-              defaultValue: 'Close periods to prevent posting; lock to make it permanent.',
-            })}
-          </p>
-        </div>
-        <div className="inline-flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setSelectedYear((y) => y - 1)}
-            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            ←
-          </button>
-          <span className="font-semibold text-slate-900 dark:text-slate-100">{selectedYear}</span>
-          <button
-            type="button"
-            onClick={() => setSelectedYear((y) => y + 1)}
-            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            →
-          </button>
-        </div>
-      </div>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Calendar size={20} />}
+          title={t('accounting.periods.title', { defaultValue: 'Accounting periods' })}
+          subtitle={t('accounting.periods.subtitle', {
+            defaultValue: 'Close periods to prevent posting; lock to make it permanent.',
+          })}
+          trailing={
+            <div className="inline-flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedYear((y) => y - 1)}
+              >
+                <ChevronLeft size={14} />
+              </Button>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {selectedYear}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedYear((y) => y + 1)}
+              >
+                <ChevronRight size={14} />
+              </Button>
+            </div>
+          }
+        />
+      }
+    >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {allMonths.map((month) => {
           const period = periodFor(month);
@@ -153,11 +170,9 @@ export const AccountingPeriodsPage = () => {
                   )}
                 </div>
                 {period && (
-                  <span
-                    className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[period.status]}`}
-                  >
+                  <Badge variant={STATUS_VARIANTS[period.status]}>
                     {t(`accounting.status.${period.status}`, { defaultValue: period.status })}
-                  </span>
+                  </Badge>
                 )}
               </div>
 
@@ -175,45 +190,47 @@ export const AccountingPeriodsPage = () => {
 
               <div className="mt-3 flex flex-wrap gap-1">
                 {!period && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => createForMonth(month)}
-                    className="inline-flex items-center gap-1 rounded border border-indigo-200 bg-white px-2 py-1 text-[11px] font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-slate-900 dark:text-indigo-300"
                   >
                     <Plus size={11} />
                     {t('accounting.periods.create', { defaultValue: 'Open period' })}
-                  </button>
+                  </Button>
                 )}
                 {period?.status === 'Open' && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => closePeriod(period)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                    >
-                      <Lock size={11} />
-                      {t('accounting.periods.close', { defaultValue: 'Close' })}
-                    </button>
-                  </>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => closePeriod(period)}
+                  >
+                    <Lock size={11} />
+                    {t('accounting.periods.close', { defaultValue: 'Close' })}
+                  </Button>
                 )}
                 {period?.status === 'Closed' && (
                   <>
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => reopenPeriod(period)}
-                      className="inline-flex items-center gap-1 rounded border border-amber-200 bg-white px-2 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-50 dark:border-amber-500/30 dark:bg-slate-900 dark:text-amber-300"
                     >
                       <RefreshCcw size={11} />
                       {t('accounting.periods.reopen', { defaultValue: 'Reopen' })}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger"
+                      size="sm"
                       onClick={() => lockPeriod(period)}
-                      className="inline-flex items-center gap-1 rounded border border-rose-200 bg-white px-2 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-900 dark:text-rose-300"
                     >
                       <ShieldAlert size={11} />
                       {t('accounting.periods.lock', { defaultValue: 'Lock' })}
-                    </button>
+                    </Button>
                   </>
                 )}
                 {period?.status === 'Locked' && (
@@ -229,7 +246,7 @@ export const AccountingPeriodsPage = () => {
           );
         })}
       </div>
-    </div>
+    </ListPageTemplate>
   );
 };
 

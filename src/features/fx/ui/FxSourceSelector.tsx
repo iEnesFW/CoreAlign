@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import type { FxSourceCode } from '../api/fxRatesApi';
@@ -21,15 +21,16 @@ export const FxSourceSelector = ({
   const [defaultSource, setDefaultSource] = useState<FxSourceCode>('TCMB');
   const [overrides, setOverrides] = useState<Record<string, FxSourceCode>>({});
 
-  useEffect(() => {
-    if (!data) return;
+  const [syncedData, setSyncedData] = useState(data);
+  if (data && data !== syncedData) {
+    setSyncedData(data);
     setDefaultSource((data.defaultSource as FxSourceCode) ?? 'TCMB');
     const normalized: Record<string, FxSourceCode> = {};
     for (const [code, source] of Object.entries(data.perCurrencyOverrides ?? {})) {
       normalized[code.toUpperCase()] = source as FxSourceCode;
     }
     setOverrides(normalized);
-  }, [data]);
+  }
 
   const rows = useMemo(
     () => managedCurrencies.map((code) => code.toUpperCase()),
@@ -85,7 +86,7 @@ export const FxSourceSelector = ({
           id="fx-default-source"
           value={defaultSource}
           onChange={(event) => setDefaultSource(event.target.value as FxSourceCode)}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:w-48"
+          className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-success-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:w-48"
         >
           {FX_SOURCES.map((source) => (
             <option key={source} value={source}>
@@ -143,7 +144,7 @@ export const FxSourceSelector = ({
                     {current && (
                       <button
                         type="button"
-                        className="text-xs font-medium text-emerald-700 hover:text-emerald-900 dark:text-emerald-400"
+                        className="text-xs font-medium text-success-700 hover:text-success-900 dark:text-success-400"
                         onClick={() =>
                           setOverrides((prev) => {
                             const next = { ...prev };
@@ -166,7 +167,7 @@ export const FxSourceSelector = ({
       <div className="flex justify-end">
         <button
           type="button"
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="rounded-md bg-success-600 px-4 py-2 text-sm font-semibold text-white hover:bg-success-700 disabled:opacity-50"
           onClick={handleSave}
           disabled={mutation.isPending}
         >

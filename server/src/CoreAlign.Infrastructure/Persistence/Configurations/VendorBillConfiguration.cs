@@ -33,7 +33,6 @@ public class VendorBillConfiguration : IEntityTypeConfiguration<VendorBill>
 
         builder.HasIndex(b => new { b.TenantId, b.VendorId, b.BillNumber }).IsUnique();
         builder.HasIndex(b => new { b.TenantId, b.Status });
-        builder.HasIndex(b => new { b.TenantId, b.BillDate }).IsDescending(false, true);
 
         builder.Ignore(b => b.AmountDue);
     }
@@ -114,7 +113,9 @@ public class VendorPaymentApplicationConfiguration : IEntityTypeConfiguration<Ve
         builder.HasOne(a => a.VendorPayment).WithMany().HasForeignKey(a => a.VendorPaymentId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(a => a.VendorBill).WithMany().HasForeignKey(a => a.VendorBillId).OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => new { a.TenantId, a.VendorPaymentId });
+        builder.HasIndex(a => new { a.TenantId, a.VendorPaymentId, a.VendorBillId })
+            .IsUnique()
+            .HasDatabaseName("ux_vendor_payment_applications_tenant_payment_bill");
         builder.HasIndex(a => new { a.TenantId, a.VendorBillId });
     }
 }

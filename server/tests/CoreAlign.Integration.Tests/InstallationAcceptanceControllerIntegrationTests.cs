@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Installation;
 using CoreAlign.Domain.Entities.GlassEnclosure;
@@ -16,7 +17,7 @@ namespace CoreAlign.Integration.Tests;
 public class InstallationAcceptanceControllerIntegrationTests
 {
     private readonly CoreAlignWebApiFactory _factory;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     public InstallationAcceptanceControllerIntegrationTests(CoreAlignWebApiFactory factory)
     {
@@ -57,7 +58,7 @@ public class InstallationAcceptanceControllerIntegrationTests
             Notes: "Looks good");
 
         var response = await client.PatchAsJsonAsync(
-            $"/api/v1/installation-acceptances/{acceptanceId}/checklist", patchCmd);
+            $"/api/v1/installation-acceptances/{acceptanceId}/checklist", patchCmd, JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<ApiResponse<InstallationAcceptanceDto>>(JsonOptions);

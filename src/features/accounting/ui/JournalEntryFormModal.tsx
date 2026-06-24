@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, Plus, Trash2 } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useGLAccountTree } from '../hooks/useGLAccountQueries';
 import { useCreateJournalEntry } from '../hooks/useJournalEntryQueries';
@@ -20,12 +25,12 @@ interface FormLine extends JournalLineInput {
   key: number;
 }
 
-const ENTRY_TYPES: { value: JournalEntryType; label: string }[] = [
-  { value: 'Tahsil', label: 'Tahsil Fişi' },
-  { value: 'Tediye', label: 'Tediye Fişi' },
-  { value: 'Mahsup', label: 'Mahsup Fişi' },
-  { value: 'Acilis', label: 'Açılış Fişi' },
-  { value: 'Kapanis', label: 'Kapanış Fişi' },
+const ENTRY_TYPES: { value: JournalEntryType; labelKey: string; defaultLabel: string }[] = [
+  { value: 'Tahsil', labelKey: 'JournalEntries.TypeTahsil', defaultLabel: 'Tahsil Fişi' },
+  { value: 'Tediye', labelKey: 'JournalEntries.TypeTediye', defaultLabel: 'Tediye Fişi' },
+  { value: 'Mahsup', labelKey: 'JournalEntries.TypeMahsup', defaultLabel: 'Mahsup Fişi' },
+  { value: 'Acilis', labelKey: 'JournalEntries.TypeAcilis', defaultLabel: 'Açılış Fişi' },
+  { value: 'Kapanis', labelKey: 'JournalEntries.TypeKapanis', defaultLabel: 'Kapanış Fişi' },
 ];
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -52,7 +57,6 @@ export const JournalEntryFormModal = ({ onClose }: JournalEntryFormModalProps) =
   const [lines, setLines] = useState<FormLine[]>([emptyLine(1), emptyLine(2)]);
   const [postImmediately, setPostImmediately] = useState(true);
 
-  // Only postable + active accounts are valid line targets.
   const postableAccounts = useMemo<GLAccount[]>(() => {
     const all = accountsQuery.data?.data ?? [];
     return all.filter((a) => a.isPostable && a.isActive);
@@ -83,16 +87,27 @@ export const JournalEntryFormModal = ({ onClose }: JournalEntryFormModalProps) =
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isBalanced) {
-      toast.error('Borç ve alacak toplamları eşit olmalı.');
+      toast.error(
+        t('JournalEntries.ErrorDebitCreditEqual', {
+          defaultValue: 'Borç ve alacak toplamları eşit olmalı.',
+        }),
+      );
       return;
     }
     if (lines.some((l) => !l.accountId)) {
-      toast.error('Tüm satırlar için hesap seçilmelidir.');
+      toast.error(
+        t('JournalEntries.ErrorAccountRequired', {
+          defaultValue: 'Tüm satırlar için hesap seçilmelidir.',
+        }),
+      );
       return;
     }
     if (lines.some((l) => (l.debit > 0 && l.credit > 0) || (l.debit === 0 && l.credit === 0))) {
       toast.error(
-        'Her satır ya borçlu ya alacaklı olmalı (ikisi birden veya ikisi de boş olamaz).',
+        t('JournalEntries.ErrorLineDebitOrCredit', {
+          defaultValue:
+            'Her satır ya borçlu ya alacaklı olmalı (ikisi birden veya ikisi de boş olamaz).',
+        }),
       );
       return;
     }
@@ -128,214 +143,203 @@ export const JournalEntryFormModal = ({ onClose }: JournalEntryFormModalProps) =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-5xl rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            Yeni Yevmiye Fişi
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+    <Modal
+      open={true}
+      title={t('JournalEntries.NewEntryTitle', { defaultValue: 'Yeni Yevmiye Fişi' })}
+      icon={<BookOpen size={18} />}
+      onClose={onClose}
+      size="2xl"
+      className="max-w-5xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('JournalEntries.Cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button
+            type="submit"
+            form="journal-entry-form"
+            isLoading={createMutation.isPending}
+            disabled={createMutation.isPending || !isBalanced}
           >
-            <X size={16} />
-          </button>
+            {createMutation.isPending
+              ? t('JournalEntries.Saving', { defaultValue: 'Kaydediliyor…' })
+              : t('JournalEntries.Save', { defaultValue: 'Kaydet' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="journal-entry-form" onSubmit={submit} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Select
+            label={t('JournalEntries.FieldType', { defaultValue: 'Fiş Tipi' })}
+            value={type}
+            onChange={(e) => setType(e.target.value as JournalEntryType)}
+          >
+            {ENTRY_TYPES.map((entryType) => (
+              <option key={entryType.value} value={entryType.value}>
+                {t(entryType.labelKey, { defaultValue: entryType.defaultLabel })}
+              </option>
+            ))}
+          </Select>
+          <Input
+            label={t('JournalEntries.FieldEntryDate', { defaultValue: 'Fiş Tarihi' })}
+            type="date"
+            value={entryDate}
+            onChange={(e) => setEntryDate(e.target.value)}
+            required
+          />
+          <Input
+            label={t('JournalEntries.FieldPostingDate', { defaultValue: 'Yevmiye Tarihi' })}
+            type="date"
+            value={postingDate}
+            onChange={(e) => setPostingDate(e.target.value)}
+            required
+          />
+          <Input
+            label={t('JournalEntries.FieldReference', { defaultValue: 'Referans' })}
+            type="text"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            maxLength={200}
+            placeholder={t('JournalEntries.ReferencePlaceholder', {
+              defaultValue: 'Belge no, açıklama ref…',
+            })}
+          />
         </div>
-        <form onSubmit={submit} className="space-y-3 p-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Fiş Tipi
-              </label>
+        <Input
+          label={t('JournalEntries.FieldDescription', { defaultValue: 'Açıklama' })}
+          type="text"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={1000}
+        />
+
+        <div className="rounded-lg border border-slate-200 dark:border-slate-800">
+          <div className="grid grid-cols-12 gap-2 border-b border-slate-200 bg-slate-50 px-2 py-1.5 text-[10px] font-semibold uppercase text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300">
+            <div className="col-span-1">#</div>
+            <div className="col-span-4">
+              {t('JournalEntries.ColumnAccount', { defaultValue: 'Hesap' })}
+            </div>
+            <div className="col-span-2 text-right">
+              {t('JournalEntries.ColumnDebit', { defaultValue: 'Borç' })}
+            </div>
+            <div className="col-span-2 text-right">
+              {t('JournalEntries.ColumnCredit', { defaultValue: 'Alacak' })}
+            </div>
+            <div className="col-span-2">
+              {t('JournalEntries.ColumnDescription', { defaultValue: 'Açıklama' })}
+            </div>
+            <div className="col-span-1" />
+          </div>
+          {lines.map((line, idx) => (
+            <div
+              key={line.key}
+              className="grid grid-cols-12 gap-2 border-b border-slate-100 px-2 py-1 last:border-b-0 dark:border-slate-800"
+            >
+              <div className="col-span-1 py-1 text-xs text-slate-500">{idx + 1}</div>
               <select
-                value={type}
-                onChange={(e) => setType(e.target.value as JournalEntryType)}
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={line.accountId}
+                onChange={(e) => updateLine(line.key, { accountId: e.target.value })}
+                className={`${fieldBaseClasses(false)} col-span-4 h-8 px-2 text-xs`}
+                required
               >
-                {ENTRY_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                <option value="">
+                  {t('JournalEntries.SelectAccountOption', { defaultValue: '— Hesap seç —' })}
+                </option>
+                {postableAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.code} — {a.name}
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Fiş Tarihi
-              </label>
               <input
-                type="date"
-                value={entryDate}
-                onChange={(e) => setEntryDate(e.target.value)}
-                required
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+                type="number"
+                step="0.01"
+                min="0"
+                value={line.debit}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value) || 0;
+                  updateLine(line.key, { debit: v, credit: v > 0 ? 0 : line.credit });
+                }}
+                className={`${fieldBaseClasses(false)} col-span-2 h-8 px-2 text-right text-xs`}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Yevmiye Tarihi
-              </label>
               <input
-                type="date"
-                value={postingDate}
-                onChange={(e) => setPostingDate(e.target.value)}
-                required
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+                type="number"
+                step="0.01"
+                min="0"
+                value={line.credit}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value) || 0;
+                  updateLine(line.key, { credit: v, debit: v > 0 ? 0 : line.debit });
+                }}
+                className={`${fieldBaseClasses(false)} col-span-2 h-8 px-2 text-right text-xs`}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Referans
-              </label>
               <input
                 type="text"
-                value={reference}
-                onChange={(e) => setReference(e.target.value)}
-                maxLength={200}
-                placeholder="Belge no, açıklama ref…"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+                value={line.description ?? ''}
+                onChange={(e) => updateLine(line.key, { description: e.target.value })}
+                maxLength={500}
+                className={`${fieldBaseClasses(false)} col-span-2 h-8 px-2 text-xs`}
               />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Açıklama
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={1000}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-
-          <div className="rounded-lg border border-slate-200 dark:border-slate-800">
-            <div className="grid grid-cols-12 gap-2 border-b border-slate-200 bg-slate-50 px-2 py-1.5 text-[10px] font-semibold uppercase text-slate-600 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-300">
-              <div className="col-span-1">#</div>
-              <div className="col-span-4">Hesap</div>
-              <div className="col-span-2 text-right">Borç</div>
-              <div className="col-span-2 text-right">Alacak</div>
-              <div className="col-span-2">Açıklama</div>
-              <div className="col-span-1" />
-            </div>
-            {lines.map((line, idx) => (
-              <div
-                key={line.key}
-                className="grid grid-cols-12 gap-2 border-b border-slate-100 px-2 py-1 last:border-b-0 dark:border-slate-800"
-              >
-                <div className="col-span-1 py-1 text-xs text-slate-500">{idx + 1}</div>
-                <select
-                  value={line.accountId}
-                  onChange={(e) => updateLine(line.key, { accountId: e.target.value })}
-                  className="col-span-4 rounded border border-slate-300 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800"
-                  required
-                >
-                  <option value="">— Hesap seç —</option>
-                  {postableAccounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.code} — {a.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={line.debit}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0;
-                    updateLine(line.key, { debit: v, credit: v > 0 ? 0 : line.credit });
-                  }}
-                  className="col-span-2 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs dark:border-slate-700 dark:bg-slate-800"
-                />
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={line.credit}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value) || 0;
-                    updateLine(line.key, { credit: v, debit: v > 0 ? 0 : line.debit });
-                  }}
-                  className="col-span-2 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs dark:border-slate-700 dark:bg-slate-800"
-                />
-                <input
-                  type="text"
-                  value={line.description ?? ''}
-                  onChange={(e) => updateLine(line.key, { description: e.target.value })}
-                  maxLength={500}
-                  className="col-span-2 rounded border border-slate-300 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-800"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeLine(line.key)}
-                  disabled={lines.length <= 2}
-                  className="col-span-1 rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 dark:hover:bg-rose-500/10"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-            <div className="flex items-center justify-between border-t border-slate-200 px-2 py-2 dark:border-slate-800">
               <button
                 type="button"
-                onClick={addLine}
-                className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                onClick={() => removeLine(line.key)}
+                disabled={lines.length <= 2}
+                className="col-span-1 rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-30 dark:hover:bg-danger-500/10"
               >
-                <Plus size={11} />
-                Satır ekle
+                <Trash2 size={12} />
               </button>
-              <div className="flex gap-6 text-xs">
-                <div>
-                  <span className="text-slate-500">Toplam Borç: </span>
-                  <span className="font-mono font-semibold">{totals.debit.toFixed(2)}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">Toplam Alacak: </span>
-                  <span className="font-mono font-semibold">{totals.credit.toFixed(2)}</span>
-                </div>
-                <div
-                  className={`font-mono font-semibold ${
-                    isBalanced
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-rose-600 dark:text-rose-400'
-                  }`}
-                >
-                  Fark: {totals.diff.toFixed(2)}
-                </div>
+            </div>
+          ))}
+          <div className="flex items-center justify-between border-t border-slate-200 px-2 py-2 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={addLine}
+              className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <Plus size={11} />
+              {t('JournalEntries.AddLine', { defaultValue: 'Satır ekle' })}
+            </button>
+            <div className="flex gap-6 text-xs">
+              <div>
+                <span className="text-slate-500">
+                  {t('JournalEntries.TotalDebit', { defaultValue: 'Toplam Borç: ' })}
+                </span>
+                <span className="font-mono font-semibold">{totals.debit.toFixed(2)}</span>
+              </div>
+              <div>
+                <span className="text-slate-500">
+                  {t('JournalEntries.TotalCredit', { defaultValue: 'Toplam Alacak: ' })}
+                </span>
+                <span className="font-mono font-semibold">{totals.credit.toFixed(2)}</span>
+              </div>
+              <div
+                className={`font-mono font-semibold ${
+                  isBalanced
+                    ? 'text-success-600 dark:text-success-400'
+                    : 'text-danger-600 dark:text-danger-400'
+                }`}
+              >
+                {t('JournalEntries.Difference', {
+                  defaultValue: 'Fark: {{value}}',
+                  value: totals.diff.toFixed(2),
+                })}
               </div>
             </div>
           </div>
+        </div>
 
-          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={postImmediately}
-              onChange={(e) => setPostImmediately(e.target.checked)}
-            />
-            Kaydet ve hemen post et (kapatılan dönemler için reddedilir)
-          </label>
-
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={createMutation.isPending || !isBalanced}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {createMutation.isPending ? 'Kaydediliyor…' : 'Kaydet'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={postImmediately}
+            onChange={(e) => setPostImmediately(e.target.checked)}
+          />
+          {t('JournalEntries.PostImmediately', {
+            defaultValue: 'Kaydet ve hemen post et (kapatılan dönemler için reddedilir)',
+          })}
+        </label>
+      </form>
+    </Modal>
   );
 };

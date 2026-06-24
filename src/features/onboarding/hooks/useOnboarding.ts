@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useAuthStore } from '@/features/auth/model/authStore';
-import { usePersonaStore } from '@/features/persona/model/personaStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
+import { usePersonaStore } from '@/shared/lib/persona';
 import type { TourKey, TourStatus } from '../model/onboarding.types';
 import { TOUR_KEYS } from '../model/onboarding.types';
 import {
@@ -73,13 +73,15 @@ export const useOnboardingController = (): UseOnboardingControllerResult => {
     return out;
   });
 
-  useEffect(() => {
+  const [syncedUserId, setSyncedUserId] = useState(userId);
+  if (userId !== syncedUserId) {
+    setSyncedUserId(userId);
     const out = {} as Record<TourKey, TourStatus>;
     TOUR_KEYS.forEach((k) => {
       out[k] = readTourStatus(userId, k);
     });
     setStatuses(out);
-  }, [userId]);
+  }
 
   const resetAll = useCallback((): void => {
     clearAllTours(userId);

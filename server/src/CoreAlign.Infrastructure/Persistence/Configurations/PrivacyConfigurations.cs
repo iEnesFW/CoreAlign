@@ -59,6 +59,7 @@ public class RetentionPolicyConfiguration : IEntityTypeConfiguration<RetentionPo
 
         builder.HasIndex(p => new { p.TenantId, p.EntityType })
             .IsUnique()
-            .HasDatabaseName("ux_retention_policies_tenant_entity");
+            .HasDatabaseName("ux_retention_policies_tenant_entity")
+            .HasFilter("is_deleted = false");
     }
 }

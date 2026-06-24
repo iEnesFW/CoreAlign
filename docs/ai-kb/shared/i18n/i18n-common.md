@@ -1,0 +1,52 @@
+# Common (CoreAlign UI)
+
+"Common" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Common" area (English / Türkçe):
+
+- Actions / İşlemler
+- All / Tümü
+- All details / Tüm detaylar
+- After / Sonrası
+- Before / Öncesi
+- Changes / Değişiklikler
+- No audit history yet. / Henüz denetim geçmişi yok.
+- Audit / Denetim
+- Back / Geri
+- Cancel / İptal
+- Clear / Temizle
+- Close / Kapat
+- Create / Oluştur
+- Day / Gün
+- Days / Gün
+- Delete / Sil
+- Disabled / Devre dışı
+- Duplicate / Çoğalt
+- Edit / Düzenle
+- Enabled / Etkin
+- All / Tümü
+- Filters / Filtreler
+- Hide / Gizle
+- records / kayıt
+- Loading… / Yükleniyor…
+- Next / Sonraki
+- No / Hayır
+- No data / Veri yok
+- You are offline. Changes will sync once the connection is restored. / Çevrimdışısınız. Bağlantı yeniden kurulduğunda değişiklikler senkronize edilecek.
+- {{count}} changes failed to sync / {{count}} değişiklik senkronize edilemedi
+- {{count}} changes pending / {{count}} değişiklik beklemede
+- Sync now / Şimdi senkronize et
+- {{count}} changes synced / {{count}} değişiklik senkronize edildi
+- {{current}}/{{total}}
+- Page size / Sayfa boyutu
+- {{size}} / page / {{size}} / sayfa
+- {{total}} {{itemLabel}} — page {{page}} / {{totalPages}} / {{total}} {{itemLabel}} — sayfa {{page}} / {{totalPages}}
+- Previous / Önceki
+- Redo / Yinele
+- Refresh / Yenile
+- Remove filter / Filtreyi kaldır
+- Save / Kaydet
+- Saving… / Kaydediliyor…
+- Select all / Tümünü seç
+- Select row / Satırı seç
+- Summary cards / Özet kartları
+- Undo / Geri al
+- Yes / Evet

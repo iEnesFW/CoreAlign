@@ -2,18 +2,17 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Scale } from 'lucide-react';
 import { formatNumber } from '@/shared/lib/format';
-import { useTrialBalanceQuery } from '@/features/accounting/hooks/useJournalEntryQueries';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { useBalanceSheetQuery } from '@/features/accounting/hooks/useFinancialStatementQueries';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
-import {
-  buildBalanceSheet,
-  type StatementSection,
-} from '@/features/accounting/lib/financialStatements';
+import type { StatementSectionDto } from '@/features/accounting/model/financialStatement.types';
 import { ReportPeriodControls } from '@/features/accounting/ui/ReportPeriodControls';
 
 const currentYear = () => new Date().getFullYear();
 
 export const BalanceSheetPage = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const decimals = useDecimalPlaces();
   const fmt = (n: number) => formatNumber(n, locale, decimals);
@@ -22,25 +21,27 @@ export const BalanceSheetPage = () => {
   const [fromDate, setFromDate] = useState(`${currentYear()}-01-01`);
   const [toDate, setToDate] = useState(`${currentYear()}-12-31`);
 
-  const params = useMemo(() => ({ fromDate, toDate }), [fromDate, toDate]);
-  const report = useTrialBalanceQuery(params);
-  const rows = useMemo(() => report.data?.data?.rows ?? [], [report.data]);
-
-  const sheet = useMemo(() => buildBalanceSheet(rows), [rows]);
-  const hasData = rows.length > 0;
+  const report = useBalanceSheetQuery(toDate);
+  const sheet = report.data?.data ?? null;
+  const earnings = useMemo(
+    () => (sheet ? sheet.currentYearEarnings + sheet.retainedPriorEarnings : 0),
+    [sheet],
+  );
 
   return (
-    <div className="space-y-4 p-4">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-          Bilanço (Balance Sheet)
-        </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-          Dönem sonu itibarıyla varlıklar, yükümlülükler ve özkaynaklar. Dönem net kârı özkaynağa
-          eklenir.
-        </p>
-      </div>
-
+    <DetailPageTemplate
+      header={
+        <PageHeader
+          icon={<Scale size={20} />}
+          title={t('BalanceSheet.title', { defaultValue: 'Bilanço (Balance Sheet)' })}
+          subtitle={t('BalanceSheet.subtitle', {
+            defaultValue:
+              'Belirtilen tarih itibarıyla varlıklar, yükümlülükler ve özkaynaklar. Dönem net kârı özkaynağa eklenir.',
+          })}
+          tone="indigo"
+        />
+      }
+    >
       <ReportPeriodControls
         year={year}
         fromDate={fromDate}
@@ -49,61 +50,86 @@ export const BalanceSheetPage = () => {
         onFromChange={setFromDate}
         onToChange={setToDate}
         right={
-          <div
-            className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
-              sheet.isBalanced
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
-                : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'
-            }`}
-          >
-            <Scale className="mr-1 inline" size={11} />
-            {sheet.isBalanced
-              ? 'Bilanço denk'
-              : `Fark: ${fmt(sheet.assets.total - sheet.totalLiabilitiesAndEquity)}`}
-          </div>
+          sheet && (
+            <div
+              className={`rounded-lg border px-3 py-1.5 text-xs font-semibold ${
+                sheet.isBalanced
+                  ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300'
+                  : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300'
+              }`}
+            >
+              <Scale className="mr-1 inline" size={11} />
+              {sheet.isBalanced
+                ? t('BalanceSheet.balanced', { defaultValue: 'Bilanço denk' })
+                : t('BalanceSheet.variance', {
+                    defaultValue: 'Fark: {{value}}',
+                    value: fmt(sheet.variance),
+                  })}
+            </div>
+          )
         }
       />
 
       {report.isPending ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-          Hesaplanıyor…
+          {t('BalanceSheet.computing', { defaultValue: 'Hesaplanıyor…' })}
         </div>
-      ) : !hasData ? (
+      ) : !sheet ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900">
-          Belirtilen aralıkta post edilmiş yevmiye fişi bulunamadı.
+          {t('BalanceSheet.empty', {
+            defaultValue: 'Belirtilen tarih itibarıyla post edilmiş yevmiye fişi bulunamadı.',
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* Assets */}
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-sm">
               <tbody>
-                <Section title="Varlıklar" section={sheet.assets} fmt={fmt} />
+                <Section
+                  title={t('BalanceSheet.assets', { defaultValue: 'Varlıklar' })}
+                  section={sheet.assets}
+                  fmt={fmt}
+                />
               </tbody>
               <tfoot>
-                <TotalRow label="Toplam Varlıklar" value={sheet.assets.total} fmt={fmt} />
+                <TotalRow
+                  label={t('BalanceSheet.totalAssets', { defaultValue: 'Toplam Varlıklar' })}
+                  value={sheet.assets.total}
+                  fmt={fmt}
+                />
               </tfoot>
             </table>
           </div>
 
-          {/* Liabilities + Equity */}
           <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-sm">
               <tbody>
-                <Section title="Yükümlülükler" section={sheet.liabilities} fmt={fmt} />
-                <Section title="Özkaynaklar" section={sheet.equity} fmt={fmt} />
+                <Section
+                  title={t('BalanceSheet.liabilities', { defaultValue: 'Yükümlülükler' })}
+                  section={sheet.liabilities}
+                  fmt={fmt}
+                />
+                <Section
+                  title={t('BalanceSheet.equity', { defaultValue: 'Özkaynaklar' })}
+                  section={sheet.equity}
+                  fmt={fmt}
+                />
                 <tr className="border-t border-slate-100 dark:border-slate-800/60">
                   <td className="px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300">
-                    Dönem Net {sheet.netIncome >= 0 ? 'Kârı' : 'Zararı'}
+                    {t('BalanceSheet.currentYearEarnings', {
+                      defaultValue: 'Dönem Net Kârı/Zararı (kapanış öncesi)',
+                    })}
                   </td>
                   <td className="px-3 py-1.5 text-right font-mono text-xs text-slate-800 dark:text-slate-200">
-                    {fmt(sheet.netIncome)}
+                    {fmt(earnings)}
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <TotalRow
-                  label="Toplam Kaynaklar"
+                  label={t('BalanceSheet.totalLiabilitiesAndEquity', {
+                    defaultValue: 'Toplam Kaynaklar',
+                  })}
                   value={sheet.totalLiabilitiesAndEquity}
                   fmt={fmt}
                 />
@@ -112,7 +138,7 @@ export const BalanceSheetPage = () => {
           </div>
         </div>
       )}
-    </div>
+    </DetailPageTemplate>
   );
 };
 
@@ -122,7 +148,7 @@ const Section = ({
   fmt,
 }: {
   title: string;
-  section: StatementSection;
+  section: StatementSectionDto;
   fmt: (n: number) => string;
 }) => (
   <>

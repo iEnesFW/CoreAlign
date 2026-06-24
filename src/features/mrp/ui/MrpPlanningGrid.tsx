@@ -62,7 +62,7 @@ export const MrpPlanningGrid = ({ items, locale, onSelectItem, selectedProductId
               <tr
                 className={
                   isSelected
-                    ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                    ? 'bg-primary-50 dark:bg-primary-500/10'
                     : 'bg-slate-50 dark:bg-slate-800/60'
                 }
               >
@@ -106,9 +106,9 @@ export const MrpPlanningGrid = ({ items, locale, onSelectItem, selectedProductId
                       row === 'ProjectedOnHand' && value < Math.max(item.safetyStock, 0);
                     const isNegative = row === 'ProjectedOnHand' && value < 0;
                     const tone = isNegative
-                      ? 'text-rose-600 font-semibold dark:text-rose-400'
+                      ? 'text-danger-600 font-semibold dark:text-danger-400'
                       : isShort
-                        ? 'text-amber-600 font-semibold dark:text-amber-400'
+                        ? 'text-warning-600 font-semibold dark:text-warning-400'
                         : value === 0
                           ? 'text-slate-300 dark:text-slate-600'
                           : 'text-slate-700 dark:text-slate-200';

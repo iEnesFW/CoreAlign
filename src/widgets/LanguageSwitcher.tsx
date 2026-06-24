@@ -101,7 +101,7 @@ export const LanguageSwitcher = ({ variant = 'menu', className }: LanguageSwitch
                     </span>
                     <span>{locale.nativeLabel}</span>
                   </span>
-                  {isActive && <Check className="h-3.5 w-3.5 text-indigo-500" />}
+                  {isActive && <Check className="h-3.5 w-3.5 text-primary-500" />}
                 </button>
               </li>
             );

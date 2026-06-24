@@ -73,7 +73,8 @@ public class CreateDealerOrderHandlerTests
 
         _sut = new CreateDealerOrderHandler(
             _scope, _dealerUsers, _tenant, _currentUser, _orders, _customers, _products, _addresses,
-            _paymentTerms, _sequences, _uow, _outbox, _dealers, _pricing, _ledger);
+            _paymentTerms, _sequences, _uow, _outbox, _dealers, _pricing,
+            new CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard(_ledger));
     }
 
     [Fact]

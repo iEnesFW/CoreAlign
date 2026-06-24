@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { RouteFallback } from '@/shared/ui/RouteFallback/RouteFallback';
 
 export const ProtectedRoute = () => {

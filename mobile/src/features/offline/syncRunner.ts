@@ -7,7 +7,7 @@ import {
 import { ticketApi, type CreateTicketRequest } from '@/features/ticket/api/ticketApi';
 import { flushMutations } from './syncQueue';
 
-interface PendingAcceptancePayload extends AcceptInstallationRequest {}
+type PendingAcceptancePayload = AcceptInstallationRequest;
 
 interface PendingTicketEnvelope {
   kind: 'create';

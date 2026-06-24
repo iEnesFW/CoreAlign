@@ -1,13 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { Paperclip, X } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { useCreateFeedback } from '../hooks/useFeedback';
+import { useCreateFeedback, useUploadFeedbackAttachment } from '../hooks/useFeedback';
 import type { FeedbackPriority, FeedbackType } from '../model/feedback.types';
+
+const ATTACHMENT_ACCEPT = 'image/jpeg,image/png,image/webp,application/pdf';
+const ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024;
 
 interface Props {
   onClose: () => void;
+  initialType?: FeedbackType;
+  initialTitle?: string;
+  initialDescription?: string;
+  initialModule?: string;
+  initialPageUrl?: string;
 }
 
 const TYPES: { value: FeedbackType; label: string }[] = [
@@ -38,19 +51,58 @@ const MODULES = [
   'Diğer',
 ];
 
-export const FeedbackFormModal = ({ onClose }: Props) => {
+export const FeedbackFormModal = ({
+  onClose,
+  initialType,
+  initialTitle,
+  initialDescription,
+  initialModule,
+  initialPageUrl,
+}: Props) => {
   const { t } = useTranslation();
   const createMutation = useCreateFeedback();
+  const uploadMutation = useUploadFeedbackAttachment();
 
-  const [type, setType] = useState<FeedbackType>('Bug');
+  const [type, setType] = useState<FeedbackType>(initialType ?? 'Bug');
   const [priority, setPriority] = useState<FeedbackPriority>('Medium');
-  const [moduleName, setModuleName] = useState('');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [moduleName, setModuleName] = useState(initialModule ?? '');
+  const [title, setTitle] = useState(initialTitle ?? '');
+  const [description, setDescription] = useState(initialDescription ?? '');
   const [steps, setSteps] = useState('');
   const [pageUrl, setPageUrl] = useState(
-    typeof window !== 'undefined' ? window.location.pathname : '',
+    initialPageUrl ?? (typeof window !== 'undefined' ? window.location.pathname : ''),
   );
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(
+    () => () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    },
+    [previewUrl],
+  );
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    if (selected && selected.size > ATTACHMENT_MAX_BYTES) {
+      toast.error(
+        t('feedback.form.attachmentTooLarge', { defaultValue: 'Dosya en fazla 5 MB olabilir.' }),
+      );
+      e.target.value = '';
+      return;
+    }
+    setFile(selected);
+    setPreviewUrl(
+      selected && selected.type.startsWith('image/') ? URL.createObjectURL(selected) : null,
+    );
+  };
+
+  const clearFile = () => {
+    setFile(null);
+    setPreviewUrl(null);
+  };
+
+  const busy = createMutation.isPending || uploadMutation.isPending;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,7 +111,7 @@ export const FeedbackFormModal = ({ onClose }: Props) => {
       return;
     }
     try {
-      await createMutation.mutateAsync({
+      const created = await createMutation.mutateAsync({
         type,
         priority,
         title: title.trim(),
@@ -68,6 +120,20 @@ export const FeedbackFormModal = ({ onClose }: Props) => {
         stepsToReproduce: type === 'Bug' && steps.trim() ? steps.trim() : null,
         pageUrl: pageUrl.trim() || null,
       });
+      if (file && created.data?.id) {
+        try {
+          await uploadMutation.mutateAsync({ id: created.data.id, file });
+        } catch (uploadErr) {
+          toastApiError(uploadErr);
+          toast.warning(
+            t('feedback.form.attachmentFailed', {
+              defaultValue: 'Talep oluşturuldu ancak dosya yüklenemedi.',
+            }),
+          );
+          onClose();
+          return;
+        }
+      }
       toast.success(
         t('feedback.form.sent', { defaultValue: 'Geri bildiriminiz alındı. Teşekkürler!' }),
       );
@@ -77,167 +143,153 @@ export const FeedbackFormModal = ({ onClose }: Props) => {
     }
   };
 
-  const inputClass =
-    'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[92vh] w-full max-w-lg flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t('feedback.form.title', { defaultValue: 'Geri Bildirim / Hata Bildir' })}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label={t('common.close', { defaultValue: 'Kapat' })}
+    <Modal
+      open={true}
+      title={t('feedback.form.title', { defaultValue: 'Geri Bildirim / Hata Bildir' })}
+      icon={<Paperclip size={18} />}
+      onClose={onClose}
+      size="lg"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="feedback-form" isLoading={busy}>
+            {busy
+              ? t('common.saving', { defaultValue: 'Gönderiliyor…' })
+              : t('feedback.form.submit', { defaultValue: 'Gönder' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="feedback-form" onSubmit={submit} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <Select
+            label={t('feedback.form.type', { defaultValue: 'Tür' })}
+            value={type}
+            onChange={(e) => setType(e.target.value as FeedbackType)}
           >
-            <X size={16} />
-          </button>
+            {TYPES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label={t('feedback.form.priority', { defaultValue: 'Öncelik' })}
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as FeedbackPriority)}
+          >
+            {PRIORITIES.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
         </div>
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="space-y-3 overflow-y-auto p-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('feedback.form.type', { defaultValue: 'Tür' })}
-                </label>
-                <select
-                  value={type}
-                  onChange={(e) => setType(e.target.value as FeedbackType)}
-                  className={inputClass}
-                >
-                  {TYPES.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('feedback.form.priority', { defaultValue: 'Öncelik' })}
-                </label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as FeedbackPriority)}
-                  className={inputClass}
-                >
-                  {PRIORITIES.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        <Select
+          label={t('feedback.form.module', { defaultValue: 'İlgili Modül' })}
+          value={moduleName}
+          onChange={(e) => setModuleName(e.target.value)}
+        >
+          <option value="">
+            {t('feedback.form.modulePlaceholder', { defaultValue: 'Seçiniz (opsiyonel)' })}
+          </option>
+          {MODULES.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </Select>
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('feedback.form.module', { defaultValue: 'İlgili Modül' })}
-              </label>
-              <select
-                value={moduleName}
-                onChange={(e) => setModuleName(e.target.value)}
-                className={inputClass}
-              >
-                <option value="">
-                  {t('feedback.form.modulePlaceholder', { defaultValue: 'Seçiniz (opsiyonel)' })}
-                </option>
-                {MODULES.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
+        <Input
+          label={`${t('feedback.form.titleField', { defaultValue: 'Başlık' })} *`}
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={200}
+          placeholder={t('feedback.form.titlePlaceholder', {
+            defaultValue: 'Kısa ve açıklayıcı bir başlık',
+          })}
+        />
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('feedback.form.titleField', { defaultValue: 'Başlık' })} *
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={200}
-                className={inputClass}
-                placeholder={t('feedback.form.titlePlaceholder', {
-                  defaultValue: 'Kısa ve açıklayıcı bir başlık',
-                })}
-              />
-            </div>
+        <Textarea
+          label={`${t('feedback.form.description', { defaultValue: 'Açıklama' })} *`}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={4000}
+          rows={4}
+          placeholder={t('feedback.form.descriptionPlaceholder', {
+            defaultValue: 'Ne olmasını bekliyordunuz, ne oldu?',
+          })}
+        />
 
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('feedback.form.description', { defaultValue: 'Açıklama' })} *
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                maxLength={4000}
-                rows={4}
-                className={inputClass}
-                placeholder={t('feedback.form.descriptionPlaceholder', {
-                  defaultValue: 'Ne olmasını bekliyordunuz, ne oldu?',
-                })}
-              />
-            </div>
+        {type === 'Bug' && (
+          <Textarea
+            label={t('feedback.form.steps', { defaultValue: 'Tekrar Üretme Adımları' })}
+            value={steps}
+            onChange={(e) => setSteps(e.target.value)}
+            maxLength={2000}
+            rows={3}
+            placeholder={t('feedback.form.stepsPlaceholder', {
+              defaultValue: '1) ... 2) ... 3) ...',
+            })}
+          />
+        )}
 
-            {type === 'Bug' && (
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('feedback.form.steps', { defaultValue: 'Tekrar Üretme Adımları' })}
-                </label>
-                <textarea
-                  value={steps}
-                  onChange={(e) => setSteps(e.target.value)}
-                  maxLength={2000}
-                  rows={3}
-                  className={inputClass}
-                  placeholder={t('feedback.form.stepsPlaceholder', {
-                    defaultValue: '1) ... 2) ... 3) ...',
-                  })}
+        <Input
+          label={t('feedback.form.pageUrl', { defaultValue: 'Sayfa / Konum' })}
+          type="text"
+          value={pageUrl}
+          onChange={(e) => setPageUrl(e.target.value)}
+          maxLength={500}
+          className="font-mono text-xs"
+        />
+
+        <div>
+          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+            {t('feedback.form.attachment', { defaultValue: 'Ek (Fotoğraf / PDF)' })}
+          </label>
+          {file ? (
+            <div className="mt-1 flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-white/10 dark:bg-slate-800">
+              {previewUrl ? (
+                <img
+                  src={previewUrl}
+                  alt={file.name}
+                  className="h-12 w-12 shrink-0 rounded object-cover"
                 />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('feedback.form.pageUrl', { defaultValue: 'Sayfa / Konum' })}
-              </label>
-              <input
-                type="text"
-                value={pageUrl}
-                onChange={(e) => setPageUrl(e.target.value)}
-                maxLength={500}
-                className={`${inputClass} font-mono text-xs`}
-              />
+              ) : (
+                <Paperclip size={18} className="shrink-0 text-slate-500 dark:text-slate-400" />
+              )}
+              <span className="min-w-0 flex-1 truncate text-xs text-slate-700 dark:text-slate-200">
+                {file.name}
+              </span>
+              <button
+                type="button"
+                onClick={clearFile}
+                className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                aria-label={t('feedback.form.attachmentRemove', { defaultValue: 'Eki kaldır' })}
+              >
+                <X size={14} />
+              </button>
             </div>
-          </div>
-
-          <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {t('common.cancel', { defaultValue: 'İptal' })}
-            </button>
-            <button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {createMutation.isPending
-                ? t('common.saving', { defaultValue: 'Gönderiliyor…' })
-                : t('feedback.form.submit', { defaultValue: 'Gönder' })}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+          ) : (
+            <input
+              type="file"
+              accept={ATTACHMENT_ACCEPT}
+              onChange={onFileChange}
+              className="mt-1 block w-full text-xs text-slate-600 file:mr-3 file:rounded file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-primary-700 hover:file:bg-primary-100 dark:text-slate-400 dark:file:bg-slate-800 dark:file:text-slate-200"
+            />
+          )}
+          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            {t('feedback.form.attachmentHint', {
+              defaultValue: 'JPG, PNG, WEBP veya PDF · en fazla 5 MB',
+            })}
+          </p>
+        </div>
+      </form>
+    </Modal>
   );
 };

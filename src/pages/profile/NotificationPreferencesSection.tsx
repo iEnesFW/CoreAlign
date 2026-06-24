@@ -151,7 +151,7 @@ export const NotificationPreferencesSection = () => {
           type="button"
           onClick={() => void handleSave()}
           disabled={query.isLoading || updateMutation.isPending}
-          className="rounded-[5px] bg-indigo-600 text-white text-[12px] font-semibold px-3 py-1.5 hover:bg-indigo-500 disabled:opacity-60"
+          className="rounded-[5px] bg-primary-600 text-white text-[12px] font-semibold px-3 py-1.5 hover:bg-primary-500 disabled:opacity-60"
         >
           {t('profile.notifications.save', { defaultValue: 'Save preferences' })}
         </button>

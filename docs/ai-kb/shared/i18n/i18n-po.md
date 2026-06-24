@@ -1,0 +1,74 @@
+# po (CoreAlign UI)
+
+"po" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "po" area (English / Türkçe):
+
+- Action completed. / İşlem tamamlandı.
+- Approve / Onayla
+- Cancel / İptal Et
+- Close / Kapat
+- Receive / Mal Kabul
+- Submit / Onaya Gönder
+- Cancel {{po}}? / {{po}} iptal edilsin mi?
+- Cancel Purchase Order / Siparişi İptal Et
+- Date / Tarih
+- No. / No
+- Status / Durum
+- Amount / Tutar
+- Vendor / Tedarikçi
+- {{count}} purchase orders / {{count}} sipariş
+- Delete {{po}}? / {{po}} silinsin mi?
+- Delete Purchase Order / Siparişi Sil
+- Purchase order deleted. / Satın alma siparişi silindi.
+- No purchase orders found. / Satın alma siparişi bulunamadı.
+- All / Tümü
+- All statuses / Tüm Durumlar
+- All vendors / Tüm Tedarikçiler
+- Filter by status / Duruma göre filtrele
+- Vendor / Tedarikçi
+- Add line / Kalem ekle
+- Purchase order created. / Satın alma siparişi oluşturuldu.
+- Currency / Para Birimi
+- Purchase Order / Satın Alma Siparişi
+- Expected delivery / Beklenen Teslimat
+- Add at least one valid line. / En az bir geçerli kalem ekleyin.
+- New Purchase Order / Yeni Satın Alma Siparişi
+- Notes / Notlar
+- Order date / Sipariş Tarihi
+- Product / Ürün
+- Qty / Miktar
+- Select… / Seçiniz…
+- Select… / Seçiniz…
+- Subtotal / Ara Toplam
+- Tax % / KDV %
+- Tax / KDV
+- Total / Genel Toplam
+- Unit cost / Birim Maliyet
+- Purchase order updated. / Satın alma siparişi güncellendi.
+- Vendor / Tedarikçi
+- Please select a vendor. / Lütfen bir tedarikçi seçin.
+- Receiving warehouse / Mal Kabul Deposu
+- Purchase Orders / Satın Alma Siparişleri
+- New PO / Yeni Sipariş
+- Create, approve, and track orders to vendors. / Tedarikçilere verilen siparişleri oluşturun, onaylayın ve takip edin.
+- Purchase Orders / Satın Alma Siparişleri
+- All lines have been received. / Tüm kalemler teslim alındı.
+- Receipt posted; stock updated. / Mal kabul kaydedildi; stok güncellendi.
+- Notes / delivery note # / Notlar / İrsaliye No
+- Enter a quantity to receive. / Teslim alınacak bir miktar girin.
+- Cannot receive more than the remaining quantity. / Kalan miktardan fazlası teslim alınamaz.
+- Product / Ürün
+- Received qty / Teslim Alınan Miktar
+- Remaining / Kalan
+- Select… / Seçiniz…
+- Post receipt / Mal Kabulü Kaydet
+- Goods Receipt / Mal Kabul
+- Receiving warehouse / Mal Kabul Deposu
+- Please select a warehouse. / Lütfen bir depo seçin.
+- purchase orders / sipariş
+- Approved / Onaylandı
+- Cancelled / İptal
+- Closed / Kapatıldı
+- Draft / Taslak
+- Partially received / Kısmen Teslim Alındı
+- Received / Teslim Alındı
+- Submitted / Onaya Gönderildi

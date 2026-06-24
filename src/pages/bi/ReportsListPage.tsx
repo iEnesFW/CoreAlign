@@ -16,7 +16,7 @@ export const ReportsListPage = () => {
         </h1>
         <Link
           to="/bi/reports/new"
-          className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
+          className="rounded bg-primary-600 px-4 py-2 text-sm text-white hover:bg-primary-700"
         >
           {t('BI.Reports.Create', { defaultValue: 'New report' })}
         </Link>
@@ -54,14 +54,14 @@ export const ReportsListPage = () => {
                   <td className="px-3 py-2 text-slate-500">{r.lastRunAtUtc ?? '-'}</td>
                   <td className="px-3 py-2 text-right">
                     <div className="inline-flex items-center gap-2">
-                      <Link to={`/bi/reports/${r.id}`} className="text-blue-600 hover:underline">
+                      <Link to={`/bi/reports/${r.id}`} className="text-primary-600 hover:underline">
                         {t('BI.Reports.Open', { defaultValue: 'Open' })}
                       </Link>
                       <ExportButton reportId={r.id} fileName={r.name} />
                       <button
                         type="button"
                         onClick={() => deleteMutation.mutate(r.id)}
-                        className="text-red-600 hover:underline"
+                        className="text-danger-600 hover:underline"
                       >
                         {t('BI.Reports.Delete', { defaultValue: 'Delete' })}
                       </button>

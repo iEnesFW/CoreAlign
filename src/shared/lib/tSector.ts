@@ -1,5 +1,5 @@
 import i18n from 'i18next';
-import type { UxComplexityMode } from '@/features/persona/model/personaStore';
+import type { UxComplexityMode } from '@/shared/model/persona';
 
 const GLOSSARY_PREFIX = 'Designer.Term.';
 

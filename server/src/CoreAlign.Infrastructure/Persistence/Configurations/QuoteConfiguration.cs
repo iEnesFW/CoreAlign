@@ -64,7 +64,6 @@ public class QuoteConfiguration : IEntityTypeConfiguration<Quote>
         builder.HasIndex(q => new { q.TenantId, q.QuoteNumber }).IsUnique();
         builder.HasIndex(q => new { q.TenantId, q.CustomerId });
         builder.HasIndex(q => new { q.TenantId, q.Status });
-        builder.HasIndex(q => new { q.TenantId, q.QuoteDate }).IsDescending(false, true);
         builder.HasIndex(q => new { q.TenantId, q.ValidUntilUtc, q.Status });
 
         builder.Ignore(q => q.IsDraft);

@@ -63,12 +63,20 @@ export const TenantIdpEditor = ({ initial, onSaved }: Props) => {
     }
 
     if (form.protocol === 'Oidc' && !form.discoveryDocumentUrl.trim()) {
-      toast.error('Discovery URL alanı OpenID Connect için zorunludur.');
+      toast.error(
+        t('Sso.Admin.DiscoveryUrlRequired', {
+          defaultValue: 'Discovery URL alanı OpenID Connect için zorunludur.',
+        }),
+      );
       return;
     }
 
     if (form.protocol === 'Saml' && !form.metadataUrl.trim()) {
-      toast.error('Metadata URL alanı SAML 2.0 için zorunludur.');
+      toast.error(
+        t('Sso.Admin.MetadataUrlRequired', {
+          defaultValue: 'Metadata URL alanı SAML 2.0 için zorunludur.',
+        }),
+      );
       return;
     }
     const payload = {
@@ -113,14 +121,20 @@ export const TenantIdpEditor = ({ initial, onSaved }: Props) => {
     }
     testMutation.mutate(initial.id, {
       onSuccess: (response) => {
+        const testFailed = t('Sso.Admin.TestConnectionFailed', {
+          defaultValue: 'Bağlantı testi başarısız.',
+        });
         if (!response.isSuccess) {
-          toast.error(response.errors?.[0] ?? 'Bağlantı testi başarısız.');
+          toast.error(response.errors?.[0] ?? testFailed);
           return;
         }
         if (response.data?.success) {
-          toast.success(response.data.message ?? 'Bağlantı başarılı.');
+          toast.success(
+            response.data.message ??
+              t('Sso.Admin.TestConnectionSuccess', { defaultValue: 'Bağlantı başarılı.' }),
+          );
         } else {
-          toast.error(response.data?.message ?? 'Bağlantı testi başarısız.');
+          toast.error(response.data?.message ?? testFailed);
         }
       },
       onError: (e) =>
@@ -169,7 +183,11 @@ export const TenantIdpEditor = ({ initial, onSaved }: Props) => {
           onChange={(e) => setForm({ ...form, entityIdOrClientId: e.target.value })}
         />
         <Input
-          label={form.protocol === 'Saml' ? 'Metadata URL' : 'Discovery URL'}
+          label={
+            form.protocol === 'Saml'
+              ? t('Sso.Admin.MetadataUrlLabel', { defaultValue: 'Metadata URL' })
+              : t('Sso.Admin.DiscoveryUrlLabel', { defaultValue: 'Discovery URL' })
+          }
           value={form.protocol === 'Saml' ? form.metadataUrl : form.discoveryDocumentUrl}
           onChange={(e) =>
             setForm(

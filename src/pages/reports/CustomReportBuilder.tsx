@@ -255,7 +255,7 @@ export const CustomReportBuilder = () => {
       </div>
 
       {errorMessage && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+        <div className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/50 dark:bg-danger-950/40 dark:text-danger-300">
           {errorMessage}
         </div>
       )}
@@ -344,7 +344,7 @@ export const CustomReportBuilder = () => {
                     <button
                       type="button"
                       onClick={() => removeMeasure(idx)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-danger-500"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -403,7 +403,7 @@ export const CustomReportBuilder = () => {
                     <button
                       type="button"
                       onClick={() => removeFilter(idx)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-danger-500"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -445,7 +445,7 @@ export const CustomReportBuilder = () => {
               type="button"
               onClick={runPreview}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-success-600 px-3 py-2 text-sm font-medium text-white hover:bg-success-500 disabled:opacity-50"
             >
               <Play className="h-4 w-4" /> {t('reports.custom.preview')}
             </button>
@@ -532,7 +532,7 @@ export const CustomReportBuilder = () => {
                     <button
                       type="button"
                       onClick={() => void deleteSaved(s.id)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-danger-500"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>

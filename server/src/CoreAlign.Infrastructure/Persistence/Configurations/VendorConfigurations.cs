@@ -93,17 +93,16 @@ public class VendorBankAccountConfiguration : IEntityTypeConfiguration<VendorBan
         builder.Property(b => b.BankName).HasMaxLength(150).IsRequired();
         builder.Property(b => b.BranchName).HasMaxLength(150);
         builder.Property(b => b.AccountHolder).HasMaxLength(200).IsRequired();
-        builder.Property(b => b.Iban).HasMaxLength(34).IsRequired();
-        builder.Property(b => b.Swift).HasMaxLength(11);
+        builder.Property(b => b.Iban).HasColumnType("text").IsRequired();
+        builder.Property(b => b.Swift).HasColumnType("text");
         builder.Property(b => b.Currency).HasMaxLength(3).IsRequired();
-        builder.Property(b => b.AccountNumber).HasMaxLength(64);
+        builder.Property(b => b.AccountNumber).HasColumnType("text");
         builder.Property(b => b.Notes).HasMaxLength(500);
         builder.Property(b => b.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(b => b.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasOne(b => b.Vendor).WithMany().HasForeignKey(b => b.VendorId).OnDelete(DeleteBehavior.Cascade);
         builder.HasIndex(b => new { b.TenantId, b.VendorId });
-        builder.HasIndex(b => new { b.TenantId, b.Iban });
     }
 }
 
@@ -128,7 +127,6 @@ public class VendorLedgerEntryConfiguration : IEntityTypeConfiguration<VendorLed
 
         builder.HasOne(e => e.Vendor).WithMany().HasForeignKey(e => e.VendorId).OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(e => new { e.TenantId, e.VendorId, e.OccurredAtUtc });
         builder.HasIndex(e => new { e.TenantId, e.VendorId, e.PostingDate });
         builder.HasIndex(e => new { e.TenantId, e.SourceType, e.SourceDocumentId });
         builder.Ignore(e => e.SignedAmount);

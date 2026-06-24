@@ -5,9 +5,6 @@ import { AlertTriangle, DollarSign, FileText, Package, ShoppingCart, Users } fro
 import { useDashboardStats } from '@/features/dashboard/hooks/useDashboardStats';
 import { StatStrip, type StatStripItem } from '@/shared/ui/StatStrip/StatStrip';
 
-// Recharts is ~150 KB gzipped — keep it out of the dashboard's first paint by
-// lazy-loading the chart wrappers. The Suspense fallback below renders the
-// chart shells so layout doesn't shift while the bundle streams in.
 const SalesTrendChart = lazy(() =>
   import('@/features/dashboard/ui/SalesTrendChart/SalesTrendChart').then((m) => ({
     default: m.SalesTrendChart,
@@ -20,12 +17,9 @@ const OrderStatusChart = lazy(() =>
 );
 
 const ChartFallback = () => (
-  <div className="h-72 rounded-lg bg-slate-100/60 dark:bg-slate-800/40 animate-pulse" />
+  <div className="h-72 animate-pulse rounded-xl bg-slate-100/60 dark:bg-slate-800/40" />
 );
 
-// Memoize Intl formatters per locale so we don't allocate a new NumberFormat /
-// DateTimeFormat on every render. The cache is bounded — locales are O(1) in
-// practice.
 const numberFormatters = new Map<string, Intl.NumberFormat>();
 const dateFormatters = new Map<string, Intl.DateTimeFormat>();
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
@@ -186,7 +180,7 @@ export const DashboardOverview = () => {
         </div>
         <PanelCard
           title={t('dashboard.statusChart.title')}
-          icon={<ShoppingCart size={14} className="text-amber-500" />}
+          icon={<ShoppingCart size={14} className="text-warning-500" />}
           empty={!stats || stats.totalOrderCount === 0}
           emptyText={t('dashboard.statusChart.empty')}
           loading={isPending}
@@ -202,18 +196,18 @@ export const DashboardOverview = () => {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <PanelCard
           title={t('dashboard.lowStock.title')}
-          icon={<AlertTriangle size={14} className="text-amber-500" />}
+          icon={<AlertTriangle size={14} className="text-warning-500" />}
           empty={!stats || stats.lowStockProducts.length === 0}
           emptyText={t('dashboard.lowStock.empty')}
           loading={isPending}
         >
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+          <ul className="divide-y divide-slate-100 dark:divide-white/5">
             {stats?.lowStockProducts.map((product) => (
               <li key={product.id}>
                 <button
                   type="button"
                   onClick={() => navigate(`/dashboard/products?selected=${product.id}&tab=stock`)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-sm transition-colors hover:bg-primary-50/50 dark:hover:bg-primary-500/[0.06]"
                 >
                   <div className="min-w-0 text-left">
                     <div className="truncate font-medium text-slate-900 dark:text-slate-100">
@@ -224,8 +218,8 @@ export const DashboardOverview = () => {
                   <div
                     className={
                       product.stockQuantity <= 0
-                        ? 'rounded bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 dark:bg-red-500/20 dark:text-red-300'
-                        : 'rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                        ? 'rounded bg-danger-100 px-2 py-0.5 text-xs font-semibold text-danger-700 dark:bg-danger-500/20 dark:text-danger-300'
+                        : 'rounded bg-warning-100 px-2 py-0.5 text-xs font-semibold text-warning-700 dark:bg-warning-500/20 dark:text-warning-300'
                     }
                   >
                     {formatNumber(product.stockQuantity, i18n.language)} {product.unit}
@@ -238,18 +232,18 @@ export const DashboardOverview = () => {
 
         <PanelCard
           title={t('dashboard.recentOrders.title')}
-          icon={<FileText size={14} className="text-indigo-500" />}
+          icon={<FileText size={14} className="text-primary-500" />}
           empty={!stats || stats.recentOrders.length === 0}
           emptyText={t('dashboard.recentOrders.empty')}
           loading={isPending}
         >
-          <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+          <ul className="divide-y divide-slate-100 dark:divide-white/5">
             {stats?.recentOrders.map((order) => (
               <li key={order.id}>
                 <button
                   type="button"
                   onClick={() => navigate(`/dashboard/orders?selected=${order.id}`)}
-                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-sm transition hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-sm transition-colors hover:bg-primary-50/50 dark:hover:bg-primary-500/[0.06]"
                 >
                   <div className="min-w-0 text-left">
                     <div className="truncate font-medium text-slate-900 dark:text-slate-100">
@@ -272,8 +266,6 @@ export const DashboardOverview = () => {
   );
 };
 
-// Removed unused StatCard components
-
 interface PanelCardProps {
   title: string;
   icon: React.ReactNode;
@@ -284,8 +276,8 @@ interface PanelCardProps {
 }
 
 const PanelCard = ({ title, icon, empty, emptyText, loading, children }: PanelCardProps) => (
-  <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-    <div className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
+  <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.05)] dark:border-white/10 dark:bg-slate-900">
+    <div className="flex items-center gap-2 border-b border-slate-200/70 px-3.5 py-2.5 dark:border-white/5">
       {icon}
       <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-200">
         {title}

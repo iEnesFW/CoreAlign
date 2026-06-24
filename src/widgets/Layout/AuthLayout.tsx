@@ -1,16 +1,14 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Logo } from '@/shared/ui/Logo/Logo';
 import { Target, Users, BarChart2, CheckCircle2, Sun, Moon } from 'lucide-react';
-import { useTheme } from '@/app/providers/ThemeProvider';
+import { useTheme } from '@/app/providers/themeContext';
 import styles from './AuthLayout.module.css';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-// Lazily load the 3D scene so the ~700 KB three.js + lil-gui chunk only ships
-// when actually needed (i.e. on auth pages, on capable devices, with motion
-// allowed). Other dashboard routes never pay this cost.
 const CoreAlign3DLogin = lazy(() =>
   import('@/shared/ui/Background/CoreAlign3DLogin').then((m) => ({ default: m.CoreAlign3DLogin })),
 );
@@ -33,8 +31,6 @@ const StaticBackground = ({ theme }: { theme: 'light' | 'dark' }) => (
 );
 
 const useAllowExpensiveScene = (): boolean => {
-  // Sadece prefers-reduced-motion kontrolü yapıyoruz.
-  // Kullanıcının isteği doğrultusunda eski katı donanım limitlerini kaldırdık.
   const [allow, setAllow] = useState(() => {
     if (typeof window === 'undefined') return false;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -56,6 +52,7 @@ const useAllowExpensiveScene = (): boolean => {
 import { LightModeBackground } from '@/shared/ui/Background/LightModeBackground';
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const allow3d = useAllowExpensiveScene();
 
@@ -80,12 +77,18 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
           <Logo size={28} showText={true} />
         </div>
         <div className={styles.headerRight}>
-          <button onClick={toggleTheme} className={styles.themeToggle} aria-label="Toggle theme">
+          <button
+            onClick={toggleTheme}
+            className={styles.themeToggle}
+            aria-label={t('AuthLayout.ToggleTheme', { defaultValue: 'Toggle theme' })}
+          >
             {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <div className={styles.statusBadge}>
             <div className={styles.statusDot} />
-            <span>All Systems Operational</span>
+            <span>
+              {t('AuthLayout.AllSystemsOperational', { defaultValue: 'All Systems Operational' })}
+            </span>
           </div>
         </div>
       </header>
@@ -96,33 +99,56 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
 
       <footer className={styles.footer}>
         <div className={styles.features}>
-          <div className={styles.featureItem} title="Strategic Planning">
+          <div
+            className={styles.featureItem}
+            title={t('AuthLayout.StrategicPlanning', { defaultValue: 'Strategic Planning' })}
+          >
             <div className={styles.featureIcon}>
               <Target size={20} />
             </div>
-            <span className={styles.featureText}>Strategy</span>
+            <span className={styles.featureText}>
+              {t('AuthLayout.Strategy', { defaultValue: 'Strategy' })}
+            </span>
           </div>
-          <div className={styles.featureItem} title="Team Alignment">
+          <div
+            className={styles.featureItem}
+            title={t('AuthLayout.TeamAlignment', { defaultValue: 'Team Alignment' })}
+          >
             <div className={styles.featureIcon}>
               <Users size={20} />
             </div>
-            <span className={styles.featureText}>Teams</span>
+            <span className={styles.featureText}>
+              {t('AuthLayout.Teams', { defaultValue: 'Teams' })}
+            </span>
           </div>
-          <div className={styles.featureItem} title="Performance Analytics">
+          <div
+            className={styles.featureItem}
+            title={t('AuthLayout.PerformanceAnalytics', { defaultValue: 'Performance Analytics' })}
+          >
             <div className={styles.featureIcon}>
               <BarChart2 size={20} />
             </div>
-            <span className={styles.featureText}>Analytics</span>
+            <span className={styles.featureText}>
+              {t('AuthLayout.Analytics', { defaultValue: 'Analytics' })}
+            </span>
           </div>
-          <div className={styles.featureItem} title="Enterprise Security">
+          <div
+            className={styles.featureItem}
+            title={t('AuthLayout.EnterpriseSecurity', { defaultValue: 'Enterprise Security' })}
+          >
             <div className={styles.featureIcon}>
               <CheckCircle2 size={20} />
             </div>
-            <span className={styles.featureText}>Secure</span>
+            <span className={styles.featureText}>
+              {t('AuthLayout.Secure', { defaultValue: 'Secure' })}
+            </span>
           </div>
         </div>
         <div className={styles.copyright}>
-          © {new Date().getFullYear()} CoreAlign Inc. All rights reserved.
+          {t('AuthLayout.Copyright', {
+            defaultValue: '© {{year}} CoreAlign Inc. All rights reserved.',
+            year: new Date().getFullYear(),
+          })}
         </div>
       </footer>
     </div>

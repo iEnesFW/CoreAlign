@@ -44,7 +44,7 @@ export const MarketplaceCard = ({ template, to }: MarketplaceCardProps) => {
           <h3 className="line-clamp-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
             {name}
           </h3>
-          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+          <span className="rounded-full bg-success-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-success-700 dark:bg-success-900/30 dark:text-success-300">
             {template.category}
           </span>
         </div>

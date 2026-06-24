@@ -1,0 +1,63 @@
+# JournalEntries (CoreAlign UI)
+
+"JournalEntries" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "JournalEntries" area (English / Türkçe):
+
+- Add line / Satır ekle
+- Cancel / İptal
+- Account / Hesap
+- Credit / Alacak
+- Debit / Borç
+- Description / Açıklama
+- Difference: {{value}} / Fark: {{value}}
+- An account must be selected for every line. / Tüm satırlar için hesap seçilmelidir.
+- Debit and credit totals must be equal. / Borç ve alacak toplamları eşit olmalı.
+- Each line must be either debit or credit (it cannot be both or neither). / Her satır ya borçlu ya alacaklı olmalı (ikisi birden veya ikisi de boş olamaz).
+- Description / Açıklama
+- Voucher Date / Fiş Tarihi
+- Posting Date / Yevmiye Tarihi
+- Reference / Referans
+- Voucher Type / Fiş Tipi
+- New Journal Entry / Yeni Yevmiye Fişi
+- Save and post immediately (rejected for closed periods) / Kaydet ve hemen post et (kapatılan dönemler için reddedilir)
+- Document no, description ref… / Belge no, açıklama ref…
+- Save / Kaydet
+- Saving… / Kaydediliyor…
+- — Select account — / — Hesap seç —
+- Total Credit: / Toplam Alacak:
+- Total Debit: / Toplam Borç:
+- Opening Voucher / Açılış Fişi
+- Closing Voucher / Kapanış Fişi
+- Offset Voucher / Mahsup Fişi
+- Collection Voucher / Tahsil Fişi
+- Payment Voucher / Tediye Fişi
+- Credit / Alacak
+- Date / Tarih
+- Debit / Borç
+- Description / Açıklama
+- Lines / Satır
+- Voucher No / Fiş No
+- Status / Durum
+- Type / Tip
+- Delete / Sil
+- Delete / Sil
+- Delete the draft voucher? / Taslak fiş silinsin mi?
+- Voucher deleted. / Fiş silindi.
+- Delete Voucher / Fişi Sil
+- No vouchers match the filters. / Filtrelere uyan fiş bulunamadı.
+- After creating your chart of accounts, you can enter your first journal voucher here. / Hesap planınızı oluşturduktan sonra ilk yevmiye fişini buradan girebilirsiniz.
+- Loading… / Yükleniyor…
+- Post / Post et
+- Voucher posted. / Fiş post edildi.
+- Reverse / Ters çevir
+- Reverse / Ters Çevir
+- The voucher will be reversed and a new counter-voucher will be created. Continue? / Fiş ters çevrilecek ve yeni bir karşı-fiş oluşturulacak. Devam edilsin mi?
+- Voucher reversed. / Fiş ters çevrildi.
+- Reverse Voucher / Fişi Ters Çevir
+- Draft / Taslak
+- Posted / Post Edildi
+- Reversed / Ters Çevrildi
+- Opening / Açılış
+- Closing / Kapanış
+- Adjustment / Mahsup
+- Receipt / Tahsil
+- Payment / Tediye

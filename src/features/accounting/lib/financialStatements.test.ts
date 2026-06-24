@@ -14,7 +14,6 @@ const row = (over: Partial<TrialBalanceRow>): TrialBalanceRow => ({
   ...over,
 });
 
-// A small but balanced ledger: Assets 1000 = Liabilities 300 + Equity 400 + NetIncome 300.
 const rows: TrialBalanceRow[] = [
   row({ accountCode: '100', type: 'Asset', normalSide: 'Debit', debit: 1000, credit: 0 }),
   row({ accountCode: '300', type: 'Liability', normalSide: 'Credit', debit: 0, credit: 300 }),

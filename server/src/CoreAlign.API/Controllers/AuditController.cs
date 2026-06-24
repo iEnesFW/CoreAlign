@@ -2,6 +2,7 @@ using Asp.Versioning;
 using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Audit;
 using CoreAlign.Application.Compliance.Audit;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
@@ -23,22 +24,36 @@ public class AuditController : ControllerBase
     private readonly IEntityAuditLogRepository _repository;
     private readonly IAuditLogExportService _exportService;
     private readonly ITenantContext _tenant;
+    private readonly IAuditFieldRedactor _redactor;
+    private readonly IAuditChainVerifier _chainVerifier;
 
     public AuditController(
         IMediator mediator,
         IEntityAuditLogRepository repository,
         IAuditLogExportService exportService,
-        ITenantContext tenant)
+        ITenantContext tenant,
+        IAuditFieldRedactor redactor,
+        IAuditChainVerifier chainVerifier)
     {
         _mediator = mediator;
         _repository = repository;
         _exportService = exportService;
         _tenant = tenant;
+        _redactor = redactor;
+        _chainVerifier = chainVerifier;
     }
 
     [HttpGet("entity/{entityType}/{entityId:guid}")]
     public async Task<IActionResult> GetTimeline(string entityType, Guid entityId, CancellationToken ct)
         => (await _mediator.Send(new GetEntityAuditTimelineQuery(entityType, entityId), ct)).ToOk();
+
+    [HttpPost("verify-chain")]
+    public async Task<IActionResult> VerifyChain(CancellationToken ct)
+    {
+        var tenantId = _tenant.RequireTenantId();
+        var result = await _chainVerifier.VerifyTenantAsync(tenantId, ct);
+        return result.ToOk();
+    }
 
     [HttpGet("search")]
     public async Task<IActionResult> Search(
@@ -58,7 +73,7 @@ public class AuditController : ControllerBase
         var criteria = AuditSearchCriteriaBuilder.Build(fromUtc, toUtc, entityType, action, userId, entityId);
         var (rows, total) = await _repository.SearchAdvancedAsync(tenantId, criteria, clampedPage, clampedPageSize, ct);
 
-        var items = rows.Select(EntityAuditLogMapper.ToDto).ToArray();
+        var items = rows.Select(log => EntityAuditLogMapper.ToDto(log, _redactor)).ToArray();
         var result = new PagedResult<EntityAuditLogDto>
         {
             Items = items,

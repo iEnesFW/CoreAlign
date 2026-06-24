@@ -15,6 +15,7 @@ public class UpdateOrderCommandHandlerTests
     private readonly IProductRepository _productRepository = Substitute.For<IProductRepository>();
     private readonly IProductComponentRepository _componentRepository = Substitute.For<IProductComponentRepository>();
     private readonly IAllocationService _allocationService = Substitute.For<IAllocationService>();
+    private readonly ICustomerLedgerRepository _ledger = Substitute.For<ICustomerLedgerRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly UpdateOrderCommandHandler _sut;
 
@@ -27,7 +28,9 @@ public class UpdateOrderCommandHandlerTests
     {
         _componentRepository.GetTreeForProductsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
             .Returns(new Dictionary<Guid, IReadOnlyList<(Guid, decimal)>>());
-        _sut = new UpdateOrderCommandHandler(_orderRepository, _customerRepository, _productRepository, _componentRepository, _allocationService, _unitOfWork);
+        _sut = new UpdateOrderCommandHandler(
+            _orderRepository, _customerRepository, _productRepository, _componentRepository, _allocationService,
+            new CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard(_ledger), _unitOfWork);
     }
 
     [Fact]

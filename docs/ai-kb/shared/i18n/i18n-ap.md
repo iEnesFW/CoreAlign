@@ -1,0 +1,80 @@
+# ap (CoreAlign UI)
+
+"ap" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "ap" area (English / Türkçe):
+
+- Action completed. / İşlem tamamlandı.
+- Approve and post / Onayla ve muhasebeleştir
+- Cancel / İptal Et
+- Edit / Düzenle
+- GL entry / Yevmiye Kaydı
+- Pay / Öde
+- Post to ledger / Muhasebeleştir
+- Approve and post {{n}}? / {{n}} onaylanıp muhasebeleştirilsin mi?
+- Approve Bill / Faturayı Onayla
+- Add line / Satır ekle
+- Vendor bill created. / Tedarikçi faturası oluşturuldu.
+- Currency / Para Birimi
+- Bill date / Fatura Tarihi
+- Due date / Vade Tarihi
+- Vendor Bill / Tedarikçi Faturası
+- Awaiting approval — {{r}} / Onay bekliyor — {{r}}
+- Enter a vendor, bill number, and amount. / Tedarikçi, fatura numarası ve tutar girin.
+- Itemized entry (product lines) / Kalemli giriş (ürün satırları)
+- PO line / Sipariş Satırı
+- Product / Ürün
+- Quantity / Miktar
+- Tax % / KDV %
+- Line Total / Satır Toplamı
+- Unit Price / Birim Fiyat
+- Add at least one valid line. / En az bir geçerli satır ekleyin.
+- Fill from PO / Siparişten doldur
+- New Vendor Bill / Yeni Tedarikçi Faturası
+- — no match — / — eşleşme yok —
+- No purchase order (optional) / Sipariş bağlama (opsiyonel)
+- Notes / Notlar
+- Bill # / Fatura No
+- This bill is awaiting approval. / Bu fatura onay bekliyor.
+- Purchase order / Satınalma Siparişi
+- Select… / Seçiniz…
+- Subtotal / Ara Toplam
+- Tax amount / KDV Tutarı
+- Total / Genel Toplam
+- Vendor bill updated. / Tedarikçi faturası güncellendi.
+- Vendor / Tedarikçi
+- Cancel {{n}}? / {{n}} iptal edilsin mi?
+- Cancel Bill / Faturayı İptal Et
+- Date / Tarih
+- Balance due / Kalan Bakiye
+- Bill # / Fatura No
+- Status / Durum
+- Amount / Tutar
+- Vendor / Tedarikçi
+- {{count}} bills / {{count}} fatura
+- No vendor bills found. / Tedarikçi faturası bulunamadı.
+- All statuses / Tüm Durumlar
+- All vendors / Tüm Tedarikçiler
+- GL Entry · {{n}} / Yevmiye Kaydı · {{n}}
+- Vendor Bills / Tedarikçi Faturaları
+- New bill / Yeni Fatura
+- Process and pay vendor bills; the vendor ledger updates automatically. / Tedarikçi faturalarını işleyin ve ödeyin; tedarikçi cari hesabı otomatik güncellenir.
+- Vendor Bills / Tedarikçi Faturaları
+- Amount / Tutar
+- Bank transfer / EFT / Havale / EFT
+- Card / Kart
+- Cash / Nakit
+- Check / Çek
+- Date / Tarih
+- Payment recorded. / Ödeme kaydedildi.
+- Remaining balance / Kalan Bakiye
+- Enter a valid amount (cannot exceed the remaining balance). / Geçerli bir tutar girin (kalan bakiyeyi aşamaz).
+- Payment method / Ödeme Yöntemi
+- Notes / Notlar
+- Make payment / Ödeme Yap
+- Vendor Payment / Tedarikçi Ödemesi
+- Amount / Tutar
+- Method / Yöntem
+- Payment # / Ödeme No
+- {{count}} payments / {{count}} ödeme
+- No vendor payments found. / Tedarikçi ödemesi bulunamadı.
+- Bills / Faturalar
+- Payments / Ödemeler

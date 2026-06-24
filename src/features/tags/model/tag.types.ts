@@ -1,9 +1,4 @@
-export interface Tag {
-  id: string;
-  name: string;
-  colorHex: string | null;
-  isActive: boolean;
-}
+export type { Tag } from '@/shared/model/tag.types';
 
 export interface CreateTagInput {
   name: string;

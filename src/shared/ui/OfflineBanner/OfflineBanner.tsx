@@ -28,7 +28,7 @@ export const OfflineBanner = () => {
   const banner = isOnline ? (
     <div
       role="status"
-      className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow"
+      className="sticky top-0 z-50 flex w-full items-center justify-between gap-3 bg-warning-500 px-4 py-2 text-sm font-medium text-white shadow"
     >
       <span className="flex items-center gap-2">
         <RefreshCw className={isFlushing ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />

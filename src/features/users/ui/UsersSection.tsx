@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Power, PowerOff, ShieldCheck, X } from 'lucide-react';
+import { Plus, Power, PowerOff, ShieldCheck, UserPlus } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Label } from '@/shared/ui/Label/Label';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatDateTime } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
@@ -93,7 +97,7 @@ export const UsersSection = () => {
         <button
           type="button"
           onClick={() => setInviteOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
         >
           <Plus size={12} />
           {t('users.invite', { defaultValue: 'Kullanıcı Ekle' })}
@@ -136,7 +140,7 @@ export const UsersSection = () => {
                       u.roles.map((r) => (
                         <span
                           key={r}
-                          className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+                          className="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300"
                         >
                           {r}
                         </span>
@@ -151,7 +155,7 @@ export const UsersSection = () => {
                   <span
                     className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
                       u.isActive
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                        ? 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300'
                         : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -230,39 +234,6 @@ export const UsersSection = () => {
   );
 };
 
-const inputClass =
-  'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-
-const ModalShell = ({
-  title,
-  onClose,
-  children,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) => {
-  const { t } = useTranslation();
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label={t('common.close', { defaultValue: 'Kapat' })}
-          >
-            <X size={16} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
-
 const InviteUserModal = ({
   roles,
   onClose,
@@ -322,60 +293,56 @@ const InviteUserModal = ({
   };
 
   return (
-    <ModalShell title={t('users.invite', { defaultValue: 'Kullanıcı Ekle' })} onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3 p-4">
+    <Modal
+      open={true}
+      title={t('users.invite', { defaultValue: 'Kullanıcı Ekle' })}
+      icon={<UserPlus size={18} />}
+      onClose={onClose}
+      size="md"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="invite-user-form" isLoading={pending} disabled={pending}>
+            {pending
+              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+              : t('users.create', { defaultValue: 'Oluştur' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="invite-user-form" onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('users.username', { defaultValue: 'Kullanıcı Adı' })} *
-            </label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('users.email', { defaultValue: 'E-posta' })} *
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('users.firstName', { defaultValue: 'Ad' })}
-            </label>
-            <input
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('users.lastName', { defaultValue: 'Soyad' })}
-            </label>
-            <input
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className={inputClass}
-            />
-          </div>
+          <Input
+            label={`${t('users.username', { defaultValue: 'Kullanıcı Adı' })} *`}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <Input
+            label={`${t('users.email', { defaultValue: 'E-posta' })} *`}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            label={t('users.firstName', { defaultValue: 'Ad' })}
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <Input
+            label={t('users.lastName', { defaultValue: 'Soyad' })}
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            {t('users.tempPassword', { defaultValue: 'Geçici Parola' })} *
-          </label>
-          <input
+          <Input
+            label={`${t('users.tempPassword', { defaultValue: 'Geçici Parola' })} *`}
             type="text"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={`${inputClass} font-mono`}
+            className="font-mono"
           />
           <p className="mt-0.5 text-[10px] text-slate-400">
             {t('users.tempPasswordHint', {
@@ -384,31 +351,11 @@ const InviteUserModal = ({
           </p>
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
-            {t('users.roles', { defaultValue: 'Roller' })}
-          </label>
+          <Label className="mb-1 block">{t('users.roles', { defaultValue: 'Roller' })}</Label>
           <RoleChecklist roles={roles} selected={selected} onToggle={toggle} />
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t('common.cancel', { defaultValue: 'İptal' })}
-          </button>
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {pending
-              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-              : t('users.create', { defaultValue: 'Oluştur' })}
-          </button>
-        </div>
       </form>
-    </ModalShell>
+    </Modal>
   );
 };
 
@@ -446,31 +393,28 @@ const EditRolesModal = ({
   };
 
   return (
-    <ModalShell
+    <Modal
+      open={true}
       title={`${t('users.editRoles', { defaultValue: 'Rolleri Düzenle' })} — ${user.username}`}
+      icon={<ShieldCheck size={18} />}
       onClose={onClose}
-    >
-      <form onSubmit={submit} className="space-y-3 p-4">
-        <RoleChecklist roles={roles} selected={selected} onToggle={toggle} />
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
+      size="md"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose}>
             {t('common.cancel', { defaultValue: 'İptal' })}
-          </button>
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
+          </Button>
+          <Button type="submit" form="edit-roles-form" isLoading={pending} disabled={pending}>
             {pending
               ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
               : t('common.save', { defaultValue: 'Kaydet' })}
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <form id="edit-roles-form" onSubmit={submit} className="space-y-3">
+        <RoleChecklist roles={roles} selected={selected} onToggle={toggle} />
       </form>
-    </ModalShell>
+    </Modal>
   );
 };

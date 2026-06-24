@@ -24,3 +24,12 @@ export const useUpdateFeedbackStatus = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
   });
 };
+
+export const useUploadFeedbackAttachment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) =>
+      feedbackApi.uploadAttachment(id, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  });
+};

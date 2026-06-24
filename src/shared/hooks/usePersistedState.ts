@@ -1,12 +1,6 @@
 import { useCallback, useState } from 'react';
 import { logger } from '@/shared/lib/logger';
 
-/**
- * useState whose value is mirrored to localStorage so a user's UI preference
- * (collapsed sections, page size, density…) survives reloads. Reads are
- * lazy-initialized once; writes are best-effort (private-mode / quota errors
- * are swallowed so the UI never breaks because storage is unavailable).
- */
 export function usePersistedState<T>(
   key: string,
   defaultValue: T,

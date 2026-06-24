@@ -26,4 +26,12 @@ public enum GLPostingKey
     PurchasePriceVariance = 13,
     FxGain = 14,
     FxLoss = 15,
+    LaborExpense = 16,
+    AdminLaborExpense = 17,
+    PersonnelNetPayable = 18,
+    TaxesPayable = 19,
+    SgkPayable = 20,
+    ShippingIncome = 21,
+    RoundingGain = 22,
+    RoundingLoss = 23,
 }

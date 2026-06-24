@@ -82,7 +82,7 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
             tone={summary.isBelowReorder ? 'red' : 'emerald'}
             footer={
               summary.isBelowReorder ? (
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400">
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-danger-600 dark:text-danger-400">
                   <AlertTriangle size={11} />
                   {t('inventory.summary.belowReorder')}
                 </span>
@@ -112,7 +112,7 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
           <button
             type="button"
             onClick={() => setNewAdjustWarehouseId('')}
-            className="inline-flex items-center gap-1.5 rounded border border-indigo-300 bg-white px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50 dark:border-indigo-700 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+            className="inline-flex items-center gap-1.5 rounded border border-primary-300 bg-white px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-50 dark:border-primary-700 dark:bg-slate-900 dark:text-primary-300 dark:hover:bg-primary-500/10"
           >
             <Edit3 size={12} />
             {t('inventory.byWarehouse.adjust')}
@@ -164,19 +164,19 @@ export const StockByWarehouseTab = ({ productId, productSku, productName, curren
                     <td className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200">
                       {fmtNumber(it.onHand, locale)}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-amber-700 dark:text-amber-300">
+                    <td className="px-3 py-2 text-right font-mono text-warning-700 dark:text-warning-300">
                       {fmtNumber(it.reserved, locale)}
                     </td>
                     <td
                       className={`px-3 py-2 text-right font-mono font-semibold ${
                         belowReorder
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-emerald-700 dark:text-emerald-300'
+                          ? 'text-danger-600 dark:text-danger-400'
+                          : 'text-success-700 dark:text-success-300'
                       }`}
                     >
                       {fmtNumber(it.availableToPromise, locale)}
                       {belowReorder && (
-                        <div className="text-[10px] font-normal text-red-500">
+                        <div className="text-[10px] font-normal text-danger-500">
                           {t('inventory.fields.reorderHint', {
                             value: fmtNumber(it.reorderPoint ?? 0, locale),
                           })}
@@ -265,18 +265,18 @@ interface SummaryCardProps {
 }
 
 const TONE_BORDER: Record<SummaryCardProps['tone'], string> = {
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  red: 'border-red-200 dark:border-red-500/30',
+  indigo: 'border-primary-200 dark:border-primary-500/30',
+  amber: 'border-warning-200 dark:border-warning-500/30',
+  emerald: 'border-success-200 dark:border-success-500/30',
+  red: 'border-danger-200 dark:border-danger-500/30',
   slate: 'border-slate-200 dark:border-slate-700',
 };
 
 const TONE_VALUE: Record<SummaryCardProps['tone'], string> = {
-  indigo: 'text-indigo-700 dark:text-indigo-300',
-  amber: 'text-amber-700 dark:text-amber-300',
-  emerald: 'text-emerald-700 dark:text-emerald-300',
-  red: 'text-red-700 dark:text-red-300',
+  indigo: 'text-primary-700 dark:text-primary-300',
+  amber: 'text-warning-700 dark:text-warning-300',
+  emerald: 'text-success-700 dark:text-success-300',
+  red: 'text-danger-700 dark:text-danger-300',
   slate: 'text-slate-800 dark:text-slate-200',
 };
 

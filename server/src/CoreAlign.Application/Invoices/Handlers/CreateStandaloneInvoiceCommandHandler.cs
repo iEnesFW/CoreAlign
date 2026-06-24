@@ -1,3 +1,4 @@
+using CoreAlign.Application.CustomerPortal.Credit;
 using CoreAlign.Application.EInvoice;
 using CoreAlign.Application.Fx;
 using CoreAlign.Application.Invoices.Commands;
@@ -25,6 +26,7 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
     private readonly IEInvoiceSubmissionOutbox _eInvoiceOutbox;
+    private readonly ICreditLimitGuard _creditGuard;
     private readonly IFxRateResolverDetailed? _fxResolver;
     private readonly ITenantContext? _tenantContext;
 
@@ -39,6 +41,7 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
         IUnitOfWork unitOfWork,
         IEmailService emailService,
         IEInvoiceSubmissionOutbox eInvoiceOutbox,
+        ICreditLimitGuard creditGuard,
         IFxRateResolverDetailed? fxResolver = null,
         ITenantContext? tenantContext = null)
     {
@@ -52,6 +55,7 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
         _unitOfWork = unitOfWork;
         _emailService = emailService;
         _eInvoiceOutbox = eInvoiceOutbox;
+        _creditGuard = creditGuard;
         _fxResolver = fxResolver;
         _tenantContext = tenantContext;
     }
@@ -186,6 +190,8 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
                 invoice.ApplyFxRateSnapshot(fxLock.Snapshot.BuyingRate, fxLock.Snapshot.Source, DateTime.UtcNow);
             }
         }
+
+        await _creditGuard.EnsureWithinLimitAsync(customer, invoice.Total, cancellationToken);
 
         invoice.Issue(invoiceNumber);
 

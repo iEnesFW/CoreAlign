@@ -60,7 +60,7 @@ export const ModuleCard = ({
   return (
     <div className="flex h-full flex-col rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:border-slate-800/70 dark:bg-slate-900">
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 text-white shadow-md shadow-primary-500/20">
           <ModuleIcon iconKey={module.iconKey} size={18} />
         </div>
         <div className="min-w-0 flex-1">
@@ -69,7 +69,7 @@ export const ModuleCard = ({
               {module.name}
             </h3>
             {isCore && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success-50 px-1.5 py-0.5 text-[10px] font-semibold text-success-700 dark:bg-success-500/15 dark:text-success-300">
                 <Sparkles size={10} />
                 {t('billing.modules.coreLabel')}
               </span>
@@ -91,12 +91,12 @@ export const ModuleCard = ({
 
       <div className="mt-3 rounded-lg border border-slate-100 bg-slate-50/60 px-2.5 py-1.5 text-[11px] dark:border-slate-800 dark:bg-slate-800/40">
         {isCore ? (
-          <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1 font-medium text-success-700 dark:text-success-300">
             <CheckCircle2 size={12} />
             {t('billing.modules.coreAlwaysOn')}
           </span>
         ) : isCurrentlyActive ? (
-          <span className="inline-flex flex-wrap items-center gap-1 font-medium text-emerald-700 dark:text-emerald-300">
+          <span className="inline-flex flex-wrap items-center gap-1 font-medium text-success-700 dark:text-success-300">
             <CheckCircle2 size={12} />
             <span>
               {t('billing.modules.activeUntil', {
@@ -130,8 +130,8 @@ export const ModuleCard = ({
                 className={cn(
                   'flex flex-col items-start gap-0.5 rounded-lg border px-2.5 py-1.5 text-left text-[11px] transition-all',
                   isSelected
-                    ? 'border-indigo-400 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-300 dark:border-indigo-500/60 dark:bg-indigo-500/10 dark:text-indigo-200'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-500/40',
+                    ? 'border-primary-400 bg-primary-50 text-primary-700 ring-1 ring-primary-300 dark:border-primary-500/60 dark:bg-primary-500/10 dark:text-primary-200'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-primary-500/40',
                 )}
               >
                 <span className="font-semibold">{plan.displayLabel}</span>
@@ -148,7 +148,7 @@ export const ModuleCard = ({
       )}
 
       {isRenewing && selectedPlan && (
-        <p className="mt-2 rounded-md bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+        <p className="mt-2 rounded-md bg-warning-50 px-2 py-1 text-[11px] text-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
           {t('billing.modules.renewalHint', {
             duration: t('billing.modules.durationDays', { count: selectedPlan.durationDays }),
           })}
@@ -174,8 +174,8 @@ export const ModuleCard = ({
             className={cn(
               'inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
               isInCart
-                ? 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-600/60'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700',
+                ? 'bg-success-600 text-white hover:bg-success-700 disabled:bg-success-600/60'
+                : 'bg-primary-600 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700',
             )}
           >
             {isInCart ? (

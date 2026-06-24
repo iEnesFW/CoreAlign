@@ -1,4 +1,5 @@
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
 
@@ -18,6 +19,7 @@ internal static class FeedbackMapper
         f.PageUrl,
         f.CreatedByName,
         f.AdminResponse,
+        f.AttachmentFileName,
         f.CreatedAtUtc,
         f.ResolvedAtUtc);
 }
@@ -80,5 +82,40 @@ public class GetFeedbackByIdHandler : IRequestHandler<GetFeedbackByIdQuery, Feed
     {
         var ticket = await _repo.GetByIdAsync(q.Id, ct);
         return ticket is null ? null : FeedbackMapper.ToDto(ticket);
+    }
+}
+
+public class AttachFeedbackFileHandler : IRequestHandler<AttachFeedbackFileCommand, FeedbackTicketDto>
+{
+    private readonly IFeedbackRepository _repo;
+    private readonly IUnitOfWork _uow;
+    public AttachFeedbackFileHandler(IFeedbackRepository repo, IUnitOfWork uow) { _repo = repo; _uow = uow; }
+
+    public async Task<FeedbackTicketDto> Handle(AttachFeedbackFileCommand c, CancellationToken ct)
+    {
+        var ticket = await _repo.GetByIdAsync(c.Id, ct) ?? throw new FeedbackNotFoundException();
+        ticket.AttachFile(c.RelativePath, c.FileName, c.ContentType);
+        _repo.Update(ticket);
+        await _uow.SaveChangesAsync(ct);
+        return FeedbackMapper.ToDto(ticket);
+    }
+}
+
+public class GetFeedbackAttachmentHandler : IRequestHandler<GetFeedbackAttachmentQuery, FeedbackAttachmentDescriptor?>
+{
+    private readonly IFeedbackRepository _repo;
+    public GetFeedbackAttachmentHandler(IFeedbackRepository repo) => _repo = repo;
+
+    public async Task<FeedbackAttachmentDescriptor?> Handle(GetFeedbackAttachmentQuery q, CancellationToken ct)
+    {
+        var ticket = await _repo.GetByIdAsync(q.Id, ct);
+        if (ticket?.AttachmentPath is null || ticket.AttachmentFileName is null)
+        {
+            return null;
+        }
+        return new FeedbackAttachmentDescriptor(
+            ticket.AttachmentPath,
+            ticket.AttachmentFileName,
+            ticket.AttachmentContentType ?? "application/octet-stream");
     }
 }

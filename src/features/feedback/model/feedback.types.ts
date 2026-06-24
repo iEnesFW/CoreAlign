@@ -14,6 +14,7 @@ export interface FeedbackTicket {
   pageUrl: string | null;
   createdByName: string | null;
   adminResponse: string | null;
+  attachmentFileName: string | null;
   createdAtUtc: string;
   resolvedAtUtc: string | null;
 }

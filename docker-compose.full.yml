@@ -17,6 +17,15 @@ services:
     networks:
       - corealign
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: corealign-ollama
+    restart: unless-stopped
+    volumes:
+      - corealign-ollama-data:/root/.ollama
+    networks:
+      - corealign
+
   api:
     image: corealign-api:${BUILD_VERSION:-dev}
     build:
@@ -29,8 +38,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      ollama:
+        condition: service_started
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      AiHelper__BaseUrl: http://ollama:11434
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=corealign;Username=postgres;Password=postgres
       Database__Provider: Postgres
@@ -107,6 +119,7 @@ networks:
     driver: bridge
 
 volumes:
+  corealign-ollama-data:
   corealign-postgres-data:
     external: false
   caddy-data:

@@ -34,4 +34,15 @@ export const feedbackApi = {
       invalidateHttpCache(INVALIDATION);
       return r.data;
     }),
+
+  uploadAttachment: (id: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return apiClient
+      .post<ApiResponse<FeedbackTicket>>(`${BASE}/${id}/attachment`, form)
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      });
+  },
 };

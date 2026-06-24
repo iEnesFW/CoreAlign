@@ -17,7 +17,7 @@ export interface AreaChartCardProps {
 
 export const AreaChartCard: React.FC<AreaChartCardProps> = ({ title, data }) => {
   return (
-    <div className="bg-white dark:bg-[#0B0F19] rounded-[5px] shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-none border border-slate-200/60 dark:border-slate-800/60 p-3 min-h-[250px] flex flex-col">
+    <div className="bg-white dark:bg-shell rounded-[5px] shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-none border border-slate-200/60 dark:border-slate-800/60 p-3 min-h-[250px] flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div>
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">{title}</h3>

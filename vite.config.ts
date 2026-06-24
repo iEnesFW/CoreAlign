@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import type { ServerResponse } from 'node:http';
 import path from 'path';
 
 export default defineConfig({
@@ -15,7 +16,7 @@ export default defineConfig({
         name: 'CoreAlign ERP',
         short_name: 'CoreAlign',
         description: 'Multi-tenant Turkish SaaS ERP — offline-capable field operations',
-        theme_color: '#0EA5E9',
+        theme_color: '#6366f1',
         background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
@@ -103,13 +104,17 @@ export default defineConfig({
         configure: (proxy) => {
           // Backend henuz baslamamissa ECONNREFUSED log spam'i yapma —
           // 503 don ve kullaniciya geri don, F5 ardindan dev ortaminda dakikalar sururebilir.
+          // Vite'in kendi built-in 'error' handler'i AggregateError/ECONNREFUSED stack'ini
+          // basiyor; onu kaldirip event'i tamamen biz sahiplenelim (asagida hemen yeni
+          // listener ekledigimiz icin unhandled-'error' crash riski yok).
+          proxy.removeAllListeners('error');
           proxy.on('error', (err, _req, res) => {
             const code = (err as NodeJS.ErrnoException).code;
             if (code === 'ECONNREFUSED' || code === 'ECONNRESET') {
-              if (res && !(res as any).headersSent && 'writeHead' in res) {
+              if (res && !(res as ServerResponse).headersSent && 'writeHead' in res) {
                 try {
-                  (res as any).writeHead(503, { 'Content-Type': 'application/json' });
-                  (res as any).end(
+                  (res as ServerResponse).writeHead(503, { 'Content-Type': 'application/json' });
+                  (res as ServerResponse).end(
                     JSON.stringify({ error: 'Backend not ready, please retry in a few seconds.' }),
                   );
                 } catch {
@@ -127,6 +132,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {
+          proxy.removeAllListeners('error');
           proxy.on('error', (err) => {
             const code = (err as NodeJS.ErrnoException).code;
             if (code === 'ECONNREFUSED' || code === 'ECONNRESET') return;
@@ -150,6 +156,7 @@ export default defineConfig({
           'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei'],
           'vendor-i18n': ['i18next', 'react-i18next'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-geo': ['country-state-city'],
         },
       },
     },

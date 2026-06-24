@@ -24,8 +24,6 @@ interface OrbitLike {
 
 const CAMERA_SAVE_DEBOUNCE_MS = 450;
 
-// Applies a saved camera once on load and reports the camera (debounced) when
-// the user orbits, so the viewpoint persists across reloads.
 function CameraSync({
   initialCamera,
   onChange,

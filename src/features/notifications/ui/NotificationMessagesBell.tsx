@@ -40,11 +40,11 @@ export const NotificationMessagesBell = () => {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={t('Notifications.Bell.Unread')}
-        className="relative p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="relative p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-1 focus:ring-primary-500"
       >
         <Bell size={16} />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] items-center justify-center rounded-full bg-rose-500 px-[3px] text-[9px] font-bold leading-[14px] text-white shadow-sm ring-1 ring-white dark:ring-[#0B0F19]">
+          <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-[3px] text-[9px] font-bold leading-[14px] text-white shadow-sm ring-1 ring-white dark:ring-shell">
             {badgeText}
           </span>
         )}

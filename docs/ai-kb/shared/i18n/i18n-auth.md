@@ -1,0 +1,84 @@
+# auth (CoreAlign UI)
+
+"auth" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "auth" area (English / Türkçe):
+
+- An unexpected error occurred. / Beklenmeyen bir hata oluştu.
+- Back to login / Giriş ekranına dön
+- Email address / E-posta adresi
+- name@company.com / isim@sirket.com
+- Send reset link / Sıfırlama bağlantısı gönder
+- Enter your email address to receive a password reset link. / Şifre sıfırlama bağlantısı almak için e-posta adresinizi girin.
+- Back to login / Giriş ekranına dön
+- Check your email for the password reset link. / Şifre sıfırlama bağlantısı için e-postanızı kontrol edin.
+- Reset Link Sent / Bağlantı Gönderildi
+- Forgot Password / Şifremi Unuttum
+- Email address / E-posta adresi
+- name@company.com / isim@sirket.com
+- Invalid tenant code or provider name. No such SSO connection was found. / Hatalı Tenant Kodu veya Sağlayıcı Adı girdiniz. Sistemde böyle bir SSO bağlantısı bulunamadı.
+- Login failed. Please try again. / Giriş başarısız. Lütfen tekrar deneyin.
+- An error occurred during SSO redirection. Please contact your system administrator. / SSO yönlendirmesi sırasında bir hata oluştu. Lütfen sistem yöneticinizle iletişime geçin.
+- Forgot password? / Şifremi unuttum?
+- Don't have an account? / Hesabınız yok mu?
+- or / veya
+- Password / Şifre
+- ••••••••
+- Sign up / Kayıt ol
+- Remember me / Beni hatırla
+- Continue with SSO / SSO ile Devam Et
+- Sign in / Giriş yap
+- Enter your details to access your account. / Hesabınıza erişmek için bilgilerinizi girin.
+- You have successfully logged in. / Başarıyla giriş yaptınız.
+- Login Successful / Giriş Başarılı
+- Welcome back / Tekrar Hoşgeldiniz
+- Your Profile / Profiliniz
+- Confirm Password / Şifreyi Onayla
+- ••••••••
+- Email Address / E-posta Adresi
+- john@example.com / ahmet@ornek.com
+- Passwords do not match / Şifreler eşleşmiyor
+- Registration failed. Please try again. / Kayıt başarısız. Lütfen tekrar deneyin.
+- First Name / Ad
+- John / Ahmet
+- Already have an account? / Zaten bir hesabınız var mı?
+- Last Name / Soyad
+- Doe / Yılmaz
+- Log in / Giriş yap
+- Organization Name / Organizasyon Adı
+- Acme Inc. / Örn. Acme A.Ş.
+- Password / Şifre
+- ••••••••
+- Create account / Hesap oluştur
+- Enter your details to create an account. / Hesap oluşturmak için bilgilerinizi girin.
+- Back to login / Giriş ekranına dön
+- Your account has been created successfully. / Hesabınız başarıyla oluşturuldu.
+- Registration Successful / Kayıt Başarılı
+- Terms and Conditions / Hizmet Şartları
+- I agree to the / Şartları kabul ediyorum
+- Register / Kayıt Ol
+- Username / Kullanıcı Adı
+- johndoe / ahmetyilmaz
+- Back to login / Giriş ekranına dön
+- Confirm New Password / Yeni Şifreyi Onayla
+- ••••••••
+- Invalid or expired token. / Geçersiz veya süresi dolmuş bağlantı.
+- Password must be at least 8 characters long. / Şifre en az 8 karakter olmalıdır.
+- Passwords do not match. / Şifreler eşleşmiyor.
+- New Password / Yeni Şifre
+- ••••••••
+- Reset password / Şifreyi sıfırla
+- Enter your new password below. / Yeni şifrenizi aşağıya girin.
+- Back to login / Giriş ekranına dön
+- Your password has been reset successfully. / Şifreniz başarıyla sıfırlandı.
+- Password Reset / Şifre Sıfırlandı
+- Reset Password / Şifre Sıfırlama
+- Settings / Ayarlar
+- Sign in / Giriş Yap
+- Sign out / Çıkış Yap
+- Sign up / Kayıt Ol
+- Invalid or expired verification token. / Geçersiz doğrulama bağlantısı.
+- Verification failed. Please try again. / Doğrulama başarısız. Lütfen tekrar deneyin.
+- We are verifying your email address... / E-posta adresiniz doğrulanıyor...
+- Go to Login / Giriş Yap'a Git
+- Your email has been successfully verified. / E-posta adresiniz başarıyla doğrulandı.
+- Verification Successful / Doğrulama Başarılı
+- Email Verification / E-posta Doğrulama

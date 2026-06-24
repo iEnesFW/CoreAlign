@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
-import { useDeleteWarehouse, useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
-import type { Warehouse, WarehouseType } from '@/features/master-data/model/masterData.types';
+import { useDeleteWarehouse, useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
+import type { Warehouse, WarehouseType } from '@/shared/master-data/model/masterData.types';
 import { WarehouseFormModal } from './WarehouseFormModal';
 
 const TYPE_LABEL: Record<WarehouseType, string> = {
@@ -58,7 +58,7 @@ export const WarehousesTab = () => {
         <button
           type="button"
           onClick={() => setModal({ mode: 'create' })}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
         >
           <Plus size={12} />
           {t('inventory.warehouse.new', { defaultValue: 'Yeni Depo' })}
@@ -104,7 +104,7 @@ export const WarehousesTab = () => {
                   </td>
                   <td className="px-3 py-2">
                     <span className="inline-flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-100">
-                      {w.isDefault && <Star size={12} className="text-amber-500" />}
+                      {w.isDefault && <Star size={12} className="text-warning-500" />}
                       {w.name}
                     </span>
                   </td>
@@ -118,7 +118,7 @@ export const WarehousesTab = () => {
                     <span
                       className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
                         w.isActive
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                          ? 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300'
                           : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                       }`}
                     >
@@ -140,7 +140,7 @@ export const WarehousesTab = () => {
                       <button
                         type="button"
                         onClick={() => remove(w)}
-                        className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                        className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                         title={t('common.delete', { defaultValue: 'Sil' })}
                       >
                         <Trash2 size={13} />

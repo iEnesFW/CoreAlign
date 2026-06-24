@@ -100,7 +100,7 @@ export const PurchaseRequisitionForm = ({
           <button
             type="button"
             onClick={() => setLines((prev) => [...prev, emptyLine()])}
-            className="flex items-center gap-1 rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+            className="flex items-center gap-1 rounded-md border border-primary-300 bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
           >
             <Plus className="h-3.5 w-3.5" />
             {t('Mrp.Requisition.AddLine')}
@@ -140,7 +140,7 @@ export const PurchaseRequisitionForm = ({
             <button
               type="button"
               onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
-              className="flex items-center justify-center rounded border border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-500/10"
+              className="flex items-center justify-center rounded border border-danger-300 bg-danger-50 text-danger-600 hover:bg-danger-100 dark:border-danger-700 dark:bg-danger-500/10"
               aria-label={t('Mrp.Requisition.RemoveLine') ?? 'Remove'}
             >
               <Trash2 className="h-4 w-4" />
@@ -162,7 +162,7 @@ export const PurchaseRequisitionForm = ({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
+          className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-500 disabled:cursor-not-allowed disabled:bg-primary-400"
         >
           {t('Common.Save')}
         </button>

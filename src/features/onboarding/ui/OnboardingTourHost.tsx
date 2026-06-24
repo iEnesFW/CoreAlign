@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Joyride, EVENTS, STATUS, type EventData, type Step } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/features/auth/model/authStore';
-import { usePersonaStore } from '@/features/persona/model/personaStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
+import { usePersonaStore } from '@/shared/lib/persona';
 import { useOnboardingStore } from '../model/onboardingStore';
 import type { TourKey, TourTranslate } from '../model/onboarding.types';
 import { TOUR_BUILDERS } from '../tours';
@@ -91,7 +91,7 @@ export const OnboardingTourHost = () => {
         skip: t('Onboarding.Action.Skip', { defaultValue: 'Atla' }) as string,
       }}
       options={{
-        primaryColor: '#4f46e5',
+        primaryColor: '#6366f1',
         zIndex: 10000,
         showProgress: true,
         buttons: ['back', 'primary', 'skip'],

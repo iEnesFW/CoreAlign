@@ -1,18 +1,23 @@
 using System.Linq.Expressions;
 using CoreAlign.Domain.Common;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Entities.AiHelper;
 using CoreAlign.Domain.Entities.Compliance;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Entities.Installation;
 using CoreAlign.Domain.Entities.Payments;
+using CoreAlign.Domain.Entities.Payroll;
 using CoreAlign.Domain.Entities.Pricing;
 using CoreAlign.Domain.Entities.Purchasing;
 using CoreAlign.Domain.Entities.Sales;
 using CoreAlign.Domain.Entities.Treasury;
 using CoreAlign.Domain.Entities.Warranty;
 using CoreAlign.Domain.Interfaces;
+using CoreAlign.Infrastructure.Persistence.Converters;
 using MediatR;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace CoreAlign.Infrastructure.Persistence;
 
@@ -20,15 +25,26 @@ public class CoreAlignDbContext : DbContext
 {
     private readonly ITenantContext _tenantContext;
     private readonly IPublisher _publisher;
+    private readonly IDataProtector? _fieldProtector;
 
     public CoreAlignDbContext(
         DbContextOptions<CoreAlignDbContext> options,
         ITenantContext tenantContext,
-        IPublisher publisher)
+        IPublisher publisher,
+        IDataProtectionProvider? dataProtectionProvider = null)
         : base(options)
     {
         _tenantContext = tenantContext;
         _publisher = publisher;
+        _fieldProtector = dataProtectionProvider?.CreateProtector("CoreAlign.Persistence.FieldEncryption.v1");
+    }
+
+    internal bool FieldEncryptionActive => _fieldProtector is not null;
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, FieldEncryptionModelCacheKeyFactory>();
+        base.OnConfiguring(optionsBuilder);
     }
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
@@ -145,6 +161,18 @@ public class CoreAlignDbContext : DbContext
     public DbSet<TaxDeclaration> TaxDeclarations => Set<TaxDeclaration>();
     public DbSet<TaxDeclarationLine> TaxDeclarationLines => Set<TaxDeclarationLine>();
 
+    // Payroll
+    public DbSet<CoreAlign.Domain.Entities.Payroll.Employee> Employees => Set<CoreAlign.Domain.Entities.Payroll.Employee>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.SalaryComponent> SalaryComponents => Set<CoreAlign.Domain.Entities.Payroll.SalaryComponent>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.EmployeeDeduction> EmployeeDeductions => Set<CoreAlign.Domain.Entities.Payroll.EmployeeDeduction>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.PayrollParameters> PayrollParameters => Set<CoreAlign.Domain.Entities.Payroll.PayrollParameters>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.PayrollTaxBracket> PayrollTaxBrackets => Set<CoreAlign.Domain.Entities.Payroll.PayrollTaxBracket>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.PayrollRun> PayrollRuns => Set<CoreAlign.Domain.Entities.Payroll.PayrollRun>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.Payslip> Payslips => Set<CoreAlign.Domain.Entities.Payroll.Payslip>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.PayslipEarningLine> PayslipEarningLines => Set<CoreAlign.Domain.Entities.Payroll.PayslipEarningLine>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.PayslipDeductionLine> PayslipDeductionLines => Set<CoreAlign.Domain.Entities.Payroll.PayslipDeductionLine>();
+    public DbSet<CoreAlign.Domain.Entities.Payroll.EmployeeYtdTaxBase> EmployeeYtdTaxBases => Set<CoreAlign.Domain.Entities.Payroll.EmployeeYtdTaxBase>();
+
     // Pricing rules
     public DbSet<CoreAlign.Domain.Entities.Pricing.DiscountRule> PricingDiscountRules => Set<CoreAlign.Domain.Entities.Pricing.DiscountRule>();
     public DbSet<TaxRule> PricingTaxRules => Set<TaxRule>();
@@ -226,6 +254,7 @@ public class CoreAlignDbContext : DbContext
     public DbSet<CoreAlign.Domain.Entities.Notifications.NotificationPreference> NotificationPreferences => Set<CoreAlign.Domain.Entities.Notifications.NotificationPreference>();
     public DbSet<CoreAlign.Domain.Entities.Notifications.UserDeviceToken> UserDeviceTokens => Set<CoreAlign.Domain.Entities.Notifications.UserDeviceToken>();
     public DbSet<CoreAlign.Domain.Entities.Notifications.NotificationRateCounter> NotificationRateCounters => Set<CoreAlign.Domain.Entities.Notifications.NotificationRateCounter>();
+    public DbSet<CoreAlign.Domain.Entities.Observability.ErrorLogEntry> ErrorLogs => Set<CoreAlign.Domain.Entities.Observability.ErrorLogEntry>();
 
     // F4.5 Whitelabel customization (tenant theme + multi-asset references)
     public DbSet<CoreAlign.Domain.Entities.Whitelabel.TenantTheme> TenantThemes => Set<CoreAlign.Domain.Entities.Whitelabel.TenantTheme>();
@@ -253,10 +282,32 @@ public class CoreAlignDbContext : DbContext
         if (Database.IsNpgsql())
         {
             ApplyXminConcurrencyTokens(modelBuilder);
+            // WHY: real[] is Npgsql-native; on the SQLite test provider float[] falls back to the EF JSON primitive collection.
+            modelBuilder.Entity<AiKbChunk>().Property(c => c.Embedding).HasColumnType("real[]");
         }
         ApplyTenantForeignKeys(modelBuilder);
+        ApplyFieldEncryption(modelBuilder);
         modelBuilder.ApplySoftDeleteFilters();
         modelBuilder.ApplySnakeCaseNaming();
+    }
+
+    private void ApplyFieldEncryption(ModelBuilder modelBuilder)
+    {
+        if (_fieldProtector is null)
+        {
+            return;
+        }
+
+        var nullable = new ResilientEncryptedStringConverter(_fieldProtector);
+        var required = new RequiredResilientEncryptedStringConverter(_fieldProtector);
+
+        modelBuilder.Entity<User>().Property(u => u.TwoFactorSecretKey).HasConversion(nullable);
+        modelBuilder.Entity<Employee>().Property(e => e.Iban).HasConversion(nullable);
+        modelBuilder.Entity<Employee>().Property(e => e.SgkRegistrationNo).HasConversion(nullable);
+        modelBuilder.Entity<Payslip>().Property(p => p.NationalId).HasConversion(required);
+        modelBuilder.Entity<VendorBankAccount>().Property(v => v.Iban).HasConversion(required);
+        modelBuilder.Entity<VendorBankAccount>().Property(v => v.AccountNumber).HasConversion(nullable);
+        modelBuilder.Entity<VendorBankAccount>().Property(v => v.Swift).HasConversion(nullable);
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

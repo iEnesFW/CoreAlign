@@ -12,10 +12,6 @@ interface Props {
   onCancel?: () => void;
 }
 
-/**
- * Small comment composer used both for top-level posts and for replies. Keeps
- * its own draft state; Ctrl/Cmd+Enter submits, Esc cancels (when onCancel set).
- */
 export const CommentForm = ({
   placeholder,
   submitLabel,
@@ -63,7 +59,7 @@ export const CommentForm = ({
         autoFocus={autoFocus}
         disabled={disabled || busy}
         rows={3}
-        className="block w-full resize-y rounded border border-transparent bg-slate-50 px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-300 dark:bg-slate-800/60 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className="block w-full resize-y rounded border border-transparent bg-slate-50 px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-300 dark:bg-slate-800/60 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
       <div className="mt-1.5 flex items-center justify-between gap-2">
         <span className="text-[10px] text-slate-400 dark:text-slate-500">
@@ -84,7 +80,7 @@ export const CommentForm = ({
             type="button"
             onClick={() => void submit()}
             disabled={!canSubmit}
-            className="inline-flex items-center gap-1 rounded bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded bg-primary-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send size={11} />
             {submitLabel ?? t('collab.comments.submit')}

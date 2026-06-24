@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Play, Trash2, Edit2 } from 'lucide-react';
+import { ClipboardList, Plus, Play, Trash2, Edit2 } from 'lucide-react';
 import { formatDateTime } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Badge } from '@/shared/ui/Badge/Badge';
 import {
   useDeleteOrderTemplateMutation,
   useOrderTemplatesQuery,
@@ -17,6 +21,7 @@ const PAGE_SIZE = 20;
 
 export const OrderTemplatesPage = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const locale = useFormatLocale();
   const [page, setPage] = useState(1);
   const query = useOrderTemplatesQuery({ page, pageSize: PAGE_SIZE });
@@ -36,31 +41,54 @@ export const OrderTemplatesPage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {t('OrderTemplates.Title')}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            {t('OrderTemplates.Subtitle')}
-          </p>
-        </div>
-        <Link
-          to="/order-templates/new"
-          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          <Plus size={14} />
-          {t('OrderTemplates.New')}
-        </Link>
-      </div>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<ClipboardList size={20} />}
+          title={t('OrderTemplates.Title')}
+          subtitle={t('OrderTemplates.Subtitle')}
+          actions={
+            <Button size="sm" onClick={() => navigate('/order-templates/new')}>
+              <Plus size={14} />
+              {t('OrderTemplates.New')}
+            </Button>
+          }
+        />
+      }
+      pagination={
+        (result?.total ?? 0) > PAGE_SIZE ? (
+          <div className="flex justify-end gap-2 text-xs">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              &lt;
+            </Button>
+            <span className="self-center">
+              {page} / {Math.max(1, Math.ceil((result?.total ?? 0) / PAGE_SIZE))}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={items.length < PAGE_SIZE}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              &gt;
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
       {items.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           {t('OrderTemplates.Empty')}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
               <tr>
@@ -86,31 +114,7 @@ export const OrderTemplatesPage = () => {
           </table>
         </div>
       )}
-
-      {(result?.total ?? 0) > PAGE_SIZE && (
-        <div className="flex justify-end gap-2 text-xs">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="rounded border border-slate-200 px-2 py-1 disabled:opacity-40 dark:border-slate-700"
-          >
-            &lt;
-          </button>
-          <span className="self-center">
-            {page} / {Math.max(1, Math.ceil((result?.total ?? 0) / PAGE_SIZE))}
-          </span>
-          <button
-            type="button"
-            disabled={items.length < PAGE_SIZE}
-            onClick={() => setPage((p) => p + 1)}
-            className="rounded border border-slate-200 px-2 py-1 disabled:opacity-40 dark:border-slate-700"
-          >
-            &gt;
-          </button>
-        </div>
-      )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -135,7 +139,7 @@ const Row = ({
       <td className="px-3 py-2">
         <Link
           to={`/order-templates/${tpl.id}`}
-          className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          className="font-medium text-primary-600 hover:underline dark:text-primary-400"
         >
           {tpl.name}
         </Link>
@@ -150,15 +154,7 @@ const Row = ({
         {tpl.lastRunAtUtc ? formatDateTime(tpl.lastRunAtUtc, locale) : '—'}
       </td>
       <td className="px-3 py-2">
-        <span
-          className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-            tpl.isActive
-              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-              : 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300'
-          }`}
-        >
-          {tpl.isActive ? '✓' : '—'}
-        </span>
+        <Badge variant={tpl.isActive ? 'success' : 'neutral'}>{tpl.isActive ? '✓' : '—'}</Badge>
       </td>
       <td className="px-3 py-2">
         <div className="flex justify-end gap-1">
@@ -179,7 +175,7 @@ const Row = ({
           <button
             type="button"
             onClick={onDelete}
-            className="rounded border border-rose-200 p-1 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/30"
+            className="rounded border border-danger-200 p-1 text-danger-600 hover:bg-danger-50 dark:border-danger-800 dark:text-danger-400 dark:hover:bg-danger-900/30"
           >
             <Trash2 size={14} />
           </button>

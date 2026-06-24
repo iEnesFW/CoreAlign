@@ -22,7 +22,7 @@ namespace CoreAlign.Infrastructure.Providers.Payment.Stripe;
 /// <c>api.stripe.com</c> using a Bearer secret key, form-encoded bodies, and
 /// an idempotency key for safe retry of mutating calls.
 /// </summary>
-public sealed class StripePaymentProvider : IPaymentProvider
+public sealed class StripePaymentProvider : IPaymentProvider, IThreeDSecureCompleter
 {
     public const string ProviderKey = "stripe";
     public const string HttpClientName = "StripePayment";
@@ -405,6 +405,50 @@ public sealed class StripePaymentProvider : IPaymentProvider
             body: null,
             idempotencyKey: null,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<WebhookProcessingResult> CompleteThreeDSecureAsync(
+        Payment3DSecureCallback callback,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+
+        var intentId = ReadCallbackField(callback.CallbackFields, "payment_intent");
+        if (string.IsNullOrWhiteSpace(intentId))
+        {
+            intentId = callback.TransactionId;
+        }
+        if (string.IsNullOrWhiteSpace(intentId))
+        {
+            throw new StripeProviderException(
+                "Stripe 3DS callback did not contain a payment_intent id.", "INTENT_ID_MISSING", null, 0);
+        }
+
+        // Authoritative completion: retrieve the PaymentIntent from Stripe with our secret
+        // key. The browser return_url callback is never trusted to capture a payment; only
+        // the status Stripe returns for our authenticated request can.
+        var intent = await GetTransactionAsync(intentId, cancellationToken).ConfigureAwait(false);
+        var status = MapStatus(intent.Status);
+        var success = status == PaymentIntentStatus.Succeeded;
+        return new WebhookProcessingResult(
+            IntentId: string.IsNullOrWhiteSpace(intent.Id) ? intentId : intent.Id,
+            Status: status,
+            Reference: intent.LatestCharge ?? intent.Id,
+            FailureReason: success ? null : intent.Status,
+            RawJson: JsonSerializer.Serialize(intent, JsonOptions));
+    }
+
+    private static string? ReadCallbackField(IReadOnlyDictionary<string, string> fields, string key)
+    {
+        if (fields is null) return null;
+        foreach (var pair in fields)
+        {
+            if (string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                return pair.Value;
+            }
+        }
+        return null;
     }
 
     /// <summary>

@@ -1,66 +1,43 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { Landmark, MapPin, User } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Label } from '@/shared/ui/Label/Label';
 import { PhoneField } from '@/shared/ui/PhoneField/PhoneField';
-import { CurrencySelect } from '@/features/lookups/ui/CurrencySelect';
-import { AddressRegionFields } from '@/features/lookups/ui/AddressRegionFields';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
+import { AddressRegionFields } from '@/shared/ui/form/AddressRegionFields';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import {
   useCreateVendorAddress,
   useCreateVendorBankAccount,
   useCreateVendorContact,
 } from '../hooks/useVendorQueries';
 
-const overlay = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4';
-const panel = 'w-full max-w-lg rounded-lg bg-white shadow-xl dark:bg-slate-900';
-const inputCls =
-  'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800';
-const labelCls = 'block text-xs font-medium text-slate-700 dark:text-slate-300';
-
-const ModalShell = ({
-  title,
+const ModalFooter = ({
   onClose,
-  children,
+  pending,
+  formId,
 }: {
-  title: string;
   onClose: () => void;
-  children: React.ReactNode;
-}) => (
-  <div className={overlay}>
-    <div className={panel}>
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-        >
-          <X size={16} />
-        </button>
-      </div>
-      {children}
-    </div>
-  </div>
-);
-
-const Actions = ({ onClose, pending }: { onClose: () => void; pending: boolean }) => (
-  <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-    <button
-      type="button"
-      onClick={onClose}
-      className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-    >
-      İptal
-    </button>
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-    >
-      {pending ? 'Kaydediliyor…' : 'Kaydet'}
-    </button>
-  </div>
-);
+  pending: boolean;
+  formId: string;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Button variant="ghost" type="button" onClick={onClose}>
+        {t('Vendors.cancel')}
+      </Button>
+      <Button type="submit" form={formId} isLoading={pending}>
+        {pending ? t('Vendors.saving') : t('Vendors.save')}
+      </Button>
+    </>
+  );
+};
 
 export const VendorAddressModal = ({
   vendorId,
@@ -69,6 +46,7 @@ export const VendorAddressModal = ({
   vendorId: string;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const create = useCreateVendorAddress();
   const [label, setLabel] = useState('');
   const [line1, setLine1] = useState('');
@@ -76,7 +54,7 @@ export const VendorAddressModal = ({
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [country, setCountry] = useState('Türkiye');
+  const [country, setCountry] = useState(t('Vendors.defaultCountry'));
   const [isPrimary, setIsPrimary] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -95,7 +73,7 @@ export const VendorAddressModal = ({
           isPrimary,
         },
       });
-      toast.success('Adres eklendi.');
+      toast.success(t('Vendors.address.success'));
       onClose();
     } catch (err) {
       toastApiError(err);
@@ -103,38 +81,38 @@ export const VendorAddressModal = ({
   };
 
   return (
-    <ModalShell title="Yeni Adres" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3 p-4">
-        <div>
-          <label className={labelCls}>Etiket *</label>
-          <input
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            required
-            maxLength={64}
-            className={inputCls}
-            placeholder="Merkez / Depo / Fatura"
-          />
-        </div>
-        <div>
-          <label className={labelCls}>Adres Satırı 1 *</label>
-          <input
-            value={line1}
-            onChange={(e) => setLine1(e.target.value)}
-            required
-            maxLength={200}
-            className={inputCls}
-          />
-        </div>
-        <div>
-          <label className={labelCls}>Adres Satırı 2</label>
-          <input
-            value={line2}
-            onChange={(e) => setLine2(e.target.value)}
-            maxLength={200}
-            className={inputCls}
-          />
-        </div>
+    <Modal
+      open
+      title={t('Vendors.modal.newAddress')}
+      icon={<MapPin size={18} />}
+      onClose={onClose}
+      size="lg"
+      footer={
+        <ModalFooter onClose={onClose} pending={create.isPending} formId="vendor-address-form" />
+      }
+    >
+      <form id="vendor-address-form" onSubmit={submit} className="space-y-3">
+        <Input
+          label={t('Vendors.address.label')}
+          required
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          maxLength={64}
+          placeholder={t('Vendors.address.labelPlaceholder')}
+        />
+        <Input
+          label={t('Vendors.address.line1')}
+          required
+          value={line1}
+          onChange={(e) => setLine1(e.target.value)}
+          maxLength={200}
+        />
+        <Input
+          label={t('Vendors.address.line2')}
+          value={line2}
+          onChange={(e) => setLine2(e.target.value)}
+          maxLength={200}
+        />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <AddressRegionFields
             country={country}
@@ -143,18 +121,24 @@ export const VendorAddressModal = ({
             onCountryChange={setCountry}
             onStateChange={setState}
             onCityChange={setCity}
-            labels={{ country: 'Ülke', province: 'İl', district: 'İlçe' }}
-            selectClassName={inputCls}
+            labels={{
+              country: t('Vendors.address.country'),
+              province: t('Vendors.address.province'),
+              district: t('Vendors.address.district'),
+            }}
+            selectClassName={fieldBaseClasses()}
           />
-          <div>
-            <label className={labelCls}>Posta Kodu</label>
+          <label className="block">
+            <span className="mb-0.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {t('Vendors.address.postalCode')}
+            </span>
             <input
               value={postalCode}
               onChange={(e) => setPostalCode(e.target.value)}
               maxLength={20}
-              className={inputCls}
+              className={fieldBaseClasses()}
             />
-          </div>
+          </label>
         </div>
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
           <input
@@ -162,11 +146,10 @@ export const VendorAddressModal = ({
             checked={isPrimary}
             onChange={(e) => setIsPrimary(e.target.checked)}
           />
-          Birincil adres
+          {t('Vendors.address.isPrimary')}
         </label>
-        <Actions onClose={onClose} pending={create.isPending} />
       </form>
-    </ModalShell>
+    </Modal>
   );
 };
 
@@ -177,6 +160,7 @@ export const VendorContactModal = ({
   vendorId: string;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const create = useCreateVendorContact();
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
@@ -198,7 +182,7 @@ export const VendorContactModal = ({
           isPrimary,
         },
       });
-      toast.success('Kontak eklendi.');
+      toast.success(t('Vendors.contact.success'));
       onClose();
     } catch (err) {
       toastApiError(err);
@@ -206,39 +190,39 @@ export const VendorContactModal = ({
   };
 
   return (
-    <ModalShell title="Yeni Kontak" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3 p-4">
+    <Modal
+      open
+      title={t('Vendors.modal.newContact')}
+      icon={<User size={18} />}
+      onClose={onClose}
+      size="lg"
+      footer={
+        <ModalFooter onClose={onClose} pending={create.isPending} formId="vendor-contact-form" />
+      }
+    >
+      <form id="vendor-contact-form" onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Ad Soyad *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              maxLength={150}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Görev</label>
-            <input
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              maxLength={100}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>E-posta</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              maxLength={256}
-              className={inputCls}
-            />
-          </div>
-          <PhoneField label="Telefon" value={phone} onChange={setPhone} />
+          <Input
+            label={t('Vendors.contact.name')}
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={150}
+          />
+          <Input
+            label={t('Vendors.contact.role')}
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            maxLength={100}
+          />
+          <Input
+            label={t('Vendors.contact.email')}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            maxLength={256}
+          />
+          <PhoneField label={t('Vendors.contact.phone')} value={phone} onChange={setPhone} />
         </div>
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
           <input
@@ -246,11 +230,10 @@ export const VendorContactModal = ({
             checked={isPrimary}
             onChange={(e) => setIsPrimary(e.target.checked)}
           />
-          Birincil kontak
+          {t('Vendors.contact.isPrimary')}
         </label>
-        <Actions onClose={onClose} pending={create.isPending} />
       </form>
-    </ModalShell>
+    </Modal>
   );
 };
 
@@ -261,6 +244,7 @@ export const VendorBankAccountModal = ({
   vendorId: string;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const create = useCreateVendorBankAccount();
   const [bankName, setBankName] = useState('');
   const [branchName, setBranchName] = useState('');
@@ -286,7 +270,7 @@ export const VendorBankAccountModal = ({
           notes: null,
         },
       });
-      toast.success('Banka hesabı eklendi.');
+      toast.success(t('Vendors.bank.success'));
       onClose();
     } catch (err) {
       toastApiError(err);
@@ -294,55 +278,59 @@ export const VendorBankAccountModal = ({
   };
 
   return (
-    <ModalShell title="Yeni Banka Hesabı" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3 p-4">
+    <Modal
+      open
+      title={t('Vendors.modal.newBankAccount')}
+      icon={<Landmark size={18} />}
+      onClose={onClose}
+      size="lg"
+      footer={
+        <ModalFooter onClose={onClose} pending={create.isPending} formId="vendor-bank-form" />
+      }
+    >
+      <form id="vendor-bank-form" onSubmit={submit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Banka *</label>
-            <input
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              required
-              maxLength={150}
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={labelCls}>Şube</label>
-            <input
-              value={branchName}
-              onChange={(e) => setBranchName(e.target.value)}
-              maxLength={150}
-              className={inputCls}
-            />
-          </div>
-        </div>
-        <div>
-          <label className={labelCls}>Hesap Sahibi *</label>
-          <input
-            value={accountHolder}
-            onChange={(e) => setAccountHolder(e.target.value)}
+          <Input
+            label={t('Vendors.bank.bankName')}
             required
-            maxLength={200}
-            className={inputCls}
+            value={bankName}
+            onChange={(e) => setBankName(e.target.value)}
+            maxLength={150}
+          />
+          <Input
+            label={t('Vendors.bank.branchName')}
+            value={branchName}
+            onChange={(e) => setBranchName(e.target.value)}
+            maxLength={150}
           />
         </div>
+        <Input
+          label={t('Vendors.bank.accountHolder')}
+          required
+          value={accountHolder}
+          onChange={(e) => setAccountHolder(e.target.value)}
+          maxLength={200}
+        />
         <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className={labelCls}>IBAN *</label>
+          <label className="col-span-2 flex w-full flex-col gap-1.5">
+            <Label required>{t('Vendors.bank.iban')}</Label>
             <input
               value={iban}
               onChange={(e) => setIban(e.target.value.toUpperCase())}
               required
               maxLength={34}
-              className={`${inputCls} font-mono`}
+              className={`${fieldBaseClasses()} font-mono`}
               placeholder="TR00 0000 0000 …"
             />
-          </div>
-          <div>
-            <label className={labelCls}>Para Birimi</label>
-            <CurrencySelect value={currency} onChange={setCurrency} className={inputCls} />
-          </div>
+          </label>
+          <label className="flex w-full flex-col gap-1.5">
+            <Label>{t('Vendors.bank.currency')}</Label>
+            <CurrencySelect
+              value={currency}
+              onChange={setCurrency}
+              className={fieldBaseClasses()}
+            />
+          </label>
         </div>
         <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
           <input
@@ -350,10 +338,9 @@ export const VendorBankAccountModal = ({
             checked={isPrimary}
             onChange={(e) => setIsPrimary(e.target.checked)}
           />
-          Birincil hesap
+          {t('Vendors.bank.isPrimary')}
         </label>
-        <Actions onClose={onClose} pending={create.isPending} />
       </form>
-    </ModalShell>
+    </Modal>
   );
 };

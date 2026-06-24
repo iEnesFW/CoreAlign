@@ -348,9 +348,17 @@ public sealed class PaymentDispatcher : IPaymentDispatcher
 
         try
         {
-            var webhookResult = await provider
-                .HandleWebhookAsync(SerializeCallback(callback), callback.CallbackFields, cancellationToken)
-                .ConfigureAwait(false);
+            // SECURITY: the 3DS browser-redirect callback is attacker-controllable; never
+            // trust its self-reported status. Providers implementing IThreeDSecureCompleter
+            // re-establish the real outcome (API re-query or signature/hash verification);
+            // a failure there throws and is handled fail-closed (transaction marked failed).
+            var webhookResult = provider is IThreeDSecureCompleter completer
+                ? await completer
+                    .CompleteThreeDSecureAsync(callback, cancellationToken)
+                    .ConfigureAwait(false)
+                : await provider
+                    .HandleWebhookAsync(SerializeCallback(callback), callback.CallbackFields, cancellationToken)
+                    .ConfigureAwait(false);
 
             var success = webhookResult.Status == PaymentIntentStatus.Succeeded;
             if (transaction is not null)

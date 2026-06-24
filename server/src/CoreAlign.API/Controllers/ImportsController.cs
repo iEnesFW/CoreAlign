@@ -2,10 +2,13 @@ using Asp.Versioning;
 using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Upload;
 using CoreAlign.Application.Imports;
 using CoreAlign.Application.Imports.Commands;
+using CoreAlign.Domain.Exceptions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoreAlign.API.Controllers;
@@ -19,22 +22,22 @@ public class ImportsController : ControllerBase
 {
     private const long MaxBytes = 10 * 1024 * 1024;
     private readonly IMediator _mediator;
+    private readonly IFileUploadService _uploads;
 
-    public ImportsController(IMediator mediator)
+    public ImportsController(IMediator mediator, IFileUploadService uploads)
     {
         _mediator = mediator;
+        _uploads = uploads;
     }
 
     [HttpPost("customers/preview")]
     [RequestSizeLimit(MaxBytes)]
     public async Task<IActionResult> PreviewCustomersAsync(IFormFile file, CancellationToken cancellationToken)
     {
-        if (!TryResolveFormat(file, out var format, out var error))
-        {
-            return BadRequest(ApiResponse<object>.Failure(error, 400));
-        }
-        using var stream = file.OpenReadStream();
-        var preview = await _mediator.Send(new PreviewCustomerImportCommand(stream, format), cancellationToken);
+        using var validated = await ValidateImportFileAsync(file, cancellationToken);
+        var preview = await _mediator.Send(
+            new PreviewCustomerImportCommand(validated.Content, MapFormat(validated.DetectedType)),
+            cancellationToken);
         return preview.ToOk();
     }
 
@@ -42,12 +45,10 @@ public class ImportsController : ControllerBase
     [RequestSizeLimit(MaxBytes)]
     public async Task<IActionResult> PreviewProductsAsync(IFormFile file, CancellationToken cancellationToken)
     {
-        if (!TryResolveFormat(file, out var format, out var error))
-        {
-            return BadRequest(ApiResponse<object>.Failure(error, 400));
-        }
-        using var stream = file.OpenReadStream();
-        var preview = await _mediator.Send(new PreviewProductImportCommand(stream, format), cancellationToken);
+        using var validated = await ValidateImportFileAsync(file, cancellationToken);
+        var preview = await _mediator.Send(
+            new PreviewProductImportCommand(validated.Content, MapFormat(validated.DetectedType)),
+            cancellationToken);
         return preview.ToOk();
     }
 
@@ -55,12 +56,10 @@ public class ImportsController : ControllerBase
     [RequestSizeLimit(MaxBytes)]
     public async Task<IActionResult> PreviewGLAccountsAsync(IFormFile file, CancellationToken cancellationToken)
     {
-        if (!TryResolveFormat(file, out var format, out var error))
-        {
-            return BadRequest(ApiResponse<object>.Failure(error, 400));
-        }
-        using var stream = file.OpenReadStream();
-        var preview = await _mediator.Send(new PreviewGLAccountImportCommand(stream, format), cancellationToken);
+        using var validated = await ValidateImportFileAsync(file, cancellationToken);
+        var preview = await _mediator.Send(
+            new PreviewGLAccountImportCommand(validated.Content, MapFormat(validated.DetectedType)),
+            cancellationToken);
         return preview.ToOk();
     }
 
@@ -78,29 +77,25 @@ public class ImportsController : ControllerBase
         return result.ToOk();
     }
 
-    private static bool TryResolveFormat(IFormFile? file, out BulkImportFileFormat format, out string error)
+    private async Task<ValidatedFile> ValidateImportFileAsync(IFormFile? file, CancellationToken cancellationToken)
     {
-        format = BulkImportFileFormat.Csv;
-        error = string.Empty;
         if (file is null || file.Length == 0)
         {
-            error = "A non-empty file is required.";
-            return false;
+            throw new FileUploadValidationException("A non-empty file is required.");
         }
-        var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
-        if (ext == ".csv")
-        {
-            format = BulkImportFileFormat.Csv;
-            return true;
-        }
-        if (ext == ".xlsx")
-        {
-            format = BulkImportFileFormat.Xlsx;
-            return true;
-        }
-        error = "Only .csv and .xlsx files are supported.";
-        return false;
+
+        await using var source = file.OpenReadStream();
+        return await _uploads.ValidateAsync(
+            new FileValidationRequest(source, file.FileName, file.ContentType, FileUploadProfiles.Import.Name),
+            cancellationToken);
     }
+
+    private static BulkImportFileFormat MapFormat(DetectedFileType detected) => detected switch
+    {
+        DetectedFileType.Csv => BulkImportFileFormat.Csv,
+        DetectedFileType.Zip => BulkImportFileFormat.Xlsx,
+        _ => throw new FileUploadValidationException("Only .csv and .xlsx files are supported."),
+    };
 
     public record CommitImportRequest(Guid SessionId, bool SkipInvalidRows);
 }

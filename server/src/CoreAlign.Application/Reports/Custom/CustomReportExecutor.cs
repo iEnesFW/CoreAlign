@@ -7,7 +7,7 @@ public interface ICustomReportExecutor
     Task<CustomReportPreviewDto> ExecuteAsync(CustomReportDefinitionDto definition, CancellationToken cancellationToken = default);
 }
 
-public sealed class CustomReportValidationException : Exception
+public sealed class CustomReportValidationException : CoreAlign.Domain.Exceptions.DomainException
 {
     public CustomReportValidationException(string message) : base(message) { }
 }

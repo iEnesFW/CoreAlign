@@ -14,34 +14,53 @@ namespace CoreAlign.Application.Common.Outbox;
 public interface IOutboxProcessor
 {
     Task DrainAsync(CancellationToken cancellationToken = default);
+    Task DrainCurrentTenantAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class OutboxProcessor : IOutboxProcessor
 {
     private const int MaxBatch = 100;
-    private const int MaxNumberRetries = 4;
+    private const int MaxSaveConflictRetries = 4;
 
     private readonly IOutboxRepository _outbox;
     private readonly IReadOnlyDictionary<string, IOutboxMessageHandler> _handlers;
     private readonly IUnitOfWork _uow;
+    private readonly IOutboxRetryPolicy _retryPolicy;
+    private readonly ITenantContext _tenantContext;
     private readonly ILogger<OutboxProcessor> _logger;
 
     public OutboxProcessor(
         IOutboxRepository outbox,
         IEnumerable<IOutboxMessageHandler> handlers,
         IUnitOfWork uow,
+        IOutboxRetryPolicy retryPolicy,
+        ITenantContext tenantContext,
         ILogger<OutboxProcessor> logger)
     {
         _outbox = outbox;
         _handlers = handlers.ToDictionary(h => h.MessageType, StringComparer.Ordinal);
         _uow = uow;
+        _retryPolicy = retryPolicy;
+        _tenantContext = tenantContext;
         _logger = logger;
     }
 
     public async Task DrainAsync(CancellationToken cancellationToken = default)
     {
-        var pending = await _outbox.GetPendingAsync(MaxBatch, cancellationToken);
-        foreach (var message in pending)
+        var due = await _outbox.GetDueAcrossTenantsAsync(MaxBatch, DateTime.UtcNow, cancellationToken);
+        foreach (var message in due)
+        {
+            using (_tenantContext.PushScope(message.TenantId))
+            {
+                await ProcessOneAsync(message, cancellationToken);
+            }
+        }
+    }
+
+    public async Task DrainCurrentTenantAsync(CancellationToken cancellationToken = default)
+    {
+        var due = await _outbox.GetDueForCurrentTenantAsync(MaxBatch, DateTime.UtcNow, cancellationToken);
+        foreach (var message in due)
         {
             await ProcessOneAsync(message, cancellationToken);
         }
@@ -51,22 +70,17 @@ public sealed class OutboxProcessor : IOutboxProcessor
     {
         if (!_handlers.TryGetValue(message.Type, out var handler))
         {
-            await FailAsync(message.Id, $"Unknown outbox type '{message.Type}'.", cancellationToken);
+            await TransitionAsync(message.Id, m => m.MarkDeadLetter($"Unknown outbox type '{message.Type}'."), cancellationToken);
             return;
         }
 
-        // Retry on any save failure: the dominant case is a unique-clash
-        // (e.g. journal-number) with a concurrent drain, where the competing
-        // commit has advanced the sequence so the next attempt picks a fresh
-        // value. ClearChangeTracker drops the failed attempt's tracked
-        // entities before retrying.
         Exception? lastError = null;
-        for (var attempt = 0; attempt < MaxNumberRetries; attempt++)
+        for (var attempt = 0; attempt < MaxSaveConflictRetries; attempt++)
         {
             try
             {
                 var result = await handler.HandleAsync(message.PayloadJson, cancellationToken);
-                ApplyResult(message, result);
+                ApplyResult(message, result, DateTime.UtcNow);
                 _outbox.Update(message);
                 await _uow.SaveChangesAsync(cancellationToken);
                 return;
@@ -78,19 +92,23 @@ public sealed class OutboxProcessor : IOutboxProcessor
             }
         }
 
-        _logger.LogWarning(lastError, "Outbox message {Id} of type {Type} failed after {Attempts} attempts.", message.Id, message.Type, MaxNumberRetries);
-        await FailAsync(message.Id, lastError?.GetBaseException().Message ?? "Unknown error.", cancellationToken);
+        _logger.LogWarning(lastError, "Outbox message {Id} of type {Type} threw after {Attempts} save attempts.", message.Id, message.Type, MaxSaveConflictRetries);
+        var error = lastError?.GetBaseException().Message ?? "Unknown error.";
+        await TransitionAsync(message.Id, m => ApplyFailure(m, error, DateTime.UtcNow), cancellationToken);
     }
 
-    private static void ApplyResult(OutboxMessage message, OutboxHandlerResult result)
+    private void ApplyResult(OutboxMessage message, OutboxHandlerResult result, DateTime utcNow)
     {
         switch (result.Outcome)
         {
+            case OutboxHandlerOutcome.Deferred when result.RetryAfterUtc.HasValue:
+                message.DeferUntil(result.RetryAfterUtc.Value, result.ResultOrError);
+                break;
             case OutboxHandlerOutcome.Deferred:
                 message.MarkDeferred(result.ResultOrError);
                 break;
             case OutboxHandlerOutcome.Failed:
-                message.MarkFailed(result.ResultOrError);
+                ApplyFailure(message, result.ResultOrError, utcNow);
                 break;
             default:
                 message.MarkProcessed(result.ResultOrError);
@@ -98,12 +116,22 @@ public sealed class OutboxProcessor : IOutboxProcessor
         }
     }
 
-    private async Task FailAsync(Guid messageId, string error, CancellationToken cancellationToken)
+    private void ApplyFailure(OutboxMessage message, string error, DateTime utcNow)
     {
-        // Re-load after a ChangeTracker.Clear so we update a tracked instance.
+        if (message.HasExhaustedAttempts)
+        {
+            message.MarkDeadLetter(error);
+            return;
+        }
+
+        message.ScheduleRetry(_retryPolicy.ComputeNextAttempt(message.Attempts + 1, utcNow), error);
+    }
+
+    private async Task TransitionAsync(Guid messageId, Action<OutboxMessage> transition, CancellationToken cancellationToken)
+    {
         var fresh = await _outbox.GetByIdAsync(messageId, cancellationToken);
         if (fresh is null) return;
-        fresh.MarkFailed(error);
+        transition(fresh);
         _outbox.Update(fresh);
         await _uow.SaveChangesAsync(cancellationToken);
     }

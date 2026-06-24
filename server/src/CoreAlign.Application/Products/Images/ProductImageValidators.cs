@@ -1,3 +1,4 @@
+using CoreAlign.Application.Common.Upload;
 using FluentValidation;
 
 namespace CoreAlign.Application.Products.Images;
@@ -10,12 +11,12 @@ public sealed class UploadProductImageValidator : AbstractValidator<UploadProduc
         RuleFor(x => x.FileName).NotEmpty().MaximumLength(256);
         RuleFor(x => x.ContentType)
             .NotEmpty()
-            .Must(ProductImagePolicy.IsAllowedContentType)
+            .Must(ct => FileUploadProfiles.ProductImage.AllowedContentTypes.Contains(FileUploadValidator.NormalizeContentType(ct)))
             .WithMessage("Only JPG, PNG, or WebP images are allowed.");
         RuleFor(x => x.SizeBytes)
             .GreaterThan(0)
-            .LessThanOrEqualTo(ProductImagePolicy.MaxBytesPerImage)
-            .WithMessage($"Image must not exceed {ProductImagePolicy.MaxBytesPerImage / (1024 * 1024)} MB.");
+            .LessThanOrEqualTo(FileUploadProfiles.ProductImage.MaxBytes)
+            .WithMessage($"Image must not exceed {FileUploadProfiles.ProductImage.MaxBytes / (1024 * 1024)} MB.");
     }
 }
 

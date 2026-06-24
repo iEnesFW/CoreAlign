@@ -1,5 +1,6 @@
 using CoreAlign.Application.Auth.Commands;
 using CoreAlign.Application.Auth.Handlers;
+using CoreAlign.Application.Auth.Services;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -12,6 +13,7 @@ public class ChangePasswordCommandHandlerTests
     private readonly IRefreshTokenRepository _refreshTokenRepository = Substitute.For<IRefreshTokenRepository>();
     private readonly IUserSessionRepository _userSessionRepository = Substitute.For<IUserSessionRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
+    private readonly IPasswordPolicyService _passwordPolicyService = Substitute.For<IPasswordPolicyService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ChangePasswordCommandHandler _sut;
 
@@ -25,6 +27,7 @@ public class ChangePasswordCommandHandlerTests
             _refreshTokenRepository,
             _userSessionRepository,
             _passwordHasher,
+            _passwordPolicyService,
             _unitOfWork);
     }
 

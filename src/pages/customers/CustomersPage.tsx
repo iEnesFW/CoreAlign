@@ -85,8 +85,6 @@ export const CustomersPage = () => {
 
   const [editing, setEditing] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  // selectedId drives the inline card under the table; panelOpen escalates to
-  // the full right-side drawer when the user clicks "Tüm detaylar".
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [bulkIds, setBulkIds] = useState<string[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -237,7 +235,6 @@ export const CustomersPage = () => {
     );
     const deletedIds = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
     const failed = results.length - deletedIds.length;
-    // Keep failed rows selected so the user can retry; drop the deleted ones.
     setBulkIds((prev) => prev.filter((id) => !deletedIds.includes(id)));
     if (failed === 0) {
       toast.success(t('customers.toast.deleted'));
@@ -339,7 +336,7 @@ export const CustomersPage = () => {
             <button
               type="button"
               onClick={handleCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-indigo-500/20 transition hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-px"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-primary-500/20 transition hover:shadow-lg hover:shadow-primary-500/30 hover:-translate-y-px"
             >
               <Plus size={13} />
               {t('customers.addNew')}
@@ -348,7 +345,10 @@ export const CustomersPage = () => {
         }
       />
 
-      <CollapsibleSection storageKey="customers.stats" label="Özet kartları">
+      <CollapsibleSection
+        storageKey="customers.stats"
+        label={t('Common.SummaryCards', { defaultValue: 'Özet kartları' })}
+      >
         <StatStrip items={statItems} />
       </CollapsibleSection>
 
@@ -459,8 +459,8 @@ export const CustomersPage = () => {
       />
 
       {bulkSelected.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
-          <span className="font-medium text-indigo-700 dark:text-indigo-300">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-200 bg-primary-50/70 px-3 py-2 text-sm dark:border-primary-500/30 dark:bg-primary-500/10">
+          <span className="font-medium text-primary-700 dark:text-primary-300">
             {t('customers.bulkSelected', {
               count: bulkSelected.length,
               defaultValue: `${bulkSelected.length} seçili`,
@@ -478,7 +478,7 @@ export const CustomersPage = () => {
             <button
               type="button"
               onClick={handleBulkDelete}
-              className="inline-flex items-center gap-1.5 rounded bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+              className="inline-flex items-center gap-1.5 rounded bg-danger-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-danger-700"
             >
               <Trash2 size={12} />
               {t('common.delete')}

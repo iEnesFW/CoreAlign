@@ -9,9 +9,10 @@ public interface IOutboxRepository
     void Update(OutboxMessage message);
     Task<OutboxMessage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    /// <summary>Pending rows for the current tenant, oldest first, capped to <paramref name="max"/>.</summary>
-    Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(int max, CancellationToken cancellationToken = default);
+    /// <summary>Due rows for the current tenant (relies on the tenant query filter), oldest first, capped to <paramref name="max"/>. Used by the inline post-commit drain.</summary>
+    Task<IReadOnlyList<OutboxMessage>> GetDueForCurrentTenantAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default);
 
+    /// <summary>Due rows across all tenants (bypasses the query filter), oldest first. Used by the Hangfire background drain.</summary>
     Task<IReadOnlyList<OutboxMessage>> GetDueAcrossTenantsAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default);
 
     /// <summary>Recent rows for an admin/ops view, optionally filtered by status.</summary>

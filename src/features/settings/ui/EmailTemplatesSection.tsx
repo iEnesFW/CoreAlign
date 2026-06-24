@@ -1,6 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Mail, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import {
@@ -12,6 +18,7 @@ import {
 import type { EmailTemplate } from '../model/settings.types';
 
 export const EmailTemplatesSection = () => {
+  const { t } = useTranslation();
   const templates = useEmailTemplatesQuery();
   const deleteMutation = useDeleteEmailTemplate();
   const confirm = useConfirm();
@@ -21,15 +28,15 @@ export const EmailTemplatesSection = () => {
 
   const remove = async (id: string) => {
     const ok = await confirm({
-      title: 'Şablonu Sil',
-      message: 'Şablon silinsin mi?',
-      confirmLabel: 'Sil',
+      title: t('Settings.EmailTemplateDeleteTitle', { defaultValue: 'Şablonu Sil' }),
+      message: t('Settings.EmailTemplateDeleteMessage', { defaultValue: 'Şablon silinsin mi?' }),
+      confirmLabel: t('Settings.Delete', { defaultValue: 'Sil' }),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deleteMutation.mutateAsync(id);
-      toast.success('Şablon silindi.');
+      toast.success(t('Settings.EmailTemplateDeleted', { defaultValue: 'Şablon silindi.' }));
     } catch (err) {
       toastApiError(err);
     }
@@ -39,16 +46,18 @@ export const EmailTemplatesSection = () => {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Sipariş onayı, fatura bildirimi, gecikme hatırlatması gibi e-posta şablonları. {'{{'}
-          değişken{'}}'} placeholder'ları gönderim anında doldurulur.
+          {t('Settings.EmailTemplatesIntro', {
+            defaultValue:
+              "Sipariş onayı, fatura bildirimi, gecikme hatırlatması gibi e-posta şablonları. {{değişken}} placeholder'ları gönderim anında doldurulur.",
+          })}
         </p>
         <button
           type="button"
           onClick={() => setEditing('new')}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
         >
           <Plus size={12} />
-          Yeni Şablon
+          {t('Settings.NewEmailTemplate', { defaultValue: 'Yeni Şablon' })}
         </button>
       </div>
 
@@ -56,11 +65,21 @@ export const EmailTemplatesSection = () => {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
             <tr>
-              <th className="px-3 py-2 text-left">Kod</th>
-              <th className="px-3 py-2 text-left">İsim</th>
-              <th className="px-3 py-2 text-left">Konu</th>
-              <th className="px-3 py-2 text-left">Dil</th>
-              <th className="px-3 py-2 text-center">Aktif</th>
+              <th className="px-3 py-2 text-left">
+                {t('Settings.EmailTemplateCode', { defaultValue: 'Kod' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('Settings.EmailTemplateName', { defaultValue: 'İsim' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('Settings.EmailTemplateSubject', { defaultValue: 'Konu' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('Settings.EmailTemplateLocale', { defaultValue: 'Dil' })}
+              </th>
+              <th className="px-3 py-2 text-center">
+                {t('Settings.EmailTemplateActive', { defaultValue: 'Aktif' })}
+              </th>
               <th className="px-3 py-2" />
             </tr>
           </thead>
@@ -68,51 +87,53 @@ export const EmailTemplatesSection = () => {
             {templates.isPending ? (
               <tr>
                 <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  Yükleniyor…
+                  {t('Settings.Loading', { defaultValue: 'Yükleniyor…' })}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
-                  Henüz e-posta şablonu yok.
+                  {t('Settings.NoEmailTemplates', { defaultValue: 'Henüz e-posta şablonu yok.' })}
                 </td>
               </tr>
             ) : (
-              items.map((t) => (
+              items.map((template) => (
                 <tr
-                  key={t.id}
+                  key={template.id}
                   className="border-t border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/30"
                 >
-                  <td className="px-3 py-2 font-mono text-xs">{t.code}</td>
-                  <td className="px-3 py-2 text-xs">{t.name}</td>
+                  <td className="px-3 py-2 font-mono text-xs">{template.code}</td>
+                  <td className="px-3 py-2 text-xs">{template.name}</td>
                   <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
-                    {t.subject}
+                    {template.subject}
                   </td>
-                  <td className="px-3 py-2 text-xs">{t.locale}</td>
+                  <td className="px-3 py-2 text-xs">{template.locale}</td>
                   <td className="px-3 py-2 text-center">
                     <span
                       className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-                        t.isActive
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                        template.isActive
+                          ? 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300'
                           : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      {t.isActive ? 'Aktif' : 'Pasif'}
+                      {template.isActive
+                        ? t('Settings.StatusActive', { defaultValue: 'Aktif' })
+                        : t('Settings.StatusInactive', { defaultValue: 'Pasif' })}
                     </span>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex justify-end gap-0.5">
                       <button
                         type="button"
-                        onClick={() => setEditing(t)}
+                        onClick={() => setEditing(template)}
                         className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
                       >
                         <Pencil size={12} />
                       </button>
                       <button
                         type="button"
-                        onClick={() => remove(t.id)}
-                        className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                        onClick={() => remove(template.id)}
+                        className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -142,6 +163,7 @@ const EmailTemplateModal = ({
   template: EmailTemplate | null;
   onClose: () => void;
 }) => {
+  const { t } = useTranslation();
   const createMutation = useCreateEmailTemplate();
   const updateMutation = useUpdateEmailTemplate();
 
@@ -164,7 +186,7 @@ const EmailTemplateModal = ({
           locale,
           isActive,
         });
-        toast.success('Şablon güncellendi.');
+        toast.success(t('Settings.EmailTemplateUpdated', { defaultValue: 'Şablon güncellendi.' }));
       } else {
         await createMutation.mutateAsync({
           code: code.trim(),
@@ -173,7 +195,7 @@ const EmailTemplateModal = ({
           body,
           locale,
         });
-        toast.success('Şablon oluşturuldu.');
+        toast.success(t('Settings.EmailTemplateCreated', { defaultValue: 'Şablon oluşturuldu.' }));
       }
       onClose();
     } catch (err) {
@@ -184,121 +206,98 @@ const EmailTemplateModal = ({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {template ? 'Şablonu Düzenle' : 'Yeni E-posta Şablonu'}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X size={16} />
-          </button>
+    <Modal
+      open={true}
+      title={
+        template
+          ? t('Settings.EditEmailTemplate', { defaultValue: 'Şablonu Düzenle' })
+          : t('Settings.NewEmailTemplateTitle', { defaultValue: 'Yeni E-posta Şablonu' })
+      }
+      icon={<Mail size={18} />}
+      onClose={onClose}
+      size="xl"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            {t('Settings.Cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="email-template-form" isLoading={isPending}>
+            {isPending
+              ? t('Settings.Saving', { defaultValue: 'Kaydediliyor…' })
+              : t('Settings.Save', { defaultValue: 'Kaydet' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="email-template-form" onSubmit={submit} className="space-y-3">
+        <div className="grid grid-cols-3 gap-3">
+          <Input
+            label={t('Settings.EmailTemplateCodeRequired', { defaultValue: 'Kod *' })}
+            type="text"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            required
+            disabled={!!template}
+            maxLength={64}
+            placeholder="OrderConfirmation"
+            className="font-mono"
+          />
+          <Input
+            className="col-span-2"
+            label={t('Settings.EmailTemplateNameRequired', { defaultValue: 'İsim *' })}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={200}
+          />
         </div>
-        <form onSubmit={submit} className="space-y-3 p-4">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Kod *
-              </label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                required
-                disabled={!!template}
-                maxLength={64}
-                placeholder="OrderConfirmation"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm font-mono disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:disabled:bg-slate-900"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                İsim *
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={200}
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Konu *
-              </label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                required
-                maxLength={500}
-                placeholder="Siparişiniz alındı — {{orderNumber}}"
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                Dil
-              </label>
-              <select
-                value={locale}
-                onChange={(e) => setLocale(e.target.value)}
-                className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-              >
-                <option value="tr-TR">Türkçe</option>
-                <option value="en-US">English</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Gövde (HTML) *
-            </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              required
-              rows={8}
-              placeholder="<p>Sayın {{customerName}}, …</p>"
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 font-mono text-xs dark:border-slate-700 dark:bg-slate-800"
+        <div className="grid grid-cols-3 gap-3">
+          <Input
+            className="col-span-2"
+            label={t('Settings.EmailTemplateSubjectRequired', { defaultValue: 'Konu *' })}
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            required
+            maxLength={500}
+            placeholder={t('Settings.EmailTemplateSubjectPlaceholder', {
+              defaultValue: 'Siparişiniz alındı — {{orderNumber}}',
+            })}
+          />
+          <Select
+            label={t('Settings.EmailTemplateLocaleLabel', { defaultValue: 'Dil' })}
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+          >
+            <option value="tr-TR">{t('Settings.LocaleTurkish', { defaultValue: 'Türkçe' })}</option>
+            <option value="en-US">
+              {t('Settings.LocaleEnglish', { defaultValue: 'English' })}
+            </option>
+          </Select>
+        </div>
+        <Textarea
+          label={t('Settings.EmailTemplateBodyRequired', { defaultValue: 'Gövde (HTML) *' })}
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          required
+          rows={8}
+          className="font-mono text-xs"
+          placeholder={t('Settings.EmailTemplateBodyPlaceholder', {
+            defaultValue: '<p>Sayın {{customerName}}, …</p>',
+          })}
+        />
+        {template && (
+          <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
             />
-          </div>
-          {template && (
-            <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-              />
-              Aktif
-            </label>
-          )}
-          <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {isPending ? 'Kaydediliyor…' : 'Kaydet'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            {t('Settings.EmailTemplateActive', { defaultValue: 'Aktif' })}
+          </label>
+        )}
+      </form>
+    </Modal>
   );
 };

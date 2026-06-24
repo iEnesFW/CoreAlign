@@ -193,7 +193,9 @@ export const AuditExportScheduleEditor = () => {
             <span className="ml-2 font-medium">[{query.data.data.lastRunStatus}]</span>
           </p>
           {query.data.data.lastRunError && (
-            <p className="mt-1 text-red-600 dark:text-red-400">{query.data.data.lastRunError}</p>
+            <p className="mt-1 text-danger-600 dark:text-danger-400">
+              {query.data.data.lastRunError}
+            </p>
           )}
         </div>
       )}
@@ -202,7 +204,7 @@ export const AuditExportScheduleEditor = () => {
         <button
           type="submit"
           disabled={upsert.isPending}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-success-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
         >
           <Save size={14} />
           {t('Audit.Admin.SaveSchedule')}

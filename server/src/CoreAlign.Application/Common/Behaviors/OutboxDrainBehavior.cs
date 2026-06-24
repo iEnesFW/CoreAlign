@@ -26,7 +26,7 @@ public class OutboxDrainBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         var response = await next();
         if (_signal.HasPending)
         {
-            await _processor.DrainAsync(cancellationToken);
+            await _processor.DrainCurrentTenantAsync(cancellationToken);
         }
         return response;
     }

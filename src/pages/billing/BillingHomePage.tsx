@@ -71,7 +71,7 @@ export const BillingHomePage = () => {
         actions={
           <Link
             to="/dashboard/billing/modules"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
           >
             <Package size={13} />
             {t('billing.home.browse')}
@@ -134,7 +134,7 @@ export const BillingHomePage = () => {
             </h3>
             <Link
               to="/dashboard/billing/modules"
-              className="text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+              className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
             >
               {t('billing.home.renew')} <ArrowRight size={10} className="inline" />
             </Link>
@@ -152,10 +152,12 @@ export const BillingHomePage = () => {
                 return (
                   <li
                     key={m.id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-amber-100 bg-amber-50/60 px-2 py-1.5 text-xs dark:border-amber-500/30 dark:bg-amber-500/10"
+                    className="flex items-center justify-between gap-2 rounded-md border border-warning-100 bg-warning-50/60 px-2 py-1.5 text-xs dark:border-warning-500/30 dark:bg-warning-500/10"
                   >
-                    <span className="font-medium text-amber-900 dark:text-amber-200">{m.name}</span>
-                    <span className="text-[11px] text-amber-700 dark:text-amber-200/80">
+                    <span className="font-medium text-warning-900 dark:text-warning-200">
+                      {m.name}
+                    </span>
+                    <span className="text-[11px] text-warning-700 dark:text-warning-200/80">
                       {days !== null
                         ? t('billing.modules.daysLeft', { count: days })
                         : t('billing.modules.activeUntil', {
@@ -176,7 +178,7 @@ export const BillingHomePage = () => {
             </h3>
             <Link
               to="/dashboard/billing/orders"
-              className="text-[11px] font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+              className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
             >
               {t('billing.home.viewAll')} <ArrowRight size={10} className="inline" />
             </Link>
@@ -193,7 +195,7 @@ export const BillingHomePage = () => {
                 <li key={o.id}>
                   <Link
                     to={`/dashboard/billing/orders/${o.id}`}
-                    className="flex items-center justify-between gap-2 rounded-md border border-slate-100 bg-slate-50/40 px-2 py-1.5 text-xs hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-indigo-500/30"
+                    className="flex items-center justify-between gap-2 rounded-md border border-slate-100 bg-slate-50/40 px-2 py-1.5 text-xs hover:border-primary-200 hover:bg-primary-50/40 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-primary-500/30"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -230,9 +232,9 @@ interface SummaryCardProps {
 }
 
 const TONE_BG: Record<SummaryCardProps['tone'], string> = {
-  emerald: 'from-emerald-500 to-teal-600',
-  amber: 'from-amber-500 to-orange-600',
-  indigo: 'from-indigo-500 to-purple-600',
+  emerald: 'from-success-500 to-teal-600',
+  amber: 'from-warning-500 to-warning-600',
+  indigo: 'from-primary-500 to-purple-600',
 };
 
 const SummaryCard = ({ icon, label, value, hint, tone, loading }: SummaryCardProps) => (

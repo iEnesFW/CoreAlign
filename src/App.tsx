@@ -16,6 +16,7 @@ import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute';
 import { CustomerProtectedRoute } from '@/features/auth/ui/CustomerProtectedRoute';
 import { AuthBootstrap } from '@/features/auth/ui/AuthBootstrap';
 import { OnboardingTourHost } from '@/features/onboarding/ui/OnboardingTourHost';
+import { AiHelperWidget } from '@/widgets/AiHelper';
 import { env } from '@/shared/lib/env';
 import {
   AccountingPeriodsPage,
@@ -39,9 +40,15 @@ import {
   LoginPage,
   NewProjectWizardPage,
   OrdersPage,
+  QuotesPage,
+  ReturnsPage,
+  ReturnDetailPage,
   ProductsPage,
   ProfilePage,
   ProvidersAdminPage,
+  ReconciliationPage,
+  SmtpSettingsPage,
+  ErrorLogsPage,
   RegisterPage,
   CustomReportBuilderPage,
   ReportLibraryPage,
@@ -51,8 +58,20 @@ import {
   ServiceTicketsPage,
   SettingsPage,
   TrialBalancePage,
+  YearEndClosePage,
   VendorDetailPage,
   VendorsPage,
+  PurchaseOrdersPage,
+  VendorBillsPage,
+  GoodsReceiptsPage,
+  ThreeWayMatchReport,
+  PayablesAgingPage,
+  EmployeesPage,
+  EmployeeDetailPage,
+  PayrollRunsPage,
+  PayrollRunDetailPage,
+  PayslipPrintView,
+  PayrollParametersPage,
   VerifyEmailPage,
   WarrantyContractDetailPage,
   WarrantyContractsPage,
@@ -84,10 +103,6 @@ import {
   LandingPage,
 } from '@/app/router/routes';
 
-// useRecaptchaNet=true + defer script injection until the consumer actually
-// renders, so the ~80KB script is loaded only on auth pages — and even there,
-// only after the first React commit (asynchronously) so the LoginForm shell can
-// paint before the recaptcha bundle blocks the main thread.
 const RecaptchaWrapper = () => (
   <GoogleReCaptchaProvider
     reCaptchaKey={env.VITE_RECAPTCHA_SITE_KEY}
@@ -110,6 +125,7 @@ function App() {
                   <OfflineBanner />
                   <ConflictResolutionHost />
                   <OnboardingTourHost />
+                  <AiHelperWidget />
                   <ConfirmDialogProvider>
                     <Suspense fallback={<RouteFallback />}>
                       <Routes>
@@ -119,6 +135,11 @@ function App() {
                           <Route path="/solutions" element={<LandingPage />} />
                           <Route path="/articles" element={<LandingPage />} />
                           <Route path="/contact" element={<LandingPage />} />
+                          <Route path="/en" element={<LandingPage />} />
+                          <Route path="/en/about" element={<LandingPage />} />
+                          <Route path="/en/solutions" element={<LandingPage />} />
+                          <Route path="/en/articles" element={<LandingPage />} />
+                          <Route path="/en/contact" element={<LandingPage />} />
                           <Route path="/login" element={<LoginPage />} />
                           <Route path="/register" element={<RegisterPage />} />
                           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -138,10 +159,38 @@ function App() {
                               path="inventory/stock-counts/:id"
                               element={<StockCountDetailPage />}
                             />
+                            <Route path="quotes" element={<QuotesPage />} />
                             <Route path="orders" element={<OrdersPage />} />
                             <Route path="invoices" element={<InvoicesPage />} />
+                            <Route path="returns" element={<ReturnsPage />} />
+                            <Route path="returns/:id" element={<ReturnDetailPage />} />
                             <Route path="vendors" element={<VendorsPage />} />
                             <Route path="vendors/:id" element={<VendorDetailPage />} />
+                            <Route
+                              path="purchasing/purchase-orders"
+                              element={<PurchaseOrdersPage />}
+                            />
+                            <Route path="purchasing/vendor-bills" element={<VendorBillsPage />} />
+                            <Route
+                              path="purchasing/goods-receipts"
+                              element={<GoodsReceiptsPage />}
+                            />
+                            <Route
+                              path="purchasing/three-way-match"
+                              element={<ThreeWayMatchReport />}
+                            />
+                            <Route
+                              path="purchasing/payables-aging"
+                              element={<PayablesAgingPage />}
+                            />
+                            <Route path="hr/employees" element={<EmployeesPage />} />
+                            <Route path="hr/employees/:id" element={<EmployeeDetailPage />} />
+                            <Route path="hr/payroll-runs" element={<PayrollRunsPage />} />
+                            <Route path="hr/payroll-runs/:id" element={<PayrollRunDetailPage />} />
+                            <Route
+                              path="hr/payroll-parameters"
+                              element={<PayrollParametersPage />}
+                            />
                             <Route path="activity" element={<ActivityPage />} />
                             <Route path="profile" element={<ProfilePage />} />
                             <Route path="accounting/periods" element={<AccountingPeriodsPage />} />
@@ -158,6 +207,14 @@ function App() {
                             <Route
                               path="accounting/income-statement"
                               element={<IncomeStatementPage />}
+                            />
+                            <Route
+                              path="accounting/reconciliation"
+                              element={<ReconciliationPage />}
+                            />
+                            <Route
+                              path="accounting/year-end-close"
+                              element={<YearEndClosePage />}
                             />
                             <Route path="reports" element={<ReportsPage />} />
                             <Route path="reports/library" element={<ReportLibraryPage />} />
@@ -178,6 +235,8 @@ function App() {
                             />
                             <Route path="admin/providers" element={<ProvidersAdminPage />} />
                             <Route path="admin/providers/sso" element={<TenantIdpAdminPage />} />
+                            <Route path="admin/smtp" element={<SmtpSettingsPage />} />
+                            <Route path="admin/error-logs" element={<ErrorLogsPage />} />
                             <Route path="warranty/contracts" element={<WarrantyContractsPage />} />
                             <Route
                               path="warranty/contracts/:id"
@@ -215,6 +274,7 @@ function App() {
                             />
                           </Route>
                           <Route path="/invoices/:id/print" element={<InvoicePrintView />} />
+                          <Route path="/payslips/:id/print" element={<PayslipPrintView />} />
                         </Route>
 
                         <Route element={<CustomerProtectedRoute />}>

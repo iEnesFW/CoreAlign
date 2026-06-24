@@ -25,4 +25,9 @@ public enum JournalSourceType
     GoodsReceiptReversal = 14,
     FxRevaluation = 15,
     InventoryWriteOff = 16,
+    PayrollAccrual = 17,
+    PayrollNetPayment = 18,
+    PayrollTaxPayment = 19,
+    PayrollSgkPayment = 20,
+    PayrollAccrualReversal = 21,
 }

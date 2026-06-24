@@ -43,6 +43,9 @@ internal static class DocumentSequenceDefaults
             [DocumentSequenceType.SubscriptionOrderNumber] = "SUB",
             [DocumentSequenceType.QuoteNumber] = "QUO",
             [DocumentSequenceType.GoodsReceiptNumber] = "GRN",
+            [DocumentSequenceType.EmployeeNumber] = "PER",
+            [DocumentSequenceType.PayrollRunNumber] = "BORD",
+            [DocumentSequenceType.PayslipNumber] = "UCRET",
         };
 
     public static string PrefixFor(DocumentSequenceType type) =>

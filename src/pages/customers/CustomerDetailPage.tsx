@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeft,
-  BarChart3,
-  Clock,
-  FileText,
-  GitMerge,
-  Receipt,
-  ShoppingCart,
-  User,
-} from 'lucide-react';
+import { BarChart3, Clock, FileText, GitMerge, Receipt, ShoppingCart, User } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useOrdersQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CustomerAnalyticsTab } from '@/features/customers/ui/CustomerAnalyticsTab';
 import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
-import { AuditTimeline } from '@/widgets/AuditTimeline';
+import { AuditTimeline } from '@/features/audit';
 import { CustomerStatementButton } from './components/CustomerStatementButton';
 import { CustomerTagsEditor } from './components/CustomerTagsEditor';
 import { MergeCustomersModal } from './components/MergeCustomersModal';
@@ -30,29 +24,29 @@ const PAGE_SIZE = 20;
 
 const orderStatusStyles: Record<OrderStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Submitted: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Approved: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+  Submitted: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Approved: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
   Allocated: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
   Picking: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-500/20 dark:text-fuchsia-300',
   Packed: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
-  PartiallyShipped: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  Shipped: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+  PartiallyShipped: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
+  Shipped: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
   Delivered: 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300',
-  Closed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
-  Returned: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Confirmed: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+  Closed: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Returned: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Confirmed: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
 };
 
 const invoiceStatusStyles: Record<InvoiceStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Issued: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  Sent: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  PartiallyPaid: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Overdue: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300',
-  Void: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  Issued: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  Sent: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  PartiallyPaid: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Paid: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Overdue: 'bg-danger-100 text-danger-800 dark:bg-danger-500/20 dark:text-danger-300',
+  Void: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const formatCurrency = (value: number, currency: string, locale: string) => {
@@ -82,41 +76,33 @@ export const CustomerDetailPage = () => {
   const customer = customerQuery.data?.data;
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/customers')}
-            className="rounded p-1.5 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            aria-label={t('common.back')}
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {customer?.name ?? t('common.loading')}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('customers.detail.subtitle')}
-            </p>
-          </div>
-        </div>
-        {customer && (
-          <div className="flex flex-wrap items-center gap-2">
-            <CustomerStatementButton customerId={customer.id} customerName={customer.name} />
-            <button
-              type="button"
-              onClick={() => setMergeOpen(true)}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <GitMerge size={14} />
-              {t('customers.merge.title')}
-            </button>
-          </div>
-        )}
-      </div>
-
+    <DetailPageTemplate
+      header={
+        <PageHeader
+          icon={<User size={20} />}
+          title={customer?.name ?? t('common.loading')}
+          subtitle={t('customers.detail.subtitle')}
+          crumbs={[
+            {
+              label: t('customers.title', { defaultValue: 'Customers' }),
+              to: '/dashboard/customers',
+            },
+            { label: customer?.name ?? t('common.loading') },
+          ]}
+          actions={
+            customer ? (
+              <>
+                <CustomerStatementButton customerId={customer.id} customerName={customer.name} />
+                <Button variant="outline" size="sm" onClick={() => setMergeOpen(true)}>
+                  <GitMerge size={14} />
+                  {t('customers.merge.title')}
+                </Button>
+              </>
+            ) : undefined
+          }
+        />
+      }
+    >
       {customer && <CustomerTagsEditor customerId={customer.id} />}
 
       {customer && (
@@ -186,7 +172,7 @@ export const CustomerDetailPage = () => {
       {tab === 'orders' && id && <OrdersTab customerId={id} locale={i18n.language} />}
       {tab === 'invoices' && id && <InvoicesTab customerId={id} locale={i18n.language} />}
       {tab === 'audit' && id && <AuditTimeline entityType="Customer" entityId={id} />}
-    </div>
+    </DetailPageTemplate>
   );
 };
 
@@ -202,7 +188,7 @@ const TabButton = ({ active, onClick, children }: TabButtonProps) => (
     onClick={onClick}
     className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition ${
       active
-        ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
         : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
     }`}
   >
@@ -248,7 +234,7 @@ const OrdersTab = ({ customerId, locale }: { customerId: string; locale: string 
               <td className="px-3 py-2">
                 <Link
                   to="/dashboard/orders"
-                  className="font-mono text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                  className="font-mono text-xs text-primary-600 hover:underline dark:text-primary-400"
                 >
                   {order.orderNumber}
                 </Link>
@@ -313,7 +299,7 @@ const InvoicesTab = ({ customerId, locale }: { customerId: string; locale: strin
               <td className="px-3 py-2">
                 <Link
                   to="/dashboard/invoices"
-                  className="font-mono text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                  className="font-mono text-xs text-primary-600 hover:underline dark:text-primary-400"
                 >
                   {invoice.invoiceNumber}
                 </Link>

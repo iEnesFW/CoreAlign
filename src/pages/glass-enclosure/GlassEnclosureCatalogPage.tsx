@@ -59,7 +59,7 @@ export function GlassEnclosureCatalogPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition ${
               activeTab === tab.id
-                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >

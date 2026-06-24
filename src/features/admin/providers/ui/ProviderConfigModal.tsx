@@ -49,7 +49,11 @@ interface ToggleProps {
   activeColor?: string;
 }
 
-const Toggle = ({ checked, onChange, activeColor = 'peer-checked:bg-indigo-500' }: ToggleProps) => (
+const Toggle = ({
+  checked,
+  onChange,
+  activeColor = 'peer-checked:bg-primary-500',
+}: ToggleProps) => (
   <label className="relative inline-flex cursor-pointer items-center">
     <input
       type="checkbox"
@@ -189,7 +193,7 @@ export const ProviderConfigModal = ({ open, provider, onClose }: Props) => {
               <Toggle
                 checked={field.value}
                 onChange={field.onChange}
-                activeColor="peer-checked:bg-amber-500"
+                activeColor="peer-checked:bg-warning-500"
               />
             </div>
           )}

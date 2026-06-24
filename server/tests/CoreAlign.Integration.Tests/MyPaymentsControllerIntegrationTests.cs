@@ -145,7 +145,7 @@ public class MyPaymentsControllerIntegrationTests
         using (TenantContextAccessor.PushTenant(tenant.TenantId))
         {
             var payment = new Payment(
-                paymentNumber: $"PMT-{tenant.TenantSlug}-{Guid.NewGuid():N}".Substring(0, 14),
+                paymentNumber: $"PMT-{Guid.NewGuid():N}".Substring(0, 14),
                 customerId: tenant.CustomerId,
                 customerNameSnapshot: $"Customer-{tenant.TenantSlug}",
                 direction: PaymentDirection.CustomerReceipt,

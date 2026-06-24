@@ -1,3 +1,4 @@
+using CoreAlign.Application.AiHelper.Ingestion;
 using CoreAlign.Application.Compliance.Audit;
 using CoreAlign.Application.Jobs;
 using CoreAlign.Application.Sales.OrderTemplates.Jobs;
@@ -56,5 +57,20 @@ public static class RecurringJobsRegistration
             "scheduled-audit-exports",
             job => job.RunAsync(CancellationToken.None),
             Cron.Daily(5));
+
+        manager.AddOrUpdate<RateCounterCleanupJob>(
+            "notification-rate-counter-cleanup",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Hourly());
+
+        manager.AddOrUpdate<ErrorLogRetentionJob>(
+            "error-log-retention",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(4));
+
+        manager.AddOrUpdate<AiKbReindexJob>(
+            "ai-kb-reindex",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(6));
     }
 }

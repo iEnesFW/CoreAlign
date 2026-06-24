@@ -78,4 +78,5 @@ public record PaymentVoidedEvent(
     Guid CustomerId,
     string PaymentNumber,
     decimal Amount,
+    string Currency,
     DateTime OccurredAtUtc) : IDomainEvent;

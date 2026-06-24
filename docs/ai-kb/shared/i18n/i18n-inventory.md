@@ -1,0 +1,45 @@
+# Inventory (CoreAlign UI)
+
+"Inventory" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Inventory" area (English / Türkçe):
+
+- All lines must be entered. / Tüm satırlar girilmelidir.
+- Back to counts / Sayımlara dön
+- Cancel Count / Sayımı İptal Et
+- Count cancelled. / Sayım iptal edildi.
+- Lines / Satır
+- Count No / Sayım No
+- Planned / Planlandı
+- Status / Durum
+- Variance Cost / Sapma Tutarı
+- Warehouse / Depo
+- {{count}} counts / {{count}} sayım
+- No counts found. / Sayım bulunamadı.
+- All statuses / Tüm durumlar
+- All warehouses / Tüm depolar
+- Counted / Sayılan
+- Expected / Beklenen
+- SKU
+- Variance / Sapma
+- Stock Counts / Stok Sayımları
+- New Count / Yeni Sayım
+- Notes / Notlar
+- When the plan is created, all stock items of the selected warehouse are written to the count lines as a snapshot. / Plan oluşturulduğunda seçilen deponun tüm stok kalemleri sayım satırlarına anlık görüntü olarak yazılır.
+- Create Count / Sayımı Oluştur
+- Plan New Count / Yeni Sayım Planla
+- Warehouse / Depo
+- Count created. / Sayım oluşturuldu.
+- Post Count / Sayımı İşle
+- Post Count / Sayımı İşle
+- Count posted. / Sayım işlendi.
+- Reconcile / Mutabakat
+- Reconciliation Notes (optional) / Mutabakat Notları (opsiyonel)
+- Count reconciled. / Sayım mutabık kılındı.
+- Count entries saved. / Sayım girişleri kaydedildi.
+- Save Counts / Sayımları Kaydet
+- Start Count / Sayımı Başlat
+- Count started. / Sayım başlatıldı.
+- Plan, enter, reconcile, and post warehouse-based count periods. / Depo bazlı sayım dönemleri planla, gir, mutabık kıl ve işle.
+- Line Count / Satır Sayısı
+- Variance Cost / Sapma Tutarı
+- Variance Qty / Sapma Miktarı
+- Stock Counts / Stok Sayımları

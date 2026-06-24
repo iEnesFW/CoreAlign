@@ -54,7 +54,7 @@ public class RetentionPolicy : TenantEntity, IHasConcurrencyToken, ISoftDeletabl
 
         return new RetentionPolicy
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             TenantId = tenantId,
             EntityType = entityType.Trim(),
             RetentionDays = retentionDays,

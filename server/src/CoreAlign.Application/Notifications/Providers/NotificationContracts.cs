@@ -13,7 +13,15 @@ public sealed record EmailMessage(
     string Subject,
     string BodyHtml,
     string BodyText,
-    string? ReplyTo);
+    string? ReplyTo,
+    IReadOnlyList<string>? Cc = null,
+    IReadOnlyList<string>? Bcc = null,
+    IReadOnlyList<EmailAttachment>? Attachments = null);
+
+public sealed record EmailAttachment(
+    string FileName,
+    string ContentType,
+    byte[] Content);
 
 public sealed record SmsMessage(
     string From,

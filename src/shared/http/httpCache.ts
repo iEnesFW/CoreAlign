@@ -37,6 +37,7 @@ const TTL_RULES: readonly TtlRule[] = [
   { re: /\/stock\/lots/i, ttl: ONE_HOUR_MS },
   { re: /\/stock\/reason-codes/i, ttl: ONE_HOUR_MS },
   { re: /\/shipments\//i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/goods-receipts(\/[a-f0-9-]+)?\/?(\?.*)?$/i, ttl: THIRTY_SECONDS_MS },
   { re: /\/payments(\/|$)/i, ttl: THIRTY_SECONDS_MS },
   { re: /\/customers\/[a-f0-9-]+\/ledger/i, ttl: THIRTY_SECONDS_MS },
   { re: /\/customers\/[a-f0-9-]+\/aging/i, ttl: THIRTY_SECONDS_MS },
@@ -47,6 +48,7 @@ const TTL_RULES: readonly TtlRule[] = [
   { re: /\/mrp\/plan\//i, ttl: THIRTY_SECONDS_MS },
   { re: /\/mrp\/action-messages/i, ttl: THIRTY_SECONDS_MS },
   { re: /\/mrp\/pegging\//i, ttl: THIRTY_SECONDS_MS },
+  { re: /\/payroll-parameters(\/[a-f0-9-]+)?\/?(\?.*)?$/i, ttl: ONE_HOUR_MS },
 ];
 
 const matchTtl = (url: string): number => {
@@ -61,16 +63,11 @@ const memCache = new Map<string, CacheEntry<unknown>>();
 const nextRevalidateAt = new Map<string, number>();
 const inflight = new Map<string, { promise: Promise<unknown>; startedAt: number }>();
 
-// Bump CACHE_VERSION whenever the shape of cached responses changes in an
-// incompatible way; persisted entries with older versions are ignored.
 const CACHE_VERSION = 'v2';
 const STORAGE_PREFIX = `corealign:${CACHE_VERSION}:httpcache:`;
-// Drop inflight entries older than this — protects against requests that hang
-// (network stalled, server frozen) so we don't permanently dedupe to a dead promise.
 const INFLIGHT_TIMEOUT_MS = 30_000;
 
 const sanitizeNamespace = (ns: string): string => {
-  // Strip characters that could break key parsing (we use ':' as separator).
   return (ns || 'anon').replace(/[:\s]/g, '_').slice(0, 64);
 };
 
@@ -110,8 +107,6 @@ const sanitize = (value: unknown): unknown => {
 };
 
 const buildKey = (url: string, params?: unknown): string => {
-  // Stable key independent of object property order:
-  //   ?foo=1&bar=2  and  ?bar=2&foo=1 → same cache entry.
   const suffix = params ? `?${JSON.stringify(sortKeysDeep(params))}` : '';
   return `${STORAGE_PREFIX}${namespace}:${url}${suffix}`;
 };
@@ -144,7 +139,7 @@ const removePersistent = (key: string): void => {
   try {
     window.localStorage.removeItem(key);
   } catch {
-    /* noop */
+    // WHY: localStorage removal is best-effort; failures must not break the cache
   }
 };
 
@@ -152,9 +147,6 @@ export const setCacheNamespace = (ns: string): void => {
   namespace = sanitizeNamespace(ns);
 };
 
-// On module init, sweep persisted entries whose key uses an older cache version
-// — this keeps localStorage clean after a CACHE_VERSION bump and prevents stale
-// payloads from surfacing under the new contract.
 try {
   if (typeof window !== 'undefined' && window.localStorage) {
     const STALE_PREFIX_RE = /^corealign:(?!v\d+:httpcache:).*httpcache:/;
@@ -175,7 +167,7 @@ try {
     stale.forEach((k) => window.localStorage.removeItem(k));
   }
 } catch {
-  /* localStorage unavailable — no-op */
+  // WHY: localStorage may be unavailable (private mode); the stale-cache sweep is best-effort
 }
 
 export const clearHttpCache = (): void => {
@@ -190,17 +182,13 @@ export const clearHttpCache = (): void => {
     }
     toRemove.forEach((k) => window.localStorage.removeItem(k));
   } catch {
-    /* noop */
+    // WHY: localStorage clear is best-effort; failures must not break the cache
   }
 };
 
 export const invalidateHttpCache = (patterns: readonly RegExp[]): void => {
-  // Selectively drop in-memory entries that match any pattern instead of
-  // blowing away the whole map — keeps unrelated cached responses warm so the
-  // user doesn't pay full network cost on the next unrelated request.
   const memKeysToRemove: string[] = [];
   memCache.forEach((_, key) => {
-    // Mem key format: "namespace:url"
     const urlPart = key.split(':').slice(1).join(':');
     if (patterns.some((p) => p.test(urlPart))) {
       memKeysToRemove.push(key);
@@ -224,7 +212,7 @@ export const invalidateHttpCache = (patterns: readonly RegExp[]): void => {
     }
     toRemove.forEach((k) => window.localStorage.removeItem(k));
   } catch {
-    /* noop */
+    // WHY: localStorage invalidation is best-effort; failures must not break the cache
   }
 };
 
@@ -266,8 +254,6 @@ export const cachedGet = async <T>(
 
   const existing = inflight.get(key);
   if (existing) {
-    // If the dedup target has been hanging for too long, evict it so the new
-    // caller can issue a fresh request instead of inheriting a dead promise.
     if (now - existing.startedAt < INFLIGHT_TIMEOUT_MS) {
       return existing.promise as Promise<T>;
     }

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type {
   ChecklistItemStatus,
   InstallationChecklistCategory,
@@ -21,10 +22,10 @@ const CATEGORY_ICONS: Record<InstallationChecklistCategory['code'], string> = {
   Cleanup: '🧹',
 };
 
-const STATUS_OPTIONS: { value: ChecklistItemStatus; label: string; emoji: string }[] = [
-  { value: 'Pass', label: 'OK', emoji: '✅' },
-  { value: 'Fail', label: 'Fail', emoji: '❌' },
-  { value: 'NotApplicable', label: 'N/A', emoji: '➖' },
+const STATUS_OPTIONS: { value: ChecklistItemStatus; labelKey: string; emoji: string }[] = [
+  { value: 'Pass', labelKey: 'installation.statusPass', emoji: '✅' },
+  { value: 'Fail', labelKey: 'installation.statusFail', emoji: '❌' },
+  { value: 'NotApplicable', labelKey: 'installation.statusNa', emoji: '➖' },
 ];
 
 const statusButtonClass = (current: ChecklistItemStatus, option: ChecklistItemStatus): string => {
@@ -41,6 +42,7 @@ export const ChecklistCategoryCard: React.FC<ChecklistCategoryCardProps> = ({
   onChangeStatus,
   onCapturePhoto,
 }) => {
+  const { t } = useTranslation();
   const summary = useMemo(() => {
     const total = category.items.length;
     const passed = category.items.filter((item) => {
@@ -78,7 +80,7 @@ export const ChecklistCategoryCard: React.FC<ChecklistCategoryCardProps> = ({
                   className={`flex-1 mr-2 min-h-touch rounded-xl items-center justify-center ${statusButtonClass(status, option.value)}`}
                 >
                   <Text className="text-white text-base font-semibold">
-                    {option.emoji} {option.label}
+                    {option.emoji} {t(option.labelKey)}
                   </Text>
                 </Pressable>
               ))}
@@ -89,7 +91,9 @@ export const ChecklistCategoryCard: React.FC<ChecklistCategoryCardProps> = ({
                 onPress={() => onCapturePhoto(item)}
                 className="mt-2 min-h-touch rounded-xl bg-brand-600 items-center justify-center"
               >
-                <Text className="text-white text-base font-semibold">{'📷'} Photo required</Text>
+                <Text className="text-white text-base font-semibold">
+                  {'📷'} {t('installation.photoRequired')}
+                </Text>
               </Pressable>
             ) : null}
           </View>

@@ -19,8 +19,6 @@ interface Props {
 export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClear }: Props) => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
-  // Derive the effective stage so the drawer auto-falls-back to "cart" when
-  // closed or emptied — avoids setState-in-effect.
   const [requestedStage, setRequestedStage] = useState<'cart' | 'checkout'>('cart');
   const stage: 'cart' | 'checkout' = !open || items.length === 0 ? 'cart' : requestedStage;
   const setStage = setRequestedStage;
@@ -65,11 +63,11 @@ export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClea
           <>
             <header className="flex items-center justify-between border-b border-slate-200/80 bg-slate-50/50 px-4 py-3 dark:border-slate-800/80 dark:bg-slate-900/40">
               <div className="flex items-center gap-2">
-                <ShoppingBag size={16} className="text-indigo-500" />
+                <ShoppingBag size={16} className="text-primary-500" />
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {t('billing.cart.title')}
                 </h2>
-                <span className="rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                <span className="rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] font-bold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">
                   {items.length}
                 </span>
               </div>
@@ -106,7 +104,7 @@ export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClea
                           {line.plan.displayLabel} ·{' '}
                           {t('billing.modules.durationDays', { count: line.plan.durationDays })}
                         </p>
-                        <p className="mt-1 text-xs font-bold text-indigo-600 tabular-nums dark:text-indigo-300">
+                        <p className="mt-1 text-xs font-bold text-primary-600 tabular-nums dark:text-primary-300">
                           {formatCurrency(line.plan.price, locale, line.plan.currency)}
                         </p>
                       </div>
@@ -114,7 +112,7 @@ export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClea
                         type="button"
                         onClick={() => onRemove(line.module.id)}
                         aria-label={t('billing.cart.remove')}
-                        className="rounded-md p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-300"
+                        className="rounded-md p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-500/10 dark:hover:text-danger-300"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -135,7 +133,7 @@ export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClea
               </div>
 
               {!canPurchase && (
-                <p className="mb-2 rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                <p className="mb-2 rounded-md bg-warning-50 px-2 py-1.5 text-[11px] text-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
                   {t('billing.cart.adminOnly')}
                 </p>
               )}
@@ -144,7 +142,7 @@ export const CartDrawer = ({ open, onClose, items, canPurchase, onRemove, onClea
                 type="button"
                 onClick={proceed}
                 disabled={!canPurchase || items.length === 0}
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700"
               >
                 <ShoppingBag size={13} />
                 {t('billing.cart.buy')}

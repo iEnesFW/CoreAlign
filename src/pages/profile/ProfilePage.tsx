@@ -7,7 +7,7 @@ import { Lock, User as UserIcon } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import {
   changePasswordSchema,
   profileSchema,
@@ -62,7 +62,7 @@ const TabButton = ({ active, onClick, children }: TabButtonProps) => (
     onClick={onClick}
     className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-medium transition ${
       active
-        ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
         : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
     }`}
   >

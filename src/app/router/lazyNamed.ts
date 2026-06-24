@@ -2,7 +2,6 @@ import type { ComponentType, LazyExoticComponent } from 'react';
 import { lazy } from 'react';
 
 export type LazyNamedComponent<P = unknown> = LazyExoticComponent<ComponentType<P>> & {
-  /** Triggers the dynamic import without rendering. Idempotent and safe to call repeatedly. */
   preload: () => Promise<unknown>;
 };
 

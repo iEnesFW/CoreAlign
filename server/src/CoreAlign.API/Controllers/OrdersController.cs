@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
@@ -22,6 +23,9 @@ public class OrdersController : ControllerBase
     {
         _mediator = mediator;
     }
+
+    private Guid CurrentUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
 
     [HttpGet]
     public async Task<IActionResult> GetOrdersAsync(
@@ -82,7 +86,7 @@ public class OrdersController : ControllerBase
 
     [HttpPost("{id:guid}/approve")]
     public async Task<IActionResult> ApproveOrderAsync(Guid id, [FromBody] ApproveOrderCommand? cmd, CancellationToken cancellationToken)
-        => (await _mediator.Send(new ApproveOrderCommand(id, cmd?.ApprovedByUserId), cancellationToken)).ToOk();
+        => (await _mediator.Send(new ApproveOrderCommand(id, CurrentUserId), cancellationToken)).ToOk();
 
     [HttpPost("{id:guid}/allocate")]
     public async Task<IActionResult> AllocateOrderAsync(Guid id, [FromBody] AllocateOrderCommand? cmd, CancellationToken cancellationToken)

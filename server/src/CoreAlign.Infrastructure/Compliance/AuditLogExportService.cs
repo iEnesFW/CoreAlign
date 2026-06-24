@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using ClosedXML.Excel;
+using CoreAlign.Application.Common.Audit;
 using CoreAlign.Application.Compliance.Audit;
 using CoreAlign.Domain.Entities.Compliance;
 using CoreAlign.Domain.Interfaces;
@@ -24,11 +25,13 @@ public sealed class AuditLogExportService : IAuditLogExportService
 
     private readonly IEntityAuditLogRepository _repository;
     private readonly ITenantContext _tenant;
+    private readonly IAuditFieldRedactor _redactor;
 
-    public AuditLogExportService(IEntityAuditLogRepository repository, ITenantContext tenant)
+    public AuditLogExportService(IEntityAuditLogRepository repository, ITenantContext tenant, IAuditFieldRedactor redactor)
     {
         _repository = repository;
         _tenant = tenant;
+        _redactor = redactor;
     }
 
     public async Task<AuditLogExportResult> ExportAsync(
@@ -120,7 +123,7 @@ public sealed class AuditLogExportService : IAuditLogExportService
         await foreach (var row in _repository.StreamAsync(tenantId, criteria, StreamBatchSize, cancellationToken))
         {
             if (rowCount >= MaxExportRows) break;
-            JsonSerializer.Serialize(writer, EntityAuditLogMapper.ToDto(row), JsonOptions);
+            JsonSerializer.Serialize(writer, EntityAuditLogMapper.ToDto(row, _redactor), JsonOptions);
             rowCount++;
         }
         writer.WriteEndArray();

@@ -157,7 +157,7 @@ export const ProviderCard = ({ provider }: Props) => {
                 disabled={setEnabled.isPending}
                 className="peer sr-only"
               />
-              <span className="block h-5 w-9 rounded-full bg-slate-200 transition-colors peer-checked:bg-indigo-500 dark:bg-slate-700" />
+              <span className="block h-5 w-9 rounded-full bg-slate-200 transition-colors peer-checked:bg-primary-500 dark:bg-slate-700" />
               <span className="pointer-events-none absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
             </span>
             <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
@@ -171,7 +171,7 @@ export const ProviderCard = ({ provider }: Props) => {
             type="button"
             onClick={handleSetDefault}
             disabled={provider.isDefault || setDefault.isPending}
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-amber-600 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-amber-300 dark:hover:bg-amber-500/10"
+            className="inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-warning-600 hover:bg-warning-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-warning-300 dark:hover:bg-warning-500/10"
           >
             {provider.isDefault ? <Star size={12} fill="currentColor" /> : <StarOff size={12} />}
             {provider.isDefault

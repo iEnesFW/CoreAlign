@@ -171,7 +171,7 @@ export const AcceptanceFormPage = () => {
           type="button"
           disabled={isLocked || acceptance.status !== 'SignedByCustomer'}
           onClick={handleAccept}
-          className="flex flex-1 items-center justify-center gap-2 rounded bg-emerald-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="flex flex-1 items-center justify-center gap-2 rounded bg-success-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
         >
           <CheckCircle2 className="size-4" />
           {t('InstallationAcceptance.Action.Accept')}
@@ -185,7 +185,7 @@ export const AcceptanceFormPage = () => {
               rejectMutation.mutate({ acceptanceId: acceptance.id, reason: reason.trim() });
             }
           }}
-          className="flex flex-1 items-center justify-center gap-2 rounded border border-rose-300 px-4 py-3 text-sm font-semibold text-rose-700 disabled:opacity-50 dark:border-rose-700 dark:text-rose-300"
+          className="flex flex-1 items-center justify-center gap-2 rounded border border-danger-300 px-4 py-3 text-sm font-semibold text-danger-700 disabled:opacity-50 dark:border-danger-700 dark:text-danger-300"
         >
           <ShieldX className="size-4" />
           {t('InstallationAcceptance.Action.Reject')}

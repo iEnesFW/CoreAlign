@@ -298,6 +298,6 @@ Mevcut job'ları **bozma** (frontend lint/typecheck/test/build, backend build/te
 9. SonarCloud config (§8)
 10. CI wiring (§9)
 11. Docs + INVARIANTS (§10)
-12. CLAUDE.md'ye `CLAUDE-additions.md` bölümlerini ekle (madde 11–16)
+12. ~~CLAUDE.md'ye `CLAUDE-additions.md` bölümlerini ekle (madde 11–16)~~ — **TAMAMLANDI** (içerik CLAUDE.md §11–17'de; `CLAUDE-additions.md` emekliye ayrıldı)
 
 Her adım sonunda ilgili build/lint/test **yeşil**. Bitişte tam doğrulama raporu (bkz. master prompt "Done").

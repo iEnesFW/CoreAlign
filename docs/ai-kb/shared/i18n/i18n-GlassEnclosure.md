@@ -1,0 +1,889 @@
+# GlassEnclosure (CoreAlign UI)
+
+"GlassEnclosure" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "GlassEnclosure" area (English / Türkçe):
+
+- Accepted / Kabul edildi
+- Compute the BOM first and make sure the project is quoted/confirmed. / Önce BOM'u hesaplayın ve projenin teklif verildi/onaylandı durumunda olduğundan emin olun.
+- Convert to order / Siparişe dönüştür
+- Copy URL / URL'yi kopyala
+- Create link / Bağlantı oluştur
+- No shares yet. Generate a link for the customer. / Henüz paylaşım yok. Müşteri için bir bağlantı oluşturun.
+- Order / Sipariş
+- Project converted to order / Proje siparişe dönüştürüldü
+- Pending / Beklemede
+- Production / Üretim
+- Rejected / Reddedildi
+- Convert to an order first and ensure Confirmed status. / Önce siparişe dönüştürün ve Onaylandı durumunda olduğundan emin olun.
+- Release to production / Üretime gönder
+- Released to production / Üretime gönderildi
+- Requested start / İstenen başlangıç
+- Link created / Bağlantı oluşturuldu
+- Share links / Paylaşım bağlantıları
+- Views / Görüntülenme
+- Connection added / Birleşim eklendi
+- Corner Profile / Köşe Profili
+- Joint Angle / Birleşim Açısı
+- Mitre Cut / Gönye Kesim
+- — None — / — Yok —
+- Suggested {{value}}° / Önerilen {{value}}°
+- Use corner post / Köşe dikmesi kullan
+- Base Cost / Baz Maliyet
+- Crane / Vinç
+- Glass / Cam
+- Customer Grand Total / Müşteri Genel Toplamı
+- Hardware / Aksesuar
+- Labor / İşçilik
+- Margin / Marj
+- Profile / Profil
+- Scaffolding / İskele
+- Tax / KDV
+- Transport / Nakliye
+- Waste / Fire
+- Bars / Boylar
+- Cuts / Kesimler
+- Export CSV / CSV dışa aktar
+- Export DXF / DXF dışa aktar
+- Cutting plan generated / Kesim planı oluşturuldu
+- Glass cutting (2D) / Cam kesimi (2D)
+- Jumbo sheet / Jumbo levha
+- Advanced 2D Nesting / Gelişmiş 2D Nesting
+- Algorithm / Algoritma
+- Allow rotation / Döndürmeye izin ver
+- Guillotine cuts only / Yalnızca giyotin kesim
+- Heuristic / Sezgisel yöntem
+- No nesting report yet. / Henüz yerleşim raporu yok.
+- Open advanced 2D nesting / Gelişmiş 2D nesting'i aç
+- Advanced 2D nesting / Gelişmiş 2D yerleşim
+- Optimization failed. / Optimizasyon başarısız oldu.
+- 2D nesting optimized. / 2D yerleşim optimize edildi.
+- Optimizing... / Optimize ediliyor...
+- Print / PDF / Yazdır / PDF
+- Run / Çalıştır
+- Sheets used / Kullanılan levha
+- Advanced 2D Nesting / Gelişmiş 2D Yerleşim
+- {{count}} unplaced panel(s) / {{count}} panel yerleştirilemedi
+- Utilization / Verimlilik
+- Waste / Fire
+- No cutting plan yet. Click Regenerate. / Henüz kesim planı yok. Yeniden oluştur'a tıklayın.
+- Profile cutting (1D) / Profil kesimi (1D)
+- Regenerate / Yeniden oluştur
+- Sheets / Levhalar
+- Stock bar / Boy
+- Cutting Report / Kesim Raporu
+- {{count}} glass piece(s) not placed / {{count}} cam parçası yerleştirilemedi
+- Utilization / Verimlilik
+- Waste / Fire
+- Add panel / Panel ekle
+- Annotations / Ölçülendirme
+- City / Şehir
+- Dawn / Şafak
+- Appearance / Görünüm
+- Plain / Düz
+- Studio / Stüdyo
+- Sunset / Gün Batımı
+- Apply / Uygula
+- Bent glass (custom production, ~2.5-3× cost) / Bombeli cam (özel üretim, ~2.5-3× maliyet)
+- Chord (mm) / Kiriş (mm)
+- R{{r}} · {{deg}}° · chord {{chord}} mm · rise {{sagitta}} mm · joint {{joint}}° / R{{r}} · {{deg}}° · kiriş {{chord}} mm · ok {{sagitta}} mm · eklem {{joint}}°
+- Bent glass / Bombeli cam
+- Faceted / Faseta
+- Rise (mm) / Ok (mm)
+- From site survey (chord + rise) / Saha ölçüsünden (kiriş + ok yüksekliği)
+- Sweep angle (°) / Yay açısı (°)
+- Curve (arc) / Kavis (arc)
+- Joint angle {{deg}}° — increase the panel count for faceting (recommended ≤10°). / Eklem açısı {{deg}}° — faseta için panel sayısını artırın (önerilen ≤10°).
+- Sliding panels cannot run on a curved track with flat glass — enable bent glass or change the opening type. / Kayar paneller kavisli rayda düz camla çalışmaz — bombeli cam modunu açın veya açılım tipini değiştirin.
+- Tight radius ({{r}} mm) — verify the system manufacturer minimum (typically ≥1500 mm). / Dar yarıçap ({{r}} mm) — sistem üreticisinin minimumunu doğrulayın (tipik ≥1500 mm).
+- Min. radius {{min}} mm / Min. yarıçap {{min}} mm
+- 0 = straight run; enter a radius to curve this run. / 0 = düz cephe; kavis için yarıçap girin.
+- Curved · sweep ≈ {{deg}}° / Kavisli · yay ≈ {{deg}}°
+- {{placed}} copies added, {{skipped}} skipped due to overlap. / {{placed}} kopya eklendi, {{skipped}} tanesi çakışma nedeniyle atlandı.
+- Avg. sound (dB) / Ort. ses yalıtımı
+- ⚠ {{count}} run(s) exceed catalog limits (panel size/weight) / ⚠ {{count}} hat katalog limitini aşıyor (panel ölçü/ağırlık)
+- This value collides with another object — not applied. / Bu değer başka bir nesneyle çakışıyor — uygulanmadı.
+- Corner connection / Köşe bağlantısı
+- Bottom left / Sol alt
+- Bottom right / Sağ alt
+- Top left / Sol üst
+- Top right / Sağ üst
+- Corner rounding (mm) / Köşe ovalliği (mm)
+- Run lengths are developed (unfolded) dimensions; cutting lists and areas are correct. Glass and profiles must be bent to the radius in production. / Hat uzunlukları açılım (gelişim) boyudur; kesim listesi ve m² doğrudur. Cam ve profiller üretimde kavise bükülmelidir.
+- Curved runs / Kavisli hatlar
+- Run / Hat
+- Delete panel / Paneli sil
+- Delete run / Hattı sil
+- {{count}} run(s) exceed catalog limits (not fabricable). Export anyway? / {{count}} hat katalog limitini aşıyor (üretilemez). Yine de dışa aktarılsın mı?
+- Catalog could not be loaded; fabricability not verified. Export anyway? / Katalog yüklenemedi; üretilebilirlik doğrulanamadı. Yine de dışa aktarılsın mı?
+- ⚠ {{count}} run(s) exceed catalog limits / ⚠ {{count}} hat katalog limitini aşıyor
+- DXF (2D plan) / DXF (2B plan)
+- glTF/GLB (3D) / glTF/GLB (3B)
+- PDF (print) / PDF (yazdır)
+- Export / Dışa aktar
+- ⚠ {{count}} object(s) unsupported (floating) / ⚠ {{count}} nesne desteksiz (boşlukta)
+- Glass is chosen per panel. Select a panel in the layout to set its glass type. / Cam, panel bazında seçilir. Cam tipini belirlemek için yerleşimden bir panel seçin.
+- Eave height / Saçak yüksekliği
+- Eave height is required for gable roofs. / Beşik çatı için saçak yüksekliği gereklidir.
+- Roof pitch must be between {{min}}° and {{max}}°. / Çatı eğimi {{min}}° ile {{max}}° arasında olmalıdır.
+- Roof pitch is required for gable roofs. / Beşik çatı için çatı eğimi gereklidir.
+- Ridge height / Mahya yüksekliği
+- Ridge height must be greater than eave height. / Mahya yüksekliği saçak yüksekliğinden büyük olmalıdır.
+- Ridge height is required for gable roofs. / Beşik çatı için mahya yüksekliği gereklidir.
+- Roof pitch / Çatı eğimi
+- Gable roof parameters / Beşik çatı parametreleri
+- Close / Kapat
+- Drag on a wall or floor/roof surface to draw the area — the region becomes an independent layer / Duvar veya zemin/çatı yüzeyinde sürükleyerek alanı çizin — bölge bağımsız bir katmana dönüşür
+- Use the Stretch tool to push/pull the layer face and set its depth; pushing fully through turns it into an opening / Genişlet aracıyla katman yüzeyini çekip iterek derinliği ayarlayın; tamamen itilen katman boşluğa dönüşür
+- Pick the shape (rectangle, circle, ellipse, triangle, polygon, freehand pen) from the strip; the drawn area is marked as a region on the surface / Şekli (dikdörtgen, daire, oval, üçgen, çokgen, serbest kalem) üst şeritten seçin; çizilen alan yüzeyde bölge olarak işaretlenir
+- With 'Split wall', the wall is divided at the clicked point / 'Duvarı böl' şekli ile tıkladığınız noktadan duvar ikiye ayrılır
+- Surface drawing / Yüzeye çizim
+- Cancel / İptal
+- Copy / Kopyala
+- Paste / Yapıştır
+- Redo / Yinele
+- Save / Kaydet
+- Keyboard / Klavye
+- Undo / Geri al
+- Usage and shortcuts / Kullanım ve kısayollar
+- Select a wall → 'Fill openings with glass' fills its openings and holes / Bir duvar seçin → 'Boşlukları camla doldur' duvarın boşluk ve deliklerine cam hattı oluşturur
+- In draw mode, drag to sketch a run / Çizim modunda sürükleyerek hat çiz
+- In wall mode, drag to draw walls/obstacles / Duvar modunda sürükleyerek duvar/engel çiz
+- Drag the endpoints to resize / Uç noktaları sürükleyerek boyutlandır
+- 2D Plan
+- Click an item to select it / Tıkla = seç
+- Click empty space to clear the selection / Boş alana tıkla = seçimi bırak
+- Selection / Seçim
+- Usage & Shortcuts / Kullanım ve Kısayollar
+- Fill the selected wall's openings with glass / Seçili duvarın boşluklarını camla doldur
+- Select · Move · Rotate · Stretch / Seç · Taşı · Döndür · Genişlet
+- Cancel tool and placement / Aracı ve yerleştirmeyi iptal et
+- Ctrl+click adds/removes items to the multi-selection — align, join, match and fill from the top-right bar / Öğeleri çoklu seçime ekle/çıkar — sağ üstten hizala, uç uca birleştir, eşitle, araları doldur
+- Delete selected item / Seçili öğeyi sil
+- Multi-select with the lasso — delete them all with Del / Lasso ile çoklu seçim — Del ile topluca silin
+- Pen — draw a free polygon surface (click corners, snap, Shift straight, close to finish) / Kalem — serbest çokgen yüzey çiz (köşe tıkla, yapış, Shift düz, kapatınca biter)
+- Add run / wall / floor / roof — sticks to the cursor, click to place / Hat / Duvar / Zemin / Çatı ekle — imlece yapışır, tıklayınca yerleşir
+- Hold Alt while moving to stack objects on top of each other / Taşırken Alt basılı tutarak objeleri üst üste istifle
+- Draw on surface · Paint · Erase / Yüzeye çiz · Boya · Sil
+- Tools / Araçlar
+- Drag the selected hardware with the axis arrows / Seçili donanımı eksen oklarıyla sürükle
+- Drag a mullion (panel divider) to resize panels / Ara kaydı (panel bölücü) sürükleyerek panel genişliğini ayarla
+- Right-click or middle wheel to rotate and zoom / Sağ tık veya orta tekerlek ile döndür ve yakınlaş
+- 3D
+- Inspector / Denetçi
+- Live cost / Canlı maliyet
+- In-browser estimate. The server report is authoritative. / Tarayıcı içi tahmindir. Resmi kayıt sunucu raporudur.
+- Preview / Önizleme
+- Max. thickness / Maks. kalınlık
+- Align X (same X) / X hizala
+- Align Y (same Y) / Y hizala
+- {{count}} items selected / {{count}} öğe seçili
+- Delete selected / Seçilenleri sil
+- Match heights / Yükseklikleri eşitle
+- Match lengths / Uzunlukları eşitle
+- Fill gaps with glass / Araları camla doldur
+- Join end-to-end / Uç uca birleştir
+- Select at least two items for this action. / Bu işlem için en az iki öğe seçin.
+- {{count}} items skipped due to collision. / {{count}} öğe çakışma nedeniyle atlandı.
+- New run / Yeni hat
+- Add runs and panels to see costs. / Maliyeti görmek için hat ve panel ekleyin.
+- Select a run or panel in the 3D scene. / 3D sahnede bir hat veya panel seçin.
+- Panel added / Panel eklendi
+- {{count}} panels / {{count}} panel
+- Panel count / Panel sayısı
+- Panel deleted / Panel silindi
+- Panel inspector / Panel denetçisi
+- Paste: click a target panel · Esc to cancel / Yapıştır: hedef panele tıkla · Esc iptal
+- Paste: click a target run or panel · Esc to cancel / Yapıştır: hedef hatta veya panele tıkla · Esc iptal
+- Paste: click a location · Esc to cancel / Yapıştır: konuma tıkla · Esc iptal
+- Add vertex / Köşe ekle
+- Facade height: {{height}} mm / Cephe yüksekliği: {{height}} mm
+- At least 3 vertices with non-zero edges are required / En az 3 köşe ve sıfır olmayan kenarlar gerekli
+- Remove / Sil
+- Save polygon / Çokgeni kaydet
+- Polygon saved / Çokgen kaydedildi
+- Polygon vertices / Çokgen köşeleri
+- X (mm)
+- Y (mm)
+- Presentation / Sunum
+- Quality / Kalite
+- Rebalance / Yeniden Dağıt
+- Run added / Hat eklendi
+- Run deleted / Hat silindi
+- Run inspector / Hat denetçisi
+- Save / Kaydet
+- Scene saved / Sahne kaydedildi
+- Back / Geri
+- Lines / Satır
+- Bill of Materials / Malzeme Listesi
+- Outdated / Güncel değil
+- Bill of Materials / Malzeme Listesi
+- Total / Toplam
+- Canvas / Çizim Alanı
+- Close / Kapat
+- Close / Kapat
+- Collapse / Daralt
+- Collapse inspector panel / Detay panelini daralt
+- Collapse runs panel / Hat panelini daralt
+- Expand / Genişlet
+- Expand inspector panel / Detay panelini genişlet
+- Expand runs panel / Hat panelini genişlet
+- Fit / Sığdır
+- Fit to screen / Ekrana sığdır
+- Full screen / Tam ekran
+- Grid / Izgara
+- No runs added yet. / Henüz cephe eklenmedi.
+- Details / Detaylar
+- BOM / Ürün Ağacı
+- Material list / Malzeme Listesi
+- Inspector / Denetçi
+- Edit details / Detayları Düzenle
+- Add run / Hat Ekle
+- Add facade / Cephe Ekle
+- Use default / Varsayılanı kullan
+- Follow the global persona mode / Genel persona modunu izle
+- On this screen / Bu ekranda
+- Pro
+- Full control, dense info / Tam kontrol, yoğun bilgi
+- Simple / Basit
+- Guided, fewer panels / Yönlendirmeli, daha az panel
+- Screen persona mode / Ekran persona modu
+- Screen-specific persona mode / Ekrana özel persona modu
+- Refresh / Yenile
+- Runs / Cepheler
+- Selected / Seçili
+- Navigation / Gezinme
+- BOM / Ürün Ağacı
+- Materials / Malzemeler
+- Canvas / Kanvas
+- Drawing / Çizim
+- Inspector / Denetçi
+- Details / Detaylar
+- Runs / Hatlar
+- Facades / Cepheler
+- Fit to screen / Ekrana Sığdır
+- Grid / Izgara
+- Zoom in / Yakınlaştır
+- Zoom out / Uzaklaştır
+- Zoom in / Yakınlaş
+- Zoom out / Uzaklaş
+- Delete floor / Zemini sil
+- Delete roof / Çatıyı sil
+- Depth / Derinlik
+- Elevation / Kot
+- Floor / Zemin
+- Type / Tip
+- Roof / Çatı
+- Rotation / Dönüş
+- Thickness / Kalınlık
+- Delete surface / Yüzeyi sil
+- Drag the surface with the Move tool; recolor it with the Paint tool. / Taşı aracıyla yüzeyi sürükleyebilir, Boya aracıyla renk/malzeme verebilirsiniz.
+- Drawn surface / Çizilen yüzey
+- Technical summary / Teknik özet
+- Add floor / Zemin ekle
+- Add roof / Çatı ekle
+- Add run / Hat ekle
+- Add wall / Duvar ekle
+- Fill openings with glass / Boşlukları camla doldur
+- Draw on surface / Yüzeye çiz
+- Draw a region on a surface → give it depth with the Stretch (S) tool / Yüzeyde bölge çiz → Genişlet (S) aracıyla girinti/çıkıntı derinliği ver
+- Erase / Sil
+- Concrete / Beton
+- Marble / Mermer
+- Panel
+- Wood / Ahşap
+- Opening (hole) / Boşluk (delik)
+- Protrusion (layer) / Çıkıntı (katman)
+- Recess (carve) / Girinti (oyma)
+- Move / Taşı
+- Multi-select (lasso) / Çoklu seç (lasso)
+- Color catalog is empty / Renk kataloğu boş
+- Paint / Boya
+- Pen (draw surface / layer) / Kalemle yüzey / katman çiz
+- Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels / Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal
+- Rotate / Döndür
+- Select / Seç
+- Circle / Daire
+- Ellipse / Oval
+- Freehand / Serbest çizim
+- Polygon / Çokgen
+- Rectangle / Dikdörtgen
+- Split wall / Duvarı böl
+- Triangle / Üçgen
+- Stretch / Genişlet
+- Add floor / Zemin ekle
+- Add roof / Çatı ekle
+- Add run / Hat ekle
+- Add wall / Duvar ekle
+- Objects / Nesneler
+- Total area / Toplam alan
+- Total weight / Toplam ağırlık
+- Base / Taban
+- Depth / Derinlik
+- Elevation / Kot
+- Height / Yükseklik
+- End height / Uç Yükseklik
+- Length / Uzunluk
+- Rotation / Dönüş
+- Thickness / Kalınlık
+- Transform / Dönüşüm
+- Width / Genişlik
+- X
+- Y
+- Validate / Doğrula
+- Validation complete / Doğrulama tamamlandı
+- 3D
+- Cutting / Kesim
+- Engineering / Statik
+- Plan (2D)
+- Quote / Teklif
+- Split / Bölünmüş
+- Site survey / Keşif
+- Door / Kapı
+- Window / Pencere
+- Fill openings with glass / Boşlukları camla doldur
+- {{count}} glass runs created. / {{count}} cam hattı oluşturuldu.
+- Fills the selected wall's window/door openings and through-holes with glass runs. / Seçili duvarın pencere/kapı boşluklarını ve deliklerini cam hattıyla doldurur.
+- No fillable gap found between the selected walls — free wall ends must be 30 cm - 12 m apart. / Seçili duvarlar arasında doldurulabilir boşluk bulunamadı — serbest duvar uçları arasında 30 cm - 12 m aralık olmalı.
+- No openings to fill — add a window/door opening or a through-hole to the wall. / Doldurulacak boşluk bulunamadı — duvara pencere/kapı boşluğu veya delik ekleyin.
+- Select a wall to fill its openings, or multi-select several walls to fill the gaps between them. / Camla doldurmak için bir duvar seçin (boşluk/delik doldurma) veya birden fazla duvarı çoklu seçin (aralarını doldurma).
+- Delete wall / Duvarı sil
+- Door / Kapı
+- End height / slope (mm) / Uç yükseklik / eğim (mm)
+- No openings — add a window or a door. / Boşluk yok — pencere veya kapı ekleyin.
+- No room for a new opening — shrink existing ones or extend the wall. / Duvarda yeni boşluk için yer yok — mevcutları daraltın veya duvarı uzatın.
+- Position / Konum
+- Bottom / Alt
+- Openings / Boşluklar
+- Remove opening / Boşluğu sil
+- Thickness / Kalınlık
+- Wall / Obstacle / Duvar / Engel
+- Window / Pencere
+- Position Y (height) / Konum Y (yükseklik)
+- Layer color / Katman rengi
+- Surface color / Yüzey rengi
+- Depth / Derinlik
+- The area does not fit within the wall bounds. / Alan duvar sınırlarına sığmıyor.
+- The area does not fit within the floor/roof bounds. / Alan zemin/çatı sınırlarına sığmıyor.
+- Flip face (inner/outer) / Yüz değiştir (iç/dış)
+- Use the Stretch tool to drag the layer face and adjust its depth; pushing it all the way through turns it into an opening. / Genişlet aracıyla katman yüzeyini sürükleyerek derinliği ayarlayabilirsiniz; tamamen içeri itilen katman boşluğa dönüşür.
+- Layers / Katmanlar
+- Behavior / Davranış
+- No layers — draw a shape on the surface with the 'Draw on surface' tool. / Katman yok — üstteki 'Yüzeye çiz' aracıyla yüzeye şekil çizin.
+- Position X / Konum X
+- The area overlaps an existing opening or layer. / Alan mevcut bir boşluk veya katmanla çakışıyor.
+- Delete layer / Katmanı sil
+- Side count / Kenar sayısı
+- Floor/roof layer / Zemin/çatı katmanı
+- Wall layer / Duvar katmanı
+- Weighted U-value / Ağırlıklı U değeri
+- Fixed Amount / Sabit Tutar
+- Percent / Yüzde
+- Coupon / Kupon
+- Customer Group / Müşteri Grubu
+- Date Range / Tarih Aralığı
+- Manual / Manuel
+- Volume / Hacim
+- Acoustic / Ses Yalıtımı
+- Applied Pressure / Uygulanan Basınç
+- Noise Reduction / Ses Azaltımı
+- Calculations are approximations per TS 498. Structural engineer approval is required for load-bearing applications. / Hesaplamalar TS 498'e göre yaklaşık değerlerdir. Taşıyıcı uygulamalar için statik mühendisi onayı gereklidir.
+- Estimated Energy Savings / Tahmini Enerji Tasarrufu
+- Height Factor / Yükseklik Katsayısı
+- Save the project to see the engineering summary. / Mühendislik özetini görmek için projeyi kaydedin.
+- Overall / Genel
+- Panels / Paneller
+- Runs / Cepheler
+- Thermal / Isı Yalıtımı
+- Engineering Report / Mühendislik Raporu
+- Total Area / Toplam Alan
+- Total Weight / Toplam Ağırlık
+- Weighted dB / Ağırlıklı dB
+- Weighted U-Value / Ağırlıklı U Değeri
+- Wind Load / Rüzgar Yükü
+- Wind zone not assigned. Set it in the project header. / Rüzgar bölgesi atanmamış. Proje başlığından belirleyin.
+- Active / Aktif
+- Arc radius / Kavis yarıçapı
+- Base pressure / Temel basınç
+- Bottom threshold / Alt eşik
+- Brand / Marka
+- Building height (m) / Bina yüksekliği (m)
+- Category / Kategori
+- Channel / Kanal
+- City / Şehir
+- Coastal / Kıyı bölgesi
+- Code / Kod
+- Color / Renk
+- Corrosion / Korozyon
+- Coupon / Kupon
+- Crane from floor / Vinç başlangıç katı
+- Crane rate / Vinç ücreti
+- Currency / Para birimi
+- Data retention / Veri saklama
+- Default currency / Varsayılan para birimi
+- Default locale / Varsayılan dil
+- Discount type / İndirim türü
+- Discount value / İndirim değeri
+- Event / Olay
+- Floor / Kat
+- Glass kerf / Cam kesim payı
+- Glass type / Cam tipi
+- Guillotine required / Giyotin gerekli
+- Brush seal / Fırça fitil
+- Handle / Kulp
+- Lock / Kilit
+- Height / Yükseklik
+- Height factor / Yükseklik katsayısı
+- Humidity / Nem
+- Items / Kalem sayısı
+- Jumbo glass / Jumbo cam
+- Label / Etiket
+- Labor cost / İşçilik maliyeti
+- Length / Uzunluk
+- Locale / Dil
+- Margin % / Marj %
+- Max. load / Maks. yük
+- Max. panel / Maks. panel
+- Name / Ad
+- Onboarding complete / Onboarding tamamlandı
+- Opening type / Açılım tipi
+- X
+- Y
+- Price (m²) / Fiyat (m²)
+- Profile system / Profil sistemi
+- Quote token TTL / Teklif token TTL
+- Recommendations / Öneriler
+- Region / Bölge
+- Rotation / Dönüş
+- Saw kerf / Testere kesim payı
+- Scaffolding from floor / İskele başlangıç katı
+- Scaffolding rate / İskele ücreti
+- Scope / Kapsam
+- Sound (dB) / Ses yalıtımı (dB)
+- Stock bar length / Boy uzunluğu
+- Structure / Yapı
+- Subject / Konu
+- System / Sistem
+- System type / Sistem tipi
+- Thickness / Kalınlık
+- Side tolerance / Yan tolerans
+- Top tolerance / Üst tolerans
+- Top drip / Üst damlalık
+- Transport / kg / Nakliye / kg
+- Transport / km / Nakliye / km
+- U-value / U değeri
+- Unit / Birim
+- Unit price / Birim fiyat
+- Waste % / Fire %
+- Width / Genişlik
+- Winter temperature / Kış sıcaklığı
+- Workshop capacity / Atölye kapasitesi
+- Anodized / Eloksal
+- Powder Coated / Elektrostatik Toz Boyalı
+- Raw / Ham
+- Wood Look / Ahşap Desenli
+- Double Glazed / Çift Cam
+- Laminated / Lamine
+- Low-E
+- Tempered / Temperli
+- Triple Glazed / Üçlü Cam
+- No hardware added yet / Henüz donanım eklenmedi
+- Color / Renk
+- Depth (mm) / Derinlik (mm)
+- Height (mm) / Yükseklik (mm)
+- Type / Tür
+- X (mm)
+- Y (mm)
+- Z (mm)
+- Width (mm) / Genişlik (mm)
+- Accessory / Aksesuar
+- Bracket / Braket
+- Corner Joint / Köşe Bağlantı
+- Drip Profile / Damlalık
+- Gasket Strip / Fitil
+- Handle / Kulp
+- Hinge / Menteşe
+- Lock / Kilit
+- Louver / Panjur
+- Pull Handle / Çekme Kulbu
+- Roller / Makara
+- Stopper / Stoper
+- Vent / Menfez
+- Hardware objects / Donanım nesneleri
+- Hardware / Donanım
+- Brush / Fırça
+- Bumper / Tampon
+- Chain / Zincir
+- Corner Post / Köşe Dikmesi
+- Drip Cap / Damlalık
+- Gasket / Fitil
+- Handle / Kulp
+- Hinge / Menteşe
+- Lock / Kilit
+- Other / Diğer
+- Roller / Makara
+- Wall Bracket / Duvar Braketi
+- Back / Geri
+- Start blank / Boş başla
+- Finish / Tamamla
+- Next / İleri
+- Skip / Atla
+- Back / Geri
+- Full professional control / Tam profesyonel kontrol
+- Step-by-step guided mode / Adım adım rehberli mod
+- Close / Kapat
+- Failed to create project. / Proje oluşturulamadı.
+- Creating project... / Proje oluşturuluyor...
+- Project created successfully. / Proje başarıyla oluşturuldu.
+- Height (mm) / Yükseklik (mm)
+- Panel count / Panel sayısı
+- Run {{index}} / Cephe {{index}}
+- Measure later / Sonra ölç
+- Create project / Proje oluştur
+- Width (mm) / Genişlik (mm)
+- Step {{step}}/{{total}} / Adım {{step}}/{{total}}
+- Step {{step}} / {{total}} / Adım {{step}} / {{total}}
+- Category / Kategori
+- Enclosure type / Sistem türü
+- Template / Şablon
+- System template or blank / Sistem şablonu veya boş
+- Project info / Proje bilgileri
+- Customer and address / Müşteri ve adres
+- Dimensions / Ölçüler
+- Quick dimension entry / Hızlı ölçü girişi
+- Site address / Montaj adresi
+- Street, no., building, district/city / Cadde, no, bina, semt/şehir
+- Customer / Müşteri
+- New customer / Yeni müşteri
+- Search customers... / Müşteri ara...
+- Project name / Proje adı
+- 3-120 characters / 3-120 karakter
+- e.g. Yildiz Apartment Balcony / örn. Yıldız Apartmanı balkon
+- Notes / Notlar
+- Internal notes, installation conditions, etc. / İç notlar, montaj koşulları vb.
+- Next / İleri
+- Enclosing a glass balcony / Cam balkon kapatma
+- TPH model | inline geometry | guillotine/sliding system / TPH modeli | doğrusal geometri | giyotin/sürme sistem
+- Enclosing a glass balcony / Cam balkon kapatma
+- TPH model | inline geometry | guillotine/sliding system / TPH modeli | doğrusal geometri | giyotin/sürme sistem
+- Balcony Glazing / Cam Balkon
+- Glass balustrade and stair railing / Cam korkuluk ve merdiven korkuluğu
+- 12-19 mm structural glass | TRSB | channel/clamp options / 12-19 mm strüktürel cam | TRSB | kanal/kelepçe seçenekleri
+- Glass balustrade, stairs and balcony edge / Cam korkuluk, merdiven ve balkon kenarı
+- 12-19 mm structural glass | TRSB / 12-19 mm strüktürel cam | TRSB
+- Balustrade / Korkuluk
+- Building facade with cassette system / Kaset sistemli bina cephesi
+- Cassette system | multi-sided polygon | 4-12 panels / Kaset sistem | çok kenarlı poligon | 4-12 panel
+- Curtain wall for office and commercial buildings / Ofis ve ticari binalar için giydirme cephe
+- Cassette system | 1.5x3 m panels | aluminum profile / Kaset sistem | 1.5x3 m panel | alüminyum profil
+- Curtain Wall / Giydirme Cephe
+- Frameless glass door / Çerçevesiz cam kapı
+- Patch fittings | 10-12 mm tempered | floor spring option / Patch fitting | 10-12 mm temperli | yer yayı seçeneği
+- Frameless glass doors and entrance partitions / Çerçevesiz cam kapılar ve giriş bölmeleri
+- Patch fittings | 10-12 mm tempered / Patch fitting | 10-12 mm temperli
+- Frameless Door / Çerçevesiz Kapı
+- User-defined custom polygon / Kullanıcı tanımlı özel poligon
+- Custom polygon | free geometry | self-supporting / Özel poligon | serbest geometri | kendinden taşıyıcı
+- Custom design with a blank polygon starter / Boş poligon başlangıcıyla özel tasarım
+- Blank start | polygon vertices >= 3 / Boş başlangıç | poligon köşe sayısı >= 3
+- Free Form / Serbest Form
+- Greenhouse / winter garden / Sera / kış bahçesi
+- Parametric hip roof | glass roof | ridge/eave control / Parametrik kırma çatı | cam çatı | mahya/saçak kontrolü
+- Greenhouse and winter garden / Sera ve kış bahçesi
+- Parametric hip roof | glass roof / Parametrik kırma çatı | cam çatı
+- Greenhouse / Sera
+- Corner or alcove shower cabin / Köşe veya niş duşakabin
+- 8/10 mm tempered | corner brackets | patch fittings / 8/10 mm temperli | köşe bağlantı | patch fitting
+- Corner or alcove shower cabin / Köşe veya niş duşakabin
+- 8/10 mm tempered | corner brackets / 8/10 mm temperli | köşe bağlantı
+- Shower Cabin / Duşakabin
+- Point-fixed structural glass facade / Noktasal tutuculu strüktürel cam cephe
+- Spider fittings | 3-4 points per panel | structural glass / Spider bağlantı | panel başına 3-4 nokta | strüktürel cam
+- Structural glass facade for lobbies and entrances / Lobi ve girişler için strüktürel cam cephe
+- 4-point fixing | min. 12 mm structural glass / 4 nokta bağlantı | min. 12 mm strüktürel cam
+- Spider Facade / Spider Cephe
+- L-shaped balcony / L balkon
+- Straight balcony / Düz balkon
+- Quick layouts / Hazır şablonlar
+- U-shaped balcony / U balkon
+- Enclosure type / Sistem türü
+- Project info / Proje bilgileri
+- Quick dimensions / Hızlı ölçüler
+- Template / Şablon
+- Category choice determines geometry and mounting topology. / Kategori seçimi geometriyi ve montaj topolojisini belirler.
+- Pick the closest option, we'll handle the rest. / En yakın seçeneği seçin, gerisini biz hallederiz.
+- What are you designing? / Hangi sistemi tasarlıyorsunuz?
+- No template for this category. Continue with "Start blank". / Bu kategori için şablon yok. "Boş başla" ile devam edin.
+- No templates found for this category. / Bu kategori için şablon bulunamadı.
+- System templates provide run and panel presets. / Sistem şablonları cephe ve panel ön ayarları sağlar.
+- Commonly used layouts. You can also start blank. / Sık kullanılan yerleşimler. Boş da başlayabilirsiniz.
+- Start blank / Boş başla
+- No template, from scratch. / Şablonsuz, sıfırdan.
+- Start from a ready-made template / Hazır bir şablonla başlayın
+- Site address / Montaj adresi
+- Street, no., building, district/city / Cadde, no, bina, semt/şehir
+- Change / Değiştir
+- Create new customer / Yeni müşteri oluştur
+- Customer _ / Müşteri _
+- Search customers... / Müşteri ara...
+- Project name and customer are required, other fields are optional. / Proje adı ve müşteri zorunludur, diğer alanlar isteğe bağlıdır.
+- Project name must be {{min}}-{{max}} characters. / Proje adı {{min}}-{{max}} karakter olmalıdır.
+- Notes / Notlar
+- Internal notes, installation conditions, etc. / İç notlar, montaj koşulları vb.
+- Project name _ / Proje adı _
+- e.g. Yildiz Apartment Balcony / örn. Yıldız Apartmanı balkon
+- Project details / Proje detayları
+- Create project / Proje oluştur
+- Height (mm) / Yükseklik (mm)
+- Approximate values — final dimensions at the on-site survey. / Yaklaşık değerler — kesin ölçüler keşifte alınır.
+- Measure on site with a laser and enter it here. Or measure later. / Yerinde lazerle ölçüp buraya girin. Ya da sonra ölçün.
+- Laser meter integration coming soon. / Lazer metre entegrasyonu yakında.
+- Panel count / Panel sayısı
+- Number of runs / Cephe sayısı
+- Run {{index}} / Cephe {{index}}
+- Create without dimensions / Ölçüsüz oluştur
+- Skip and measure later / Atla, sonra ölç
+- Run dimensions and panel count / Cephe ölçüleri ve panel sayısı
+- Enter a quick measurement, fine-tune later / Hızlı ölçü girin, ince ayarı sonra yapın
+- Width (mm) / Genişlik (mm)
+- No templates available. / Kullanılabilir şablon yok.
+- {{min}}–{{max}} m²
+- {{count}} panel
+- {{count}} panel
+- {{count}} panels / {{count}} panel
+- {{count}} run / {{count}} cephe
+- {{count}} run / {{count}} cephe
+- {{count}} runs / {{count}} cephe
+- New Glazing Project / Yeni Cam Projesi
+- New Project / Yeni Proje
+- New Glazing Project / Yeni Cam Projesi
+- Customer is required. / Müşteri zorunludur.
+- Project name is required. / Proje adı zorunludur.
+- No notifications sent yet. / Henüz bildirim gönderilmedi.
+- Notification History / Bildirim Geçmişi
+- Fixed / Sabit
+- Folding / Katlanır
+- Guillotine / Giyotin
+- Hinged / Menteşeli
+- Sliding ← Left / Sürme ← Sol
+- Sliding → Right / Sürme → Sağ
+- Draw / Çiz
+- Drag from start to end point / Başlangıç noktasından bitiş noktasına sürükleyin
+- Fit / Sığdır
+- Select / Seç
+- Draw wall / Duvar çiz
+- Zoom In / Yakınlaştır
+- Zoom Out / Uzaklaştır
+- Area / Alan
+- Project created / Proje oluşturuldu
+- Customer / Müşteri
+- Customer ID / Müşteri ID
+- No projects yet. / Henüz proje yok.
+- Grand Total / Genel Toplam
+- New Project / Yeni Proje
+- Panels / Panel
+- Project Name / Proje Adı
+- Search by code or name... / Kod veya ada göre ara...
+- Status / Durum
+- Customer projects and 3D designs. / Müşteri projeleri ve 3D tasarımlar.
+- Glass Enclosure Projects / Cam Balkon Projeleri
+- Updated / Güncellendi
+- High / Yüksek
+- Low / Düşük
+- Medium / Orta
+- Ultra
+- Actions / İşlemler
+- Add custom line / Özel satır ekle
+- Add line / Satır ekle
+- Area / Alan
+- Catalog price updated. / Katalog fiyatı güncellendi.
+- Category / Kategori
+- Restore list price / Liste fiyatına dön
+- Custom / Özel satır
+- Custom line added to the quote. / Özel satır teklife eklendi.
+- Custom line removed. / Özel satır kaldırıldı.
+- Remove custom line / Özel satırı kaldır
+- This custom line will be removed from the quote. Continue? / Bu özel satır tekliften kaldırılacak. Devam edilsin mi?
+- Description / Açıklama
+- Edit unit price / Birim fiyatı düzenle
+- Export CSV / CSV dışa aktar
+- Glass / Cam
+- Hardware / Aksesuar
+- Installation / scaffolding / Montaj / iskele
+- Labor / İşçilik
+- Other / Diğer
+- Profile / Profil
+- Transport / Nakliye
+- Line cost / Kalem tutarı
+- Lines / Kalemler
+- Manual / Manuel
+- BOM not computed yet. Click Recompute. / BOM henüz hesaplanmadı. Yeniden hesapla'ya tıklayın.
+- List price / Liste fiyatı
+- Manual price removed; list price restored. / Manuel fiyat kaldırıldı; liste fiyatına dönüldü.
+- Panels / Paneller
+- Unit price updated. / Birim fiyat güncellendi.
+- Update price list / Fiyat listesini güncelle
+- The catalog price of this item will be updated with the manual price. Continue? / Bu kalemin katalog fiyatı manuel fiyatla güncellenecek. Devam edilsin mi?
+- Qty / Miktar
+- Recompute / Yeniden hesapla
+- BOM recomputed / BOM yeniden hesaplandı
+- This summary is derived from the project BOM — adjust the design to change lines. / Bu özet proje BOM'undan türetilir — kalemleri değiştirmek için tasarımı düzenleyin.
+- Quote Summary / Teklif Özeti
+- Totals / Toplamlar
+- Unit / Birim
+- Unit cost / Birim maliyet
+- Valid until / Geçerlilik tarihi
+- Weight / Ağırlık
+- Corrosion-resistant coating / Korozyona dayanıklı kaplama
+- Double glazing recommended / Çift cam önerilir
+- Smaller panels / Daha küçük paneller
+- Core / Temel
+- Field Survey / Saha Keşfi
+- Installation / Montaj
+- Locale & Communication / Dil ve İletişim
+- Onboarding
+- Accept Design / Tasarımı Onayla
+- Quote accepted / Teklif kabul edildi
+- Clear / Temizle
+- Customer / Müşteri
+- Decide / Karar Ver
+- Secure share for your signature and approval. / İmza ve onayınız için güvenli paylaşım.
+- Grand Total / Genel Toplam
+- Invalid or expired share link. / Geçersiz veya süresi dolmuş paylaşım bağlantısı.
+- Reject / Reddet
+- Reason (optional) / Gerekçe (isteğe bağlı)
+- Your requested changes... / Değişiklik talepleriniz...
+- Quote rejected / Teklif reddedildi
+- Signature / İmza
+- Status / Durum
+- Glass Enclosure Quote / Cam Balkon Teklifi
+- Valid Until / Geçerlilik Tarihi
+- Version / Versiyon
+- All / Tümü
+- Cancelled / İptal
+- Confirmed / Onaylandı
+- Defective / Kusurlu
+- Draft / Taslak
+- In production / Üretimde
+- In transit / Yolda
+- Installed / Monte Edildi
+- Quoted / Teklif Verildi
+- Ready / Hazır
+- Surveyed / Keşif Yapıldı
+- Manage profile systems, glazing, hardware, discounts and workshop settings. / Profil sistemlerini, camları, aksesuarları, indirimleri ve atölye ayarlarını yönetin.
+- Add measurement / Ölçüm ekle
+- Add obstacle / Engel ekle
+- Applied: {{date}} / Uygulandı: {{date}}
+- {{runs}} runs updated · {{mm}} mm slope tolerance applied / {{runs}} cephe güncellendi · {{mm}} mm eğim toleransı uygulandı
+- Approve & apply / Onayla ve uygula
+- Approve only / Yalnızca onayla
+- Survey approved / Keşif onaylandı
+- Survey created / Keşif oluşturuldu
+- Location unavailable; survey created without GPS coordinates. / Konum alınamadı; keşif GPS koordinatları olmadan oluşturuldu.
+- Label (e.g. top edge length) / Etiket (örn. üst kenar uzunluğu)
+- Value (mm) / Değer (mm)
+- Manual measurements / Manuel ölçümler
+- New survey / Yeni keşif
+- No active survey yet. Start one with 'New survey'. / Henüz aktif keşif yok. 'Yeni keşif' ile başlatın.
+- No manual measurements yet. / Henüz manuel ölçüm yok.
+- No obstacles recorded. / Kayıtlı engel yok.
+- No photos yet. / Henüz fotoğraf yok.
+- Notes / Notlar
+- Details observed on site… / Sahada gözlemlenen detaylar…
+- Door / Kapı
+- Other / Diğer
+- Pipe / Boru
+- Radiator / Radyatör
+- Window / Pencere
+- Description / Açıklama
+- Obstacles / Engeller
+- Recorded for reference only — not applied to the drawing or cost. / Engeller yalnızca kayıt amaçlıdır; çizime veya hesaba uygulanmaz.
+- File must be smaller than 25 MB. / Dosya 25 MB'tan küçük olmalıdır.
+- Only image files are allowed (JPG, PNG, WebP, HEIC). / Yalnızca görsel dosyalarına izin verilir (JPG, PNG, WebP, HEIC).
+- Photo uploaded / Fotoğraf yüklendi
+- Photos / Fotoğraflar
+- Reject / Reddet
+- Reason (optional) / Gerekçe (isteğe bağlı)
+- Survey rejected / Keşif reddedildi
+- Save draft / Taslağı kaydet
+- Draft saved / Taslak kaydedildi
+- Slope / plumb deviation / Eğim / şakül sapması
+- Bottom / Alt
+- Positive values mean deviation outward, negative inward. / Pozitif değerler dışa, negatif değerler içe sapmayı gösterir.
+- Left / Sol
+- Right / Sağ
+- Top / Üst
+- Approved / Onaylandı
+- In progress / Devam ediyor
+- Rejected / Reddedildi
+- Submitted / Gönderildi
+- Submit / Gönder
+- Submitted for approval / Onaya gönderildi
+- Capture on-site measurements and observations; apply tolerances to runs after approval. / Sahada ölçüleri ve gözlemleri kaydedin; onaydan sonra cephelere tolerans uygulayın.
+- Field Survey / Saha Keşfi
+- Upload photo / Fotoğraf yükle
+- Fixed / Sabit
+- Folding / Katlanır
+- Guillotine / Giyotin
+- Heat-Insulated Sliding / Isı Yalıtımlı Sürme
+- Hinged / Menteşeli
+- Sliding / Sürme
+- Climate Zones / İklim Bölgeleri
+- Colors / Renkler
+- Discount Rules / İndirim Kuralları
+- Glass Types / Cam Tipleri
+- Hardware Items / Aksesuarlar
+- Hardware Kits / Aksesuar Setleri
+- Notification Templates / Bildirim Şablonları
+- Profile Systems / Profil Sistemleri
+- Settings / Ayarlar
+- Wind Zones / Rüzgar Bölgeleri
+- Glass Enclosure / Cam Balkon
+- All checks passed. / Tüm kontroller başarılı.
+- Mitre angle outside recommended range / Gönye açısı önerilen aralığın dışında
+- Glass area exceeds maximum / Cam alanı maksimumu aşıyor
+- Glass type not found / Cam tipi bulunamadı
+- Glass thickness not compatible with system / Cam kalınlığı sistemle uyumlu değil
+- Panel exceeds maximum system width / Panel, maksimum sistem genişliğini aşıyor
+- Run exceeds maximum system height / Cephe, maksimum sistem yüksekliğini aşıyor
+- Panel too large for seismic zone / Panel, deprem bölgesi için çok büyük
+- Profile system not found / Profil sistemi bulunamadı
+- System does not support this opening type / Sistem bu açılım tipini desteklemiyor
+- Panel weight exceeds system capacity / Panel ağırlığı sistem kapasitesini aşıyor
+- Glass insufficient for wind load / Cam, rüzgar yükü için yetersiz
+- Work order blocked by pending revision / İş emri bekleyen revizyon nedeniyle durduruldu
+- Record defect / Kusur kaydet
+- Defect details... / Kusur açıklaması...
+- Defect recorded / Kusur kaydedildi
+- Submit defect / Kusuru gönder
+- Exiting Defective status requires a new BOM revision / Kusurlu durumundan çıkış yeni bir BOM revizyonu gerektirir
+- No work orders yet. / Henüz iş emri yok.
+- Approve / Onayla
+- Approved / Onaylandı
+- Revision approved / Revizyon onaylandı
+- Review / İncele
+- Pending blocking revision / Bekleyen engelleyici revizyon
+- This work order is awaiting an approval / Bu iş emri onay bekliyor
+- Blocked / Engellendi
+- Created / Oluşturulma
+- Delta
+- No revisions recorded yet. / Henüz revizyon kaydı yok.
+- Rev.
+- Override reason / Geçersiz kılma gerekçesi
+- Optional override note / İsteğe bağlı geçersiz kılma notu
+- Pending approval / Onay bekliyor
+- Reject / Reddet
+- Rejected / Reddedildi
+- Revision rejected / Revizyon reddedildi
+- Rejection reason / Ret gerekçesi
+- Justification required / Gerekçe zorunludur
+- Silent snapshot / Sessiz anlık görüntü
+- Revisions / Revizyonlar
+- Revision approved / Revizyon onaylandı
+- Revision rejected / Revizyon reddedildi
+- Assembling / Montaj
+- Cutting / Kesim
+- Defective / Kusurlu
+- In transit / Yolda
+- Installed / Monte edildi
+- Pending / Beklemede
+- Ready / Hazır
+- Work order updated / İş emri güncellendi

@@ -141,12 +141,21 @@ public class UpdateUserRolesHandler : IRequestHandler<UpdateUserRolesCommand, Us
 public class SetUserActiveHandler : IRequestHandler<SetUserActiveCommand, UserSummaryDto>
 {
     private readonly IUserRepository _users;
+    private readonly IRefreshTokenRepository _refreshTokens;
+    private readonly IUserSessionRepository _sessions;
     private readonly ITenantContext _tenant;
     private readonly IUnitOfWork _uow;
 
-    public SetUserActiveHandler(IUserRepository users, ITenantContext tenant, IUnitOfWork uow)
+    public SetUserActiveHandler(
+        IUserRepository users,
+        IRefreshTokenRepository refreshTokens,
+        IUserSessionRepository sessions,
+        ITenantContext tenant,
+        IUnitOfWork uow)
     {
         _users = users;
+        _refreshTokens = refreshTokens;
+        _sessions = sessions;
         _tenant = tenant;
         _uow = uow;
     }
@@ -159,7 +168,12 @@ public class SetUserActiveHandler : IRequestHandler<SetUserActiveCommand, UserSu
 
         user.IsActive = c.IsActive;
         user.UpdatedAtUtc = DateTime.UtcNow;
-        if (!c.IsActive) user.ResetSecurityStamp();
+        if (!c.IsActive)
+        {
+            user.ResetSecurityStamp();
+            await _refreshTokens.RevokeAllByUserIdAsync(user.Id, ct);
+            await _sessions.RevokeAllByUserIdAsync(user.Id, ct);
+        }
         _users.Update(user);
         await _uow.SaveChangesAsync(ct);
         return UserMapper.ToDto(user);

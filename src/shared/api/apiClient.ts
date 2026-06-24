@@ -1,10 +1,9 @@
 import axios, { type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '@/features/auth/model/authStore';
-import { authApi } from '@/features/auth/api/authApi';
 import { env } from '@/shared/lib/env';
 import { logger } from '@/shared/lib/logger';
 import { parseError, formatError } from '@/shared/errors/errorPipeline';
 import { ApiError } from './ApiError';
+import { authBridge } from './authBridge';
 import { queueToast } from './toastQueue';
 import { acquireRefreshLock, releaseRefreshLock, waitForRefreshLock } from './refreshLock';
 import { broadcastRefresh, subscribeRefreshBroadcast } from './refreshBroadcast';
@@ -13,8 +12,6 @@ import { setLoggerContext } from '@/shared/lib/logger';
 
 const HEADER_CORRELATION_ID = 'X-Correlation-Id';
 
-// Stable per-tab session id — reused across requests so backend logs can group
-// activity by browser session in addition to per-request correlation ids.
 const SESSION_ID = generateId();
 setLoggerContext({ sessionId: SESSION_ID });
 
@@ -22,7 +19,6 @@ function generateId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID().replace(/-/g, '');
   }
-  // Acceptable fallback for environments without WebCrypto (older Safari, jsdom).
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
@@ -37,40 +33,36 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const { accessToken } = useAuthStore.getState();
+  const accessToken = authBridge.getAccessToken();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
-  // Tag every request with a correlation id so backend logs can be cross-linked
-  // with frontend telemetry. We respect the caller's id if they already set one
-  // (e.g. an automation rerunning a request) and otherwise mint a fresh one.
   if (!config.headers[HEADER_CORRELATION_ID]) {
     config.headers[HEADER_CORRELATION_ID] = generateId();
   }
   return config;
 });
 
-// Capture the correlation id from successful + failing responses so the most
-// recent one is available to logger.warn/error calls without callers having to
-// thread it through manually.
+let lastCorrelationId: string | undefined;
+
+export const getLastCorrelationId = (): string | undefined => lastCorrelationId;
+
 const captureCorrelation = (headers: Record<string, unknown> | undefined): void => {
   if (!headers) return;
   const id = (headers[HEADER_CORRELATION_ID.toLowerCase()] ?? headers[HEADER_CORRELATION_ID]) as
     | string
     | undefined;
   if (typeof id === 'string' && id.length > 0) {
+    lastCorrelationId = id;
     setLoggerContext({ correlationId: id });
   }
 };
 
-// Listen for token rotations performed by another tab and apply them locally so
-// queued requests after `waitForRefreshLock` retry with the fresh token instead
-// of the stale in-memory copy. The token never touches localStorage.
 subscribeRefreshBroadcast((msg) => {
   if (msg.type === 'token-refreshed') {
-    useAuthStore.getState().setAccessToken(msg.accessToken);
+    authBridge.applyToken(msg.accessToken);
   } else if (msg.type === 'signed-out') {
-    useAuthStore.getState().clearAuth();
+    authBridge.signOut();
   }
 });
 
@@ -166,13 +158,11 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        const response = await authApi.refreshToken();
-        if (response.isSuccess && response.data) {
-          useAuthStore.getState().setAuth(response.data.accessToken, response.data.user);
-          // Push the new token to other tabs so their queued retries don't 401.
+        const newToken = await authBridge.refresh();
+        if (newToken) {
           broadcastRefresh({
             type: 'token-refreshed',
-            accessToken: response.data.accessToken,
+            accessToken: newToken,
             at: Date.now(),
           });
           drainQueue(null);
@@ -182,7 +172,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         logger.warn('Token refresh failed, signing out', { url: originalRequest.url });
         drainQueue(refreshError);
-        useAuthStore.getState().clearAuth();
+        authBridge.signOut();
         broadcastRefresh({ type: 'signed-out', at: Date.now() });
         window.location.href = '/login';
         return Promise.reject(refreshError);

@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
 import { Input } from '@/shared/ui/Input/Input';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
-import type { Product } from '@/features/products/model/product.types';
-import type { TaxRate, Warehouse } from '@/features/master-data/model/masterData.types';
+import type { Product } from '@/shared/model/product.types';
+import type { TaxRate, Warehouse } from '@/shared/master-data/model/masterData.types';
 import type { OrderFormValues, OrderLineFormValues } from '../model/orderSchema';
-import { ProductPicker } from './ProductPicker';
+import { ProductPicker } from '@/shared/ui/ProductPicker';
 
 const selectCls =
-  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 
 interface Props {
   index: number;
@@ -104,7 +104,7 @@ export const OrderLineEditor = ({
             onSelect={(id) => onProductSelect(index, id)}
           />
           {errors?.productId?.message && (
-            <span className="mt-1 block text-xs text-red-500">
+            <span className="mt-1 block text-xs text-danger-500">
               {translateError(errors.productId.message)}
             </span>
           )}
@@ -113,7 +113,7 @@ export const OrderLineEditor = ({
           type="button"
           onClick={() => onRemove(index)}
           disabled={disabled || !canRemove}
-          className="rounded p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-red-500/10"
+          className="rounded p-2 text-slate-500 hover:bg-danger-50 hover:text-danger-600 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-danger-500/10"
           aria-label={t('common.delete')}
         >
           <Trash2 size={14} />
@@ -215,13 +215,12 @@ export const OrderLineEditor = ({
         </div>
       </div>
 
-      {/* Per-line pricing breakdown */}
       <div className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
         <span>
           {formatNumber(calc.qty, locale, decimals)} × {formatNumber(calc.price, locale, decimals)}
         </span>
         {calc.discountPct > 0 && (
-          <span className="text-amber-600 dark:text-amber-400">
+          <span className="text-warning-600 dark:text-warning-400">
             {t('orders.lines.discountPercent')} {calc.discountPct}% (−
             {formatCurrency(calc.discount, locale, currency, decimals)})
           </span>

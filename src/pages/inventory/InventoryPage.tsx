@@ -9,6 +9,8 @@ import {
   ClipboardList,
   Warehouse,
 } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
 import { StockStatusLedger } from '@/features/inventory/ui/StockStatusLedger';
 import { StockMovementsLedger } from '@/features/inventory/ui/StockMovementsLedger';
 import { WarehousesTab } from '@/features/inventory/ui/WarehousesTab';
@@ -35,25 +37,25 @@ const VOUCHER_ACTIONS: {
     type: 'receive',
     label: 'Giriş Fişi',
     icon: ArrowDownToLine,
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20',
+    tone: 'border-success-200 bg-success-50 text-success-700 hover:bg-success-100 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300 dark:hover:bg-success-500/20',
   },
   {
     type: 'issue',
     label: 'Çıkış Fişi',
     icon: ArrowUpFromLine,
-    tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20',
+    tone: 'border-warning-200 bg-warning-50 text-warning-700 hover:bg-warning-100 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300 dark:hover:bg-warning-500/20',
   },
   {
     type: 'count',
     label: 'Sayım Fişi',
     icon: ClipboardList,
-    tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20',
+    tone: 'border-primary-200 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20',
   },
   {
     type: 'transfer',
     label: 'Transfer Fişi',
     icon: ArrowRightLeft,
-    tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300 dark:hover:bg-sky-500/20',
+    tone: 'border-info-200 bg-info-50 text-info-700 hover:bg-info-100 dark:border-info-500/30 dark:bg-info-500/10 dark:text-info-300 dark:hover:bg-info-500/20',
   },
 ];
 
@@ -63,21 +65,16 @@ export const InventoryPage = () => {
   const [voucher, setVoucher] = useState<StockVoucherType | null>(null);
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('inventory.page.title', { defaultValue: 'Stok Yönetimi' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('inventory.page.subtitle', {
-              defaultValue:
-                'Depo bazında stok durumu, miktarları ve tüm stok/depo hareketleri tek ekranda.',
-            })}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {VOUCHER_ACTIONS.map((action) => {
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Boxes size={20} />}
+          title={t('inventory.page.title', { defaultValue: 'Stok Yönetimi' })}
+          subtitle={t('inventory.page.subtitle', {
+            defaultValue:
+              'Depo bazında stok durumu, miktarları ve tüm stok/depo hareketleri tek ekranda.',
+          })}
+          actions={VOUCHER_ACTIONS.map((action) => {
             const Icon = action.icon;
             return (
               <button
@@ -91,37 +88,38 @@ export const InventoryPage = () => {
               </button>
             );
           })}
+        />
+      }
+      toolbar={
+        <div className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
+          {TABS.map((tItem) => {
+            const Icon = tItem.icon;
+            const active = tab === tItem.id;
+            return (
+              <button
+                key={tItem.id}
+                type="button"
+                onClick={() => setTab(tItem.id)}
+                className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition ${
+                  active
+                    ? 'border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-300'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                }`}
+              >
+                <Icon size={13} />
+                {t(`inventory.page.tab.${tItem.id}`, { defaultValue: tItem.label })}
+              </button>
+            );
+          })}
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
-        {TABS.map((tItem) => {
-          const Icon = tItem.icon;
-          const active = tab === tItem.id;
-          return (
-            <button
-              key={tItem.id}
-              type="button"
-              onClick={() => setTab(tItem.id)}
-              className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition ${
-                active
-                  ? 'border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-              }`}
-            >
-              <Icon size={13} />
-              {t(`inventory.page.tab.${tItem.id}`, { defaultValue: tItem.label })}
-            </button>
-          );
-        })}
-      </div>
-
+      }
+    >
       {tab === 'status' && <StockStatusLedger />}
       {tab === 'movements' && <StockMovementsLedger />}
       {tab === 'warehouses' && <WarehousesTab />}
 
       {voucher && <StockVoucherModal type={voucher} onClose={() => setVoucher(null)} />}
-    </div>
+    </ListPageTemplate>
   );
 };
 

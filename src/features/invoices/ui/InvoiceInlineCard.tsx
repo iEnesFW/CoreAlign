@@ -10,7 +10,7 @@ interface InvoiceInlineCardProps {
 }
 
 export const InvoiceInlineCard = ({ invoiceId, onClose, onOpenPanel }: InvoiceInlineCardProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const invoiceQuery = useInvoiceQuery(invoiceId);
   const inv = invoiceQuery.data?.data;
@@ -18,15 +18,19 @@ export const InvoiceInlineCard = ({ invoiceId, onClose, onOpenPanel }: InvoiceIn
 
   return (
     <InlineDetailCard
-      title={inv?.invoiceNumber ?? 'Fatura'}
+      title={inv?.invoiceNumber ?? t('InvoiceCard.Title', { defaultValue: 'Fatura' })}
       subtitle={inv ? `${inv.customerName} · ${inv.status}` : undefined}
       onOpenPanel={onOpenPanel}
       onClose={onClose}
     >
       {invoiceQuery.isPending ? (
-        <div className="py-6 text-center text-sm text-slate-500">Yükleniyor…</div>
+        <div className="py-6 text-center text-sm text-slate-500">
+          {t('InvoiceCard.Loading', { defaultValue: 'Yükleniyor…' })}
+        </div>
       ) : !inv ? (
-        <div className="py-6 text-center text-sm text-slate-500">Fatura bulunamadı.</div>
+        <div className="py-6 text-center text-sm text-slate-500">
+          {t('InvoiceCard.NotFound', { defaultValue: 'Fatura bulunamadı.' })}
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
@@ -34,11 +38,21 @@ export const InvoiceInlineCard = ({ invoiceId, onClose, onOpenPanel }: InvoiceIn
               <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
                 <tr>
                   <th className="px-2 py-1.5 text-left">#</th>
-                  <th className="px-2 py-1.5 text-left">Ürün/Hizmet</th>
-                  <th className="px-2 py-1.5 text-right">Miktar</th>
-                  <th className="px-2 py-1.5 text-right">Birim Fiyat</th>
-                  <th className="px-2 py-1.5 text-right">KDV %</th>
-                  <th className="px-2 py-1.5 text-right">Tutar</th>
+                  <th className="px-2 py-1.5 text-left">
+                    {t('InvoiceCard.ColProduct', { defaultValue: 'Ürün/Hizmet' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('InvoiceCard.ColQuantity', { defaultValue: 'Miktar' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('InvoiceCard.ColUnitPrice', { defaultValue: 'Birim Fiyat' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('InvoiceCard.ColTaxPercent', { defaultValue: 'KDV %' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('InvoiceCard.ColAmount', { defaultValue: 'Tutar' })}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -72,26 +86,36 @@ export const InvoiceInlineCard = ({ invoiceId, onClose, onOpenPanel }: InvoiceIn
           </div>
 
           <div className="flex flex-col items-end gap-0.5 text-xs">
-            <Row label="Ara Toplam" value={formatCurrency(inv.subtotal, locale, currency)} />
+            <Row
+              label={t('InvoiceCard.Subtotal', { defaultValue: 'Ara Toplam' })}
+              value={formatCurrency(inv.subtotal, locale, currency)}
+            />
             {inv.lineDiscountTotal > 0 && (
               <Row
-                label="İskonto"
+                label={t('InvoiceCard.Discount', { defaultValue: 'İskonto' })}
                 value={`-${formatCurrency(inv.lineDiscountTotal, locale, currency)}`}
               />
             )}
-            <Row label="KDV" value={formatCurrency(inv.taxTotal, locale, currency)} />
+            <Row
+              label={t('InvoiceCard.Tax', { defaultValue: 'KDV' })}
+              value={formatCurrency(inv.taxTotal, locale, currency)}
+            />
             {inv.withholdingTotal > 0 && (
               <Row
-                label="Tevkifat"
+                label={t('InvoiceCard.Withholding', { defaultValue: 'Tevkifat' })}
                 value={`-${formatCurrency(inv.withholdingTotal, locale, currency)}`}
               />
             )}
             <div className="mt-1 border-t border-slate-200 pt-1 text-sm font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100">
-              Genel Toplam: {formatCurrency(inv.total, locale, currency)}
+              {t('InvoiceCard.GrandTotal', { defaultValue: 'Genel Toplam' })}:{' '}
+              {formatCurrency(inv.total, locale, currency)}
             </div>
-            <Row label="Ödenen" value={formatCurrency(inv.amountPaid, locale, currency)} />
             <Row
-              label="Kalan"
+              label={t('InvoiceCard.AmountPaid', { defaultValue: 'Ödenen' })}
+              value={formatCurrency(inv.amountPaid, locale, currency)}
+            />
+            <Row
+              label={t('InvoiceCard.AmountDue', { defaultValue: 'Kalan' })}
               value={formatCurrency(inv.amountDue, locale, currency)}
               emphasize={inv.amountDue > 0}
             />
@@ -114,7 +138,7 @@ const Row = ({
   <div className="flex w-48 justify-between">
     <span className="text-slate-500">{label}</span>
     <span
-      className={`font-mono ${emphasize ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-slate-700 dark:text-slate-200'}`}
+      className={`font-mono ${emphasize ? 'font-semibold text-danger-600 dark:text-danger-400' : 'text-slate-700 dark:text-slate-200'}`}
     >
       {value}
     </span>

@@ -102,7 +102,7 @@ export function OrderRevisionsTab({ order, currentUserId }: Props) {
               key={rev.id}
               className={`rounded-md border p-4 ${
                 isPending
-                  ? 'border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20'
+                  ? 'border-warning-300 bg-warning-50 dark:border-warning-700 dark:bg-warning-900/20'
                   : 'border-border'
               }`}
             >
@@ -126,7 +126,7 @@ export function OrderRevisionsTab({ order, currentUserId }: Props) {
                     </p>
                   )}
                   {rev.rejectionReason && (
-                    <p className="mt-1 text-xs text-rose-600">
+                    <p className="mt-1 text-xs text-danger-600">
                       {t('orders.revisions.rejectionReason')}: {rev.rejectionReason}
                     </p>
                   )}
@@ -142,14 +142,14 @@ export function OrderRevisionsTab({ order, currentUserId }: Props) {
                           type="button"
                           onClick={() => handleApprove(rev)}
                           disabled={approveMutation.isPending}
-                          className="rounded-md bg-emerald-600 px-3 py-1 text-xs text-white hover:bg-emerald-500"
+                          className="rounded-md bg-success-600 px-3 py-1 text-xs text-white hover:bg-success-500"
                         >
                           {t('orders.revisions.approveButton')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setRejectingId(rev.id)}
-                          className="rounded-md bg-rose-600 px-3 py-1 text-xs text-white hover:bg-rose-500"
+                          className="rounded-md bg-danger-600 px-3 py-1 text-xs text-white hover:bg-danger-500"
                         >
                           {t('orders.revisions.rejectButton')}
                         </button>
@@ -214,7 +214,7 @@ export function OrderRevisionsTab({ order, currentUserId }: Props) {
                       type="button"
                       onClick={() => handleReject(rev)}
                       disabled={rejectMutation.isPending || !rejectReason.trim()}
-                      className="rounded-md bg-rose-600 px-3 py-1 text-xs text-white hover:bg-rose-500 disabled:opacity-50"
+                      className="rounded-md bg-danger-600 px-3 py-1 text-xs text-white hover:bg-danger-500 disabled:opacity-50"
                     >
                       {t('orders.revisions.rejectButton')}
                     </button>

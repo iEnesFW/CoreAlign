@@ -43,7 +43,10 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         uploaded: false,
       });
     } catch (err) {
-      Alert.alert('Camera', err instanceof Error ? err.message : String(err));
+      Alert.alert(
+        t('installation.cameraErrorTitle'),
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       setBusy(false);
     }
@@ -101,9 +104,13 @@ export const PhotoCapture: React.FC<PhotoCaptureProps> = ({
                 <Text className="text-white text-xs font-bold">×</Text>
               </Pressable>
               {item.uploaded ? (
-                <Text className="text-xs text-success mt-1">{'✓'} synced</Text>
+                <Text className="text-xs text-success mt-1">
+                  {'✓'} {t('installation.photoSynced')}
+                </Text>
               ) : (
-                <Text className="text-xs text-warning mt-1">{'…'} pending</Text>
+                <Text className="text-xs text-warning mt-1">
+                  {'…'} {t('installation.photoPending')}
+                </Text>
               )}
             </View>
           )}

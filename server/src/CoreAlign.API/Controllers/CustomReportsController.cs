@@ -40,15 +40,8 @@ public sealed class CustomReportsController : ControllerBase
     [HttpPost("preview")]
     public async Task<IActionResult> PreviewAsync([FromBody] CustomReportDefinitionDto definition, CancellationToken cancellationToken)
     {
-        try
-        {
-            var preview = await _mediator.Send(new PreviewCustomReportQuery(definition), cancellationToken);
-            return preview.ToOk();
-        }
-        catch (CustomReportValidationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var preview = await _mediator.Send(new PreviewCustomReportQuery(definition), cancellationToken);
+        return preview.ToOk();
     }
 
     [HttpGet]
@@ -62,15 +55,8 @@ public sealed class CustomReportsController : ControllerBase
     [Authorize(Roles = PersonaPolicies.TenantAdminRole + "," + PersonaPolicies.PlatformAdminRole)]
     public async Task<IActionResult> SaveAsync([FromBody] SaveCustomReportRequestDto request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var summary = await _mediator.Send(new SaveCustomReportCommand(request), cancellationToken);
-            return summary.ToCreated();
-        }
-        catch (CustomReportValidationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var summary = await _mediator.Send(new SaveCustomReportCommand(request), cancellationToken);
+        return summary.ToCreated();
     }
 
     [HttpDelete("{id:guid}")]

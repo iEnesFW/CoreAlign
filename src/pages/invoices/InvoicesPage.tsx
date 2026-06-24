@@ -7,6 +7,7 @@ import {
   Coins,
   Download,
   FileText,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
@@ -31,6 +32,7 @@ import {
   useMarkInvoicePaid,
 } from '@/features/invoices/hooks/useInvoiceQueries';
 import { PaymentCreateModal } from '@/features/payments/ui/PaymentCreateModal';
+import { CreateStandaloneInvoiceModal } from './components/CreateStandaloneInvoiceModal';
 import type { InvoiceStatus, InvoiceSummary } from '@/features/invoices/model/invoice.types';
 
 const PAGE_SIZE = 10;
@@ -88,6 +90,7 @@ export const InvoicesPage = () => {
   const [viewingId, setViewingId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [paymentForInvoiceId, setPaymentForInvoiceId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const params = useMemo(
     () => ({ page, pageSize, search: debouncedSearch.trim() || undefined }),
@@ -261,19 +264,32 @@ export const InvoicesPage = () => {
         ]}
         tone="sky"
         actions={
-          <button
-            type="button"
-            onClick={() => exportInvoicesCsv(filteredInvoices)}
-            disabled={filteredInvoices.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            <Download size={13} />
-            {t('common.exportCsv', { defaultValue: 'Export CSV' })}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => exportInvoicesCsv(filteredInvoices)}
+              disabled={filteredInvoices.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Download size={13} />
+              {t('common.exportCsv', { defaultValue: 'Export CSV' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-primary-500/20 transition hover:shadow-lg hover:shadow-primary-500/30 hover:-translate-y-px"
+            >
+              <Plus size={13} />
+              {t('invoices.newInvoice')}
+            </button>
+          </>
         }
       />
 
-      <CollapsibleSection storageKey="invoices.stats" label="Özet kartları">
+      <CollapsibleSection
+        storageKey="invoices.stats"
+        label={t('Common.SummaryCards', { defaultValue: 'Özet kartları' })}
+      >
         <StatStrip items={statItems} />
       </CollapsibleSection>
 
@@ -404,6 +420,15 @@ export const InvoicesPage = () => {
           onClose={() => setPaymentForInvoiceId(null)}
         />
       )}
+
+      <CreateStandaloneInvoiceModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={(id) => {
+          setViewingId(id);
+          setPanelOpen(true);
+        }}
+      />
     </div>
   );
 };

@@ -3,15 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Bell, LogOut, ShieldCheck, UserCog } from 'lucide-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/shared/ui/Button';
 import { Card, CardBody, CardHeader } from '@/shared/ui/Card';
 import { Input } from '@/shared/ui/Input';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Spinner } from '@/shared/ui/Spinner';
-import { apiClient } from '@/shared/api/apiClient';
 import { useAuthStore } from '@/features/auth/authStore';
-import { useDealerProfile } from '@/features/portal/hooks';
+import {
+  useChangeDealerPassword,
+  useDealerProfile,
+  useUpdateDealerProfile,
+} from '@/features/portal/hooks';
 
 type Tab = 'profile' | 'security' | 'notifications';
 
@@ -90,17 +92,9 @@ const TabButton = ({
   </button>
 );
 
-interface UpdateProfileRequest {
-  firstName?: string | null;
-  lastName?: string | null;
-  phoneNumber?: string | null;
-  avatarUrl?: string | null;
-}
-
 const ProfileSection = ({ onLogout }: { onLogout: () => void }) => {
   const { t } = useTranslation();
   const profile = useDealerProfile();
-  const queryClient = useQueryClient();
 
   if (profile.isLoading || !profile.data) {
     return (
@@ -114,39 +108,35 @@ const ProfileSection = ({ onLogout }: { onLogout: () => void }) => {
     );
   }
 
-  return <ProfileForm profile={profile.data} onLogout={onLogout} queryClient={queryClient} t={t} />;
+  return <ProfileForm profile={profile.data} onLogout={onLogout} t={t} />;
 };
 
 interface ProfileFormProps {
   profile: NonNullable<ReturnType<typeof useDealerProfile>['data']>;
   onLogout: () => void;
-  queryClient: ReturnType<typeof useQueryClient>;
   t: ReturnType<typeof useTranslation>['t'];
 }
 
-const ProfileForm = ({ profile, onLogout, queryClient, t }: ProfileFormProps) => {
+const ProfileForm = ({ profile, onLogout, t }: ProfileFormProps) => {
   const [firstName, setFirstName] = useState(profile.firstName ?? '');
   const [lastName, setLastName] = useState(profile.lastName ?? '');
   const [phone, setPhone] = useState(profile.phoneNumber ?? '');
 
-  const update = useMutation({
-    mutationFn: async (input: UpdateProfileRequest) => {
-      await apiClient.put('/auth/profile', input);
-    },
-    onSuccess: () => {
-      toast.success(t('b2b.profile.savedToast'));
-      queryClient.invalidateQueries({ queryKey: ['dealer', 'profile'] });
-    },
-    onError: () => toast.error(t('b2b.common.errorGeneric')),
-  });
+  const update = useUpdateDealerProfile();
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
-    update.mutate({
-      firstName: firstName.trim() || null,
-      lastName: lastName.trim() || null,
-      phoneNumber: phone.trim() || null,
-    });
+    update.mutate(
+      {
+        firstName: firstName.trim() || null,
+        lastName: lastName.trim() || null,
+        phoneNumber: phone.trim() || null,
+      },
+      {
+        onSuccess: () => toast.success(t('b2b.profile.savedToast')),
+        onError: () => toast.error(t('b2b.common.errorGeneric')),
+      },
+    );
   };
 
   const fullName =
@@ -195,29 +185,13 @@ const ProfileForm = ({ profile, onLogout, queryClient, t }: ProfileFormProps) =>
   );
 };
 
-interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
 const SecuritySection = () => {
   const { t } = useTranslation();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
 
-  const change = useMutation({
-    mutationFn: async (input: ChangePasswordRequest) => {
-      await apiClient.post('/auth/change-password', input);
-    },
-    onSuccess: () => {
-      toast.success(t('b2b.profile.passwordChanged'));
-      setCurrent('');
-      setNext('');
-      setConfirm('');
-    },
-    onError: () => toast.error(t('b2b.profile.passwordChangeFailed')),
-  });
+  const change = useChangeDealerPassword();
 
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -229,7 +203,18 @@ const SecuritySection = () => {
       toast.error(t('b2b.profile.passwordTooShort'));
       return;
     }
-    change.mutate({ currentPassword: current, newPassword: next });
+    change.mutate(
+      { currentPassword: current, newPassword: next },
+      {
+        onSuccess: () => {
+          toast.success(t('b2b.profile.passwordChanged'));
+          setCurrent('');
+          setNext('');
+          setConfirm('');
+        },
+        onError: () => toast.error(t('b2b.profile.passwordChangeFailed')),
+      },
+    );
   };
 
   return (

@@ -1,4 +1,4 @@
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { type Country } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import './PhoneField.css';
 
@@ -8,7 +8,7 @@ interface Props {
   onChange: (value: string) => void;
   error?: string;
   disabled?: boolean;
-  defaultCountry?: string;
+  defaultCountry?: Country;
   placeholder?: string;
 }
 
@@ -27,7 +27,6 @@ export const PhoneField = ({
     {label && <label className={labelCls}>{label}</label>}
     <PhoneInput
       international
-      // @ts-expect-error library types the country as its own union; "TR" is valid at runtime.
       defaultCountry={defaultCountry}
       value={value || undefined}
       onChange={(v) => onChange(v ?? '')}
@@ -35,6 +34,6 @@ export const PhoneField = ({
       placeholder={placeholder}
       className="ca-phone-input"
     />
-    {error && <span className="mt-1 block text-xs text-red-500">{error}</span>}
+    {error && <span className="mt-1 block text-xs text-danger-500">{error}</span>}
   </div>
 );

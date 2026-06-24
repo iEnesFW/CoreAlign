@@ -8,25 +8,36 @@ using MediatR;
 namespace CoreAlign.Application.Accounting.EventHandlers;
 
 /// <summary>
-/// Builds the AR-side journal lines for a sales document. Revenue is booked at
-/// the taxable base; any tevkifat (withholding) the customer does not pay is
-/// debited to a withholding-receivable control account so the entry still
-/// balances: DR(AR + Withholding) == CR(Revenue + VAT). <paramref name="reverse"/>
-/// flips the entry for credit notes and for voids/cancellations.
+/// Builds the AR-side journal lines for a sales document so the entry foots to
+/// the invoice total the customer is billed. Revenue is booked at the taxable
+/// base; recharged freight credits shipping income (602) and any rounding the
+/// invoice applies credits a rounding gain (679) or debits a rounding loss
+/// (689); any tevkifat (withholding) the customer does not pay is debited to a
+/// withholding-receivable control account. The result is
+/// DR(AR + Withholding [+ RoundingLoss]) == CR(Revenue + VAT + Shipping
+/// [+ RoundingGain]) with DR AccountsReceivable == invoice.Total exactly.
+/// <paramref name="reverse"/> flips the entry for credit notes and for
+/// voids/cancellations.
 /// </summary>
 internal static class SalesGLLines
 {
-    public static IReadOnlyList<GLPostingLine> Build(decimal revenue, decimal tax, decimal withholding, bool reverse)
+    public static IReadOnlyList<GLPostingLine> Build(
+        decimal revenue, decimal tax, decimal withholding, decimal shipping, decimal rounding, bool reverse)
     {
         revenue = Math.Max(0m, revenue);
         withholding = Math.Max(0m, withholding);
-        // AR is what the customer actually owes: taxable base + VAT − withholding.
-        var receivable = Math.Max(0m, revenue + tax - withholding);
+        shipping = Math.Max(0m, shipping);
+        var receivable = Math.Max(0m, revenue + tax - withholding + shipping + rounding);
+        var roundingGain = rounding > 0m ? rounding : 0m;
+        var roundingLoss = rounding < 0m ? -rounding : 0m;
         return reverse
             ? new[]
             {
                 new GLPostingLine(GLPostingKey.SalesRevenue, revenue, 0m),
                 new GLPostingLine(GLPostingKey.OutputVat, tax, 0m),
+                new GLPostingLine(GLPostingKey.ShippingIncome, shipping, 0m),
+                new GLPostingLine(GLPostingKey.RoundingGain, roundingGain, 0m),
+                new GLPostingLine(GLPostingKey.RoundingLoss, 0m, roundingLoss),
                 new GLPostingLine(GLPostingKey.AccountsReceivable, 0m, receivable),
                 new GLPostingLine(GLPostingKey.WithholdingReceivable, 0m, withholding),
             }
@@ -34,8 +45,11 @@ internal static class SalesGLLines
             {
                 new GLPostingLine(GLPostingKey.AccountsReceivable, receivable, 0m),
                 new GLPostingLine(GLPostingKey.WithholdingReceivable, withholding, 0m),
+                new GLPostingLine(GLPostingKey.RoundingLoss, roundingLoss, 0m),
                 new GLPostingLine(GLPostingKey.SalesRevenue, 0m, revenue),
                 new GLPostingLine(GLPostingKey.OutputVat, 0m, tax),
+                new GLPostingLine(GLPostingKey.ShippingIncome, 0m, shipping),
+                new GLPostingLine(GLPostingKey.RoundingGain, 0m, roundingGain),
             };
     }
 }
@@ -64,7 +78,7 @@ public class InvoiceIssuedGLHandler : INotificationHandler<InvoiceIssuedEvent>
             n.OccurredAtUtc.Date,
             JournalEntryType.Mahsup,
             reverse ? $"İade faturası {n.InvoiceNumber}" : $"Satış faturası {n.InvoiceNumber}",
-            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, invoice.ShippingCost, invoice.RoundingAdjustment, reverse),
             invoice.Currency, invoice.ExchangeRate), cancellationToken);
     }
 }
@@ -95,7 +109,7 @@ public class InvoiceVoidedGLHandler : INotificationHandler<InvoiceVoidedEvent>
             n.OccurredAtUtc.Date,
             JournalEntryType.Mahsup,
             $"Fatura iptali {n.InvoiceNumber}",
-            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, invoice.ShippingCost, invoice.RoundingAdjustment, reverse),
             invoice.Currency, invoice.ExchangeRate), cancellationToken);
     }
 }
@@ -126,7 +140,7 @@ public class InvoiceCancelledGLHandler : INotificationHandler<InvoiceCancelledEv
             n.OccurredAtUtc.Date,
             JournalEntryType.Mahsup,
             $"Fatura iptali {n.InvoiceNumber}",
-            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, reverse),
+            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, invoice.ShippingCost, invoice.RoundingAdjustment, reverse),
             invoice.Currency, invoice.ExchangeRate), cancellationToken);
     }
 }

@@ -34,7 +34,7 @@ export const PhotoCapture = ({ photoFileIds, onPhotoSelected, disabled }: Props)
           type="button"
           disabled={disabled}
           onClick={() => cameraInputRef.current?.click()}
-          className="flex flex-1 items-center justify-center gap-2 rounded bg-blue-600 px-4 py-3 text-sm font-medium text-white disabled:opacity-50 sm:flex-initial"
+          className="flex flex-1 items-center justify-center gap-2 rounded bg-primary-600 px-4 py-3 text-sm font-medium text-white disabled:opacity-50 sm:flex-initial"
         >
           <Camera className="size-4" />
           {t('InstallationAcceptance.PhotoCapture.TakePhoto')}

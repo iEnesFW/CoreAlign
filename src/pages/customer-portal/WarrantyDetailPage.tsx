@@ -14,7 +14,7 @@ export const WarrantyDetailPage = () => {
     <div className="space-y-4">
       <Link
         to="/customer-portal/warranties"
-        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
       >
         <ChevronLeft size={16} /> {t('CustomerPortal.Common.Back')}
       </Link>
@@ -22,7 +22,7 @@ export const WarrantyDetailPage = () => {
       {isLoading ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Common.Loading')}</div>
       ) : isError || !warranty ? (
-        <div className="text-sm text-red-600">{t('CustomerPortal.Common.LoadError')}</div>
+        <div className="text-sm text-danger-600">{t('CustomerPortal.Common.LoadError')}</div>
       ) : (
         <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 space-y-3">
           <div className="flex items-start justify-between gap-3">

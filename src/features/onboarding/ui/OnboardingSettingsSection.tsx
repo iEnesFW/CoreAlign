@@ -20,8 +20,8 @@ const STATUS_KEY: Record<TourStatus, string> = {
 
 const STATUS_TONE: Record<TourStatus, string> = {
   pending: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  completed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  skipped: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  completed: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300',
+  skipped: 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300',
 };
 
 export const OnboardingSettingsSection = () => {
@@ -80,7 +80,7 @@ export const OnboardingSettingsSection = () => {
               <button
                 type="button"
                 onClick={() => handleResetOne(tourKey)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-[11px] font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+                className="inline-flex items-center gap-1.5 rounded-md border border-primary-300 bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-primary-500/10 dark:text-primary-300"
               >
                 {t('Onboarding.Settings.ResetOne')}
               </button>

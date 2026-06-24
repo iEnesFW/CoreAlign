@@ -71,7 +71,7 @@ const releaseLock = (tabId: string): void => {
     try {
       window.localStorage.removeItem(FLUSH_LOCK_KEY);
     } catch {
-      /* swallow */
+      void 0;
     }
   }
 };
@@ -200,7 +200,7 @@ export const useOfflineSync = (): OfflineState => {
         try {
           channel.close();
         } catch {
-          /* swallow */
+          void 0;
         }
       }
       channelRef.current = null;

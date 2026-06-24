@@ -110,7 +110,7 @@ export const RetentionPolicyEditor = () => {
                     }
                     className={
                       p.isEnabled
-                        ? 'rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                        ? 'rounded-full bg-success-100 px-2 py-0.5 text-xs font-semibold text-success-700 dark:bg-success-500/20 dark:text-success-300'
                         : 'rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300'
                     }
                   >
@@ -193,7 +193,7 @@ export const RetentionPolicyEditor = () => {
             <button
               type="submit"
               disabled={create.isPending}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
             >
               {create.isPending ? <Save size={14} /> : <Plus size={14} />}
               {t('Privacy.Retention.AddButton')}

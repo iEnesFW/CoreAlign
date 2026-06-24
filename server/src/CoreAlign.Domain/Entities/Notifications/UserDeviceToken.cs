@@ -26,7 +26,7 @@ public sealed class UserDeviceToken : TenantEntity
         if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("Token is required", nameof(token));
         if (string.IsNullOrWhiteSpace(platform)) throw new ArgumentException("Platform is required", nameof(platform));
 
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         TenantId = tenantId;
         UserId = userId;
         Token = token.Trim();

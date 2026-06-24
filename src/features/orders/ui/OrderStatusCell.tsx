@@ -4,8 +4,6 @@ import { ChevronDown, Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import type { OrderStatus } from '../model/order.types';
 
-// Valid quick transitions per status, excluding "createShipment" (which needs
-// the shipment modal in the detail panel). Mirrors the order state machine.
 const QUICK_TRANSITIONS: Record<OrderStatus, string[]> = {
   Draft: ['submit', 'cancel'],
   Submitted: ['approve', 'cancel'],
@@ -58,7 +56,6 @@ export const OrderStatusCell = ({ status, toneClass, busy, onTransition }: Props
     </span>
   );
 
-  // No quick transitions → plain, non-interactive badge.
   if (actions.length === 0) {
     return badge;
   }
@@ -94,7 +91,7 @@ export const OrderStatusCell = ({ status, toneClass, busy, onTransition }: Props
               className={cn(
                 'block w-full px-3 py-1.5 text-left text-xs',
                 action === 'cancel'
-                  ? 'text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10'
+                  ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-300 dark:hover:bg-danger-500/10'
                   : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50',
               )}
             >

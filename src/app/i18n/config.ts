@@ -54,7 +54,14 @@ i18n
 
 registerRtlListener(i18n);
 
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = initialLng;
+}
+
 i18n.on('languageChanged', async (lng) => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = lng;
+  }
   if (i18n.hasResourceBundle(lng, 'translation')) return;
   const bundle = await loadLocale(lng);
   i18n.addResourceBundle(lng, 'translation', bundle, true, true);

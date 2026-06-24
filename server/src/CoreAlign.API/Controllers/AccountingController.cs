@@ -119,10 +119,12 @@ public class AccountingController : ControllerBase
         => (await _mediator.Send(new GetJournalEntryByIdQuery(id), ct)).ToOk();
 
     [HttpPost("journal-entries")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> CreateJournalEntry([FromBody] CreateJournalEntryCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
 
     [HttpPut("journal-entries/{id:guid}/header")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> UpdateJournalEntryHeader(Guid id, [FromBody] UpdateJournalEntryHeaderCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
@@ -130,6 +132,7 @@ public class AccountingController : ControllerBase
     }
 
     [HttpPut("journal-entries/{id:guid}/lines")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> ReplaceJournalEntryLines(Guid id, [FromBody] ReplaceJournalEntryLinesCommand cmd, CancellationToken ct)
     {
         if (id != cmd.Id) return BadRequest(Application.Common.ApiResponse<object>.Failure("Route id mismatch.", 400));
@@ -137,15 +140,18 @@ public class AccountingController : ControllerBase
     }
 
     [HttpPost("journal-entries/{id:guid}/post")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> PostJournalEntry(Guid id, [FromBody] PostJournalEntryCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new PostJournalEntryCommand(id, cmd?.PostedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new PostJournalEntryCommand(id, CurrentUserId), ct)).ToOk();
 
     [HttpPost("journal-entries/{id:guid}/reverse")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> ReverseJournalEntry(Guid id, [FromBody] ReverseJournalEntryCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(
-            new ReverseJournalEntryCommand(id, cmd?.ReversalPostingDate, cmd?.ReversedByUserId), ct)).ToOk();
+            new ReverseJournalEntryCommand(id, cmd?.ReversalPostingDate, CurrentUserId), ct)).ToOk();
 
     [HttpDelete("journal-entries/{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> DeleteJournalEntry(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteJournalEntryCommand(id), ct)).ToOk();
 
@@ -154,17 +160,17 @@ public class AccountingController : ControllerBase
     [HttpPost("fiscal-years/{year:int}/close")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> CloseFiscalYear(int year, [FromBody] CloseFiscalYearCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new CloseFiscalYearCommand(year, cmd?.PostedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new CloseFiscalYearCommand(year, CurrentUserId), ct)).ToOk();
 
     [HttpPost("fiscal-years/{year:int}/open-next")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> OpenNextFiscalYear(int year, [FromBody] OpenFiscalYearCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new OpenFiscalYearCommand(year, cmd?.PostedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new OpenFiscalYearCommand(year, CurrentUserId), ct)).ToOk();
 
     [HttpPost("fiscal-years/{year:int}/reverse-close")]
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> ReverseFiscalYearClose(int year, [FromBody] ReverseFiscalYearCloseCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new ReverseFiscalYearCloseCommand(year, cmd?.ReversedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new ReverseFiscalYearCloseCommand(year, CurrentUserId), ct)).ToOk();
 
     // ---------- Mizan / Trial Balance ----------
 

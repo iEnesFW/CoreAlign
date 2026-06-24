@@ -3,6 +3,7 @@ import { cachedGet } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
 import type {
   CreateStandaloneInvoiceInput,
+  CreditedLineQuantity,
   GenerateInvoiceRequest,
   Invoice,
   InvoiceListParams,
@@ -34,6 +35,11 @@ export const invoicesApi = {
 
   getCreditNotes: (id: string) =>
     cachedGet<ApiResponse<InvoiceSummary[]>>(apiClient, `${BASE}/${id}/credit-notes`),
+
+  getCreditedByLine: (id: string) =>
+    apiClient
+      .get<ApiResponse<CreditedLineQuantity[]>>(`${BASE}/${id}/credited-by-line`)
+      .then((r) => r.data),
 
   createStandalone: (input: CreateStandaloneInvoiceInput) =>
     apiClient.post<ApiResponse<Invoice>>(`${BASE}/standalone`, input).then((r) => r.data),

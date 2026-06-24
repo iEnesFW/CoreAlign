@@ -16,7 +16,7 @@ using BillingPaymentIntentRequest = CoreAlign.Application.Billing.Payments.Payme
 
 namespace CoreAlign.Infrastructure.Providers.Payment.Iyzico;
 
-public sealed class IyzicoPaymentProvider : IPaymentProvider
+public sealed class IyzicoPaymentProvider : IPaymentProvider, IThreeDSecureCompleter
 {
     public const string ProviderKey = "iyzico";
     public const string HttpClientName = "IyzicoPayment";
@@ -174,6 +174,54 @@ public sealed class IyzicoPaymentProvider : IPaymentProvider
             FailureReason: mapped == PaymentIntentStatus.Failed ? status : null,
             RawJson: payload);
         return Task.FromResult(result);
+    }
+
+    public async Task<WebhookProcessingResult> CompleteThreeDSecureAsync(
+        Payment3DSecureCallback callback,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(callback);
+
+        var paymentId = ReadCallbackField(callback.CallbackFields, "paymentId");
+        if (string.IsNullOrWhiteSpace(paymentId))
+        {
+            paymentId = callback.TransactionId;
+        }
+        if (string.IsNullOrWhiteSpace(paymentId))
+        {
+            throw new IyzicoProviderException("3DS_PAYMENT_ID_MISSING", "Iyzico 3DS callback did not contain a paymentId.");
+        }
+
+        var conversationData = ReadCallbackField(callback.CallbackFields, "conversationData");
+        var conversationId = string.IsNullOrWhiteSpace(callback.TransactionId) ? paymentId : callback.TransactionId;
+
+        // Authoritative completion: re-query iyzico with the signed iyzws-pki request.
+        // The browser-redirect callback's self-reported status is never trusted; only the
+        // status returned by iyzico for our authenticated request can capture the payment.
+        var request = new Iyzico3DSecureVerifyRequest(DefaultLocale, conversationId, paymentId, conversationData);
+        var result = await PostAsync<Iyzico3DSecureVerifyRequest, IyzicoChargeResult>(ThreeDSVerifyPath, request, cancellationToken)
+            .ConfigureAwait(false);
+
+        var success = IsSuccess(result.Status);
+        return new WebhookProcessingResult(
+            IntentId: result.PaymentId ?? paymentId,
+            Status: success ? PaymentIntentStatus.Succeeded : PaymentIntentStatus.Failed,
+            Reference: result.PaymentId ?? paymentId,
+            FailureReason: success ? null : (result.ErrorMessage ?? result.ErrorCode ?? result.Status),
+            RawJson: JsonSerializer.Serialize(result, JsonOptions));
+    }
+
+    private static string? ReadCallbackField(IReadOnlyDictionary<string, string> fields, string key)
+    {
+        if (fields is null) return null;
+        foreach (var pair in fields)
+        {
+            if (string.Equals(pair.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                return pair.Value;
+            }
+        }
+        return null;
     }
 
     public Task<CaptureResult> CaptureAsync(CaptureRequest request, CancellationToken cancellationToken)

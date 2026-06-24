@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePriceListsQuery } from '@/features/master-data/hooks/useMasterData';
-import type { PriceList } from '@/features/master-data/model/masterData.types';
+import { Tags } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { usePriceListsQuery } from '@/shared/master-data/hooks/useMasterData';
+import type { PriceList } from '@/shared/master-data/model/masterData.types';
 import { PriceListItemsGrid } from './PriceListItemsGrid';
 
 export const PriceListsPage = () => {
@@ -12,16 +15,15 @@ export const PriceListsPage = () => {
   const selected = lists.find((l) => l.id === selectedId) ?? lists[0];
 
   return (
-    <div className="space-y-4">
-      <header>
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-          {t('Settings.PriceLists.Title')}
-        </h2>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          {t('Settings.PriceLists.Subtitle')}
-        </p>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Tags size={20} />}
+          title={t('Settings.PriceLists.Title')}
+          subtitle={t('Settings.PriceLists.Subtitle')}
+        />
+      }
+    >
       {listsQ.isPending && <p className="text-xs text-slate-400">{t('Common.Loading')}</p>}
 
       {lists.length === 0 && !listsQ.isPending && (
@@ -49,7 +51,7 @@ export const PriceListsPage = () => {
           )}
         </div>
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -65,7 +67,7 @@ const PriceListCard = ({ list, active, onSelect }: CardProps) => (
     onClick={onSelect}
     className={`block w-full rounded-md border px-3 py-2 text-left text-xs transition ${
       active
-        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-500/15 dark:text-indigo-200'
+        ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-500/15 dark:text-primary-200'
         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800'
     }`}
   >

@@ -1,4 +1,4 @@
-using CoreAlign.Application.Common.Storage;
+using CoreAlign.Application.Common.Upload;
 using CoreAlign.Domain.Entities.Catalog;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -10,49 +10,23 @@ public sealed class UploadProductImageHandler : IRequestHandler<UploadProductIma
 {
     private readonly IProductRepository _products;
     private readonly IProductImageRepository _images;
-    private readonly IFileStorage _storage;
+    private readonly IFileUploadService _uploads;
     private readonly IUnitOfWork _uow;
 
     public UploadProductImageHandler(
         IProductRepository products,
         IProductImageRepository images,
-        IFileStorage storage,
+        IFileUploadService uploads,
         IUnitOfWork uow)
     {
         _products = products;
         _images = images;
-        _storage = storage;
+        _uploads = uploads;
         _uow = uow;
     }
 
     public async Task<ProductImageDto> Handle(UploadProductImageCommand request, CancellationToken cancellationToken)
     {
-        if (!ProductImagePolicy.IsAllowedContentType(request.ContentType))
-        {
-            throw new ArgumentException("Only JPG, PNG, or WebP images are allowed.", nameof(request));
-        }
-
-        if (!ProductImagePolicy.IsAllowedExtension(request.FileName))
-        {
-            throw new ArgumentException("File name must end with .jpg, .jpeg, .png, or .webp.", nameof(request));
-        }
-
-        if (!ProductImagePolicy.MatchesContentTypeAndExtension(request.ContentType, request.FileName))
-        {
-            throw new ArgumentException("File extension does not match the declared image type.", nameof(request));
-        }
-
-        if (request.SizeBytes <= 0 || request.SizeBytes > ProductImagePolicy.MaxBytesPerImage)
-        {
-            throw new ArgumentOutOfRangeException(nameof(request),
-                $"Image must be between 1 byte and {ProductImagePolicy.MaxBytesPerImage} bytes.");
-        }
-
-        if (!await ProductImagePolicy.LooksLikeImageAsync(request.Content, cancellationToken))
-        {
-            throw new ArgumentException("File content does not match a supported image format.", nameof(request));
-        }
-
         var product = await _products.GetByIdAsync(request.ProductId, cancellationToken)
             ?? throw new ProductNotFoundException();
 
@@ -62,11 +36,13 @@ public sealed class UploadProductImageHandler : IRequestHandler<UploadProductIma
             throw new ProductImageLimitExceededException(ProductImagePolicy.MaxImagesPerProduct);
         }
 
-        var stored = await _storage.SaveAsync(
-            ProductImagePolicy.StorageScope,
-            request.FileName,
-            request.Content,
-            request.ContentType,
+        var uploaded = await _uploads.UploadAsync(
+            new FileUploadRequest(
+                request.Content,
+                request.FileName,
+                request.ContentType,
+                FileUploadProfiles.ProductImage.Name,
+                ProductImagePolicy.StorageScope),
             cancellationToken);
 
         var nextOrder = existing.Count == 0 ? 0 : existing.Max(i => i.DisplayOrder) + 1;
@@ -84,9 +60,9 @@ public sealed class UploadProductImageHandler : IRequestHandler<UploadProductIma
 
         var image = new ProductImage(
             product.Id,
-            stored.RelativePath,
-            stored.ContentType,
-            stored.SizeBytes,
+            uploaded.RelativePath,
+            uploaded.ContentType,
+            uploaded.SizeBytes,
             request.AltText,
             nextOrder,
             makePrimary);
@@ -98,7 +74,7 @@ public sealed class UploadProductImageHandler : IRequestHandler<UploadProductIma
             image.Id,
             image.ProductId,
             image.StorageKey,
-            _storage.ResolvePublicUrl(image.StorageKey),
+            uploaded.PublicUrl,
             image.ContentType,
             image.SizeBytes,
             image.AltText,

@@ -39,7 +39,7 @@ export const InitiatePaymentPage = () => {
     <div className="space-y-4 max-w-xl">
       <Link
         to="/customer-portal/payments"
-        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
       >
         <ChevronLeft size={16} /> {t('CustomerPortal.Common.Back')}
       </Link>
@@ -63,7 +63,7 @@ export const InitiatePaymentPage = () => {
           />
           <p className="text-xs text-slate-500 mt-1">{t('CustomerPortal.Payment.InvoiceIdHint')}</p>
         </div>
-        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+        {error ? <div className="text-sm text-danger-600">{error}</div> : null}
         <div className="flex items-center justify-end gap-2">
           <Link
             to="/customer-portal/payments"
@@ -74,7 +74,7 @@ export const InitiatePaymentPage = () => {
           <button
             type="submit"
             disabled={initiate.isPending}
-            className="px-3 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="px-3 py-2 rounded-md text-sm bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60"
           >
             {initiate.isPending
               ? t('CustomerPortal.Common.Submitting')

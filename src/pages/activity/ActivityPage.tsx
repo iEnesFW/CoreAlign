@@ -1,23 +1,29 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import { useActivityLogsQuery } from '@/features/activity/hooks/useActivityQueries';
 import type { ActivityLog } from '@/features/activity/model/activity.types';
 
 const PAGE_SIZE = 30;
 
 const methodStyles: Record<string, string> = {
-  POST: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  PUT: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  PATCH: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  DELETE: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  POST: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  PUT: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  PATCH: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  DELETE: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const statusStyles = (status: number): string => {
-  if (status >= 500) return 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300';
-  if (status >= 400) return 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300';
-  if (status >= 300) return 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300';
-  return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300';
+  if (status >= 500)
+    return 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300';
+  if (status >= 400)
+    return 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300';
+  if (status >= 300)
+    return 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300';
+  return 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300';
 };
 
 const formatDateTime = (iso: string, locale: string) => {
@@ -42,15 +48,54 @@ export const ActivityPage = () => {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <div>
-        <h1 className="flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-slate-100">
-          <Activity size={18} className="text-indigo-500" />
-          {t('activity.title')}
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">{t('activity.subtitle')}</p>
-      </div>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Activity size={20} />}
+          title={t('activity.title')}
+          subtitle={t('activity.subtitle')}
+        />
+      }
+      pagination={
+        total > PAGE_SIZE ? (
+          <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+            <div>
+              {t('activity.pagination.summary', {
+                from: (page - 1) * PAGE_SIZE + 1,
+                to: Math.min(page * PAGE_SIZE, total),
+                total,
+                defaultValue: `${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} / ${total}`,
+              })}
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                aria-label={t('activity.pagination.previous')}
+              >
+                <ChevronLeft size={14} />
+              </Button>
+              <span className="px-2">
+                {page} / {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                aria-label={t('activity.pagination.next')}
+              >
+                <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
+        ) : undefined
+      }
+    >
       {query.isPending && logs.length === 0 ? (
         <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           {t('common.loading')}
@@ -83,43 +128,7 @@ export const ActivityPage = () => {
           </div>
         </div>
       )}
-
-      {total > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-          <div>
-            {t('activity.pagination.summary', {
-              from: (page - 1) * PAGE_SIZE + 1,
-              to: Math.min(page * PAGE_SIZE, total),
-              total,
-              defaultValue: `${(page - 1) * PAGE_SIZE + 1}-${Math.min(page * PAGE_SIZE, total)} / ${total}`,
-            })}
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              aria-label={t('activity.pagination.previous')}
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="px-2">
-              {page} / {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="rounded border border-slate-200 p-1.5 text-slate-600 hover:bg-slate-100 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-              aria-label={t('activity.pagination.next')}
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+    </ListPageTemplate>
   );
 };
 

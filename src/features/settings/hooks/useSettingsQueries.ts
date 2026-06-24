@@ -51,11 +51,6 @@ export const useUpsertParameters = () => {
   });
 };
 
-/**
- * Tenant-configured decimal places for displaying amounts and quantities.
- * Display-only: callers must format with this value but never round the stored
- * numeric value, so changing the setting cannot mutate existing order figures.
- */
 export const useDecimalPlaces = (): number => {
   const query = useParametersQuery(NUMBER_FORMAT_CATEGORY);
   const raw = query.data?.data?.find((s) => s.key === DECIMAL_PLACES_KEY)?.value;

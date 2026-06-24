@@ -63,7 +63,7 @@ export const MarketplaceListPage = () => {
           <button
             type="button"
             onClick={() => setSubmitOpen(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-md bg-success-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-success-700"
           >
             <Upload size={14} />
             {t('Marketplace.List.SubmitButton', 'Submit a template')}

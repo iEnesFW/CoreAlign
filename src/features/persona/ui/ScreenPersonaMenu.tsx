@@ -1,8 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, Lightbulb, Settings2, SlidersHorizontal } from 'lucide-react';
-import { usePersonaStore, type UxComplexityMode } from '../model/personaStore';
-import { useScreenOverride, useScreenUxMode } from '../hooks/useScreenUxMode';
+import {
+  usePersonaStore,
+  useScreenOverride,
+  useScreenUxMode,
+  type UxComplexityMode,
+} from '@/shared/lib/persona';
 import { syncPerScreenOverridesDebounced } from '../hooks/usePersonaSync';
 
 interface ScreenPersonaMenuProps {
@@ -76,7 +80,7 @@ export const ScreenPersonaMenu = ({
         title={t(`${i18nNamespace}.TriggerTitle`, {
           defaultValue: 'Per-screen persona mode',
         })}
-        className="inline-flex items-center gap-1.5 rounded-[5px] border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+        className="inline-flex items-center gap-1.5 rounded-[5px] border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
       >
         <TriggerIcon size={14} />
         <span className="hidden sm:inline">{triggerLabel}</span>
@@ -145,6 +149,6 @@ const PersonaMenuItem = ({ active, icon, label, description, onSelect }: Persona
       <span className="block font-medium text-slate-800 dark:text-slate-100">{label}</span>
       <span className="block text-[11px] text-slate-500 dark:text-slate-400">{description}</span>
     </span>
-    {active && <Check size={14} className="mt-0.5 text-indigo-600 dark:text-indigo-400" />}
+    {active && <Check size={14} className="mt-0.5 text-primary-600 dark:text-primary-400" />}
   </button>
 );

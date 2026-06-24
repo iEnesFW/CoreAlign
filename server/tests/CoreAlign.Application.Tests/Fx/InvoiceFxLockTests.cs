@@ -25,6 +25,7 @@ public class InvoiceFxLockTests
     private readonly IEInvoiceSubmissionOutbox _einvoice = Substitute.For<IEInvoiceSubmissionOutbox>();
     private readonly IFxRateResolverDetailed _fxResolver = Substitute.For<IFxRateResolverDetailed>();
     private readonly ITenantContext _tenantContext = Substitute.For<ITenantContext>();
+    private readonly ICustomerLedgerRepository _ledger = Substitute.For<ICustomerLedgerRepository>();
     private readonly CreateStandaloneInvoiceCommandHandler _sut;
 
     public InvoiceFxLockTests()
@@ -39,7 +40,9 @@ public class InvoiceFxLockTests
 
         _sut = new CreateStandaloneInvoiceCommandHandler(
             _customers, _addresses, _paymentTerms, _invoices, _products, _sequences,
-            _periods, _uow, _email, _einvoice, _fxResolver, _tenantContext);
+            _periods, _uow, _email, _einvoice,
+            new CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard(_ledger),
+            _fxResolver, _tenantContext);
     }
 
     [Fact]

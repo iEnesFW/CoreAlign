@@ -182,7 +182,9 @@ public class PaymentApplicationConfiguration : IEntityTypeConfiguration<PaymentA
 
         builder.HasOne(a => a.Invoice).WithMany().HasForeignKey(a => a.InvoiceId).OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => new { a.TenantId, a.PaymentId });
+        builder.HasIndex(a => new { a.TenantId, a.PaymentId, a.InvoiceId })
+            .IsUnique()
+            .HasDatabaseName("ux_payment_applications_tenant_payment_invoice");
         builder.HasIndex(a => new { a.TenantId, a.InvoiceId });
     }
 }

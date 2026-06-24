@@ -47,16 +47,16 @@ export const RequisitionSuggestionsTable = ({ candidates, onSelect }: Props) => 
                 <Td align="right">{formatNumber(c.onOrder, i18n.language)}</Td>
                 <Td align="right">{formatNumber(c.projectedAvailable, i18n.language)}</Td>
                 <Td align="right">{formatNumber(c.reorderPoint, i18n.language)}</Td>
-                <Td align="right" className="font-semibold text-indigo-600 dark:text-indigo-300">
+                <Td align="right" className="font-semibold text-primary-600 dark:text-primary-300">
                   {formatNumber(c.suggestedOrderQuantity, i18n.language)}
                 </Td>
                 <Td align="right">
                   <span
                     className={
                       c.daysUntilStockOut <= 7
-                        ? 'rounded bg-rose-100 px-2 py-0.5 text-xs font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
+                        ? 'rounded bg-danger-100 px-2 py-0.5 text-xs font-semibold text-danger-700 dark:bg-danger-500/20 dark:text-danger-300'
                         : c.daysUntilStockOut <= 30
-                          ? 'rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                          ? 'rounded bg-warning-100 px-2 py-0.5 text-xs font-semibold text-warning-700 dark:bg-warning-500/20 dark:text-warning-300'
                           : 'text-slate-600 dark:text-slate-300'
                     }
                   >

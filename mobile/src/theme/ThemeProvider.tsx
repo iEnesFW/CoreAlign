@@ -1,15 +1,6 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
-
-type ThemeMode = 'light' | 'dark' | 'system';
-
-interface ThemeContextValue {
-  mode: ThemeMode;
-  resolved: 'light' | 'dark';
-  setMode: (mode: ThemeMode) => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | null>(null);
+import { ThemeContext, type ThemeContextValue, type ThemeMode } from './themeContext';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const system = useColorScheme();
@@ -22,12 +13,4 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [mode, system]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
-};
-
-export const useTheme = (): ThemeContextValue => {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error('useTheme must be used inside <ThemeProvider>');
-  }
-  return ctx;
 };

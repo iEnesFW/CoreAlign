@@ -62,23 +62,19 @@ public class RetentionPolicyExecutor : IRetentionPolicyExecutor
 
     private async Task<int> ApplyNotificationRetentionAsync(RetentionPolicy policy, DateTime cutoffUtc, CancellationToken cancellationToken)
     {
-        var rows = await _context.NotificationMessages
-            .Where(n => n.CreatedAtUtc < cutoffUtc)
-            .ToListAsync(cancellationToken);
+        var expired = _context.NotificationMessages.Where(n => n.CreatedAtUtc < cutoffUtc);
+
+        if (policy.ActionOnExpiry == RetentionActionOnExpiry.Delete)
+        {
+            return await expired.ExecuteDeleteAsync(cancellationToken);
+        }
 
         var now = DateTime.UtcNow;
-        foreach (var row in rows)
-        {
-            if (policy.ActionOnExpiry == RetentionActionOnExpiry.Delete)
-            {
-                _context.NotificationMessages.Remove(row);
-            }
-            else
-            {
-                row.MarkDeleted(null, "Privacy.RetentionExpiry", now);
-            }
-        }
-        return rows.Count;
+        return await expired.ExecuteUpdateAsync(s => s
+            .SetProperty(n => n.IsDeleted, true)
+            .SetProperty(n => n.DeletedAtUtc, now)
+            .SetProperty(n => n.DeletedReason, "Privacy.RetentionExpiry")
+            .SetProperty(n => n.UpdatedAtUtc, now), cancellationToken);
     }
 
     private async Task<int> ApplyActivityLogRetentionAsync(DateTime cutoffUtc, CancellationToken cancellationToken)

@@ -50,11 +50,11 @@ export const CapacityLoadView = ({ result, locale, isLoading = false }: Props) =
         <span>{t('Mrp.Workbench.Capacity.Summary', { count: result.workCenters.length })}</span>
         <span className="flex items-center gap-3">
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500 dark:bg-emerald-400" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-success-500 dark:bg-success-400" />
             {t('Mrp.Workbench.Capacity.WithinCapacity')}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-rose-500 dark:bg-rose-400" />
+            <span className="h-2.5 w-2.5 rounded-sm bg-danger-500 dark:bg-danger-400" />
             {t('Mrp.Workbench.Capacity.Overloaded')}
           </span>
         </span>
@@ -69,7 +69,7 @@ export const CapacityLoadView = ({ result, locale, isLoading = false }: Props) =
       {result.unroutedProductionOrderCount > 0 && (
         <div
           data-testid="capacity-unrouted-note"
-          className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-200"
+          className="flex items-center gap-2 rounded-lg border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-800 dark:border-warning-700 dark:bg-warning-500/10 dark:text-warning-200"
         >
           <PackageX className="h-4 w-4 shrink-0" />
           {t('Mrp.Workbench.Capacity.UnroutedNote', {
@@ -100,7 +100,7 @@ const WorkCenterCard = ({
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Factory className="h-4 w-4 text-indigo-500 dark:text-indigo-300" />
+          <Factory className="h-4 w-4 text-primary-500 dark:text-primary-300" />
           <span className="font-mono text-sm font-semibold text-slate-800 dark:text-slate-100">
             {workCenter.code}
           </span>
@@ -114,7 +114,7 @@ const WorkCenterCard = ({
             minutes: formatNumber(workCenter.dailyCapacityMinutes, locale, 0),
           })}
           {overloadedCount > 0 && (
-            <span className="ml-1 rounded bg-rose-100 px-1.5 py-0.5 font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">
+            <span className="ml-1 rounded bg-danger-100 px-1.5 py-0.5 font-semibold text-danger-700 dark:bg-danger-500/20 dark:text-danger-300">
               {t('Mrp.Workbench.Capacity.OverloadedBuckets', { count: overloadedCount })}
             </span>
           )}
@@ -153,10 +153,10 @@ const WorkCenterCard = ({
 const BucketRow = ({ bucket, locale }: { bucket: MrpCapacityBucket; locale: string }) => {
   const { t } = useTranslation();
   const barColor = bucket.isOverloaded
-    ? 'bg-rose-500 dark:bg-rose-400'
-    : 'bg-emerald-500 dark:bg-emerald-400';
+    ? 'bg-danger-500 dark:bg-danger-400'
+    : 'bg-success-500 dark:bg-success-400';
   const loadColor = bucket.isOverloaded
-    ? 'text-rose-600 dark:text-rose-300'
+    ? 'text-danger-600 dark:text-danger-300'
     : 'text-slate-700 dark:text-slate-200';
 
   return (

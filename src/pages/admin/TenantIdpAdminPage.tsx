@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyRound, Plus } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Badge } from '@/shared/ui/Badge/Badge';
 import { useSsoIdentityProviders } from '@/features/sso/hooks/useSsoQueries';
 import { TenantIdpEditor } from '@/features/sso/ui/TenantIdpEditor';
 import type { SsoIdentityProviderDto } from '@/features/sso/model/sso.types';
@@ -14,35 +18,31 @@ export const TenantIdpAdminPage = () => {
   const providers = data?.isSuccess ? (data.data ?? []) : [];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-      <header className="flex items-center gap-3">
-        <KeyRound className="text-indigo-600 dark:text-indigo-400" size={20} />
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {t('Sso.Admin.Title', { defaultValue: 'SSO Kimlik Sağlayıcıları' })}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Sso.Admin.Subtitle', {
-              defaultValue: 'SAML 2.0 / OpenID Connect entegrasyonlarını yönetin.',
-            })}
-          </p>
-        </div>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<KeyRound size={20} />}
+          title={t('Sso.Admin.Title', { defaultValue: 'SSO Kimlik Sağlayıcıları' })}
+          subtitle={t('Sso.Admin.Subtitle', {
+            defaultValue: 'SAML 2.0 / OpenID Connect entegrasyonlarını yönetin.',
+          })}
+          actions={
+            <Button
+              size="sm"
+              onClick={() => {
+                setSelected(undefined);
+                setCreating(true);
+              }}
+            >
+              <Plus size={14} />
+              {t('Sso.Admin.New', { defaultValue: 'Yeni Sağlayıcı' })}
+            </Button>
+          }
+        />
+      }
+    >
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="space-y-3 lg:col-span-4">
-          <button
-            type="button"
-            onClick={() => {
-              setSelected(undefined);
-              setCreating(true);
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-          >
-            <Plus size={14} />
-            {t('Sso.Admin.New', { defaultValue: 'Yeni Sağlayıcı' })}
-          </button>
-
           <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
             {isLoading && (
               <div className="p-4 text-sm text-slate-500 dark:text-slate-400">
@@ -64,7 +64,7 @@ export const TenantIdpAdminPage = () => {
                 }}
                 className={
                   selected?.id === idp.id
-                    ? 'flex w-full flex-col items-start gap-1 border-b border-slate-200 bg-indigo-50 p-3 text-left last:border-b-0 dark:border-slate-700 dark:bg-indigo-900/20'
+                    ? 'flex w-full flex-col items-start gap-1 border-b border-slate-200 bg-primary-50 p-3 text-left last:border-b-0 dark:border-slate-700 dark:bg-primary-900/20'
                     : 'flex w-full flex-col items-start gap-1 border-b border-slate-200 p-3 text-left last:border-b-0 hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'
                 }
               >
@@ -72,15 +72,9 @@ export const TenantIdpAdminPage = () => {
                   <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {idp.name}
                   </span>
-                  <span
-                    className={
-                      idp.isActive
-                        ? 'rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                        : 'rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                    }
-                  >
+                  <Badge variant={idp.isActive ? 'success' : 'neutral'} pill>
                     {idp.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  </Badge>
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">{idp.protocol}</span>
               </button>
@@ -106,7 +100,7 @@ export const TenantIdpAdminPage = () => {
           )}
         </section>
       </div>
-    </div>
+    </ListPageTemplate>
   );
 };
 

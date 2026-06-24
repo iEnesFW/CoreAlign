@@ -1,5 +1,5 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { dealerApi } from './api';
+import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+import { dealerApi, type ChangeDealerPasswordInput, type UpdateDealerProfileInput } from './api';
 import type {
   CommissionEntry,
   CommissionStatus,
@@ -212,6 +212,21 @@ export const useDealerProfile = (
     queryFn: () => dealerApi.getProfile(),
     staleTime: 60_000,
     ...options,
+  });
+
+export const useUpdateDealerProfile = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateDealerProfileInput) => dealerApi.updateProfile(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: dealerKeys.profile });
+    },
+  });
+};
+
+export const useChangeDealerPassword = () =>
+  useMutation({
+    mutationFn: (input: ChangeDealerPasswordInput) => dealerApi.changePassword(input),
   });
 
 export const useDealerCustomerCredit = (

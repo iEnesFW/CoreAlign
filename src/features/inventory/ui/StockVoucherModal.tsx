@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, X } from 'lucide-react';
+import { ClipboardList, Plus, Trash2 } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
-import { ProductPicker } from '@/features/orders/ui/ProductPicker';
-import { useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
+import { ProductPicker } from '@/shared/ui/ProductPicker';
+import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
 import {
   useAdjustStock,
   useIssueStock,
@@ -63,8 +68,6 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
   const products = productsQuery.data?.data?.items ?? [];
   const warehouses = warehousesQuery.data?.data ?? [];
 
-  // For count vouchers, current on-hand per product in the chosen warehouse is
-  // needed to derive the adjustment delta (counted − on-hand).
   const onHandQuery = useStockItemsQuery(
     { warehouseId: warehouseId || undefined, page: 1, pageSize: 500 },
     type === 'count' && Boolean(warehouseId),
@@ -175,214 +178,178 @@ export const StockVoucherModal = ({ type, onClose }: Props) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {t(`inventory.voucher.title.${type}`, { defaultValue: TITLES[type] })}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label={t('common.close', { defaultValue: 'Kapat' })}
+    <Modal
+      open={true}
+      title={t(`inventory.voucher.title.${type}`, { defaultValue: TITLES[type] })}
+      icon={<ClipboardList size={18} />}
+      onClose={onClose}
+      size="xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="stock-voucher-form" isLoading={submitting}>
+            {submitting
+              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+              : t('inventory.voucher.post', { defaultValue: 'Fişi İşle' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="stock-voucher-form" onSubmit={submit} className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Select
+            label={
+              isTransfer
+                ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
+                : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })
+            }
+            required
+            aria-label={
+              isTransfer
+                ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
+                : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })
+            }
+            value={warehouseId}
+            onChange={(e) => setWarehouseId(e.target.value)}
           >
-            <X size={16} />
-          </button>
+            <option value="">
+              {t('inventory.voucher.selectWarehouse', { defaultValue: 'Seçiniz…' })}
+            </option>
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} ({w.code})
+              </option>
+            ))}
+          </Select>
+          {isTransfer && (
+            <Select
+              label={t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })}
+              required
+              aria-label={t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })}
+              value={toWarehouseId}
+              onChange={(e) => setToWarehouseId(e.target.value)}
+            >
+              <option value="">
+                {t('inventory.voucher.selectWarehouse', { defaultValue: 'Seçiniz…' })}
+              </option>
+              {warehouses
+                .filter((w) => w.id !== warehouseId)
+                .map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name} ({w.code})
+                  </option>
+                ))}
+            </Select>
+          )}
+          <Input
+            label={t('inventory.voucher.reference', { defaultValue: 'Belge No / Referans' })}
+            type="text"
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            maxLength={64}
+          />
+          <Input
+            label={t('inventory.voucher.notes', { defaultValue: 'Açıklama' })}
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={200}
+          />
         </div>
 
-        <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
-          <div className="space-y-3 overflow-y-auto p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {isTransfer
-                    ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
-                    : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })}{' '}
-                  *
-                </label>
-                <select
-                  aria-label={
-                    isTransfer
-                      ? t('inventory.voucher.fromWarehouse', { defaultValue: 'Kaynak depo' })
-                      : t('inventory.voucher.warehouse', { defaultValue: 'Depo' })
-                  }
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
-                  className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                >
-                  <option value="">
-                    {t('inventory.voucher.selectWarehouse', { defaultValue: 'Seçiniz…' })}
-                  </option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name} ({w.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {isTransfer && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })} *
-                  </label>
-                  <select
-                    aria-label={t('inventory.voucher.toWarehouse', { defaultValue: 'Hedef depo' })}
-                    value={toWarehouseId}
-                    onChange={(e) => setToWarehouseId(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                  >
-                    <option value="">
-                      {t('inventory.voucher.selectWarehouse', { defaultValue: 'Seçiniz…' })}
-                    </option>
-                    {warehouses
-                      .filter((w) => w.id !== warehouseId)
-                      .map((w) => (
-                        <option key={w.id} value={w.id}>
-                          {w.name} ({w.code})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('inventory.voucher.reference', { defaultValue: 'Belge No / Referans' })}
-                </label>
-                <input
-                  type="text"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  maxLength={64}
-                  className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('inventory.voucher.notes', { defaultValue: 'Açıklama' })}
-                </label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  maxLength={200}
-                  className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left">
-                      {t('inventory.voucher.product', { defaultValue: 'Ürün' })}
-                    </th>
-                    <th className="w-28 px-2 py-1.5 text-right">
-                      {type === 'count'
-                        ? t('inventory.voucher.counted', { defaultValue: 'Sayılan' })
-                        : t('inventory.voucher.quantity', { defaultValue: 'Miktar' })}
-                    </th>
+        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              <tr>
+                <th className="px-2 py-1.5 text-left">
+                  {t('inventory.voucher.product', { defaultValue: 'Ürün' })}
+                </th>
+                <th className="w-28 px-2 py-1.5 text-right">
+                  {type === 'count'
+                    ? t('inventory.voucher.counted', { defaultValue: 'Sayılan' })
+                    : t('inventory.voucher.quantity', { defaultValue: 'Miktar' })}
+                </th>
+                {type === 'receive' && (
+                  <th className="w-28 px-2 py-1.5 text-right">
+                    {t('inventory.voucher.unitCost', { defaultValue: 'Birim Maliyet' })}
+                  </th>
+                )}
+                {type === 'count' && (
+                  <th className="w-24 px-2 py-1.5 text-right">
+                    {t('inventory.voucher.onHand', { defaultValue: 'Mevcut' })}
+                  </th>
+                )}
+                <th className="w-8 px-2 py-1.5"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((l) => {
+                const onHand = onHandByProduct.get(l.productId) ?? 0;
+                return (
+                  <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
+                    <td className="px-2 py-1.5">
+                      <ProductPicker
+                        products={products}
+                        value={l.productId}
+                        onSelect={(productId) => updateLine(l.key, { productId })}
+                      />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input
+                        type="number"
+                        min={0}
+                        step="any"
+                        value={l.quantity}
+                        onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
+                        className={`${fieldBaseClasses(false)} text-right`}
+                      />
+                    </td>
                     {type === 'receive' && (
-                      <th className="w-28 px-2 py-1.5 text-right">
-                        {t('inventory.voucher.unitCost', { defaultValue: 'Birim Maliyet' })}
-                      </th>
+                      <td className="px-2 py-1.5">
+                        <input
+                          type="number"
+                          min={0}
+                          step="any"
+                          value={l.unitCost}
+                          onChange={(e) => updateLine(l.key, { unitCost: e.target.value })}
+                          className={`${fieldBaseClasses(false)} text-right`}
+                        />
+                      </td>
                     )}
                     {type === 'count' && (
-                      <th className="w-24 px-2 py-1.5 text-right">
-                        {t('inventory.voucher.onHand', { defaultValue: 'Mevcut' })}
-                      </th>
+                      <td className="px-2 py-1.5 text-right font-mono text-xs text-slate-500 dark:text-slate-400">
+                        {l.productId ? onHand : '—'}
+                      </td>
                     )}
-                    <th className="w-8 px-2 py-1.5"></th>
+                    <td className="px-2 py-1.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => removeLine(l.key)}
+                        disabled={lines.length === 1}
+                        className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-30 dark:hover:bg-danger-500/10"
+                        aria-label={t('common.delete', { defaultValue: 'Sil' })}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {lines.map((l) => {
-                    const onHand = onHandByProduct.get(l.productId) ?? 0;
-                    return (
-                      <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
-                        <td className="px-2 py-1.5">
-                          <ProductPicker
-                            products={products}
-                            value={l.productId}
-                            onSelect={(productId) => updateLine(l.key, { productId })}
-                          />
-                        </td>
-                        <td className="px-2 py-1.5">
-                          <input
-                            type="number"
-                            min={0}
-                            step="any"
-                            value={l.quantity}
-                            onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
-                            className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                          />
-                        </td>
-                        {type === 'receive' && (
-                          <td className="px-2 py-1.5">
-                            <input
-                              type="number"
-                              min={0}
-                              step="any"
-                              value={l.unitCost}
-                              onChange={(e) => updateLine(l.key, { unitCost: e.target.value })}
-                              className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                            />
-                          </td>
-                        )}
-                        {type === 'count' && (
-                          <td className="px-2 py-1.5 text-right font-mono text-xs text-slate-500 dark:text-slate-400">
-                            {l.productId ? onHand : '—'}
-                          </td>
-                        )}
-                        <td className="px-2 py-1.5 text-center">
-                          <button
-                            type="button"
-                            onClick={() => removeLine(l.key)}
-                            disabled={lines.length === 1}
-                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 dark:hover:bg-rose-500/10"
-                            aria-label={t('common.delete', { defaultValue: 'Sil' })}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-            <button
-              type="button"
-              onClick={addLine}
-              className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <Plus size={12} />
-              {t('inventory.voucher.addLine', { defaultValue: 'Satır ekle' })}
-            </button>
-          </div>
-
-          <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {t('common.cancel', { defaultValue: 'İptal' })}
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {submitting
-                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-                : t('inventory.voucher.post', { defaultValue: 'Fişi İşle' })}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <button
+          type="button"
+          onClick={addLine}
+          className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          <Plus size={12} />
+          {t('inventory.voucher.addLine', { defaultValue: 'Satır ekle' })}
+        </button>
+      </form>
+    </Modal>
   );
 };

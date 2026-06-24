@@ -1,0 +1,45 @@
+# Notifications (CoreAlign UI)
+
+"Notifications" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Notifications" area (English / Türkçe):
+
+- All statuses / Tüm durumlar
+- No new notifications / Yeni bildirim yok
+- Unread notifications / Okunmamış bildirimler
+- Installation / Montaj
+- MRP
+- Payment / Ödeme
+- Service ticket / Servis kaydı
+- Warranty / Garanti
+- Email / E-posta
+- In-app / Uygulama içi
+- Push
+- SMS
+- WhatsApp
+- Mark as read / Okundu olarak işaretle
+- Category / Channel / Kategori / Kanal
+- Notification preferences / Bildirim tercihleri
+- See all / Tümünü gör
+- Choose which categories you receive through which channel. / Hangi kategorileri hangi kanaldan alacağınızı seçin.
+- Notification settings / Bildirim ayarları
+- Bounced / Geri döndü
+- Delivered / Teslim edildi
+- Failed / Başarısız
+- Pending / Beklemede
+- Queued / Kuyrukta
+- Read / Okundu
+- Sending / Gönderiliyor
+- Sent / Gönderildi
+- Category / Kategori
+- Channel / Kanal
+- Created / Oluşturulma
+- Status / Durum
+- Subject / Konu
+- Installation accepted / Montaj kabul edildi
+- New MRP suggestions / Yeni MRP önerileri
+- Payment failed / Ödeme başarısız oldu
+- Payment received / Ödeme alındı
+- Your ticket has been resolved / Servis kaydınız çözüldü
+- Your warranty is active / Garantiniz aktif
+- Your warranty is expiring soon / Garantinizin süresi yakında doluyor
+- Notifications / Bildirimler
+- Unread only / Yalnızca okunmamış

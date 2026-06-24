@@ -10,10 +10,12 @@ public record OutboxMessageDto(
     string Type,
     OutboxStatus Status,
     int Attempts,
+    int MaxAttempts,
     string? Result,
     string? LastError,
     DateTime CreatedAtUtc,
-    DateTime? ProcessedAtUtc);
+    DateTime? ProcessedAtUtc,
+    DateTime? NextAttemptUtc);
 
 public record ListOutboxMessagesQuery(OutboxStatus? Status = null, int Max = 100)
     : IRequest<IReadOnlyList<OutboxMessageDto>>;
@@ -31,7 +33,7 @@ public class ListOutboxMessagesHandler : IRequestHandler<ListOutboxMessagesQuery
         var max = Math.Clamp(q.Max, 1, 500);
         var rows = await _outbox.ListAsync(q.Status, max, ct);
         return rows.Select(m => new OutboxMessageDto(
-            m.Id, m.Type, m.Status, m.Attempts, m.Result, m.LastError, m.CreatedAtUtc, m.ProcessedAtUtc)).ToList();
+            m.Id, m.Type, m.Status, m.Attempts, m.MaxAttempts, m.Result, m.LastError, m.CreatedAtUtc, m.ProcessedAtUtc, m.NextAttemptUtc)).ToList();
     }
 }
 
@@ -52,7 +54,8 @@ public class ReplayOutboxHandler : IRequestHandler<ReplayOutboxCommand, int>
     {
         var deferred = await _outbox.ListAsync(OutboxStatus.Deferred, 500, ct);
         var failed = await _outbox.ListAsync(OutboxStatus.Failed, 500, ct);
-        var stuck = deferred.Concat(failed).ToList();
+        var deadLettered = await _outbox.ListAsync(OutboxStatus.DeadLetter, 500, ct);
+        var stuck = deferred.Concat(failed).Concat(deadLettered).ToList();
         if (stuck.Count == 0) return 0;
 
         foreach (var message in stuck)
@@ -62,7 +65,7 @@ public class ReplayOutboxHandler : IRequestHandler<ReplayOutboxCommand, int>
         }
         await _uow.SaveChangesAsync(ct);
 
-        await _processor.DrainAsync(ct);
+        await _processor.DrainCurrentTenantAsync(ct);
         return stuck.Count;
     }
 }

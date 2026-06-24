@@ -12,9 +12,9 @@ export const MUTATION_TYPES = Object.freeze({
   TICKET_CREATE: 'ticket.create',
 });
 
-interface InstallationAcceptPayload extends AcceptInstallationRequest {}
-interface InstallationRejectPayload extends RejectInstallationRequest {}
-interface TicketCreatePayload extends CreateTicketRequest {}
+type InstallationAcceptPayload = AcceptInstallationRequest;
+type InstallationRejectPayload = RejectInstallationRequest;
+type TicketCreatePayload = CreateTicketRequest;
 
 let registered = false;
 

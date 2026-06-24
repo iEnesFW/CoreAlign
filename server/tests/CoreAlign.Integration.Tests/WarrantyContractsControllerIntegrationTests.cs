@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Warranty;
 using CoreAlign.Domain.Enums;
@@ -15,7 +16,7 @@ namespace CoreAlign.Integration.Tests;
 public class WarrantyContractsControllerIntegrationTests
 {
     private readonly CoreAlignWebApiFactory _factory;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     public WarrantyContractsControllerIntegrationTests(CoreAlignWebApiFactory factory)
     {
@@ -33,7 +34,7 @@ public class WarrantyContractsControllerIntegrationTests
             WarrantyMonths: 24,
             TermsJson: "{\"coverage\":\"full\"}");
 
-        var response = await client.PostAsJsonAsync("/api/v1/warranty-contracts", cmd);
+        var response = await client.PostAsJsonAsync("/api/v1/warranty-contracts", cmd, JsonOptions);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var body = await response.Content.ReadFromJsonAsync<ApiResponse<WarrantyContractDto>>(JsonOptions);

@@ -1,0 +1,41 @@
+VERIFYING i18n SHAPE KEYS
+
+From earlier grep results:
+
+en.json contains:
+  "Shape": {
+    "Raked": "Raked",
+    "Arched": "Arched",
+    "Rounded": "Rounded"
+  }
+
+tr.json contains:
+  "Shape": {
+    "Raked": "Eğimli",
+    "Arched": "Kemerli",
+    "Rounded": "Yuvarlak köşe"
+  }
+
+All three keys (Raked, Arched, Rounded) exist in BOTH locales. ✓
+
+Usage in code:
+  Glass2DNestingViewer.tsx line 10-14:
+    const SHAPE_KEY: Record<PanelShapeToken, string> = {
+      raked: 'GlassEnclosure.Cutting.Shape.Raked',
+      arched: 'GlassEnclosure.Cutting.Shape.Arched',
+      rounded: 'GlassEnclosure.Cutting.Shape.Rounded',
+    };
+  
+  CuttingReportView.tsx line 14-18:
+    const SHAPE_KEY: Record<PanelShapeToken, string> = {
+      raked: 'GlassEnclosure.Cutting.Shape.Raked',
+      arched: 'GlassEnclosure.Cutting.Shape.Arched',
+      rounded: 'GlassEnclosure.Cutting.Shape.Rounded',
+    };
+
+Both components use t() function to translate:
+  Glass2DNestingViewer.tsx line 206: {t(SHAPE_KEY[token])}
+  CuttingReportView.tsx line 280: {t(SHAPE_KEY[token])}
+
+No hardcoded strings for shape names. ✓
+

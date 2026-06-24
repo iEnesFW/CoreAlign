@@ -100,8 +100,6 @@ export const OrdersPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const focusFromUrl = searchParams.get('focus') ?? searchParams.get('selected');
   const [selectedId, setSelectedId] = useState<string | null>(focusFromUrl);
-  // Deep-links (?selected=) open the full panel directly; in-page row clicks
-  // open the inline card and only escalate to the panel on demand.
   const [panelOpen, setPanelOpen] = useState<boolean>(!!focusFromUrl);
 
   useEffect(() => {
@@ -339,7 +337,7 @@ export const OrdersPage = () => {
             <button
               type="button"
               onClick={handleCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-violet-500/20 transition hover:-translate-y-px hover:shadow-lg hover:shadow-violet-500/30"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-primary-500/20 transition hover:-translate-y-px hover:shadow-lg hover:shadow-primary-500/30"
             >
               <Plus size={13} />
               {t('orders.addNew')}
@@ -348,7 +346,10 @@ export const OrdersPage = () => {
         }
       />
 
-      <CollapsibleSection storageKey="orders.stats" label="Özet kartları">
+      <CollapsibleSection
+        storageKey="orders.stats"
+        label={t('Common.SummaryCards', { defaultValue: 'Özet kartları' })}
+      >
         <StatStrip items={statItems} />
       </CollapsibleSection>
 

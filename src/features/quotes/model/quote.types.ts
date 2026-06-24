@@ -1,4 +1,4 @@
-import type { AddressSnapshot, CustomerSnapshot } from '@/features/orders/model/order.types';
+import type { AddressSnapshot, CustomerSnapshot } from '@/shared/model/documentSnapshot.types';
 
 export type QuoteStatus = 'Draft' | 'Sent' | 'Accepted' | 'Rejected' | 'Expired';
 

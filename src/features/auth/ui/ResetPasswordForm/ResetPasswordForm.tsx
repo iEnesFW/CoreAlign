@@ -25,7 +25,6 @@ export const ResetPasswordForm = () => {
 
   useEffect(() => {
     if (!token) {
-      // Use setTimeout to avoid synchronous setState during render
       const timer = setTimeout(() => {
         setServerError(t('auth.resetPassword.errors.invalidToken'));
       }, 0);

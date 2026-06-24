@@ -50,7 +50,16 @@
     "punchPlaceholder": "Describe defect",
     "addPunch": "Add",
     "notes": "Notes",
-    "notesPlaceholder": "Additional notes"
+    "notesPlaceholder": "Additional notes",
+    "statusPass": "OK",
+    "statusFail": "Fail",
+    "statusNa": "N/A",
+    "photoRequired": "Photo required",
+    "cameraErrorTitle": "Camera",
+    "signatureErrorTitle": "Signature",
+    "photoSynced": "synced",
+    "photoPending": "pending",
+    "resolve": "Resolve"
   },
   "ticket": {
     "listTitle": "My service tickets",
@@ -84,7 +93,13 @@
       "Resolved": "Resolved",
       "Closed": "Closed"
     },
-    "empty": "No tickets assigned"
+    "empty": "No tickets assigned",
+    "priorityLevels": {
+      "Low": "Low",
+      "Normal": "Normal",
+      "High": "High",
+      "Critical": "Critical"
+    }
   },
   "project": {
     "notFound": "Project not found",

@@ -38,11 +38,11 @@ export const FxRateSnapshotLabel = ({
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200"
+      className="inline-flex items-center gap-1 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-200"
       title={`${t('Fx.Snapshot.LockedAt', 'Locked at')}: ${new Date(fxLockedAtUtc).toLocaleString()}`}
     >
       {currencyCode} {formatRate(fxRateSnapshot)} {baseCurrencyCode}
-      <span className="text-indigo-500 dark:text-indigo-300">·</span>
+      <span className="text-primary-500 dark:text-primary-300">·</span>
       {fxSource} {t('Fx.Snapshot.On', 'on')} {formatDate(fxLockedAtUtc)}
     </span>
   );

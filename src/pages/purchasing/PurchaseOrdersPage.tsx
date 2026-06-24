@@ -8,6 +8,7 @@ import {
   Pencil,
   Plus,
   Send,
+  ShoppingCart,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -17,6 +18,10 @@ import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import { DataToolbar } from '@/shared/ui/DataToolbar/DataToolbar';
 import { SegmentedControl } from '@/shared/ui/SegmentedControl/SegmentedControl';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Select } from '@/shared/ui/Select/Select';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import {
   useDeletePurchaseOrder,
@@ -34,12 +39,12 @@ type StatusFilter = 'all' | PurchaseOrderStatus;
 
 const STATUS_TONE: Record<PurchaseOrderStatus, string> = {
   Draft: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  Submitted: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Approved: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  PartiallyReceived: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Received: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  Submitted: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Approved: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  PartiallyReceived: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Received: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
   Closed: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  Cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const STATUS_LABEL_FALLBACK: Record<PurchaseOrderStatus, string> = {
@@ -148,72 +153,93 @@ export const PurchaseOrdersPage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('po.page.title', { defaultValue: 'Satınalma Siparişleri' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('po.page.subtitle', {
-              defaultValue: 'Tedarikçilere sipariş oluştur, onayla ve takip et.',
-            })}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setModal({ mode: 'create' })}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-        >
-          <Plus size={13} />
-          {t('po.page.new', { defaultValue: 'Yeni Sipariş' })}
-        </button>
-      </div>
-
-      <DataToolbar
-        viewMode={
-          <SegmentedControl
-            value={status}
-            onChange={(v) => {
-              setStatus(v);
-              setPage(1);
-            }}
-            ariaLabel={t('po.filter.statusAria', { defaultValue: 'Duruma göre filtrele' })}
-            options={[
-              { value: 'all', label: t('po.filter.all', { defaultValue: 'Tümü' }) },
-              ...STATUSES.map((s) => ({ value: s, label: statusLabel(s) })),
-            ]}
-          />
-        }
-        leading={
-          <select
-            value={vendorId}
-            onChange={(e) => {
-              setVendorId(e.target.value);
-              setPage(1);
-            }}
-            aria-label={t('po.filter.vendor', { defaultValue: 'Tedarikçi' })}
-            className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            <option value="">
-              {t('po.filter.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
-            </option>
-            {vendorOptions.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.code ? `${v.code} · ${v.name}` : v.name}
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<ShoppingCart size={20} />}
+          title={t('po.page.title', { defaultValue: 'Satınalma Siparişleri' })}
+          subtitle={t('po.page.subtitle', {
+            defaultValue: 'Tedarikçilere sipariş oluştur, onayla ve takip et.',
+          })}
+          actions={
+            <Button size="sm" onClick={() => setModal({ mode: 'create' })}>
+              <Plus size={14} />
+              {t('po.page.new', { defaultValue: 'Yeni Sipariş' })}
+            </Button>
+          }
+        />
+      }
+      toolbar={
+        <DataToolbar
+          viewMode={
+            <SegmentedControl
+              value={status}
+              onChange={(v) => {
+                setStatus(v);
+                setPage(1);
+              }}
+              ariaLabel={t('po.filter.statusAria', { defaultValue: 'Duruma göre filtrele' })}
+              options={[
+                { value: 'all', label: t('po.filter.all', { defaultValue: 'Tümü' }) },
+                ...STATUSES.map((s) => ({ value: s, label: statusLabel(s) })),
+              ]}
+            />
+          }
+          leading={
+            <Select
+              value={vendorId}
+              onChange={(e) => {
+                setVendorId(e.target.value);
+                setPage(1);
+              }}
+              aria-label={t('po.filter.vendor', { defaultValue: 'Tedarikçi' })}
+              className="w-full sm:w-48"
+            >
+              <option value="">
+                {t('po.filter.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
               </option>
-            ))}
-          </select>
-        }
-        resultCount={{
-          count: total,
-          label: t('po.resultCountLabel', { defaultValue: 'sipariş' }),
-        }}
-        hasActiveFilters={hasActiveFilters}
-        onClearFilters={clearFilters}
-      />
-
-      <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+              {vendorOptions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.code ? `${v.code} · ${v.name}` : v.name}
+                </option>
+              ))}
+            </Select>
+          }
+          resultCount={{
+            count: total,
+            label: t('po.resultCountLabel', { defaultValue: 'sipariş' }),
+          }}
+          hasActiveFilters={hasActiveFilters}
+          onClearFilters={clearFilters}
+        />
+      }
+      pagination={
+        totalPages > 1 ? (
+          <div className="flex items-center justify-end gap-1 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              {t('common.prev', { defaultValue: 'Önceki' })}
+            </Button>
+            <span className="px-2 text-slate-500">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              {t('common.next', { defaultValue: 'Sonraki' })}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
+      <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         {query.isPending ? (
           <div className="px-3 py-8 text-center text-sm text-slate-500">
             {t('common.loading', { defaultValue: 'Yükleniyor…' })}
@@ -279,7 +305,7 @@ export const PurchaseOrdersPage = () => {
                           <button
                             type="button"
                             onClick={() => runAction(o, 'submit')}
-                            className="rounded p-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10"
+                            className="rounded p-1 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10"
                             title={t('po.actions.submit', { defaultValue: 'Gönder' })}
                           >
                             <Send size={13} />
@@ -287,7 +313,7 @@ export const PurchaseOrdersPage = () => {
                           <button
                             type="button"
                             onClick={() => remove(o)}
-                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                            className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                             title={t('common.delete', { defaultValue: 'Sil' })}
                           >
                             <Trash2 size={13} />
@@ -298,7 +324,7 @@ export const PurchaseOrdersPage = () => {
                         <button
                           type="button"
                           onClick={() => runAction(o, 'approve')}
-                          className="rounded p-1 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                          className="rounded p-1 text-success-500 hover:bg-success-50 dark:hover:bg-success-500/10"
                           title={t('po.actions.approve', { defaultValue: 'Onayla' })}
                         >
                           <CheckCircle2 size={13} />
@@ -308,7 +334,7 @@ export const PurchaseOrdersPage = () => {
                         <button
                           type="button"
                           onClick={() => setReceiveOrder(o)}
-                          className="rounded p-1 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                          className="rounded p-1 text-success-500 hover:bg-success-50 dark:hover:bg-success-500/10"
                           title={t('po.actions.receive', { defaultValue: 'Mal Kabul' })}
                         >
                           <PackageCheck size={13} />
@@ -330,7 +356,7 @@ export const PurchaseOrdersPage = () => {
                         <button
                           type="button"
                           onClick={() => runAction(o, 'cancel')}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                          className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                           title={t('po.actions.cancel', { defaultValue: 'İptal' })}
                         >
                           <XCircle size={13} />
@@ -345,30 +371,6 @@ export const PurchaseOrdersPage = () => {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            {t('common.prev', { defaultValue: 'Önceki' })}
-          </button>
-          <span className="px-2 text-slate-500">
-            {page} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            {t('common.next', { defaultValue: 'Sonraki' })}
-          </button>
-        </div>
-      )}
-
       {modal && (
         <PurchaseOrderFormModal
           key={modal.mode === 'edit' ? modal.order.id : 'new'}
@@ -380,7 +382,7 @@ export const PurchaseOrdersPage = () => {
       {receiveOrder && (
         <ReceivePurchaseOrderModal order={receiveOrder} onClose={() => setReceiveOrder(null)} />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 

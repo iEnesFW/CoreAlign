@@ -1,11 +1,3 @@
-/**
- * Centralized locale-aware formatting. Replaces the per-page `Intl.NumberFormat`
- * / `Intl.DateTimeFormat` helpers that were copy-pasted across Vendors,
- * Products, Accounting, etc. Formatters are memoized per (locale, options) so
- * repeated calls in a render loop don't re-instantiate the (expensive) Intl
- * objects.
- */
-
 const numberFormatters = new Map<string, Intl.NumberFormat>();
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 const dateFormatters = new Map<string, Intl.DateTimeFormat>();
@@ -40,7 +32,6 @@ const getCurrencyFormatter = (
         maximumFractionDigits: fractionDigits,
       });
     } catch {
-      // Unknown ISO code → fall back to a plain number; caller appends the code.
       f = new Intl.NumberFormat(locale, {
         minimumFractionDigits: fractionDigits,
         maximumFractionDigits: fractionDigits,
@@ -51,11 +42,9 @@ const getCurrencyFormatter = (
   return f;
 };
 
-/** Format a number with a fixed number of fraction digits (default 2). */
 export const formatNumber = (value: number, locale: string, fractionDigits = 2): string =>
   getNumberFormatter(locale, fractionDigits).format(value);
 
-/** Format a monetary amount in the given ISO currency. Falls back gracefully. */
 export const formatCurrency = (
   value: number,
   locale: string,
@@ -64,11 +53,9 @@ export const formatCurrency = (
 ): string => {
   const formatter = getCurrencyFormatter(locale, currency, fractionDigits);
   const formatted = formatter.format(value);
-  // When the currency style failed we appended nothing, so add the code.
   return formatter.resolvedOptions().style === 'currency' ? formatted : `${formatted} ${currency}`;
 };
 
-/** Medium date (e.g. "20 May 2026"). Accepts ISO string or Date. */
 export const formatDate = (value: string | Date | null | undefined, locale: string): string => {
   if (!value) return '—';
   const key = locale;
@@ -84,7 +71,6 @@ export const formatDate = (value: string | Date | null | undefined, locale: stri
   }
 };
 
-/** Medium date + short time. */
 export const formatDateTime = (value: string | Date | null | undefined, locale: string): string => {
   if (!value) return '—';
   let f = dateTimeFormatters.get(locale);

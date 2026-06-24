@@ -22,6 +22,7 @@ public class EraseCustomerByAdminHandlerTests
     private readonly IUserAnonymizer _anonymizer = Substitute.For<IUserAnonymizer>();
     private readonly IDataSubjectRequestLog _audit = Substitute.For<IDataSubjectRequestLog>();
     private readonly IPrivacyHasher _hasher = Substitute.For<IPrivacyHasher>();
+    private readonly IPrivacyEraseService _eraseService = Substitute.For<IPrivacyEraseService>();
 
     [Fact]
     public async Task Anonymizes_customer_and_cascades_children_and_members()
@@ -51,6 +52,8 @@ public class EraseCustomerByAdminHandlerTests
         customer.IsAnonymized.Should().BeTrue();
 
         await _anonymizer.Received(1).AnonymizeAsync(member, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _eraseService.Received(1).AnonymizeCustomerChildrenAsync(
+            customer.Id, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -131,7 +134,7 @@ public class EraseCustomerByAdminHandlerTests
     }
 
     private EraseCustomerByAdminHandler BuildSut() =>
-        new(_currentUser, _tenant, _users, _customers, _customerUsers, _anonymizer, _audit, _hasher);
+        new(_currentUser, _tenant, _users, _customers, _customerUsers, _anonymizer, _audit, _hasher, _eraseService);
 
     private static Customer BuildCustomer()
     {

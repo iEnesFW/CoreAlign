@@ -40,6 +40,12 @@ export const ProductsPage = lazyNamed(
   'ProductsPage',
 );
 export const OrdersPage = lazyNamed(() => import('@/pages/orders/OrdersPage'), 'OrdersPage');
+export const QuotesPage = lazyNamed(() => import('@/pages/Quotes/QuotesPage'), 'QuotesPage');
+export const ReturnsPage = lazyNamed(() => import('@/pages/returns/ReturnsPage'), 'ReturnsPage');
+export const ReturnDetailPage = lazyNamed(
+  () => import('@/pages/returns/ReturnDetailPage'),
+  'ReturnDetailPage',
+);
 export const InventoryPage = lazyNamed(
   () => import('@/pages/inventory/InventoryPage'),
   'InventoryPage',
@@ -89,10 +95,59 @@ export const IncomeStatementPage = lazyNamed(
   () => import('@/pages/accounting/IncomeStatementPage'),
   'IncomeStatementPage',
 );
+export const ReconciliationPage = lazyNamed(
+  () => import('@/pages/accounting/ReconciliationPage'),
+  'ReconciliationPage',
+);
+export const YearEndClosePage = lazyNamed(
+  () => import('@/pages/accounting/YearEndClosePage'),
+  'YearEndClosePage',
+);
 export const VendorsPage = lazyNamed(() => import('@/pages/vendors/VendorsPage'), 'VendorsPage');
 export const VendorDetailPage = lazyNamed(
   () => import('@/pages/vendors/VendorDetailPage'),
   'VendorDetailPage',
+);
+export const PurchaseOrdersPage = lazyNamed(
+  () => import('@/pages/purchasing/PurchaseOrdersPage'),
+  'PurchaseOrdersPage',
+);
+export const VendorBillsPage = lazyNamed(
+  () => import('@/pages/purchasing/VendorBillsPage'),
+  'VendorBillsPage',
+);
+export const GoodsReceiptsPage = lazyNamed(
+  () => import('@/pages/purchasing/GoodsReceiptsPage'),
+  'GoodsReceiptsPage',
+);
+export const ThreeWayMatchReport = lazyNamed(
+  () => import('@/pages/purchasing/ThreeWayMatchReport'),
+  'ThreeWayMatchReport',
+);
+export const PayablesAgingPage = lazyNamed(
+  () => import('@/pages/purchasing/PayablesAgingPage'),
+  'PayablesAgingPage',
+);
+export const EmployeesPage = lazyNamed(() => import('@/pages/hr/EmployeesPage'), 'EmployeesPage');
+export const EmployeeDetailPage = lazyNamed(
+  () => import('@/pages/hr/EmployeeDetailPage'),
+  'EmployeeDetailPage',
+);
+export const PayrollRunsPage = lazyNamed(
+  () => import('@/pages/hr/PayrollRunsPage'),
+  'PayrollRunsPage',
+);
+export const PayrollRunDetailPage = lazyNamed(
+  () => import('@/pages/hr/PayrollRunDetailPage'),
+  'PayrollRunDetailPage',
+);
+export const PayslipPrintView = lazyNamed(
+  () => import('@/pages/hr/PayslipPrintView'),
+  'PayslipPrintView',
+);
+export const PayrollParametersPage = lazyNamed(
+  () => import('@/pages/hr/PayrollParametersPage'),
+  'PayrollParametersPage',
 );
 export const SettingsPage = lazyNamed(
   () => import('@/pages/settings/SettingsPage'),
@@ -126,6 +181,14 @@ export const GlassProjectDesignerPage = lazyNamed(
 export const ProvidersAdminPage = lazyNamed(
   () => import('@/pages/admin/ProvidersAdminPage'),
   'ProvidersAdminPage',
+);
+export const SmtpSettingsPage = lazyNamed(
+  () => import('@/pages/admin/SmtpSettingsPage'),
+  'SmtpSettingsPage',
+);
+export const ErrorLogsPage = lazyNamed(
+  () => import('@/pages/admin/ErrorLogsPage'),
+  'ErrorLogsPage',
 );
 export const TenantIdpAdminPage = lazyNamed(
   () => import('@/pages/admin/TenantIdpAdminPage'),

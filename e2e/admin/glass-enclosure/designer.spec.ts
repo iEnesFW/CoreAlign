@@ -1,10 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { skipIfNoStack } from '../../fixtures/credentials';
 import { GlassDesignerPage, GlassProjectsPage } from '../../pages';
 
-const openFirstProjectDesigner = async (
-  page: import('@playwright/test').Page,
-): Promise<GlassDesignerPage | null> => {
+const openFirstProjectDesigner = async (page: Page): Promise<GlassDesignerPage | null> => {
   const projects = new GlassProjectsPage(page);
   await projects.goto();
   const hasProject = await projects

@@ -19,10 +19,10 @@ interface Props {
 }
 
 const statusTone: Record<ProductStatus, string> = {
-  Active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  New: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Discontinued: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  EndOfLife: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Active: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  New: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Discontinued: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
+  EndOfLife: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
@@ -70,7 +70,7 @@ export const ProductList = ({
           <button
             type="button"
             onClick={onCreate}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700"
+            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
             {t('products.addNew')}
           </button>
@@ -84,7 +84,7 @@ export const ProductList = ({
           sortValue: (p) => p.name.toLowerCase(),
           cell: (p) => (
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/15 to-teal-500/15 text-emerald-700 ring-1 ring-emerald-200/40 dark:text-emerald-300 dark:ring-emerald-500/30">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-success-500/15 to-teal-500/15 text-success-700 ring-1 ring-success-200/40 dark:text-success-300 dark:ring-success-500/30">
                 <Package size={14} />
               </div>
               <div className="min-w-0">
@@ -134,9 +134,9 @@ export const ProductList = ({
                   className={cn(
                     'font-mono text-xs font-semibold tabular-nums',
                     outOfStock
-                      ? 'text-rose-600 dark:text-rose-400'
+                      ? 'text-danger-600 dark:text-danger-400'
                       : belowReorder
-                        ? 'text-amber-600 dark:text-amber-400'
+                        ? 'text-warning-600 dark:text-warning-400'
                         : 'text-slate-900 dark:text-slate-100',
                   )}
                 >
@@ -148,7 +148,7 @@ export const ProductList = ({
                   </div>
                 )}
                 {belowReorder && (
-                  <div className="mt-0.5 inline-flex items-center gap-0.5 rounded bg-amber-100 px-1 py-px text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                  <div className="mt-0.5 inline-flex items-center gap-0.5 rounded bg-warning-100 px-1 py-px text-[9px] font-semibold uppercase text-warning-700 dark:bg-warning-500/20 dark:text-warning-300">
                     <AlertTriangle size={8} />
                     {outOfStock
                       ? t('products.outOfStock', { defaultValue: 'Out' })

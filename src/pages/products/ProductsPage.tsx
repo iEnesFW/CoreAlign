@@ -30,7 +30,7 @@ import { ProductInlineCard } from '@/features/products/ui/ProductInlineCard';
 import { ProductFormModal } from '@/features/products/ui/ProductFormModal';
 import { ProductList } from '@/features/products/ui/ProductList';
 import { useDeleteProduct, useProductsQuery } from '@/features/products/hooks/useProductQueries';
-import type { Product, ProductStatus } from '@/features/products/model/product.types';
+import type { Product, ProductStatus } from '@/shared/model/product.types';
 
 const PAGE_SIZE = 10;
 
@@ -298,7 +298,7 @@ export const ProductsPage = () => {
             <button
               type="button"
               onClick={handleCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-emerald-500/20 transition hover:-translate-y-px hover:shadow-lg hover:shadow-emerald-500/30"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-success-600 to-teal-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-success-500/20 transition hover:-translate-y-px hover:shadow-lg hover:shadow-success-500/30"
             >
               <Plus size={13} />
               {t('products.addNew')}
@@ -307,7 +307,10 @@ export const ProductsPage = () => {
         }
       />
 
-      <CollapsibleSection storageKey="products.stats" label="Özet kartları">
+      <CollapsibleSection
+        storageKey="products.stats"
+        label={t('Common.SummaryCards', { defaultValue: 'Özet kartları' })}
+      >
         <StatStrip items={statItems} />
       </CollapsibleSection>
 
@@ -402,8 +405,8 @@ export const ProductsPage = () => {
       />
 
       {bulkSelected.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-sm dark:border-indigo-500/30 dark:bg-indigo-500/10">
-          <span className="font-medium text-indigo-700 dark:text-indigo-300">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-200 bg-primary-50/70 px-3 py-2 text-sm dark:border-primary-500/30 dark:bg-primary-500/10">
+          <span className="font-medium text-primary-700 dark:text-primary-300">
             {t('products.bulkSelected', {
               count: bulkSelected.length,
               defaultValue: `${bulkSelected.length} seçili`,
@@ -421,7 +424,7 @@ export const ProductsPage = () => {
             <button
               type="button"
               onClick={handleBulkDelete}
-              className="inline-flex items-center gap-1.5 rounded bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700"
+              className="inline-flex items-center gap-1.5 rounded bg-danger-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-danger-700"
             >
               <Trash2 size={12} />
               {t('common.delete')}

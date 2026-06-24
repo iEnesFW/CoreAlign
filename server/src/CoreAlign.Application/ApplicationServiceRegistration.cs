@@ -36,10 +36,15 @@ public static class ApplicationServiceRegistration
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ConcurrencyTokenBehavior<,>));
+        services.AddScoped<
+            IPipelineBehavior<Invoices.Commands.IssueCreditNoteCommand, Invoices.DTOs.InvoiceDto>,
+            IssueCreditNoteIdempotencyBehavior>();
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(SaveChangesBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(OutboxDrainBehavior<,>));
+
+        services.AddSingleton<IOutboxRetryPolicy, OutboxRetryPolicy>();
 
         services.AddScoped<IPersonaPreferenceService, PersonaPreferenceService>();
         services.AddScoped<IStockAvailabilityService, StockAvailabilityService>();
@@ -77,7 +82,13 @@ public static class ApplicationServiceRegistration
         services.AddScoped<ICuttingOptimizer2D, MaximalRectanglesOptimizer2D>();
 
         services.AddScoped<IGLPostingService, GLPostingService>();
+        services.AddSingleton<CoreAlign.Application.Payroll.Calculation.IPayrollCalculationService,
+            CoreAlign.Application.Payroll.Calculation.PayrollCalculationService>();
         services.AddScoped<IInvoicePaymentSessionWebhookService, InvoicePaymentSessionWebhookService>();
+        services.AddScoped<CoreAlign.Application.CustomerPortal.Credit.ICreditLimitGuard,
+            CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard>();
+        services.AddScoped<CoreAlign.Application.Purchasing.ITolerancePolicyProvider,
+            CoreAlign.Application.Purchasing.TolerancePolicyProvider>();
 
         services.AddSingleton<ISkuTemplateCache, InMemorySkuTemplateCache>();
         services.AddScoped<ISkuStrategy, DefaultSkuStrategy>();
@@ -128,12 +139,25 @@ public static class ApplicationServiceRegistration
         services.AddScoped<CoreAlign.Application.Notifications.Templates.INotificationTemplateRenderer,
             CoreAlign.Application.Notifications.Templates.ScribanNotificationTemplateRenderer>();
         services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Notifications.Outbox.NotificationDispatchOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Notifications.Delivery.NotificationChannelSendOutboxHandler>();
+        services.AddScoped<CoreAlign.Application.Notifications.Delivery.INotificationDeliveryQueue,
+            CoreAlign.Application.Notifications.Delivery.NotificationDeliveryQueue>();
+        services.AddScoped<CoreAlign.Application.Notifications.Delivery.INotificationRateLimiter,
+            CoreAlign.Application.Notifications.Delivery.NotificationRateLimiter>();
+        services.AddScoped<CoreAlign.Application.Documents.Forwarding.IForwardDocumentService,
+            CoreAlign.Application.Documents.Forwarding.ForwardDocumentService>();
         services.AddScoped<CoreAlign.Application.Notifications.Webhooks.INotificationStatusUpdater,
             CoreAlign.Application.Notifications.Webhooks.NotificationStatusUpdater>();
 
         // F4.5 Whitelabel customization (tenant theme + assets + public theme by subdomain)
         services.AddScoped<CoreAlign.Application.Whitelabel.ITenantThemeService,
             CoreAlign.Application.Whitelabel.TenantThemeService>();
+
+        services.AddScoped<CoreAlign.Application.AiHelper.IAiHelperService,
+            CoreAlign.Application.AiHelper.AiHelperService>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Ingestion.IKnowledgeIngestionService,
+            CoreAlign.Application.AiHelper.Ingestion.KnowledgeIngestionService>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Ingestion.AiKbReindexJob>();
 
         return services;
     }

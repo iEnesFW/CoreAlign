@@ -47,7 +47,7 @@ export const ChangeImpactView = ({
 
   return (
     <div className="space-y-3" data-testid="change-impact-view">
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-200">
+      <div className="rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-800 dark:border-warning-700 dark:bg-warning-500/10 dark:text-warning-200">
         {t('Mrp.Workbench.ChangeImpact.Summary', {
           source: sourceLabel ?? result.sourceOrderLineId,
           count: supply.length,

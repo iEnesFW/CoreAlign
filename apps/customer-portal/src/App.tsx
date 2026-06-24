@@ -5,6 +5,7 @@ import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { router } from '@/app/router';
 import i18n from '@/app/i18n';
+import { AiHelperWidget } from '@/widgets/AiHelper/AiHelperWidget';
 
 export const App = () => {
   const queryClient = useMemo(
@@ -35,6 +36,7 @@ export const App = () => {
           closeButton
           toastOptions={{ className: 'text-sm' }}
         />
+        <AiHelperWidget />
       </I18nextProvider>
     </QueryClientProvider>
   );

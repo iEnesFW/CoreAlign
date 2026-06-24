@@ -7,8 +7,6 @@
   border-radius: 0.25rem;
   background: #fff;
   padding: 0.25rem 0.5rem;
-  /* Library CSS variables — control flag size and the gap before the caret so
-     the flag and the dropdown arrow never overlap. */
   --PhoneInputCountryFlag-height: 1em;
   --PhoneInputCountrySelectArrow-marginLeft: 0.5em;
   --PhoneInputCountrySelectArrow-width: 0.35em;
@@ -49,7 +47,6 @@
   color: rgb(15 23 42);
 }
 
-/* Dark mode (class-based) */
 .dark .ca-phone-input {
   border-color: rgb(51 65 85);
   background: rgb(15 23 42);

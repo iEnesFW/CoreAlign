@@ -1,23 +1,12 @@
+import type { UserProfile } from '@/shared/model/user.types';
+
 export type { ApiResponse } from '@/shared/types/api';
+export type { UserProfile };
 
 export interface AuthResponse {
   accessToken: string;
   expiresAt: string;
   user: UserProfile;
-}
-
-export interface UserProfile {
-  id: string;
-  tenantId: string;
-  tenantName: string;
-  tenantSlug: string;
-  username: string;
-  email: string;
-  firstName: string | null;
-  lastName: string | null;
-  avatarUrl: string | null;
-  roles: string[];
-  preferredLocale?: string | null;
 }
 
 export interface LoginRequest {

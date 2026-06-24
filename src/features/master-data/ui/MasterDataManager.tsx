@@ -5,6 +5,9 @@ import { toast } from 'sonner';
 import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
 
 export type FieldValue = string | boolean;
 export type FieldValues = Record<string, FieldValue>;
@@ -111,9 +114,6 @@ export function MasterDataManager<T extends { id: string; isActive: boolean }>({
     }
   };
 
-  const inputClass =
-    'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -121,7 +121,7 @@ export function MasterDataManager<T extends { id: string; isActive: boolean }>({
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
         >
           <Plus size={12} />
           {t('common.new', { defaultValue: 'Yeni' })}
@@ -166,7 +166,7 @@ export function MasterDataManager<T extends { id: string; isActive: boolean }>({
                     <button
                       type="button"
                       onClick={() => onDelete(row)}
-                      className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                      className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                       title={t('common.delete', { defaultValue: 'Sil' })}
                     >
                       <Trash2 size={13} />
@@ -189,67 +189,58 @@ export function MasterDataManager<T extends { id: string; isActive: boolean }>({
         </table>
       </div>
 
-      {editing !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <form
-            onSubmit={submit}
-            className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-900"
-          >
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {editing === 'new'
-                ? `${title} — ${t('common.new', { defaultValue: 'Yeni' })}`
-                : `${title} — ${t('common.edit', { defaultValue: 'Düzenle' })}`}
-            </h3>
-            {fields.map((f) => (
-              <div key={f.name}>
-                {f.type === 'checkbox' ? (
-                  <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                    <input
-                      type="checkbox"
-                      checked={Boolean(values[f.name])}
-                      onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.checked }))}
-                    />
-                    {f.label}
-                  </label>
-                ) : (
-                  <>
-                    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {f.label} {f.required && '*'}
-                    </label>
-                    <input
-                      type={f.type === 'number' ? 'number' : 'text'}
-                      step={f.type === 'number' ? 'any' : undefined}
-                      required={f.required}
-                      value={String(values[f.name] ?? '')}
-                      placeholder={f.placeholder}
-                      onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-                      className={inputClass}
-                    />
-                  </>
-                )}
-              </div>
-            ))}
-            <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      <Modal
+        open={editing !== null}
+        title={
+          editing === 'new'
+            ? `${title} — ${t('common.new', { defaultValue: 'Yeni' })}`
+            : `${title} — ${t('common.edit', { defaultValue: 'Düzenle' })}`
+        }
+        icon={<Plus size={18} />}
+        onClose={() => setEditing(null)}
+        size="md"
+        footer={
+          <>
+            <Button type="button" variant="ghost" onClick={() => setEditing(null)}>
+              {t('common.cancel', { defaultValue: 'İptal' })}
+            </Button>
+            <Button type="submit" form="master-data-form" isLoading={saving}>
+              {saving
+                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+                : t('common.save', { defaultValue: 'Kaydet' })}
+            </Button>
+          </>
+        }
+      >
+        <form id="master-data-form" onSubmit={submit} className="space-y-3">
+          {fields.map((f) =>
+            f.type === 'checkbox' ? (
+              <label
+                key={f.name}
+                className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300"
               >
-                {t('common.cancel', { defaultValue: 'İptal' })}
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving
-                  ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-                  : t('common.save', { defaultValue: 'Kaydet' })}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+                <input
+                  type="checkbox"
+                  checked={Boolean(values[f.name])}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.checked }))}
+                />
+                {f.label}
+              </label>
+            ) : (
+              <Input
+                key={f.name}
+                label={f.label}
+                type={f.type === 'number' ? 'number' : 'text'}
+                step={f.type === 'number' ? 'any' : undefined}
+                required={f.required}
+                value={String(values[f.name] ?? '')}
+                placeholder={f.placeholder}
+                onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+              />
+            ),
+          )}
+        </form>
+      </Modal>
     </section>
   );
 }

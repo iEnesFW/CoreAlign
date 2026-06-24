@@ -106,7 +106,7 @@ export const NewTicketForm: React.FC<NewTicketFormProps> = ({
               className={`flex-1 mr-2 min-h-touch rounded-xl items-center justify-center ${priorityButtonClass(priority, choice.value)}`}
             >
               <Text className="text-sm font-bold text-white">
-                {choice.emoji} {choice.value}
+                {choice.emoji} {t(`ticket.priorityLevels.${choice.value}`)}
               </Text>
             </Pressable>
           ))}

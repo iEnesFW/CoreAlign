@@ -29,8 +29,8 @@ const RESULT_OPTIONS: {
 
 const RESULT_TONE: Record<InstallationChecklistResult, string> = {
   NotEvaluated: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
-  Pass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Fail: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Pass: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Fail: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   NotApplicable: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
 };
 
@@ -99,7 +99,7 @@ export const AcceptanceChecklist = ({ checklistJson, onItemChange, disabled }: P
                             }
                             className={`flex items-center gap-1 rounded border px-3 py-1.5 text-xs ${
                               active
-                                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-500/20 dark:text-blue-200'
+                                ? 'border-primary-500 bg-primary-50 text-primary-700 dark:border-primary-400 dark:bg-primary-500/20 dark:text-primary-200'
                                 : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                             } disabled:opacity-50`}
                           >

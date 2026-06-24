@@ -34,6 +34,18 @@ export interface CreateDealerOrderInput {
   billingAddressId?: string | null;
 }
 
+export interface UpdateDealerProfileInput {
+  firstName?: string | null;
+  lastName?: string | null;
+  phoneNumber?: string | null;
+  avatarUrl?: string | null;
+}
+
+export interface ChangeDealerPasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const dealerApi = {
   getDashboard: async (): Promise<DealerPortalDashboard> => {
     const { data } = await apiClient.get<DealerPortalDashboard>(`${BASE}/dashboard`);
@@ -115,5 +127,11 @@ export const dealerApi = {
   getCustomerCredit: async (customerId: string): Promise<CreditSnapshot> => {
     const { data } = await apiClient.get<CreditSnapshot>(`${BASE}/customers/${customerId}/credit`);
     return data;
+  },
+  updateProfile: async (input: UpdateDealerProfileInput): Promise<void> => {
+    await apiClient.put('/auth/profile', input);
+  },
+  changePassword: async (input: ChangeDealerPasswordInput): Promise<void> => {
+    await apiClient.post('/auth/change-password', input);
   },
 };

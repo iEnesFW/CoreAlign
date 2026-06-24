@@ -1,4 +1,4 @@
-using CoreAlign.Application.Common.Storage;
+using CoreAlign.Application.Common.Upload;
 using CoreAlign.Application.Products.Images;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Entities.Catalog;
@@ -11,7 +11,7 @@ public class UploadProductImageHandlerTests
 {
     private readonly IProductRepository _products = Substitute.For<IProductRepository>();
     private readonly IProductImageRepository _images = Substitute.For<IProductImageRepository>();
-    private readonly IFileStorage _storage = Substitute.For<IFileStorage>();
+    private readonly IFileUploadService _uploads = Substitute.For<IFileUploadService>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
 
     private static readonly byte[] PngHeader =
@@ -21,62 +21,34 @@ public class UploadProductImageHandlerTests
 
     private static MemoryStream NewPngStream() => new(PngHeader, writable: false);
 
+    private void StubUpload() =>
+        _uploads
+            .UploadAsync(Arg.Any<FileUploadRequest>(), Arg.Any<CancellationToken>())
+            .Returns(new UploadedFile("tenant/product-images/x.png", "image/png", PngHeader.Length, "x.png", "https://cdn/x.png"));
+
     [Fact]
-    public async Task Rejects_disallowed_content_type()
+    public async Task Propagates_validation_error_from_upload_service()
     {
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
+        var productId = Guid.NewGuid();
+        var product = new Product("SKU", "Name") { Id = productId };
+        _products.GetByIdAsync(productId, Arg.Any<CancellationToken>()).Returns(product);
+        _images.GetByProductAsync(productId, Arg.Any<CancellationToken>()).Returns(new List<ProductImage>());
+        _uploads
+            .UploadAsync(Arg.Any<FileUploadRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<UploadedFile>(new FileUploadValidationException("bad file")));
+
         using var content = new MemoryStream(new byte[] { 1, 2, 3 });
-        var command = new UploadProductImageCommand(Guid.NewGuid(), "x.gif", "image/gif", 3, content, null, false);
+        var command = new UploadProductImageCommand(productId, "x.gif", "image/gif", 3, content, null, false);
+        var sut = new UploadProductImageHandler(_products, _images, _uploads, _uow);
 
-        var act = () => sut.Handle(command, default);
-        await act.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
-    public async Task Rejects_when_extension_disagrees_with_content_type()
-    {
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
-        using var content = NewPngStream();
-        var command = new UploadProductImageCommand(Guid.NewGuid(), "x.jpg", "image/png", PngHeader.Length, content, null, false);
-
-        var act = () => sut.Handle(command, default);
-        await act.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
-    public async Task Rejects_when_payload_is_not_a_real_image()
-    {
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
-        using var content = new MemoryStream(System.Text.Encoding.ASCII.GetBytes("not-an-image-but-named-png"));
-        var command = new UploadProductImageCommand(Guid.NewGuid(), "x.png", "image/png", content.Length, content, null, false);
-
-        var act = () => sut.Handle(command, default);
-        await act.Should().ThrowAsync<ArgumentException>();
-    }
-
-    [Fact]
-    public async Task Rejects_oversized_image()
-    {
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
-        using var content = NewPngStream();
-        var command = new UploadProductImageCommand(
-            Guid.NewGuid(),
-            "x.png",
-            "image/png",
-            ProductImagePolicy.MaxBytesPerImage + 1,
-            content,
-            null,
-            false);
-
-        var act = () => sut.Handle(command, default);
-        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await Assert.ThrowsAsync<FileUploadValidationException>(() => sut.Handle(command, default));
     }
 
     [Fact]
     public async Task Throws_when_product_not_found()
     {
         _products.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Product?)null);
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
+        var sut = new UploadProductImageHandler(_products, _images, _uploads, _uow);
         using var content = NewPngStream();
         var command = new UploadProductImageCommand(Guid.NewGuid(), "x.png", "image/png", content.Length, content, null, false);
         var act = () => sut.Handle(command, default);
@@ -87,8 +59,7 @@ public class UploadProductImageHandlerTests
     public async Task Throws_when_max_images_reached()
     {
         var productId = Guid.NewGuid();
-        var product = new Product("SKU", "Name");
-        product.Id = productId;
+        var product = new Product("SKU", "Name") { Id = productId };
         _products.GetByIdAsync(productId, Arg.Any<CancellationToken>()).Returns(product);
 
         var existing = Enumerable.Range(0, ProductImagePolicy.MaxImagesPerProduct)
@@ -98,7 +69,7 @@ public class UploadProductImageHandlerTests
 
         using var content = NewPngStream();
         var command = new UploadProductImageCommand(productId, "x.png", "image/png", content.Length, content, null, false);
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
+        var sut = new UploadProductImageHandler(_products, _images, _uploads, _uow);
         var act = () => sut.Handle(command, default);
         await act.Should().ThrowAsync<ProductImageLimitExceededException>();
     }
@@ -107,20 +78,17 @@ public class UploadProductImageHandlerTests
     public async Task First_image_is_marked_primary_even_when_caller_did_not_request_it()
     {
         var productId = Guid.NewGuid();
-        var product = new Product("SKU", "Name");
-        product.Id = productId;
+        var product = new Product("SKU", "Name") { Id = productId };
         _products.GetByIdAsync(productId, Arg.Any<CancellationToken>()).Returns(product);
         _images.GetByProductAsync(productId, Arg.Any<CancellationToken>()).Returns(new List<ProductImage>());
-        _storage.SaveAsync("product-images", "x.png", Arg.Any<Stream>(), "image/png", Arg.Any<CancellationToken>())
-            .Returns(new StoredFile("tenant/product-images/x.png", "image/png", PngHeader.Length, "https://cdn/x.png"));
-        _storage.ResolvePublicUrl("tenant/product-images/x.png").Returns("https://cdn/x.png");
+        StubUpload();
 
         ProductImage? captured = null;
         await _images.AddAsync(Arg.Do<ProductImage>(i => captured = i), Arg.Any<CancellationToken>());
 
         using var content = NewPngStream();
         var command = new UploadProductImageCommand(productId, "x.png", "image/png", content.Length, content, "front", false);
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
+        var sut = new UploadProductImageHandler(_products, _images, _uploads, _uow);
         var dto = await sut.Handle(command, default);
 
         captured.Should().NotBeNull();
@@ -134,18 +102,15 @@ public class UploadProductImageHandlerTests
     public async Task Demotes_previous_primary_when_make_primary_requested()
     {
         var productId = Guid.NewGuid();
-        var product = new Product("SKU", "Name");
-        product.Id = productId;
+        var product = new Product("SKU", "Name") { Id = productId };
         _products.GetByIdAsync(productId, Arg.Any<CancellationToken>()).Returns(product);
         var existingPrimary = new ProductImage(productId, "k0", "image/png", 1, null, 0, true);
         _images.GetByProductAsync(productId, Arg.Any<CancellationToken>()).Returns(new List<ProductImage> { existingPrimary });
-        _storage.SaveAsync("product-images", "x.png", Arg.Any<Stream>(), "image/png", Arg.Any<CancellationToken>())
-            .Returns(new StoredFile("tenant/product-images/x.png", "image/png", PngHeader.Length, "https://cdn/x.png"));
-        _storage.ResolvePublicUrl(Arg.Any<string>()).Returns("https://cdn/x.png");
+        StubUpload();
 
         using var content = NewPngStream();
         var command = new UploadProductImageCommand(productId, "x.png", "image/png", content.Length, content, null, true);
-        var sut = new UploadProductImageHandler(_products, _images, _storage, _uow);
+        var sut = new UploadProductImageHandler(_products, _images, _uploads, _uow);
         var dto = await sut.Handle(command, default);
 
         existingPrimary.IsPrimary.Should().BeFalse();

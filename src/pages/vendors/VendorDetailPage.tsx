@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import {
-  ArrowLeft,
   Building2,
   MapPin,
   Phone,
@@ -16,6 +15,10 @@ import {
 } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { Button } from '@/shared/ui/Button/Button';
+import { Badge, type BadgeVariant } from '@/shared/ui/Badge/Badge';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import {
   useDeleteVendorAddress,
@@ -39,16 +42,16 @@ import type { VendorStatus } from '@/features/vendors/model/vendor.types';
 type Tab = 'overview' | 'addresses' | 'contacts' | 'bank' | 'ledger';
 type ChildModal = 'address' | 'contact' | 'bank' | null;
 
-const STATUS_STYLES: Record<VendorStatus, string> = {
-  Active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Blocked: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Archived: 'bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  PendingApproval: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+const STATUS_VARIANTS: Record<VendorStatus, BadgeVariant> = {
+  Active: 'success',
+  Blocked: 'danger',
+  Archived: 'neutral',
+  PendingApproval: 'warning',
 };
 
 export const VendorDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const confirm = useConfirm();
 
@@ -71,24 +74,24 @@ export const VendorDetailPage = () => {
   const v = vendor.data?.data;
 
   if (vendor.isPending) {
-    return <div className="p-6 text-sm text-slate-500">Yükleniyor…</div>;
+    return <div className="p-6 text-sm text-slate-500">{t('VendorDetail.loading')}</div>;
   }
   if (!v) {
-    return <div className="p-6 text-sm text-slate-500">Tedarikçi bulunamadı.</div>;
+    return <div className="p-6 text-sm text-slate-500">{t('VendorDetail.notFound')}</div>;
   }
 
   const tabs: { id: Tab; label: string; icon: typeof Building2 }[] = [
-    { id: 'overview', label: 'Genel', icon: Building2 },
-    { id: 'addresses', label: 'Adresler', icon: MapPin },
-    { id: 'contacts', label: 'Kontaklar', icon: Phone },
-    { id: 'bank', label: 'Banka Bilgileri', icon: CreditCard },
-    { id: 'ledger', label: 'Cari Hesap', icon: BookOpen },
+    { id: 'overview', label: t('VendorDetail.tabs.overview'), icon: Building2 },
+    { id: 'addresses', label: t('VendorDetail.tabs.addresses'), icon: MapPin },
+    { id: 'contacts', label: t('VendorDetail.tabs.contacts'), icon: Phone },
+    { id: 'bank', label: t('VendorDetail.tabs.bank'), icon: CreditCard },
+    { id: 'ledger', label: t('VendorDetail.tabs.ledger'), icon: BookOpen },
   ];
 
   const applyRating = async (rating: number) => {
     try {
       await setRating.mutateAsync({ id: v.id, rating });
-      toast.success('Performans puanı güncellendi.');
+      toast.success(t('VendorDetail.rating.success'));
     } catch (err) {
       toastApiError(err);
     }
@@ -100,9 +103,9 @@ export const VendorDetailPage = () => {
     label: string,
   ) => {
     const ok = await confirm({
-      title: 'Sil',
-      message: `${label} silinsin mi?`,
-      confirmLabel: 'Sil',
+      title: t('VendorDetail.delete.title'),
+      message: t('VendorDetail.delete.message', { label }),
+      confirmLabel: t('VendorDetail.delete.confirm'),
       tone: 'danger',
     });
     if (!ok) return;
@@ -110,88 +113,78 @@ export const VendorDetailPage = () => {
       if (kind === 'address') await deleteAddress.mutateAsync(childId);
       else if (kind === 'contact') await deleteContact.mutateAsync(childId);
       else await deleteBank.mutateAsync(childId);
-      toast.success('Silindi.');
+      toast.success(t('VendorDetail.delete.success'));
     } catch (err) {
       toastApiError(err);
     }
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div>
-        <Link
-          to="/dashboard/vendors"
-          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-        >
-          <ArrowLeft size={11} />
-          Tedarikçilere dön
-        </Link>
-      </div>
-
-      <div className="flex items-start justify-between rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{v.name}</h1>
-            <span
-              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[v.status]}`}
-            >
-              {v.status}
-            </span>
-          </div>
-          {v.legalName && (
-            <div className="text-sm text-slate-500 dark:text-slate-400">{v.legalName}</div>
-          )}
-          <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-600 dark:text-slate-300">
-            {v.code && (
-              <div>
-                <span className="text-slate-500">Kod:</span>{' '}
-                <span className="font-mono">{v.code}</span>
+    <DetailPageTemplate
+      header={
+        <PageHeader
+          icon={<Building2 size={20} />}
+          title={v.name}
+          subtitle={v.legalName ?? undefined}
+          crumbs={[
+            { label: t('VendorDetail.backToList'), to: '/dashboard/vendors' },
+            { label: v.name },
+          ]}
+          actions={
+            <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
+              <Pencil size={14} />
+              {t('VendorDetail.edit')}
+            </Button>
+          }
+          trailing={
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              <Badge variant={STATUS_VARIANTS[v.status]}>{t(`Vendors.status.${v.status}`)}</Badge>
+              <div className="text-right">
+                <div className="text-xs text-slate-500">{t('VendorDetail.currentBalance')}</div>
+                <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  {formatCurrency(v.currentBalance, locale, v.defaultCurrency)}
+                </div>
+                {v.overdueAmount > 0 && (
+                  <div className="text-xs text-danger-600 dark:text-danger-400">
+                    {t('VendorDetail.overdue')}:{' '}
+                    {formatCurrency(v.overdueAmount, locale, v.defaultCurrency)}
+                  </div>
+                )}
               </div>
-            )}
-            {v.taxNumber && (
-              <div>
-                <span className="text-slate-500">VKN:</span>{' '}
-                <span className="font-mono">{v.taxNumber}</span>
-              </div>
-            )}
-            {v.taxOffice && (
-              <div>
-                <span className="text-slate-500">VD:</span> {v.taxOffice}
-              </div>
-            )}
-            {v.email && (
-              <div>
-                <span className="text-slate-500">E-posta:</span> {v.email}
-              </div>
-            )}
-            {v.phone && (
-              <div>
-                <span className="text-slate-500">Tel:</span> {v.phone}
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <button
-            type="button"
-            onClick={() => setShowEdit(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-          >
-            <Pencil size={12} />
-            Düzenle
-          </button>
-          <div className="text-right">
-            <div className="text-xs text-slate-500">Cari Bakiye</div>
-            <div className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              {formatCurrency(v.currentBalance, locale, v.defaultCurrency)}
             </div>
-            {v.overdueAmount > 0 && (
-              <div className="text-xs text-rose-600 dark:text-rose-400">
-                Vadesi geçen: {formatCurrency(v.overdueAmount, locale, v.defaultCurrency)}
-              </div>
-            )}
+          }
+        />
+      }
+    >
+      <div className="flex flex-wrap gap-3 rounded-xl border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+        {v.code && (
+          <div>
+            <span className="text-slate-500">{t('VendorDetail.fields.code')}:</span>{' '}
+            <span className="font-mono">{v.code}</span>
           </div>
-        </div>
+        )}
+        {v.taxNumber && (
+          <div>
+            <span className="text-slate-500">{t('VendorDetail.fields.taxNumber')}:</span>{' '}
+            <span className="font-mono">{v.taxNumber}</span>
+          </div>
+        )}
+        {v.taxOffice && (
+          <div>
+            <span className="text-slate-500">{t('VendorDetail.fields.taxOffice')}:</span>{' '}
+            {v.taxOffice}
+          </div>
+        )}
+        {v.email && (
+          <div>
+            <span className="text-slate-500">{t('VendorDetail.fields.email')}:</span> {v.email}
+          </div>
+        )}
+        {v.phone && (
+          <div>
+            <span className="text-slate-500">{t('VendorDetail.fields.phone')}:</span> {v.phone}
+          </div>
+        )}
       </div>
 
       <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
@@ -205,7 +198,7 @@ export const VendorDetailPage = () => {
               onClick={() => setTab(t.id)}
               className={`inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition ${
                 active
-                  ? 'border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
+                  ? 'border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-300'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -219,16 +212,20 @@ export const VendorDetailPage = () => {
       <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
         {tab === 'overview' && (
           <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-            <Field label="Tip">{v.type === 'Business' ? 'Şirket' : 'Şahıs'}</Field>
-            <Field label="Para Birimi">{v.defaultCurrency}</Field>
-            <Field label="Ödeme Vadesi">{v.paymentTermsName ?? '—'}</Field>
-            <Field label="Bölge">{v.territory ?? '—'}</Field>
-            <Field label="Sınıflandırma">{v.classification ?? '—'}</Field>
-            <Field label="Web">{v.website ?? '—'}</Field>
-            <Field label="Onay">
-              {v.approvedAtUtc ? formatDate(v.approvedAtUtc, locale) : 'Henüz onaylanmadı'}
+            <Field label={t('VendorDetail.fields.type')}>
+              {v.type === 'Business' ? t('VendorDetail.business') : t('VendorDetail.individual')}
             </Field>
-            <Field label="Performans">
+            <Field label={t('VendorDetail.fields.currency')}>{v.defaultCurrency}</Field>
+            <Field label={t('VendorDetail.fields.paymentTerms')}>{v.paymentTermsName ?? '—'}</Field>
+            <Field label={t('VendorDetail.fields.territory')}>{v.territory ?? '—'}</Field>
+            <Field label={t('VendorDetail.fields.classification')}>{v.classification ?? '—'}</Field>
+            <Field label={t('VendorDetail.fields.website')}>{v.website ?? '—'}</Field>
+            <Field label={t('VendorDetail.fields.approval')}>
+              {v.approvedAtUtc
+                ? formatDate(v.approvedAtUtc, locale)
+                : t('VendorDetail.notApproved')}
+            </Field>
+            <Field label={t('VendorDetail.fields.rating')}>
               <div className="flex items-center gap-0.5">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -236,14 +233,14 @@ export const VendorDetailPage = () => {
                     type="button"
                     onClick={() => applyRating(star)}
                     disabled={setRating.isPending}
-                    aria-label={`${star} yıldız`}
+                    aria-label={t('VendorDetail.star', { count: star })}
                     className="disabled:opacity-50"
                   >
                     <Star
                       size={16}
                       className={
                         (v.rating ?? 0) >= star
-                          ? 'fill-amber-400 text-amber-400'
+                          ? 'fill-warning-400 text-warning-400'
                           : 'text-slate-300 dark:text-slate-600'
                       }
                     />
@@ -252,12 +249,12 @@ export const VendorDetailPage = () => {
               </div>
             </Field>
             {v.blockReason && (
-              <Field label="Bloke Nedeni" full>
-                <span className="text-rose-600 dark:text-rose-400">{v.blockReason}</span>
+              <Field label={t('VendorDetail.fields.blockReason')} full>
+                <span className="text-danger-600 dark:text-danger-400">{v.blockReason}</span>
               </Field>
             )}
             {v.notes && (
-              <Field label="Notlar" full>
+              <Field label={t('VendorDetail.fields.notes')} full>
                 {v.notes}
               </Field>
             )}
@@ -267,15 +264,21 @@ export const VendorDetailPage = () => {
           <SimpleList
             items={addresses.data?.data ?? []}
             isLoading={addresses.isPending}
-            empty="Henüz adres tanımlanmadı."
-            addLabel="Adres ekle"
+            loadingLabel={t('VendorDetail.loading')}
+            empty={t('VendorDetail.addresses.empty')}
+            addLabel={t('VendorDetail.addresses.add')}
+            deleteLabel={t('VendorDetail.delete.title')}
             onAdd={() => setChildModal('address')}
             onDelete={(a) => removeChild('address', a.id, a.label)}
             render={(a) => (
               <div className="space-y-0.5">
                 <div className="font-semibold text-slate-900 dark:text-slate-100">
                   {a.label}{' '}
-                  {a.isPrimary && <span className="text-[10px] text-indigo-600">[Birincil]</span>}
+                  {a.isPrimary && (
+                    <span className="text-[10px] text-primary-600">
+                      [{t('VendorDetail.primary')}]
+                    </span>
+                  )}
                 </div>
                 <div className="text-slate-600 dark:text-slate-300">{a.line1}</div>
                 {a.line2 && <div className="text-slate-500">{a.line2}</div>}
@@ -290,15 +293,21 @@ export const VendorDetailPage = () => {
           <SimpleList
             items={contacts.data?.data ?? []}
             isLoading={contacts.isPending}
-            empty="Henüz kontak tanımlanmadı."
-            addLabel="Kontak ekle"
+            loadingLabel={t('VendorDetail.loading')}
+            empty={t('VendorDetail.contacts.empty')}
+            addLabel={t('VendorDetail.contacts.add')}
+            deleteLabel={t('VendorDetail.delete.title')}
             onAdd={() => setChildModal('contact')}
             onDelete={(c) => removeChild('contact', c.id, c.name)}
             render={(c) => (
               <div className="space-y-0.5">
                 <div className="font-semibold text-slate-900 dark:text-slate-100">
                   {c.name}{' '}
-                  {c.isPrimary && <span className="text-[10px] text-indigo-600">[Birincil]</span>}
+                  {c.isPrimary && (
+                    <span className="text-[10px] text-primary-600">
+                      [{t('VendorDetail.primary')}]
+                    </span>
+                  )}
                 </div>
                 {c.role && <div className="text-slate-500">{c.role}</div>}
                 {c.email && <div className="text-slate-600 dark:text-slate-300">{c.email}</div>}
@@ -311,15 +320,21 @@ export const VendorDetailPage = () => {
           <SimpleList
             items={banks.data?.data ?? []}
             isLoading={banks.isPending}
-            empty="Henüz banka hesabı tanımlanmadı."
-            addLabel="Banka hesabı ekle"
+            loadingLabel={t('VendorDetail.loading')}
+            empty={t('VendorDetail.bank.empty')}
+            addLabel={t('VendorDetail.bank.add')}
+            deleteLabel={t('VendorDetail.delete.title')}
             onAdd={() => setChildModal('bank')}
             onDelete={(b) => removeChild('bank', b.id, b.bankName)}
             render={(b) => (
               <div className="space-y-0.5">
                 <div className="font-semibold text-slate-900 dark:text-slate-100">
                   {b.bankName}{' '}
-                  {b.isPrimary && <span className="text-[10px] text-indigo-600">[Birincil]</span>}
+                  {b.isPrimary && (
+                    <span className="text-[10px] text-primary-600">
+                      [{t('VendorDetail.primary')}]
+                    </span>
+                  )}
                 </div>
                 {b.branchName && <div className="text-slate-500">{b.branchName}</div>}
                 <div className="font-mono text-slate-600 dark:text-slate-300">{b.iban}</div>
@@ -335,25 +350,25 @@ export const VendorDetailPage = () => {
             <table className="w-full text-xs">
               <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
                 <tr>
-                  <th className="px-2 py-1.5 text-left">Tarih</th>
-                  <th className="px-2 py-1.5 text-left">Belge</th>
-                  <th className="px-2 py-1.5 text-left">Açıklama</th>
-                  <th className="px-2 py-1.5 text-right">Borç</th>
-                  <th className="px-2 py-1.5 text-right">Alacak</th>
-                  <th className="px-2 py-1.5 text-right">Bakiye</th>
+                  <th className="px-2 py-1.5 text-left">{t('VendorDetail.ledger.date')}</th>
+                  <th className="px-2 py-1.5 text-left">{t('VendorDetail.ledger.document')}</th>
+                  <th className="px-2 py-1.5 text-left">{t('VendorDetail.ledger.description')}</th>
+                  <th className="px-2 py-1.5 text-right">{t('VendorDetail.ledger.debit')}</th>
+                  <th className="px-2 py-1.5 text-right">{t('VendorDetail.ledger.credit')}</th>
+                  <th className="px-2 py-1.5 text-right">{t('VendorDetail.ledger.balance')}</th>
                 </tr>
               </thead>
               <tbody>
                 {ledger.isPending ? (
                   <tr>
                     <td colSpan={6} className="px-2 py-6 text-center text-slate-500">
-                      Yükleniyor…
+                      {t('VendorDetail.loading')}
                     </td>
                   </tr>
                 ) : (ledger.data?.data?.items ?? []).length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-2 py-6 text-center text-slate-500">
-                      Henüz cari hareket yok.
+                      {t('VendorDetail.ledger.empty')}
                     </td>
                   </tr>
                 ) : (
@@ -392,7 +407,7 @@ export const VendorDetailPage = () => {
       {childModal === 'bank' && (
         <VendorBankAccountModal vendorId={v.id} onClose={() => setChildModal(null)} />
       )}
-    </div>
+    </DetailPageTemplate>
   );
 };
 
@@ -414,16 +429,20 @@ const Field = ({
 const SimpleList = <T extends { id: string }>({
   items,
   isLoading,
+  loadingLabel,
   empty,
   addLabel,
+  deleteLabel,
   onAdd,
   onDelete,
   render,
 }: {
   items: T[];
   isLoading: boolean;
+  loadingLabel: string;
   empty: string;
-  addLabel?: string;
+  addLabel: string;
+  deleteLabel: string;
   onAdd?: () => void;
   onDelete?: (item: T) => void;
   render: (item: T) => React.ReactNode;
@@ -432,18 +451,14 @@ const SimpleList = <T extends { id: string }>({
     <div className="space-y-3">
       {onAdd && (
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onAdd}
-            className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-          >
-            <Plus size={12} />
-            {addLabel ?? 'Ekle'}
-          </button>
+          <Button size="sm" onClick={onAdd}>
+            <Plus size={14} />
+            {addLabel}
+          </Button>
         </div>
       )}
       {isLoading ? (
-        <div className="py-6 text-center text-sm text-slate-500">Yükleniyor…</div>
+        <div className="py-6 text-center text-sm text-slate-500">{loadingLabel}</div>
       ) : items.length === 0 ? (
         <div className="py-6 text-center text-sm text-slate-500">{empty}</div>
       ) : (
@@ -458,8 +473,8 @@ const SimpleList = <T extends { id: string }>({
                 <button
                   type="button"
                   onClick={() => onDelete(item)}
-                  className="absolute right-2 top-2 rounded p-1 text-slate-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-700 group-hover:opacity-100 dark:hover:bg-rose-500/10"
-                  aria-label="Sil"
+                  className="absolute right-2 top-2 rounded p-1 text-slate-400 opacity-0 transition hover:bg-danger-50 hover:text-danger-700 group-hover:opacity-100 dark:hover:bg-danger-500/10"
+                  aria-label={deleteLabel}
                 >
                   <Trash2 size={12} />
                 </button>

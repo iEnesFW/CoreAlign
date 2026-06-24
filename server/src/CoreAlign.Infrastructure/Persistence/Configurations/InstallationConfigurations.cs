@@ -30,7 +30,8 @@ public class InstallationAcceptanceConfiguration : IEntityTypeConfiguration<Inst
 
         builder.HasIndex(a => new { a.TenantId, a.WorkOrderId })
             .HasDatabaseName("ux_installation_acceptances_tenant_workorder")
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("is_deleted = false");
 
         builder.HasIndex(a => new { a.TenantId, a.ProjectId })
             .HasDatabaseName("ix_installation_acceptances_tenant_project");

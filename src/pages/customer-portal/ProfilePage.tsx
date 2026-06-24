@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 
 export const ProfilePage = () => {
   const { t } = useTranslation();

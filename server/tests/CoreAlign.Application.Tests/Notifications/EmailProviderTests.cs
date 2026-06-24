@@ -1,5 +1,7 @@
 using System.Net;
 using CoreAlign.Application.Notifications.Providers;
+using CoreAlign.Application.Providers;
+using CoreAlign.Domain.Interfaces;
 using CoreAlign.Infrastructure.Notifications.Email;
 using CoreAlign.Infrastructure.Options;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,11 +20,20 @@ public class EmailProviderTests
         BodyText: "Hello",
         ReplyTo: null);
 
+    private static TenantAwareSmtpEmailProvider BuildSmtp(SmtpEmailOptions options)
+    {
+        var tenantContext = Substitute.For<ITenantContext>();
+        tenantContext.CurrentTenantId.Returns((Guid?)null);
+        var resolver = Substitute.For<ITenantProviderConfigResolver>();
+        var protector = Substitute.For<IProviderCredentialProtector>();
+        return new TenantAwareSmtpEmailProvider(
+            tenantContext, resolver, protector, Options.Create(options), NullLogger<TenantAwareSmtpEmailProvider>.Instance);
+    }
+
     [Fact]
     public async Task SmtpEmailProvider_returns_failure_when_host_not_configured()
     {
-        var options = Options.Create(new SmtpEmailOptions { Host = string.Empty });
-        var sut = new SmtpEmailProvider(options, NullLogger<SmtpEmailProvider>.Instance);
+        var sut = BuildSmtp(new SmtpEmailOptions { Host = string.Empty });
 
         var result = await sut.SendAsync(SampleMessage(), CancellationToken.None);
 
@@ -33,7 +44,7 @@ public class EmailProviderTests
     [Fact]
     public async Task SmtpEmailProvider_returns_failure_when_host_unreachable()
     {
-        var options = Options.Create(new SmtpEmailOptions
+        var sut = BuildSmtp(new SmtpEmailOptions
         {
             Host = "127.0.0.1",
             Port = 1,
@@ -41,7 +52,6 @@ public class EmailProviderTests
             Username = string.Empty,
             Password = string.Empty
         });
-        var sut = new SmtpEmailProvider(options, NullLogger<SmtpEmailProvider>.Instance);
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var result = await sut.SendAsync(SampleMessage(), cts.Token);
@@ -53,8 +63,7 @@ public class EmailProviderTests
     [Fact]
     public void SmtpEmailProvider_exposes_name_and_capabilities()
     {
-        var options = Options.Create(new SmtpEmailOptions { Host = "smtp.example.com" });
-        var sut = new SmtpEmailProvider(options, NullLogger<SmtpEmailProvider>.Instance);
+        var sut = BuildSmtp(new SmtpEmailOptions { Host = "smtp.example.com" });
 
         sut.Name.Should().Be("smtp");
         sut.DisplayName.Should().Contain("SMTP");

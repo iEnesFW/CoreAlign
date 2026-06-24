@@ -41,7 +41,7 @@ export const writeTourStatus = (
   try {
     window.localStorage.setItem(buildStorageKey(resolvedUserId, tourKey), status);
   } catch {
-    // Storage may be full or disabled; tour gating is non-critical.
+    return;
   }
 };
 
@@ -51,7 +51,7 @@ export const clearTourStatus = (userId: string | null, tourKey: TourKey): void =
   try {
     window.localStorage.removeItem(buildStorageKey(resolvedUserId, tourKey));
   } catch {
-    // ignore
+    return;
   }
 };
 

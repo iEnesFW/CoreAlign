@@ -1,9 +1,8 @@
 using CoreAlign.Application.Notifications;
+using CoreAlign.Application.Notifications.Delivery;
 using CoreAlign.Application.Notifications.Providers;
 using CoreAlign.Application.Notifications.Repositories;
 using CoreAlign.Application.Notifications.Templates;
-using CoreAlign.Application.Providers;
-using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Entities.Notifications;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -19,35 +18,23 @@ public class NotificationDispatcherTests
     private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly ICustomerRepository _customers = Substitute.For<ICustomerRepository>();
     private readonly IUserDeviceTokenRepository _deviceTokens = Substitute.For<IUserDeviceTokenRepository>();
-    private readonly IProviderRegistry<IEmailProvider> _emailRegistry = Substitute.For<IProviderRegistry<IEmailProvider>>();
-    private readonly IProviderRegistry<ISmsProvider> _smsRegistry = Substitute.For<IProviderRegistry<ISmsProvider>>();
-    private readonly IProviderRegistry<IPushNotificationProvider> _pushRegistry = Substitute.For<IProviderRegistry<IPushNotificationProvider>>();
-    private readonly IProviderRegistry<IWhatsAppProvider> _whatsAppRegistry = Substitute.For<IProviderRegistry<IWhatsAppProvider>>();
+    private readonly INotificationDeliveryQueue _deliveryQueue = Substitute.For<INotificationDeliveryQueue>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
-
-    private readonly IEmailProvider _emailProvider = Substitute.For<IEmailProvider>();
-    private readonly ISmsProvider _smsProvider = Substitute.For<ISmsProvider>();
-    private readonly IPushNotificationProvider _pushProvider = Substitute.For<IPushNotificationProvider>();
 
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
 
-    private NotificationDispatcher BuildSut()
-    {
-        return new NotificationDispatcher(
+    private NotificationDispatcher BuildSut() =>
+        new(
             _renderer,
             _messages,
             _preferences,
             _users,
             _customers,
             _deviceTokens,
-            _emailRegistry,
-            _smsRegistry,
-            _pushRegistry,
-            _whatsAppRegistry,
+            _deliveryQueue,
             _unitOfWork,
             NullLogger<NotificationDispatcher>.Instance);
-    }
 
     private NotificationRequest BuildRequest(IReadOnlyList<NotificationChannel>? channels = null) =>
         new(
@@ -60,8 +47,6 @@ public class NotificationDispatcherTests
             Payload: new Dictionary<string, object?>
             {
                 ["warrantyNumber"] = "W-1",
-                ["startDate"] = "2026-01-01",
-                ["endDate"] = "2027-01-01"
             },
             ChannelsOverride: channels,
             RecipientEmailOverride: "user@example.com",
@@ -75,95 +60,71 @@ public class NotificationDispatcherTests
     }
 
     [Fact]
-    public async Task DispatchAsync_renders_and_calls_email_provider_for_email_channel()
+    public async Task DispatchAsync_queues_email_channel_without_calling_provider()
     {
         StubTemplateRender();
-        _emailRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_emailProvider);
-        _emailProvider.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok("provider-msg-1"));
-
         var sut = BuildSut();
-        var request = BuildRequest(new[] { NotificationChannel.Email });
 
-        var results = await sut.DispatchAsync(request);
+        var results = await sut.DispatchAsync(BuildRequest(new[] { NotificationChannel.Email }));
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeTrue();
-        results[0].ProviderMessageId.Should().Be("provider-msg-1");
-        await _emailProvider.Received(1).SendAsync(
-            Arg.Is<EmailMessage>(m => m.To == "user@example.com" && m.Subject == "Subject"),
-            Arg.Any<CancellationToken>());
         await _messages.Received(1).UpsertAsync(
             Arg.Is<NotificationMessage>(m =>
                 m.TenantId == _tenantId &&
                 m.Channel == NotificationChannel.Email &&
-                m.Status == NotificationStatus.Sent &&
+                m.Status == NotificationStatus.Queued &&
                 m.RecipientAddress == "user@example.com"),
             Arg.Any<CancellationToken>());
+        await _deliveryQueue.Received(1).EnqueueChannelSendAsync(
+            Arg.Is<NotificationChannelSendPayload>(p =>
+                p.Channel == NotificationChannel.Email &&
+                p.Address == "user@example.com" &&
+                p.Subject == "Subject"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task DispatchAsync_marks_inapp_sent_inline_without_queue()
+    {
+        StubTemplateRender();
+        var sut = BuildSut();
+
+        var results = await sut.DispatchAsync(BuildRequest(new[] { NotificationChannel.InApp }));
+
+        results.Should().HaveCount(1);
+        results[0].Success.Should().BeTrue();
+        await _messages.Received(1).UpsertAsync(
+            Arg.Is<NotificationMessage>(m => m.Channel == NotificationChannel.InApp && m.Status == NotificationStatus.Sent),
+            Arg.Any<CancellationToken>());
+        await _deliveryQueue.DidNotReceive().EnqueueChannelSendAsync(Arg.Any<NotificationChannelSendPayload>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task DispatchAsync_skips_channel_when_user_opted_out()
     {
         StubTemplateRender();
-        _emailRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_emailProvider);
-        _emailProvider.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok());
-
         var disabledPref = new NotificationPreference(_tenantId, _userId, "Warranty", NotificationChannel.Email, false);
         _preferences.GetAsync(_tenantId, _userId, "Warranty", NotificationChannel.Email, Arg.Any<CancellationToken>())
             .Returns(disabledPref);
 
         var sut = BuildSut();
-        var request = BuildRequest(new[] { NotificationChannel.Email });
 
-        var results = await sut.DispatchAsync(request);
+        var results = await sut.DispatchAsync(BuildRequest(new[] { NotificationChannel.Email }));
 
         results.Should().BeEmpty();
-        await _emailProvider.DidNotReceive().SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
+        await _deliveryQueue.DidNotReceive().EnqueueChannelSendAsync(Arg.Any<NotificationChannelSendPayload>(), Arg.Any<CancellationToken>());
         await _messages.DidNotReceive().UpsertAsync(Arg.Any<NotificationMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DispatchAsync_marks_message_failed_and_increments_retry_when_provider_fails()
+    public async Task DispatchAsync_push_resolves_tokens_and_enqueues_per_token()
     {
         StubTemplateRender();
-        _emailRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_emailProvider);
-        _emailProvider.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Fail("smtp timeout"));
-
-        NotificationMessage? captured = null;
-        await _messages.UpsertAsync(
-            Arg.Do<NotificationMessage>(m => captured = m),
-            Arg.Any<CancellationToken>());
-
-        var sut = BuildSut();
-        var request = BuildRequest(new[] { NotificationChannel.Email });
-
-        var results = await sut.DispatchAsync(request);
-
-        results.Should().HaveCount(1);
-        results[0].Success.Should().BeFalse();
-        results[0].FailureReason.Should().Be("smtp timeout");
-        captured.Should().NotBeNull();
-        captured!.Status.Should().Be(NotificationStatus.Failed);
-        captured.FailureReason.Should().Be("smtp timeout");
-        captured.RetryCount.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task DispatchAsync_push_channel_resolves_device_tokens_from_repository_when_no_override()
-    {
-        StubTemplateRender();
-        _pushRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_pushProvider);
-
         var tokenA = new UserDeviceToken(_tenantId, _userId, "token-a", "ios", "iPhone", "17.0", DateTime.UtcNow);
         var tokenB = new UserDeviceToken(_tenantId, _userId, "token-b", "android", "Pixel", "14", DateTime.UtcNow);
         _deviceTokens.ListActiveByUserAsync(_tenantId, _userId, Arg.Any<CancellationToken>())
             .Returns(new List<UserDeviceToken> { tokenA, tokenB });
-
-        _pushProvider.SendAsync(Arg.Any<PushMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok("push-ok"));
 
         var sut = BuildSut();
         var request = new NotificationRequest(
@@ -180,21 +141,18 @@ public class NotificationDispatcherTests
 
         results.Should().HaveCount(2);
         results.Should().OnlyContain(r => r.Success);
-        await _pushProvider.Received(1).SendAsync(
-            Arg.Is<PushMessage>(m => m.DeviceToken == "token-a"),
+        await _deliveryQueue.Received(1).EnqueueChannelSendAsync(
+            Arg.Is<NotificationChannelSendPayload>(p => p.Channel == NotificationChannel.Push && p.Address == "token-a"),
             Arg.Any<CancellationToken>());
-        await _pushProvider.Received(1).SendAsync(
-            Arg.Is<PushMessage>(m => m.DeviceToken == "token-b"),
+        await _deliveryQueue.Received(1).EnqueueChannelSendAsync(
+            Arg.Is<NotificationChannelSendPayload>(p => p.Channel == NotificationChannel.Push && p.Address == "token-b"),
             Arg.Any<CancellationToken>());
-        await _deviceTokens.Received(1).MarkLastUsedAsync(_tenantId, tokenA.Id, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
-        await _deviceTokens.Received(1).MarkLastUsedAsync(_tenantId, tokenB.Id, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DispatchAsync_push_channel_returns_NoDeviceTokens_when_repository_empty_and_no_override()
+    public async Task DispatchAsync_push_returns_NoDeviceTokens_when_repository_empty_and_no_override()
     {
         StubTemplateRender();
-        _pushRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_pushProvider);
         _deviceTokens.ListActiveByUserAsync(_tenantId, _userId, Arg.Any<CancellationToken>())
             .Returns(Array.Empty<UserDeviceToken>());
 
@@ -214,17 +172,13 @@ public class NotificationDispatcherTests
         results.Should().HaveCount(1);
         results[0].Success.Should().BeFalse();
         results[0].FailureReason.Should().Be("NoDeviceTokens");
-        await _pushProvider.DidNotReceive().SendAsync(Arg.Any<PushMessage>(), Arg.Any<CancellationToken>());
+        await _deliveryQueue.DidNotReceive().EnqueueChannelSendAsync(Arg.Any<NotificationChannelSendPayload>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DispatchAsync_push_channel_uses_override_token_when_provided()
+    public async Task DispatchAsync_push_uses_override_token_when_provided()
     {
         StubTemplateRender();
-        _pushRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_pushProvider);
-        _pushProvider.SendAsync(Arg.Any<PushMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok("override-ok"));
-
         var sut = BuildSut();
         var request = new NotificationRequest(
             TenantId: _tenantId,
@@ -241,27 +195,18 @@ public class NotificationDispatcherTests
 
         results.Should().HaveCount(1);
         results[0].Success.Should().BeTrue();
-        await _pushProvider.Received(1).SendAsync(
-            Arg.Is<PushMessage>(m => m.DeviceToken == "override-token"),
+        await _deliveryQueue.Received(1).EnqueueChannelSendAsync(
+            Arg.Is<NotificationChannelSendPayload>(p => p.Address == "override-token"),
             Arg.Any<CancellationToken>());
         await _deviceTokens.DidNotReceive().ListActiveByUserAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task DispatchAsync_creates_one_NotificationMessage_per_channel_when_multi_channel()
+    public async Task DispatchAsync_enqueues_one_send_per_channel_when_multi_channel()
     {
         StubTemplateRender();
-        _emailRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_emailProvider);
-        _smsRegistry.TryResolveForTenantAsync(_tenantId, Arg.Any<CancellationToken>()).Returns(_smsProvider);
-        _emailProvider.SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok("email-1"));
-        _smsProvider.SendAsync(Arg.Any<SmsMessage>(), Arg.Any<CancellationToken>())
-            .Returns(NotificationSendResult.Ok("sms-1"));
-
         var captured = new List<NotificationMessage>();
-        await _messages.UpsertAsync(
-            Arg.Do<NotificationMessage>(m => captured.Add(m)),
-            Arg.Any<CancellationToken>());
+        await _messages.UpsertAsync(Arg.Do<NotificationMessage>(m => captured.Add(m)), Arg.Any<CancellationToken>());
 
         var sut = BuildSut();
         var request = BuildRequest(new[] { NotificationChannel.Email, NotificationChannel.Sms });
@@ -272,7 +217,6 @@ public class NotificationDispatcherTests
         results.Should().OnlyContain(r => r.Success);
         captured.Should().HaveCount(2);
         captured.Select(m => m.Channel).Should().BeEquivalentTo(new[] { NotificationChannel.Email, NotificationChannel.Sms });
-        await _emailProvider.Received(1).SendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
-        await _smsProvider.Received(1).SendAsync(Arg.Any<SmsMessage>(), Arg.Any<CancellationToken>());
+        await _deliveryQueue.Received(2).EnqueueChannelSendAsync(Arg.Any<NotificationChannelSendPayload>(), Arg.Any<CancellationToken>());
     }
 }

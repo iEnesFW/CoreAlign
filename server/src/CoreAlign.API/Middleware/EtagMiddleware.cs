@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace CoreAlign.API.Middleware;
 
@@ -52,7 +54,7 @@ public sealed class EtagMiddleware
             }
 
             buffer.Position = 0;
-            var etag = ComputeEtag(buffer);
+            var etag = ComputeEtag(buffer, context.Response.ContentType);
             context.Response.Headers[ETagHeader] = etag;
 
             var requestETag = context.Request.Headers[IfNoneMatchHeader].ToString();
@@ -121,12 +123,48 @@ public sealed class EtagMiddleware
             || contentType.StartsWith(TextPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string ComputeEtag(Stream body)
+    private static string ComputeEtag(MemoryStream body, string? contentType)
     {
-        body.Position = 0;
-        var hash = SHA256.HashData(body);
+        var hash = SHA256.HashData(CanonicalizeForEtag(body, contentType));
         var hex = Convert.ToHexString(hash);
         return $"\"{hex}\"";
+    }
+
+    private static byte[] CanonicalizeForEtag(MemoryStream body, string? contentType)
+    {
+        if (!string.IsNullOrEmpty(contentType)
+            && contentType.StartsWith(ApplicationJsonPrefix, StringComparison.OrdinalIgnoreCase)
+            && TryStripVolatileFields(body, out var canonical))
+        {
+            return canonical;
+        }
+
+        return body.ToArray();
+    }
+
+    private static bool TryStripVolatileFields(MemoryStream body, out byte[] canonical)
+    {
+        canonical = Array.Empty<byte>();
+        try
+        {
+            body.Position = 0;
+            if (JsonNode.Parse(body) is not JsonObject root || !root.ContainsKey("traceId"))
+            {
+                return false;
+            }
+
+            root["traceId"] = null;
+            canonical = JsonSerializer.SerializeToUtf8Bytes(root);
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+        finally
+        {
+            body.Position = 0;
+        }
     }
 
     private static bool IsEtagMatch(string ifNoneMatch, string etag)

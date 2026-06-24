@@ -144,7 +144,7 @@ export const ProductImagesTab = ({ productId }: ProductImagesTabProps) => {
             type="button"
             disabled={!canUpload || upload.isPending}
             onClick={() => inputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-[5px] bg-indigo-600 text-white text-[11px] font-semibold px-2.5 py-1.5 hover:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 rounded-[5px] bg-primary-600 text-white text-[11px] font-semibold px-2.5 py-1.5 hover:bg-primary-500 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Upload className="h-3.5 w-3.5" />
             {t('Products.Images.upload', { defaultValue: 'Upload' })}
@@ -183,7 +183,7 @@ export const ProductImagesTab = ({ productId }: ProductImagesTabProps) => {
               />
             </div>
             {image.isPrimary && (
-              <span className="absolute top-1.5 start-1.5 inline-flex items-center gap-1 rounded-[3px] bg-amber-500/90 text-white text-[9px] font-bold px-1.5 py-0.5">
+              <span className="absolute top-1.5 start-1.5 inline-flex items-center gap-1 rounded-[3px] bg-warning-500/90 text-white text-[9px] font-bold px-1.5 py-0.5">
                 <Star className="h-3 w-3" />
                 {t('Products.Images.primary', { defaultValue: 'Primary' })}
               </span>
@@ -213,7 +213,7 @@ export const ProductImagesTab = ({ productId }: ProductImagesTabProps) => {
                   onClick={() => void setPrimary(image)}
                   disabled={image.isPrimary || pendingId === image.id}
                   aria-label={t('Products.Images.markPrimary', { defaultValue: 'Mark as primary' })}
-                  className="p-1 rounded-[3px] hover:bg-slate-100 dark:hover:bg-slate-800 text-amber-500 disabled:opacity-40"
+                  className="p-1 rounded-[3px] hover:bg-slate-100 dark:hover:bg-slate-800 text-warning-500 disabled:opacity-40"
                 >
                   <Star className="h-3.5 w-3.5" />
                 </button>
@@ -240,7 +240,7 @@ export const ProductImagesTab = ({ productId }: ProductImagesTabProps) => {
                   onClick={() => void remove1(image)}
                   disabled={pendingId === image.id}
                   aria-label={t('Products.Images.delete', { defaultValue: 'Delete' })}
-                  className="p-1 rounded-[3px] hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 disabled:opacity-40"
+                  className="p-1 rounded-[3px] hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500 disabled:opacity-40"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>

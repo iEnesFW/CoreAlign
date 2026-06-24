@@ -9,7 +9,7 @@ import {
 import { ProductComponentsTab } from '@/features/products/ui/ProductComponentsTab';
 import { StockByWarehouseTab } from '@/features/inventory/ui/StockByWarehouseTab';
 import { StockMovementsTab } from '@/features/inventory/ui/StockMovementsTab';
-import { AuditTimeline } from '@/widgets/AuditTimeline';
+import { AuditTimeline } from '@/features/audit';
 import type {
   Product,
   StockTransaction,
@@ -26,9 +26,9 @@ type Tab = 'overview' | 'transactions' | 'warehouses' | 'movements' | 'rules' | 
 
 const txnStyles: Record<StockTransactionType, string> = {
   Initial: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Sale: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  SaleCancelled: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  Restock: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  Sale: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  SaleCancelled: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  Restock: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
   Adjustment: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
 };
 
@@ -221,8 +221,8 @@ const TransactionsTab = ({
             <div
               className={`text-sm font-semibold tabular-nums ${
                 tx.quantity > 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-amber-600 dark:text-amber-400'
+                  ? 'text-success-600 dark:text-success-400'
+                  : 'text-warning-600 dark:text-warning-400'
               }`}
             >
               {tx.quantity > 0 ? '+' : ''}
@@ -248,9 +248,9 @@ const Row = ({ label, children }: { label: string; children: React.ReactNode }) 
 );
 
 const highlightClass: Record<'indigo' | 'emerald' | 'amber', string> = {
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
+  indigo: 'border-primary-200 dark:border-primary-500/30',
+  emerald: 'border-success-200 dark:border-success-500/30',
+  amber: 'border-warning-200 dark:border-warning-500/30',
 };
 
 const Stat = ({

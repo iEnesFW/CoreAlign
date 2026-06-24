@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowRight, X } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Users, X } from 'lucide-react';
 import {
   customersApi,
   type MergeCustomersInput,
@@ -11,6 +11,9 @@ import { customerKeys } from '@/features/customers/hooks/customerKeys';
 import type { Customer } from '@/features/customers/model/customer.types';
 import { safeRequest } from '@/shared/lib/safeRequest';
 import { logger } from '@/shared/lib/logger';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 
 interface MergeCustomersModalProps {
   open: boolean;
@@ -55,17 +58,17 @@ const CustomerSearchList = ({ label, selected, onSelect }: CustomerSearchListPro
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder={t('customers.merge.searchPlaceholder')}
-        className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+        className={fieldBaseClasses(false)}
       />
       {selected ? (
-        <div className="flex items-center justify-between gap-2 rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1.5 text-sm dark:border-indigo-700 dark:bg-indigo-900/30">
-          <span className="truncate font-medium text-indigo-900 dark:text-indigo-100">
+        <div className="flex items-center justify-between gap-2 rounded-md border border-primary-300 bg-primary-50 px-2 py-1.5 text-sm dark:border-primary-700 dark:bg-primary-900/30">
+          <span className="truncate font-medium text-primary-900 dark:text-primary-100">
             {selected.name}
           </span>
           <button
             type="button"
             onClick={() => onSelect(null)}
-            className="rounded p-0.5 text-indigo-700 hover:bg-indigo-100 dark:text-indigo-300 dark:hover:bg-indigo-800"
+            className="rounded p-0.5 text-primary-700 hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-800"
             aria-label="Clear selection"
           >
             <X size={12} />
@@ -165,86 +168,71 @@ export const MergeCustomersModal = ({
     });
   };
 
-  if (!open) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="w-full max-w-xl rounded-xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-700 dark:bg-slate-900">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              {t('customers.merge.title')}
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('customers.merge.subtitle')}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
-            aria-label={t('customers.merge.cancel')}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="mb-4 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-700 dark:bg-amber-900/20">
-          <AlertTriangle
-            size={14}
-            className="mt-0.5 flex-shrink-0 text-amber-600 dark:text-amber-400"
-          />
-          <p className="text-xs text-amber-800 dark:text-amber-200">
-            {t('customers.merge.warning')}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CustomerSearchList
-            label={t('customers.merge.source')}
-            selected={source}
-            onSelect={setSource}
-          />
-          <CustomerSearchList
-            label={t('customers.merge.target')}
-            selected={target}
-            onSelect={setTarget}
-          />
-        </div>
-
-        {source && target && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="truncate font-medium">{source.name}</span>
-            <ArrowRight size={12} />
-            <span className="truncate font-medium text-indigo-600 dark:text-indigo-400">
-              {target.name}
-            </span>
-          </div>
-        )}
-
-        {error && <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
+    <Modal
+      open={open}
+      title={t('customers.merge.title')}
+      subtitle={t('customers.merge.subtitle')}
+      icon={<Users size={18} />}
+      onClose={onClose}
+      size="xl"
+      footer={
+        <>
+          <Button
+            variant="ghost"
             type="button"
             onClick={onClose}
             disabled={mergeMutation.isPending}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             {t('customers.merge.cancel')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={handleConfirm}
             disabled={!canMerge || mergeMutation.isPending}
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            isLoading={mergeMutation.isPending}
           >
             {mergeMutation.isPending
               ? t('customers.merge.executing')
               : t('customers.merge.confirm')}
-          </button>
-        </div>
+          </Button>
+        </>
+      }
+    >
+      <div className="mb-4 flex items-start gap-2 rounded-md border border-warning-200 bg-warning-50 p-2 dark:border-warning-700 dark:bg-warning-900/20">
+        <AlertTriangle
+          size={14}
+          className="mt-0.5 flex-shrink-0 text-warning-600 dark:text-warning-400"
+        />
+        <p className="text-xs text-warning-800 dark:text-warning-200">
+          {t('customers.merge.warning')}
+        </p>
       </div>
-    </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <CustomerSearchList
+          label={t('customers.merge.source')}
+          selected={source}
+          onSelect={setSource}
+        />
+        <CustomerSearchList
+          label={t('customers.merge.target')}
+          selected={target}
+          onSelect={setTarget}
+        />
+      </div>
+
+      {source && target && (
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <span className="truncate font-medium">{source.name}</span>
+          <ArrowRight size={12} />
+          <span className="truncate font-medium text-primary-600 dark:text-primary-400">
+            {target.name}
+          </span>
+        </div>
+      )}
+
+      {error && <p className="mt-3 text-xs text-danger-600 dark:text-danger-400">{error}</p>}
+    </Modal>
   );
 };

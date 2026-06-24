@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 
 const APPROVE_ROLES = ['TenantAdmin', 'PurchasingManager', 'Purchasing.Approve'];
 

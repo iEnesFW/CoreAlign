@@ -128,7 +128,7 @@ export const AuditLogFilterBar = ({ draft, onChange, onApply, onReset }: Props) 
       <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-2">
         <button
           type="submit"
-          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
         >
           <Filter size={14} />
           {t('Audit.Admin.ApplyFilter')}

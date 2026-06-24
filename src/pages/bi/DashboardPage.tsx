@@ -20,9 +20,9 @@ const WidgetSkeleton = ({ title }: { title: string }) => (
 const WidgetErrorBanner = ({ title }: { title: string }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full flex-col rounded-lg border border-red-200 bg-red-50 p-4 shadow-sm dark:border-red-900/50 dark:bg-red-950/30">
+    <div className="flex h-full flex-col rounded-lg border border-danger-200 bg-danger-50 p-4 shadow-sm dark:border-danger-900/50 dark:bg-danger-950/30">
       <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</h3>
-      <div className="text-sm text-red-700 dark:text-red-300">
+      <div className="text-sm text-danger-700 dark:text-danger-300">
         {t('BI.Dashboard.WidgetError', { defaultValue: 'Failed to load widget data.' })}
       </div>
     </div>

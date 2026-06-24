@@ -59,7 +59,7 @@ export const LogoUpload = ({
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploadAsset.isPending}
-          className="rounded bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          className="rounded bg-info-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-info-700 disabled:opacity-60"
         >
           {uploadAsset.isPending ? t('Whitelabel.upload.uploading') : t('Whitelabel.upload.choose')}
         </button>
@@ -67,7 +67,7 @@ export const LogoUpload = ({
       {acceptHint ? (
         <span className="text-xs text-slate-500 dark:text-slate-400">{acceptHint}</span>
       ) : null}
-      {error ? <span className="text-xs text-red-600 dark:text-red-400">{error}</span> : null}
+      {error ? <span className="text-xs text-danger-600 dark:text-danger-400">{error}</span> : null}
     </div>
   );
 };

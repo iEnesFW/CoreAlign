@@ -1,0 +1,153 @@
+# billing (CoreAlign UI)
+
+"billing" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "billing" area (English / Türkçe):
+
+- No active modules. Pick one from the catalog below. / Aktif modül yok. Aşağıdaki katalogdan seçim yapın.
+- {{count}} active modules / {{count}} aktif modül
+- {{count}} active module / {{count}} aktif modül
+- {{count}} active modules / {{count}} aktif modül
+- Address / Adres
+- City / Şehir
+- Country / Ülke
+- Email / E-posta
+- Address is required. / Adres zorunludur.
+- City is required. / Şehir zorunludur.
+- Country is required (min. 2 characters). / Ülke zorunludur (en az 2 karakter).
+- Enter a valid email address. / Geçerli bir e-posta adresi girin.
+- Please complete the billing form. / Lütfen fatura formunu eksiksiz doldurun.
+- Enter a valid mobile number (10-15 digits, optional +). / Geçerli bir cep telefonu numarası girin (10-15 rakam, isteğe bağlı +).
+- Enter a valid identity number (5-32 alphanumeric characters). / Geçerli bir kimlik numarası girin (5-32 alfasayısal karakter).
+- First name is required. / Ad zorunludur.
+- Last name is required. / Soyad zorunludur.
+- Postal code is required. / Posta kodu zorunludur.
+- Mobile phone / Cep telefonu
+- Identity / TC ID number / Kimlik / TC Kimlik No
+- First name / Ad
+- Sent encrypted. We never store your card number. / Şifreli olarak iletilir. Kart numaranızı saklamayız.
+- Last name / Soyad
+- Billing information / Fatura bilgileri
+- Postal code / Posta kodu
+- Cancel order / Siparişi iptal et
+- Yes, cancel / Evet, iptal et
+- Order {{number}} will be cancelled. This cannot be undone. / {{number}} numaralı sipariş iptal edilecek. Bu işlem geri alınamaz.
+- Cancel order? / Sipariş iptal edilsin mi?
+- Only tenant administrators can complete a purchase. / Satın almayı yalnızca kiracı yöneticileri tamamlayabilir.
+- Buy / Satın al
+- Your cart is empty. Pick a module to get started. / Sepetiniz boş. Başlamak için bir modül seçin.
+- Cart ({{count}}) / Sepet ({{count}})
+- Cart ({{count}}) / Sepet ({{count}})
+- Cart ({{count}}) / Sepet ({{count}})
+- Remove / Kaldır
+- Cart / Sepet
+- Total / Toplam
+- Pay now / Şimdi öde
+- Checkout / Ödeme
+- Billing / Faturalama
+- Orders / Siparişler
+- Couldn't load active modules / Aktif modüller yüklenemedi
+- The module catalog could not be loaded. Please try again. / Modül kataloğu yüklenemedi. Lütfen tekrar deneyin.
+- Couldn't load modules / Modüller yüklenemedi
+- This subscription order could not be loaded. / Bu abonelik siparişi yüklenemedi.
+- Couldn't load order / Sipariş yüklenemedi
+- Couldn't load orders / Siparişler yüklenemedi
+- Billing / Faturalama
+- Sandbox / development only / Yalnızca sandbox / geliştirme
+- No payment gateway is configured. Contact your administrator. / Yapılandırılmış ödeme altyapısı yok. Yöneticinizle iletişime geçin.
+- Iyzico (real payment) / Iyzico (gerçek ödeme)
+- Mock (development) / Mock (geliştirme)
+- Please select a payment method. / Lütfen bir ödeme yöntemi seçin.
+- Billing info required / Fatura bilgileri gerekli
+- Payment method / Ödeme yöntemi
+- Active modules / Aktif modüller
+- {{count}} module(s) on file / {{count}} modül tanımlı
+- Browse modules / Modüllere göz at
+- Expires in {{days}}d / {{days}} gün içinde bitiyor
+- Renewals due soon / Yaklaşan yenilemeler
+- Last order {{number}} / Son sipariş {{number}}
+- Next: {{date}} / Sıradaki: {{date}}
+- Nothing expiring soon. / Yakında süresi dolan abonelik yok.
+- No subscription orders yet. / Henüz abonelik siparişi yok.
+- Recent orders / Son siparişler
+- Latest orders / En son siparişler
+- Renew / Yenile
+- Track active modules, upcoming expirations and recent purchases. / Aktif modülleri, yaklaşan bitişleri ve son satın alımları takip edin.
+- My Subscriptions / Aboneliklerim
+- View all / Tümünü gör
+- Only tenant administrators can simulate a payment outcome. / Ödeme sonucunu yalnızca kiracı yöneticileri simüle edebilir.
+- Approve / Onayla
+- DEV / MOCK PAYMENT / DEV / MOCK ÖDEME
+- This page only exists in development. Production payments are handled by the real gateway. / Bu sayfa yalnızca geliştirme ortamında bulunur. Canlı ödemeler gerçek ödeme altyapısı tarafından işlenir.
+- Cancel / İptal et
+- Development / Geliştirme
+- Simulate failure / Hata simüle et
+- No order ID provided. Open this page from an order with "Pending payment" status. / Sipariş ID'si belirtilmedi. Bu sayfayı "Ödeme Bekliyor" durumundaki bir siparişten açın.
+- Order / Sipariş
+- Simulate the payment outcome for this subscription order. / Bu abonelik siparişi için ödeme sonucunu simüle edin.
+- Mock payment / Mock ödeme
+- Active until {{date}} / {{date}} tarihine kadar aktif
+- Add to cart / Sepete ekle
+- Core module — always on / Çekirdek modül — her zaman aktif
+- Core / Çekirdek
+- Included for everyone / Herkese dahil
+- {{count}} days left / {{count}} gün kaldı
+- {{count}} day left / {{count}} gün kaldı
+- {{count}} days left / {{count}} gün kaldı
+- {{count}} days / {{count}} gün
+- {{count}} day / {{count}} gün
+- {{count}} days / {{count}} gün
+- There are no purchasable modules right now. / Şu anda satın alınabilir modül bulunmuyor.
+- No modules available / Kullanılabilir modül yok
+- Added / Eklendi
+- Not subscribed yet / Henüz abone değilsiniz
+- Renew plan / Planı yenile
+- Renewal: {{duration}} will be added to your current term — no time lost. / Yenileme: {{duration}} mevcut sürenin üzerine eklenir — süre kaybı olmaz.
+- Subscribe to unlock more capabilities for your team. / Ekibiniz için ek özelliklerin kilidini açmak üzere abone olun.
+- Modules / Modüller
+- Other modules / Diğer modüller
+- Payment attempts / Ödeme denemeleri
+- Back to list / Listeye dön
+- This order was cancelled. / Bu sipariş iptal edildi.
+- Created / Oluşturulma
+- Duration / Süre
+- Items / Kalem
+- Module / Modül
+- Order # / Sipariş No
+- Plan
+- Status / Durum
+- Total / Toplam
+- Unit price / Birim Fiyat
+- Completed / Tamamlandı
+- Created {{value}} / Oluşturulma {{value}}
+- Gateway / Ödeme altyapısı
+- Intent ID
+- Items / Kalemler
+- Paid / Ödendi
+- Payment received on {{value}}. Your modules are now active. / Ödeme {{value}} tarihinde alındı. Modülleriniz artık aktif.
+- Payment confirmed / Ödeme onaylandı
+- Go to mock payment / Mock ödemeye git
+- This order is awaiting payment. Head to the (mock) payment page to complete it. / Bu sipariş ödeme bekliyor. Tamamlamak için (mock) ödeme sayfasına geçin.
+- Payment required / Ödeme gerekli
+- Payment / Ödeme
+- Reference / Referans
+- Cancelled / İptal
+- Draft / Taslak
+- Expired / Süresi Doldu
+- Failed / Başarısız
+- Paid / Ödendi
+- Pending payment / Ödeme Bekliyor
+- Subscription order details and payment status. / Abonelik siparişi detayları ve ödeme durumu.
+- Order {{number}} / Sipariş {{number}}
+- Total / Toplam
+- All / Tümü
+- order(s) / sipariş
+- When you purchase a module, the order will show up here. / Bir modül satın aldığınızda sipariş burada görünür.
+- No orders yet / Henüz sipariş yok
+- Filter by status / Duruma göre filtrele
+- All orders placed for module subscriptions. / Modül abonelikleri için verilen tüm siparişler.
+- Subscription orders / Abonelik siparişleri
+- View details / Detayları gör
+- Billing / Faturalama
+- Payment approved. / Ödeme onaylandı.
+- Order cancelled. / Sipariş iptal edildi.
+- Order created. / Sipariş oluşturuldu.
+- Something went wrong. Please try again. / Bir şeyler ters gitti. Lütfen tekrar deneyin.

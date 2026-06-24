@@ -1,4 +1,4 @@
-using CoreAlign.Application.Common.Storage;
+using CoreAlign.Application.Common.Upload;
 using CoreAlign.Domain.Entities.Whitelabel;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -8,16 +8,16 @@ namespace CoreAlign.Application.Whitelabel;
 public sealed class TenantThemeService : ITenantThemeService
 {
     private readonly ITenantThemeRepository _repo;
-    private readonly IFileStorage _storage;
+    private readonly IFileUploadService _uploads;
     private readonly IUnitOfWork _uow;
 
     public TenantThemeService(
         ITenantThemeRepository repo,
-        IFileStorage storage,
+        IFileUploadService uploads,
         IUnitOfWork uow)
     {
         _repo = repo;
-        _storage = storage;
+        _uploads = uploads;
         _uow = uow;
     }
 
@@ -63,38 +63,27 @@ public sealed class TenantThemeService : ITenantThemeService
         TenantThemeAssetKind kind,
         string fileName,
         string contentType,
-        long sizeBytes,
         Stream content,
         CancellationToken ct)
     {
-        if (!TenantThemeAssetPolicy.IsAllowedFor(kind, contentType))
-        {
-            throw new ArgumentException("Unsupported asset content type for the requested kind.", nameof(contentType));
-        }
-
-        if (sizeBytes <= 0 || sizeBytes > TenantThemeAssetPolicy.MaxBytes)
-        {
-            throw new ArgumentOutOfRangeException(nameof(sizeBytes), $"Asset must be between 1 and {TenantThemeAssetPolicy.MaxBytes} bytes.");
-        }
-
         var theme = await GetOrCreateAsync(tenantId, ct);
 
-        var safeName = SanitizeUploadFileName(fileName, kind);
-
-        var stored = await _storage.SaveAsync(
-            $"{TenantThemeAssetPolicy.StorageScope}/{tenantId:N}/{kind.ToString().ToLowerInvariant()}",
-            safeName,
-            content,
-            contentType,
+        var uploaded = await _uploads.UploadAsync(
+            new FileUploadRequest(
+                content,
+                fileName,
+                contentType,
+                FileUploadProfiles.TenantTheme.Name,
+                $"{TenantThemeAssetPolicy.StorageScope}/{tenantId:N}/{kind.ToString().ToLowerInvariant()}"),
             ct);
 
         var asset = new TenantThemeAsset(
             tenantId,
             kind,
             Guid.NewGuid(),
-            stored.ContentType,
-            stored.SizeBytes,
-            stored.PublicUrl);
+            uploaded.ContentType,
+            uploaded.SizeBytes,
+            uploaded.PublicUrl);
 
         await _repo.AddAssetAsync(asset, ct);
         theme.SetAssetFileId(kind, asset.FileId, DateTime.UtcNow);
@@ -122,39 +111,6 @@ public sealed class TenantThemeService : ITenantThemeService
         var theme = await _repo.GetByCustomDomainAsync(domain, ct);
         if (theme is null) return null;
         return await ToPublicDtoAsync(theme, ct);
-    }
-
-    private static string SanitizeUploadFileName(string? fileName, TenantThemeAssetKind kind)
-    {
-        if (string.IsNullOrWhiteSpace(fileName))
-        {
-            return $"{kind}-{Guid.NewGuid():N}";
-        }
-
-        var leaf = Path.GetFileName(fileName);
-        if (string.IsNullOrWhiteSpace(leaf))
-        {
-            return $"{kind}-{Guid.NewGuid():N}";
-        }
-
-        var invalid = Path.GetInvalidFileNameChars();
-        Span<char> buffer = stackalloc char[leaf.Length];
-        var index = 0;
-        foreach (var ch in leaf)
-        {
-            if (ch == '/' || ch == '\\' || ch == ':' || Array.IndexOf(invalid, ch) >= 0)
-            {
-                continue;
-            }
-            buffer[index++] = ch;
-        }
-
-        var sanitized = new string(buffer[..index]).Trim().TrimStart('.');
-        if (string.IsNullOrWhiteSpace(sanitized) || sanitized.Length > 128)
-        {
-            return $"{kind}-{Guid.NewGuid():N}";
-        }
-        return sanitized;
     }
 
     private async Task<TenantTheme> GetOrCreateAsync(Guid tenantId, CancellationToken ct)

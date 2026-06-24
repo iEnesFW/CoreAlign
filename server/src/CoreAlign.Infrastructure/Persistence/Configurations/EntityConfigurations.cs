@@ -93,7 +93,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastName).HasMaxLength(64);
         builder.Property(u => u.PhoneNumber).HasMaxLength(20);
         builder.Property(u => u.AvatarUrl).HasMaxLength(500);
-        builder.Property(u => u.TwoFactorSecretKey).HasMaxLength(256);
+        builder.Property(u => u.TwoFactorSecretKey).HasColumnType("text");
         builder.Property(u => u.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(u => u.UpdatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(u => u.LastLoginAtUtc).HasColumnType("timestamp with time zone");

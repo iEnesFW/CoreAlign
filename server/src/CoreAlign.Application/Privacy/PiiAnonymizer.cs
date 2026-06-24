@@ -11,15 +11,18 @@ public class PiiAnonymizer : IPiiAnonymizer
     private readonly IUserRepository _users;
     private readonly ICustomerRepository _customers;
     private readonly IUserAnonymizer _userAnonymizer;
+    private readonly IPrivacyEraseService _eraseService;
 
     public PiiAnonymizer(
         IUserRepository users,
         ICustomerRepository customers,
-        IUserAnonymizer userAnonymizer)
+        IUserAnonymizer userAnonymizer,
+        IPrivacyEraseService eraseService)
     {
         _users = users;
         _customers = customers;
         _userAnonymizer = userAnonymizer;
+        _eraseService = eraseService;
     }
 
     public async Task<PiiAnonymizationResult> AnonymizeUserAsync(
@@ -50,16 +53,19 @@ public class PiiAnonymizer : IPiiAnonymizer
         var customer = await _customers.GetByIdAsync(customerId, cancellationToken)
             ?? throw new PrivacyCustomerNotFoundException();
 
+        var now = DateTime.UtcNow;
         var displayName = $"[anonymized-customer-{customer.Id:N}]";
         customer.Anonymize(displayName);
         _customers.Update(customer);
+
+        await _eraseService.AnonymizeCustomerChildrenAsync(customer.Id, now, cancellationToken);
 
         const int anonymizedFields = 9;
         return new PiiAnonymizationResult(
             customerId,
             SubjectTypeCustomer,
             anonymizedFields,
-            DateTime.UtcNow,
+            now,
             keepFinancialTrail);
     }
 }

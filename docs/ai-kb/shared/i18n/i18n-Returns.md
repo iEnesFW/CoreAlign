@@ -1,0 +1,41 @@
+# Returns (CoreAlign UI)
+
+"Returns" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Returns" area (English / Türkçe):
+
+- Receive / Teslim Al
+- Reject / Reddet
+- View / Görüntüle
+- Approved / Onaylandı
+- Cancelled / İptal Edildi
+- Credit Note Issued / Alacak Dekontu Kesildi
+- Received / Teslim Alındı
+- Refunded / Geri Ödendi
+- Rejected / Reddedildi
+- Requested / Talep Edildi
+- Activity / İşlem Geçmişi
+- Back to Returns / İade Listesine Dön
+- No return requests found. / İade talebi bulunamadı.
+- Credit Note / Alacak Dekontu
+- Customer / Müşteri
+- Return No / İade No
+- Order / Sipariş
+- Product / Ürün
+- Quantity / Miktar
+- Requested At / Talep Tarihi
+- Status / Durum
+- Subtotal / Ara Toplam
+- Total / Toplam
+- Unit Price / Birim Fiyat
+- Filter by status / Duruma göre filtrele
+- Automatically issue credit note / Alacak dekontunu otomatik oluştur
+- Receive Return / İadeyi Teslim Al
+- Warehouse / Depo
+- Select a warehouse / Depo seçin
+- Reason for rejection (optional) / Reddetme nedeni (isteğe bağlı)
+- Reject Return / İadeyi Reddet
+- Search by return no, order or customer... / İade no, sipariş veya müşteri ara...
+- Returns / İadeler
+- Return approved. / İade onaylandı.
+- Return cancelled. / İade iptal edildi.
+- Return rejected. / İade reddedildi.
+- Please select a warehouse first. / Lütfen önce bir depo seçin.

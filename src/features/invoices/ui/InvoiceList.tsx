@@ -25,13 +25,13 @@ interface Props {
 
 const statusTone: Record<InvoiceStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Issued: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-  Sent: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  PartiallyPaid: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Overdue: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300',
-  Void: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  Issued: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  Sent: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  PartiallyPaid: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Paid: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Overdue: 'bg-danger-100 text-danger-800 dark:bg-danger-500/20 dark:text-danger-300',
+  Void: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
@@ -87,7 +87,7 @@ export const InvoiceList = ({
           sortValue: (i) => i.invoiceNumber,
           cell: (i) => (
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500/15 to-sky-500/15 text-blue-600 ring-1 ring-blue-200/40 dark:text-blue-300 dark:ring-blue-500/30">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary-500/15 to-info-500/15 text-primary-600 ring-1 ring-primary-200/40 dark:text-primary-300 dark:ring-primary-500/30">
                 <FileText size={11} />
               </span>
               <span className="font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
@@ -133,9 +133,9 @@ export const InvoiceList = ({
                   className={cn(
                     'tabular-nums',
                     isOverdue
-                      ? 'font-semibold text-rose-600 dark:text-rose-400'
+                      ? 'font-semibold text-danger-600 dark:text-danger-400'
                       : isDueSoon
-                        ? 'font-semibold text-amber-600 dark:text-amber-400'
+                        ? 'font-semibold text-warning-600 dark:text-warning-400'
                         : 'text-slate-600 dark:text-slate-400',
                   )}
                 >
@@ -146,8 +146,8 @@ export const InvoiceList = ({
                     className={cn(
                       'mt-0.5 inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wider',
                       isOverdue
-                        ? 'text-rose-600 dark:text-rose-400'
-                        : 'text-amber-600 dark:text-amber-400',
+                        ? 'text-danger-600 dark:text-danger-400'
+                        : 'text-warning-600 dark:text-warning-400',
                     )}
                   >
                     {isOverdue ? <AlertTriangle size={9} /> : <CalendarClock size={9} />}
@@ -190,7 +190,7 @@ export const InvoiceList = ({
                 {i.amountPaid > 0 && i.amountPaid < i.total && (
                   <div className="mt-1 flex items-center justify-end gap-1.5">
                     <div className="h-1 w-12 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                      <div className="h-full bg-emerald-500" style={{ width: `${paid}%` }} />
+                      <div className="h-full bg-success-500" style={{ width: `${paid}%` }} />
                     </div>
                     <span className="text-[9px] tabular-nums text-slate-500 dark:text-slate-400">
                       {paid.toFixed(0)}%
@@ -218,7 +218,7 @@ export const InvoiceList = ({
             to={`/invoices/${i.id}/print`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
+            className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-primary-300"
             aria-label={t('invoices.actions.print')}
             title={t('invoices.actions.print')}
           >
@@ -228,7 +228,7 @@ export const InvoiceList = ({
             <button
               type="button"
               onClick={() => onMarkPaid(i)}
-              className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:text-slate-400 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
+              className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-success-50 hover:text-success-600 dark:text-slate-400 dark:hover:bg-success-500/10 dark:hover:text-success-300"
               aria-label={t('invoices.actions.markPaid')}
               title={t('invoices.actions.markPaid')}
             >

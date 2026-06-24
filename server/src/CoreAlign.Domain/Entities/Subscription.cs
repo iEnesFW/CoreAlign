@@ -28,7 +28,7 @@ public class Subscription
         var now = DateTime.UtcNow;
         return new Subscription
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             UserId = userId,
             PlanId = freeTrialPlanId,
             Status = SubscriptionStatus.Active,

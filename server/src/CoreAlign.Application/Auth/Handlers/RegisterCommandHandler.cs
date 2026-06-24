@@ -1,5 +1,6 @@
 using CoreAlign.Application.Auth.Commands;
 using CoreAlign.Application.Auth.DTOs;
+using CoreAlign.Application.Auth.Services;
 using CoreAlign.Application.Common;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Exceptions;
@@ -18,6 +19,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
     private readonly ISubscriptionRepository _subscriptionRepository;
     private readonly IEmailVerificationTokenRepository _emailVerificationTokenRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IPasswordPolicyService _passwordPolicyService;
+    private readonly ICaptchaVerifier _captchaVerifier;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
@@ -31,6 +34,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
         ISubscriptionRepository subscriptionRepository,
         IEmailVerificationTokenRepository emailVerificationTokenRepository,
         IPasswordHasher passwordHasher,
+        IPasswordPolicyService passwordPolicyService,
+        ICaptchaVerifier captchaVerifier,
         IJwtTokenService jwtTokenService,
         IEmailService emailService,
         IUnitOfWork unitOfWork,
@@ -43,6 +48,8 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
         _subscriptionRepository = subscriptionRepository;
         _emailVerificationTokenRepository = emailVerificationTokenRepository;
         _passwordHasher = passwordHasher;
+        _passwordPolicyService = passwordPolicyService;
+        _captchaVerifier = captchaVerifier;
         _jwtTokenService = jwtTokenService;
         _emailService = emailService;
         _unitOfWork = unitOfWork;
@@ -51,6 +58,11 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
 
     public async Task<AuthResponseDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
+        if (!await _captchaVerifier.VerifyAsync(request.CaptchaToken, "register", cancellationToken))
+        {
+            throw new CaptchaValidationException();
+        }
+
         if (await _userRepository.ExistsByEmailAsync(request.Email, cancellationToken))
         {
             await _emailService.SendDuplicateRegistrationNoticeAsync(request.Email, cancellationToken);
@@ -59,6 +71,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
 
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
             throw new DuplicateUsernameException();
+
+        await _passwordPolicyService.ValidateAsync(
+            Guid.Empty, request.Password, PasswordPolicyContext.TenantAdmin, cancellationToken);
 
         var tenantSlug = await GenerateUniqueSlugAsync(request.OrganizationName, cancellationToken);
         var tenant = new Tenant(request.OrganizationName, tenantSlug);

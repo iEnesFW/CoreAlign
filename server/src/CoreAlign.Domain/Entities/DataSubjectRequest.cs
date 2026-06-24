@@ -80,7 +80,7 @@ public class DataSubjectRequest : TenantEntity, IHasConcurrencyToken, ISoftDelet
         string? usernameHash,
         string? emailHash)
     {
-        Id = Guid.NewGuid();
+        Id = Guid.CreateVersion7();
         TenantId = tenantId;
         UserId = userId;
         RequestType = requestType;
@@ -106,7 +106,7 @@ public class DataSubjectRequest : TenantEntity, IHasConcurrencyToken, ISoftDelet
 
         return new DataSubjectRequest
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             TenantId = tenantId,
             UserId = requesterUserId ?? Guid.Empty,
             RequestType = requestType,

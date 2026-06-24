@@ -98,6 +98,7 @@ public class EraseCustomerByAdminHandler : IRequestHandler<EraseCustomerByAdminC
     private readonly IUserAnonymizer _anonymizer;
     private readonly IDataSubjectRequestLog _audit;
     private readonly IPrivacyHasher _hasher;
+    private readonly IPrivacyEraseService _eraseService;
 
     public EraseCustomerByAdminHandler(
         ICurrentUserAccessor currentUser,
@@ -107,7 +108,8 @@ public class EraseCustomerByAdminHandler : IRequestHandler<EraseCustomerByAdminC
         ICustomerUserRepository customerUsers,
         IUserAnonymizer anonymizer,
         IDataSubjectRequestLog audit,
-        IPrivacyHasher hasher)
+        IPrivacyHasher hasher,
+        IPrivacyEraseService eraseService)
     {
         _currentUser = currentUser;
         _tenant = tenant;
@@ -117,6 +119,7 @@ public class EraseCustomerByAdminHandler : IRequestHandler<EraseCustomerByAdminC
         _anonymizer = anonymizer;
         _audit = audit;
         _hasher = hasher;
+        _eraseService = eraseService;
     }
 
     public async Task<ErasureResultDto> Handle(EraseCustomerByAdminCommand request, CancellationToken cancellationToken)
@@ -146,6 +149,8 @@ public class EraseCustomerByAdminHandler : IRequestHandler<EraseCustomerByAdminC
         var now = DateTime.UtcNow;
         customer.Anonymize(PrivacyAnonymization.CustomerDisplayName(customer.Id));
         _customers.Update(customer);
+
+        await _eraseService.AnonymizeCustomerChildrenAsync(customer.Id, now, cancellationToken);
 
         var memberships = await _customerUsers.ListByCustomerAsync(customer.Id, cancellationToken);
         var memberIds = memberships.Select(m => m.UserId).Distinct().ToList();

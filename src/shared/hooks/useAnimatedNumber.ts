@@ -10,7 +10,6 @@ export const useAnimatedNumber = (target: number, durationMs = 700): number => {
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion || target === fromRef.current) {
-      // Defer state update to next frame to avoid synchronous setState in effect body.
       frameRef.current = requestAnimationFrame(() => {
         setValue(target);
         fromRef.current = target;

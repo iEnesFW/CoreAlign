@@ -15,7 +15,7 @@ import {
   X,
   Layers,
 } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { RouteFallback } from '@/shared/ui/RouteFallback/RouteFallback';
 
 interface NavItem {
@@ -113,7 +113,7 @@ export const CustomerPortalLayout: React.FC = () => {
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors ${
                     isActive
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`
                 }
@@ -155,7 +155,7 @@ export const CustomerPortalLayout: React.FC = () => {
                     className={({ isActive }) =>
                       `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm ${
                         isActive
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-primary-600 text-white'
                           : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`
                     }
@@ -186,7 +186,7 @@ export const CustomerPortalLayout: React.FC = () => {
             end={item.to === '/customer-portal'}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] ${
-                isActive ? 'text-blue-600' : 'text-slate-600 dark:text-slate-400'
+                isActive ? 'text-primary-600' : 'text-slate-600 dark:text-slate-400'
               }`
             }
           >

@@ -8,10 +8,7 @@ export interface OfflineProviderProps {
   enablePush?: boolean;
 }
 
-export const OfflineProvider: React.FC<OfflineProviderProps> = ({
-  children,
-  enablePush = true,
-}) => {
+export const OfflineProvider: React.FC<OfflineProviderProps> = ({ children }) => {
   useEffect(() => {
     registerCoreMutationHandlers();
   }, []);

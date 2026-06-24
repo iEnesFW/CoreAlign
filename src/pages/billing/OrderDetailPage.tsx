@@ -115,7 +115,7 @@ export const OrderDetailPage = () => {
                 type="button"
                 onClick={handleCancel}
                 disabled={cancel.isPending}
-                className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+                className="inline-flex items-center gap-1 rounded-lg border border-danger-200 bg-danger-50 px-2.5 py-1.5 text-xs font-semibold text-danger-700 hover:bg-danger-100 disabled:opacity-50 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300"
               >
                 {cancel.isPending ? (
                   <Loader2 size={12} className="animate-spin" />
@@ -153,11 +153,11 @@ export const OrderDetailPage = () => {
         </div>
 
         {isPaidLike && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200">
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-success-200 bg-success-50/60 p-3 text-xs text-success-800 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-200">
             <BadgeCheck size={16} className="mt-0.5 shrink-0" />
             <div>
               <p className="font-semibold">{t('billing.order.paidTitle')}</p>
-              <p className="mt-0.5 text-[11px] text-emerald-700 dark:text-emerald-200/80">
+              <p className="mt-0.5 text-[11px] text-success-700 dark:text-success-200/80">
                 {t('billing.order.paidDescription', {
                   value: order.paidAtUtc ? formatDateTime(order.paidAtUtc, locale) : '—',
                 })}
@@ -173,19 +173,19 @@ export const OrderDetailPage = () => {
         )}
 
         {isMockPending && (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/70 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning-200 bg-warning-50/70 p-3 dark:border-warning-500/30 dark:bg-warning-500/10">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+              <p className="text-xs font-semibold text-warning-800 dark:text-warning-200">
                 {t('billing.order.payNowTitle')}
               </p>
-              <p className="mt-0.5 text-[11px] text-amber-700 dark:text-amber-200/80">
+              <p className="mt-0.5 text-[11px] text-warning-700 dark:text-warning-200/80">
                 {t('billing.order.payNowDescription')}
               </p>
             </div>
             <button
               type="button"
               onClick={handleGoToMock}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-amber-600"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-warning-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-warning-600"
             >
               <Wallet size={13} />
               {t('billing.order.payNow')}

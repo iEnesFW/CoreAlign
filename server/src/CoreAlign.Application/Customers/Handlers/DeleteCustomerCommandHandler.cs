@@ -22,7 +22,8 @@ public class DeleteCustomerCommandHandler : IRequestHandler<DeleteCustomerComman
         var customer = await _customerRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new CustomerNotFoundException();
 
-        _customerRepository.Remove(customer);
+        customer.Archive();
+        _customerRepository.Update(customer);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return true;

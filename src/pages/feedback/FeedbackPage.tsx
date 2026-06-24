@@ -5,7 +5,12 @@ import { MessageSquarePlus, Plus } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatDateTime } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import {
   useFeedbackListQuery,
   useUpdateFeedbackStatus,
@@ -26,26 +31,26 @@ const TYPE_LABEL: Record<FeedbackType, string> = {
 };
 
 const TYPE_TONE: Record<FeedbackType, string> = {
-  Bug: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  Feature: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  Improvement: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Question: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  Bug: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Feature: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  Improvement: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Question: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
   Other: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
 };
 
 const PRIORITY_TONE: Record<string, string> = {
   Low: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
-  Medium: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  High: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Critical: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Medium: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  High: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Critical: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const STATUS_TONE: Record<FeedbackStatus, string> = {
-  Open: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  InProgress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+  Open: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  InProgress: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
   Resolved: 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300',
   Closed: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  Rejected: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Rejected: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const STATUS_LABEL: Record<FeedbackStatus, string> = {
@@ -88,61 +93,59 @@ export const FeedbackPage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('feedback.page.title', { defaultValue: 'Geri Bildirim & Hata Bildirimi' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('feedback.page.subtitle', {
-              defaultValue:
-                'Hata bildir, yeni özellik öner veya soru sor. Tüm bildirimler buradan takip edilir.',
-            })}
-          </p>
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<MessageSquarePlus size={20} />}
+          title={t('feedback.page.title', { defaultValue: 'Geri Bildirim & Hata Bildirimi' })}
+          subtitle={t('feedback.page.subtitle', {
+            defaultValue:
+              'Hata bildir, yeni özellik öner veya soru sor. Tüm bildirimler buradan takip edilir.',
+          })}
+          actions={
+            <Button size="sm" onClick={() => setModalOpen(true)}>
+              <Plus size={14} />
+              {t('feedback.page.new', { defaultValue: 'Yeni Bildirim' })}
+            </Button>
+          }
+        />
+      }
+      toolbar={
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as FeedbackType | '')}
+            className="w-full sm:w-48"
+          >
+            <option value="">
+              {t('feedback.filter.allTypes', { defaultValue: 'Tüm türler' })}
+            </option>
+            {(Object.keys(TYPE_LABEL) as FeedbackType[]).map((tp) => (
+              <option key={tp} value={tp}>
+                {TYPE_LABEL[tp]}
+              </option>
+            ))}
+          </Select>
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as FeedbackStatus | '')}
+            className="w-full sm:w-48"
+          >
+            <option value="">
+              {t('feedback.filter.allStatuses', { defaultValue: 'Tüm durumlar' })}
+            </option>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABEL[s]}
+              </option>
+            ))}
+          </Select>
+          <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
+            {t('feedback.count', { defaultValue: '{{count}} bildirim', count: tickets.length })}
+          </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-        >
-          <Plus size={13} />
-          {t('feedback.page.new', { defaultValue: 'Yeni Bildirim' })}
-        </button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as FeedbackType | '')}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="">{t('feedback.filter.allTypes', { defaultValue: 'Tüm türler' })}</option>
-          {(Object.keys(TYPE_LABEL) as FeedbackType[]).map((tp) => (
-            <option key={tp} value={tp}>
-              {TYPE_LABEL[tp]}
-            </option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as FeedbackStatus | '')}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="">
-            {t('feedback.filter.allStatuses', { defaultValue: 'Tüm durumlar' })}
-          </option>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABEL[s]}
-            </option>
-          ))}
-        </select>
-        <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
-          {t('feedback.count', { defaultValue: '{{count}} bildirim', count: tickets.length })}
-        </span>
-      </div>
-
+      }
+    >
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
         {listQuery.isPending ? (
           <div className="px-3 py-8 text-center text-sm text-slate-500">
@@ -210,7 +213,7 @@ export const FeedbackPage = () => {
                       {ticket.createdByName && <span>{ticket.createdByName}</span>}
                     </div>
                     {ticket.adminResponse && (
-                      <div className="rounded border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs text-indigo-800 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-200">
+                      <div className="rounded border border-primary-200 bg-primary-50 px-2 py-1.5 text-xs text-primary-800 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-200">
                         <span className="font-semibold">
                           {t('feedback.adminResponse', { defaultValue: 'Yönetici yanıtı' })}:{' '}
                         </span>
@@ -227,7 +230,7 @@ export const FeedbackPage = () => {
       </div>
 
       {modalOpen && <FeedbackFormModal onClose={() => setModalOpen(false)} />}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -244,36 +247,28 @@ const AdminStatusEditor = ({
 
   return (
     <div className="flex flex-wrap items-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-      <div>
-        <label className="block text-[10px] font-semibold uppercase text-slate-400">
-          {t('feedback.status', { defaultValue: 'Durum' })}
-        </label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as FeedbackStatus)}
-          className="mt-0.5 rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {STATUS_LABEL[s]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <input
+      <Select
+        label={t('feedback.status', { defaultValue: 'Durum' })}
+        value={status}
+        onChange={(e) => setStatus(e.target.value as FeedbackStatus)}
+        className="w-full sm:w-48"
+      >
+        {STATUS_OPTIONS.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_LABEL[s]}
+          </option>
+        ))}
+      </Select>
+      <Input
         type="text"
         value={response}
         onChange={(e) => setResponse(e.target.value)}
         placeholder={t('feedback.responsePlaceholder', { defaultValue: 'Yanıt (opsiyonel)' })}
-        className="min-w-[180px] flex-1 rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        className="min-w-[180px] flex-1"
       />
-      <button
-        type="button"
-        onClick={() => onApply(ticket, status, response)}
-        className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
-      >
+      <Button type="button" size="sm" onClick={() => onApply(ticket, status, response)}>
         {t('feedback.apply', { defaultValue: 'Uygula' })}
-      </button>
+      </Button>
     </div>
   );
 };

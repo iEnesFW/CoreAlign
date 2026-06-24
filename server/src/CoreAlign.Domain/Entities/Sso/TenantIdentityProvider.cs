@@ -67,7 +67,7 @@ public class TenantIdentityProvider : TenantEntity, IHasConcurrencyToken, ISoftD
 
         return new TenantIdentityProvider
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             TenantId = tenantId,
             Name = name.Trim(),
             Protocol = protocol,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pencil, Plus, Trash2, X } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useCreateProductVariant,
@@ -9,6 +9,10 @@ import {
   useUpdateProductVariant,
 } from '@/features/products/hooks/useProductVariants';
 import type { ProductVariant } from '@/features/products/api/productVariantsApi';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
 
 interface ProductVariantsTabProps {
   productId: string;
@@ -154,7 +158,7 @@ export const ProductVariantsTab = ({ productId }: ProductVariantsTabProps) => {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 rounded-[5px] bg-indigo-600 text-white text-[11px] font-semibold px-2.5 py-1.5 hover:bg-indigo-500"
+          className="inline-flex items-center gap-1.5 rounded-[5px] bg-primary-600 text-white text-[11px] font-semibold px-2.5 py-1.5 hover:bg-primary-500"
         >
           <Plus className="h-3.5 w-3.5" />
           {t('Products.Variants.add', { defaultValue: 'Add variant' })}
@@ -224,7 +228,7 @@ export const ProductVariantsTab = ({ productId }: ProductVariantsTabProps) => {
                     <span
                       className={
                         variant.isActive
-                          ? 'inline-block rounded-[3px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 text-[10px]'
+                          ? 'inline-block rounded-[3px] bg-success-100 text-success-700 px-1.5 py-0.5 text-[10px]'
                           : 'inline-block rounded-[3px] bg-slate-100 text-slate-500 px-1.5 py-0.5 text-[10px]'
                       }
                     >
@@ -246,7 +250,7 @@ export const ProductVariantsTab = ({ productId }: ProductVariantsTabProps) => {
                         onClick={() => void confirmDelete(variant)}
                         disabled={pendingId === variant.id}
                         aria-label={t('Products.Variants.delete', { defaultValue: 'Delete' })}
-                        className="p-1 rounded-[3px] hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 disabled:opacity-40"
+                        className="p-1 rounded-[3px] hover:bg-danger-50 dark:hover:bg-danger-500/10 text-danger-500 disabled:opacity-40"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -259,117 +263,89 @@ export const ProductVariantsTab = ({ productId }: ProductVariantsTabProps) => {
         </div>
       )}
 
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <form
-            onSubmit={submit}
-            className="w-full max-w-md rounded-[6px] bg-white dark:bg-slate-900 shadow-lg p-4 space-y-3"
-          >
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                {form.id
-                  ? t('Products.Variants.editTitle', { defaultValue: 'Edit variant' })
-                  : t('Products.Variants.createTitle', { defaultValue: 'New variant' })}
-              </h4>
-              <button
-                type="button"
-                onClick={closeModal}
-                className="p-1 rounded-[3px] hover:bg-slate-100 dark:hover:bg-slate-800"
-                aria-label={t('Products.Variants.cancel', { defaultValue: 'Cancel' })}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                {t('Products.Variants.sku', { defaultValue: 'SKU' })}
-                <input
-                  type="text"
-                  required
-                  value={form.sku}
-                  onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-                  className="mt-1 w-full text-[11px] px-2 py-1.5 rounded-[3px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                />
-              </label>
-              <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                {t('Products.Variants.barcode', { defaultValue: 'Barcode' })}
-                <input
-                  type="text"
-                  value={form.barcode}
-                  onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
-                  className="mt-1 w-full text-[11px] px-2 py-1.5 rounded-[3px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                />
-              </label>
-              <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                {t('Products.Variants.attributes', { defaultValue: 'Attributes (JSON)' })}
-                <textarea
-                  value={form.variantAttributesJson}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, variantAttributesJson: e.target.value }))
-                  }
-                  rows={3}
-                  className="mt-1 w-full text-[11px] font-mono px-2 py-1.5 rounded-[3px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                />
-                <span className="block text-[10px] text-slate-400 mt-1">
-                  {t('Products.Variants.attributesHint', {
-                    defaultValue: 'JSON object, e.g. {"color":"red","size":"L"}',
-                  })}
-                </span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                  {t('Products.Variants.priceOverride', { defaultValue: 'Price override' })}
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={form.priceOverride}
-                    onChange={(e) => setForm((f) => ({ ...f, priceOverride: e.target.value }))}
-                    className="mt-1 w-full text-[11px] px-2 py-1.5 rounded-[3px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                  />
-                </label>
-                <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-200">
-                  {t('Products.Variants.stock', { defaultValue: 'Stock' })}
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    value={form.stockQuantity}
-                    disabled={!!form.id}
-                    onChange={(e) => setForm((f) => ({ ...f, stockQuantity: e.target.value }))}
-                    className="mt-1 w-full text-[11px] px-2 py-1.5 rounded-[3px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:bg-slate-50 dark:disabled:bg-slate-800"
-                  />
-                </label>
-              </div>
-              <label className="inline-flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                  className="h-3.5 w-3.5 rounded-[2px] border-slate-300"
-                />
-                {t('Products.Variants.active', { defaultValue: 'Active' })}
-              </label>
-            </div>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="px-3 py-1.5 text-[11px] rounded-[3px] bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200"
-              >
-                {t('Products.Variants.cancel', { defaultValue: 'Cancel' })}
-              </button>
-              <button
-                type="submit"
-                disabled={createMutation.isPending || updateMutation.isPending}
-                className="px-3 py-1.5 text-[11px] rounded-[3px] bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-60"
-              >
-                {t('Products.Variants.save', { defaultValue: 'Save' })}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      <Modal
+        open={modalOpen}
+        title={
+          form.id
+            ? t('Products.Variants.editTitle', { defaultValue: 'Edit variant' })
+            : t('Products.Variants.createTitle', { defaultValue: 'New variant' })
+        }
+        icon={form.id ? <Pencil size={18} /> : <Plus size={18} />}
+        onClose={closeModal}
+        size="md"
+        footer={
+          <>
+            <Button type="button" variant="ghost" onClick={closeModal}>
+              {t('Products.Variants.cancel', { defaultValue: 'Cancel' })}
+            </Button>
+            <Button
+              type="submit"
+              form="product-variant-form"
+              isLoading={createMutation.isPending || updateMutation.isPending}
+            >
+              {t('Products.Variants.save', { defaultValue: 'Save' })}
+            </Button>
+          </>
+        }
+      >
+        <form id="product-variant-form" onSubmit={submit} className="space-y-3">
+          <Input
+            label={t('Products.Variants.sku', { defaultValue: 'SKU' })}
+            type="text"
+            required
+            value={form.sku}
+            onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
+          />
+          <Input
+            label={t('Products.Variants.barcode', { defaultValue: 'Barcode' })}
+            type="text"
+            value={form.barcode}
+            onChange={(e) => setForm((f) => ({ ...f, barcode: e.target.value }))}
+          />
+          <div>
+            <Textarea
+              label={t('Products.Variants.attributes', { defaultValue: 'Attributes (JSON)' })}
+              value={form.variantAttributesJson}
+              onChange={(e) => setForm((f) => ({ ...f, variantAttributesJson: e.target.value }))}
+              rows={3}
+              className="font-mono"
+            />
+            <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
+              {t('Products.Variants.attributesHint', {
+                defaultValue: 'JSON object, e.g. {"color":"red","size":"L"}',
+              })}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label={t('Products.Variants.priceOverride', { defaultValue: 'Price override' })}
+              type="number"
+              step="0.0001"
+              min="0"
+              value={form.priceOverride}
+              onChange={(e) => setForm((f) => ({ ...f, priceOverride: e.target.value }))}
+            />
+            <Input
+              label={t('Products.Variants.stock', { defaultValue: 'Stock' })}
+              type="number"
+              step="0.0001"
+              min="0"
+              value={form.stockQuantity}
+              disabled={!!form.id}
+              onChange={(e) => setForm((f) => ({ ...f, stockQuantity: e.target.value }))}
+            />
+          </div>
+          <label className="inline-flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-200">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              className="h-3.5 w-3.5 rounded-[2px] border-slate-300"
+            />
+            {t('Products.Variants.active', { defaultValue: 'Active' })}
+          </label>
+        </form>
+      </Modal>
     </section>
   );
 };

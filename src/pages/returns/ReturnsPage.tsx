@@ -158,7 +158,7 @@ const Row = ({ row, locale }: RowProps) => {
       <td className="px-3 py-2">
         <Link
           to={`/dashboard/returns/${row.id}`}
-          className="font-mono text-indigo-600 hover:underline dark:text-indigo-400"
+          className="font-mono text-primary-600 hover:underline dark:text-primary-400"
         >
           {row.returnNumber}
         </Link>
@@ -177,7 +177,7 @@ const Row = ({ row, locale }: RowProps) => {
       <td className="px-3 py-2 text-right">
         <Link
           to={`/dashboard/returns/${row.id}`}
-          className="text-slate-400 hover:text-indigo-500"
+          className="text-slate-400 hover:text-primary-500"
           aria-label={t('Returns.actions.view')}
         >
           <Eye size={14} />

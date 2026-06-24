@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import axios from 'axios';
-import { useAuthStore } from '../model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { authApi } from '../api/authApi';
 import { isApiError } from '@/shared/api/ApiError';
 

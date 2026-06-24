@@ -13,7 +13,7 @@ import type {
   GLPostingMapping,
 } from '@/features/accounting/model/glPostingMap.types';
 
-const KEY_LABELS: Record<GLPostingKey, string> = {
+const KEY_DEFAULTS: Record<GLPostingKey, string> = {
   AccountsReceivable: 'Alıcılar (AR)',
   SalesRevenue: 'Satış Geliri',
   OutputVat: 'Hesaplanan KDV',
@@ -29,27 +29,38 @@ const KEY_LABELS: Record<GLPostingKey, string> = {
 };
 
 export const GLPostingMapSection = () => {
+  const { t } = useTranslation();
   const query = useGLPostingMapQuery();
   const rows = query.data?.data ?? [];
 
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Otomatik muhasebe fişleri (satış, tahsilat, tedarikçi faturası/ödemesi, mal kabul, SMM)
-        oluşturulurken her rolün hangi muhasebe hesabına işleneceğini buradan belirleyin. Boş
-        bırakılan satırlar varsayılan TDHP koduyla çalışır; eşleşen hesap bulunamazsa o fiş sessizce
-        atlanır ve ana işlem akışı bozulmaz.
+        {t('Accounting.glPostingMap.help', {
+          defaultValue:
+            'Otomatik muhasebe fişleri (satış, tahsilat, tedarikçi faturası/ödemesi, mal kabul, SMM) oluşturulurken her rolün hangi muhasebe hesabına işleneceğini buradan belirleyin. Boş bırakılan satırlar varsayılan TDHP koduyla çalışır; eşleşen hesap bulunamazsa o fiş sessizce atlanır ve ana işlem akışı bozulmaz.',
+        })}
       </p>
 
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
             <tr>
-              <th className="px-3 py-2 text-left">Rol</th>
-              <th className="w-28 px-3 py-2 text-left">Varsayılan</th>
-              <th className="w-32 px-3 py-2 text-left">Hesap Kodu</th>
-              <th className="px-3 py-2 text-left">Hesap</th>
-              <th className="w-20 px-3 py-2 text-center">Durum</th>
+              <th className="px-3 py-2 text-left">
+                {t('Accounting.glPostingMap.columns.role', { defaultValue: 'Rol' })}
+              </th>
+              <th className="w-28 px-3 py-2 text-left">
+                {t('Accounting.glPostingMap.columns.default', { defaultValue: 'Varsayılan' })}
+              </th>
+              <th className="w-32 px-3 py-2 text-left">
+                {t('Accounting.glPostingMap.columns.accountCode', { defaultValue: 'Hesap Kodu' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('Accounting.glPostingMap.columns.account', { defaultValue: 'Hesap' })}
+              </th>
+              <th className="w-20 px-3 py-2 text-center">
+                {t('Accounting.glPostingMap.columns.status', { defaultValue: 'Durum' })}
+              </th>
               <th className="px-3 py-2" />
             </tr>
           </thead>
@@ -61,13 +72,17 @@ export const GLPostingMapSection = () => {
               <tr>
                 <td
                   colSpan={6}
-                  className={`px-3 py-4 text-center text-xs ${query.isError ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}
+                  className={`px-3 py-4 text-center text-xs ${query.isError ? 'text-danger-600 dark:text-danger-400' : 'text-slate-500'}`}
                 >
                   {query.isPending
-                    ? 'Yükleniyor…'
+                    ? t('Accounting.glPostingMap.loading', { defaultValue: 'Yükleniyor…' })
                     : query.isError
-                      ? 'Eşleştirmeler yüklenemedi.'
-                      : 'Eşleştirme bulunamadı.'}
+                      ? t('Accounting.glPostingMap.loadError', {
+                          defaultValue: 'Eşleştirmeler yüklenemedi.',
+                        })
+                      : t('Accounting.glPostingMap.empty', {
+                          defaultValue: 'Eşleştirme bulunamadı.',
+                        })}
                 </td>
               </tr>
             )}
@@ -87,12 +102,16 @@ const MapRow = ({ row }: { row: GLPostingMapping }) => {
 
   const save = async () => {
     if (!code.trim()) {
-      toast.error('Hesap kodu zorunludur.');
+      toast.error(
+        t('Accounting.glPostingMap.codeRequired', { defaultValue: 'Hesap kodu zorunludur.' }),
+      );
       return;
     }
     try {
       await configure.mutateAsync({ key: row.postingKey, accountCode: code.trim() });
-      toast.success('Hesap eşleştirmesi kaydedildi.');
+      toast.success(
+        t('Accounting.glPostingMap.saved', { defaultValue: 'Hesap eşleştirmesi kaydedildi.' }),
+      );
     } catch (err) {
       toastApiError(err);
     }
@@ -102,10 +121,14 @@ const MapRow = ({ row }: { row: GLPostingMapping }) => {
     <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
       <td className="px-3 py-2">
         <div className="font-medium text-slate-800 dark:text-slate-100">
-          {KEY_LABELS[row.postingKey] ?? row.key}
+          {t(`Accounting.glPostingMap.roles.${row.postingKey}`, {
+            defaultValue: KEY_DEFAULTS[row.postingKey] ?? row.key,
+          })}
         </div>
         {row.overrideCode && (
-          <span className="text-[10px] text-indigo-600 dark:text-indigo-400">özelleştirildi</span>
+          <span className="text-[10px] text-primary-600 dark:text-primary-400">
+            {t('Accounting.glPostingMap.customized', { defaultValue: 'özelleştirildi' })}
+          </span>
         )}
       </td>
       <td className="px-3 py-2 font-mono text-xs text-slate-500 dark:text-slate-400">
@@ -119,12 +142,18 @@ const MapRow = ({ row }: { row: GLPostingMapping }) => {
       </td>
       <td className="px-3 py-2 text-center">
         {row.resolves ? (
-          <CheckCircle2 size={15} className="mx-auto text-emerald-500" aria-label="çözümlendi" />
+          <CheckCircle2
+            size={15}
+            className="mx-auto text-success-500"
+            aria-label={t('Accounting.glPostingMap.resolved', { defaultValue: 'çözümlendi' })}
+          />
         ) : (
           <AlertTriangle
             size={15}
-            className="mx-auto text-amber-500"
-            aria-label="hesap bulunamadı"
+            className="mx-auto text-warning-500"
+            aria-label={t('Accounting.glPostingMap.unresolved', {
+              defaultValue: 'hesap bulunamadı',
+            })}
           />
         )}
       </td>
@@ -133,7 +162,7 @@ const MapRow = ({ row }: { row: GLPostingMapping }) => {
           type="button"
           onClick={save}
           disabled={!dirty || configure.isPending}
-          className="rounded bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
+          className="rounded bg-primary-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-primary-700 disabled:opacity-40"
         >
           {t('common.save', { defaultValue: 'Kaydet' })}
         </button>

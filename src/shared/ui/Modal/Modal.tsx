@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 
@@ -39,6 +40,7 @@ export const Modal = ({
   className,
   bodyClassName,
 }: Props) => {
+  const { t } = useTranslation();
   const closeRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +94,7 @@ export const Modal = ({
         {(title || icon) && (
           <header className="flex items-start gap-3 border-b border-slate-200/80 bg-slate-50/40 px-4 py-3 dark:border-slate-800/80 dark:bg-slate-900/40">
             {icon && (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/20">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 text-white shadow-md shadow-primary-500/20">
                 {icon}
               </div>
             )}
@@ -112,8 +114,8 @@ export const Modal = ({
               ref={closeRef}
               type="button"
               onClick={onClose}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-              aria-label="Close"
+              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              aria-label={t('Common.Close', { defaultValue: 'Close' })}
             >
               <X size={14} />
             </button>

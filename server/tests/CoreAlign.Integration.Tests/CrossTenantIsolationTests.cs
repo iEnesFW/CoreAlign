@@ -206,6 +206,36 @@ public class CrossTenantIsolationTests
     }
 
     [Fact]
+    public async Task TenantAdminA_ReadingCreditedByLineOfTenantBInvoice_ReturnsEmpty()
+    {
+        var client = AdminOfTenantA();
+        var response = await client.GetAsync($"/api/v1/Invoices/{_factory.TenantB.InvoiceId}/credited-by-line");
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            AssertDenied(response);
+            return;
+        }
+        var body = await response.Content.ReadAsStringAsync();
+        body.Should().NotContain(_factory.TenantB.InvoiceId.ToString());
+    }
+
+    [Fact]
+    public async Task TenantAdminA_CannotIssueCreditNoteOnTenantBInvoice()
+    {
+        var client = AdminOfTenantA();
+        var body = new
+        {
+            lines = new[] { new { invoiceLineId = Guid.NewGuid(), quantity = 1m } },
+            reason = (string?)null,
+            operationId = Guid.NewGuid(),
+        };
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/Invoices/{_factory.TenantB.InvoiceId}/credit-notes",
+            body);
+        AssertDeniedAllowValidation(response);
+    }
+
+    [Fact]
     public async Task TenantAdminA_CannotReadProductOfTenantB()
     {
         var client = AdminOfTenantA();
@@ -694,6 +724,38 @@ public class CrossTenantIsolationTests
             await db.SaveChangesAsync();
 
             return (run.Id, run.PlannedOrders.First().Id);
+        }
+    }
+
+    [Fact]
+    public async Task TenantAdminA_CannotDownloadFeedbackAttachmentOfTenantB()
+    {
+        var feedbackId = await SeedTenantBFeedbackWithAttachmentAsync();
+
+        var client = AdminOfTenantA();
+        var response = await client.GetAsync($"/api/v1/feedback/{feedbackId}/attachment");
+
+        AssertDenied(response);
+    }
+
+    private async Task<Guid> SeedTenantBFeedbackWithAttachmentAsync()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+
+        using (TenantContextAccessor.PushTenant(_factory.TenantB.TenantId))
+        {
+            var ticket = new CoreAlign.Domain.Entities.FeedbackTicket(
+                CoreAlign.Domain.Enums.FeedbackType.Bug,
+                "Cross-tenant feedback",
+                "Should never be reachable by Tenant A.",
+                CoreAlign.Domain.Enums.FeedbackPriority.Medium);
+            ticket.AttachFile("tenant-b/feedback-attachments/secret.png", "secret.png", "image/png");
+
+            db.Set<CoreAlign.Domain.Entities.FeedbackTicket>().Add(ticket);
+            await db.SaveChangesAsync();
+
+            return ticket.Id;
         }
     }
 }

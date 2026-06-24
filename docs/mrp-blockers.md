@@ -115,7 +115,7 @@ under ERP-MRP-001.
 note. Group B subsequently APPLIED `20260616000000_Phase72MrpPlanning` to the local dev
 Postgres (`Host=localhost;Port=5432;Database=corealign`, via the dev user-secret
 connection string passed explicitly to `dotnet ef database update`). The 7 product
-columns + 4 mrp_* tables are now live in dev. The migration is idempotent
+columns + 4 mrp\_\* tables are now live in dev. The migration is idempotent
 (`ADD COLUMN/CREATE TABLE/CREATE INDEX IF NOT EXISTS`), so re-applying anywhere is a
 no-op. See ERP-MRP-001 for the snapshot-reconcile obligation that still gates the next
 `dotnet ef migrations add`.
@@ -159,9 +159,9 @@ serialization differs, update `src/features/mrp/model/mrp-planning.types.ts` +
   `GET /mrp/change-impact/{planRunId}?sourceKind=&sourceId=` →
   `ApiResponse<ChangeImpactResult>` where `ChangeImpactResult` =
   `{ planRunId, demandSourceKind, demandSourceId, demandSourceLabel,
-  affectedPlannedOrderCount, affectedNodes: ChangeImpactNode[] }` and
+affectedPlannedOrderCount, affectedNodes: ChangeImpactNode[] }` and
   `ChangeImpactNode` = `{ plannedOrderId, productId, productSku, productName,
-  procurementType, quantity, dueDateUtc, lowLevelCode, parentProductId }`. Walks the
+procurementType, quantity, dueDateUtc, lowLevelCode, parentProductId }`. Walks the
   persisted pegging chain from a demand source (a sales-order line) down to every
   downstream planned order it pegs to. The "Change impact" workbench tab is wired to it;
   if the endpoint is not yet live the `useMrpChangeImpactQuery` returns empty/loading and
@@ -263,6 +263,7 @@ and the integration test (`MrpMakeVsBuyIntegrationTests.ChangeImpact_lists_downs
 which calls `/api/v1/mrp/change-impact/{run.Id}/{Guid.NewGuid()}`).
 
 **Fix (frontend only, no backend/glass touched):**
+
 - `mrp-planning.types.ts`: replaced `ChangeImpactNode`/old `ChangeImpactResult` with
   `ChangeImpactSupplyOrder` + the real `ChangeImpactResult`
   (`{ planRunId, sourceOrderLineId, downstreamSupply }`); added `OrderSinkKind`
@@ -294,6 +295,7 @@ i18n key is left in both `en.json`/`tr.json` (parity preserved, 4110/4110); harm
 (design-time factory creds; runtime `Migrate()` applies). Frontend T3 UI = follow-up.
 
 **Shipped (T3 backend):**
+
 - **Firm-as-fixed-supply.** `MrpPlanningDataLoader.LoadFirmedSupplyAsync` loads firmed buy
   orders (`MrpPlannedOrder` `IsFirmed && !IsReleased`) + firm production orders
   (`PlannedProductionOrder` `Status==Firm`) into `MrpPlanningSnapshot.FirmedSupply`. The engine
@@ -301,7 +303,7 @@ i18n key is left in both `en.json`/`tr.json` (parity preserved, 4110/4110); harm
   firmed decisions and emits no duplicate orders; make firm orders ALSO feed `plannedReleases`
   (release-bucket) so component demand still explodes. See INVARIANTS (firmed-as-supply).
 - **Override audit.** `MrpPlannedOrder` + `PlannedProductionOrder` gained `OriginalQuantity`
-  + `OriginalDueDateUtc`, captured in `Firm()` (first-value-wins). Migration Phase74.
+  - `OriginalDueDateUtc`, captured in `Firm()` (first-value-wins). Migration Phase74.
 - **Net-change.** `MrpPlanningMode.NetChange` on `CommitMrpPlanCommand` → `CommitAsync`
   skips creating a redundant run when the plan equals the latest committed run
   (`FindUnchangedLatestRunAsync` signature compare). **Limitation:** this is skip-if-unchanged,

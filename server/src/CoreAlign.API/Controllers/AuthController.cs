@@ -113,7 +113,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> GetCurrentUserAsync(CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = CurrentUserId;
         var result = await _mediator.Send(new GetCurrentUserQuery(userId), cancellationToken);
         return result.ToOk();
     }
@@ -122,7 +122,7 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> ChangePasswordAsync([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = CurrentUserId;
         var command = new ChangePasswordCommand(userId, request.CurrentPassword, request.NewPassword);
         var result = await _mediator.Send(command, cancellationToken);
         if (result)
@@ -136,11 +136,71 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateProfileAsync([FromBody] UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = CurrentUserId;
         var command = new UpdateProfileCommand(userId, request.FirstName, request.LastName, request.PhoneNumber, request.AvatarUrl);
         var result = await _mediator.Send(command, cancellationToken);
         return result.ToOk();
     }
+
+    [HttpPost("2fa/enroll")]
+    [Authorize]
+    public async Task<IActionResult> EnrollTwoFactorAsync(CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new EnrollTwoFactorCommand(CurrentUserId), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("2fa/verify")]
+    [Authorize]
+    public async Task<IActionResult> VerifyTwoFactorAsync([FromBody] TwoFactorVerifyRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new VerifyTwoFactorEnrollmentCommand(CurrentUserId, request.Code), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("2fa/disable")]
+    [Authorize]
+    public async Task<IActionResult> DisableTwoFactorAsync([FromBody] TwoFactorPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new DisableTwoFactorCommand(CurrentUserId, request.Password), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("2fa/backup-codes/regenerate")]
+    [Authorize]
+    public async Task<IActionResult> RegenerateBackupCodesAsync([FromBody] TwoFactorPasswordRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new RegenerateBackupCodesCommand(CurrentUserId, request.Password), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("2fa/challenge")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> CompleteTwoFactorChallengeAsync([FromBody] TwoFactorChallengeRequest request, CancellationToken cancellationToken)
+    {
+        var command = new CompleteTwoFactorChallengeCommand(
+            request.ChallengeToken,
+            request.Code,
+            request.BackupCode,
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            Request.Headers.UserAgent.ToString());
+
+        var result = await _mediator.Send(command, cancellationToken);
+        AttachRefreshTokenCookie(result);
+        return result.ToOk();
+    }
+
+    [HttpPost("2fa/step-up")]
+    [Authorize]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> StepUpTwoFactorAsync([FromBody] TwoFactorStepUpRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new StepUpTwoFactorCommand(CurrentUserId, request.Code), cancellationToken);
+        return result.ToOk();
+    }
+
+    private Guid CurrentUserId => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
     private void AttachRefreshTokenCookie(AuthResponseDto result)
     {

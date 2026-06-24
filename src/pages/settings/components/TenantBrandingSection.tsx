@@ -69,7 +69,11 @@ export const TenantBrandingSection = () => {
             {t('TenantBranding.current', { defaultValue: 'Current logo' })}
           </p>
           {logoUrl ? (
-            <img src={logoUrl} alt="Tenant logo" className="max-h-20 max-w-full object-contain" />
+            <img
+              src={logoUrl}
+              alt={t('TenantBranding.logoAlt', { defaultValue: 'Tenant logo' })}
+              className="max-h-20 max-w-full object-contain"
+            />
           ) : (
             <div className="flex flex-col items-center gap-1 text-slate-400">
               <ImageIcon className="h-6 w-6" />
@@ -93,7 +97,7 @@ export const TenantBrandingSection = () => {
           }}
           className={`rounded-[5px] border-2 border-dashed p-4 flex flex-col items-center justify-center gap-2 text-center min-h-[120px] transition ${
             dragOver
-              ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-500/10'
+              ? 'border-primary-500 bg-primary-50/40 dark:bg-primary-500/10'
               : 'border-slate-200 dark:border-slate-700'
           }`}
         >
@@ -115,7 +119,7 @@ export const TenantBrandingSection = () => {
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploadMutation.isPending}
-            className="rounded-[5px] bg-indigo-600 text-white text-[11px] font-semibold px-3 py-1.5 hover:bg-indigo-500 disabled:opacity-60"
+            className="rounded-[5px] bg-primary-600 text-white text-[11px] font-semibold px-3 py-1.5 hover:bg-primary-500 disabled:opacity-60"
           >
             {uploadMutation.isPending
               ? t('TenantBranding.uploading', { defaultValue: 'Uploading…' })

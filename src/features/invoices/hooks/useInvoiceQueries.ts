@@ -38,6 +38,13 @@ export const useCreditNotesForInvoice = (invoiceId: string | null) =>
     enabled: invoiceId !== null,
   });
 
+export const useCreditedQuantitiesByLine = (invoiceId: string | null) =>
+  useQuery({
+    queryKey: ['invoices', 'credited-by-line', invoiceId] as const,
+    queryFn: () => invoicesApi.getCreditedByLine(invoiceId as string),
+    enabled: invoiceId !== null,
+  });
+
 interface GenerateArgs {
   orderId: string;
   request?: GenerateInvoiceRequest;
@@ -101,6 +108,7 @@ export const useIssueCreditNote = () => {
       queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
       queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(vars.id) });
       queryClient.invalidateQueries({ queryKey: ['invoices', 'credit-notes', vars.id] });
+      queryClient.invalidateQueries({ queryKey: ['invoices', 'credited-by-line', vars.id] });
     },
   });
 };

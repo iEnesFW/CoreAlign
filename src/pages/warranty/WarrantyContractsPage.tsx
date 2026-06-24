@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ShieldPlus } from 'lucide-react';
+import { ShieldCheck, ShieldPlus } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
 import { useWarrantyContractsQuery } from '@/features/warranty/hooks/useWarrantyContracts';
 import { WarrantyContractCard } from '@/features/warranty/ui/WarrantyContractCard';
 import { WarrantyAlertsBadge } from '@/features/warranty/ui/WarrantyAlertsBadge';
@@ -24,40 +26,38 @@ export const WarrantyContractsPage = () => {
   const contracts = data?.data ?? [];
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100 sm:text-2xl">
-            {t('Warranty.Title', { defaultValue: 'Warranty contracts' })}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Warranty.Subtitle', {
-              defaultValue: 'Track warranty coverage, expirations, and renewals.',
-            })}
-          </p>
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<ShieldCheck size={20} />}
+          title={t('Warranty.Title', { defaultValue: 'Warranty contracts' })}
+          subtitle={t('Warranty.Subtitle', {
+            defaultValue: 'Track warranty coverage, expirations, and renewals.',
+          })}
+          trailing={<WarrantyAlertsBadge />}
+        />
+      }
+      toolbar={
+        <div className="flex flex-wrap items-center gap-2">
+          {STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setStatus(opt)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                status === opt
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              {opt === 'All'
+                ? t('Common.Filter.All', { defaultValue: 'All' })
+                : t(`Warranty.Status.${opt}`, { defaultValue: opt })}
+            </button>
+          ))}
         </div>
-        <WarrantyAlertsBadge />
-      </header>
-
-      <div className="flex flex-wrap items-center gap-2">
-        {STATUS_OPTIONS.map((opt) => (
-          <button
-            key={opt}
-            type="button"
-            onClick={() => setStatus(opt)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              status === opt
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            {opt === 'All'
-              ? t('Common.Filter.All', { defaultValue: 'All' })
-              : t(`Warranty.Status.${opt}`, { defaultValue: opt })}
-          </button>
-        ))}
-      </div>
-
+      }
+    >
       {isLoading ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">
           {t('Common.Loading', { defaultValue: 'Loading...' })}
@@ -80,7 +80,7 @@ export const WarrantyContractsPage = () => {
           ))}
         </div>
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 

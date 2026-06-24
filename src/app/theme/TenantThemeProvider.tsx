@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useEffect, useMemo } from 'react';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import {
   usePublicThemeQuery,
   useTenantThemeQuery,
@@ -8,28 +8,18 @@ import type {
   PublicTenantThemeDto,
   TenantThemeDto,
 } from '@/features/whitelabel/model/whitelabel.types';
+import {
+  DEFAULT_TENANT_THEME,
+  TenantThemeContext,
+  type TenantThemeContextValue,
+} from './tenantThemeContext';
 
-interface TenantThemeContextValue {
-  primaryColor: string;
-  accentColor: string;
-  brandName?: string | null;
-  logoUrl?: string | null;
-  faviconUrl?: string | null;
-  loginBackgroundUrl?: string | null;
-  loginHeadingMd?: string | null;
-}
-
-const DEFAULT_VALUE: TenantThemeContextValue = {
-  primaryColor: '#0EA5E9',
-  accentColor: '#22D3EE',
-  brandName: null,
-  logoUrl: null,
-  faviconUrl: null,
-  loginBackgroundUrl: null,
-  loginHeadingMd: null,
-};
-
-const TenantThemeContext = createContext<TenantThemeContextValue>(DEFAULT_VALUE);
+const PRIMARY_RAMP_KEYS = [
+  '--color-primary-400',
+  '--color-primary-500',
+  '--color-primary-600',
+  '--color-primary-700',
+];
 
 const extractSubdomain = (): string | undefined => {
   if (typeof window === 'undefined') return undefined;
@@ -48,6 +38,17 @@ const applyThemeVariables = (value: TenantThemeContextValue) => {
   const root = document.documentElement;
   root.style.setProperty('--color-primary', value.primaryColor);
   root.style.setProperty('--color-accent', value.accentColor);
+
+  if (value.brandName) {
+    const p = value.primaryColor;
+    root.style.setProperty('--color-primary-400', `color-mix(in srgb, ${p} 55%, white)`);
+    root.style.setProperty('--color-primary-500', `color-mix(in srgb, ${p} 80%, white)`);
+    root.style.setProperty('--color-primary-600', p);
+    root.style.setProperty('--color-primary-700', `color-mix(in srgb, ${p} 82%, black)`);
+  } else {
+    PRIMARY_RAMP_KEYS.forEach((key) => root.style.removeProperty(key));
+  }
+
   if (value.logoUrl) {
     root.style.setProperty('--logo-url', `url("${value.logoUrl}")`);
   } else {
@@ -103,7 +104,7 @@ export const TenantThemeProvider = ({ children }: { children: React.ReactNode })
     const resolved = isAuthenticated
       ? fromAuthenticated(authedQuery.data)
       : fromPublic(publicQuery.data);
-    return resolved ?? DEFAULT_VALUE;
+    return resolved ?? DEFAULT_TENANT_THEME;
   }, [isAuthenticated, authedQuery.data, publicQuery.data]);
 
   useEffect(() => {
@@ -112,6 +113,3 @@ export const TenantThemeProvider = ({ children }: { children: React.ReactNode })
 
   return <TenantThemeContext.Provider value={value}>{children}</TenantThemeContext.Provider>;
 };
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const useTenantTheme = (): TenantThemeContextValue => useContext(TenantThemeContext);

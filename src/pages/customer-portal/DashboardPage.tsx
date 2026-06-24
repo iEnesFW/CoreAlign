@@ -7,7 +7,7 @@ import {
   useMyServiceTicketsQuery,
   useMyWarrantiesQuery,
 } from '@/features/customer-portal/hooks/useCustomerPortalQueries';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 
 interface StatCardProps {
   to: string;
@@ -22,7 +22,7 @@ const StatCard = ({ to, icon: Icon, title, value, hint }: StatCardProps) => (
     to={to}
     className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex items-center gap-3 hover:shadow-sm transition-shadow"
   >
-    <div className="w-10 h-10 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+    <div className="w-10 h-10 rounded-md bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
       <Icon size={20} />
     </div>
     <div className="min-w-0">
@@ -97,7 +97,7 @@ export const DashboardPage = () => {
             </h2>
             <Link
               to="/customer-portal/service-tickets"
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-primary-600 hover:underline"
             >
               {t('CustomerPortal.Common.ViewAll')}
             </Link>
@@ -133,7 +133,10 @@ export const DashboardPage = () => {
             <h2 className="text-sm font-semibold">
               {t('CustomerPortal.Dashboard.RecentInvoicesTitle')}
             </h2>
-            <Link to="/customer-portal/invoices" className="text-xs text-blue-600 hover:underline">
+            <Link
+              to="/customer-portal/invoices"
+              className="text-xs text-primary-600 hover:underline"
+            >
               {t('CustomerPortal.Common.ViewAll')}
             </Link>
           </div>

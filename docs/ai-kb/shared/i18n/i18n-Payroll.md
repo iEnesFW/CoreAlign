@@ -1,0 +1,260 @@
+# Payroll (CoreAlign UI)
+
+"Payroll" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Payroll" area (English / Türkçe):
+
+- Amount / Tutar
+- Enter a valid amount. / Geçerli bir tutar girin.
+- Component added. / Bileşen eklendi.
+- Edit Salary Component / Maaş Bileşenini Düzenle
+- Effective From / Geçerlilik Başlangıcı
+- Effective To / Geçerlilik Bitişi
+- Name / Ad
+- Component name is required. / Bileşen adı zorunlu.
+- Add Salary Component / Maaş Bileşeni Ekle
+- Recurring / Tekrarlayan
+- Taxable / Vergiye Tabi
+- Type / Tür
+- Component updated. / Bileşen güncellendi.
+- Base Salary / Temel Maaş
+- Bonus / İkramiye
+- Child Allowance / Çocuk Yardımı
+- Family Allowance / Aile Yardımı
+- Meal / Yemek
+- Overtime / Fazla Mesai
+- Premium / Prim
+- Transport / Yol
+- Total Amount / Toplam Tutar
+- Enter a valid amount. / Geçerli bir tutar girin.
+- Deduction added. / Kesinti eklendi.
+- Edit Deduction / Kesintiyi Düzenle
+- From / Başlangıç
+- To / Bitiş
+- Installment / Taksit Tutarı
+- Name / Ad
+- Deduction name is required. / Kesinti adı zorunlu.
+- Add Deduction / Kesinti Ekle
+- Repeat every period / Her dönem tekrarla
+- Remaining / Kalan
+- Type / Tür
+- Deduction updated. / Kesinti güncellendi.
+- Advance / Avans
+- Other / Diğer
+- Garnishment / Haciz
+- Private Pension (BES) / Bireysel Emeklilik (BES)
+- Union Dues / Sendika Aidatı
+- Add Component / Bileşen Ekle
+- Add Deduction / Kesinti Ekle
+- Employees / Personel
+- Gross Salary / Brüt Maaş
+- Component deleted. / Bileşen silindi.
+- No salary components. / Maaş bileşeni yok.
+- Deduction deleted. / Kesinti silindi.
+- No deductions. / Kesinti yok.
+- Delete {{name}}? / {{name}} silinsin mi?
+- Delete Component / Bileşeni Sil
+- Delete {{name}}? / {{name}} silinsin mi?
+- Delete Deduction / Kesintiyi Sil
+- Bank / Banka
+- Components / Bileşen Sayısı
+- Currency / Para Birimi
+- Department / Departman
+- Email / E-posta
+- Hire Date / İşe Giriş
+- IBAN
+- Notes / Notlar
+- No. / Sicil
+- Pay Frequency / Ödeme Periyodu
+- Phone / Telefon
+- National ID / TC Kimlik
+- Termination Date / Çıkış Tarihi
+- Leave recorded. / İzin kaydedildi.
+- Employee not found. / Personel bulunamadı.
+- Put on Leave / İzne Çıkar
+- Return from leave recorded. / İzin dönüşü kaydedildi.
+- Return to Work / İşe Döndür
+- Salary Components / Maaş Bileşenleri
+- Deductions / Kesintiler
+- Overview / Genel
+- Terminate / İşten Çıkar
+- Terminate {{name}}? / {{name}} işten çıkarılsın mı?
+- Termination / İşten Çıkış
+- Employee terminated. / Personel işten çıkarıldı.
+- Bank / Banka
+- Gross Salary / Brüt Maaş
+- Employee created. / Personel oluşturuldu.
+- Currency / Para Birimi
+- Department / Departman
+- Dependents / Bakmakla Yükümlü Sayısı
+- Edit Employee / Personeli Düzenle
+- Email / E-posta
+- Employee No. / Sicil No
+- Employment Type / Çalışma Türü
+- First Name / Ad
+- Hire Date / İşe Giriş Tarihi
+- IBAN
+- Job Title / Unvan
+- Last Name / Soyad
+- First and last name are required. / Ad ve soyad zorunlu.
+- National ID / TC Kimlik No
+- New Employee / Yeni Personel
+- Phone / Telefon
+- Salary Basis / Maaş Esası
+- Enter a valid salary. / Geçerli bir maaş girin.
+- Spouse Employed / Eşi Çalışıyor
+- National ID is required. / TC kimlik no zorunlu.
+- Employee updated. / Personel güncellendi.
+- All / Tümü
+- Gross Salary / Brüt Maaş
+- Department / Departman
+- Hire Date / İşe Giriş
+- Name / Ad Soyad
+- No. / Sicil
+- Status / Durum
+- National ID / TC Kimlik
+- No employees found. / Personel bulunamadı.
+- New Employee / Yeni Personel
+- employees / personel
+- Search name, number or department… / Ad, sicil no veya departman ara…
+- Filter by status / Duruma göre filtrele
+- Manage employee records, salaries and deductions. / Personel kayıtlarını yönetin, maaş ve kesintileri tanımlayın.
+- Employees / Personel
+- Active / Aktif
+- On Leave / İzinde
+- Terminated / İşten Ayrıldı
+- Full Time / Tam Zamanlı
+- Part Time / Yarı Zamanlı
+- Seasonal / Mevsimlik
+- Employees / Personel
+- Payroll Parameters / Bordro Parametreleri
+- Payroll Runs / Bordro Dönemleri
+- Effective / Geçerlilik
+- Minimum Wage / Asgari Ücret
+- Set Name / Set Adı
+- Scope / Kapsam
+- No parameter sets found. / Parametre seti bulunamadı.
+- New Set / Yeni Set
+- Read-only / Salt okunur
+- Define SGK, unemployment, stamp and income tax rates and minimum wage by effective period. / SGK, işsizlik, damga ve gelir vergisi oranları ile asgari ücret değerlerini dönemsel olarak tanımlayın.
+- System / Sistem
+- Tenant / Kuruluş
+- Payroll Parameters / Bordro Parametreleri
+- Add bracket / Dilim ekle
+- Income Tax Brackets / Gelir Vergisi Dilimleri
+- Parameter set created. / Parametre seti oluşturuldu.
+- Currency / Para Birimi
+- Edit Payroll Parameters / Bordro Parametrelerini Düzenle
+- Effective From / Geçerlilik Başlangıcı
+- Effective To / Geçerlilik Bitişi
+- Apply minimum wage income/stamp tax exemption / Asgari ücret gelir/damga vergisi istisnası uygula
+- Enter a valid minimum wage. / Geçerli bir asgari ücret girin.
+- Minimum Wage (Gross) / Asgari Ücret (Brüt)
+- Set Name / Set Adı
+- Parameter set name is required. / Parametre seti adı zorunlu.
+- New Parameter Set / Yeni Parametre Seti
+- Rate % / Oran %
+- SGK Base Ceiling / SGK Tavan Matrahı
+- SGK Employee % / SGK İşçi %
+- SGK Employer % / SGK İşveren %
+- Stamp Tax % / Damga Vergisi %
+- Unemployment Employee % / İşsizlik İşçi %
+- Unemployment Employer % / İşsizlik İşveren %
+- Parameters updated. / Parametreler güncellendi.
+- Upper Limit (empty = unlimited) / Üst Sınır (boş = sınırsız)
+- Amount / Tutar
+- Category / Kategori
+- Deduction / Kesinti
+- Earning / Kazanç
+- Employer Cost / İşveren Maliyeti
+- Code / Kod
+- Description / Açıklama
+- No payslip lines. / Bordro kalemi yok.
+- Gross Salary / Brüt Maaş
+- Print / Yazdır
+- Days Worked / Çalışılan Gün
+- Deductions / Kesintiler
+- Earnings / Kazançlar
+- Additional Earnings / Ek Kazançlar
+- Employee / Personel
+- Employer / İşveren
+- Total Employer Cost / Toplam İşveren Maliyeti
+- Employer Cost / İşveren Maliyeti
+- This payslip was generated electronically. / Bu bordro elektronik olarak oluşturulmuştur.
+- Gross Total / Brüt Toplam
+- Payslip / Maaş Bordrosu
+- IBAN
+- Income Tax / Gelir Vergisi
+- Minimum Wage Exemption / Asgari Ücret İstisnası
+- Income tax is calculated after applying a minimum-wage exemption of {{amount}}. / Gelir vergisi, {{amount}} asgari ücret istisnası düşülerek hesaplanmıştır.
+- Net Pay / Net Ödenecek
+- Other Deduction Items / Diğer Kesinti Kalemleri
+- Other Deductions / Diğer Kesintiler
+- Pay Date / Ödeme Tarihi
+- SGK Employee Share / SGK İşçi Payı
+- SGK Employer Share / SGK İşveren Payı
+- Stamp Tax / Damga Vergisi
+- Total Deductions / Toplam Kesinti
+- Unemployment Employee Share / İşsizlik İşçi Payı
+- Unemployment Employer Share / İşsizlik İşveren Payı
+- Action completed. / İşlem tamamlandı.
+- Approve / Onayla
+- After approval the run must be reopened to make changes. Continue? / Bordro onaylandıktan sonra değişiklik için yeniden açılması gerekir. Devam edilsin mi?
+- Approve Payroll / Bordroyu Onayla
+- Approved / Onaylandı
+- Payroll Runs / Bordro Dönemleri
+- Calculate / Hesapla
+- Calculated / Hesaplandı
+- Deductions / Kesintiler
+- Employee / Personel
+- Employer Cost / İşveren Maliyeti
+- Gross / Brüt
+- Net
+- Employer Cost / İşveren Maliyeti
+- This period has been paid. / Bu dönem ödendi.
+- Gross / Brüt
+- Income Tax / Gelir Vergisi
+- Net
+- Net Total / Net Toplam
+- Payroll run not found. / Bordro dönemi bulunamadı.
+- Paid / Ödendi
+- Pay Net Salaries / Net Maaşları Öde
+- Pay SGK / SGK Öde
+- Pay Taxes / Vergileri Öde
+- Payslips / Bordro Pusulaları
+- No payslips yet. Run the Calculate step. / Henüz pusula yok. Hesapla adımını çalıştırın.
+- Post / Muhasebeleştir
+- The payroll will be posted to accounting. Continue? / Bordro muhasebe kayıtlarına işlenecek. Devam edilsin mi?
+- Post / Muhasebeleştir
+- Posted / Muhasebeleşti
+- Recalculate / Yeniden Hesapla
+- Reopen / Yeniden Aç
+- The run will be returned to draft. Continue? / Bordro taslak durumuna döndürülecek. Devam edilsin mi?
+- Reopen Payroll / Bordroyu Yeniden Aç
+- SGK Employee / SGK İşçi
+- Stamp Tax / Damga Vergisi
+- Payslip / Bordro Pusulası
+- Approved / Onaylandı
+- Calculated / Hesaplandı
+- Draft / Taslak
+- Paid / Ödendi
+- Posted / Muhasebeleşti
+- All / Tümü
+- Employees / Personel
+- Gross / Brüt
+- Net
+- No. / No
+- Pay Date / Ödeme
+- Period / Dönem
+- Status / Durum
+- Create / Oluştur
+- Payroll run created. / Bordro dönemi oluşturuldu.
+- No payroll runs found. / Bordro dönemi bulunamadı.
+- Month / Ay
+- New Run / Yeni Dönem
+- New Payroll Run / Yeni Bordro Dönemi
+- runs / dönem
+- Filter by status / Duruma göre filtrele
+- Create, calculate and pay monthly payroll periods. / Aylık bordro dönemlerini oluştur, hesapla ve öde.
+- Payroll Runs / Bordro Dönemleri
+- Year / Yıl
+- Gross / Brüt
+- Net

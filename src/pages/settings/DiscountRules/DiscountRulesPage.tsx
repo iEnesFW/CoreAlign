@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import { Pencil, Plus, Power, Trash2 } from 'lucide-react';
+import { Pencil, Percent, Plus, Power, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Badge } from '@/shared/ui/Badge/Badge';
 import {
   useCreateDiscountRule,
   useDeleteDiscountRule,
@@ -19,7 +23,7 @@ import type {
 import {
   useCustomerGroupsQuery,
   useCategoriesQuery,
-} from '@/features/master-data/hooks/useMasterData';
+} from '@/shared/master-data/hooks/useMasterData';
 import { DiscountRuleForm } from './DiscountRuleForm';
 
 export const DiscountRulesPage = () => {
@@ -89,25 +93,21 @@ export const DiscountRulesPage = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            {t('Settings.DiscountRules.Title')}
-          </h2>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('Settings.DiscountRules.Subtitle')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setEditing('new')}
-          className="inline-flex items-center gap-1 rounded bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
-        >
-          <Plus size={12} /> {t('Settings.DiscountRules.New')}
-        </button>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Percent size={20} />}
+          title={t('Settings.DiscountRules.Title')}
+          subtitle={t('Settings.DiscountRules.Subtitle')}
+          actions={
+            <Button size="sm" onClick={() => setEditing('new')}>
+              <Plus size={14} />
+              {t('Settings.DiscountRules.New')}
+            </Button>
+          }
+        />
+      }
+    >
       <div className="overflow-x-auto rounded border border-slate-200 dark:border-slate-700">
         <table className="min-w-full text-xs">
           <thead className="bg-slate-50 text-left text-slate-500 dark:bg-slate-800 dark:text-slate-400">
@@ -158,8 +158,8 @@ export const DiscountRulesPage = () => {
                     onClick={() => handleToggleActive(rule)}
                     className={`rounded p-1 ${
                       rule.isActive
-                        ? 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30'
-                        : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30'
+                        ? 'text-warning-600 hover:bg-warning-50 dark:hover:bg-warning-900/30'
+                        : 'text-success-600 hover:bg-success-50 dark:hover:bg-success-900/30'
                     }`}
                     aria-label={t(rule.isActive ? 'Common.Deactivate' : 'Common.Activate')}
                   >
@@ -176,7 +176,7 @@ export const DiscountRulesPage = () => {
                   <button
                     type="button"
                     onClick={() => handleDelete(rule)}
-                    className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
+                    className="rounded p-1 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30"
                     aria-label={t('Common.Delete')}
                   >
                     <Trash2 size={12} />
@@ -229,20 +229,14 @@ export const DiscountRulesPage = () => {
           }}
         />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
 const StatusBadge = ({ active, t }: { active: boolean; t: TFunction }) => (
-  <span
-    className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-      active
-        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-        : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-    }`}
-  >
+  <Badge variant={active ? 'success' : 'neutral'}>
     {t(active ? 'Common.Active' : 'Common.Inactive')}
-  </span>
+  </Badge>
 );
 
 const validityLabel = (rule: DiscountRule): string => {

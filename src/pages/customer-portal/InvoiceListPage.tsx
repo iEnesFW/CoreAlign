@@ -18,7 +18,7 @@ export const InvoiceListPage = () => {
       {isLoading ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Common.Loading')}</div>
       ) : isError ? (
-        <div className="text-sm text-red-600">{t('CustomerPortal.Common.LoadError')}</div>
+        <div className="text-sm text-danger-600">{t('CustomerPortal.Common.LoadError')}</div>
       ) : items.length === 0 ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Invoice.Empty')}</div>
       ) : (
@@ -32,7 +32,7 @@ export const InvoiceListPage = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <Link
                     to={`/customer-portal/invoices/${inv.id}`}
-                    className="font-medium text-blue-600 hover:underline truncate"
+                    className="font-medium text-primary-600 hover:underline truncate"
                   >
                     {inv.invoiceNumber}
                   </Link>

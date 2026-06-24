@@ -1,0 +1,131 @@
+# Settings (CoreAlign UI)
+
+"Settings" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Settings" area (English / Türkçe):
+
+- These colors will be used as the company brand on invoice/order outputs and reports. / Bu renkler fatura/sipariş çıktılarında ve raporlarda firma markası olarak kullanılacaktır.
+- Brand settings saved. / Marka ayarları kaydedildi.
+- Cancel / İptal
+- Number of Decimal Places / Ondalık Basamak Sayısı
+- Delete / Sil
+- Code / Kod
+- Discount rule created / İndirim kuralı oluşturuldu
+- Customer Group / Cari Grubu
+- Delete Discount Rule / İndirim Kuralını Sil
+- Discount rule deleted / İndirim kuralı silindi
+- Description / Açıklama
+- Edit Discount Rule / İndirim Kuralını Düzenle
+- No discount rules defined yet / Henüz tanımlı indirim kuralı yok
+- Enter a valid discount value / Geçerli bir indirim değeri girin
+- Min. Quantity / Min. Miktar
+- Name / Ad
+- New Rule / Yeni Kural
+- Priority / Öncelik
+- Product / Ürün
+- Product Category / Ürün Kategorisi
+- Scope / Kapsam
+- Status / Durum
+- Discount Rules / İndirim Kuralları
+- Discount rule updated / İndirim kuralı güncellendi
+- Valid From / Geçerlilik Başlangıcı
+- Valid Until / Geçerlilik Bitişi
+- Validity / Geçerlilik
+- Value / Değer
+- Value Type / Değer Türü
+- Edit Template / Şablonu Düzenle
+- Active / Aktif
+- <p>Dear {{customerName}}, …</p> / <p>Sayın {{customerName}}, …</p>
+- Body (HTML) _ / Gövde (HTML) _
+- Code / Kod
+- Code _ / Kod _
+- Template created. / Şablon oluşturuldu.
+- Delete this template? / Şablon silinsin mi?
+- Delete Template / Şablonu Sil
+- Template deleted. / Şablon silindi.
+- Language / Dil
+- Language / Dil
+- Name / İsim
+- Name _ / İsim _
+- Subject / Konu
+- Your order has been received — {{orderNumber}} / Siparişiniz alındı — {{orderNumber}}
+- Subject _ / Konu _
+- Template updated. / Şablon güncellendi.
+- Email templates such as order confirmation, invoice notification, and overdue reminder. {{variable}} placeholders are filled in at the time of sending. / Sipariş onayı, fatura bildirimi, gecikme hatırlatması gibi e-posta şablonları. {{değişken}} placeholder'ları gönderim anında doldurulur.
+- Currency / Para Birimi
+- Filter by Currency / Para Birimine Göre Filtrele
+- No exchange rates found / Döviz kuru bulunamadı
+- Rate Against TRY / TRY Karşılığı Kur
+- Refresh Rates / Kurları Güncelle
+- Source / Kaynak
+- Exchange Rates / Döviz Kurları
+- Valid On / Geçerlilik Tarihi
+- Import Valid Rows / Geçerli Satırları İçe Aktar
+- {{count}} rows imported successfully / {{count}} satır başarıyla içe aktarıldı
+- Drag and drop a file here, or click to browse (.csv, .xlsx) / Dosyayı buraya sürükleyip bırakın veya seçmek için tıklayın (.csv, .xlsx)
+- Errors / Hatalar
+- {{count}} invalid rows found. Enable skipping invalid rows to continue. / {{count}} geçersiz satır bulundu. Devam etmek için geçersiz satırları atlama seçeneğini işaretleyin.
+- Invalid Rows / Geçersiz Satır
+- Row / Satır
+- Skip invalid rows / Geçersiz satırları atla
+- Data Imports / Veri İçe Aktarma
+- Total Rows / Toplam Satır
+- Valid Rows / Geçerli Satır
+- Failed to load. / Yüklenemedi.
+- Loading… / Yükleniyor…
+- English / İngilizce
+- Turkish / Türkçe
+- Logo preview / Logo önizleme
+- Logo URL
+- New Template / Yeni Şablon
+- New Email Template / Yeni E-posta Şablonu
+- No email templates yet. / Henüz e-posta şablonu yok.
+- Set how many decimal places amounts and quantities are displayed with on screen. / Tutar ve miktarların ekranda kaç ondalık basamakla gösterileceğini belirleyin.
+- This setting only affects display. Stored amounts, quantities and numeric values are kept at full precision; changing the number of decimal places does not change the data of existing orders and invoices. / Bu ayar yalnızca görüntülemeyi etkiler. Kayıtlı tutar, miktar ve sayısal değerler tam hassasiyetle saklanır; basamak sayısını değiştirmek mevcut sipariş ve faturaların verilerini değiştirmez.
+- Number format saved. / Sayı biçimi kaydedildi.
+- Number Format / Sayı Biçimi
+- Preview / Önizleme
+- No price lists defined yet / Henüz tanımlı fiyat listesi yok
+- Add Line / Satır Ekle
+- Price list line added / Fiyat listesi satırı eklendi
+- Discount % / İskonto %
+- No lines in this price list yet / Bu fiyat listesinde henüz satır yok
+- Discount must be between 0 and 100 / İskonto 0 ile 100 arasında olmalıdır
+- Min. quantity cannot exceed max. quantity / Min. miktar maks. miktardan büyük olamaz
+- Enter a valid price / Geçerli bir fiyat girin
+- Max. Quantity / Maks. Miktar
+- Product / Ürün
+- Remove Line / Satırı Kaldır
+- Price list line removed / Fiyat listesi satırı kaldırıldı
+- Select a product / Ürün seçin
+- Price List Lines / Fiyat Listesi Satırları
+- Price list line updated / Fiyat listesi satırı güncellendi
+- Price Lists / Fiyat Listeleri
+- Primary Color / Birincil Renk
+- Save / Kaydet
+- Saving… / Kaydediliyor…
+- Secondary Color / İkincil Renk
+- Active / Aktif
+- Inactive / Pasif
+- Code / Kod
+- Tax rule created / Vergi kuralı oluşturuldu
+- Delete Tax Rule / Vergi Kuralını Sil
+- Tax rule deleted / Vergi kuralı silindi
+- Description / Açıklama
+- Edit Tax Rule / Vergi Kuralını Düzenle
+- No tax rules defined yet / Henüz tanımlı vergi kuralı yok
+- Rate must be between 0 and 100 / Oran 0 ile 100 arasında olmalıdır
+- Fallback Tax Rate / Yedek Vergi Oranı
+- Name / Ad
+- New Rule / Yeni Kural
+- Priority / Öncelik
+- Product / Ürün
+- Product Category / Ürün Kategorisi
+- Product Class / Ürün Sınıfı
+- Rate (%) / Oran (%)
+- Region Code / Bölge Kodu
+- Scope / Kapsam
+- Status / Durum
+- Tax Rules / Vergi Kuralları
+- Tax rule updated / Vergi kuralı güncellendi
+- Valid From / Geçerlilik Başlangıcı
+- Valid Until / Geçerlilik Bitişi
+- GL Mapping / GL Eşleştirme

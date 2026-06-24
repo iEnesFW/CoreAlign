@@ -11,7 +11,6 @@ interface Props {
   onCancel: () => void;
 }
 
-// Mirrors the invoice row-action gating: mark-paid for Issued; cancel for Draft/Issued.
 const canMarkPaid = (s: InvoiceStatus) => s === 'Issued';
 const canCancel = (s: InvoiceStatus) => s === 'Draft' || s === 'Issued';
 
@@ -75,7 +74,7 @@ export const InvoiceStatusCell = ({ status, toneClass, onMarkPaid, onCancel }: P
               className={cn(
                 'block w-full px-3 py-1.5 text-left text-xs',
                 a.danger
-                  ? 'text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10'
+                  ? 'text-danger-600 hover:bg-danger-50 dark:text-danger-300 dark:hover:bg-danger-500/10'
                   : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-700/50',
               )}
             >

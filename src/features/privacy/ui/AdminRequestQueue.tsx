@@ -128,7 +128,7 @@ export const AdminRequestQueue = () => {
                         type="button"
                         onClick={() => handleProcess(req)}
                         disabled={processor.isPending}
-                        className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-md bg-success-600 px-2 py-1 text-xs font-medium text-white hover:bg-success-700 disabled:opacity-50"
                       >
                         <Check size={12} />
                         {t('Privacy.Admin.Process')}
@@ -137,7 +137,7 @@ export const AdminRequestQueue = () => {
                         type="button"
                         onClick={() => handleReject(req)}
                         disabled={processor.isPending}
-                        className="inline-flex items-center gap-1 rounded-md bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                        className="inline-flex items-center gap-1 rounded-md bg-danger-600 px-2 py-1 text-xs font-medium text-white hover:bg-danger-700 disabled:opacity-50"
                       >
                         <X size={12} />
                         {t('Privacy.Admin.Reject')}

@@ -2,6 +2,7 @@ using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Invoices.Commands;
 using CoreAlign.Application.Invoices.Queries;
+using CoreAlign.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,10 +52,52 @@ public class InvoicesController : ControllerBase
         return result.ToOk();
     }
 
+    [HttpPost("standalone")]
+    public async Task<IActionResult> CreateStandaloneAsync(
+        [FromBody] CreateStandaloneInvoiceCommand command,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return result.ToCreated();
+    }
+
+    [HttpPost("{id:guid}/credit-notes")]
+    public async Task<IActionResult> IssueCreditNoteAsync(
+        Guid id,
+        [FromBody] IssueCreditNoteRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new IssueCreditNoteCommand(
+            id,
+            request.Lines,
+            request.Reason,
+            request.ReturnRequestId,
+            request.OperationId);
+        var result = await _mediator.Send(command, cancellationToken);
+        return result.ToCreated();
+    }
+
     [HttpPost("{id:guid}/mark-paid")]
     public async Task<IActionResult> MarkPaidAsync(Guid id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new MarkInvoiceAsPaidCommand(id), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("{id:guid}/payments")]
+    public async Task<IActionResult> RecordPaymentAsync(
+        Guid id,
+        [FromBody] RecordInvoicePaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new RecordInvoicePaymentCommand(
+            id,
+            request.Amount,
+            request.Method,
+            request.PaymentDate,
+            request.ReferenceNumber,
+            request.Notes);
+        var result = await _mediator.Send(command, cancellationToken);
         return result.ToOk();
     }
 
@@ -71,6 +114,26 @@ public class InvoicesController : ControllerBase
         var result = await _mediator.Send(new GetCreditNotesForInvoiceQuery(id), cancellationToken);
         return result.ToOk();
     }
+
+    [HttpGet("{id:guid}/credited-by-line")]
+    public async Task<IActionResult> GetCreditedByLineAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new GetCreditedQuantitiesByLineQuery(id), cancellationToken);
+        return result.ToOk();
+    }
 }
 
 public record GenerateInvoiceRequest(int DueDays = 30, string? Notes = null);
+
+public record IssueCreditNoteRequest(
+    IReadOnlyList<IssueCreditNoteLineInput> Lines,
+    string? Reason = null,
+    Guid? ReturnRequestId = null,
+    Guid? OperationId = null);
+
+public record RecordInvoicePaymentRequest(
+    decimal Amount,
+    PaymentMethod Method = PaymentMethod.BankTransfer,
+    DateTime? PaymentDate = null,
+    string? ReferenceNumber = null,
+    string? Notes = null);

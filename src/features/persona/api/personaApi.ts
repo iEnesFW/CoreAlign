@@ -1,6 +1,6 @@
 import { apiClient } from '@/shared/api/apiClient';
 import type { ApiResponse } from '@/shared/types/api';
-import type { UxComplexityMode } from '../model/personaStore';
+import type { UxComplexityMode } from '@/shared/lib/persona';
 
 export interface UserPreferenceSnapshot {
   effectiveMode: UxComplexityMode;

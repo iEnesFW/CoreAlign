@@ -58,17 +58,17 @@ const marginTone = (pct: number): 'red' | 'amber' | 'emerald' | 'slate' => {
 };
 
 const toneText: Record<'red' | 'amber' | 'emerald' | 'slate' | 'indigo', string> = {
-  red: 'text-red-600 dark:text-red-400',
-  amber: 'text-amber-600 dark:text-amber-400',
-  emerald: 'text-emerald-600 dark:text-emerald-400',
+  red: 'text-danger-600 dark:text-danger-400',
+  amber: 'text-warning-600 dark:text-warning-400',
+  emerald: 'text-success-600 dark:text-success-400',
   slate: 'text-slate-700 dark:text-slate-200',
-  indigo: 'text-indigo-700 dark:text-indigo-300',
+  indigo: 'text-primary-700 dark:text-primary-300',
 };
 
 const toneBg: Record<'red' | 'amber' | 'emerald' | 'slate', string> = {
-  red: 'bg-red-500',
-  amber: 'bg-amber-500',
-  emerald: 'bg-emerald-500',
+  red: 'bg-danger-500',
+  amber: 'bg-warning-500',
+  emerald: 'bg-success-500',
   slate: 'bg-slate-400',
 };
 
@@ -131,7 +131,7 @@ export const OrderMarginTab = ({ order, locale }: Props) => {
                   </td>
                   <td className="px-2 py-1.5 text-right tabular-nums">
                     {missing ? (
-                      <span className="text-amber-600 dark:text-amber-400">—</span>
+                      <span className="text-warning-600 dark:text-warning-400">—</span>
                     ) : (
                       <span className="text-slate-700 dark:text-slate-300">
                         {fmtCurrency(line.unitCostSnapshot, order.currency, locale)}
@@ -154,7 +154,7 @@ export const OrderMarginTab = ({ order, locale }: Props) => {
                   </td>
                   <td className="px-2 py-1.5 text-right">
                     {missing ? (
-                      <span className="text-amber-600 dark:text-amber-400">—</span>
+                      <span className="text-warning-600 dark:text-warning-400">—</span>
                     ) : (
                       <div className="flex items-center justify-end gap-1.5">
                         <span className={`font-semibold tabular-nums ${toneText[tone]}`}>
@@ -203,7 +203,7 @@ export const OrderMarginTab = ({ order, locale }: Props) => {
       </section>
 
       {hasMissingCost && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/70 p-2.5 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <div className="flex items-start gap-2 rounded-lg border border-warning-200 bg-warning-50/70 p-2.5 text-[11px] text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />
           <span>{t('orders.margin.missingCostWarning')}</span>
         </div>
@@ -268,10 +268,10 @@ const KpiRow = ({
 
 const kpiTones: Record<'slate' | 'indigo' | 'amber' | 'emerald' | 'red', string> = {
   slate: 'border-slate-200 dark:border-slate-800',
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  red: 'border-red-200 dark:border-red-500/30',
+  indigo: 'border-primary-200 dark:border-primary-500/30',
+  amber: 'border-warning-200 dark:border-warning-500/30',
+  emerald: 'border-success-200 dark:border-success-500/30',
+  red: 'border-danger-200 dark:border-danger-500/30',
 };
 
 const Kpi = ({

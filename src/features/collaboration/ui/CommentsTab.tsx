@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { MessageSquare } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import type { CollabEntityType, Comment } from '../model/collab.types';
 import { useComments, useCreateComment, useDeleteComment } from '../hooks/useCollab';

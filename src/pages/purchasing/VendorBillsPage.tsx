@@ -8,6 +8,7 @@ import {
   Link2,
   Pencil,
   Plus,
+  Receipt,
   ShieldCheck,
   XCircle,
 } from 'lucide-react';
@@ -15,6 +16,13 @@ import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency, formatDate } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Select } from '@/shared/ui/Select/Select';
+import { Badge } from '@/shared/ui/Badge/Badge';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
 import {
   useVendorBillAction,
   useVendorBillApplicationsQuery,
@@ -28,13 +36,13 @@ import { SourceJournalEntriesModal } from '@/features/accounting/ui/SourceJourna
 import { usePurchasingApprove } from '@/features/purchasing/hooks/usePurchasingApprove';
 import type { VendorBill, VendorBillStatus } from '@/features/purchasing/model/vendorBilling.types';
 
-const STATUS_TONE: Record<VendorBillStatus, string> = {
-  Draft: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  Posted: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  PartiallyPaid: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Paid: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  PendingApproval: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300',
+const STATUS_VARIANT: Record<VendorBillStatus, BadgeVariant> = {
+  Draft: 'neutral',
+  Posted: 'info',
+  PartiallyPaid: 'warning',
+  Paid: 'success',
+  Cancelled: 'danger',
+  PendingApproval: 'warning',
 };
 
 const STATUS_LABEL_KEY: Record<VendorBillStatus, string> = {
@@ -155,7 +163,7 @@ export const VendorBillsPage = () => {
       onClick={() => switchView(id)}
       className={`border-b-2 px-3 py-1.5 text-xs font-medium transition ${
         view === id
-          ? 'border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
+          ? 'border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-300'
           : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
       }`}
     >
@@ -164,78 +172,102 @@ export const VendorBillsPage = () => {
   );
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('ap.page.title', { defaultValue: 'Tedarikçi Faturaları' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('ap.page.subtitle', {
-              defaultValue:
-                'Tedarikçi faturalarını işle ve öde; tedarikçi cari hesabı otomatik güncellenir.',
-            })}
-          </p>
-        </div>
-        {view === 'bills' && (
-          <button
-            type="button"
-            onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-          >
-            <Plus size={13} />
-            {t('ap.page.new', { defaultValue: 'Yeni Fatura' })}
-          </button>
-        )}
-      </div>
-
-      <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
-        {tabBtn('bills', t('ap.tab.bills', { defaultValue: 'Faturalar' }))}
-        {tabBtn('payments', t('ap.tab.payments', { defaultValue: 'Ödemeler' }))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={vendorId}
-          onChange={(e) => {
-            setVendorId(e.target.value);
-            setPage(1);
-          }}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="">
-            {t('ap.filter.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
-          </option>
-          {vendors.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-        {view === 'bills' && (
-          <select
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value as VendorBillStatus | '');
-              setPage(1);
-            }}
-            className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          >
-            <option value="">{t('ap.filter.allStatuses', { defaultValue: 'Tüm durumlar' })}</option>
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {statusLabel(s)}
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Receipt size={20} />}
+          title={t('ap.page.title', { defaultValue: 'Tedarikçi Faturaları' })}
+          subtitle={t('ap.page.subtitle', {
+            defaultValue:
+              'Tedarikçi faturalarını işle ve öde; tedarikçi cari hesabı otomatik güncellenir.',
+          })}
+          actions={
+            view === 'bills' ? (
+              <Button size="sm" onClick={() => setCreateOpen(true)}>
+                <Plus size={14} />
+                {t('ap.page.new', { defaultValue: 'Yeni Fatura' })}
+              </Button>
+            ) : undefined
+          }
+        />
+      }
+      toolbar={
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800">
+            {tabBtn('bills', t('ap.tab.bills', { defaultValue: 'Faturalar' }))}
+            {tabBtn('payments', t('ap.tab.payments', { defaultValue: 'Ödemeler' }))}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={vendorId}
+              onChange={(e) => {
+                setVendorId(e.target.value);
+                setPage(1);
+              }}
+              className="w-full sm:w-48"
+            >
+              <option value="">
+                {t('ap.filter.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
               </option>
-            ))}
-          </select>
-        )}
-        <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
-          {view === 'bills'
-            ? t('ap.count', { defaultValue: '{{count}} fatura', count: total })
-            : t('ap.paymentCount', { defaultValue: '{{count}} ödeme', count: total })}
-        </span>
-      </div>
-
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </Select>
+            {view === 'bills' && (
+              <Select
+                value={status}
+                onChange={(e) => {
+                  setStatus(e.target.value as VendorBillStatus | '');
+                  setPage(1);
+                }}
+                className="w-full sm:w-48"
+              >
+                <option value="">
+                  {t('ap.filter.allStatuses', { defaultValue: 'Tüm durumlar' })}
+                </option>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {statusLabel(s)}
+                  </option>
+                ))}
+              </Select>
+            )}
+            <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
+              {view === 'bills'
+                ? t('ap.count', { defaultValue: '{{count}} fatura', count: total })
+                : t('ap.paymentCount', { defaultValue: '{{count}} ödeme', count: total })}
+            </span>
+          </div>
+        </div>
+      }
+      pagination={
+        totalPages > 1 ? (
+          <div className="flex items-center justify-end gap-1 text-xs">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
+            >
+              {t('common.prev', { defaultValue: 'Önceki' })}
+            </button>
+            <span className="px-2 text-slate-500">
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
+            >
+              {t('common.next', { defaultValue: 'Sonraki' })}
+            </button>
+          </div>
+        ) : undefined
+      }
+    >
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         {isPending ? (
           <div className="px-3 py-8 text-center text-sm text-slate-500">
@@ -284,18 +316,26 @@ export const VendorBillsPage = () => {
                     <td className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200">
                       {formatCurrency(b.total, locale, b.currency)}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-amber-700 dark:text-amber-300">
+                    <td className="px-3 py-2 text-right font-mono text-warning-700 dark:text-warning-300">
                       {formatCurrency(b.amountDue, locale, b.currency)}
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_TONE[b.status]}`}
-                        title={
-                          b.status === 'PendingApproval' && b.holdReason ? b.holdReason : undefined
+                      <Badge
+                        variant={STATUS_VARIANT[b.status]}
+                        className={
+                          b.status === 'PendingApproval' && b.holdReason ? 'cursor-help' : undefined
                         }
                       >
-                        {statusLabel(b.status)}
-                      </span>
+                        <span
+                          title={
+                            b.status === 'PendingApproval' && b.holdReason
+                              ? b.holdReason
+                              : undefined
+                          }
+                        >
+                          {statusLabel(b.status)}
+                        </span>
+                      </Badge>
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="inline-flex items-center gap-1">
@@ -324,7 +364,7 @@ export const VendorBillsPage = () => {
                             type="button"
                             onClick={() => run(b, 'post')}
                             disabled={action.isPending}
-                            className="rounded p-1 text-indigo-500 hover:bg-indigo-50 disabled:opacity-40 dark:hover:bg-indigo-500/10"
+                            className="rounded p-1 text-primary-500 hover:bg-primary-50 disabled:opacity-40 dark:hover:bg-primary-500/10"
                             title={t('ap.actions.post', { defaultValue: 'İşle (cariye yaz)' })}
                           >
                             <CheckCircle2 size={13} />
@@ -335,7 +375,7 @@ export const VendorBillsPage = () => {
                             type="button"
                             onClick={() => run(b, 'approve')}
                             disabled={action.isPending}
-                            className="rounded p-1 text-orange-500 hover:bg-orange-50 disabled:opacity-40 dark:hover:bg-orange-500/10"
+                            className="rounded p-1 text-warning-500 hover:bg-warning-50 disabled:opacity-40 dark:hover:bg-warning-500/10"
                             title={t('ap.actions.approve', {
                               defaultValue: 'Onayla ve muhasebeleştir',
                             })}
@@ -347,7 +387,7 @@ export const VendorBillsPage = () => {
                           <button
                             type="button"
                             onClick={() => setPayBill(b)}
-                            className="rounded p-1 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                            className="rounded p-1 text-success-500 hover:bg-success-50 dark:hover:bg-success-500/10"
                             title={t('ap.actions.pay', { defaultValue: 'Öde' })}
                           >
                             <BadgeDollarSign size={13} />
@@ -357,7 +397,7 @@ export const VendorBillsPage = () => {
                           <button
                             type="button"
                             onClick={() => setApplyBill(b)}
-                            className="rounded p-1 text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-500/10"
+                            className="rounded p-1 text-info-500 hover:bg-info-50 dark:hover:bg-info-500/10"
                             title={t('VendorPayments.applyPayment', {
                               defaultValue: 'Mevcut ödemeyi uygula',
                             })}
@@ -382,7 +422,7 @@ export const VendorBillsPage = () => {
                             type="button"
                             onClick={() => run(b, 'cancel')}
                             disabled={action.isPending}
-                            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-40 dark:hover:bg-rose-500/10"
+                            className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-40 dark:hover:bg-danger-500/10"
                             title={t('ap.actions.cancel', { defaultValue: 'İptal' })}
                           >
                             <XCircle size={13} />
@@ -454,30 +494,6 @@ export const VendorBillsPage = () => {
         )}
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-end gap-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            {t('common.prev', { defaultValue: 'Önceki' })}
-          </button>
-          <span className="px-2 text-slate-500">
-            {page} / {totalPages}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="rounded border border-slate-200 bg-white px-2 py-1 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900"
-          >
-            {t('common.next', { defaultValue: 'Sonraki' })}
-          </button>
-        </div>
-      )}
-
       {createOpen && <VendorBillFormModal onClose={() => setCreateOpen(false)} />}
       {editBill && <VendorBillFormModal bill={editBill} onClose={() => setEditBill(null)} />}
       {payBill && <VendorPaymentModal bill={payBill} onClose={() => setPayBill(null)} />}
@@ -492,7 +508,7 @@ export const VendorBillsPage = () => {
           onClose={() => setGlSource(null)}
         />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -508,66 +524,56 @@ const VendorBillApplicationsModal = ({ billId, onClose }: ApplicationsModalProps
   const items = data?.data ?? [];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-      onClick={onClose}
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      title={t('VendorPayments.applications.title', { defaultValue: 'Uygulanan Ödemeler' })}
+      footer={
+        <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+          {t('common.close', { defaultValue: 'Kapat' })}
+        </Button>
+      }
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg space-y-3 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-900"
-      >
-        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-          {t('VendorPayments.applications.title', { defaultValue: 'Uygulanan Ödemeler' })}
-        </h2>
-        {isPending ? (
-          <p className="text-sm text-slate-500">
-            {t('common.loading', { defaultValue: 'Yükleniyor…' })}
-          </p>
-        ) : items.length === 0 ? (
-          <p className="text-sm text-slate-500">
-            {t('VendorPayments.applications.empty', { defaultValue: 'Uygulanan ödeme yok.' })}
-          </p>
-        ) : (
-          <table className="w-full text-xs">
-            <thead className="text-[10px] uppercase tracking-wider text-slate-500">
-              <tr>
-                <th className="px-2 py-1 text-left">
-                  {t('VendorPayments.applications.paymentNo', { defaultValue: 'Ödeme No' })}
-                </th>
-                <th className="px-2 py-1 text-left">
-                  {t('VendorPayments.applications.date', { defaultValue: 'Tarih' })}
-                </th>
-                <th className="px-2 py-1 text-right">
-                  {t('VendorPayments.applications.amount', { defaultValue: 'Tutar' })}
-                </th>
+      {isPending ? (
+        <p className="text-sm text-slate-500">
+          {t('common.loading', { defaultValue: 'Yükleniyor…' })}
+        </p>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-slate-500">
+          {t('VendorPayments.applications.empty', { defaultValue: 'Uygulanan ödeme yok.' })}
+        </p>
+      ) : (
+        <table className="w-full text-xs">
+          <thead className="text-[10px] uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="px-2 py-1 text-left">
+                {t('VendorPayments.applications.paymentNo', { defaultValue: 'Ödeme No' })}
+              </th>
+              <th className="px-2 py-1 text-left">
+                {t('VendorPayments.applications.date', { defaultValue: 'Tarih' })}
+              </th>
+              <th className="px-2 py-1 text-right">
+                {t('VendorPayments.applications.amount', { defaultValue: 'Tutar' })}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+            {items.map((a) => (
+              <tr key={a.id}>
+                <td className="px-2 py-1 font-mono text-slate-700 dark:text-slate-300">
+                  {a.paymentNumber}
+                </td>
+                <td className="px-2 py-1 text-slate-500">{formatDate(a.appliedAtUtc, locale)}</td>
+                <td className="px-2 py-1 text-right font-mono">
+                  {formatCurrency(a.appliedAmount, locale, 'TRY')}
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {items.map((a) => (
-                <tr key={a.id}>
-                  <td className="px-2 py-1 font-mono text-slate-700 dark:text-slate-300">
-                    {a.paymentNumber}
-                  </td>
-                  <td className="px-2 py-1 text-slate-500">{formatDate(a.appliedAtUtc, locale)}</td>
-                  <td className="px-2 py-1 text-right font-mono">
-                    {formatCurrency(a.appliedAmount, locale, 'TRY')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {t('common.close', { defaultValue: 'Kapat' })}
-          </button>
-        </div>
-      </div>
-    </div>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Modal>
   );
 };
 

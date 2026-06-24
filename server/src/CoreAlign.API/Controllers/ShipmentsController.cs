@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
@@ -17,6 +18,9 @@ public class ShipmentsController : ControllerBase
 {
     private readonly IMediator _mediator;
     public ShipmentsController(IMediator mediator) => _mediator = mediator;
+
+    private Guid CurrentUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
 
     [HttpGet]
     public async Task<IActionResult> Search(
@@ -42,7 +46,7 @@ public class ShipmentsController : ControllerBase
 
     [HttpPost("{id:guid}/pick")]
     public async Task<IActionResult> Pick(Guid id, [FromBody] PickShipmentCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new PickShipmentCommand(id, cmd?.PostedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new PickShipmentCommand(id, CurrentUserId), ct)).ToOk();
 
     [HttpPost("{id:guid}/pack")]
     public async Task<IActionResult> Pack(Guid id, CancellationToken ct)

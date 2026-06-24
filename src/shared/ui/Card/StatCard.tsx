@@ -20,23 +20,22 @@ export const StatCard: React.FC<StatCardProps> = ({
   color,
 }) => {
   return (
-    <div className="relative overflow-hidden p-3 bg-white/50 dark:bg-[#0B0F19]/50 backdrop-blur-md rounded-[5px] border border-slate-200/60 dark:border-slate-800/60 transition-all duration-300 hover:border-indigo-500/50 group flex items-center justify-between">
-      {/* Animated Background Glow */}
+    <div className="group relative flex items-center justify-between overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-3.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-primary-300/60 hover:shadow-lg hover:shadow-primary-500/5 dark:border-white/10 dark:bg-slate-900/60 dark:hover:border-primary-500/40">
       <div
-        className={`absolute -inset-1 bg-gradient-to-r ${color} opacity-0 group-hover:opacity-10 blur-xl transition-opacity duration-500`}
+        className={`absolute -inset-1 bg-gradient-to-r ${color} opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-10`}
       />
 
-      <div className="flex items-center gap-3 relative z-10">
+      <div className="relative z-10 flex items-center gap-3">
         <div
-          className={`p-2 rounded-[5px] bg-gradient-to-br ${color} text-white shadow-lg shadow-${color.split('-')[1]}-500/30 group-hover:scale-110 transition-transform duration-300`}
+          className={`rounded-lg bg-gradient-to-br p-2 text-white shadow-sm ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-110 ${color}`}
         >
-          <Icon className="w-4 h-4" />
+          <Icon className="h-4 w-4" />
         </div>
         <div>
-          <h3 className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             {name}
           </h3>
-          <p className="text-base font-bold text-slate-900 dark:text-white leading-tight font-mono">
+          <p className="text-base font-bold leading-tight tabular-nums text-slate-900 dark:text-white">
             {value}
           </p>
         </div>
@@ -44,10 +43,10 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       <div className="relative z-10 flex flex-col items-end">
         <div
-          className={`flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-[3px] backdrop-blur-sm ${
+          className={`flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[10px] font-bold backdrop-blur-sm ${
             trend === 'up'
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-              : 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+              ? 'border-success-500/20 bg-success-500/10 text-success-600 dark:text-success-400'
+              : 'border-danger-500/20 bg-danger-500/10 text-danger-600 dark:text-danger-400'
           }`}
         >
           {trend === 'up' ? (
@@ -57,8 +56,7 @@ export const StatCard: React.FC<StatCardProps> = ({
           )}
           {change}
         </div>
-        {/* Mini Sparkline Placeholder (Visual only) */}
-        <div className="mt-1.5 flex items-end gap-0.5 h-3 opacity-50 group-hover:opacity-100 transition-opacity">
+        <div className="mt-1.5 flex h-3 items-end gap-0.5 opacity-50 transition-opacity group-hover:opacity-100">
           {[40, 70, 45, 90, 65, 85, 100].map((h, i) => (
             <div
               key={i}

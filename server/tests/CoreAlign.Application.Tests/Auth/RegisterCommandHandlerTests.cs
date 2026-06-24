@@ -1,5 +1,6 @@
 using CoreAlign.Application.Auth.Commands;
 using CoreAlign.Application.Auth.Handlers;
+using CoreAlign.Application.Auth.Services;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -16,6 +17,8 @@ public class RegisterCommandHandlerTests
     private readonly ISubscriptionRepository _subscriptionRepository = Substitute.For<ISubscriptionRepository>();
     private readonly IEmailVerificationTokenRepository _emailVerificationTokenRepository = Substitute.For<IEmailVerificationTokenRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
+    private readonly IPasswordPolicyService _passwordPolicyService = Substitute.For<IPasswordPolicyService>();
+    private readonly ICaptchaVerifier _captchaVerifier = Substitute.For<ICaptchaVerifier>();
     private readonly IJwtTokenService _jwtTokenService = Substitute.For<IJwtTokenService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
@@ -29,6 +32,7 @@ public class RegisterCommandHandlerTests
         _passwordHasher.Hash(Arg.Any<string>()).Returns("hashed");
         _jwtTokenService.GenerateRefreshToken().Returns("raw-token");
         _jwtTokenService.HashToken("raw-token").Returns("token-hash");
+        _captchaVerifier.VerifyAsync(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(true);
 
         _sut = new RegisterCommandHandler(
             _tenantRepository,
@@ -38,6 +42,8 @@ public class RegisterCommandHandlerTests
             _subscriptionRepository,
             _emailVerificationTokenRepository,
             _passwordHasher,
+            _passwordPolicyService,
+            _captchaVerifier,
             _jwtTokenService,
             _emailService,
             _unitOfWork,

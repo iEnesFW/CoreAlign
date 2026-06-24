@@ -4,6 +4,9 @@ import { Download, FileText, RefreshCw } from 'lucide-react';
 import { formatDate } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import { AuditLogFilterBar } from '@/features/audit/ui/AuditLogFilterBar';
 import { AuditLogDetailDrawer } from '@/features/audit/ui/AuditLogDetailDrawer';
 import { AuditExportScheduleEditor } from '@/features/audit/ui/AuditExportScheduleEditor';
@@ -61,19 +64,61 @@ export const AdminAuditLogPage = () => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6">
-      <header className="flex items-center gap-3">
-        <FileText className="text-indigo-600 dark:text-indigo-400" size={20} />
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {t('Audit.Admin.PageTitle')}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Audit.Admin.PageSubtitle')}
-          </p>
-        </div>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<FileText size={20} />}
+          title={t('Audit.Admin.PageTitle')}
+          subtitle={t('Audit.Admin.PageSubtitle')}
+          actions={
+            tab === 'log' ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => search.refetch()}>
+                  <RefreshCw size={14} />
+                  {t('Common.Refresh')}
+                </Button>
+                {FORMATS.map((format) => (
+                  <Button
+                    key={format}
+                    size="sm"
+                    disabled={download.isPending}
+                    onClick={() => handleExport(format)}
+                  >
+                    <Download size={14} />
+                    {format.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            ) : undefined
+          }
+        />
+      }
+      pagination={
+        tab === 'log' && total > pageSize ? (
+          <div className="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+            >
+              {t('Common.Previous')}
+            </Button>
+            <span>
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+            >
+              {t('Common.Next')}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
       <nav className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
         <TabButton current={tab} value="log" onClick={setTab}>
           {t('Audit.Admin.Tab.Log')}
@@ -93,29 +138,9 @@ export const AdminAuditLogPage = () => {
           />
 
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => search.refetch()}
-              className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <RefreshCw size={14} />
-              {t('Common.Refresh')}
-            </button>
             <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
               {t('Audit.Admin.TotalRows', { count: total })}
             </span>
-            {FORMATS.map((format) => (
-              <button
-                key={format}
-                type="button"
-                disabled={download.isPending}
-                onClick={() => handleExport(format)}
-                className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                <Download size={14} />
-                {format.toUpperCase()}
-              </button>
-            ))}
           </div>
 
           <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -166,37 +191,13 @@ export const AdminAuditLogPage = () => {
               </tbody>
             </table>
           </div>
-
-          {total > pageSize && (
-            <div className="flex items-center justify-end gap-2 text-sm text-slate-600 dark:text-slate-300">
-              <button
-                type="button"
-                onClick={() => goToPage(page - 1)}
-                disabled={page <= 1}
-                className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50 dark:border-slate-700"
-              >
-                {t('Common.Previous')}
-              </button>
-              <span>
-                {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => goToPage(page + 1)}
-                disabled={page >= totalPages}
-                className="rounded-md border border-slate-300 px-3 py-1 disabled:opacity-50 dark:border-slate-700"
-              >
-                {t('Common.Next')}
-              </button>
-            </div>
-          )}
         </div>
       )}
 
       {tab === 'schedule' && <AuditExportScheduleEditor />}
 
       <AuditLogDetailDrawer entry={selected} onClose={() => setSelected(null)} />
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -215,7 +216,7 @@ const TabButton = ({ current, value, onClick, children }: TabButtonProps) => {
       onClick={() => onClick(value)}
       className={
         active
-          ? 'border-b-2 border-indigo-600 px-3 py-2 text-sm font-semibold text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
+          ? 'border-b-2 border-primary-600 px-3 py-2 text-sm font-semibold text-primary-700 dark:border-primary-400 dark:text-primary-300'
           : 'px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
       }
     >

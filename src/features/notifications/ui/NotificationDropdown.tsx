@@ -16,7 +16,7 @@ export const NotificationDropdown = () => {
         </span>
         <a
           href="/notifications"
-          className="text-[10px] font-medium text-indigo-600 hover:underline dark:text-indigo-300"
+          className="text-[10px] font-medium text-primary-600 hover:underline dark:text-primary-300"
         >
           {t('Notifications.SeeAll')}
         </a>

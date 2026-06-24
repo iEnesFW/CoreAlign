@@ -29,7 +29,7 @@ public class ExternalUserBinding : TenantEntity, IHasConcurrencyToken
 
         return new ExternalUserBinding
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             TenantId = tenantId,
             LocalUserId = localUserId,
             IdentityProviderId = identityProviderId,

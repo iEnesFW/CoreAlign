@@ -1,0 +1,83 @@
+# reports (CoreAlign UI)
+
+"reports" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "reports" area (English / Türkçe):
+
+- Top customers by outstanding / Bakiyeli müşteriler
+- No outstanding receivables. / Açık alacak yok.
+- Aging summary / Yaşlandırma özeti
+- Day / Gün
+- Month / Ay
+- Week / Hafta
+- Add / Ekle
+- Dimensions / Boyutlar
+- Data Source / Veri Kaynağı
+- Failed to load the field catalog / Alan kataloğu yüklenemedi
+- Report name is required / Rapor adı zorunludur
+- Failed to generate the preview / Önizleme oluşturulamadı
+- Failed to save the report / Rapor kaydedilemedi
+- Filters / Filtreler
+- Measures / Ölçüler
+- Report Name / Rapor Adı
+- e.g. Monthly sales by customer / örn. Müşteri bazında aylık satışlar
+- Preview / Önizle
+- Run a preview to see results here / Sonuçları görmek için önizleme çalıştırın
+- Preview / Önizleme
+- Row Limit / Satır Limiti
+- Save / Kaydet
+- No saved reports yet / Henüz kayıtlı rapor yok
+- Saved Reports / Kayıtlı Raporlar
+- Custom Report Builder / Özel Rapor Oluşturucu
+- Value / Değer
+- Active customers / Aktif müşteri
+- Collected / Tahsil edildi
+- collection rate / tahsilat oranı
+- Invoices / Fatura
+- Revenue / Ciro
+- Account ID / Hesap ID
+- As of Date / Tarih İtibarıyla
+- Back / Geri
+- Download with the selected filters / Seçili filtrelerle indirilir
+- Downloading... / İndiriliyor...
+- Filters / Filtreler
+- From Date / Başlangıç Tarihi
+- Only items below reorder level / Yalnızca yeniden sipariş seviyesinin altındakiler
+- Report Library / Rapor Kitaplığı
+- Product ID / Ürün ID
+- Report Library / Rapor Kitaplığı
+- To Date / Bitiş Tarihi
+- Warehouse ID / Depo ID
+- No sales recorded in this period. / Bu dönemde satış yok.
+- Sales trend / Satış trendi
+- Active / Aktif
+- Actions / İşlemler
+- Frequency / Sıklık
+- Name / Ad
+- Next Run / Sonraki Çalışma
+- Recipients / Alıcılar
+- Report / Rapor
+- Status / Durum
+- No scheduled reports yet / Henüz zamanlanmış rapor yok
+- Enter at least one recipient email address / En az bir alıcı e-posta adresi girin
+- Failed to save the schedule / Zamanlama kaydedilemedi
+- Format
+- Frequency / Sıklık
+- Name / Ad
+- New Schedule / Yeni Zamanlama
+- Create Schedule / Zamanlama Oluştur
+- Recipients (comma separated) / Alıcılar (virgülle ayırın)
+- Report Key / Rapor Anahtarı
+- Start At / Başlangıç Zamanı
+- Scheduled Reports / Zamanlanmış Raporlar
+- Sales, customer and aging analytics across the tenant. / Tenant geneli satış, müşteri ve yaşlandırma analizi.
+- Reports / Raporlar
+- No customer activity in this period. / Bu dönemde müşteri aktivitesi yok.
+- Orders / Sipariş
+- Outstanding / Bakiye
+- Top customers / En çok ciro yapan müşteriler
+- No product sales in this period. / Bu dönemde ürün satışı yok.
+- Invoices / Fatura
+- Product / Ürün
+- Qty sold / Satılan
+- Revenue / Ciro
+- SKU
+- Top products / En çok satan ürünler

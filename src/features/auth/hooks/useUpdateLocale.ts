@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/shared/api/apiClient';
-import { useAuthStore } from '../model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { resolveLocale } from '@/app/i18n/supportedLocales';
 
 interface SetLocaleResponse {

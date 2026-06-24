@@ -1,7 +1,3 @@
-/**
- * Helpers for mapping react-hook-form field errors onto modal tabs so a tab can
- * show an error badge and submit can jump to the first tab containing an error.
- */
 export const getErroredTabs = (
   errors: Record<string, unknown>,
   fieldTab: Record<string, string>,

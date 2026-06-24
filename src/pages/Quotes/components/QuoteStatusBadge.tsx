@@ -3,10 +3,10 @@ import type { QuoteStatus } from '@/features/quotes/model/quote.types';
 
 const toneByStatus: Record<QuoteStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
-  Sent: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200',
-  Accepted: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
-  Rejected: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-200',
-  Expired: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  Sent: 'bg-info-100 text-info-700 dark:bg-info-900/40 dark:text-info-200',
+  Accepted: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-200',
+  Rejected: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-200',
+  Expired: 'bg-warning-100 text-warning-800 dark:bg-warning-900/40 dark:text-warning-200',
 };
 
 export const QuoteStatusBadge = ({ status }: { status: QuoteStatus }) => {

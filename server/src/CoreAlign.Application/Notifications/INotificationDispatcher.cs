@@ -19,4 +19,6 @@ public sealed record NotificationRequest(
     IReadOnlyList<NotificationChannel>? ChannelsOverride = null,
     string? RecipientEmailOverride = null,
     string? RecipientPhoneOverride = null,
-    string? RecipientDeviceTokenOverride = null);
+    string? RecipientDeviceTokenOverride = null,
+    string? ReplyToOverride = null,
+    IReadOnlyList<EmailAttachment>? Attachments = null);

@@ -468,7 +468,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                             t.HasCheckConstraint("ck_ai_kb_documents_scope", "scope IN ('Public','Tenant','Role')");
 
-                            t.HasCheckConstraint("ck_ai_kb_documents_source_type", "source_type IN ('Route','I18n','ModuleDoc','Article','Sector')");
+                            t.HasCheckConstraint("ck_ai_kb_documents_source_type", "source_type IN ('Route','I18n','ModuleDoc','Article','Sector','SourceCode')");
                         });
                 });
 
@@ -9687,8 +9687,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("hire_date");
 
                     b.Property<string>("Iban")
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)")
+                        .HasColumnType("text")
                         .HasColumnName("iban");
 
                     b.Property<bool>("IsDeleted")
@@ -9735,8 +9734,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("sgk_exempt");
 
                     b.Property<string>("SgkRegistrationNo")
-                        .HasMaxLength(32)
-                        .HasColumnType("character varying(32)")
+                        .HasColumnType("text")
                         .HasColumnName("sgk_registration_no");
 
                     b.Property<bool>("SpouseEmployed")
@@ -10302,7 +10300,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("NationalId")
                         .IsRequired()
-                        .HasColumnType("char(11)")
+                        .HasColumnType("text")
                         .HasColumnName("national_id");
 
                     b.Property<decimal>("NetPay")
@@ -15892,8 +15890,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("tenant_id");
 
                     b.Property<string>("TwoFactorSecretKey")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
+                        .HasColumnType("text")
                         .HasColumnName("two_factor_secret_key");
 
                     b.Property<DateTime>("UpdatedAtUtc")
@@ -16467,8 +16464,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("account_holder");
 
                     b.Property<string>("AccountNumber")
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasColumnType("text")
                         .HasColumnName("account_number");
 
                     b.Property<string>("BankName")
@@ -16494,8 +16490,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Iban")
                         .IsRequired()
-                        .HasMaxLength(34)
-                        .HasColumnType("character varying(34)")
+                        .HasColumnType("text")
                         .HasColumnName("iban");
 
                     b.Property<bool>("IsPrimary")
@@ -16508,8 +16503,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("notes");
 
                     b.Property<string>("Swift")
-                        .HasMaxLength(11)
-                        .HasColumnType("character varying(11)")
+                        .HasColumnType("text")
                         .HasColumnName("swift");
 
                     b.Property<Guid>("TenantId")
@@ -16529,9 +16523,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("VendorId")
                         .HasDatabaseName("ix_vendor_bank_accounts_vendor_id");
-
-                    b.HasIndex("TenantId", "Iban")
-                        .HasDatabaseName("ix_vendor_bank_accounts_tenant_id_iban");
 
                     b.HasIndex("TenantId", "VendorId")
                         .HasDatabaseName("ix_vendor_bank_accounts_tenant_id_vendor_id");

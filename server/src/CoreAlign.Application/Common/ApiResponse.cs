@@ -1,10 +1,16 @@
 namespace CoreAlign.Application.Common;
 
-public class ApiResponse<T>
+public interface ITraceableResponse
+{
+    string? TraceId { get; set; }
+}
+
+public class ApiResponse<T> : ITraceableResponse
 {
     public bool IsSuccess { get; set; }
     public T? Data { get; set; }
     public List<string> Errors { get; set; } = new();
+    public IReadOnlyDictionary<string, string[]>? FieldErrors { get; set; }
     public int StatusCode { get; set; }
     public string? TraceId { get; set; }
 

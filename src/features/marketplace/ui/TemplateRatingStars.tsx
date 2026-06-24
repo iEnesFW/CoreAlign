@@ -36,7 +36,7 @@ export const TemplateRatingStars = ({
               className={cn(
                 'transition-colors',
                 filled
-                  ? 'fill-amber-400 stroke-amber-500'
+                  ? 'fill-warning-400 stroke-warning-500'
                   : 'fill-transparent stroke-slate-300 dark:stroke-slate-600',
               )}
             />
@@ -55,7 +55,7 @@ export const TemplateRatingStars = ({
               role="radio"
               aria-checked={filled}
               onClick={() => onSelect?.(index + 1)}
-              className="px-0.5 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded"
+              className="px-0.5 hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-success-500 rounded"
             >
               {StarIcon}
             </button>

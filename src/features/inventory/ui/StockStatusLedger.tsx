@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, Warehouse as WarehouseIcon } from 'lucide-react';
-import { useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
+import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
 import { useStockItemsQuery } from '../hooks/useInventoryQueries';
 
 const fmtNumber = (n: number, locale: string) =>
@@ -60,7 +60,7 @@ export const StockStatusLedger = () => {
             setWarehouseId(e.target.value);
             setPage(1);
           }}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">
             {t('inventory.status.allWarehouses', { defaultValue: 'Tüm depolar' })}
@@ -79,7 +79,7 @@ export const StockStatusLedger = () => {
               setOnlyBelowReorder(e.target.checked);
               setPage(1);
             }}
-            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600 dark:bg-slate-800"
           />
           {t('inventory.status.belowReorderOnly', { defaultValue: 'Sadece kritik seviye' })}
         </label>
@@ -153,14 +153,14 @@ export const StockStatusLedger = () => {
                     <td className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200">
                       {fmtNumber(it.onHand, locale)}
                     </td>
-                    <td className="px-3 py-2 text-right font-mono text-amber-700 dark:text-amber-300">
+                    <td className="px-3 py-2 text-right font-mono text-warning-700 dark:text-warning-300">
                       {fmtNumber(it.reserved, locale)}
                     </td>
                     <td
                       className={`px-3 py-2 text-right font-mono font-semibold ${
                         belowReorder
-                          ? 'text-red-600 dark:text-red-400'
-                          : 'text-emerald-700 dark:text-emerald-300'
+                          ? 'text-danger-600 dark:text-danger-400'
+                          : 'text-success-700 dark:text-success-300'
                       }`}
                     >
                       <span className="inline-flex items-center justify-end gap-1">

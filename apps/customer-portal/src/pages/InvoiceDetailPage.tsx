@@ -1,8 +1,10 @@
-import { ArrowLeft, CreditCard, Download } from 'lucide-react';
+import { ArrowLeft, CreditCard, Download, Send } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui/Button';
+import { ForwardDocumentModal } from '@/features/portal/ForwardDocumentModal';
 import { Card, CardBody, CardHeader } from '@/shared/ui/Card';
 import { Spinner } from '@/shared/ui/Spinner';
 import { InvoiceStatusBadge } from '@/shared/ui/StatusBadge';
@@ -25,6 +27,7 @@ export const InvoiceDetailPage = () => {
     `Invoice-${data?.invoiceNumber ?? id ?? ''}.pdf`,
   );
   const payInvoice = usePayInvoice();
+  const [forwardOpen, setForwardOpen] = useState(false);
 
   const canPay = !!data && PAYABLE_STATUSES.has(data.status) && data.amountDue > 0;
 
@@ -81,8 +84,19 @@ export const InvoiceDetailPage = () => {
           <Button variant="secondary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
             <Download size={14} /> {t('common.downloadPdf')}
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setForwardOpen(true)}>
+            <Send size={14} /> {t('forward.action')}
+          </Button>
         </div>
       </div>
+
+      <ForwardDocumentModal
+        open={forwardOpen}
+        onClose={() => setForwardOpen(false)}
+        documentType="Invoice"
+        documentId={id ?? ''}
+        documentNumber={data.invoiceNumber}
+      />
 
       <Card>
         <CardHeader

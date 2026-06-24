@@ -1,18 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
-import { authApi, type CurrentUser, type LoginRequest } from '@/api/endpoints/auth';
+import React, { useCallback, useEffect, useMemo } from 'react';
+import { authApi, type LoginRequest } from '@/api/endpoints/auth';
 import { TokenStorage, registerAuthFailureHandler, registerRefreshHandler } from '@/api/apiClient';
 import { useAuthStore } from './authStore';
-
-interface AuthContextValue {
-  user: CurrentUser | null;
-  isAuthenticated: boolean;
-  isHydrated: boolean;
-  login: (req: LoginRequest) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { AuthContext, type AuthContextValue } from './authContext';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAuthenticated, isHydrated, setUser, setHydrated, reset } = useAuthStore();
@@ -81,12 +71,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
-
-export const useAuth = (): AuthContextValue => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used inside <AuthProvider>');
-  }
-  return ctx;
 };

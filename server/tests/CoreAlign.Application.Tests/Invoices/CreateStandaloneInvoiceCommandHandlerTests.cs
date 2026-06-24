@@ -20,6 +20,7 @@ public class CreateStandaloneInvoiceCommandHandlerTests
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly IEmailService _email = Substitute.For<IEmailService>();
     private readonly IEInvoiceSubmissionOutbox _einvoice = Substitute.For<IEInvoiceSubmissionOutbox>();
+    private readonly ICustomerLedgerRepository _ledger = Substitute.For<ICustomerLedgerRepository>();
     private readonly CreateStandaloneInvoiceCommandHandler _sut;
 
     private static readonly Guid TenantId = Guid.NewGuid();
@@ -36,7 +37,8 @@ public class CreateStandaloneInvoiceCommandHandlerTests
 
         _sut = new CreateStandaloneInvoiceCommandHandler(
             _customers, _addresses, _paymentTerms, _invoices, _products, _sequences,
-            _periods, _uow, _email, _einvoice);
+            _periods, _uow, _email, _einvoice,
+            new CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard(_ledger));
     }
 
     [Fact]

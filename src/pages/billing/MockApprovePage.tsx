@@ -60,16 +60,19 @@ export const MockApprovePage = () => {
         ]}
       />
 
-      <div className="flex items-start gap-2 rounded-xl border-2 border-dashed border-amber-400 bg-amber-50/70 p-3 dark:border-amber-400/60 dark:bg-amber-500/10">
-        <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-300" />
-        <div className="text-xs text-amber-800 dark:text-amber-200">
+      <div className="flex items-start gap-2 rounded-xl border-2 border-dashed border-warning-400 bg-warning-50/70 p-3 dark:border-warning-400/60 dark:bg-warning-500/10">
+        <TriangleAlert
+          size={18}
+          className="mt-0.5 shrink-0 text-warning-600 dark:text-warning-300"
+        />
+        <div className="text-xs text-warning-800 dark:text-warning-200">
           <p className="font-bold uppercase tracking-wider">{t('billing.mock.banner')}</p>
           <p className="mt-0.5 text-[11px]">{t('billing.mock.bannerDescription')}</p>
         </div>
       </div>
 
       {!orderId && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+        <div className="rounded-xl border border-danger-200 bg-danger-50/60 p-4 text-xs text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-200">
           <AlertTriangle size={16} className="inline-block mr-1" />
           {t('billing.mock.missingOrder')}
         </div>
@@ -116,7 +119,7 @@ export const MockApprovePage = () => {
           )}
 
           {!isAdmin && (
-            <p className="mt-3 rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+            <p className="mt-3 rounded-md bg-warning-50 px-2 py-1.5 text-[11px] text-warning-800 dark:bg-warning-500/10 dark:text-warning-200">
               {t('billing.mock.adminOnly')}
             </p>
           )}
@@ -126,7 +129,7 @@ export const MockApprovePage = () => {
               type="button"
               onClick={() => handle('approve')}
               disabled={!isAdmin || mockApprove.isPending}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-emerald-600/50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-success-600 px-3 py-2 text-xs font-semibold text-white hover:bg-success-700 disabled:cursor-not-allowed disabled:bg-success-600/50"
             >
               {mockApprove.isPending ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -148,7 +151,7 @@ export const MockApprovePage = () => {
               type="button"
               onClick={() => handle('fail')}
               disabled={!isAdmin || mockApprove.isPending}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-600/50"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-danger-600 px-3 py-2 text-xs font-semibold text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:bg-danger-600/50"
             >
               <AlertTriangle size={13} />
               {t('billing.mock.fail')}

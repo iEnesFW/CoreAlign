@@ -1,10 +1,159 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>corealign</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="theme-color" content="#6366f1" />
+    <link rel="canonical" href="https://corealign.com/" />
+
+    <title>CoreAlign — Cam & İmalat için Bulut ERP</title>
+    <meta
+      name="description"
+      content="Cam kabin/cephe tasarımı (3D CAD + CPQ), üretim (MRP), stok ve muhasebeyi tek platformda birleştiren çok-kiracılı bulut ERP. Teklif süresini saatlere indirin."
+    />
+    <meta
+      name="keywords"
+      content="ERP, bulut ERP, cam ERP, CPQ, 3D CAD, MRP, üretim planlama, stok yönetimi, ön muhasebe, cam kabin, çok kiracılı SaaS"
+    />
+    <meta name="author" content="CoreAlign" />
+    <meta name="robots" content="index, follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CoreAlign" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta property="og:url" content="https://corealign.com/" />
+    <meta property="og:title" content="CoreAlign — Cam & İmalat için Bulut ERP" />
+    <meta
+      property="og:description"
+      content="Tasarım, teklif, üretim, stok ve muhasebe tek platformda. Teklif süresini saatlere indirin, fireyi azaltın."
+    />
+    <meta property="og:image" content="https://corealign.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="CoreAlign — cam ve imalat için bulut ERP" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CoreAlign — Cam & İmalat için Bulut ERP" />
+    <meta
+      name="twitter:description"
+      content="Tasarım, teklif, üretim, stok ve muhasebe tek platformda. Teklif süresini saatlere indirin, fireyi azaltın."
+    />
+    <meta name="twitter:image" content="https://corealign.com/og-image.png" />
+    <meta name="twitter:image:alt" content="CoreAlign — cam ve imalat için bulut ERP" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "CoreAlign",
+            "applicationCategory": "BusinessApplication",
+            "operatingSystem": "Web",
+            "description": "Cam kabin/cephe tasarımı (3D CAD + CPQ), üretim planlama (MRP), stok, satınalma ve muhasebeyi tek platformda birleştiren çok-kiracılı bulut ERP.",
+            "url": "https://corealign.com/",
+            "inLanguage": ["tr", "en"],
+            "offers": {
+              "@type": "Offer",
+              "availability": "https://schema.org/PreOrder"
+            }
+          },
+          {
+            "@type": "Organization",
+            "name": "CoreAlign",
+            "url": "https://corealign.com/",
+            "logo": "https://corealign.com/og-image.png",
+            "description": "Cam ve imalat sektörü için çok-kiracılı bulut ERP platformu."
+          },
+          {
+            "@type": "WebSite",
+            "name": "CoreAlign",
+            "url": "https://corealign.com/",
+            "inLanguage": ["tr", "en"]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Mevcut ERP ve Muhasebe sistemimizle entegre çalışabilir mi?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Evet. CoreAlign, çift yönlü REST API'leri ve hazır ETL (Extract, Transform, Load) şablonları sayesinde Logo Go/Tiger, Mikro, Netsis ve global SAP sistemleriyle gerçek zamanlı veya periyodik veri senkronizasyonu yapabilir. Bayileriniz sipariş girdiğinde cari fişler ve faturalar otomatik olarak mevcut muhasebe sisteminize işlenir."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Bayi siparişlerindeki çizim hatalarını nasıl engelliyor?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "CoreAlign bünyesindeki Akıllı CAD Çizim motoru, sipariş aşamasında dinamik kurallar ve tolerans sınırlarını (cam kalınlık limitleri, rüzgar yükü dayanımları, maksimum kanat genişlikleri) anlık olarak denetler. Hatalı çizimler veya geçersiz ebatlar siparişe eklenemez; bayiye otomatik düzeltme önerisi sunulur. Böylece üretimde hatalı kesim riski sıfıra indirilir."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Veri güvenliği ve barındırma seçenekleri nelerdir?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "CoreAlign, çoklu kiracılı (multi-tenant) bulut mimarisinde kiracı seviyesinde mantıksal veri izolasyonu uygular. Tüm hassas veriler sunucu tarafında AES-256 ile şifrelenir. Kurumsal müşterilerimiz için verilerin Türkiye sınırları içindeki özel sunucularda veya kendi yerel veri merkezlerinde (On-Premise) barındırılması seçeneklerini de sunuyoruz."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Stok ve üretim planlamasında (MRP) fırın kapasitesi nasıl optimize ediliyor?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "MRP modülümüz, sipariş ölçülerini alarak 2D Kesim Optimizasyonu algoritmasıyla plakaları en az fire verecek şekilde yerleştirir (fireyi %15'ten %1.2'ye düşürür). Ayrıca temperleme fırınlarının doluluk oranlarını cam ağırlık ve kalınlıklarına göre hesaplayarak pişirme döngülerini gruplar. Bu sayede fırın boş çalıştırılmaz, enerji maliyetlerinde ciddi tasarruf elde edilir."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Fiyatlandırma modeli nasıl işliyor? Gizli maliyet var mı?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "CoreAlign abonelik (SaaS) modeliyle çalışır: aktif kullanıcı ve kullandığınız modüller üzerinden aylık veya yıllık ödenir. Kurulum, bakım ve sürüm güncellemeleri abonelik ücretine dahildir; donanım veya lisans sunucusu satın almanız gerekmez. Modülleri ihtiyaç duydukça açar, büyüdükçe ölçeklersiniz. Sözleşmede satır satır şeffaf kalemler yer alır — sürpriz kurulum veya kullanım bedeli çıkarmıyoruz."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Verilerimin sahibi kim? Aboneliği bırakırsam verilerime ne olur?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Verileriniz tümüyle size aittir; CoreAlign yalnızca işleyen taraftır. İstediğiniz an müşteri, ürün, sipariş, fatura ve muhasebe kayıtlarınızı standart formatlarda (CSV, Excel ve yapısal JSON) dışa aktarabilirsiniz. Aboneliğinizi sonlandırırsanız, tanımlı bir geçiş penceresinde tam veri dışa aktarımı sağlanır; saklama süresi dolduğunda veriler kalıcı olarak silinir. Verinizi rehin alan bir kilitlenme (vendor lock-in) yaratmıyoruz."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Mevcut sistemimizdeki verileri CoreAlign'e taşımak ne kadar sürer?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Geçiş yapılandırılmış bir süreçtir: önce cari hesap, ürün/stok kartları, açık siparişler ve açılış bakiyeleri eşlenir, ardından test ortamında doğrulanıp canlıya alınır. Hazır içe aktarma şablonları ve doğrulama kontrolleri sayesinde, hatalı veya eksik kayıtlar daha aktarım anında yakalanır. Onboarding ekibimiz eşleştirme ve mutabakatı sizinle birlikte yürütür; canlıya geçişi hafta sonu gibi düşük yoğunluklu bir pencerede planlarız."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Hangi dilleri destekliyor? Yurt dışı bayilerimizle kullanabilir miyiz?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Arayüz Türkçe, İngilizce, Almanca, Rusça ve Arapça olarak sunulur; Arapça için sağdan-sola (RTL) yerleşim desteklenir. Her kullanıcı kendi dilini seçer, böylece yurt dışı bayileriniz kendi dillerinde sipariş girerken siz Türkçe çalışmaya devam edersiniz. Tarih, sayı ve para birimi biçimleri kullanıcının yereline göre gösterilir; veriler arka planda UTC ve standart birimlerle tutulduğu için raporlama tutarlı kalır."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Buluttan mı yoksa kendi sunucumuzda (on-premise) mı kullanmalıyız?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "İki seçenek de mevcut. Çoğu işletme için önerimiz buluttur: yedekleme, ölçekleme ve güncellemeler tarafımızca yönetilir, ek BT yükü olmaz. Düzenleyici gereksinim veya kurumsal politika nedeniyle verinin sizde kalması gerekiyorsa, Türkiye sınırları içindeki özel sunucularda barındırma ya da kendi veri merkezinizde (on-premise) kurulum sağlıyoruz. Her iki dağıtımda da aynı kod tabanı ve aynı çok-kiracılı izolasyon mimarisi çalışır."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

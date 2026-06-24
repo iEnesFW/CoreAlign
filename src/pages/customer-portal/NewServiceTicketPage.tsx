@@ -49,7 +49,7 @@ export const NewServiceTicketPage = () => {
     <div className="space-y-4 max-w-2xl">
       <Link
         to="/customer-portal/service-tickets"
-        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
       >
         <ChevronLeft size={16} /> {t('CustomerPortal.Common.Back')}
       </Link>
@@ -129,7 +129,7 @@ export const NewServiceTicketPage = () => {
           <button
             type="submit"
             disabled={createTicket.isPending}
-            className="px-3 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="px-3 py-2 rounded-md text-sm bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-60"
           >
             {createTicket.isPending
               ? t('CustomerPortal.Common.Submitting')

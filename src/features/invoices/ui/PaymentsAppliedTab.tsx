@@ -98,7 +98,7 @@ export const PaymentsAppliedTab = ({
                 className="flex items-center justify-between gap-2 px-3 py-2 text-[11px]"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300">
                     <Receipt size={12} />
                   </span>
                   <div className="min-w-0">
@@ -114,7 +114,7 @@ export const PaymentsAppliedTab = ({
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-[11px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">
+                  <div className="text-[11px] font-semibold tabular-nums text-success-600 dark:text-success-400">
                     {fmtCurrency(app.appliedAmount, currency, locale)}
                   </div>
                 </div>
@@ -129,9 +129,9 @@ export const PaymentsAppliedTab = ({
 
 const statTones: Record<'slate' | 'indigo' | 'emerald' | 'amber', string> = {
   slate: 'border-slate-200 dark:border-slate-800',
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
+  indigo: 'border-primary-200 dark:border-primary-500/30',
+  emerald: 'border-success-200 dark:border-success-500/30',
+  amber: 'border-warning-200 dark:border-warning-500/30',
 };
 
 const Stat = ({

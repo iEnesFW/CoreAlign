@@ -39,7 +39,10 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         capturedAt: result.capturedAt,
       });
     } catch (err) {
-      Alert.alert('Signature', err instanceof Error ? err.message : String(err));
+      Alert.alert(
+        t('installation.signatureErrorTitle'),
+        err instanceof Error ? err.message : String(err),
+      );
     } finally {
       setBusy(false);
     }

@@ -17,7 +17,7 @@ import {
   useRejectReturn,
   useReturnRequestQuery,
 } from '@/features/returns/hooks/useReturnQueries';
-import { useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
+import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
 import type { ReturnRequest, ReturnRequestStatus } from '@/features/returns/model/return.types';
 
 const statusVariant: Record<ReturnRequestStatus, BadgeVariant> = {
@@ -177,7 +177,7 @@ export const ReturnDetailPage = () => {
                 value={warehouseId}
                 onChange={(e) => setWarehouseId(e.target.value)}
                 disabled={warehousesQuery.isLoading || warehouses.length === 0}
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800"
+                className="w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800"
               >
                 <option value="">{t('Returns.receive.warehousePlaceholder')}</option>
                 {warehouses.map((w) => (
@@ -192,7 +192,7 @@ export const ReturnDetailPage = () => {
                 type="checkbox"
                 checked={autoIssueCreditNote}
                 onChange={(e) => setAutoIssueCreditNote(e.target.checked)}
-                className="h-4 w-4 accent-indigo-500"
+                className="h-4 w-4 accent-primary-500"
               />
               {t('Returns.receive.autoIssueCreditNote')}
             </label>
@@ -210,7 +210,7 @@ export const ReturnDetailPage = () => {
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             placeholder={t('Returns.reject.placeholder')}
-            className="mt-2 block w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
+            className="mt-2 block w-full rounded border border-slate-300 px-2 py-1.5 text-xs focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800"
           />
           <div className="mt-2 flex justify-end">
             <Button

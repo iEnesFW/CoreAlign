@@ -36,7 +36,7 @@ export const ProviderTestSuiteResultDialog = ({
     >
       {isRunning && (
         <div className="flex flex-col items-center justify-center py-10 text-slate-500 dark:text-slate-400">
-          <Loader2 className="mb-3 h-8 w-8 animate-spin text-indigo-500" />
+          <Loader2 className="mb-3 h-8 w-8 animate-spin text-primary-500" />
           <p className="text-sm">{t('Admin.Providers.TestSuite.Running')}</p>
         </div>
       )}
@@ -66,9 +66,9 @@ export const ProviderTestSuiteResultDialog = ({
               >
                 <div className="mt-0.5 shrink-0">
                   {step.passed ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    <CheckCircle2 className="h-4 w-4 text-success-500" />
                   ) : (
-                    <XCircle className="h-4 w-4 text-red-500" />
+                    <XCircle className="h-4 w-4 text-danger-500" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

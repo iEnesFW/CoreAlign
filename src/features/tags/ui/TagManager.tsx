@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Label } from '@/shared/ui/Label/Label';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import { TagChip } from './TagChip';
@@ -80,9 +84,6 @@ export const TagManager = () => {
     }
   };
 
-  const inputClass =
-    'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -92,7 +93,7 @@ export const TagManager = () => {
         <button
           type="button"
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
         >
           <Plus size={12} />
           {t('common.new')}
@@ -130,7 +131,7 @@ export const TagManager = () => {
                     <button
                       type="button"
                       onClick={() => onDelete(tag)}
-                      className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
+                      className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
                       title={t('common.delete')}
                     >
                       <Trash2 size={13} />
@@ -153,72 +154,60 @@ export const TagManager = () => {
         </table>
       </div>
 
-      {editing !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <form
-            onSubmit={submit}
-            className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-900"
-          >
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-              {editing === 'new'
-                ? `${t('tags.manageTitle')} — ${t('common.new')}`
-                : `${t('tags.manageTitle')} — ${t('common.edit')}`}
-            </h3>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('tags.fields.name')} *
-              </label>
+      <Modal
+        open={editing !== null}
+        title={
+          editing === 'new'
+            ? `${t('tags.manageTitle')} — ${t('common.new')}`
+            : `${t('tags.manageTitle')} — ${t('common.edit')}`
+        }
+        icon={<TagIcon size={18} />}
+        onClose={() => setEditing(null)}
+        size="md"
+        footer={
+          <>
+            <Button type="button" variant="ghost" onClick={() => setEditing(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" form="tag-form" isLoading={saving} disabled={saving}>
+              {saving ? t('common.saving') : t('common.save')}
+            </Button>
+          </>
+        }
+      >
+        <form id="tag-form" onSubmit={submit} className="space-y-3">
+          <Input
+            label={t('tags.fields.name')}
+            type="text"
+            required
+            value={form.name}
+            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          />
+          <div className="flex w-full flex-col gap-1.5">
+            <Label htmlFor="tag-color">{t('tags.fields.color')}</Label>
+            <div className="flex items-center gap-2">
               <input
-                type="text"
-                required
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className={inputClass}
+                id="tag-color"
+                type="color"
+                value={form.colorHex}
+                onChange={(e) => setForm((f) => ({ ...f, colorHex: e.target.value }))}
+                className="h-8 w-12 cursor-pointer rounded border border-slate-300 dark:border-slate-700"
               />
+              <TagChip name={form.name || t('tags.preview')} colorHex={form.colorHex} />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('tags.fields.color')}
-              </label>
-              <div className="mt-1 flex items-center gap-2">
-                <input
-                  type="color"
-                  value={form.colorHex}
-                  onChange={(e) => setForm((f) => ({ ...f, colorHex: e.target.value }))}
-                  className="h-8 w-12 cursor-pointer rounded border border-slate-300 dark:border-slate-700"
-                />
-                <TagChip name={form.name || t('tags.preview')} colorHex={form.colorHex} />
-              </div>
-            </div>
-            {editing !== 'new' && (
-              <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
-                <input
-                  type="checkbox"
-                  checked={form.isActive}
-                  onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                />
-                {t('common.active')}
-              </label>
-            )}
-            <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {saving ? t('common.saving') : t('common.save')}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+          </div>
+          {editing !== 'new' && (
+            <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              />
+              {t('common.active')}
+            </label>
+          )}
+        </form>
+      </Modal>
     </section>
   );
 };

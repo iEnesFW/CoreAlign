@@ -34,7 +34,7 @@ export const InvoiceDetailPage = () => {
     <div className="space-y-4">
       <Link
         to="/customer-portal/invoices"
-        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+        className="inline-flex items-center gap-1 text-sm text-primary-600 hover:underline"
       >
         <ChevronLeft size={16} /> {t('CustomerPortal.Common.Back')}
       </Link>
@@ -42,7 +42,7 @@ export const InvoiceDetailPage = () => {
       {isLoading ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Common.Loading')}</div>
       ) : isError || !invoice ? (
-        <div className="text-sm text-red-600">{t('CustomerPortal.Common.LoadError')}</div>
+        <div className="text-sm text-danger-600">{t('CustomerPortal.Common.LoadError')}</div>
       ) : (
         <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -66,7 +66,7 @@ export const InvoiceDetailPage = () => {
                 invoice.status === 'Overdue') && (
                 <Link
                   to={`/customer-portal/payments/initiate?invoiceId=${invoice.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm bg-primary-600 text-white hover:bg-primary-700"
                 >
                   <CreditCard size={16} /> {t('CustomerPortal.Invoice.PayNow')}
                 </Link>

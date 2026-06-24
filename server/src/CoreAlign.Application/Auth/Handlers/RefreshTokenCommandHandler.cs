@@ -98,6 +98,15 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
         var tenant = await _tenantRepository.GetByIdAsync(user.TenantId, cancellationToken)
             ?? throw new UserNotFoundException();
 
+        if (!user.IsActive)
+        {
+            throw new AccountDisabledException();
+        }
+        if (!tenant.IsActive || tenant.IsArchived)
+        {
+            throw new TenantInactiveException();
+        }
+
         var newRawRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var newRefreshTokenHash = _jwtTokenService.HashToken(newRawRefreshToken);
 

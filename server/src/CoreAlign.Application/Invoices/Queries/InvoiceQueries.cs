@@ -12,3 +12,5 @@ public record GetInvoiceByIdQuery(Guid Id) : IRequest<InvoiceDto>;
 public record GetInvoicesByOrderQuery(Guid OrderId) : IRequest<List<InvoiceSummaryDto>>;
 
 public record GetCreditNotesForInvoiceQuery(Guid InvoiceId) : IRequest<List<InvoiceSummaryDto>>;
+
+public record GetCreditedQuantitiesByLineQuery(Guid InvoiceId) : IRequest<List<CreditedLineQuantityDto>>;

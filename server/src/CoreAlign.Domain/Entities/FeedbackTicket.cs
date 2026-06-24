@@ -17,6 +17,9 @@ public class FeedbackTicket : TenantEntity
     public string? CreatedByName { get; private set; }
     public string? AdminResponse { get; private set; }
     public DateTime? ResolvedAtUtc { get; private set; }
+    public string? AttachmentPath { get; private set; }
+    public string? AttachmentFileName { get; private set; }
+    public string? AttachmentContentType { get; private set; }
 
     protected FeedbackTicket() { }
 
@@ -41,6 +44,14 @@ public class FeedbackTicket : TenantEntity
         PageUrl = pageUrl;
         CreatedByUserId = createdByUserId;
         CreatedByName = createdByName;
+    }
+
+    public void AttachFile(string path, string fileName, string contentType)
+    {
+        AttachmentPath = path;
+        AttachmentFileName = fileName;
+        AttachmentContentType = contentType;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
     public void ChangeStatus(FeedbackStatus status, string? adminResponse)

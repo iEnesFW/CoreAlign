@@ -1,16 +1,28 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Image as ImageIcon } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useCompanyProfileQuery, useUpdateCompanyProfile } from '../hooks/useSettingsQueries';
 
 export const BrandingSection = () => {
+  const { t } = useTranslation();
   const profile = useCompanyProfileQuery();
   const update = useUpdateCompanyProfile();
   const data = profile.data?.data;
 
-  if (profile.isPending) return <div className="p-6 text-sm text-slate-500">Yükleniyor…</div>;
-  if (!data) return <div className="p-6 text-sm text-slate-500">Yüklenemedi.</div>;
+  if (profile.isPending)
+    return (
+      <div className="p-6 text-sm text-slate-500">
+        {t('Settings.Loading', { defaultValue: 'Yükleniyor…' })}
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="p-6 text-sm text-slate-500">
+        {t('Settings.LoadFailed', { defaultValue: 'Yüklenemedi.' })}
+      </div>
+    );
 
   return <BrandingForm key={data.id} initial={data} update={update} />;
 };
@@ -22,6 +34,7 @@ const BrandingForm = ({
   initial: NonNullable<NonNullable<ReturnType<typeof useCompanyProfileQuery>['data']>['data']>;
   update: ReturnType<typeof useUpdateCompanyProfile>;
 }) => {
+  const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState(initial.logoUrl ?? '');
   const [primaryColor, setPrimaryColor] = useState(initial.primaryColor ?? '#4f46e5');
   const [secondaryColor, setSecondaryColor] = useState(initial.secondaryColor ?? '#0ea5e9');
@@ -29,8 +42,6 @@ const BrandingForm = ({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Branding edits reuse the company-profile update; we send the full
-      // existing profile plus the branding changes so nothing else is wiped.
       await update.mutateAsync({
         name: initial.name,
         legalName: initial.legalName ?? null,
@@ -61,7 +72,7 @@ const BrandingForm = ({
         primaryColor: primaryColor || null,
         secondaryColor: secondaryColor || null,
       });
-      toast.success('Marka ayarları kaydedildi.');
+      toast.success(t('Settings.BrandingSaved', { defaultValue: 'Marka ayarları kaydedildi.' }));
     } catch (err) {
       toastApiError(err);
     }
@@ -71,7 +82,7 @@ const BrandingForm = ({
     <form onSubmit={submit} className="space-y-5">
       <div>
         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Logo URL
+          {t('Settings.LogoUrl', { defaultValue: 'Logo URL' })}
         </label>
         <input
           type="url"
@@ -83,11 +94,15 @@ const BrandingForm = ({
         />
         <div className="mt-3 flex h-24 w-48 items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/40">
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo önizleme" className="max-h-20 max-w-44 object-contain" />
+            <img
+              src={logoUrl}
+              alt={t('Settings.LogoPreview', { defaultValue: 'Logo önizleme' })}
+              className="max-h-20 max-w-44 object-contain"
+            />
           ) : (
             <span className="flex flex-col items-center gap-1 text-[10px] text-slate-400">
               <ImageIcon size={20} />
-              Logo önizleme
+              {t('Settings.LogoPreview', { defaultValue: 'Logo önizleme' })}
             </span>
           )}
         </div>
@@ -96,7 +111,7 @@ const BrandingForm = ({
       <div className="grid grid-cols-2 gap-4 sm:max-w-md">
         <div>
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            Birincil Renk
+            {t('Settings.PrimaryColor', { defaultValue: 'Birincil Renk' })}
           </label>
           <div className="mt-1 flex items-center gap-2">
             <input
@@ -116,7 +131,7 @@ const BrandingForm = ({
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            İkincil Renk
+            {t('Settings.SecondaryColor', { defaultValue: 'İkincil Renk' })}
           </label>
           <div className="mt-1 flex items-center gap-2">
             <input
@@ -137,16 +152,21 @@ const BrandingForm = ({
       </div>
 
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Bu renkler fatura/sipariş çıktılarında ve raporlarda firma markası olarak kullanılacaktır.
+        {t('Settings.BrandColorsHint', {
+          defaultValue:
+            'Bu renkler fatura/sipariş çıktılarında ve raporlarda firma markası olarak kullanılacaktır.',
+        })}
       </p>
 
       <div className="flex justify-end border-t border-slate-200 pt-3 dark:border-slate-800">
         <button
           type="submit"
           disabled={update.isPending}
-          className="rounded bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded bg-primary-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
         >
-          {update.isPending ? 'Kaydediliyor…' : 'Kaydet'}
+          {update.isPending
+            ? t('Settings.Saving', { defaultValue: 'Kaydediliyor…' })
+            : t('Settings.Save', { defaultValue: 'Kaydet' })}
         </button>
       </div>
     </form>

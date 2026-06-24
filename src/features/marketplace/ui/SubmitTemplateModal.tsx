@@ -53,7 +53,7 @@ export const SubmitTemplateModal = ({ open, onClose, onSubmitted }: SubmitTempla
             value={tenantTemplateId}
             onChange={(event) => setTenantTemplateId(event.target.value)}
             placeholder="00000000-0000-0000-0000-000000000000"
-            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-success-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           />
         </label>
         <div className="flex justify-end gap-2">
@@ -67,7 +67,7 @@ export const SubmitTemplateModal = ({ open, onClose, onSubmitted }: SubmitTempla
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="rounded-md bg-success-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-success-700 disabled:opacity-50"
           >
             {mutation.isPending
               ? t('Marketplace.Submit.Submitting', 'Submitting...')

@@ -32,30 +32,16 @@ public sealed class ReportSchedulesController : ControllerBase
     [Authorize(Roles = PersonaPolicies.TenantAdminRole + "," + PersonaPolicies.PlatformAdminRole)]
     public async Task<IActionResult> CreateAsync([FromBody] CreateReportScheduleRequestDto request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var created = await _mediator.Send(new CreateReportScheduleCommand(request), cancellationToken);
-            return created.ToCreated();
-        }
-        catch (ScheduleValidationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var created = await _mediator.Send(new CreateReportScheduleCommand(request), cancellationToken);
+        return created.ToCreated();
     }
 
     [HttpPut("{id:guid}")]
     [Authorize(Roles = PersonaPolicies.TenantAdminRole + "," + PersonaPolicies.PlatformAdminRole)]
     public async Task<IActionResult> UpdateAsync(Guid id, [FromBody] UpdateReportScheduleRequestDto request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var updated = await _mediator.Send(new UpdateReportScheduleCommand(id, request), cancellationToken);
-            return updated is null ? NotFound() : updated.ToOk();
-        }
-        catch (ScheduleValidationException ex)
-        {
-            return BadRequest(new { error = ex.Message });
-        }
+        var updated = await _mediator.Send(new UpdateReportScheduleCommand(id, request), cancellationToken);
+        return updated is null ? NotFound() : updated.ToOk();
     }
 
     [HttpDelete("{id:guid}")]

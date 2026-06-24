@@ -13,7 +13,6 @@ interface Props {
   onChange: (id: string) => void;
 }
 
-/** Sticky tab bar for splitting long modal forms into sections. */
 export const ModalTabs = ({ tabs, active, onChange }: Props) => (
   <div className="sticky top-[49px] z-10 flex gap-1 border-b border-slate-200 bg-white px-5 dark:border-slate-800 dark:bg-slate-900">
     {tabs.map((tab) => {
@@ -25,7 +24,7 @@ export const ModalTabs = ({ tabs, active, onChange }: Props) => (
           onClick={() => onChange(tab.id)}
           className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition ${
             isActive
-              ? 'border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300'
+              ? 'border-primary-600 text-primary-700 dark:border-primary-400 dark:text-primary-300'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
@@ -35,7 +34,7 @@ export const ModalTabs = ({ tabs, active, onChange }: Props) => (
               {tab.badge}
             </span>
           )}
-          {tab.hasError && <span className="h-1.5 w-1.5 rounded-full bg-red-500" aria-hidden />}
+          {tab.hasError && <span className="h-1.5 w-1.5 rounded-full bg-danger-500" aria-hidden />}
         </button>
       );
     })}

@@ -21,4 +21,7 @@ public enum DocumentSequenceType
     PurchaseRequisitionNumber = 16,
     MrpPlanRunNumber = 17,
     GoodsReceiptNumber = 18,
+    EmployeeNumber = 19,
+    PayrollRunNumber = 20,
+    PayslipNumber = 21,
 }

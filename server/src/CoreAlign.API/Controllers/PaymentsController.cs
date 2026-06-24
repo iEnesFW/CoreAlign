@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
@@ -18,6 +19,9 @@ public class PaymentsController : ControllerBase
 {
     private readonly IMediator _mediator;
     public PaymentsController(IMediator mediator) => _mediator = mediator;
+
+    private Guid CurrentUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
 
     [HttpGet]
     public async Task<IActionResult> Search(
@@ -53,7 +57,7 @@ public class PaymentsController : ControllerBase
 
     [HttpPost("{id:guid}/confirm")]
     public async Task<IActionResult> Confirm(Guid id, [FromBody] ConfirmPaymentCommand? cmd, CancellationToken ct)
-        => (await _mediator.Send(new ConfirmPaymentCommand(id, cmd?.PostedByUserId), ct)).ToOk();
+        => (await _mediator.Send(new ConfirmPaymentCommand(id, CurrentUserId), ct)).ToOk();
 
     [HttpPost("{id:guid}/apply")]
     public async Task<IActionResult> Apply(Guid id, [FromBody] ApplyPaymentCommand cmd, CancellationToken ct)

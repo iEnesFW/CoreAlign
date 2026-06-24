@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { privacyApi } from '@/features/privacy/api/privacyApi';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -73,7 +73,7 @@ export const PrivacyPage = () => {
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <div className="mb-3 flex items-center gap-2">
-          <ShieldCheck className="text-emerald-600 dark:text-emerald-400" size={18} />
+          <ShieldCheck className="text-success-600 dark:text-success-400" size={18} />
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
             {t('Privacy.Export.Title')}
           </h2>
@@ -88,21 +88,21 @@ export const PrivacyPage = () => {
           type="button"
           onClick={handleExport}
           disabled={isExporting}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-md bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
         >
           <Download size={14} />
           {isExporting ? t('Privacy.Export.Preparing') : t('Privacy.Export.Button')}
         </button>
       </section>
 
-      <section className="rounded-lg border border-red-200 bg-red-50/40 p-5 shadow-sm dark:border-red-900/40 dark:bg-red-950/20">
+      <section className="rounded-lg border border-danger-200 bg-danger-50/40 p-5 shadow-sm dark:border-danger-900/40 dark:bg-danger-950/20">
         <div className="mb-3 flex items-center gap-2">
-          <ShieldAlert className="text-red-600 dark:text-red-400" size={18} />
-          <h2 className="text-base font-semibold text-red-900 dark:text-red-200">
+          <ShieldAlert className="text-danger-600 dark:text-danger-400" size={18} />
+          <h2 className="text-base font-semibold text-danger-900 dark:text-danger-200">
             {t('Privacy.Erase.Title')}
           </h2>
         </div>
-        <p className="mb-4 text-sm text-red-800/90 dark:text-red-200/90">
+        <p className="mb-4 text-sm text-danger-800/90 dark:text-danger-200/90">
           {t('Privacy.Erase.Description')}
         </p>
         {!showConfirm ? (
@@ -110,21 +110,21 @@ export const PrivacyPage = () => {
             type="button"
             onClick={() => setShowConfirm(true)}
             disabled={!user}
-            className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-md bg-danger-600 px-4 py-2 text-sm font-medium text-white hover:bg-danger-700 disabled:opacity-50"
           >
             <ShieldAlert size={14} />
             {t('Privacy.Erase.Button')}
           </button>
         ) : (
           <div className="space-y-3">
-            <label className="block text-sm text-red-900 dark:text-red-200">
+            <label className="block text-sm text-danger-900 dark:text-danger-200">
               {t('Privacy.Erase.ConfirmPrompt')}
               <input
                 type="text"
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 autoComplete="off"
-                className="mt-1 block w-full rounded-md border border-red-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-red-500 focus:ring-1 focus:ring-red-500 dark:border-red-800 dark:bg-slate-900 dark:text-slate-100"
+                className="mt-1 block w-full rounded-md border border-danger-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-danger-500 focus:ring-1 focus:ring-danger-500 dark:border-danger-800 dark:bg-slate-900 dark:text-slate-100"
                 placeholder={user?.username}
               />
             </label>
@@ -133,7 +133,7 @@ export const PrivacyPage = () => {
                 type="button"
                 onClick={handleErase}
                 disabled={isErasing || confirmText !== user?.username}
-                className="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-md bg-danger-600 px-4 py-2 text-sm font-medium text-white hover:bg-danger-700 disabled:opacity-50"
               >
                 <ShieldAlert size={14} />
                 {isErasing ? t('Privacy.Erase.Processing') : t('Privacy.Erase.Button')}

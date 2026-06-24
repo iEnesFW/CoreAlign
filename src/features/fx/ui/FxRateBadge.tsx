@@ -36,7 +36,7 @@ export const FxRateBadge = ({
 
   if (isError || !data) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1 rounded-md bg-warning-100 px-2 py-1 text-xs text-warning-700 dark:bg-warning-900/30 dark:text-warning-300">
         {t('Fx.LatestRates.Unavailable', 'FX unavailable')}
       </span>
     );
@@ -44,7 +44,7 @@ export const FxRateBadge = ({
 
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+      className="inline-flex items-center gap-1 rounded-md bg-success-50 px-2 py-1 text-xs font-medium text-success-700 dark:bg-success-900/30 dark:text-success-300"
       title={`${t('Fx.LatestRates.LastUpdated', 'Last updated')}: ${formatDate(data.effectiveDate)} (${data.source})`}
     >
       1 {data.currencyCode} = {formatRate(data.buyingRate)} {baseCurrencyCode}

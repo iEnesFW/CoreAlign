@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, PauseCircle, PlayCircle, Plus, Trash2 } from 'lucide-react';
+import { CalendarClock, PauseCircle, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { apiClient } from '@/shared/api/apiClient';
 import { safeRequest } from '@/shared/lib/safeRequest';
 import { logger } from '@/shared/lib/logger';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Badge } from '@/shared/ui/Badge/Badge';
 
 type Frequency = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly';
 type Format = 'Pdf' | 'Xlsx';
@@ -46,7 +51,6 @@ const emptyForm: FormState = {
 
 export const SchedulesPage = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [items, setItems] = useState<ScheduleDto[]>([]);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<FormState>(emptyForm);
@@ -142,34 +146,24 @@ export const SchedulesPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/reports')}
-            className="mb-2 inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          >
-            <ArrowLeft className="h-4 w-4" /> {t('common.back')}
-          </button>
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
-            {t('reports.schedules.title')}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('reports.schedules.subtitle')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreating(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-        >
-          <Plus className="h-4 w-4" /> {t('reports.schedules.new')}
-        </button>
-      </div>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<CalendarClock size={20} />}
+          title={t('reports.schedules.title')}
+          subtitle={t('reports.schedules.subtitle')}
+          crumbs={[{ label: t('common.back'), to: '/dashboard/reports' }]}
+          actions={
+            <Button size="sm" onClick={() => setCreating(true)}>
+              <Plus size={14} />
+              {t('reports.schedules.new')}
+            </Button>
+          }
+        />
+      }
+    >
       {errorMessage && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+        <div className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-sm text-danger-700 dark:border-danger-900/50 dark:bg-danger-950/40 dark:text-danger-300">
           {errorMessage}
         </div>
       )}
@@ -180,92 +174,56 @@ export const SchedulesPage = () => {
             {t('reports.schedules.newTitle')}
           </h2>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <label className="block text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.name')}
-              </span>
-              <input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.reportKey')}
-              </span>
-              <input
-                value={form.reportKey}
-                onChange={(e) => setForm({ ...form, reportKey: e.target.value })}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.frequency')}
-              </span>
-              <select
-                value={form.frequency}
-                onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="Hourly">Hourly</option>
-                <option value="Daily">Daily</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Monthly">Monthly</option>
-              </select>
-            </label>
-            <label className="block text-sm">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.format')}
-              </span>
-              <select
-                value={form.format}
-                onChange={(e) => setForm({ ...form, format: e.target.value as Format })}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              >
-                <option value="Pdf">PDF</option>
-                <option value="Xlsx">Excel</option>
-              </select>
-            </label>
-            <label className="block text-sm md:col-span-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.recipients')}
-              </span>
-              <input
-                value={form.recipientsText}
-                onChange={(e) => setForm({ ...form, recipientsText: e.target.value })}
-                placeholder="ops@example.com, cfo@example.com"
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-            </label>
-            <label className="block text-sm md:col-span-2">
-              <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('reports.schedules.startAt')}
-              </span>
-              <input
-                type="datetime-local"
-                value={form.startAtUtc}
-                onChange={(e) => setForm({ ...form, startAtUtc: e.target.value })}
-                className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-            </label>
+            <Input
+              label={t('reports.schedules.name')}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <Input
+              label={t('reports.schedules.reportKey')}
+              value={form.reportKey}
+              onChange={(e) => setForm({ ...form, reportKey: e.target.value })}
+            />
+            <Select
+              label={t('reports.schedules.frequency')}
+              value={form.frequency}
+              onChange={(e) => setForm({ ...form, frequency: e.target.value as Frequency })}
+            >
+              <option value="Hourly">Hourly</option>
+              <option value="Daily">Daily</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Monthly">Monthly</option>
+            </Select>
+            <Select
+              label={t('reports.schedules.format')}
+              value={form.format}
+              onChange={(e) => setForm({ ...form, format: e.target.value as Format })}
+            >
+              <option value="Pdf">PDF</option>
+              <option value="Xlsx">Excel</option>
+            </Select>
+            <Input
+              label={t('reports.schedules.recipients')}
+              className="md:col-span-2"
+              value={form.recipientsText}
+              onChange={(e) => setForm({ ...form, recipientsText: e.target.value })}
+              placeholder="ops@example.com, cfo@example.com"
+            />
+            <Input
+              label={t('reports.schedules.startAt')}
+              className="md:col-span-2"
+              type="datetime-local"
+              value={form.startAtUtc}
+              onChange={(e) => setForm({ ...form, startAtUtc: e.target.value })}
+            />
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setCreating(false)}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm dark:border-slate-700"
-            >
+            <Button type="button" variant="secondary" size="sm" onClick={() => setCreating(false)}>
               {t('common.cancel')}
-            </button>
-            <button
-              type="button"
-              onClick={submit}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
-            >
+            </Button>
+            <Button type="button" size="sm" onClick={submit}>
               {t('common.save')}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -322,15 +280,9 @@ export const SchedulesPage = () => {
                   {new Date(s.nextRunAtUtc).toLocaleString()}
                 </td>
                 <td className="px-3 py-2">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-xs ${
-                      s.isActive
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                    }`}
-                  >
+                  <Badge variant={s.isActive ? 'success' : 'neutral'} pill>
                     {s.isActive ? t('reports.schedules.active') : t('reports.schedules.inactive')}
-                  </span>
+                  </Badge>
                 </td>
                 <td className="px-3 py-2 text-right">
                   <div className="inline-flex items-center gap-1">
@@ -348,7 +300,7 @@ export const SchedulesPage = () => {
                     <button
                       type="button"
                       onClick={() => void remove(s.id)}
-                      className="text-slate-400 hover:text-red-500"
+                      className="text-slate-400 hover:text-danger-500"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -359,7 +311,7 @@ export const SchedulesPage = () => {
           </tbody>
         </table>
       </div>
-    </div>
+    </ListPageTemplate>
   );
 };
 

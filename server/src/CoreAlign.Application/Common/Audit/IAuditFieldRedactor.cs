@@ -12,4 +12,11 @@ public interface IAuditFieldRedactor
     /// replacement when <paramref name="fieldName"/> is sensitive.
     /// </summary>
     string? Redact(string fieldName, string? value);
+
+    /// <summary>
+    /// Redacts every sensitive property of a serialized JSON object (the audit
+    /// before/after payloads) in place, leaving non-sensitive fields untouched.
+    /// Invalid or non-object JSON is returned unchanged.
+    /// </summary>
+    string? RedactJson(string? json);
 }

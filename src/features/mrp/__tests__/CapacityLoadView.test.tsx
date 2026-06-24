@@ -68,11 +68,11 @@ describe('CapacityLoadView', () => {
     const overloadedRow = rows.find((r) => r.getAttribute('data-overloaded') === 'true');
     expect(overloadedRow).toBeDefined();
     const bar = within(overloadedRow as HTMLElement).getByTestId('capacity-bucket-bar');
-    expect(bar.className).toMatch(/bg-rose-500/);
+    expect(bar.className).toMatch(/bg-danger-500/);
 
     const withinRow = rows.find((r) => r.getAttribute('data-overloaded') === 'false');
     const okBar = within(withinRow as HTMLElement).getByTestId('capacity-bucket-bar');
-    expect(okBar.className).toMatch(/bg-emerald-500/);
+    expect(okBar.className).toMatch(/bg-success-500/);
   });
 
   it('shows the unrouted production-order note when present', () => {

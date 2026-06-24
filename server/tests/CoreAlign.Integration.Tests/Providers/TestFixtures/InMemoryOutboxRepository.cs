@@ -22,8 +22,15 @@ public sealed class InMemoryOutboxRepository : IOutboxRepository
     public Task<OutboxMessage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         Task.FromResult<OutboxMessage?>(Messages.FirstOrDefault(m => m.Id == id));
 
-    public Task<IReadOnlyList<OutboxMessage>> GetPendingAsync(int max, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<OutboxMessage>>(Messages.Take(max).ToList());
+    public Task<IReadOnlyList<OutboxMessage>> GetDueForCurrentTenantAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<OutboxMessage>>(
+            Messages.Where(m => m.Status == OutboxStatus.Pending && (m.NextAttemptUtc == null || m.NextAttemptUtc <= utcNow))
+                .Take(max).ToList());
+
+    public Task<IReadOnlyList<OutboxMessage>> GetDueAcrossTenantsAsync(int max, DateTime utcNow, CancellationToken cancellationToken = default) =>
+        Task.FromResult<IReadOnlyList<OutboxMessage>>(
+            Messages.Where(m => m.Status == OutboxStatus.Pending && (m.NextAttemptUtc == null || m.NextAttemptUtc <= utcNow))
+                .Take(max).ToList());
 
     public Task<IReadOnlyList<OutboxMessage>> ListAsync(OutboxStatus? status, int max, CancellationToken cancellationToken = default) =>
         Task.FromResult<IReadOnlyList<OutboxMessage>>(Messages.Take(max).ToList());

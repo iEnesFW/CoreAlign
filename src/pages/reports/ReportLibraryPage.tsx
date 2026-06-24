@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Download, FileSpreadsheet, FileText, Filter } from 'lucide-react';
+import { ArrowLeft, Download, FileSpreadsheet, FileText, Filter, Library } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/shared/api/apiClient';
 import { safeRequest } from '@/shared/lib/safeRequest';
 import { logger } from '@/shared/lib/logger';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 
 type ReportFormat = 'pdf' | 'xlsx';
 
@@ -109,27 +112,21 @@ export const ReportLibraryPage = () => {
   }, []);
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/reports')}
-            className="inline-flex items-center gap-1 rounded border border-slate-200 px-2 py-1 text-[11px] hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft size={12} /> {t('reports.library.back')}
-          </button>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-              {t('reports.library.title')}
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t('reports.library.subtitle')}
-            </p>
-          </div>
-        </div>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Library size={20} />}
+          title={t('reports.library.title')}
+          subtitle={t('reports.library.subtitle')}
+          actions={
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/reports')}>
+              <ArrowLeft size={14} />
+              {t('reports.library.back')}
+            </Button>
+          }
+        />
+      }
+    >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {grouped.map(([categoryKey, reports]) => (
           <section
@@ -147,7 +144,7 @@ export const ReportLibraryPage = () => {
                     onClick={() => setActiveKey(r.key)}
                     className={`flex w-full flex-col items-start gap-0.5 rounded border px-2 py-2 text-left text-[11px] transition ${
                       activeKey === r.key
-                        ? 'border-indigo-300 bg-indigo-50 dark:border-indigo-500/40 dark:bg-indigo-500/10'
+                        ? 'border-primary-300 bg-primary-50 dark:border-primary-500/40 dark:bg-primary-500/10'
                         : 'border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50'
                     }`}
                   >
@@ -171,7 +168,7 @@ export const ReportLibraryPage = () => {
           onClose={() => setActiveKey(null)}
         />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -346,7 +343,7 @@ const ReportFilterPanel = ({
           type="button"
           disabled={busyFormat !== null}
           onClick={() => trigger('pdf')}
-          className="inline-flex items-center gap-1.5 rounded border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-[11px] font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-60 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
+          className="inline-flex items-center gap-1.5 rounded border border-primary-300 bg-primary-50 px-3 py-1.5 text-[11px] font-semibold text-primary-700 hover:bg-primary-100 disabled:opacity-60 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300"
         >
           <FileText size={13} />
           {busyFormat === 'pdf' ? t('reports.library.downloading') : t('reports.library.pdf')}
@@ -355,7 +352,7 @@ const ReportFilterPanel = ({
           type="button"
           disabled={busyFormat !== null}
           onClick={() => trigger('xlsx')}
-          className="inline-flex items-center gap-1.5 rounded border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+          className="inline-flex items-center gap-1.5 rounded border border-success-300 bg-success-50 px-3 py-1.5 text-[11px] font-semibold text-success-700 hover:bg-success-100 disabled:opacity-60 dark:border-success-500/40 dark:bg-success-500/10 dark:text-success-300"
         >
           <FileSpreadsheet size={13} />
           {busyFormat === 'xlsx' ? t('reports.library.downloading') : t('reports.library.xlsx')}
@@ -392,3 +389,5 @@ const LabeledInput = ({
     />
   </label>
 );
+
+export default ReportLibraryPage;

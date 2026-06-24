@@ -53,7 +53,7 @@ export const SsoLoginButton = ({ defaultIdpName = 'default', className }: Props)
               onClick={() => setProtocol('oidc')}
               className={
                 protocol === 'oidc'
-                  ? 'flex-1 rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white'
+                  ? 'flex-1 rounded-md bg-primary-600 px-3 py-2 text-xs font-semibold text-white'
                   : 'flex-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 dark:border-slate-600 dark:text-slate-300'
               }
             >
@@ -64,7 +64,7 @@ export const SsoLoginButton = ({ defaultIdpName = 'default', className }: Props)
               onClick={() => setProtocol('saml')}
               className={
                 protocol === 'saml'
-                  ? 'flex-1 rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white'
+                  ? 'flex-1 rounded-md bg-primary-600 px-3 py-2 text-xs font-semibold text-white'
                   : 'flex-1 rounded-md border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 dark:border-slate-600 dark:text-slate-300'
               }
             >

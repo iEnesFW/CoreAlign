@@ -130,6 +130,40 @@ public static class NotificationTemplateSeeder
                 ["de"] = "Ihr Service-Ticket wurde gelöst. Gebühr: {{chargeableAmount}}.",
                 ["ru"] = "Ваш сервисный запрос решён. Сумма: {{chargeableAmount}}."
             }),
+        new TemplateSpec("DocumentForward.Invoice", "DocumentForward",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Fatura {{documentNumber}} sizinle paylaşıldı",
+                ["en"] = "Invoice {{documentNumber}} shared with you",
+                ["ar"] = "تمت مشاركة الفاتورة {{documentNumber}} معك",
+                ["de"] = "Rechnung {{documentNumber}} wurde mit Ihnen geteilt",
+                ["ru"] = "Счёт {{documentNumber}} отправлен вам"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{forwardedByName}} sizinle {{documentNumber}} numaralı faturayı paylaştı. Belge ektedir.",
+                ["en"] = "{{forwardedByName}} shared invoice {{documentNumber}} with you. The document is attached.",
+                ["ar"] = "شارك {{forwardedByName}} الفاتورة {{documentNumber}} معك. المستند مرفق.",
+                ["de"] = "{{forwardedByName}} hat die Rechnung {{documentNumber}} mit Ihnen geteilt. Das Dokument ist angehängt.",
+                ["ru"] = "{{forwardedByName}} отправил вам счёт {{documentNumber}}. Документ во вложении."
+            }),
+        new TemplateSpec("DocumentForward.Order", "DocumentForward",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Sipariş {{documentNumber}} sizinle paylaşıldı",
+                ["en"] = "Order {{documentNumber}} shared with you",
+                ["ar"] = "تمت مشاركة الطلب {{documentNumber}} معك",
+                ["de"] = "Bestellung {{documentNumber}} wurde mit Ihnen geteilt",
+                ["ru"] = "Заказ {{documentNumber}} отправлен вам"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{forwardedByName}} sizinle {{documentNumber}} numaralı siparişi paylaştı. Belge ektedir.",
+                ["en"] = "{{forwardedByName}} shared order {{documentNumber}} with you. The document is attached.",
+                ["ar"] = "شارك {{forwardedByName}} الطلب {{documentNumber}} معك. المستند مرفق.",
+                ["de"] = "{{forwardedByName}} hat die Bestellung {{documentNumber}} mit Ihnen geteilt. Das Dokument ist angehängt.",
+                ["ru"] = "{{forwardedByName}} отправил вам заказ {{documentNumber}}. Документ во вложении."
+            }),
     };
 
     private static readonly NotificationChannel[] SeedChannels = new[]

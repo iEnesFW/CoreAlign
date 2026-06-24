@@ -8,7 +8,7 @@ import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { cn } from '@/shared/lib/cn';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { useCreateSubscriptionOrder, usePaymentGatewaysQuery } from '../hooks/useBilling';
 import type {
   CartLine,
@@ -22,9 +22,6 @@ interface Props {
   onCompleted: () => void;
 }
 
-// Messages are i18n keys; the form translates them via t() when rendering an
-// error. Keeping the schema at module scope (no t() bound in) sidesteps zod's
-// excessive-depth type inference under the strict project tsconfig.
 const billingSchema = z.object({
   name: z.string().trim().min(1, 'billing.billingInfo.errors.nameRequired').max(100),
   surname: z.string().trim().min(1, 'billing.billingInfo.errors.surnameRequired').max(100),
@@ -69,8 +66,6 @@ export const CheckoutPanel = ({ items, onBack, onCompleted }: Props) => {
   const total = useMemo(() => items.reduce((sum, line) => sum + line.plan.price, 0), [items]);
 
   const gateways: PaymentGatewayDescriptor[] = gatewaysQuery.data?.data ?? [];
-  // Derived default: prefer the registry-marked default, else the first; user
-  // selection overrides. Avoids a setState-in-effect "sync prop to state" cycle.
   const defaultGatewayName = gateways.find((g) => g.isDefault)?.name ?? gateways[0]?.name ?? null;
   const [userSelectedGateway, setUserSelectedGateway] = useState<string | null>(null);
   const selectedGateway = userSelectedGateway ?? defaultGatewayName;
@@ -180,7 +175,7 @@ export const CheckoutPanel = ({ items, onBack, onCompleted }: Props) => {
               {t('common.loading', { defaultValue: 'Loading...' })}
             </div>
           ) : gateways.length === 0 ? (
-            <p className="rounded-md bg-amber-50 px-2 py-2 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+            <p className="rounded-md bg-warning-50 px-2 py-2 text-[11px] text-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
               {t('billing.gateway.empty')}
             </p>
           ) : (
@@ -193,11 +188,11 @@ export const CheckoutPanel = ({ items, onBack, onCompleted }: Props) => {
                   className={cn(
                     'flex items-center gap-2 rounded-lg border p-3 text-left text-xs transition-colors',
                     selectedGateway === g.name
-                      ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-500/10'
+                      ? 'border-primary-500 bg-primary-50 dark:border-primary-400 dark:bg-primary-500/10'
                       : 'border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900/40',
                   )}
                 >
-                  <CreditCard size={14} className="text-indigo-500" />
+                  <CreditCard size={14} className="text-primary-500" />
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
                       {g.name === 'mock'
@@ -310,7 +305,7 @@ export const CheckoutPanel = ({ items, onBack, onCompleted }: Props) => {
             createOrder.isPending ||
             gatewaysQuery.isLoading
           }
-          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 dark:disabled:bg-slate-700"
         >
           {createOrder.isPending ? (
             <Loader2 size={13} className="animate-spin" />
@@ -356,9 +351,9 @@ const Field = ({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'rounded-md border bg-white px-2 py-1.5 text-xs text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-500 dark:bg-slate-900 dark:text-slate-100',
+          'rounded-md border bg-white px-2 py-1.5 text-xs text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-500 dark:bg-slate-900 dark:text-slate-100',
           error
-            ? 'border-rose-400 dark:border-rose-500/60'
+            ? 'border-danger-400 dark:border-danger-500/60'
             : 'border-slate-200 dark:border-slate-800',
         )}
       />
@@ -369,13 +364,13 @@ const Field = ({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={cn(
-          'rounded-md border bg-white px-2 py-1.5 text-xs text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-500 dark:bg-slate-900 dark:text-slate-100',
+          'rounded-md border bg-white px-2 py-1.5 text-xs text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-primary-500 dark:bg-slate-900 dark:text-slate-100',
           error
-            ? 'border-rose-400 dark:border-rose-500/60'
+            ? 'border-danger-400 dark:border-danger-500/60'
             : 'border-slate-200 dark:border-slate-800',
         )}
       />
     )}
-    {error && <span className="text-[10px] text-rose-600 dark:text-rose-400">{error}</span>}
+    {error && <span className="text-[10px] text-danger-600 dark:text-danger-400">{error}</span>}
   </label>
 );

@@ -1,4 +1,20 @@
 {
+  "aiHelper": {
+    "launcher": "AI Assistant",
+    "title": "CoreAlign Assistant",
+    "subtitle": "Ask anything about the dealer portal",
+    "placeholder": "Ask a question...",
+    "send": "Send",
+    "close": "Close",
+    "welcome": "Hi! How can I help you?",
+    "sources": "Sources",
+    "error": "Something went wrong. Please try again.",
+    "thinking": "Thinking...",
+    "noSource": "Based on general knowledge — no specific CoreAlign source matched.",
+    "feedbackHelpful": "Helpful",
+    "feedbackNotHelpful": "Not helpful",
+    "feedbackThanks": "Thanks for your feedback."
+  },
   "consent": {
     "banner": {
       "title": "Cookie preferences",
@@ -47,6 +63,18 @@
       "invoices": "Invoices",
       "commissions": "Commissions",
       "profile": "Profile"
+    },
+    "forward": {
+      "action": "Forward by email",
+      "title": "Forward by email",
+      "subtitle": "Send {{number}} as a PDF attachment to a recipient.",
+      "recipient": "Recipient email",
+      "hint": "The document is sent as a PDF from your supplier. Replies go to your email address.",
+      "send": "Send",
+      "sending": "Sending…",
+      "success": "Sent to {{email}}.",
+      "error": "Could not send the document.",
+      "invalidEmail": "Enter a valid email address."
     },
     "common": {
       "loading": "Loading…",
@@ -321,6 +349,13 @@
       "send": "Send",
       "posted": "Message sent.",
       "unknownAuthor": "Unknown user"
+    }
+  },
+  "errors": {
+    "boundary": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please reload the page.",
+      "reload": "Reload"
     }
   }
 }

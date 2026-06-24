@@ -13,7 +13,6 @@ public interface ITenantThemeService
         TenantThemeAssetKind kind,
         string fileName,
         string contentType,
-        long sizeBytes,
         Stream content,
         CancellationToken ct);
 

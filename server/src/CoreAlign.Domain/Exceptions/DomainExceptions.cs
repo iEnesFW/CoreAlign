@@ -46,7 +46,7 @@ public class EmailNotVerifiedException : ForbiddenException
     public EmailNotVerifiedException() : base("Email address has not been verified.") { }
 }
 
-public class TokenExpiredException : DomainException
+public class TokenExpiredException : AuthenticationException
 {
     public TokenExpiredException() : base("Token has expired or is invalid.") { }
 }
@@ -66,6 +66,16 @@ public class AccountDisabledException : ForbiddenException
     public AccountDisabledException() : base("This account has been disabled.") { }
 }
 
+public class TenantInactiveException : ForbiddenException
+{
+    public TenantInactiveException() : base("This organization's account is inactive.") { }
+}
+
+public class CaptchaValidationException : DomainException
+{
+    public CaptchaValidationException() : base("CAPTCHA verification failed. Please try again.") { }
+}
+
 public class MissingTenantContextException : AuthenticationException
 {
     public MissingTenantContextException()
@@ -76,4 +86,9 @@ public class CrossTenantAccessException : ForbiddenException
 {
     public CrossTenantAccessException()
         : base("Resource does not belong to the current tenant.") { }
+}
+
+public sealed class FeedbackNotFoundException : NotFoundException
+{
+    public FeedbackNotFoundException() : base("Feedback ticket not found.") { }
 }

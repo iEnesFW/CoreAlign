@@ -107,6 +107,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         var tenant = await _tenantRepository.GetByIdAsync(user.TenantId, cancellationToken)
             ?? throw new UserNotFoundException();
 
+        if (!tenant.IsActive || tenant.IsArchived)
+        {
+            await CommitFailedAttemptAsync(request.Email, LoginResultType.Disabled, user.Id, request, "Tenant inactive", cancellationToken);
+            throw new TenantInactiveException();
+        }
+
         var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
 
         if (!user.IsTwoFactorEnabled && !string.IsNullOrWhiteSpace(tenant.RequireTwoFactorForRoles))

@@ -1,0 +1,42 @@
+# BI (CoreAlign UI)
+
+"BI" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "BI" area (English / Türkçe):
+
+- Add filter / Filtre Ekle
+- Aggregation / Toplulaştırma
+- Data source / Veri Kaynağı
+- Field / Alan
+- Filters / Filtreler
+- From / Başlangıç
+- Group by / Gruplama
+- Measure field / Ölçü Alanı
+- Name is required / Ad gereklidir
+- Preview / Önizleme
+- Preview failed / Önizleme başarısız
+- Preview / Önizleme
+- Visible to all tenant users / Tüm kiracı kullanıcılarına görünür
+- Report name / Rapor Adı
+- Save / Kaydet
+- Failed to save report / Rapor kaydedilemedi
+- Report saved / Rapor kaydedildi
+- Report Builder / Rapor Oluşturucu
+- To / Bitiş
+- Value / Değer
+- Loading... / Yükleniyor...
+- No widgets yet — add your first widget. / Henüz widget yok — ilk widget'ınızı ekleyin.
+- Remove widget / Widget'ı kaldır
+- KPI Dashboard / KPI Paneli
+- Failed to load widget data. / Widget verisi yüklenemedi.
+- Export / Dışa Aktar
+- Export failed / Dışa aktarma başarısız
+- Export downloaded / Dışa aktarma indirildi
+- Actions / İşlemler
+- New report / Yeni Rapor
+- Data source / Veri Kaynağı
+- Delete / Sil
+- No saved reports yet. / Henüz kayıtlı rapor yok.
+- Last run / Son Çalıştırma
+- Name / Ad
+- Open / Aç
+- Saved Reports / Kayıtlı Raporlar
+- Visibility / Görünürlük

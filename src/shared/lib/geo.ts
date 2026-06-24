@@ -1,16 +1,4 @@
-/**
- * Browser locale → country detection from the IANA timezone reported by
- * `Intl.DateTimeFormat().resolvedOptions().timeZone`. No network calls, no
- * permissions — purely the runtime's own timezone. Country names are localized
- * via `Intl.DisplayNames`; flags are rendered from the ISO-3166 alpha-2 code by
- * the `flag-icons` CSS set (works on Windows, unlike emoji flags).
- */
-
-// IANA timezone → ISO 3166-1 alpha-2 (lowercase, matching flag-icons class names).
-// Covers every country's primary zone plus the major cities of multi-zone
-// countries. Unmapped zones fall back to null (no flag shown).
 const TZ_TO_COUNTRY: Record<string, string> = {
-  // Europe
   'Europe/Istanbul': 'tr',
   'Europe/London': 'gb',
   'Europe/Dublin': 'ie',
@@ -61,7 +49,6 @@ const TZ_TO_COUNTRY: Record<string, string> = {
   'Atlantic/Canary': 'es',
   'Atlantic/Reykjavik': 'is',
 
-  // Middle East
   'Asia/Nicosia': 'cy',
   'Asia/Famagusta': 'cy',
   'Asia/Beirut': 'lb',
@@ -83,7 +70,6 @@ const TZ_TO_COUNTRY: Record<string, string> = {
   'Asia/Yerevan': 'am',
   'Asia/Tbilisi': 'ge',
 
-  // Asia
   'Asia/Karachi': 'pk',
   'Asia/Kabul': 'af',
   'Asia/Tashkent': 'uz',
@@ -119,7 +105,6 @@ const TZ_TO_COUNTRY: Record<string, string> = {
   'Asia/Tokyo': 'jp',
   'Asia/Ulaanbaatar': 'mn',
 
-  // Africa
   'Africa/Casablanca': 'ma',
   'Africa/Algiers': 'dz',
   'Africa/Tunis': 'tn',
@@ -149,7 +134,6 @@ const TZ_TO_COUNTRY: Record<string, string> = {
   'Africa/Gaborone': 'bw',
   'Indian/Mauritius': 'mu',
 
-  // Americas
   'America/New_York': 'us',
   'America/Detroit': 'us',
   'America/Chicago': 'us',
@@ -188,7 +172,6 @@ const TZ_TO_COUNTRY: Record<string, string> = {
   'America/Manaus': 'br',
   'America/Fortaleza': 'br',
 
-  // Oceania
   'Australia/Sydney': 'au',
   'Australia/Melbourne': 'au',
   'Australia/Brisbane': 'au',
@@ -201,11 +184,8 @@ const TZ_TO_COUNTRY: Record<string, string> = {
 };
 
 export interface DetectedLocation {
-  /** IANA timezone, e.g. "Europe/Istanbul". */
   timezone: string;
-  /** ISO 3166-1 alpha-2, lowercase, e.g. "tr" — or null if unmapped. */
   countryCode: string | null;
-  /** Localized country name (per the given locale), or null. */
   countryName: string | null;
 }
 

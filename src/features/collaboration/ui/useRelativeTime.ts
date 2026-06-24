@@ -2,11 +2,6 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 
-/**
- * Locale-aware relative timestamp formatter (e.g. "5 minutes ago"). Uses
- * `Intl.RelativeTimeFormat` so the output respects the user's region; falls
- * back to the absolute ISO string only if the value is unparseable.
- */
 export const useRelativeTime = () => {
   const { i18n } = useTranslation();
   const locale = useFormatLocale();

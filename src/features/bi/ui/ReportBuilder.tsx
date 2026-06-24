@@ -170,7 +170,7 @@ export const ReportBuilder = ({ initialDataSource, initialConfig, onChange }: Pr
           <button
             type="button"
             onClick={addFilter}
-            className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+            className="rounded bg-primary-600 px-3 py-1 text-xs text-white hover:bg-primary-700"
           >
             {t('BI.Builder.AddFilter', { defaultValue: 'Add filter' })}
           </button>
@@ -204,7 +204,7 @@ export const ReportBuilder = ({ initialDataSource, initialConfig, onChange }: Pr
               <button
                 type="button"
                 onClick={() => removeFilter(idx)}
-                className="col-span-1 rounded text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                className="col-span-1 rounded text-sm text-danger-600 hover:bg-danger-50 dark:hover:bg-danger-900/20"
               >
                 {'×'}
               </button>

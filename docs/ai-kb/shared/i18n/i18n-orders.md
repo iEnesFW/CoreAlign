@@ -1,0 +1,272 @@
+# orders (CoreAlign UI)
+
+"orders" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "orders" area (English / Türkçe):
+
+- Allocate stock / Stok Rezerve Et
+- Approve / Onayla
+- Cancel / İptal Et
+- Cancel shipment / Sevkiyatı İptal Et
+- Close order / Siparişi Kapat
+- Create shipment / Sevkiyat Oluştur
+- Mark delivered / Teslim Edildi
+- Mark delivered / Teslim Edildi
+- Dispatch / Sevk Et
+- Generate invoice / Fatura oluştur
+- Mark packed / Paketlendi
+- Mark picked / Toplandı
+- Record scrap / Fire Kaydet
+- Submit / Onaya Gönder
+- New order / Yeni sipariş
+- Allocated by warehouse / Depo bazında tahsis
+- Consumed / Tüketildi
+- No stock allocations yet. / Henüz stok tahsisi yok.
+- Allocations / Tahsisler
+- Released / Serbest
+- Remaining / Kalan
+- remaining / kalan
+- Active / Aktif
+- Consumed / Tüketildi
+- Partial / Kısmen
+- Released / Serbest
+- Allocated / Tahsis edildi
+- Actual delivery / Gerçek teslimat
+- Approved / Onaylandı
+- Cancelled / İptal edildi
+- Order created / Sipariş oluşturuldu
+- Current Status / Güncel Durum
+- Delivered / Teslim edildi
+- Delivery commitments / Teslim taahhütleri
+- Payment due / Ödeme vadesi
+- Last update / Son güncelleme
+- Promised to customer / Söz verilen tarih
+- Requested by customer / Müşterinin talep tarihi
+- Submitted for approval / Onaya gönderildi
+- Audit timeline / Hareket geçmişi
+- Last updated / Son güncelleme
+- Actions / İşlemler
+- Customer / Müşteri
+- Date / Tarih
+- Order # / Sipariş No
+- Status / Durum
+- Total / Toplam
+- Delete order {{number}}? / {{number}} numaralı sipariş silinsin mi?
+- Generate invoice for {{number}}? / {{number}} için fatura oluşturulsun mu?
+- Billing address / Fatura adresi
+- Customer snapshot / Müşteri snapshot
+- Header discount ({{pct}}%) / Başlık iskontosu ({{pct}}%)
+- Line discounts / Satır iskontoları
+- Rounding / Yuvarlama
+- Shipping / Kargo
+- Subtotal / Ara toplam
+- Tax / KDV
+- Taxable amount / Vergiye tabi tutar
+- Financial breakdown / Finansal döküm
+- Total / Toplam
+- Withholding / Tevkifat
+- Line progress / Satır ilerlemesi
+- Invoiced / Faturalandı
+- Shipped / Sevk
+- Invoiced / Faturalandı
+- Lines / Satır
+- Shipped / Sevk
+- Order Total / Sipariş Tutarı
+- units / birim
+- No billing address. / Fatura adresi yok.
+- Customer could not be loaded. / Müşteri bilgisi yüklenemedi.
+- No invoices generated from this order yet. / Bu siparişten henüz fatura oluşturulmadı.
+- No lines on this order. / Bu siparişte satır yok.
+- No notes on this order. / Bu sipariş için not yok.
+- No shipping address. / Sevk adresi yok.
+- Shipping address / Sevk adresi
+- Allocations / Tahsisler
+- Audit / Hareket
+- Customer / Müşteri
+- Invoices / Faturalar
+- Lines / Satırlar
+- Margin / Marj
+- Notes / Notlar
+- Overview / Genel
+- Due in {{count}}d / {{count}}g içinde vadeli
+- Due today / Bugün vadeli
+- No orders yet. / Henüz sipariş yok.
+- Create your first order to kick off the sales pipeline. / Satış sürecini başlatmak için ilk siparişinizi oluşturun.
+- Sales · Fulfillment / Satış · Sevkiyat
+- Billing Address / Fatura Adresi
+- Channel / Kanal
+- Currency / Para Birimi
+- Customer / Müşteri
+- Customer Notes / Müşteri Notları
+- Select a customer / Müşteri seçin
+- Due / Vade
+- Exchange Rate / Döviz Kuru
+- Discount % / İskonto %
+- Internal Notes / Dahili Notlar
+- Order Lines / Sipariş Satırları
+- Notes / Notlar
+- Internal notes / Dahili notlar
+- Order Date / Sipariş Tarihi
+- Order Number / Sipariş Numarası
+- Payment Terms / Ödeme Vadesi
+- Price List / Fiyat Listesi
+- Promised delivery / Söz verilen teslim
+- Requested delivery / Talep edilen teslim
+- Rounding / amount adjustment / Yuvarlama / tutar düzeltme
+- Shipping Address / Teslimat Adresi
+- Shipping Cost / Kargo Ücreti
+- Source / Kaynak
+- Status / Durum
+- Terms / Vade
+- Total / Toplam
+- Order Type / Sipariş Türü
+- All / Tümü
+- Cancelled / İptal
+- Closed / Kapatılan
+- Drafts only / Yalnızca taslaklar
+- Fulfilled / Tamamlanan
+- High value (≥1.5× avg) / Yüksek tutar (≥1,5× ort.)
+- Open / Açık
+- Add line / Satır ekle
+- Disc% / İsk%
+- Line note / Satır notu
+- Line Total / Satır Toplamı
+- —
+- Product / Ürün
+- Select product / Ürün seç
+- Qty / Mik.
+- Tax / KDV
+- Tax rate / KDV oranı
+- Unit Price / Birim Fiyat
+- Warehouse / Depo
+- Select warehouse / Depo seç
+- WHT% / Tevkifat%
+- Cost / Maliyet
+- Healthy / Sağlıklı
+- Line-level margin / Satır bazında marj
+- Loss / Zarar
+- Margin % / Marj %
+- Markup / Mark-up
+- Some lines have no captured cost — margins shown reflect only lines with cost snapshots. / Bazı satırlarda maliyet snapshot yok — marj sadece maliyetli satırları yansıtır.
+- Partial cost data / Kısmi maliyet
+- Profit / Kar
+- Revenue / Ciro
+- Thin / Düşük
+- Total / Toplam
+- Unit cost / Birim maliyet
+- Unit price / Birim fiyat
+- New order / Yeni sipariş
+- Edit order / Siparişi düzenle
+- Overdue / Vadesi geçti
+- Overdue {{count}}d / {{count}}g geçmiş
+- Next / Sonraki
+- Previous / Önceki
+- {{from}}-{{to}} of {{total}} / {{from}}-{{to}} / {{total}}
+- orders / sipariş
+- Approve / Onayla
+- Cancel Request / Talebi İptal Et
+- Decided at {{when}} / Karar tarihi: {{when}}
+- No revisions yet. / Henüz revizyon yok.
+- Submit Revision Request / Revizyon Talebi Gönder
+- Request Order Revision / Sipariş Revizyonu Talep Et
+- Proposed lines / Önerilen satırlar
+- Reject / Reddet
+- Rejection Reason / Ret Nedeni
+- Explain why this revision is rejected... / Revizyonun neden reddedildiğini açıklayın...
+- Request Revision / Revizyon Talep Et
+- Request Notes / Talep Notları
+- Optional notes about this revision request... / Bu revizyon talebiyle ilgili isteğe bağlı notlar...
+- Requested at {{when}} by {{persona}} / {{persona}} tarafından {{when}} tarihinde talep edildi
+- Revision #{{number}} / Revizyon #{{number}}
+- Revisions / Revizyonlar
+- Scrap recorded. / Fire kaydedildi.
+- Scrap quantity cannot exceed the remaining quantity ({{max}}). / Fire miktarı kalan miktarı aşamaz ({{max}}).
+- Enter a line, warehouse and a valid quantity. / Satır, depo ve geçerli bir miktar girin.
+- Line / Satır
+- Maximum / Maksimum
+- No lines available for scrap. / Fire kaydı için uygun satır yok.
+- Scrap reason / notes / Fire nedeni / notlar
+- E.g. production defect, damage… / Örn. üretim hatası, hasar…
+- Scrap quantity / Fire miktarı
+- Remaining / Kalan
+- Select… / Seçin…
+- Save scrap / Fireyi kaydet
+- Record scrap / Fire Kaydet
+- Warehouse / Depo
+- Search by number or customer... / Numara veya müşteri ara...
+- Addresses / Adresler
+- Commercial Terms / Ticari Koşullar
+- General / Genel Bilgiler
+- Notes / Notlar
+- Cancelled / İptal
+- Delivered / Teslim Edildi
+- In transit / Yolda
+- Draft / Taslak
+- Packed / Paketlendi
+- Picked / Toplandı
+- Returned / İade
+- Carrier / Kargo firması
+- Create shipment / Sevkiyat oluştur
+- No shipments yet. / Henüz sevkiyat yok.
+- Received by / Teslim alan
+- Remaining: {{value}} / Kalan: {{value}}
+- Select lines and quantities to ship / Sevk edilecek kalem ve miktarları seçin
+- Shipping cost / Kargo ücreti
+- Shipments / Sevkiyatlar
+- Tracking # / Takip no
+- Tracking URL / Takip URL
+- API
+- EDI
+- In-Store / Mağaza
+- Manual / Manuel
+- Marketplace / Pazaryeri
+- Phone / Telefon
+- Web
+- Avg / Ort.
+- Pending drafts / Bekleyen taslaklar
+- Submit or discard / Onaya gönderin veya vazgeçin
+- Open pipeline / Açık siparişler
+- Page volume / Sayfa hacmi
+- Orders (page) / Siparişler (sayfa)
+- {{count}} of {{all}} / {{count}} / {{all}}
+- Allocated / Rezerve Edildi
+- Approved / Onaylandı
+- Cancelled / İptal
+- Closed / Kapatıldı
+- Confirmed / Onaylı
+- Delivered / Teslim Edildi
+- Draft / Taslak
+- Packed / Paketlendi
+- Partially shipped / Kısmi Sevk
+- Picking / Toplama
+- Returned / İade
+- Shipped / Sevk Edildi
+- Submitted / Onaya Gönderildi
+- Change status / Durumu değiştir
+- Manage sales orders. / Satış siparişlerini yönet.
+- Estimated — final amounts are calculated on save / Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır
+- Grand Total / Genel Toplam
+- Order Discount / Genel İskonto
+- Line Discounts / Satır İskontoları
+- Rounding / Yuvarlama
+- Shipping / Kargo
+- Subtotal / Ara Toplam
+- Tax / KDV
+- Taxable / Vergilendirilebilir
+- Withholding / Tevkifat
+- General / Genel Bilgiler
+- Line Items / Kalemler
+- Approved / Onaylandı
+- Cancelled / İptal edildi
+- Delivered / Teslim edildi
+- Drafted / Taslak
+- Submitted / Onaya gönderildi
+- Status timeline / Durum zaman çizelgesi
+- Orders / Siparişler
+- Order created. / Sipariş oluşturuldu.
+- Order deleted. / Sipariş silindi.
+- Invoice generated. / Fatura oluşturuldu.
+- Order updated. / Sipariş güncellendi.
+- Blanket / Çerçeve
+- Internal / Dahili
+- Return / İade
+- Sample / Numune
+- Standard / Standart

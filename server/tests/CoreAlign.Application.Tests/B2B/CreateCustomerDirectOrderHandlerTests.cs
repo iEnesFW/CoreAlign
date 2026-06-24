@@ -55,7 +55,8 @@ public class CreateCustomerDirectOrderHandlerTests
             });
 
         _sut = new CreateCustomerDirectOrderHandler(
-            _scope, _currentUser, _orders, _customers, _products, _paymentTerms, _sequences, _uow, _pricing, _addresses, _ledger);
+            _scope, _currentUser, _orders, _customers, _products, _paymentTerms, _sequences, _uow, _pricing, _addresses,
+            new CoreAlign.Application.CustomerPortal.Credit.CreditLimitGuard(_ledger));
     }
 
     [Fact]

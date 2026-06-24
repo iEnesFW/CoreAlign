@@ -35,8 +35,8 @@ const fmtDateTime = (iso: string, locale: string) => {
 };
 
 const ENTRY_ICON: Record<LedgerEntryType, React.ReactNode> = {
-  Debit: <ArrowUpRight size={12} className="text-red-600 dark:text-red-400" />,
-  Credit: <ArrowDownRight size={12} className="text-emerald-600 dark:text-emerald-400" />,
+  Debit: <ArrowUpRight size={12} className="text-danger-600 dark:text-danger-400" />,
+  Credit: <ArrowDownRight size={12} className="text-success-600 dark:text-success-400" />,
 };
 
 export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props) => {
@@ -98,7 +98,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
           <button
             type="button"
             onClick={() => setPaymentModalOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-success-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-success-700"
           >
             <Plus size={12} />
             {t('payments.ledger.recordPayment', { defaultValue: 'Record payment' })}
@@ -120,27 +120,27 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
             <AgingSegment
               value={aging.current}
               total={aging.totalOutstanding}
-              color="bg-emerald-400"
+              color="bg-success-400"
             />
             <AgingSegment
               value={aging.days1To30}
               total={aging.totalOutstanding}
-              color="bg-amber-400"
+              color="bg-warning-400"
             />
             <AgingSegment
               value={aging.days31To60}
               total={aging.totalOutstanding}
-              color="bg-orange-500"
+              color="bg-warning-500"
             />
             <AgingSegment
               value={aging.days61To90}
               total={aging.totalOutstanding}
-              color="bg-red-500"
+              color="bg-danger-500"
             />
             <AgingSegment
               value={aging.daysOver90}
               total={aging.totalOutstanding}
-              color="bg-rose-700"
+              color="bg-danger-700"
             />
           </div>
           <div className="mt-2 grid grid-cols-5 gap-1 text-[10px]">
@@ -181,7 +181,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
             />
           </div>
           {aging.daysOver90 > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-rose-700 dark:text-rose-300">
+            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-danger-700 dark:text-danger-300">
               <AlertCircle size={12} />
               {t('payments.aging.overdueWarning', {
                 defaultValue: '{{amount}} is overdue by more than 90 days.',
@@ -239,10 +239,10 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
                       </div>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-red-700 dark:text-red-300">
+                  <td className="px-3 py-2 text-right font-mono text-danger-700 dark:text-danger-300">
                     {e.entryType === 'Debit' ? fmtCurrency(e.amount, e.currency, locale) : '—'}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-emerald-700 dark:text-emerald-300">
+                  <td className="px-3 py-2 text-right font-mono text-success-700 dark:text-success-300">
                     {e.entryType === 'Credit' ? fmtCurrency(e.amount, e.currency, locale) : '—'}
                   </td>
                   <td className="px-3 py-2 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
@@ -295,7 +295,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
                     {fmtDateTime(p.paymentDate, locale)} ·{' '}
                     {t(`invoices.paymentMethod.${p.method}` as never)}
                     {p.unappliedAmount > 0 && (
-                      <span className="ml-2 inline-flex rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                      <span className="ml-2 inline-flex rounded bg-warning-100 px-1.5 text-[10px] font-medium text-warning-800 dark:bg-warning-500/20 dark:text-warning-300">
                         {fmtCurrency(p.unappliedAmount, p.currency, locale)}{' '}
                         {t('payments.list.unapplied', { defaultValue: 'unapplied' })}
                       </span>
@@ -349,11 +349,11 @@ interface AgingLegendProps {
 }
 
 const COLOR_DOT: Record<AgingLegendProps['color'], string> = {
-  emerald: 'bg-emerald-400',
-  amber: 'bg-amber-400',
-  orange: 'bg-orange-500',
-  red: 'bg-red-500',
-  rose: 'bg-rose-700',
+  emerald: 'bg-success-400',
+  amber: 'bg-warning-400',
+  orange: 'bg-warning-500',
+  red: 'bg-danger-500',
+  rose: 'bg-danger-700',
 };
 
 const AgingLegend = ({ label, amount, currency, locale, color }: AgingLegendProps) => (
@@ -383,7 +383,7 @@ const DateInput = ({
       type="date"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      className="rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
     />
   </label>
 );

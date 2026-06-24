@@ -1,0 +1,225 @@
+# Mrp (CoreAlign UI)
+
+"Mrp" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Mrp" area (English / Türkçe):
+
+- Approve / Onayla
+- Cancel / İptal Et
+- Convert to PO / Siparişe Dönüştür
+- Run MRP / MRP Çalıştır
+- Reject / Reddet
+- Submit / Onaya Gönder
+- Currency / Para birimi
+- Expected delivery / Beklenen teslimat
+- Select a vendor… / Tedarikçi seçin…
+- Convert {{number}} to PO / {{number}} satın almaya dönüştür
+- Vendor / Tedarikçi
+- Open purchase orders / Açık Satın Alma Siparişleri
+- Open workbench / Tezgahı Aç
+- Pending requisitions / Bekleyen Talepler
+- Reorder candidates / Yeniden Sipariş Adayları
+- Material requirements planning and reorder suggestions. / Malzeme ihtiyaç planlaması ve yeniden sipariş önerileri.
+- MRP Dashboard / MRP Paneli
+- Tracked products / İzlenen Ürünler
+- Manage requisitions / Talepleri Yönet
+- Avg daily demand / Günlük Ortalama Talep
+- Peak day / Zirve Gün
+- Demand Forecast / Talep Tahmini
+- Total demand / Toplam Talep
+- Window / Dönem
+- No projection data available. / Projeksiyon verisi yok.
+- On hand / Eldeki Stok
+- On order / Siparişte
+- Reorder point / Yeniden Sipariş Noktası
+- Reserved / Rezerve
+- Reorder recommended / Yeniden sipariş önerilir
+- Projected balance for the next {{days}} days. / Önümüzdeki {{days}} gün için öngörülen stok.
+- Suggested / Önerilen
+- Stock Projection / Stok Projeksiyonu
+- Add line / Kalem ekle
+- Cancel {{number}} / {{number}} iptal et
+- No requisitions match the filters. / Filtrelere uyan talep yok.
+- Estimated total / Tahmini Toplam
+- lines / kalem
+- Lines / Kalemler
+- New requisition / Yeni Talep
+- Notes / Notlar
+- Review, approve, and convert requisitions into purchase orders. / Talepleri inceleyin, onaylayın ve satın alma siparişine dönüştürün.
+- Purchase Requisitions / Satın Alma Talepleri
+- Product ID / Ürün ID
+- Quantity / Miktar
+- Emergency order / Acil Sipariş
+- Reason / Neden
+- MRP suggestion / MRP Önerisi
+- Manual / Manuel
+- Stockout / Stok Tükendi
+- Reason (optional) / Neden (isteğe bağlı)
+- Reject {{number}} / {{number}} reddet
+- Remove line / Kalemi kaldır
+- Approved / Onaylandı
+- Cancelled / İptal
+- Converted / Dönüştürüldü
+- Draft / Taslak
+- Rejected / Reddedildi
+- Submitted / Onaya Gönderildi
+- Unit cost / Birim Maliyet
+- Available / Kullanılabilir
+- Days until stockout / Stok Bitimine Kalan Gün
+- No products below their reorder point. / Yeniden sipariş noktasının altında ürün yok.
+- On hand / Eldeki Stok
+- On order / Siparişte
+- Product / Ürün
+- Reorder point / Yeniden Sipariş Noktası
+- SKU
+- Suggested / Önerilen
+- Reorder Suggestions / Yeniden Sipariş Önerileri
+- A
+- B
+- C
+- Below safety stock / Emniyet stoğunun altında
+- Cancel supply / Tedariği iptal et
+- Expedite / Hızlandır
+- Projected stockout / Öngörülen tükenme
+- Release / Serbest bırak
+- Reschedule in / Öne al
+- Reschedule out / Ertele
+- As of / Tarih
+- Daily / Günlük
+- Weekly / Haftalık
+- Bucket / Periyot
+- Load {{load}} of {{capacity}} minutes / {{capacity}} dakikanın {{load}} dakikası yüklü
+- Bucket / Periyot
+- Capacity (min) / Kapasite (dk)
+- {{minutes}} min/day / {{minutes}} dk/gün
+- Rough-cut capacity planning — compare the production load on each work center against its available capacity per bucket. / Kaba kapasite planlaması — her iş merkezindeki üretim yükünü periyot bazında mevcut kapasiteyle karşılaştırın.
+- Load (min) / Yük (dk)
+- Load vs capacity / Yük / kapasite
+- No work centers or planned load — route Make products to a work center to see capacity. / İş merkezi veya planlı yük yok — kapasiteyi görmek için üretilen ürünleri bir iş merkezine yönlendirin.
+- Overloaded / Aşırı yüklü
+- {{count}} overloaded / {{count}} aşırı yüklü
+- {{count}} work center(s) with planned load. / Planlı yükü olan {{count}} iş merkezi.
+- Unrouted / Rotasız
+- {{count}} production order(s) have no work center routing and are excluded from capacity. / {{count}} üretim emrinin iş merkezi rotası yok ve kapasiteye dahil edilmedi.
+- Within capacity / Kapasite dahilinde
+- Work center / İş merkezi
+- Analyze impact / Etkiyi analiz et
+- Commit the plan to analyze change impact. / Değişim etkisini analiz etmek için planı işleyin.
+- Due / Termin
+- No planned orders depend on this demand source. / Bu talep kaynağına bağlı planlanan sipariş yok.
+- Trace which planned orders depend on a demand source — see what would be affected if it is cancelled or changed. / Hangi planlanan siparişlerin bir talep kaynağına bağlı olduğunu izleyin — iptal veya değişiklik durumunda nelerin etkileneceğini görün.
+- BOM level / Ürün ağacı seviyesi
+- Product / Ürün
+- Select a demand source and run the analysis. / Bir talep kaynağı seçin ve analizi çalıştırın.
+- Quantity / Miktar
+- Select a sales order… / Bir satış siparişi seçin…
+- Demand source / Talep kaynağı
+- Source type / Kaynak türü
+- Cancelling {{source}} affects {{count}} planned order(s). / {{source}} iptal edilirse {{count}} planlanan sipariş etkilenir.
+- Type / Tür
+- Demand / Talep
+- No time-phased data available. / Zaman fazlı veri yok.
+- Projected on-hand / Öngörülen eldeki stok
+- Reorder point / Yeniden sipariş noktası
+- Scheduled receipts / Planlı girişler
+- Classify ABC / ABC sınıflandır
+- Commit plan / Planı kaydet
+- Available / Mevcut
+- Demand / Talep
+- Execute / Uygula
+- Executing… / Uygulanıyor…
+- External replenishment needed / Dış tedarik gerekiyor
+- {{sku}} at {{warehouse}}: {{quantity}} short with no surplus to transfer. / {{warehouse}} deposunda {{sku}}: {{quantity}} eksik, transfer edilecek fazla stok yok.
+- From / Kaynak
+- Rebalance stock across warehouses by transferring surplus to shortfall sites before buying more. / Daha fazla satın almadan önce fazla stoğu eksik olan depolara transfer ederek depolar arası stoğu dengeleyin.
+- Net
+- No transfers needed — every warehouse can cover its own demand. / Transfer gerekmiyor — her depo kendi talebini karşılayabiliyor.
+- Product / Ürün
+- Quantity / Miktar
+- {{products}} products evaluated · {{transfers}} transfer(s) suggested. / {{products}} ürün değerlendirildi · {{transfers}} transfer önerildi.
+- To / Hedef
+- Transfer
+- Transfer {{quantity}} {{sku}} from {{from}} to {{to}} / {{from}} deposundan {{to}} deposuna {{quantity}} {{sku}} transfer et
+- Warehouse / Depo
+- Commit the plan to firm or release these planned orders. / Bu planlanan siparişleri sabitlemek veya serbest bırakmak için planı işleyin.
+- Complete / Tamamla
+- Completed / Tamamlandı
+- Create production order / Üretim emri oluştur
+- Due / Termin
+- Firm / Sabitle
+- Firmed / Sabitlendi
+- No pegged demand. / Eşleştirilmiş talep yok.
+- No planned orders. / Planlanan sipariş yok.
+- On hand / Eldeki stok
+- {{count}} order / {{count}} sipariş
+- {{count}} orders / {{count}} sipariş
+- Overridden / Geçersiz kılındı
+- Pegging / Eşleştirme
+- Planned orders / Planlanan siparişler
+- Lot policy / Parti politikası
+- Production order created / Üretim emri oluşturuldu
+- Quantity / Miktar
+- Release / Serbest bırakma
+- Released / Serbest bırakıldı
+- Reorder point / Yeniden sipariş noktası
+- Safety stock / Emniyet stoğu
+- Plan for {{sku}} / {{sku}} planı
+- Procurement / Tedarik
+- Severity / Önem
+- Supplier / Tedarikçi
+- Exception type / İstisna türü
+- Run a preview to see the time-phased plan. / Zaman fazlı planı görmek için önizleme çalıştırın.
+- Gross requirements / Brüt ihtiyaç
+- Net requirements / Net ihtiyaç
+- Planned releases / Planlanan serbest bırakmalar
+- Projected on-hand / Öngörülen eldeki stok
+- Scheduled receipts / Planlı girişler
+- Horizon / Ufuk
+- {{days}} days / {{days}} gün
+- On order / Siparişte
+- Open exceptions / Açık istisnalar
+- Projected stockouts / Öngörülen tükenmeler
+- Stockout risk / Stok tükenme riski
+- Forecast / Tahmin
+- Planned order / Planlanan sipariş
+- Sales order / Satış siparişi
+- EOQ
+- Fixed order qty / Sabit sipariş miktarı
+- Lot-for-lot / Parti-parti
+- Min/Max / Min/Maks
+- Period order qty / Dönem sipariş miktarı
+- Buy / Satın al
+- Make / Üret
+- {{count}} products evaluated / {{count}} ürün değerlendirildi
+- Actions / İşlemler
+- Commit the plan to release planned orders into requisitions. / Planlanan siparişleri taleplere dönüştürmek için planı işleyin.
+- Days to stockout / Tükenmeye kalan gün
+- Dismiss / Yoksay
+- No open exceptions. / Açık istisna yok.
+- Message / Mesaj
+- Open in grid / Tabloda aç
+- Product / Ürün
+- Quantity / Miktar
+- Release / Serbest bırak
+- Release selected / Seçilenleri serbest bırak
+- Select all / Tümünü seç
+- Select {{sku}} / {{sku}} seç
+- {{count}} selected / {{count}} seçildi
+- Severity / Önem
+- Type / Tür
+- Run preview / Önizlemeyi çalıştır
+- As of / Tarih
+- No committed plan runs yet. / Henüz kaydedilmiş plan çalışması yok.
+- Exceptions / İstisnalar
+- Number / Numara
+- Planned orders / Planlanan siparişler
+- Products / Ürünler
+- Critical / Kritik
+- Info / Bilgi
+- Warning / Uyarı
+- Time-phased material planning, exception triage, and planned-order release. / Zaman fazlı malzeme planlaması, istisna triyajı ve planlanan sipariş serbest bırakma.
+- Capacity / Kapasite
+- Distribution / Dağıtım
+- Planning grid / Planlama tablosu
+- Change impact / Değişim etkisi
+- Action queue / İşlem kuyruğu
+- Plan runs / Plan çalışmaları
+- MRP Planner Workbench / MRP Planlama Tezgahı

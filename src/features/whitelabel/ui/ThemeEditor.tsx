@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTenantThemeQuery, useUpdateTenantTheme } from '../hooks/useTenantTheme';
 import type { UpdateTenantThemeInput } from '../model/whitelabel.types';
@@ -22,21 +22,21 @@ export const ThemeEditor = () => {
   const themeQuery = useTenantThemeQuery();
   const updateTheme = useUpdateTenantTheme();
   const [form, setForm] = useState<UpdateTenantThemeInput>(DEFAULT_FORM);
+  const [syncedData, setSyncedData] = useState(themeQuery.data);
 
-  useEffect(() => {
-    if (themeQuery.data) {
-      setForm({
-        primaryColor: themeQuery.data.primaryColor,
-        accentColor: themeQuery.data.accentColor,
-        brandName: themeQuery.data.brandName ?? '',
-        customSubdomain: themeQuery.data.customSubdomain ?? '',
-        customDomain: themeQuery.data.customDomain ?? '',
-        emailFromName: themeQuery.data.emailFromName,
-        emailFromAddress: themeQuery.data.emailFromAddress ?? '',
-        loginHeadingMd: themeQuery.data.loginHeadingMd ?? '',
-      });
-    }
-  }, [themeQuery.data]);
+  if (themeQuery.data && themeQuery.data !== syncedData) {
+    setSyncedData(themeQuery.data);
+    setForm({
+      primaryColor: themeQuery.data.primaryColor,
+      accentColor: themeQuery.data.accentColor,
+      brandName: themeQuery.data.brandName ?? '',
+      customSubdomain: themeQuery.data.customSubdomain ?? '',
+      customDomain: themeQuery.data.customDomain ?? '',
+      emailFromName: themeQuery.data.emailFromName,
+      emailFromAddress: themeQuery.data.emailFromAddress ?? '',
+      loginHeadingMd: themeQuery.data.loginHeadingMd ?? '',
+    });
+  }
 
   const update = <K extends keyof UpdateTenantThemeInput>(
     key: K,
@@ -188,19 +188,19 @@ export const ThemeEditor = () => {
 
       <div className="flex items-center justify-end gap-3">
         {updateTheme.isError ? (
-          <span className="text-sm text-red-600 dark:text-red-400">
+          <span className="text-sm text-danger-600 dark:text-danger-400">
             {t('Whitelabel.save.error')}
           </span>
         ) : null}
         {updateTheme.isSuccess ? (
-          <span className="text-sm text-green-600 dark:text-green-400">
+          <span className="text-sm text-success-600 dark:text-success-400">
             {t('Whitelabel.save.success')}
           </span>
         ) : null}
         <button
           type="submit"
           disabled={updateTheme.isPending}
-          className="rounded bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          className="rounded bg-info-600 px-4 py-2 text-sm font-medium text-white hover:bg-info-700 disabled:opacity-60"
         >
           {updateTheme.isPending ? t('Whitelabel.save.saving') : t('Whitelabel.save.submit')}
         </button>

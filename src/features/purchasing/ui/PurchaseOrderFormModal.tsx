@@ -1,14 +1,20 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
-import { ProductPicker } from '@/features/orders/ui/ProductPicker';
+import { ProductPicker } from '@/shared/ui/ProductPicker';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
-import { useWarehousesQuery } from '@/features/master-data/hooks/useMasterData';
+import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
 import { useCreatePurchaseOrder, useUpdatePurchaseOrder } from '../hooks/usePurchaseOrders';
 import type { PurchaseOrder } from '../model/purchaseOrder.types';
 
@@ -125,240 +131,190 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
   };
 
   const pending = createMutation.isPending || updateMutation.isPending;
-  const inputClass =
-    'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
+  const numberCellClass = `${fieldBaseClasses(false)} text-right`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900">
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {isEdit
-              ? `${t('po.form.editTitle', { defaultValue: 'Satınalma Siparişi' })} ${order?.poNumber}`
-              : t('po.form.newTitle', { defaultValue: 'Yeni Satınalma Siparişi' })}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label={t('common.close', { defaultValue: 'Kapat' })}
+    <Modal
+      open={true}
+      title={
+        isEdit
+          ? `${t('po.form.editTitle', { defaultValue: 'Satınalma Siparişi' })} ${order?.poNumber}`
+          : t('po.form.newTitle', { defaultValue: 'Yeni Satınalma Siparişi' })
+      }
+      icon={<ShoppingCart size={18} />}
+      onClose={onClose}
+      size="2xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="purchase-order-form" isLoading={pending} disabled={pending}>
+            {pending
+              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+              : t('common.save', { defaultValue: 'Kaydet' })}
+          </Button>
+        </>
+      }
+    >
+      <form id="purchase-order-form" onSubmit={submit} className="dense-form space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Select
+            label={t('po.form.vendor', { defaultValue: 'Tedarikçi' })}
+            required
+            value={vendorId}
+            onChange={(e) => setVendorId(e.target.value)}
           >
-            <X size={16} />
-          </button>
+            <option value="">{t('po.form.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
+            {vendors.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label={t('po.form.warehouse', { defaultValue: 'Teslim Deposu' })}
+            value={warehouseId}
+            onChange={(e) => setWarehouseId(e.target.value)}
+          >
+            <option value="">{t('po.form.selectWarehouse', { defaultValue: 'Seçiniz…' })}</option>
+            {warehouses.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name} ({w.code})
+              </option>
+            ))}
+          </Select>
+          <Input
+            label={t('po.form.currency', { defaultValue: 'Para Birimi' })}
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+            maxLength={3}
+            className="uppercase"
+          />
+          <Input
+            label={t('po.form.orderDate', { defaultValue: 'Sipariş Tarihi' })}
+            type="date"
+            value={orderDate}
+            onChange={(e) => setOrderDate(e.target.value)}
+          />
+          <Input
+            label={t('po.form.expectedDate', { defaultValue: 'Beklenen Teslim' })}
+            type="date"
+            value={expectedDate}
+            onChange={(e) => setExpectedDate(e.target.value)}
+          />
         </div>
 
-        <form onSubmit={submit} className="dense-form flex min-h-0 flex-1 flex-col">
-          <div className="space-y-3 overflow-y-auto p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('po.form.vendor', { defaultValue: 'Tedarikçi' })} *
-                </label>
-                <select
-                  value={vendorId}
-                  onChange={(e) => setVendorId(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">
-                    {t('po.form.selectVendor', { defaultValue: 'Seçiniz…' })}
-                  </option>
-                  {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('po.form.warehouse', { defaultValue: 'Teslim Deposu' })}
-                </label>
-                <select
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">
-                    {t('po.form.selectWarehouse', { defaultValue: 'Seçiniz…' })}
-                  </option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      {w.name} ({w.code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('po.form.currency', { defaultValue: 'Para Birimi' })}
-                </label>
-                <input
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                  maxLength={3}
-                  className={`${inputClass} uppercase`}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('po.form.orderDate', { defaultValue: 'Sipariş Tarihi' })}
-                </label>
-                <input
-                  type="date"
-                  value={orderDate}
-                  onChange={(e) => setOrderDate(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                  {t('po.form.expectedDate', { defaultValue: 'Beklenen Teslim' })}
-                </label>
-                <input
-                  type="date"
-                  value={expectedDate}
-                  onChange={(e) => setExpectedDate(e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-            </div>
+        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+              <tr>
+                <th className="px-2 py-1.5 text-left">
+                  {t('po.form.product', { defaultValue: 'Ürün' })}
+                </th>
+                <th className="w-24 px-2 py-1.5 text-right">
+                  {t('po.form.qty', { defaultValue: 'Miktar' })}
+                </th>
+                <th className="w-28 px-2 py-1.5 text-right">
+                  {t('po.form.unitCost', { defaultValue: 'Birim Maliyet' })}
+                </th>
+                <th className="w-20 px-2 py-1.5 text-right">
+                  {t('po.form.tax', { defaultValue: 'KDV %' })}
+                </th>
+                <th className="w-8 px-2 py-1.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {lines.map((l) => (
+                <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
+                  <td className="px-2 py-1.5">
+                    <ProductPicker
+                      products={products}
+                      value={l.productId}
+                      onSelect={(productId) => updateLine(l.key, { productId })}
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={l.quantity}
+                      onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
+                      className={numberCellClass}
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      step="any"
+                      value={l.unitCost}
+                      onChange={(e) => updateLine(l.key, { unitCost: e.target.value })}
+                      className={numberCellClass}
+                    />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step="any"
+                      value={l.taxRatePercent}
+                      onChange={(e) => updateLine(l.key, { taxRatePercent: e.target.value })}
+                      className={numberCellClass}
+                    />
+                  </td>
+                  <td className="px-2 py-1.5 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeLine(l.key)}
+                      disabled={lines.length === 1}
+                      className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-30 dark:hover:bg-danger-500/10"
+                      aria-label={t('common.delete', { defaultValue: 'Sil' })}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left">
-                      {t('po.form.product', { defaultValue: 'Ürün' })}
-                    </th>
-                    <th className="w-24 px-2 py-1.5 text-right">
-                      {t('po.form.qty', { defaultValue: 'Miktar' })}
-                    </th>
-                    <th className="w-28 px-2 py-1.5 text-right">
-                      {t('po.form.unitCost', { defaultValue: 'Birim Maliyet' })}
-                    </th>
-                    <th className="w-20 px-2 py-1.5 text-right">
-                      {t('po.form.tax', { defaultValue: 'KDV %' })}
-                    </th>
-                    <th className="w-8 px-2 py-1.5" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {lines.map((l) => (
-                    <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
-                      <td className="px-2 py-1.5">
-                        <ProductPicker
-                          products={products}
-                          value={l.productId}
-                          onSelect={(productId) => updateLine(l.key, { productId })}
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="number"
-                          min={0}
-                          step="any"
-                          value={l.quantity}
-                          onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
-                          className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="number"
-                          min={0}
-                          step="any"
-                          value={l.unitCost}
-                          onChange={(e) => updateLine(l.key, { unitCost: e.target.value })}
-                          className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input
-                          type="number"
-                          min={0}
-                          max={100}
-                          step="any"
-                          value={l.taxRatePercent}
-                          onChange={(e) => updateLine(l.key, { taxRatePercent: e.target.value })}
-                          className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        />
-                      </td>
-                      <td className="px-2 py-1.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeLine(l.key)}
-                          disabled={lines.length === 1}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 dark:hover:bg-rose-500/10"
-                          aria-label={t('common.delete', { defaultValue: 'Sil' })}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={addLine}
+            className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            <Plus size={12} />
+            {t('po.form.addLine', { defaultValue: 'Satır ekle' })}
+          </button>
+          <div className="text-right text-sm">
+            <div className="text-slate-500 dark:text-slate-400">
+              {t('po.form.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
+              {formatCurrency(totals.subtotal, locale, currency)}
             </div>
-
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={addLine}
-                className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                <Plus size={12} />
-                {t('po.form.addLine', { defaultValue: 'Satır ekle' })}
-              </button>
-              <div className="text-right text-sm">
-                <div className="text-slate-500 dark:text-slate-400">
-                  {t('po.form.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
-                  {formatCurrency(totals.subtotal, locale, currency)}
-                </div>
-                <div className="text-slate-500 dark:text-slate-400">
-                  {t('po.form.taxTotal', { defaultValue: 'KDV' })}:{' '}
-                  {formatCurrency(totals.tax, locale, currency)}
-                </div>
-                <div className="font-bold text-slate-900 dark:text-slate-100">
-                  {t('po.form.total', { defaultValue: 'Genel Toplam' })}:{' '}
-                  {formatCurrency(totals.total, locale, currency)}
-                </div>
-              </div>
+            <div className="text-slate-500 dark:text-slate-400">
+              {t('po.form.taxTotal', { defaultValue: 'KDV' })}:{' '}
+              {formatCurrency(totals.tax, locale, currency)}
             </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('po.form.notes', { defaultValue: 'Açıklama' })}
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={2}
-                maxLength={2000}
-                className={inputClass}
-              />
+            <div className="font-bold text-slate-900 dark:text-slate-100">
+              {t('po.form.total', { defaultValue: 'Genel Toplam' })}:{' '}
+              {formatCurrency(totals.total, locale, currency)}
             </div>
           </div>
+        </div>
 
-          <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              {t('common.cancel', { defaultValue: 'İptal' })}
-            </button>
-            <button
-              type="submit"
-              disabled={pending}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {pending
-                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-                : t('common.save', { defaultValue: 'Kaydet' })}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Textarea
+          label={t('po.form.notes', { defaultValue: 'Açıklama' })}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={2}
+          maxLength={2000}
+        />
+      </form>
+    </Modal>
   );
 };

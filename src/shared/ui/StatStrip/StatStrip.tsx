@@ -25,12 +25,12 @@ interface Props {
 }
 
 const toneIconBg: Record<StatTone, string> = {
-  indigo: 'from-indigo-500 to-blue-600',
+  indigo: 'from-primary-500 to-primary-600',
   violet: 'from-violet-500 to-fuchsia-600',
-  emerald: 'from-emerald-500 to-teal-600',
-  amber: 'from-amber-500 to-orange-500',
-  rose: 'from-rose-500 to-pink-600',
-  sky: 'from-sky-500 to-cyan-600',
+  emerald: 'from-success-500 to-teal-600',
+  amber: 'from-warning-500 to-warning-500',
+  rose: 'from-danger-500 to-pink-600',
+  sky: 'from-info-500 to-cyan-600',
   slate: 'from-slate-500 to-slate-700',
 };
 
@@ -75,7 +75,7 @@ const StatCardItem = ({ item }: { item: StatStripItem }) => {
 
   const containerClass = cn(
     'group relative isolate overflow-hidden rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm transition-all duration-300 dark:border-slate-800/70 dark:bg-slate-900/60',
-    'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-300/60 dark:hover:border-indigo-500/40',
+    'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/5 hover:border-primary-300/60 dark:hover:border-primary-500/40',
     item.onClick && 'cursor-pointer',
   );
 
@@ -118,8 +118,8 @@ const StatCardItem = ({ item }: { item: StatStripItem }) => {
               className={cn(
                 'inline-flex items-center gap-0.5 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
                 goodDirection
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                  : 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300',
+                  ? 'border-success-500/30 bg-success-500/10 text-success-700 dark:text-success-300'
+                  : 'border-danger-500/30 bg-danger-500/10 text-danger-700 dark:text-danger-300',
               )}
             >
               {showDeltaPositive ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}

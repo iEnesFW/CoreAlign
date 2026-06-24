@@ -1,0 +1,85 @@
+# Privacy (CoreAlign UI)
+
+"Privacy" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Privacy" area (English / Türkçe):
+
+- Actions / İşlemler
+- All statuses / Tüm durumlar
+- No requests found / Talep bulunamadı
+- Notes / Notlar
+- Process / İşle
+- Request processed / Talep işlendi
+- Reject / Reddet
+- Request rejected / Talep reddedildi
+- Enter rejection reason / Reddetme nedenini girin
+- Status / Durum
+- Status filter / Durum filtresi
+- Submitted at / Gönderim tarihi
+- Manage GDPR/KVKK data subject requests / KVKK/GDPR veri sahibi taleplerini yönetin
+- Audit / Denetim
+- Audit logs coming soon / Denetim kayıtları yakında
+- Retention policies / Saklama politikaları
+- Requests / Talepler
+- Privacy Administration / Gizlilik Yönetimi
+- Type / Tür
+- Anonymous usage analytics / Anonim kullanım analitiği
+- Marketing communications / Pazarlama iletişimleri
+- Preference updated / Tercih güncellendi
+- Data subject request not found / Veri sahibi talebi bulunamadı
+- Email is required / E-posta gereklidir
+- Delete Account / Hesabı Sil
+- Type your username to confirm / Onaylamak için kullanıcı adınızı yazın
+- Request anonymization of your account under data protection rights. This action is irreversible; financial records are retained for the legal retention period, but personal identifiers are erased. / Veri koruma hakları kapsamında hesabınızın anonimleştirilmesini talep edin. Bu işlem geri alınamaz; finansal kayıtlar yasal saklama süresi boyunca tutulur, ancak kişisel kimlik bilgileri silinir.
+- Username does not match / Kullanıcı adı eşleşmiyor
+- Processing… / İşleniyor…
+- Erasure request received / Silme talebi alındı
+- Delete My Account / Hesabımı Sil
+- Download Data Package / Veri Paketini İndir
+- Download all your personal data — account, projects, and activity history — in JSON format. / Tüm kişisel verilerinizi — hesap, projeler ve etkinlik geçmişi — JSON formatında indirin.
+- Preparing… / Hazırlanıyor…
+- Data package ready / Veri paketi hazır
+- Export My Data / Verilerimi Dışa Aktar
+- Export includes profile, customer/dealer memberships, order history, and recent activity. / Dışa aktarım; profil, müşteri/bayi üyelikleri, sipariş geçmişi ve son etkinlikleri kapsar.
+- Last submitted request ID / Son gönderilen talep ID'si
+- Exercise your rights under GDPR / KVKK Art. 11 / GDPR / KVKK md. 11 kapsamındaki haklarınızı kullanın
+- Privacy Requests / Gizlilik Talepleri
+- Email address / E-posta adresi
+- Notes (optional) / Notlar (isteğe bağlı)
+- Submit request / Talep gönder
+- Request submitted successfully / Talep başarıyla gönderildi
+- Submitting... / Gönderiliyor...
+- Request type / Talep türü
+- Right of access / Erişim hakkı
+- Right to erasure / Silme hakkı
+- Data export / Veri dışa aktarımı
+- Right to object / İtiraz hakkı
+- Data portability / Veri taşınabilirliği
+- Right to rectification / Düzeltme hakkı
+- Restrict processing / İşlemeyi kısıtlama
+- Request is already closed / Talep zaten kapatılmış
+- Request type mismatch / Talep türü uyuşmazlığı
+- Account anonymized. Financial records are retained for the legal retention period. / Hesap anonimleştirildi. Finansal kayıtlar yasal saklama süresi boyunca tutulur.
+- Customer record anonymized. Financial snapshots are retained for the legal retention period. / Müşteri kaydı anonimleştirildi. Finansal anlık görüntüler yasal saklama süresi boyunca tutulur.
+- Action / İşlem
+- Anonymize / Anonimleştir
+- Archive / Arşivle
+- Delete / Sil
+- Add policy / Politika ekle
+- Add retention policy / Saklama politikası ekle
+- Retention policy created / Saklama politikası oluşturuldu
+- Days / Gün
+- No policies defined yet / Henüz politika tanımlanmadı
+- Enabled / Etkin
+- Data type / Veri türü
+- Existing policies / Mevcut politikalar
+- Last run / Son çalıştırma
+- Retention policy updated / Saklama politikası güncellendi
+- Retention period expired / Saklama süresi doldu
+- Retention policy not found / Saklama politikası bulunamadı
+- Completed / Tamamlandı
+- In progress / İşlemde
+- Rejected / Reddedildi
+- Submitted / Gönderildi
+- Manage your personal data rights: download your data or delete your account. / Kişisel veri haklarınızı yönetin: verilerinizi indirin veya hesabınızı silin.
+- Tenant is required / Kiracı gereklidir
+- Privacy & GDPR / Gizlilik & KVKK
+- Verification email sent / Doğrulama e-postası gönderildi

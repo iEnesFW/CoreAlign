@@ -91,6 +91,12 @@ public class InvoiceDto
     public DateTime UpdatedAtUtc { get; set; }
 }
 
+public class CreditedLineQuantityDto
+{
+    public Guid InvoiceLineId { get; set; }
+    public decimal CreditedQuantity { get; set; }
+}
+
 public class InvoiceSummaryDto
 {
     public Guid Id { get; set; }

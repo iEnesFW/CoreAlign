@@ -16,7 +16,7 @@
   width: 100%;
   max-width: 480px;
   padding: 1rem;
-  margin: auto; /* Centers it between header and footer */
+  margin: auto;
 }
 
 .card {

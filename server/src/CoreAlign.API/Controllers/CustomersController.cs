@@ -2,6 +2,7 @@ using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Customers.Commands;
+using CoreAlign.Application.Customers.Maintenance;
 using CoreAlign.Application.Customers.Merge;
 using CoreAlign.Application.Customers.Queries;
 using CoreAlign.Application.Customers.Statements;
@@ -220,6 +221,17 @@ public class CustomersController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpPost("recompute-balances")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> RecomputeBalancesAsync(
+        [FromQuery] Guid? customerId = null,
+        [FromQuery] bool dryRun = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new RecomputeCustomerBalancesCommand(customerId, dryRun), cancellationToken);
         return result.ToOk();
     }
 

@@ -1,4 +1,16 @@
 {
+  "AiHelper": {
+    "Launcher": "AI Assistant",
+    "Title": "CoreAlign Assistant",
+    "Subtitle": "Ask anything about the app",
+    "Placeholder": "Ask a question...",
+    "Send": "Send",
+    "Close": "Close",
+    "Welcome": "Hi! I'm your CoreAlign assistant. How can I help you?",
+    "Sources": "Sources",
+    "Error": "Something went wrong. Please try again.",
+    "Thinking": "Thinking..."
+  },
   "inventory": {
     "summary": {
       "totalOnHand": "إجمالي المتوفر",
@@ -185,7 +197,7 @@
     "Required": "هذا الحقل مطلوب.",
     "InvalidEmail": "يرجى إدخال بريد إلكتروني صالح.",
     "EmailTooLong": "البريد الإلكتروني طويل جدًا.",
-    "PasswordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل.",
+    "PasswordTooShort": "يجب أن تكون كلمة المرور 12 حرفًا على الأقل.",
     "PasswordMismatch": "كلمتا المرور غير متطابقتين.",
     "PasswordNeedsUppercase": "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل.",
     "PasswordNeedsLowercase": "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل.",
@@ -2204,6 +2216,18 @@
       "NoSelection": "اختر تشغيلًا أو لوحًا من المشهد ثلاثي الأبعاد.",
       "DefaultRunLabel": "تشغيل",
       "RunAdded": "تمت إضافة التشغيل",
+      "FloatingWarning": "⚠ {{count}} عنصر بلا دعامة (معلّق)",
+      "CatalogWarning": "⚠ {{count}} مقطع يتجاوز حدود الكتالوج (مقاس/وزن اللوح)",
+      "ArrayOverlap": "تمت إضافة {{placed}} نسخة، وتم تخطّي {{skipped}} بسبب التداخل.",
+      "Export": {
+        "Title": "تصدير",
+        "Dxf": "DXF (مخطط ثنائي الأبعاد)",
+        "Glb": "glTF/GLB (ثلاثي الأبعاد)",
+        "Pdf": "PDF (طباعة)",
+        "CatalogConfirm": "{{count}} مقطع يتجاوز حدود الكتالوج (غير قابل للتصنيع). هل تريد التصدير على أي حال؟",
+        "CatalogWarn": "⚠ {{count}} مقطع يتجاوز حدود الكتالوج",
+        "CatalogNotLoadedConfirm": "تعذّر تحميل الكتالوج؛ لم يتم التحقق من قابلية التصنيع. هل تريد التصدير على أي حال؟"
+      },
       "ConnectionInspector": "اتصال الزاوية",
       "ViewSplit": "تقسيم",
       "ViewPlan": "مسقط (2D)",
@@ -2983,7 +3007,9 @@
       "Sort.Rating": "الأعلى تقييماً",
       "Sort.Alphabetical": "أبجدي"
     },
-    "Card": { "NoPreview": "لا توجد معاينة" },
+    "Card": {
+      "NoPreview": "لا توجد معاينة"
+    },
     "Detail": {
       "Back": "العودة إلى السوق",
       "Install": "تثبيت القالب",
@@ -3756,6 +3782,704 @@
       "Button": "تصدير",
       "Success": "تم تنزيل التصدير",
       "Failed": "فشل التصدير"
+    }
+  },
+  "Vendors": {
+    "title": "الموردون",
+    "subtitle": "بيانات المورد الرئيسية والحساب الجاري والتفاصيل المصرفية.",
+    "newVendor": "مورد جديد",
+    "searchPlaceholder": "الاسم، الرمز، الرقم الضريبي، البريد…",
+    "allStatuses": "جميع الحالات",
+    "itemLabel": "موردين",
+    "loading": "جارٍ التحميل…",
+    "empty": "لا يوجد موردون مطابقون للمرشحات.",
+    "cols": {
+      "code": "الرمز",
+      "vendor": "المورد",
+      "taxNumber": "الرقم الضريبي",
+      "contact": "جهة الاتصال",
+      "status": "الحالة",
+      "balance": "الرصيد",
+      "overdue": "متأخر"
+    },
+    "status": {
+      "Active": "نشط",
+      "Blocked": "محظور",
+      "Archived": "مؤرشف",
+      "PendingApproval": "بانتظار الموافقة"
+    },
+    "actions": {
+      "approve": "موافقة",
+      "block": "حظر",
+      "archive": "أرشفة",
+      "detail": "التفاصيل"
+    },
+    "approve": {
+      "success": "تمت الموافقة على المورد."
+    },
+    "archive": {
+      "title": "أرشفة",
+      "message": "هل تريد أرشفة هذا المورد؟",
+      "confirm": "أرشفة",
+      "success": "تمت أرشفة المورد."
+    },
+    "block": {
+      "title": "حظر المورد",
+      "reasonLabel": "سبب الحظر *",
+      "submit": "حظر",
+      "success": "تم حظر المورد."
+    },
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ…",
+    "save": "حفظ",
+    "add": "إضافة",
+    "modal": {
+      "newAddress": "عنوان جديد",
+      "newContact": "جهة اتصال جديدة",
+      "newBankAccount": "حساب مصرفي جديد"
+    },
+    "address": {
+      "label": "التسمية",
+      "line1": "سطر العنوان 1",
+      "line2": "سطر العنوان 2",
+      "labelPlaceholder": "المركز / المستودع / الفوترة",
+      "postalCode": "الرمز البريدي",
+      "country": "الدولة",
+      "province": "المحافظة",
+      "district": "المنطقة",
+      "isPrimary": "العنوان الأساسي",
+      "success": "تمت إضافة العنوان."
+    },
+    "contact": {
+      "name": "الاسم الكامل",
+      "role": "المنصب",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "isPrimary": "جهة الاتصال الأساسية",
+      "success": "تمت إضافة جهة الاتصال."
+    },
+    "bank": {
+      "bankName": "البنك",
+      "branchName": "الفرع",
+      "accountHolder": "صاحب الحساب",
+      "iban": "IBAN",
+      "currency": "العملة",
+      "isPrimary": "الحساب الأساسي",
+      "success": "تمت إضافة الحساب المصرفي."
+    },
+    "defaultCountry": "تركيا"
+  },
+  "VendorDetail": {
+    "notFound": "لم يتم العثور على المورد.",
+    "loading": "جارٍ التحميل…",
+    "backToList": "العودة إلى الموردين",
+    "edit": "تعديل",
+    "currentBalance": "الرصيد الجاري",
+    "overdue": "متأخر",
+    "tabs": {
+      "overview": "عام",
+      "addresses": "العناوين",
+      "contacts": "جهات الاتصال",
+      "bank": "التفاصيل المصرفية",
+      "ledger": "الحساب الجاري"
+    },
+    "fields": {
+      "code": "الرمز",
+      "taxNumber": "الرقم الضريبي",
+      "taxOffice": "مكتب الضرائب",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "type": "النوع",
+      "currency": "العملة",
+      "paymentTerms": "شروط الدفع",
+      "territory": "المنطقة",
+      "classification": "التصنيف",
+      "website": "الموقع",
+      "approval": "الموافقة",
+      "rating": "الأداء",
+      "blockReason": "سبب الحظر",
+      "notes": "ملاحظات"
+    },
+    "business": "شركة",
+    "individual": "فرد",
+    "notApproved": "لم تتم الموافقة بعد",
+    "star": "{{count}} نجمة",
+    "rating": {
+      "success": "تم تحديث تقييم الأداء."
+    },
+    "delete": {
+      "title": "حذف",
+      "message": "هل تريد حذف {{label}}؟",
+      "confirm": "حذف",
+      "success": "تم الحذف."
+    },
+    "primary": "أساسي",
+    "addresses": {
+      "empty": "لم يتم تعريف عناوين بعد.",
+      "add": "إضافة عنوان"
+    },
+    "contacts": {
+      "empty": "لم يتم تعريف جهات اتصال بعد.",
+      "add": "إضافة جهة اتصال"
+    },
+    "bank": {
+      "empty": "لم يتم تعريف حسابات مصرفية بعد.",
+      "add": "إضافة حساب مصرفي"
+    },
+    "ledger": {
+      "date": "التاريخ",
+      "document": "المستند",
+      "description": "الوصف",
+      "debit": "مدين",
+      "credit": "دائن",
+      "balance": "الرصيد",
+      "empty": "لا توجد حركات على الحساب الجاري بعد."
+    }
+  },
+  "VendorBills": {
+    "threeWayMatch": {
+      "allVendors": "جميع الموردين",
+      "cols": {
+        "billed": "المفوتر",
+        "billedAmount": "مبلغ الفاتورة",
+        "expected": "المتوقع",
+        "flags": "الاختلافات",
+        "po": "رقم أمر الشراء",
+        "product": "المنتج",
+        "received": "المستلم",
+        "vendor": "المورد",
+        "match": "المطابقة"
+      },
+      "codes": {
+        "UnderReceived": "استلام ناقص",
+        "OverReceived": "استلام زائد",
+        "UnderBilled": "فوترة ناقصة",
+        "OverBilled": "فوترة زائدة",
+        "BillExceedsPo": "الفاتورة تتجاوز أمر الشراء"
+      },
+      "count": "{{count}} سطر",
+      "empty": "جميع سلاسل أمر الشراء - الاستلام - الفاتورة متطابقة.",
+      "navLabel": "المطابقة الثلاثية",
+      "subtitle": "يسرد اختلافات أمر الشراء ↔ الاستلام ↔ الفاتورة. صفِّ حسب رمز الاختلاف.",
+      "title": "تقرير المطابقة الثلاثية",
+      "matched": "متطابق",
+      "mismatch": "غير متطابق"
+    },
+    "Status": {
+      "Draft": "مسودة",
+      "Posted": "مرحّل",
+      "PartiallyPaid": "مدفوع جزئياً",
+      "Paid": "مدفوع",
+      "Cancelled": "ملغى",
+      "PendingApproval": "معلّق / يتطلب الموافقة"
+    }
+  },
+  "VendorPayments": {
+    "applications": {
+      "amount": "المبلغ",
+      "date": "التاريخ",
+      "empty": "لا توجد مدفوعات مطبّقة.",
+      "paymentNo": "رقم الدفعة",
+      "title": "المدفوعات المطبّقة"
+    },
+    "apply": {
+      "amount": "المبلغ",
+      "amountDue": "المبلغ المستحق",
+      "billTotal": "إجمالي الفاتورة",
+      "maxHint": "الحد الأقصى {{m}}",
+      "noEligible": "لم يتم العثور على مدفوعات قابلة للتطبيق لهذا المورد.",
+      "notes": "ملاحظات",
+      "payment": "الدفعة",
+      "pickPayment": "اختر الدفعة…",
+      "submit": "تطبيق",
+      "subtitle": "اختر الدفعة لتطبيقها على الفاتورة {{n}}.",
+      "title": "تطبيق دفعة المورد",
+      "unapplied": "غير مطبّقة"
+    },
+    "applyPayment": "تطبيق دفعة موجودة",
+    "applySuccess": "تم تطبيق الدفعة على الفاتورة.",
+    "viewApplications": "المدفوعات المطبّقة"
+  },
+  "grn": {
+    "page": {
+      "title": "إيصالات الاستلام",
+      "subtitle": "اعرض إذونات استلام البضائع وقم بعكسها عند الحاجة."
+    },
+    "count": "{{count}} إيصال",
+    "empty": "لم يتم العثور على إيصالات استلام.",
+    "toggleLines": "إظهار/إخفاء البنود",
+    "filter": {
+      "vendor": "المورّد",
+      "status": "الحالة",
+      "allVendors": "جميع المورّدين",
+      "allStatuses": "جميع الحالات"
+    },
+    "status": {
+      "Posted": "مُرحَّل",
+      "Reversed": "معكوس"
+    },
+    "cols": {
+      "number": "رقم الإيصال",
+      "vendor": "المورّد",
+      "po": "الطلب",
+      "date": "التاريخ",
+      "lines": "البنود",
+      "total": "المبلغ",
+      "status": "الحالة"
+    },
+    "line": {
+      "product": "المنتج",
+      "qty": "الكمية",
+      "unitCost": "تكلفة الوحدة",
+      "lineCost": "مبلغ البند"
+    },
+    "reverse": {
+      "action": "عكس",
+      "title": "عكس استلام البضائع",
+      "hint": "يؤدي العكس إلى إلغاء حركات المخزون وكمية الاستلام في الطلب وعكس القيد المحاسبي.",
+      "reasonLabel": "سبب العكس",
+      "submit": "عكس",
+      "done": "تم عكس استلام البضائع."
+    }
+  },
+  "BalanceSheet": {
+    "title": "الميزانية العمومية",
+    "subtitle": "الأصول والخصوم وحقوق الملكية حتى التاريخ المحدد. يُضاف صافي ربح الفترة إلى حقوق الملكية قبل قيود الإقفال.",
+    "balanced": "الميزانية متوازنة",
+    "variance": "الفرق: {{value}}",
+    "computing": "جارٍ الحساب…",
+    "empty": "لم يتم العثور على قيود يومية مرحّلة حتى التاريخ المحدد.",
+    "assets": "الأصول",
+    "liabilities": "الخصوم",
+    "equity": "حقوق الملكية",
+    "currentYearEarnings": "صافي الربح/الخسارة (قبل الإقفال)",
+    "totalAssets": "إجمالي الأصول",
+    "totalLiabilitiesAndEquity": "إجمالي الخصوم وحقوق الملكية"
+  },
+  "IncomeStatement": {
+    "title": "قائمة الدخل",
+    "subtitle": "الإيرادات وتكلفة البضاعة المباعة والمصروفات التشغيلية المستمدة من القيود اليومية المرحّلة في الفترة المحددة.",
+    "computing": "جارٍ الحساب…",
+    "empty": "لم يتم العثور على قيود يومية مرحّلة في النطاق المحدد.",
+    "netProfit": "صافي الربح: {{value}}",
+    "netLoss": "صافي الخسارة: {{value}}",
+    "revenue": "الإيرادات",
+    "totalRevenue": "إجمالي الإيرادات",
+    "cogs": "تكلفة البضاعة المباعة (COGS)",
+    "grossProfit": "إجمالي الربح",
+    "opex": "المصروفات التشغيلية",
+    "netIncomeRow": "صافي الدخل",
+    "netLossRow": "صافي الخسارة"
+  },
+  "YearEndClose": {
+    "title": "إقفال نهاية السنة (قيد الإقفال)",
+    "subtitle": "إقفال نهاية السنة وفق TDHP: تُرحَّل جميع حسابات الإيرادات/المصروفات 6xx إلى 690 ربح/خسارة الفترة، ثم يُرحَّل 690 إلى 590 (ربح) أو 591 (خسارة) ضمن حقوق الملكية.",
+    "fiscalYear": "السنة المالية",
+    "prevYear": "السنة السابقة",
+    "nextYear": "السنة التالية",
+    "alreadyClosed": "{{year}} مُقفلة",
+    "open": "{{year}} مفتوحة",
+    "closedHint": "يوجد بالفعل قيد إقفال لهذه السنة المالية. العملية متكافئة؛ تشغيلها مرة أخرى لن يُنشئ قيدًا جديدًا.",
+    "guardHint": "الإقفال عملية مهمة وتُنتج قيد إقفال (Kapanış) مُرحَّلًا. تأكد من صحة ميزان مراجعة الفترة قبل المتابعة.",
+    "runClose": "تشغيل إقفال نهاية السنة",
+    "closing": "جارٍ الإقفال…",
+    "refresh": "عرض الإقفال",
+    "runOpen": "إنشاء قيد افتتاح {{year}}",
+    "opening": "جارٍ الافتتاح…",
+    "openingDone": "تم إنشاء افتتاح {{year}}",
+    "reverseClose": "عكس الإقفال",
+    "reversing": "جارٍ العكس…",
+    "confirmTitle": "إقفال نهاية السنة",
+    "confirmMessage": "سيتم إنشاء قيد إقفال نهاية السنة وفق TDHP لسنة {{year}}: تُرحَّل حسابات الإيرادات/المصروفات 6xx إلى 690، ويُرحَّل 690 إلى حساب حقوق الملكية 590/591. ينتج عن ذلك قيد مُرحَّل.",
+    "confirmAction": "إنشاء قيد الإقفال",
+    "confirmReverse": "سيتم عكس إقفال نهاية سنة {{year}} (قيد عكسي). نفّذ ذلك فقط إذا لم يتم إنشاء قيد الافتتاح بعد.",
+    "reverseTitle": "عكس الإقفال",
+    "reverseAction": "عكس",
+    "closed": "تم إقفال السنة المالية {{year}}.",
+    "opened": "تم إنشاء قيد افتتاح {{year}}.",
+    "reversed": "تم عكس إقفال {{year}}.",
+    "alreadyExistedToast": "{{year}} مُقفلة بالفعل؛ يتم عرض القيد الموجود.",
+    "netResult": "نتيجة الفترة",
+    "netProfit": "صافي الربح: {{value}}",
+    "netLoss": "صافي الخسارة: {{value}}",
+    "transferProfit": "تم ترحيل صافي ربح الفترة إلى حقوق الملكية",
+    "transferLoss": "تم ترحيل صافي خسارة الفترة إلى حقوق الملكية",
+    "closingEntryCaption": "قيد الإقفال",
+    "openingEntryCaption": "قيد الافتتاح ({{year}})",
+    "posted": "مُرحَّل",
+    "code": "الرمز",
+    "accountName": "الحساب",
+    "debit": "مدين",
+    "credit": "دائن",
+    "total": "الإجمالي"
+  },
+  "Accounting": {
+    "glPostingMap": {
+      "help": "حدّد هنا حساب الأستاذ العام الذي يُرحّل إليه كل دور عند إنشاء القيود اليومية التلقائية (المبيعات، التحصيلات، فواتير/مدفوعات الموردين، استلام البضائع، تكلفة البضاعة المباعة). تستخدم الصفوف الفارغة رمز TDHP الافتراضي؛ وإذا لم يُعثر على حساب مطابق يُتخطى القيد بصمت ولا يتعطل سير العمل الرئيسي.",
+      "columns": {
+        "role": "الدور",
+        "default": "الافتراضي",
+        "accountCode": "رمز الحساب",
+        "account": "الحساب",
+        "status": "الحالة"
+      },
+      "roles": {
+        "AccountsReceivable": "الذمم المدينة (AR)",
+        "SalesRevenue": "إيرادات المبيعات",
+        "OutputVat": "ضريبة القيمة المضافة المستحقة",
+        "Cash": "النقدية",
+        "Bank": "البنك",
+        "AccountsPayable": "الذمم الدائنة (AP)",
+        "InputVat": "ضريبة القيمة المضافة القابلة للخصم",
+        "Inventory": "المخزون",
+        "CostOfGoodsSold": "تكلفة البضاعة المباعة (COGS)",
+        "GoodsReceiptClearing": "تسوية استلام البضائع (GR/IR)",
+        "PurchaseExpense": "مصروف المشتريات",
+        "InventoryWriteOff": "إعدام المخزون"
+      },
+      "loading": "جارٍ التحميل…",
+      "loadError": "تعذّر تحميل التعيينات.",
+      "empty": "لم يتم العثور على تعيينات.",
+      "codeRequired": "رمز الحساب مطلوب.",
+      "saved": "تم حفظ تعيين الحساب.",
+      "customized": "مخصّص",
+      "resolved": "تم الحل",
+      "unresolved": "الحساب غير موجود"
+    },
+    "Reconciliation": {
+      "title": "التسوية",
+      "subtitle": "أرصدة الحسابات الضابطة في دفتر الأستاذ العام مقارنةً بإجماليات دفاترها المساعدة حتى التاريخ المحدد.",
+      "asOf": "حتى تاريخ",
+      "computing": "جارٍ الحساب…",
+      "empty": "لا توجد حسابات ضابطة لتسويتها حتى التاريخ المحدد.",
+      "allReconciled": "تمت تسوية الكل",
+      "notReconciled": "تم العثور على فروقات",
+      "controlAccount": "الحساب الضابط",
+      "subledger": "الدفتر المساعد",
+      "glBalance": "رصيد دفتر الأستاذ",
+      "subledgerBalance": "رصيد الدفتر المساعد",
+      "variance": "الفرق",
+      "reconciled": "مُسوّى؟",
+      "yes": "نعم",
+      "no": "لا"
+    }
+  },
+  "Settings": {
+    "tabs": {
+      "glPostingMap": "تعيين الأستاذ العام"
+    }
+  },
+  "Sidebar": {
+    "sections": {
+      "hrPayroll": "الموارد البشرية والرواتب"
+    }
+  },
+  "Payroll": {
+    "nav": {
+      "employees": "الموظفون",
+      "payrollRuns": "دورات الرواتب",
+      "parameters": "معايير الرواتب"
+    },
+    "employmentStatus": {
+      "Active": "نشط",
+      "OnLeave": "في إجازة",
+      "Terminated": "منتهية خدمته"
+    },
+    "runStatus": {
+      "Draft": "مسودة",
+      "Calculated": "تم الحساب",
+      "Approved": "معتمد",
+      "Posted": "مُرحّل",
+      "Paid": "مدفوع"
+    },
+    "componentType": {
+      "BaseSalary": "Base Salary",
+      "Meal": "Meal",
+      "Transport": "Transport",
+      "Bonus": "Bonus",
+      "Premium": "Premium",
+      "Overtime": "Overtime",
+      "Family": "Family Allowance",
+      "Child": "Child Allowance"
+    },
+    "deductionType": {
+      "Advance": "سلفة",
+      "Garnishment": "حجز",
+      "UnionDues": "Union Dues",
+      "PrivatePensionBES": "Private Pension (BES)",
+      "Custom": "Other"
+    },
+    "employees": {
+      "title": "الموظفون",
+      "subtitle": "إدارة سجلات الموظفين والرواتب والاستقطاعات.",
+      "new": "موظف جديد",
+      "searchPlaceholder": "ابحث بالاسم أو الرقم أو القسم…",
+      "statusAria": "تصفية حسب الحالة",
+      "all": "الكل",
+      "resultCountLabel": "موظف",
+      "empty": "لا يوجد موظفون.",
+      "cols": {
+        "number": "الرقم",
+        "name": "الاسم",
+        "tc": "الهوية",
+        "department": "القسم",
+        "status": "الحالة",
+        "baseSalary": "الراتب الإجمالي",
+        "hireDate": "التعيين"
+      }
+    },
+    "employeeForm": {
+      "newTitle": "موظف جديد",
+      "editTitle": "تعديل الموظف",
+      "nameRequired": "الاسم الأول والأخير مطلوبان.",
+      "tcRequired": "رقم الهوية مطلوب.",
+      "salaryRequired": "أدخل راتبًا صالحًا.",
+      "created": "تم إنشاء الموظف.",
+      "updated": "تم تحديث الموظف.",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "nationalId": "رقم الهوية",
+      "employeeNumber": "الرقم الوظيفي",
+      "jobTitle": "المسمى الوظيفي",
+      "department": "القسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "iban": "IBAN",
+      "bankName": "البنك",
+      "baseSalary": "الراتب الإجمالي",
+      "currency": "العملة",
+      "hireDate": "تاريخ التعيين",
+      "employmentType": "Employment Type",
+      "salaryBasis": "Salary Basis",
+      "dependentCount": "Dependents",
+      "spouseEmployed": "Spouse Employed"
+    },
+    "employeeDetail": {
+      "notFound": "لم يتم العثور على الموظف.",
+      "backToList": "الموظفون",
+      "baseSalary": "الراتب الإجمالي",
+      "putOnLeave": "منح إجازة",
+      "returnFromLeave": "إعادة للعمل",
+      "terminate": "إنهاء الخدمة",
+      "terminateTitle": "إنهاء الخدمة",
+      "terminateConfirm": "إنهاء خدمة {{name}}؟",
+      "terminated": "تم إنهاء خدمة الموظف.",
+      "leaveDone": "تم تسجيل الإجازة.",
+      "returnDone": "تم تسجيل العودة من الإجازة.",
+      "addComponent": "إضافة مكوّن",
+      "addDeduction": "إضافة استقطاع",
+      "componentsEmpty": "لا توجد مكوّنات راتب.",
+      "deductionsEmpty": "لا توجد استقطاعات.",
+      "deleteComponentTitle": "حذف المكوّن",
+      "deleteComponentConfirm": "حذف {{name}}؟",
+      "componentDeleted": "تم حذف المكوّن.",
+      "deleteDeductionTitle": "حذف الاستقطاع",
+      "deleteDeductionConfirm": "حذف {{name}}؟",
+      "deductionDeleted": "تم حذف الاستقطاع.",
+      "tabs": {
+        "overview": "نظرة عامة",
+        "components": "مكوّنات الراتب",
+        "deductions": "الاستقطاعات"
+      },
+      "fields": {
+        "number": "الرقم",
+        "tc": "الهوية",
+        "iban": "IBAN",
+        "department": "القسم",
+        "email": "البريد الإلكتروني",
+        "phone": "الهاتف",
+        "hireDate": "التعيين",
+        "terminationDate": "تاريخ الإنهاء",
+        "currency": "العملة",
+        "payFrequency": "دورية الدفع",
+        "bankName": "البنك",
+        "componentsCount": "المكوّنات",
+        "notes": "ملاحظات"
+      }
+    },
+    "componentForm": {
+      "newTitle": "إضافة مكوّن راتب",
+      "editTitle": "تعديل مكوّن الراتب",
+      "nameRequired": "اسم المكوّن مطلوب.",
+      "amountRequired": "أدخل مبلغًا صالحًا.",
+      "created": "تمت إضافة المكوّن.",
+      "updated": "تم تحديث المكوّن.",
+      "type": "النوع",
+      "name": "الاسم",
+      "amount": "المبلغ",
+      "effectiveFrom": "ساري من",
+      "effectiveTo": "ساري حتى",
+      "recurring": "متكرر",
+      "taxable": "خاضع للضريبة"
+    },
+    "deductionForm": {
+      "newTitle": "إضافة استقطاع",
+      "editTitle": "تعديل الاستقطاع",
+      "nameRequired": "اسم الاستقطاع مطلوب.",
+      "amountRequired": "أدخل مبلغًا صالحًا.",
+      "created": "تمت إضافة الاستقطاع.",
+      "updated": "تم تحديث الاستقطاع.",
+      "type": "النوع",
+      "name": "الاسم",
+      "amount": "المبلغ الإجمالي",
+      "remaining": "المتبقي",
+      "installment": "القسط",
+      "effectiveFrom": "من",
+      "effectiveTo": "إلى",
+      "recurring": "التكرار كل فترة"
+    },
+    "runs": {
+      "title": "دورات الرواتب",
+      "subtitle": "إنشاء وحساب ودفع فترات الرواتب الشهرية.",
+      "new": "دورة جديدة",
+      "newTitle": "دورة رواتب جديدة",
+      "create": "إنشاء",
+      "created": "تم إنشاء دورة الرواتب.",
+      "statusAria": "تصفية حسب الحالة",
+      "all": "الكل",
+      "resultCountLabel": "دورة",
+      "empty": "لا توجد دورات رواتب.",
+      "year": "السنة",
+      "month": "الشهر",
+      "cols": {
+        "number": "الرقم",
+        "period": "الفترة",
+        "employees": "الموظفون",
+        "status": "الحالة",
+        "gross": "الإجمالي",
+        "net": "الصافي",
+        "payDate": "الدفع"
+      }
+    },
+    "runDetail": {
+      "notFound": "لم يتم العثور على دورة الرواتب.",
+      "backToList": "دورات الرواتب",
+      "netTotal": "إجمالي الصافي",
+      "actionDone": "اكتمل الإجراء.",
+      "calculate": "حساب",
+      "recalculate": "إعادة الحساب",
+      "approve": "اعتماد",
+      "reopen": "إعادة فتح",
+      "post": "ترحيل",
+      "pay": "دفع الرواتب الصافية",
+      "payTaxes": "دفع الضرائب",
+      "paySgk": "دفع SGK",
+      "fullyPaid": "تم دفع هذه الفترة.",
+      "approveTitle": "اعتماد الرواتب",
+      "approveConfirm": "بعد الاعتماد يجب إعادة فتح الدورة لإجراء تغييرات. متابعة؟",
+      "reopenTitle": "إعادة فتح الرواتب",
+      "reopenConfirm": "ستعود الدورة إلى المسودة. متابعة؟",
+      "postTitle": "ترحيل",
+      "postConfirm": "سيتم ترحيل الرواتب إلى المحاسبة. متابعة؟",
+      "gross": "الإجمالي",
+      "sgkEmployee": "SGK الموظف",
+      "incomeTax": "ضريبة الدخل",
+      "stampTax": "ضريبة الدمغة",
+      "net": "الصافي",
+      "employerCost": "تكلفة صاحب العمل",
+      "payslips": "كشوف الرواتب",
+      "payslipsEmpty": "لا توجد كشوف بعد. شغّل خطوة الحساب.",
+      "viewPayslip": "كشف الراتب",
+      "calculatedAt": "تم الحساب",
+      "approvedAt": "معتمد",
+      "postedAt": "مُرحّل",
+      "paidAt": "مدفوع",
+      "cols": {
+        "employee": "الموظف",
+        "gross": "الإجمالي",
+        "deductions": "الاستقطاعات",
+        "net": "الصافي",
+        "employerCost": "تكلفة صاحب العمل"
+      }
+    },
+    "payslip": {
+      "noLines": "لا توجد بنود كشف.",
+      "code": "الرمز",
+      "description": "الوصف",
+      "category": "الفئة",
+      "amount": "المبلغ",
+      "categoryLabel": {
+        "Earning": "استحقاق",
+        "Deduction": "استقطاع",
+        "EmployerCost": "تكلفة صاحب العمل"
+      }
+    },
+    "payslipPrint": {
+      "button": "طباعة",
+      "heading": "كشف الراتب",
+      "employer": "صاحب العمل",
+      "employee": "الموظف",
+      "iban": "IBAN",
+      "payDate": "تاريخ الدفع",
+      "earnings": "الاستحقاقات",
+      "baseSalary": "الراتب الإجمالي",
+      "earningsTotal": "استحقاقات إضافية",
+      "gross": "الإجمالي",
+      "deductions": "الاستقطاعات",
+      "sgkEmployee": "حصة الموظف SGK",
+      "unemploymentEmployee": "حصة الموظف من التأمين ضد البطالة",
+      "incomeTax": "ضريبة الدخل",
+      "stampTax": "ضريبة الدمغة",
+      "minWageExemption": "إعفاء الحد الأدنى للأجور",
+      "otherDeductions": "استقطاعات أخرى",
+      "totalDeductions": "إجمالي الاستقطاعات",
+      "netPay": "صافي المستحق",
+      "employerCostTitle": "تكلفة صاحب العمل",
+      "sgkEmployer": "حصة صاحب العمل SGK",
+      "unemploymentEmployer": "حصة صاحب العمل من التأمين ضد البطالة",
+      "employerCost": "إجمالي تكلفة صاحب العمل",
+      "footer": "تم إنشاء كشف الراتب هذا إلكترونيًا.",
+      "daysWorked": "Days Worked",
+      "minWageExemptionNote": "Income tax is calculated after applying a minimum-wage exemption of {{amount}}.",
+      "otherDeductionLines": "Other Deduction Items"
+    },
+    "parameters": {
+      "title": "معايير الرواتب",
+      "subtitle": "حدد نسب SGK والبطالة والدمغة وضريبة الدخل والحد الأدنى للأجور حسب فترة السريان.",
+      "new": "مجموعة جديدة",
+      "empty": "لا توجد مجموعات معايير.",
+      "system": "النظام",
+      "tenant": "المؤسسة",
+      "readOnly": "للقراءة فقط",
+      "cols": {
+        "name": "اسم المجموعة",
+        "effectiveFrom": "السريان",
+        "minWage": "الحد الأدنى للأجور",
+        "scope": "النطاق"
+      }
+    },
+    "parametersForm": {
+      "newTitle": "مجموعة معايير جديدة",
+      "editTitle": "تعديل معايير الرواتب",
+      "nameRequired": "اسم مجموعة المعايير مطلوب.",
+      "minWageRequired": "أدخل حدًا أدنى صالحًا للأجور.",
+      "created": "تم إنشاء مجموعة المعايير.",
+      "updated": "تم تحديث المعايير.",
+      "name": "اسم المجموعة",
+      "currency": "العملة",
+      "effectiveFrom": "ساري من",
+      "effectiveTo": "ساري حتى",
+      "minimumWage": "الحد الأدنى للأجور (إجمالي)",
+      "sgkEmployee": "SGK الموظف %",
+      "sgkEmployer": "SGK صاحب العمل %",
+      "unemploymentEmployee": "بطالة الموظف %",
+      "unemploymentEmployer": "بطالة صاحب العمل %",
+      "stampTax": "ضريبة الدمغة %",
+      "sgkBaseCeiling": "سقف أساس SGK",
+      "minWageExemption": "تطبيق إعفاء الحد الأدنى (الدخل/الدمغة)",
+      "brackets": "شرائح ضريبة الدخل",
+      "addBracket": "إضافة شريحة",
+      "upperLimit": "الحد الأعلى (فارغ = بلا حد)",
+      "ratePercent": "النسبة %"
+    },
+    "employmentType": {
+      "FullTime": "Full Time",
+      "PartTime": "Part Time",
+      "Seasonal": "Seasonal"
+    },
+    "salaryBasis": {
+      "Gross": "Gross",
+      "Net": "Net"
     }
   }
 }

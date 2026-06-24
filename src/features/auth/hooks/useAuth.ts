@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import i18n from '@/app/i18n/config';
 import { resolveLocale } from '@/app/i18n/supportedLocales';
 import { authApi } from '../api/authApi';
-import { useAuthStore } from '../model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import type {
   ChangePasswordRequest,
   ForgotPasswordRequest,

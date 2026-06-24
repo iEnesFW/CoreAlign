@@ -22,9 +22,9 @@ public enum OutboxHandlerOutcome
     Failed,
 }
 
-public sealed record OutboxHandlerResult(OutboxHandlerOutcome Outcome, string ResultOrError)
+public sealed record OutboxHandlerResult(OutboxHandlerOutcome Outcome, string ResultOrError, DateTime? RetryAfterUtc = null)
 {
     public static OutboxHandlerResult Processed(string result) => new(OutboxHandlerOutcome.Processed, result);
-    public static OutboxHandlerResult Deferred(string reason) => new(OutboxHandlerOutcome.Deferred, reason);
+    public static OutboxHandlerResult Deferred(string reason, DateTime? retryAfterUtc = null) => new(OutboxHandlerOutcome.Deferred, reason, retryAfterUtc);
     public static OutboxHandlerResult Failed(string error) => new(OutboxHandlerOutcome.Failed, error);
 }

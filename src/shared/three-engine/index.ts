@@ -26,6 +26,7 @@ export {
 } from './interaction/useDrag3D';
 export {
   applyPlanMoveSnap,
+  lineProbePoints,
   snapDimensionMm,
   stickyDimensionMm,
   filterSnapTargets,
@@ -43,8 +44,11 @@ export {
   buildPlanFootprint,
   buildPolygonFootprint,
   restElevationMm,
+  isFloating,
   normalizePlanAngleDeg,
   penetratesAny,
+  firstPenetratingOwner,
+  footprintsPenetrate,
   clampPlanMove,
   slidePlanMove,
   clampPlanStretch,

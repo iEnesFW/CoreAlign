@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Wallet } from 'lucide-react';
 import { toast } from 'sonner';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { formatCurrency } from '@/shared/lib/format';
@@ -54,27 +59,33 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-      onClick={onClose}
+    <Modal
+      open={true}
+      title={t('VendorPayments.apply.title', { defaultValue: 'Tedarikçi Ödemesini Uygula' })}
+      subtitle={t('VendorPayments.apply.subtitle', {
+        defaultValue: '{{n}} faturasına uygulanacak ödemeyi seç.',
+        n: bill.billNumber,
+      })}
+      icon={<Wallet size={18} />}
+      onClose={onClose}
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'Vazgeç' })}
+          </Button>
+          <Button
+            type="submit"
+            form="apply-vendor-payment-form"
+            isLoading={apply.isPending}
+            disabled={apply.isPending || !selected}
+          >
+            {t('VendorPayments.apply.submit', { defaultValue: 'Uygula' })}
+          </Button>
+        </>
+      }
     >
-      <form
-        onClick={(e) => e.stopPropagation()}
-        onSubmit={onSubmit}
-        className="w-full max-w-md space-y-3 rounded-lg bg-white p-4 shadow-xl dark:bg-slate-900"
-      >
-        <div>
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            {t('VendorPayments.apply.title', { defaultValue: 'Tedarikçi Ödemesini Uygula' })}
-          </h2>
-          <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-            {t('VendorPayments.apply.subtitle', {
-              defaultValue: '{{n}} faturasına uygulanacak ödemeyi seç.',
-              n: bill.billNumber,
-            })}
-          </p>
-        </div>
-
+      <form id="apply-vendor-payment-form" onSubmit={onSubmit} className="space-y-3">
         <div className="rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-700 dark:bg-slate-800/50">
           <div className="flex justify-between">
             <span className="text-slate-500">
@@ -88,17 +99,15 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
             <span className="text-slate-500">
               {t('VendorPayments.apply.amountDue', { defaultValue: 'Kalan' })}
             </span>
-            <span className="font-mono font-semibold text-amber-700 dark:text-amber-300">
+            <span className="font-mono font-semibold text-warning-700 dark:text-warning-300">
               {formatCurrency(bill.amountDue, locale, bill.currency)}
             </span>
           </div>
         </div>
 
-        <label className="block text-xs">
-          <span className="mb-1 block text-slate-600 dark:text-slate-400">
-            {t('VendorPayments.apply.payment', { defaultValue: 'Ödeme' })}
-          </span>
-          <select
+        <div>
+          <Select
+            label={t('VendorPayments.apply.payment', { defaultValue: 'Ödeme' })}
             value={selectedId}
             onChange={(e) => {
               setSelectedId(e.target.value);
@@ -108,7 +117,6 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
               }
             }}
             required
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
             <option value="">
               {t('VendorPayments.apply.pickPayment', { defaultValue: 'Ödeme seç…' })}
@@ -119,21 +127,19 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
                 {t('VendorPayments.apply.unapplied', { defaultValue: 'uygulanmamış' })}
               </option>
             ))}
-          </select>
+          </Select>
           {eligible.length === 0 && (
-            <p className="mt-1 text-[10px] text-amber-600 dark:text-amber-400">
+            <p className="mt-1 text-[10px] text-warning-600 dark:text-warning-400">
               {t('VendorPayments.apply.noEligible', {
                 defaultValue: 'Bu tedarikçi için uygulanabilir ödeme bulunamadı.',
               })}
             </p>
           )}
-        </label>
+        </div>
 
-        <label className="block text-xs">
-          <span className="mb-1 block text-slate-600 dark:text-slate-400">
-            {t('VendorPayments.apply.amount', { defaultValue: 'Tutar' })}
-          </span>
-          <input
+        <div>
+          <Input
+            label={t('VendorPayments.apply.amount', { defaultValue: 'Tutar' })}
             type="number"
             step="0.01"
             min="0.01"
@@ -141,7 +147,7 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-sm font-mono dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="font-mono"
           />
           {selected && (
             <p className="mt-1 text-[10px] text-slate-500">
@@ -151,38 +157,16 @@ export const ApplyVendorPaymentModal = ({ bill, onClose }: Props) => {
               })}
             </p>
           )}
-        </label>
-
-        <label className="block text-xs">
-          <span className="mb-1 block text-slate-600 dark:text-slate-400">
-            {t('VendorPayments.apply.notes', { defaultValue: 'Notlar' })}
-          </span>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            maxLength={500}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-        </label>
-
-        <div className="flex justify-end gap-2 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-          >
-            {t('common.cancel', { defaultValue: 'Vazgeç' })}
-          </button>
-          <button
-            type="submit"
-            disabled={apply.isPending || !selected}
-            className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {t('VendorPayments.apply.submit', { defaultValue: 'Uygula' })}
-          </button>
         </div>
+
+        <Input
+          label={t('VendorPayments.apply.notes', { defaultValue: 'Notlar' })}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          maxLength={500}
+        />
       </form>
-    </div>
+    </Modal>
   );
 };
 

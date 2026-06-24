@@ -1,4 +1,20 @@
 {
+  "aiHelper": {
+    "launcher": "AI Asistan",
+    "title": "CoreAlign Asistanı",
+    "subtitle": "Bayi portalı hakkında her şeyi sorun",
+    "placeholder": "Bir soru sorun...",
+    "send": "Gönder",
+    "close": "Kapat",
+    "welcome": "Merhaba! Size nasıl yardımcı olabilirim?",
+    "sources": "Kaynaklar",
+    "error": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "thinking": "Düşünüyor...",
+    "noSource": "Genel bilgiye dayanıyor — CoreAlign'a özel bir kaynak eşleşmedi.",
+    "feedbackHelpful": "Faydalı",
+    "feedbackNotHelpful": "Faydalı değil",
+    "feedbackThanks": "Geri bildiriminiz için teşekkürler."
+  },
   "consent": {
     "banner": {
       "title": "Çerez tercihleri",
@@ -47,6 +63,18 @@
       "invoices": "Faturalar",
       "commissions": "Komisyonlar",
       "profile": "Profil"
+    },
+    "forward": {
+      "action": "E-posta ile ilet",
+      "title": "E-posta ile ilet",
+      "subtitle": "{{number}} numaralı belgeyi PDF eki olarak bir alıcıya gönderin.",
+      "recipient": "Alıcı e-posta",
+      "hint": "Belge tedarikçinizden PDF olarak gönderilir. Yanıtlar sizin e-posta adresinize gelir.",
+      "send": "Gönder",
+      "sending": "Gönderiliyor…",
+      "success": "{{email}} adresine gönderildi.",
+      "error": "Belge gönderilemedi.",
+      "invalidEmail": "Geçerli bir e-posta adresi girin."
     },
     "common": {
       "loading": "Yükleniyor…",
@@ -321,6 +349,13 @@
       "send": "Gönder",
       "posted": "Mesaj gönderildi.",
       "unknownAuthor": "Bilinmeyen kullanıcı"
+    }
+  },
+  "errors": {
+    "boundary": {
+      "title": "Bir şeyler ters gitti",
+      "description": "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.",
+      "reload": "Yenile"
     }
   }
 }

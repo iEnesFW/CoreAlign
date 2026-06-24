@@ -27,8 +27,6 @@ export const customerSchema = z.object({
   paymentTermsId: optionalString(64),
   priceListId: optionalString(64),
   customerGroupId: optionalString(64),
-  // Kept as strings in the form (native number inputs emit strings); parsed to
-  // numbers at submit. Avoids the RHF×zod coerce-resolver input-type conflict.
   creditLimit: optionalString(20),
   defaultDiscountPercent: optionalString(10),
   classification: optionalString(64),

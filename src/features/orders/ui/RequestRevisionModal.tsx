@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FilePenLine } from 'lucide-react';
 import { toast } from 'sonner';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import type { Order } from '../model/order.types';
 import { useRequestOrderRevision } from '../hooks/useOrderRevisionQueries';
@@ -45,7 +50,8 @@ export function RequestRevisionModal({ order, onClose }: Props) {
   const updateLine = (idx: number, patch: Partial<DraftLine>) =>
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     const valid = lines.filter((l) => l.quantity > 0);
     if (valid.length === 0) return;
     requestMutation.mutate(
@@ -61,19 +67,33 @@ export function RequestRevisionModal({ order, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-background p-6 shadow-xl">
-        <h2 className="text-lg font-semibold">{t('orders.revisions.modalTitle')}</h2>
-
-        <div className="mt-4 space-y-2">
+    <Modal
+      open={true}
+      title={t('orders.revisions.modalTitle')}
+      icon={<FilePenLine size={18} />}
+      onClose={onClose}
+      size="xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'Cancel' })}
+          </Button>
+          <Button type="submit" form="request-revision-form" isLoading={requestMutation.isPending}>
+            {t('orders.revisions.modalSubmit')}
+          </Button>
+        </>
+      }
+    >
+      <form id="request-revision-form" onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
           {lines.map((line, idx) => (
             <div
               key={`${line.productId}-${idx}`}
-              className="grid grid-cols-12 items-center gap-2 rounded border px-2 py-1"
+              className="grid grid-cols-12 items-center gap-2 rounded-lg border border-slate-200 px-2 py-1 dark:border-white/10"
             >
               <span className="col-span-6 truncate text-sm">
                 <span className="font-medium">{line.productSku}</span>{' '}
-                <span className="text-muted-foreground">{line.productName}</span>
+                <span className="text-slate-500 dark:text-slate-400">{line.productName}</span>
               </span>
               <input
                 type="number"
@@ -81,7 +101,7 @@ export function RequestRevisionModal({ order, onClose }: Props) {
                 step="0.01"
                 value={line.quantity}
                 onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })}
-                className="col-span-3 rounded border px-2 py-1 text-sm"
+                className={`${fieldBaseClasses(false)} col-span-3`}
               />
               <input
                 type="number"
@@ -89,37 +109,20 @@ export function RequestRevisionModal({ order, onClose }: Props) {
                 step="0.01"
                 value={line.unitPrice}
                 onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })}
-                className="col-span-3 rounded border px-2 py-1 text-sm"
+                className={`${fieldBaseClasses(false)} col-span-3`}
               />
             </div>
           ))}
         </div>
 
-        <div className="mt-4">
-          <label className="text-sm font-medium">{t('orders.revisions.requestNotes')}</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-            placeholder={t('orders.revisions.requestNotesPlaceholder')}
-            className="mt-1 w-full rounded-md border px-2 py-1 text-sm"
-          />
-        </div>
-
-        <div className="mt-6 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-md border px-3 py-2 text-sm">
-            {t('common.cancel', { defaultValue: 'Cancel' })}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={requestMutation.isPending}
-            className="rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {t('orders.revisions.modalSubmit')}
-          </button>
-        </div>
-      </div>
-    </div>
+        <Textarea
+          label={t('orders.revisions.requestNotes')}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          placeholder={t('orders.revisions.requestNotesPlaceholder')}
+        />
+      </form>
+    </Modal>
   );
 }

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, XCircle, Send, Ban, FileOutput } from 'lucide-react';
+import { CheckCircle2, XCircle, Send, Ban, FileOutput, ClipboardList } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import {
   useApprovePurchaseRequisition,
   useCancelPurchaseRequisition,
@@ -37,13 +40,13 @@ const statusTone = (status: PurchaseRequisitionStatus) => {
     case 'Draft':
       return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200';
     case 'Submitted':
-      return 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300';
+      return 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300';
     case 'Approved':
-      return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300';
+      return 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300';
     case 'Rejected':
-      return 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300';
+      return 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300';
     case 'Converted':
-      return 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300';
+      return 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300';
     case 'Cancelled':
       return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
     default:
@@ -94,25 +97,38 @@ export const PurchaseRequisitionsPage = () => {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-            {t('Mrp.Requisition.PageTitle')}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mrp.Requisition.PageSubtitle')}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-        >
-          {showForm ? t('Common.Cancel') : t('Mrp.Requisition.NewRequisition')}
-        </button>
-      </header>
-
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<ClipboardList size={20} />}
+          title={t('Mrp.Requisition.PageTitle')}
+          subtitle={t('Mrp.Requisition.PageSubtitle')}
+          actions={
+            <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+              {showForm ? t('Common.Cancel') : t('Mrp.Requisition.NewRequisition')}
+            </Button>
+          }
+        />
+      }
+      toolbar={
+        <nav className="flex flex-wrap gap-2">
+          {STATUS_FILTERS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setStatusFilter(s)}
+              className={
+                statusFilter === s
+                  ? 'rounded-full bg-primary-600 px-3 py-1 text-xs font-semibold text-white'
+                  : 'rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+              }
+            >
+              {s === 'All' ? t('Common.All') : t(`Mrp.Requisition.Status.${s}`)}
+            </button>
+          ))}
+        </nav>
+      }
+    >
       {showForm && (
         <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
           <h2 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -125,23 +141,6 @@ export const PurchaseRequisitionsPage = () => {
           />
         </section>
       )}
-
-      <nav className="flex flex-wrap gap-2">
-        {STATUS_FILTERS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setStatusFilter(s)}
-            className={
-              statusFilter === s
-                ? 'rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white'
-                : 'rounded-full border border-slate-300 px-3 py-1 text-xs text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
-            }
-          >
-            {s === 'All' ? t('Common.All') : t(`Mrp.Requisition.Status.${s}`)}
-          </button>
-        ))}
-      </nav>
 
       {list.isLoading && (
         <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
@@ -194,7 +193,7 @@ export const PurchaseRequisitionsPage = () => {
           onCancel={() => setReasonAction(null)}
         />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -296,10 +295,10 @@ interface ActionButtonProps {
 const ActionButton = ({ icon: Icon, label, onClick, tone = 'indigo' }: ActionButtonProps) => {
   const palette: Record<NonNullable<ActionButtonProps['tone']>, string> = {
     indigo:
-      'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300',
+      'border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-primary-500/10 dark:text-primary-300',
     emerald:
-      'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
-    rose: 'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
+      'border-success-300 bg-success-50 text-success-700 hover:bg-success-100 dark:border-success-700 dark:bg-success-500/10 dark:text-success-300',
+    rose: 'border-danger-300 bg-danger-50 text-danger-700 hover:bg-danger-100 dark:border-danger-700 dark:bg-danger-500/10 dark:text-danger-300',
     slate:
       'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200',
   };

@@ -112,7 +112,7 @@ export const SignaturePad = ({ onCapture, disabled }: Props) => {
           type="button"
           onClick={capture}
           disabled={disabled || !hasDrawn || !customerName.trim()}
-          className="flex items-center gap-1 rounded bg-blue-600 px-3 py-2 text-sm text-white disabled:opacity-50"
+          className="flex items-center gap-1 rounded bg-primary-600 px-3 py-2 text-sm text-white disabled:opacity-50"
         >
           <Save className="size-4" />
           {t('InstallationAcceptance.SignaturePad.Save')}

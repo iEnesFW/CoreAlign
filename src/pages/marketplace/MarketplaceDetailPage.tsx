@@ -86,7 +86,7 @@ export const MarketplaceDetailPage = () => {
       <button
         type="button"
         onClick={() => navigate('/dashboard/marketplace')}
-        className="inline-flex items-center gap-1 text-sm text-emerald-700 hover:text-emerald-900 dark:text-emerald-400"
+        className="inline-flex items-center gap-1 text-sm text-success-700 hover:text-success-900 dark:text-success-400"
       >
         <ArrowLeft size={14} />
         {t('Marketplace.Detail.Back', 'Back to marketplace')}
@@ -101,7 +101,7 @@ export const MarketplaceDetailPage = () => {
             type="button"
             onClick={handleInstall}
             disabled={installMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-md bg-success-600 px-4 py-2 text-sm font-semibold text-white hover:bg-success-700 disabled:opacity-50"
           >
             <Download size={14} />
             {installMutation.isPending

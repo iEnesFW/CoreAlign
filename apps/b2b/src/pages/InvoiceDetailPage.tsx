@@ -1,4 +1,5 @@
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Send } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button';
@@ -9,6 +10,7 @@ import { formatCurrency, formatDate, formatNumber } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { usePdfDownload } from '@/shared/lib/usePdfDownload';
 import { useDealerInvoice } from '@/features/portal/hooks';
+import { ForwardDocumentModal } from '@/features/portal/ForwardDocumentModal';
 
 export const InvoiceDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +18,7 @@ export const InvoiceDetailPage = () => {
   const locale = useFormatLocale();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useDealerInvoice(id);
+  const [forwardOpen, setForwardOpen] = useState(false);
   const pdf = usePdfDownload(
     `/dealer-portal/invoices/${id ?? ''}/pdf`,
     `Invoice-${data?.invoiceNumber ?? id ?? ''}.pdf`,
@@ -49,10 +52,23 @@ export const InvoiceDetailPage = () => {
         >
           <ArrowLeft size={14} /> {t('b2b.invoices.title')}
         </Link>
-        <Button variant="primary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
-          <Download size={14} /> {t('b2b.common.downloadPdf')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
+            <Download size={14} /> {t('b2b.common.downloadPdf')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setForwardOpen(true)}>
+            <Send size={14} /> {t('b2b.forward.action')}
+          </Button>
+        </div>
       </div>
+
+      <ForwardDocumentModal
+        open={forwardOpen}
+        onClose={() => setForwardOpen(false)}
+        documentType="Invoice"
+        documentId={id ?? ''}
+        documentNumber={data.invoiceNumber}
+      />
 
       <Card>
         <CardHeader

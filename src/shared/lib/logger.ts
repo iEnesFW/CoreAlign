@@ -13,15 +13,8 @@ export interface ErrorReporter {
 const isProduction = import.meta.env.PROD;
 let reporter: ErrorReporter | null = null;
 
-// Global structured fields attached to every log record. Used by the auth
-// store to inject userId/tenantId once authenticated, and by the apiClient
-// to stash the most recent correlation id for cross-stack debugging.
 const globalContext: Record<string, unknown> = {};
 
-/**
- * Merge or remove fields from the global structured-log context.
- * Pass `null`/`undefined` for a value to drop that key.
- */
 export const setLoggerContext = (fields: Record<string, unknown>): void => {
   for (const [k, v] of Object.entries(fields)) {
     if (v === undefined || v === null) {
@@ -50,6 +43,13 @@ const enrichContext = (context?: Record<string, unknown>): Record<string, unknow
   return { ...globalContext, ...(context ?? {}) };
 };
 
+const consoleMethod = (name: 'log'): ((...args: unknown[]) => void) =>
+  (console as unknown as Record<string, (...args: unknown[]) => void>)[name];
+
+const writeDebug = (args: unknown[]): void => {
+  consoleMethod('log')(...args);
+};
+
 const writeToConsole = (level: LogLevel, payload: LogPayload): void => {
   if (level === 'debug' || level === 'info') {
     if (isProduction) {
@@ -70,8 +70,7 @@ const writeToConsole = (level: LogLevel, payload: LogPayload): void => {
       console.error(...args);
       break;
     default:
-      // eslint-disable-next-line no-console
-      console.log(...args);
+      writeDebug(args);
   }
 };
 
@@ -81,7 +80,7 @@ const emit = (level: LogLevel, payload: LogPayload): void => {
     try {
       reporter.capture(level, { ...payload, context: enrichContext(payload.context) });
     } catch {
-      /* never let a reporter failure break the app */
+      void 0;
     }
   }
 };

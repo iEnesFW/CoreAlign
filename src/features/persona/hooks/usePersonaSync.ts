@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
-import { usePersonaStore } from '../model/personaStore';
+import { usePersonaStore, type UxComplexityMode } from '@/shared/lib/persona';
 import { personaApi } from '../api/personaApi';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { safeRequest } from '@/shared/lib/safeRequest';
 import { logger } from '@/shared/lib/logger';
-import type { UxComplexityMode } from '../model/personaStore';
 
 const parsePerScreenOverrides = (json: string | null): Record<string, UxComplexityMode> => {
   if (!json) return {};

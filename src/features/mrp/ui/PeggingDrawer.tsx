@@ -131,7 +131,7 @@ const PlannedOrderRow = ({
       className={`rounded-md border p-2 ${
         isMake
           ? 'border-violet-200 bg-violet-50 dark:border-violet-700/50 dark:bg-violet-500/5'
-          : 'border-sky-200 bg-sky-50 dark:border-sky-700/50 dark:bg-sky-500/5'
+          : 'border-info-200 bg-info-50 dark:border-info-700/50 dark:bg-info-500/5'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -143,7 +143,7 @@ const PlannedOrderRow = ({
           </span>
         </div>
         {order.isFirmed && (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+          <span className="rounded-full bg-success-100 px-2 py-0.5 text-[11px] font-semibold text-success-700 dark:bg-success-500/20 dark:text-success-300">
             {t('Mrp.Workbench.Drawer.Firmed')}
           </span>
         )}
@@ -155,7 +155,7 @@ const PlannedOrderRow = ({
                 ? `${order.originalQuantity.toLocaleString(locale)} → ${order.quantity.toLocaleString(locale)}`
                 : t('Mrp.Workbench.Drawer.Overridden')
             }
-            className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+            className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-semibold text-warning-700 dark:bg-warning-500/20 dark:text-warning-300"
           >
             {t('Mrp.Workbench.Drawer.Overridden')}
             {order.isQuantityOverridden && typeof order.originalQuantity === 'number'
@@ -164,7 +164,7 @@ const PlannedOrderRow = ({
           </span>
         )}
         {isReleased && (
-          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+          <span className="rounded-full bg-success-100 px-2 py-0.5 text-[11px] font-semibold text-success-700 dark:bg-success-500/20 dark:text-success-300">
             {isMake
               ? t('Mrp.Workbench.Drawer.ProductionOrderCreated')
               : t('Mrp.Workbench.Drawer.Released')}
@@ -221,7 +221,7 @@ const PlannedOrderRow = ({
           className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed ${
             isMake
               ? 'bg-violet-600 hover:bg-violet-500 disabled:bg-violet-400'
-              : 'bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-400'
+              : 'bg-primary-600 hover:bg-primary-500 disabled:bg-primary-400'
           }`}
         >
           {isMake ? <Factory className="h-3.5 w-3.5" /> : <Send className="h-3.5 w-3.5" />}
@@ -324,7 +324,7 @@ export const PeggingDrawer = ({
           ) : (
             <div className="space-y-3">
               {!isCommitted && (
-                <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-700 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                <p className="rounded-md border border-warning-200 bg-warning-50 px-2 py-1.5 text-[11px] text-warning-700 dark:border-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
                   {t('Mrp.Workbench.Drawer.CommitRequired')}
                 </p>
               )}

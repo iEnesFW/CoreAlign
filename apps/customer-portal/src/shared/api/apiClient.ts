@@ -1,7 +1,26 @@
 import axios, { type AxiosError, type AxiosResponse } from 'axios';
 import { toast } from 'sonner';
 import i18n from '@/app/i18n';
-import { useAuthStore } from '@/features/auth/authStore';
+import { authBridge } from './authBridge';
+
+const HEADER_CORRELATION_ID = 'X-Correlation-Id';
+
+let lastCorrelationId: string | undefined;
+
+export const getLastCorrelationId = (): string | undefined => lastCorrelationId;
+
+const newCorrelationId = (): string =>
+  typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID().replace(/-/g, '')
+    : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+const captureCorrelation = (headers: Record<string, unknown> | undefined): void => {
+  if (!headers) return;
+  const id = (headers[HEADER_CORRELATION_ID.toLowerCase()] ?? headers[HEADER_CORRELATION_ID]) as
+    | string
+    | undefined;
+  if (typeof id === 'string' && id.length > 0) lastCorrelationId = id;
+};
 
 export const apiClient = axios.create({
   baseURL: '/api/v1',
@@ -10,9 +29,12 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const { accessToken } = useAuthStore.getState();
+  const accessToken = authBridge.getAccessToken();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (!config.headers[HEADER_CORRELATION_ID]) {
+    config.headers[HEADER_CORRELATION_ID] = newCorrelationId();
   }
   return config;
 });
@@ -46,8 +68,12 @@ const unwrap = (response: AxiosResponse): AxiosResponse => {
 };
 
 apiClient.interceptors.response.use(
-  (response) => unwrap(response),
+  (response) => {
+    captureCorrelation(response.headers as Record<string, unknown>);
+    return unwrap(response);
+  },
   (error: AxiosError) => {
+    captureCorrelation(error.response?.headers as Record<string, unknown> | undefined);
     if (axios.isCancel(error)) return Promise.reject(error);
 
     const status = error.response?.status;
@@ -55,7 +81,7 @@ apiClient.interceptors.response.use(
     const message = isFailureEnvelope(body) ? (body.errors?.[0] ?? error.message) : error.message;
 
     if (status === 401) {
-      useAuthStore.getState().clearAuth();
+      authBridge.clearAuth();
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/login';
       }

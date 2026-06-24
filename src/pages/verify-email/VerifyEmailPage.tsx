@@ -1,69 +1,62 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/widgets/Layout/AuthLayout';
 import { Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Logo } from '@/shared/ui/Logo/Logo';
-import { apiClient } from '@/shared/api/apiClient';
+import { useVerifyEmail } from '@/features/auth/hooks/useAuth';
+import { isApiError } from '@/shared/api/ApiError';
 import styles from '@/features/auth/ui/ResetPasswordForm/ResetPasswordForm.module.css';
 
 export const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [pageErrorMessage, setPageErrorMessage] = useState<string>('');
+  const { mutate } = useVerifyEmail();
   const hasVerified = useRef(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>(
+    token ? 'loading' : 'idle',
+  );
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (!token || hasVerified.current) return;
-
-    const verify = async () => {
-      hasVerified.current = true;
-      setStatus('loading');
-      try {
-        const response = await apiClient.post('/auth/verify-email', { token });
-        if (response.data?.isSuccess) {
-          setStatus('success');
-          setTimeout(() => navigate('/login'), 4000);
-        } else {
+    hasVerified.current = true;
+    const fallback = t('VerifyEmail.failedFallback');
+    mutate(
+      { token },
+      {
+        onSuccess: (response) => {
+          if (response.isSuccess && response.data) {
+            setStatus('success');
+            setTimeout(() => navigate('/login'), 4000);
+          } else {
+            setStatus('error');
+            setErrorMessage(response.errors[0] ?? fallback);
+          }
+        },
+        onError: (error) => {
           setStatus('error');
-          setPageErrorMessage(response.data?.message || 'Doğrulama başarısız.');
-        }
-      } catch (catchErr: unknown) {
-        console.error('Direct fetch failed:', catchErr);
-        setStatus('error');
-        if (axios.isAxiosError(catchErr)) {
-          setPageErrorMessage(
-            catchErr.response?.data?.errors?.[0] ||
-              catchErr.response?.data?.message ||
-              catchErr.message ||
-              'Token geçersiz veya süresi dolmuş.',
-          );
-        } else if (catchErr instanceof Error) {
-          setPageErrorMessage(catchErr.message);
-        } else {
-          setPageErrorMessage('Token geçersiz veya süresi dolmuş.');
-        }
-      }
-    };
-
-    verify();
-  }, [token, navigate]);
+          setErrorMessage(isApiError(error) ? (error.errors[0] ?? fallback) : fallback);
+        },
+      },
+    );
+  }, [token, navigate, mutate, t]);
 
   const renderContent = () => {
     if (!token) {
       return (
         <div className={styles.successMessage}>
-          <AlertCircle size={56} strokeWidth={1.5} className="text-red-400 mb-4" />
-          <h2 className="text-2xl font-semibold text-white mb-2">Geçersiz Bağlantı</h2>
-          <p className="text-gray-400 mb-6">
-            Token bulunamadı veya link eksik kopyalanmış olabilir.
-          </p>
+          <AlertCircle size={56} strokeWidth={1.5} className="mb-4 text-danger-400" />
+          <h2 className="mb-2 text-2xl font-semibold text-white">
+            {t('VerifyEmail.invalidLinkTitle')}
+          </h2>
+          <p className="mb-6 text-gray-400">{t('VerifyEmail.invalidLinkBody')}</p>
           <Button onClick={() => navigate('/login')} className={styles.submitButton}>
-            Giriş Sayfasına Dön
+            {t('VerifyEmail.backToLogin')}
           </Button>
         </div>
       );
@@ -72,9 +65,11 @@ export const VerifyEmailPage = () => {
     if (status === 'loading' || status === 'idle') {
       return (
         <div className={styles.successMessage}>
-          <Loader2 size={56} strokeWidth={1.5} className="text-primary animate-spin mb-4" />
-          <h2 className="text-2xl font-semibold text-white mb-2">Hesap Doğrulanıyor</h2>
-          <p className="text-gray-400">Lütfen bekleyin, e-posta adresiniz onaylanıyor...</p>
+          <Loader2 size={56} strokeWidth={1.5} className="text-primary mb-4 animate-spin" />
+          <h2 className="mb-2 text-2xl font-semibold text-white">
+            {t('VerifyEmail.verifyingTitle')}
+          </h2>
+          <p className="text-gray-400">{t('VerifyEmail.verifyingBody')}</p>
         </div>
       );
     }
@@ -82,13 +77,13 @@ export const VerifyEmailPage = () => {
     if (status === 'success') {
       return (
         <div className={styles.successMessage}>
-          <CheckCircle2 size={56} strokeWidth={1.5} className="text-green-400 mb-4" />
-          <h2 className="text-2xl font-semibold text-white mb-2">E-posta Doğrulandı!</h2>
-          <p className="text-gray-400 mb-6">
-            Hesabınız başarıyla aktifleştirildi. Giriş sayfasına yönlendiriliyorsunuz...
-          </p>
+          <CheckCircle2 size={56} strokeWidth={1.5} className="mb-4 text-success-400" />
+          <h2 className="mb-2 text-2xl font-semibold text-white">
+            {t('VerifyEmail.successTitle')}
+          </h2>
+          <p className="mb-6 text-gray-400">{t('VerifyEmail.successBody')}</p>
           <Button onClick={() => navigate('/login')} className={styles.submitButton}>
-            Hemen Giriş Yap
+            {t('VerifyEmail.loginNow')}
           </Button>
         </div>
       );
@@ -96,11 +91,11 @@ export const VerifyEmailPage = () => {
 
     return (
       <div className={styles.successMessage}>
-        <XCircle size={56} strokeWidth={1.5} className="text-red-400 mb-4" />
-        <h2 className="text-2xl font-semibold text-white mb-2">Doğrulama Başarısız</h2>
-        <p className="text-red-300/80 mb-6 text-sm">{pageErrorMessage}</p>
+        <XCircle size={56} strokeWidth={1.5} className="mb-4 text-danger-400" />
+        <h2 className="mb-2 text-2xl font-semibold text-white">{t('VerifyEmail.failedTitle')}</h2>
+        <p className="mb-6 text-sm text-danger-300/80">{errorMessage}</p>
         <Button onClick={() => navigate('/login')} className={styles.submitButton}>
-          Giriş Sayfasına Dön
+          {t('VerifyEmail.backToLogin')}
         </Button>
       </div>
     );

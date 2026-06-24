@@ -38,7 +38,7 @@ public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Validation.Required")
-            .MinimumLength(8).WithMessage("Validation.PasswordTooShort")
+            .MinimumLength(12).WithMessage("Validation.PasswordTooShort")
             .Matches("[A-Z]").WithMessage("Validation.PasswordNeedsUppercase")
             .Matches("[a-z]").WithMessage("Validation.PasswordNeedsLowercase")
             .Matches("[0-9]").WithMessage("Validation.PasswordNeedsDigit")
@@ -55,7 +55,7 @@ public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordComm
 
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Validation.Required")
-            .MinimumLength(8).WithMessage("Validation.PasswordTooShort")
+            .MinimumLength(12).WithMessage("Validation.PasswordTooShort")
             .Matches("[A-Z]").WithMessage("Validation.PasswordNeedsUppercase")
             .Matches("[a-z]").WithMessage("Validation.PasswordNeedsLowercase")
             .Matches("[0-9]").WithMessage("Validation.PasswordNeedsDigit")
@@ -84,7 +84,7 @@ public class ChangePasswordCommandValidator : AbstractValidator<ChangePasswordCo
 
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Validation.Required")
-            .MinimumLength(8).WithMessage("Validation.PasswordTooShort")
+            .MinimumLength(12).WithMessage("Validation.PasswordTooShort")
             .Matches("[A-Z]").WithMessage("Validation.PasswordNeedsUppercase")
             .Matches("[a-z]").WithMessage("Validation.PasswordNeedsLowercase")
             .Matches("[0-9]").WithMessage("Validation.PasswordNeedsDigit")

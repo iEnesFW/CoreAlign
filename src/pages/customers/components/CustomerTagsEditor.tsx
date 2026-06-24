@@ -107,7 +107,7 @@ export const CustomerTagsEditor = ({ customerId }: CustomerTagsEditorProps) => {
                   type="button"
                   onClick={() => attachMutation.mutate(tag.id)}
                   disabled={attachMutation.isPending}
-                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:border-indigo-400 dark:hover:text-indigo-300"
+                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-600 transition hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-300 dark:hover:border-primary-400 dark:hover:text-primary-300"
                   aria-label={t('customers.tagsEditor.add')}
                 >
                   <Plus size={10} />
@@ -120,7 +120,7 @@ export const CustomerTagsEditor = ({ customerId }: CustomerTagsEditorProps) => {
       )}
 
       {(attachMutation.isError || detachMutation.isError) && (
-        <p className="mt-2 inline-flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+        <p className="mt-2 inline-flex items-center gap-1 text-xs text-danger-600 dark:text-danger-400">
           <X size={11} />
           {t('common.error', { defaultValue: 'Action failed.' })}
         </p>

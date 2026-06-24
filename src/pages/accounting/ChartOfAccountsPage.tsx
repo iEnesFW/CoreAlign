@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -13,6 +14,10 @@ import {
 } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
 import {
   useDeleteGLAccount,
   useGLAccountTree,
@@ -28,12 +33,12 @@ interface TreeNode {
 }
 
 const TYPE_STYLES: Record<AccountType, string> = {
-  Asset: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Liability: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Asset: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Liability: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Equity: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  Revenue: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Expense: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  CostOfGoodsSold: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+  Revenue: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Expense: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  CostOfGoodsSold: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
   Memorandum: 'bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
 };
 
@@ -49,7 +54,6 @@ const buildTree = (accounts: GLAccount[]): TreeNode[] => {
       roots.push(node);
     }
   }
-  // Children come back code-ordered from the server, but ensure roots are too.
   roots.sort((a, b) => a.account.code.localeCompare(b.account.code));
   return roots;
 };
@@ -78,6 +82,7 @@ const TreeRow = ({
   onEdit,
   onToggleActive,
   onDelete,
+  t,
 }: {
   node: TreeNode;
   depth: number;
@@ -87,6 +92,7 @@ const TreeRow = ({
   onEdit: (account: GLAccount) => void;
   onToggleActive: (account: GLAccount) => void;
   onDelete: (account: GLAccount) => void;
+  t: TFunction;
 }) => {
   const isOpen = expanded.has(node.account.id);
   const hasChildren = node.children.length > 0;
@@ -101,7 +107,11 @@ const TreeRow = ({
           onClick={() => hasChildren && onToggle(node.account.id)}
           className="flex h-5 w-5 items-center justify-center text-slate-400 disabled:opacity-30"
           disabled={!hasChildren}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-label={
+            isOpen
+              ? t('accounting.coa.collapse', { defaultValue: 'Collapse' })
+              : t('accounting.coa.expand', { defaultValue: 'Expand' })
+          }
         >
           {hasChildren ? (
             isOpen ? (
@@ -125,17 +135,19 @@ const TreeRow = ({
           {node.account.type}
         </span>
         <span className="w-12 text-center text-[10px] uppercase text-slate-500">
-          {node.account.normalSide === 'Debit' ? 'Dr' : 'Cr'}
+          {node.account.normalSide === 'Debit'
+            ? t('accounting.coa.debitShort', { defaultValue: 'Dr' })
+            : t('accounting.coa.creditShort', { defaultValue: 'Cr' })}
         </span>
         <span className="w-10 text-center text-[10px] text-slate-500">{node.account.currency}</span>
         {!node.account.isActive && (
           <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-            Pasif
+            {t('accounting.coa.inactiveBadge', { defaultValue: 'Pasif' })}
           </span>
         )}
         {node.account.isPostable && (
-          <span className="rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
-            Postable
+          <span className="rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">
+            {t('accounting.coa.postableBadge', { defaultValue: 'Postable' })}
           </span>
         )}
         <div className="ml-2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 [div:hover>&]:opacity-100">
@@ -143,7 +155,7 @@ const TreeRow = ({
             type="button"
             onClick={() => onAddChild(node.account)}
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-            title="Alt hesap ekle"
+            title={t('accounting.coa.addChild', { defaultValue: 'Alt hesap ekle' })}
           >
             <Plus size={12} />
           </button>
@@ -151,7 +163,7 @@ const TreeRow = ({
             type="button"
             onClick={() => onEdit(node.account)}
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-            title="Düzenle"
+            title={t('accounting.coa.edit', { defaultValue: 'Düzenle' })}
           >
             <BookOpen size={12} />
           </button>
@@ -159,15 +171,19 @@ const TreeRow = ({
             type="button"
             onClick={() => onToggleActive(node.account)}
             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
-            title={node.account.isActive ? 'Pasifle' : 'Aktifle'}
+            title={
+              node.account.isActive
+                ? t('accounting.coa.deactivate', { defaultValue: 'Pasifle' })
+                : t('accounting.coa.activate', { defaultValue: 'Aktifle' })
+            }
           >
             {node.account.isActive ? <PowerOff size={12} /> : <Power size={12} />}
           </button>
           <button
             type="button"
             onClick={() => onDelete(node.account)}
-            className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-500/10"
-            title="Sil"
+            className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
+            title={t('accounting.coa.delete', { defaultValue: 'Sil' })}
           >
             <Trash2 size={12} />
           </button>
@@ -185,6 +201,7 @@ const TreeRow = ({
             onEdit={onEdit}
             onToggleActive={onToggleActive}
             onDelete={onDelete}
+            t={t}
           />
         ))}
     </>
@@ -207,9 +224,6 @@ export const ChartOfAccountsPage = () => {
     | { mode: 'edit'; account: GLAccount }
   >({ mode: 'closed' });
 
-  // `tree.data?.data ?? []` would produce a new array identity on every render
-  // and force buildTree to re-run; memoize the fallback so the empty array is
-  // stable when the query is still loading.
   const accounts = useMemo(() => tree.data?.data ?? [], [tree.data]);
   const roots = useMemo(() => buildTree(accounts), [accounts]);
   const filtered = useMemo(
@@ -217,8 +231,6 @@ export const ChartOfAccountsPage = () => {
     [roots, search],
   );
 
-  // When the user types in search, auto-expand all matched paths so results
-  // are visible without manual clicking.
   const expandedForView = useMemo(() => {
     if (!search.trim()) return expanded;
     const all = new Set<string>();
@@ -240,11 +252,11 @@ export const ChartOfAccountsPage = () => {
 
   const seedTurkish = async () => {
     const ok = await confirm({
-      title: 'TDHP Yükle',
+      title: t('accounting.coa.seedTitle', { defaultValue: 'TDHP Yükle' }),
       message: t('accounting.coa.seedConfirm', {
         defaultValue: 'Tek Düzen Hesap Planı (TDHP) eklenecek. Devam edilsin mi?',
       }),
-      confirmLabel: 'Yükle',
+      confirmLabel: t('accounting.coa.seedConfirmLabel', { defaultValue: 'Yükle' }),
     });
     if (!ok) return;
     try {
@@ -263,7 +275,11 @@ export const ChartOfAccountsPage = () => {
   const toggleActive = async (account: GLAccount) => {
     try {
       await setActiveMutation.mutateAsync({ id: account.id, isActive: !account.isActive });
-      toast.success(account.isActive ? 'Hesap pasifleştirildi.' : 'Hesap aktifleştirildi.');
+      toast.success(
+        account.isActive
+          ? t('accounting.coa.deactivated', { defaultValue: 'Hesap pasifleştirildi.' })
+          : t('accounting.coa.activated', { defaultValue: 'Hesap aktifleştirildi.' }),
+      );
     } catch (err) {
       toastApiError(err);
     }
@@ -271,73 +287,72 @@ export const ChartOfAccountsPage = () => {
 
   const remove = async (account: GLAccount) => {
     const ok = await confirm({
-      title: 'Hesabı Sil',
+      title: t('accounting.coa.deleteTitle', { defaultValue: 'Hesabı Sil' }),
       message: t('accounting.coa.deleteConfirm', {
         defaultValue: '{{code}} - {{name}} silinsin mi?',
         code: account.code,
         name: account.name,
       }),
-      confirmLabel: 'Sil',
+      confirmLabel: t('accounting.coa.deleteConfirmLabel', { defaultValue: 'Sil' }),
       tone: 'danger',
     });
     if (!ok) return;
     try {
       await deleteMutation.mutateAsync(account.id);
-      toast.success('Hesap silindi.');
+      toast.success(t('accounting.coa.deleted', { defaultValue: 'Hesap silindi.' }));
     } catch (err) {
       toastApiError(err);
     }
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            {t('accounting.coa.title', { defaultValue: 'Hesap Planı' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('accounting.coa.subtitle', {
-              defaultValue:
-                'Tek Düzen Hesap Planı (TDHP) hiyerarşik görünüm. Yevmiye fişleri sadece "Postable" alt hesaplara post edilebilir.',
-            })}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<BookOpen size={20} />}
+          title={t('accounting.coa.title', { defaultValue: 'Hesap Planı' })}
+          subtitle={t('accounting.coa.subtitle', {
+            defaultValue:
+              'Tek Düzen Hesap Planı (TDHP) hiyerarşik görünüm. Yevmiye fişleri sadece "Postable" alt hesaplara post edilebilir.',
+          })}
+          actions={
+            <Button size="sm" onClick={() => setModalState({ mode: 'create' })}>
+              <Plus size={14} />
+              {t('accounting.coa.create', { defaultValue: 'Yeni Hesap' })}
+            </Button>
+          }
+        />
+      }
+      toolbar={
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('accounting.coa.searchPlaceholder', {
               defaultValue: 'Kod veya isim ile ara…',
             })}
-            className="w-64 rounded border border-slate-200 bg-white px-3 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className="w-full sm:w-72"
           />
           {accounts.length === 0 && (
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={seedTurkish}
-              disabled={seedMutation.isPending}
-              className="inline-flex items-center gap-1.5 rounded border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
+              isLoading={seedMutation.isPending}
             >
-              <Database size={12} />
+              <Database size={14} />
               {t('accounting.coa.seedTurkish', { defaultValue: 'TDHP Yükle' })}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={() => setModalState({ mode: 'create' })}
-            className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
-          >
-            <Plus size={12} />
-            {t('accounting.coa.create', { defaultValue: 'Yeni Hesap' })}
-          </button>
         </div>
-      </div>
-
+      }
+    >
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         {tree.isPending ? (
-          <div className="p-8 text-center text-sm text-slate-500">Yükleniyor…</div>
+          <div className="p-8 text-center text-sm text-slate-500">
+            {t('accounting.coa.loading', { defaultValue: 'Yükleniyor…' })}
+          </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-sm text-slate-500">
             {accounts.length === 0
@@ -359,6 +374,7 @@ export const ChartOfAccountsPage = () => {
                 onEdit={(account) => setModalState({ mode: 'edit', account })}
                 onToggleActive={toggleActive}
                 onDelete={remove}
+                t={t}
               />
             ))}
           </div>
@@ -373,7 +389,7 @@ export const ChartOfAccountsPage = () => {
           onClose={() => setModalState({ mode: 'closed' })}
         />
       )}
-    </div>
+    </ListPageTemplate>
   );
 };
 

@@ -1,4 +1,5 @@
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 
 interface Props {
@@ -33,6 +34,7 @@ export const DataToolbar = ({
   density,
   viewMode,
 }: Props) => {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -57,14 +59,14 @@ export const DataToolbar = ({
                 onChange={(e) => search.onChange(e.target.value)}
                 placeholder={search.placeholder}
                 autoFocus={search.autoFocus}
-                className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-8 text-xs text-slate-900 transition-colors focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="w-full rounded-lg border border-slate-200 bg-white py-1.5 pl-8 pr-8 text-xs text-slate-900 transition-colors focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
               />
               {search.value && (
                 <button
                   type="button"
                   onClick={() => search.onChange('')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
-                  aria-label="Clear"
+                  aria-label={t('Common.Clear', { defaultValue: 'Clear' })}
                 >
                   <X size={12} />
                 </button>
@@ -91,17 +93,17 @@ export const DataToolbar = ({
       {filters && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-2 dark:border-slate-800">
           <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-            Filters
+            {t('Common.Filters', { defaultValue: 'Filters' })}
           </span>
           {filters}
           {hasActiveFilters && onClearFilters && (
             <button
               type="button"
               onClick={onClearFilters}
-              className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-transparent px-2 py-0.5 text-[10px] font-medium text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10"
+              className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-transparent px-2 py-0.5 text-[10px] font-medium text-danger-600 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10"
             >
               <X size={10} />
-              Clear
+              {t('Common.Clear', { defaultValue: 'Clear' })}
             </button>
           )}
         </div>

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ShieldCheck, X } from 'lucide-react';
+import { ShieldCheck, Ban } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { QueryError } from '@/shared/ui/QueryError/QueryError';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
 import {
   usePendingSubmissionsQuery,
   usePublishTemplateMutation,
@@ -116,14 +119,14 @@ export const AdminReviewQueuePage = () => {
                           type="button"
                           onClick={() => handlePublish(submission)}
                           disabled={publishMutation.isPending}
-                          className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+                          className="rounded-md bg-success-600 px-3 py-1 text-xs font-semibold text-white hover:bg-success-700 disabled:opacity-50"
                         >
                           {t('Marketplace.Admin.Publish', 'Publish')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setRejectModal({ templateId: submission.id, reason: '' })}
-                          className="rounded-md border border-rose-300 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-700 dark:text-rose-300 dark:hover:bg-rose-900/30"
+                          className="rounded-md border border-danger-300 px-3 py-1 text-xs font-semibold text-danger-700 hover:bg-danger-50 dark:border-danger-700 dark:text-danger-300 dark:hover:bg-danger-900/30"
                         >
                           {t('Marketplace.Admin.Reject', 'Reject')}
                         </button>
@@ -137,61 +140,40 @@ export const AdminReviewQueuePage = () => {
         </div>
       )}
 
-      {rejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
-            <header className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700">
-              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {t('Marketplace.Admin.RejectTitle', 'Reject submission')}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setRejectModal(null)}
-                className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X size={14} />
-              </button>
-            </header>
-            <div className="space-y-3 p-4">
-              <label className="block text-xs">
-                <span className="text-slate-600 dark:text-slate-300">
-                  {t('Marketplace.Admin.RejectReason', 'Rejection reason')}
-                </span>
-                <textarea
-                  value={rejectModal.reason}
-                  onChange={(event) =>
-                    setRejectModal((prev) =>
-                      prev ? { ...prev, reason: event.target.value } : prev,
-                    )
-                  }
-                  rows={3}
-                  maxLength={1000}
-                  className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-rose-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-                />
-              </label>
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRejectModal(null)}
-                  className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
-                >
-                  {t('Marketplace.Admin.Cancel', 'Cancel')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReject}
-                  disabled={rejectMutation.isPending}
-                  className="rounded-md bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
-                >
-                  {rejectMutation.isPending
-                    ? t('Marketplace.Admin.Rejecting', 'Rejecting...')
-                    : t('Marketplace.Admin.ConfirmReject', 'Reject')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        open={rejectModal !== null}
+        title={t('Marketplace.Admin.RejectTitle', 'Reject submission')}
+        icon={<Ban size={18} />}
+        onClose={() => setRejectModal(null)}
+        size="md"
+        footer={
+          <>
+            <Button type="button" variant="ghost" onClick={() => setRejectModal(null)}>
+              {t('Marketplace.Admin.Cancel', 'Cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleReject}
+              isLoading={rejectMutation.isPending}
+            >
+              {rejectMutation.isPending
+                ? t('Marketplace.Admin.Rejecting', 'Rejecting...')
+                : t('Marketplace.Admin.ConfirmReject', 'Reject')}
+            </Button>
+          </>
+        }
+      >
+        <Textarea
+          label={t('Marketplace.Admin.RejectReason', 'Rejection reason')}
+          value={rejectModal?.reason ?? ''}
+          onChange={(event) =>
+            setRejectModal((prev) => (prev ? { ...prev, reason: event.target.value } : prev))
+          }
+          rows={3}
+          maxLength={1000}
+        />
+      </Modal>
     </main>
   );
 };

@@ -1,4 +1,5 @@
 import { Check, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 
 export type ChipTone = 'indigo' | 'emerald' | 'amber' | 'rose' | 'sky' | 'violet' | 'slate';
@@ -17,13 +18,13 @@ interface Props {
 
 const activeToneClasses: Record<ChipTone, string> = {
   indigo:
-    'border-indigo-300/80 bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200/60 dark:border-indigo-500/40 dark:bg-indigo-500/15 dark:text-indigo-200 dark:ring-indigo-500/30',
+    'border-primary-300/80 bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200/60 dark:border-primary-500/40 dark:bg-primary-500/15 dark:text-primary-200 dark:ring-primary-500/30',
   emerald:
-    'border-emerald-300/80 bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200/60 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-200',
+    'border-success-300/80 bg-success-50 text-success-700 ring-1 ring-inset ring-success-200/60 dark:border-success-500/40 dark:bg-success-500/15 dark:text-success-200',
   amber:
-    'border-amber-300/80 bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200/60 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-200',
-  rose: 'border-rose-300/80 bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200/60 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-200',
-  sky: 'border-sky-300/80 bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200/60 dark:border-sky-500/40 dark:bg-sky-500/15 dark:text-sky-200',
+    'border-warning-300/80 bg-warning-50 text-warning-800 ring-1 ring-inset ring-warning-200/60 dark:border-warning-500/40 dark:bg-warning-500/15 dark:text-warning-200',
+  rose: 'border-danger-300/80 bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200/60 dark:border-danger-500/40 dark:bg-danger-500/15 dark:text-danger-200',
+  sky: 'border-info-300/80 bg-info-50 text-info-700 ring-1 ring-inset ring-info-200/60 dark:border-info-500/40 dark:bg-info-500/15 dark:text-info-200',
   violet:
     'border-violet-300/80 bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-200/60 dark:border-violet-500/40 dark:bg-violet-500/15 dark:text-violet-200',
   slate:
@@ -41,12 +42,13 @@ export const FilterChip = ({
   size = 'md',
   className,
 }: Props) => {
+  const { t } = useTranslation();
   const base = cn(
     'group inline-flex items-center gap-1.5 rounded-full border font-medium transition-all duration-200',
     size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]',
     active
       ? activeToneClasses[tone]
-      : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-200',
+      : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50/50 hover:text-primary-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-200',
     className,
   );
 
@@ -70,7 +72,7 @@ export const FilterChip = ({
       {onRemove && active && (
         <span
           role="button"
-          aria-label="Remove filter"
+          aria-label={t('Common.RemoveFilter', { defaultValue: 'Remove filter' })}
           onClick={(e) => {
             e.stopPropagation();
             onRemove();

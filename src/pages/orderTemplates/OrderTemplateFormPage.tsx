@@ -329,7 +329,7 @@ const OrderTemplateFormInner = ({
                     type="button"
                     onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
                     disabled={lines.length === 1}
-                    className="rounded border border-rose-200 p-1 text-rose-600 hover:bg-rose-50 disabled:opacity-40 dark:border-rose-800 dark:text-rose-400"
+                    className="rounded border border-danger-200 p-1 text-danger-600 hover:bg-danger-50 disabled:opacity-40 dark:border-danger-800 dark:text-danger-400"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -343,7 +343,7 @@ const OrderTemplateFormInner = ({
           <button
             type="submit"
             disabled={createMut.isPending || updateMut.isPending}
-            className="rounded-md bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-md bg-primary-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             {t('OrderTemplates.Form.Submit')}
           </button>

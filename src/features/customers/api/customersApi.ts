@@ -1,7 +1,7 @@
 import { apiClient } from '@/shared/api/apiClient';
 import { cachedGet, invalidateHttpCache } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
-import type { Tag } from '@/features/tags/model/tag.types';
+import type { Tag } from '@/shared/model/tag.types';
 import type {
   Customer,
   CreateCustomerInput,

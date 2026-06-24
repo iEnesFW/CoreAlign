@@ -16,15 +16,13 @@ const OPTIONS = [0, 1, 2, 3, 4, 5, 6];
 const SAMPLE = 1234567.891234;
 
 export const NumberFormatSection = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const params = useParametersQuery(NUMBER_FORMAT_CATEGORY);
   const upsert = useUpsertParameters();
 
   const stored = params.data?.data?.find((s) => s.key === DECIMAL_PLACES_KEY)?.value;
   const [decimals, setDecimals] = useState<number>(DEFAULT_DECIMAL_PLACES);
 
-  // Seed the editable value from the server setting once it loads (adjust during
-  // render rather than in an effect to avoid a cascading re-render).
   const seededFrom = useRef<string | null | undefined>(undefined);
   if (stored !== seededFrom.current) {
     seededFrom.current = stored;
@@ -46,7 +44,10 @@ export const NumberFormatSection = () => {
         },
       ],
       {
-        onSuccess: () => toast.success('Sayı biçimi kaydedildi.'),
+        onSuccess: () =>
+          toast.success(
+            t('Settings.NumberFormatSaved', { defaultValue: 'Sayı biçimi kaydedildi.' }),
+          ),
         onError: (err) => toastApiError(err),
       },
     );
@@ -57,15 +58,20 @@ export const NumberFormatSection = () => {
   return (
     <div className="max-w-xl space-y-4">
       <div>
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Sayı Biçimi</h2>
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('Settings.NumberFormatTitle', { defaultValue: 'Sayı Biçimi' })}
+        </h2>
         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          Tutar ve miktarların ekranda kaç ondalık basamakla gösterileceğini belirleyin.
+          {t('Settings.NumberFormatDescription', {
+            defaultValue:
+              'Tutar ve miktarların ekranda kaç ondalık basamakla gösterileceğini belirleyin.',
+          })}
         </p>
       </div>
 
       <div>
         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Ondalık Basamak Sayısı
+          {t('Settings.DecimalPlacesLabel', { defaultValue: 'Ondalık Basamak Sayısı' })}
         </label>
         <select
           value={decimals}
@@ -82,7 +88,7 @@ export const NumberFormatSection = () => {
 
       <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/50">
         <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Önizleme
+          {t('Settings.Preview', { defaultValue: 'Önizleme' })}
         </div>
         <div className="mt-1 space-y-0.5 text-slate-800 dark:text-slate-200">
           <div>{formatNumber(SAMPLE, locale, decimals)}</div>
@@ -90,12 +96,13 @@ export const NumberFormatSection = () => {
         </div>
       </div>
 
-      <div className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+      <div className="flex items-start gap-2 rounded border border-warning-200 bg-warning-50 p-3 text-xs text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300">
         <Info size={14} className="mt-0.5 shrink-0" />
         <span>
-          Bu ayar yalnızca görüntülemeyi etkiler. Kayıtlı tutar, miktar ve sayısal değerler tam
-          hassasiyetle saklanır; basamak sayısını değiştirmek mevcut sipariş ve faturaların
-          verilerini değiştirmez.
+          {t('Settings.NumberFormatDisplayOnlyNote', {
+            defaultValue:
+              'Bu ayar yalnızca görüntülemeyi etkiler. Kayıtlı tutar, miktar ve sayısal değerler tam hassasiyetle saklanır; basamak sayısını değiştirmek mevcut sipariş ve faturaların verilerini değiştirmez.',
+          })}
         </span>
       </div>
 
@@ -103,9 +110,11 @@ export const NumberFormatSection = () => {
         type="button"
         onClick={save}
         disabled={upsert.isPending}
-        className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="rounded bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
       >
-        {upsert.isPending ? 'Kaydediliyor…' : 'Kaydet'}
+        {upsert.isPending
+          ? t('Settings.Saving', { defaultValue: 'Kaydediliyor…' })
+          : t('Settings.Save', { defaultValue: 'Kaydet' })}
       </button>
     </div>
   );

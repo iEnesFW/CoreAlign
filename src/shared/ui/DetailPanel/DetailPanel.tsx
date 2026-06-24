@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 
@@ -16,22 +17,22 @@ interface Props {
 }
 
 const toneIconBg: Record<NonNullable<Props['tone']>, string> = {
-  indigo: 'from-indigo-500 to-purple-600',
-  emerald: 'from-emerald-500 to-teal-600',
+  indigo: 'from-primary-500 to-purple-600',
+  emerald: 'from-success-500 to-teal-600',
   violet: 'from-violet-500 to-fuchsia-600',
-  amber: 'from-amber-500 to-orange-600',
-  rose: 'from-rose-500 to-pink-600',
-  sky: 'from-sky-500 to-cyan-600',
+  amber: 'from-warning-500 to-warning-600',
+  rose: 'from-danger-500 to-pink-600',
+  sky: 'from-info-500 to-cyan-600',
   slate: 'from-slate-500 to-slate-700',
 };
 
 const toneAccent: Record<NonNullable<Props['tone']>, string> = {
-  indigo: 'from-indigo-500/15',
-  emerald: 'from-emerald-500/15',
+  indigo: 'from-primary-500/15',
+  emerald: 'from-success-500/15',
   violet: 'from-violet-500/15',
-  amber: 'from-amber-500/15',
-  rose: 'from-rose-500/15',
-  sky: 'from-sky-500/15',
+  amber: 'from-warning-500/15',
+  rose: 'from-danger-500/15',
+  sky: 'from-info-500/15',
   slate: 'from-slate-500/10',
 };
 
@@ -47,6 +48,7 @@ export const DetailPanel = ({
   statusBadge,
   tone = 'indigo',
 }: Props) => {
+  const { t } = useTranslation();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previousActiveRef = useRef<HTMLElement | null>(null);
   const asideRef = useRef<HTMLElement>(null);
@@ -121,7 +123,7 @@ export const DetailPanel = ({
               {icon && (
                 <div
                   className={cn(
-                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md shadow-indigo-500/20 ring-1 ring-white/20',
+                    'flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md shadow-primary-500/20 ring-1 ring-white/20',
                     toneIconBg[tone],
                   )}
                 >
@@ -144,8 +146,8 @@ export const DetailPanel = ({
                 ref={closeButtonRef}
                 type="button"
                 onClick={onClose}
-                className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                aria-label="Close"
+                className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label={t('Common.Close', { defaultValue: 'Close' })}
               >
                 <X size={16} />
               </button>
@@ -180,9 +182,9 @@ export function PanelTabs<T extends string>({ tabs, active, onSelect }: PanelTab
             aria-selected={isActive}
             onClick={() => onSelect(tab.id)}
             className={cn(
-              '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/40',
+              '-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500/40',
               isActive
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-300'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-300'
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
             )}
           >
@@ -193,7 +195,7 @@ export function PanelTabs<T extends string>({ tabs, active, onSelect }: PanelTab
                 className={cn(
                   'ml-0.5 rounded-full px-1.5 py-px text-[9px] font-semibold tabular-nums',
                   isActive
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300'
                     : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
                 )}
               >

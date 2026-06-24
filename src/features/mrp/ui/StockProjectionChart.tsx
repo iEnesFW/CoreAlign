@@ -41,7 +41,7 @@ export const StockProjectionChart = ({ projection }: Props) => {
             </span>
           </p>
           {projection.shouldReorder && (
-            <p className="font-semibold text-amber-600 dark:text-amber-400">
+            <p className="font-semibold text-warning-600 dark:text-warning-400">
               {t('Mrp.Projection.ShouldReorder')}
             </p>
           )}
@@ -59,7 +59,7 @@ export const StockProjectionChart = ({ projection }: Props) => {
               title={`${p.date.slice(0, 10)}: ${formatNumber(p.projectedQuantity, i18n.language)}`}
             >
               <div
-                className={`w-full rounded-t ${belowRop ? 'bg-rose-500/60' : 'bg-indigo-500/60'}`}
+                className={`w-full rounded-t ${belowRop ? 'bg-danger-500/60' : 'bg-primary-500/60'}`}
                 style={{ height: `${heightPct}%` }}
               />
             </div>

@@ -43,7 +43,5 @@ public class StockTransactionConfiguration : IEntityTypeConfiguration<StockTrans
 
         builder.HasOne(t => t.Product).WithMany().HasForeignKey(t => t.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(t => t.Order).WithMany().HasForeignKey(t => t.OrderId).OnDelete(DeleteBehavior.SetNull);
-
-        builder.HasIndex(t => new { t.TenantId, t.ProductId, t.OccurredAtUtc }).IsDescending(false, false, true);
     }
 }

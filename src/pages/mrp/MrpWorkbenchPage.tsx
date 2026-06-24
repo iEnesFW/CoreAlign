@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlayCircle, Save, Tags } from 'lucide-react';
+import { PlayCircle, Save, Tags, Workflow } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
+import { Select } from '@/shared/ui/Select/Select';
 import {
   useClassifyAbc,
   useCommitMrpPlan,
@@ -215,344 +219,342 @@ export const MrpWorkbenchPage = () => {
   const runs = planRuns.data?.data?.items ?? [];
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-800 dark:text-slate-100">
-            {t('Mrp.Workbench.Title')}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mrp.Workbench.Subtitle')}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            aria-label={t('Mrp.Workbench.BucketKind') ?? 'Bucket'}
-            value={bucketKind}
-            onChange={(e) => setBucketKind(e.target.value as MrpBucketKind)}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            {BUCKET_KINDS.map((b) => (
-              <option key={b} value={b}>
-                {t(`Mrp.Workbench.Bucket.${b}`)}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label={t('Mrp.Workbench.Horizon') ?? 'Horizon'}
-            value={horizonDays}
-            onChange={(e) => setHorizonDays(Number(e.target.value))}
-            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-          >
-            {HORIZON_OPTIONS.map((h) => (
-              <option key={h} value={h}>
-                {t('Mrp.Workbench.HorizonDays', { days: h })}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => preview.refetch()}
-            className="flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            <PlayCircle className="h-4 w-4" />
-            {t('Mrp.Workbench.RunPreview')}
-          </button>
-          <button
-            type="button"
-            disabled={classifyAbc.isPending}
-            onClick={handleClassifyAbc}
-            className="flex items-center gap-1 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
-          >
-            <Tags className="h-4 w-4" />
-            {t('Mrp.Workbench.ClassifyAbc')}
-          </button>
-          <button
-            type="button"
-            disabled={commit.isPending}
-            onClick={() => commit.mutate(previewParams)}
-            className="flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
-          >
-            <Save className="h-4 w-4" />
-            {t('Mrp.Workbench.Commit')}
-          </button>
-        </div>
-      </header>
-
-      {preview.isLoading && (
-        <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
-      )}
-
-      {plan && <KpiStrip plan={plan} />}
-
-      {plan && (
-        <p className="text-xs text-slate-400 dark:text-slate-500">
-          {t('Mrp.Workbench.AsOf')}: {formatDateTime(plan.asOfUtc, locale)} ·{' '}
-          {t('Mrp.Workbench.ProductsEvaluated', { count: plan.productsEvaluated })}
-        </p>
-      )}
-
-      <nav className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700">
-        {(['grid', 'queue', 'impact', 'distribution', 'capacity', 'runs'] as WorkbenchTab[]).map(
-          (tk) => (
-            <button
-              key={tk}
-              type="button"
-              onClick={() => setTab(tk)}
-              className={
-                tab === tk
-                  ? 'border-b-2 border-indigo-600 px-3 py-2 text-sm font-semibold text-indigo-700 dark:text-indigo-300'
-                  : 'px-3 py-2 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }
-            >
-              {t(`Mrp.Workbench.Tab.${tk}`)}
-            </button>
-          ),
-        )}
-      </nav>
-
-      {tab === 'grid' && plan && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t('Mrp.Workbench.Filter.Procurement')}
-            </span>
-            <div className="inline-flex rounded-md border border-slate-300 p-0.5 dark:border-slate-700">
-              {PROCUREMENT_FILTERS.map((pf) => (
-                <button
-                  key={pf}
-                  type="button"
-                  onClick={() => setProcurementFilter(pf)}
-                  aria-pressed={procurementFilter === pf}
-                  className={
-                    procurementFilter === pf
-                      ? 'rounded px-2.5 py-1 text-xs font-semibold text-white bg-indigo-600'
-                      : 'rounded px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
-                  }
-                >
-                  {pf === 'All' ? t('Common.All') : t(`Mrp.Workbench.Procurement.${pf}`)}
-                </button>
-              ))}
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<Workflow size={20} />}
+          title={t('Mrp.Workbench.Title')}
+          subtitle={t('Mrp.Workbench.Subtitle')}
+          actions={
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                aria-label={t('Mrp.Workbench.BucketKind') ?? 'Bucket'}
+                value={bucketKind}
+                onChange={(e) => setBucketKind(e.target.value as MrpBucketKind)}
+                className="w-full sm:w-40"
+              >
+                {BUCKET_KINDS.map((b) => (
+                  <option key={b} value={b}>
+                    {t(`Mrp.Workbench.Bucket.${b}`)}
+                  </option>
+                ))}
+              </Select>
+              <Select
+                aria-label={t('Mrp.Workbench.Horizon') ?? 'Horizon'}
+                value={horizonDays}
+                onChange={(e) => setHorizonDays(Number(e.target.value))}
+                className="w-full sm:w-40"
+              >
+                {HORIZON_OPTIONS.map((h) => (
+                  <option key={h} value={h}>
+                    {t('Mrp.Workbench.HorizonDays', { days: h })}
+                  </option>
+                ))}
+              </Select>
+              <Button type="button" variant="outline" size="sm" onClick={() => preview.refetch()}>
+                <PlayCircle className="h-4 w-4" />
+                {t('Mrp.Workbench.RunPreview')}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={classifyAbc.isPending}
+                onClick={handleClassifyAbc}
+              >
+                <Tags className="h-4 w-4" />
+                {t('Mrp.Workbench.ClassifyAbc')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={commit.isPending}
+                onClick={() => commit.mutate(previewParams)}
+              >
+                <Save className="h-4 w-4" />
+                {t('Mrp.Workbench.Commit')}
+              </Button>
             </div>
-            <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <ProcurementBadge type="Make" /> {plan.makeOrderCount}
-              <ProcurementBadge type="Buy" /> {plan.buyOrderCount}
-            </span>
-          </div>
-          <MrpPlanningGrid
-            items={filteredItems}
-            locale={locale}
-            selectedProductId={selectedProductId}
-            onSelectItem={setSelectedProductId}
-          />
-        </div>
-      )}
-
-      {tab === 'queue' && (
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <FilterSelect
-              label={t('Mrp.Workbench.Filter.Type')}
-              value={typeFilter}
-              onChange={(v) => setTypeFilter(v as MrpActionType | 'All')}
-              options={['All', ...ACTION_TYPES]}
-              render={(o) => (o === 'All' ? t('Common.All') : t(`Mrp.Workbench.ActionType.${o}`))}
-            />
-            <FilterSelect
-              label={t('Mrp.Workbench.Filter.Severity')}
-              value={severityFilter}
-              onChange={(v) => setSeverityFilter(v as MrpActionSeverity | 'All')}
-              options={['All', ...SEVERITIES]}
-              render={(o) => (o === 'All' ? t('Common.All') : t(`Mrp.Workbench.Severity.${o}`))}
-            />
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('Mrp.Workbench.Filter.Supplier')}
-              </span>
-              <select
-                value={supplierFilter}
-                onChange={(e) => setSupplierFilter(e.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">{t('Common.All')}</option>
-                {(vendors.data?.data?.items ?? []).map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {!planRunId && (
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-              {t('Mrp.Workbench.Queue.CommitToRelease')}
-            </p>
-          )}
-          {actionMessages.isLoading ? (
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
-          ) : (
-            <ActionMessageQueue
-              messages={messages}
-              locale={locale}
-              isReleasing={release.isPending}
-              canRelease={!!planRunId}
-              onReleaseSelected={handleRelease}
-              onDismiss={handleDismiss}
-              onOpenInGrid={(productId) => {
-                setSelectedProductId(productId);
-                setTab('grid');
-              }}
-            />
-          )}
-        </div>
-      )}
-
-      {tab === 'impact' && (
-        <div className="space-y-3">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mrp.Workbench.ChangeImpact.Help')}
-          </p>
-          {!planRunId && (
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-              {t('Mrp.Workbench.ChangeImpact.CommitRequired')}
-            </p>
-          )}
-          <div className="flex flex-wrap items-end gap-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t('Mrp.Workbench.ChangeImpact.Source')}
-              </span>
-              <select
-                value={impactSourceId}
-                onChange={(e) => setImpactSourceId(e.target.value)}
-                className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              >
-                <option value="">{t('Mrp.Workbench.ChangeImpact.SelectSource')}</option>
-                {impactSources.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              disabled={!planRunId || !impactSourceId}
-              onClick={() => {
-                const selected = impactSources.find((s) => s.id === impactSourceId);
-                setImpactQuery({ id: impactSourceId, label: selected?.label ?? impactSourceId });
-              }}
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-400"
-            >
-              {t('Mrp.Workbench.ChangeImpact.Analyze')}
-            </button>
-          </div>
-          <ChangeImpactView
-            result={changeImpact.data?.data ?? null}
-            locale={locale}
-            sourceLabel={impactQuery?.label}
-            productInfo={impactProductInfo}
-            isLoading={changeImpact.isLoading && !!impactQuery}
-          />
-        </div>
-      )}
-
-      {tab === 'distribution' && (
-        <div className="space-y-3">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mrp.Workbench.Distribution.Help')}
-          </p>
-          <TransferSuggestionsView
-            result={transferSuggestions.data?.data ?? null}
-            locale={locale}
-            isLoading={transferSuggestions.isLoading}
-            onExecute={handleExecuteTransfer}
-            executingKey={executingTransferKey}
-            isExecuting={executeTransfer.isPending}
-          />
-        </div>
-      )}
-
-      {tab === 'capacity' && (
-        <div className="space-y-3">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t('Mrp.Workbench.Capacity.Help')}
-          </p>
-          <CapacityLoadView
-            result={capacityLoad.data?.data ?? null}
-            locale={locale}
-            isLoading={capacityLoad.isLoading}
-          />
-        </div>
-      )}
-
-      {tab === 'runs' && (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <table className="min-w-full text-xs">
-            <thead className="bg-slate-50 text-left text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-              <tr>
-                <th scope="col" className="px-3 py-2">
-                  {t('Mrp.Workbench.Runs.Number')}
-                </th>
-                <th scope="col" className="px-3 py-2">
-                  {t('Mrp.Workbench.Runs.AsOf')}
-                </th>
-                <th scope="col" className="px-3 py-2 text-right">
-                  {t('Mrp.Workbench.Runs.Products')}
-                </th>
-                <th scope="col" className="px-3 py-2 text-right">
-                  {t('Mrp.Workbench.Runs.PlannedOrders')}
-                </th>
-                <th scope="col" className="px-3 py-2 text-right">
-                  {t('Mrp.Workbench.Runs.Exceptions')}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
-                  <td className="px-3 py-2 font-mono font-semibold text-slate-800 dark:text-slate-100">
-                    {r.number}
-                  </td>
-                  <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
-                    {formatDateTime(r.asOfDateUtc, locale)}
-                  </td>
-                  <td className="px-3 py-2 text-right tabular-nums">{r.productsEvaluated}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{r.plannedOrderCount}</td>
-                  <td className="px-3 py-2 text-right tabular-nums">{r.actionMessageCount}</td>
-                </tr>
-              ))}
-              {!planRuns.isLoading && runs.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-3 py-6 text-center text-slate-500 dark:text-slate-400"
-                  >
-                    {t('Mrp.Workbench.Runs.Empty')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {selectedProductId && (
-        <PeggingDrawer
-          item={drawerItem}
-          pegging={pegging.data?.data ?? []}
-          planRunId={planRunId}
-          locale={locale}
-          isFirming={firm.isPending || firmProduction.isPending}
-          isReleasing={release.isPending || releaseProduction.isPending}
-          isCompleting={completeProduction.isPending}
-          onClose={() => setSelectedProductId(null)}
-          onFirm={handleDrawerFirm}
-          onRelease={handleDrawerRelease}
-          onComplete={handleDrawerComplete}
+          }
         />
-      )}
-    </div>
+      }
+    >
+      <div className="space-y-6">
+        {preview.isLoading && (
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
+        )}
+
+        {plan && <KpiStrip plan={plan} />}
+
+        {plan && (
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            {t('Mrp.Workbench.AsOf')}: {formatDateTime(plan.asOfUtc, locale)} ·{' '}
+            {t('Mrp.Workbench.ProductsEvaluated', { count: plan.productsEvaluated })}
+          </p>
+        )}
+
+        <nav className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700">
+          {(['grid', 'queue', 'impact', 'distribution', 'capacity', 'runs'] as WorkbenchTab[]).map(
+            (tk) => (
+              <button
+                key={tk}
+                type="button"
+                onClick={() => setTab(tk)}
+                className={
+                  tab === tk
+                    ? 'border-b-2 border-primary-600 px-3 py-2 text-sm font-semibold text-primary-700 dark:text-primary-300'
+                    : 'px-3 py-2 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }
+              >
+                {t(`Mrp.Workbench.Tab.${tk}`)}
+              </button>
+            ),
+          )}
+        </nav>
+
+        {tab === 'grid' && plan && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {t('Mrp.Workbench.Filter.Procurement')}
+              </span>
+              <div className="inline-flex rounded-md border border-slate-300 p-0.5 dark:border-slate-700">
+                {PROCUREMENT_FILTERS.map((pf) => (
+                  <button
+                    key={pf}
+                    type="button"
+                    onClick={() => setProcurementFilter(pf)}
+                    aria-pressed={procurementFilter === pf}
+                    className={
+                      procurementFilter === pf
+                        ? 'rounded px-2.5 py-1 text-xs font-semibold text-white bg-primary-600'
+                        : 'rounded px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700'
+                    }
+                  >
+                    {pf === 'All' ? t('Common.All') : t(`Mrp.Workbench.Procurement.${pf}`)}
+                  </button>
+                ))}
+              </div>
+              <span className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <ProcurementBadge type="Make" /> {plan.makeOrderCount}
+                <ProcurementBadge type="Buy" /> {plan.buyOrderCount}
+              </span>
+            </div>
+            <MrpPlanningGrid
+              items={filteredItems}
+              locale={locale}
+              selectedProductId={selectedProductId}
+              onSelectItem={setSelectedProductId}
+            />
+          </div>
+        )}
+
+        {tab === 'queue' && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <FilterSelect
+                label={t('Mrp.Workbench.Filter.Type')}
+                value={typeFilter}
+                onChange={(v) => setTypeFilter(v as MrpActionType | 'All')}
+                options={['All', ...ACTION_TYPES]}
+                render={(o) => (o === 'All' ? t('Common.All') : t(`Mrp.Workbench.ActionType.${o}`))}
+              />
+              <FilterSelect
+                label={t('Mrp.Workbench.Filter.Severity')}
+                value={severityFilter}
+                onChange={(v) => setSeverityFilter(v as MrpActionSeverity | 'All')}
+                options={['All', ...SEVERITIES]}
+                render={(o) => (o === 'All' ? t('Common.All') : t(`Mrp.Workbench.Severity.${o}`))}
+              />
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('Mrp.Workbench.Filter.Supplier')}
+                </span>
+                <select
+                  value={supplierFilter}
+                  onChange={(e) => setSupplierFilter(e.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                >
+                  <option value="">{t('Common.All')}</option>
+                  {(vendors.data?.data?.items ?? []).map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {!planRunId && (
+              <p className="rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-700 dark:border-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
+                {t('Mrp.Workbench.Queue.CommitToRelease')}
+              </p>
+            )}
+            {actionMessages.isLoading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
+            ) : (
+              <ActionMessageQueue
+                messages={messages}
+                locale={locale}
+                isReleasing={release.isPending}
+                canRelease={!!planRunId}
+                onReleaseSelected={handleRelease}
+                onDismiss={handleDismiss}
+                onOpenInGrid={(productId) => {
+                  setSelectedProductId(productId);
+                  setTab('grid');
+                }}
+              />
+            )}
+          </div>
+        )}
+
+        {tab === 'impact' && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('Mrp.Workbench.ChangeImpact.Help')}
+            </p>
+            {!planRunId && (
+              <p className="rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-700 dark:border-warning-700 dark:bg-warning-500/10 dark:text-warning-300">
+                {t('Mrp.Workbench.ChangeImpact.CommitRequired')}
+              </p>
+            )}
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t('Mrp.Workbench.ChangeImpact.Source')}
+                </span>
+                <select
+                  value={impactSourceId}
+                  onChange={(e) => setImpactSourceId(e.target.value)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                >
+                  <option value="">{t('Mrp.Workbench.ChangeImpact.SelectSource')}</option>
+                  {impactSources.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={!planRunId || !impactSourceId}
+                onClick={() => {
+                  const selected = impactSources.find((s) => s.id === impactSourceId);
+                  setImpactQuery({ id: impactSourceId, label: selected?.label ?? impactSourceId });
+                }}
+                className="rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-500 disabled:cursor-not-allowed disabled:bg-primary-400"
+              >
+                {t('Mrp.Workbench.ChangeImpact.Analyze')}
+              </button>
+            </div>
+            <ChangeImpactView
+              result={changeImpact.data?.data ?? null}
+              locale={locale}
+              sourceLabel={impactQuery?.label}
+              productInfo={impactProductInfo}
+              isLoading={changeImpact.isLoading && !!impactQuery}
+            />
+          </div>
+        )}
+
+        {tab === 'distribution' && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('Mrp.Workbench.Distribution.Help')}
+            </p>
+            <TransferSuggestionsView
+              result={transferSuggestions.data?.data ?? null}
+              locale={locale}
+              isLoading={transferSuggestions.isLoading}
+              onExecute={handleExecuteTransfer}
+              executingKey={executingTransferKey}
+              isExecuting={executeTransfer.isPending}
+            />
+          </div>
+        )}
+
+        {tab === 'capacity' && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t('Mrp.Workbench.Capacity.Help')}
+            </p>
+            <CapacityLoadView
+              result={capacityLoad.data?.data ?? null}
+              locale={locale}
+              isLoading={capacityLoad.isLoading}
+            />
+          </div>
+        )}
+
+        {tab === 'runs' && (
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <table className="min-w-full text-xs">
+              <thead className="bg-slate-50 text-left text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                <tr>
+                  <th scope="col" className="px-3 py-2">
+                    {t('Mrp.Workbench.Runs.Number')}
+                  </th>
+                  <th scope="col" className="px-3 py-2">
+                    {t('Mrp.Workbench.Runs.AsOf')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right">
+                    {t('Mrp.Workbench.Runs.Products')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right">
+                    {t('Mrp.Workbench.Runs.PlannedOrders')}
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-right">
+                    {t('Mrp.Workbench.Runs.Exceptions')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.map((r) => (
+                  <tr key={r.id} className="border-t border-slate-100 dark:border-slate-800">
+                    <td className="px-3 py-2 font-mono font-semibold text-slate-800 dark:text-slate-100">
+                      {r.number}
+                    </td>
+                    <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
+                      {formatDateTime(r.asOfDateUtc, locale)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{r.productsEvaluated}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{r.plannedOrderCount}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{r.actionMessageCount}</td>
+                  </tr>
+                ))}
+                {!planRuns.isLoading && runs.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-6 text-center text-slate-500 dark:text-slate-400"
+                    >
+                      {t('Mrp.Workbench.Runs.Empty')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {selectedProductId && (
+          <PeggingDrawer
+            item={drawerItem}
+            pegging={pegging.data?.data ?? []}
+            planRunId={planRunId}
+            locale={locale}
+            isFirming={firm.isPending || firmProduction.isPending}
+            isReleasing={release.isPending || releaseProduction.isPending}
+            isCompleting={completeProduction.isPending}
+            onClose={() => setSelectedProductId(null)}
+            onFirm={handleDrawerFirm}
+            onRelease={handleDrawerRelease}
+            onComplete={handleDrawerComplete}
+          />
+        )}
+      </div>
+    </ListPageTemplate>
   );
 };
 

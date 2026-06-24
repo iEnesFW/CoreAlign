@@ -1,0 +1,139 @@
+# CustomerPortal (CoreAlign UI)
+
+"CustomerPortal" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "CustomerPortal" area (English / Türkçe):
+
+- Back / Geri
+- Cancel / İptal
+- Close menu / Menüyü kapat
+- Could not load data. / Veriler yüklenemedi.
+- Loading... / Yükleniyor...
+- Log out / Çıkış yap
+- Next / Sonraki
+- No data yet / Henüz veri yok
+- Notifications / Bildirimler
+- Open menu / Menüyü aç
+- Customer portal / Müşteri Portalı
+- Previous / Önceki
+- Submitting... / Gönderiliyor...
+- View all / Tümünü gör
+- Invoices / Faturalar
+- Service tickets / Servis talepleri
+- Recent invoices / Son faturalar
+- Recent payments / Son tahsilatlar
+- Recent service tickets / Son servis talepleri
+- A quick overview of your projects, warranties and invoices. / Projeleriniz, garantileriniz ve faturalarınıza hızlı bir bakış.
+- Active warranties / Aktif garantiler
+- Welcome, {{name}} / Hoş geldiniz, {{name}}
+- Download PDF / PDF indir
+- Outstanding / Bakiye
+- Due date / Vade tarihi
+- You have no invoices. / Faturanız bulunmuyor.
+- Issue date / Düzenleme tarihi
+- Invoices / Faturalar
+- Paid / Ödenen
+- Pay now / Şimdi öde
+- Cancelled / İptal
+- Draft / Taslak
+- Issued / Düzenlendi
+- Overdue / Vadesi Geçti
+- Paid / Ödendi
+- Partially paid / Kısmi Ödenmiş
+- Sent / Gönderildi
+- Void / İptal (Geçersiz)
+- Total / Toplam
+- Dashboard / Genel Bakış
+- Invoices / Faturalar
+- Payments / Ödemeler
+- Profile / Profil
+- Projects / Projeler
+- Service tickets / Servis Talepleri
+- Warranty / Garanti
+- No payments yet. / Henüz ödeme yok.
+- Invoice ID / Fatura ID
+- Could not start the payment. Please try again. / Ödeme başlatılamadı. Lütfen tekrar deneyin.
+- Pay an invoice online / Online fatura ödeme
+- Paste the invoice ID you want to pay. You can find it from the invoice detail page. / Ödemek istediğiniz faturanın ID'sini yapıştırın. Fatura detay sayfasından bulabilirsiniz.
+- Invoice ID is required. / Fatura ID zorunludur.
+- Payments / Ödemeler
+- Bank transfer / Banka Havalesi
+- Cash / Nakit
+- Check / Çek
+- Credit card / Kredi Kartı
+- Debit card / Banka Kartı
+- Online
+- Other / Diğer
+- Promissory note / Senet
+- Pay an invoice / Fatura öde
+- Pay now / Şimdi öde
+- Confirmed / Onaylı
+- Draft / Taslak
+- Fully applied / Tam Uygulanmış
+- Partially applied / Kısmi Uygulanmış
+- Refunded / İade Edildi
+- Void / Geçersiz
+- Email / E-posta
+- Name / Ad
+- Choose how we contact you about your warranties, tickets and invoices. / Garantileriniz, talepleriniz ve faturalarınız hakkında sizinle nasıl iletişim kuracağımızı seçin.
+- Notification preferences / Bildirim tercihleri
+- Account / Hesap
+- Profile / Profil
+- Username / Kullanıcı adı
+- Code / Kod
+- No projects yet. / Henüz proje yok.
+- Last updated / Son güncelleme
+- My projects / Projelerim
+- Panels / Paneller
+- Project details are read-only in the customer portal. / Proje detayları müşteri portalında salt okunurdur.
+- Site city / Şantiye ili
+- Site district / Şantiye ilçesi
+- Approved / Onaylandı
+- Awaiting approval / Onay Bekliyor
+- Cancelled / İptal
+- Closed / Kapandı
+- Draft / Taslak
+- In design / Tasarımda
+- In production / Üretimde
+- Installed / Montajı Yapıldı
+- Shipped / Sevk Edildi
+- Grand total / Genel toplam
+- Quote valid until / Teklif geçerlilik tarihi
+- Description / Açıklama
+- You have no service tickets. / Servis talebiniz bulunmuyor.
+- Describe the issue / Sorunu açıklayın
+- Priority / Öncelik
+- Title / Başlık
+- Type / Tür
+- Service tickets / Servis talepleri
+- New ticket / Yeni talep
+- Open a new service ticket / Yeni servis talebi oluştur
+- High / Yüksek
+- Low / Düşük
+- Normal
+- Urgent / Acil
+- Resolution / Çözüm
+- Assigned / Atandı
+- Cancelled / İptal
+- In progress / Devam Ediyor
+- Open / Açık
+- Resolved / Çözüldü
+- Submit ticket / Talebi gönder
+- Inspection / Keşif
+- Out-of-warranty repair / Garanti dışı onarım
+- Preventive maintenance / Periyodik bakım
+- Warranty claim / Garanti talebi
+- Coverage / Kapsam
+- Full service / Tam servis
+- Installation / Montaj
+- Limited / Sınırlı
+- Manufacturer defect / Üretici kusuru
+- You have no active warranty contracts. / Aktif garanti sözleşmeniz bulunmuyor.
+- End date / Bitiş tarihi
+- My warranties / Garantilerim
+- Warranty months / Garanti süresi (ay)
+- Notes / Notlar
+- Period / Dönem
+- Start date / Başlangıç tarihi
+- Active / Aktif
+- Cancelled / İptal
+- Expired / Süresi Doldu
+- Suspended / Askıda

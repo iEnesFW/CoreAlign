@@ -1,3 +1,4 @@
+using CoreAlign.Application.Common.Audit;
 using CoreAlign.Domain.Entities.Compliance;
 using MediatR;
 
@@ -56,13 +57,13 @@ public sealed record AuditLogSearchCriteria(
 
 public static class EntityAuditLogMapper
 {
-    public static EntityAuditLogDto ToDto(EntityAuditLog log) => new(
+    public static EntityAuditLogDto ToDto(EntityAuditLog log, IAuditFieldRedactor redactor) => new(
         log.Id,
         log.EntityType,
         log.EntityId,
         log.Action.ToString(),
-        log.BeforeJson,
-        log.AfterJson,
+        redactor.RedactJson(log.BeforeJson),
+        redactor.RedactJson(log.AfterJson),
         log.UserId,
         log.ChangedAtUtc,
         log.CorrelationId,
@@ -73,10 +74,15 @@ public static class EntityAuditLogMapper
 public sealed class GetEntityAuditTimelineHandler : IRequestHandler<GetEntityAuditTimelineQuery, IReadOnlyList<EntityAuditLogDto>>
 {
     private readonly IEntityAuditLogRepository _repo;
-    public GetEntityAuditTimelineHandler(IEntityAuditLogRepository repo) => _repo = repo;
+    private readonly IAuditFieldRedactor _redactor;
+    public GetEntityAuditTimelineHandler(IEntityAuditLogRepository repo, IAuditFieldRedactor redactor)
+    {
+        _repo = repo;
+        _redactor = redactor;
+    }
     public async Task<IReadOnlyList<EntityAuditLogDto>> Handle(GetEntityAuditTimelineQuery query, CancellationToken cancellationToken)
     {
         var items = await _repo.GetTimelineAsync(query.EntityType, query.EntityId, cancellationToken);
-        return items.Select(EntityAuditLogMapper.ToDto).ToArray();
+        return items.Select(log => EntityAuditLogMapper.ToDto(log, _redactor)).ToArray();
     }
 }

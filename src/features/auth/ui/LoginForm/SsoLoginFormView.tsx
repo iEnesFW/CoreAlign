@@ -29,11 +29,16 @@ export const SsoLoginFormView = ({ onBack, defaultIdpName = 'default' }: Props) 
   return (
     <div className={`${styles.ssoView} animate-in fade-in slide-in-from-right-4 duration-300`}>
       <div className={styles.ssoHeader}>
-        <button type="button" onClick={onBack} className={styles.backButton} aria-label="Back">
+        <button
+          type="button"
+          onClick={onBack}
+          className={styles.backButton}
+          aria-label={t('Sso.Login.Back', { defaultValue: 'Back' })}
+        >
           <ArrowLeft size={18} />
         </button>
         <div className="flex items-center gap-2">
-          <KeyRound size={18} className="text-indigo-500" />
+          <KeyRound size={18} className="text-primary-500" />
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             {t('Sso.Login.OpenButton', { defaultValue: 'SSO ile Giriş' })}
           </h3>
@@ -45,14 +50,14 @@ export const SsoLoginFormView = ({ onBack, defaultIdpName = 'default' }: Props) 
           label={t('Sso.Login.TenantSlug', { defaultValue: 'Tenant Kodu' })}
           value={tenantSlug}
           onChange={(e) => setTenantSlug(e.target.value)}
-          placeholder="Örn: acme"
+          placeholder={t('Sso.Login.TenantSlugPlaceholder', { defaultValue: 'Örn: acme' })}
           autoFocus
         />
         <Input
           label={t('Sso.Login.IdpName', { defaultValue: 'Sağlayıcı Adı' })}
           value={idpName}
           onChange={(e) => setIdpName(e.target.value)}
-          placeholder="Örn: azure-ad, okta"
+          placeholder={t('Sso.Login.IdpNamePlaceholder', { defaultValue: 'Örn: azure-ad, okta' })}
         />
 
         <div className="flex gap-2 mt-1">
@@ -61,7 +66,7 @@ export const SsoLoginFormView = ({ onBack, defaultIdpName = 'default' }: Props) 
             onClick={() => setProtocol('oidc')}
             className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
               protocol === 'oidc'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
                 : 'border border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >
@@ -72,7 +77,7 @@ export const SsoLoginFormView = ({ onBack, defaultIdpName = 'default' }: Props) 
             onClick={() => setProtocol('saml')}
             className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-all ${
               protocol === 'saml'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20'
                 : 'border border-slate-300 text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
             }`}
           >

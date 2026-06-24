@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, ShieldCheck, Trash2, X } from 'lucide-react';
+import { FileText, Plus, ShieldCheck, Trash2, Wallet } from 'lucide-react';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
-import { ProductPicker } from '@/features/orders/ui/ProductPicker';
+import { ProductPicker } from '@/shared/ui/ProductPicker';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import { usePurchaseOrdersQuery } from '../hooks/usePurchaseOrders';
 import {
@@ -20,10 +23,6 @@ import type { PurchaseOrder, PurchaseOrderLine } from '../model/purchaseOrder.ty
 import type { VendorBill, VendorBillLineInput } from '../model/vendorBilling.types';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
-const inputClass =
-  'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100';
-const cellInputClass =
-  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 
 interface BillLineState {
   key: string;
@@ -58,41 +57,8 @@ const billToLineState = (line: NonNullable<VendorBill['lines']>[number]): BillLi
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-const Shell = ({
-  title,
-  onClose,
-  children,
-  wide,
-}: {
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-  wide?: boolean;
-}) => {
-  const { t } = useTranslation();
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-      <div
-        className={`flex max-h-[92vh] w-full flex-col rounded-lg bg-white shadow-xl dark:bg-slate-900 ${
-          wide ? 'max-w-5xl' : 'max-w-2xl'
-        }`}
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-            aria-label={t('common.close', { defaultValue: 'Kapat' })}
-          >
-            <X size={16} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-};
+const cellInputClass =
+  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-right text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 
 export const VendorBillFormModal = ({
   bill,
@@ -269,362 +235,358 @@ export const VendorBillFormModal = ({
     : t('ap.bill.newTitle', { defaultValue: 'Yeni Tedarikçi Faturası' });
 
   return (
-    <Shell title={title} onClose={onClose} wide={lineMode}>
-      <form onSubmit={submit} className="dense-form flex min-h-0 flex-1 flex-col">
-        <div className="space-y-3 overflow-y-auto p-4">
-          {bill?.status === 'PendingApproval' && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-xs text-orange-800 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-300">
-              <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck size={13} />
-                {bill.holdReason
-                  ? t('ap.bill.holdReason', {
-                      defaultValue: 'Onay bekliyor — {{r}}',
-                      r: bill.holdReason,
-                    })
-                  : t('ap.bill.pendingApproval', {
-                      defaultValue: 'Bu fatura onay bekliyor.',
-                    })}
-              </span>
-              {canApprove && (
-                <button
-                  type="button"
-                  onClick={approve}
-                  disabled={billAction.isPending}
-                  className="inline-flex items-center gap-1 rounded bg-orange-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-orange-700 disabled:opacity-50"
-                >
-                  <ShieldCheck size={12} />
-                  {t('ap.actions.approve', { defaultValue: 'Onayla ve muhasebeleştir' })}
-                </button>
-              )}
-            </div>
+    <Modal
+      open={true}
+      title={title}
+      icon={<FileText size={18} />}
+      onClose={onClose}
+      size={lineMode ? '2xl' : 'xl'}
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          {editable && (
+            <Button type="submit" form="vendor-bill-form" isLoading={pending}>
+              {pending
+                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+                : t('common.save', { defaultValue: 'Kaydet' })}
+            </Button>
           )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.vendor', { defaultValue: 'Tedarikçi' })} *
-              </label>
-              <select
-                value={vendorId}
-                onChange={(e) => {
-                  setVendorId(e.target.value);
-                  setPurchaseOrderId('');
-                }}
-                disabled={!editable || isEdit}
-                className={inputClass}
+        </>
+      }
+    >
+      <form id="vendor-bill-form" onSubmit={submit} className="dense-form space-y-3">
+        {bill?.status === 'PendingApproval' && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded border border-warning-200 bg-warning-50 px-3 py-2 text-xs text-warning-800 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-300">
+            <span className="inline-flex items-center gap-1.5">
+              <ShieldCheck size={13} />
+              {bill.holdReason
+                ? t('ap.bill.holdReason', {
+                    defaultValue: 'Onay bekliyor — {{r}}',
+                    r: bill.holdReason,
+                  })
+                : t('ap.bill.pendingApproval', {
+                    defaultValue: 'Bu fatura onay bekliyor.',
+                  })}
+            </span>
+            {canApprove && (
+              <button
+                type="button"
+                onClick={approve}
+                disabled={billAction.isPending}
+                className="inline-flex items-center gap-1 rounded bg-warning-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-warning-700 disabled:opacity-50"
               >
-                <option value="">{t('ap.bill.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
+                <ShieldCheck size={12} />
+                {t('ap.actions.approve', { defaultValue: 'Onayla ve muhasebeleştir' })}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.vendor', { defaultValue: 'Tedarikçi' })} *
+            </label>
+            <select
+              value={vendorId}
+              onChange={(e) => {
+                setVendorId(e.target.value);
+                setPurchaseOrderId('');
+              }}
+              disabled={!editable || isEdit}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
+            >
+              <option value="">{t('ap.bill.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.purchaseOrder', { defaultValue: 'Satınalma Siparişi' })}
+            </label>
+            <div className="mt-1 flex gap-2">
+              <select
+                value={purchaseOrderId}
+                onChange={(e) => setPurchaseOrderId(e.target.value)}
+                disabled={!editable || !vendorId}
+                className={fieldBaseClasses(false)}
+              >
+                <option value="">
+                  {t('ap.bill.noPurchaseOrder', { defaultValue: 'Sipariş bağlama (opsiyonel)' })}
+                </option>
+                {purchaseOrders.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.poNumber} · {formatCurrency(p.total, locale, p.currency)}
                   </option>
                 ))}
               </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.purchaseOrder', { defaultValue: 'Satınalma Siparişi' })}
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={purchaseOrderId}
-                  onChange={(e) => setPurchaseOrderId(e.target.value)}
-                  disabled={!editable || !vendorId}
-                  className={inputClass}
-                >
-                  <option value="">
-                    {t('ap.bill.noPurchaseOrder', { defaultValue: 'Sipariş bağlama (opsiyonel)' })}
-                  </option>
-                  {purchaseOrders.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.poNumber} · {formatCurrency(p.total, locale, p.currency)}
-                    </option>
-                  ))}
-                </select>
-                {editable && selectedPo && poLines.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={loadFromPo}
-                    className="shrink-0 self-end rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    {t('ap.bill.loadFromPo', { defaultValue: 'Siparişten doldur' })}
-                  </button>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.number', { defaultValue: 'Fatura No' })} *
-              </label>
-              <input
-                value={billNumber}
-                onChange={(e) => setBillNumber(e.target.value)}
-                maxLength={64}
-                disabled={!editable}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.currency', { defaultValue: 'Para Birimi' })}
-              </label>
-              <input
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-                maxLength={3}
-                disabled={!editable}
-                className={`${inputClass} uppercase`}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.date', { defaultValue: 'Fatura Tarihi' })}
-              </label>
-              <input
-                type="date"
-                value={billDate}
-                onChange={(e) => setBillDate(e.target.value)}
-                disabled={!editable}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                {t('ap.bill.due', { defaultValue: 'Vade Tarihi' })}
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                disabled={!editable}
-                className={inputClass}
-              />
-            </div>
-            {!lineMode && (
-              <>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })} *
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={subtotal}
-                    onChange={(e) => setSubtotal(e.target.value)}
-                    disabled={!editable}
-                    className={`${inputClass} text-right`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="any"
-                    value={taxAmount}
-                    onChange={(e) => setTaxAmount(e.target.value)}
-                    disabled={!editable}
-                    className={`${inputClass} text-right`}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-
-          <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={lineMode}
-              onChange={(e) => setLineMode(e.target.checked)}
-              disabled={!editable}
-              className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
-            />
-            {t('ap.bill.itemized', { defaultValue: 'Kalemli giriş (ürün satırları)' })}
-          </label>
-
-          {lineMode && (
-            <div className="space-y-2">
-              <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-                <table className="w-full text-sm">
-                  <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
-                    <tr>
-                      <th className="px-2 py-1.5 text-left">
-                        {t('ap.bill.lineProduct', { defaultValue: 'Ürün' })}
-                      </th>
-                      {selectedPo && (
-                        <th className="w-44 px-2 py-1.5 text-left">
-                          {t('ap.bill.linePoLine', { defaultValue: 'Sipariş Satırı' })}
-                        </th>
-                      )}
-                      <th className="w-24 px-2 py-1.5 text-right">
-                        {t('ap.bill.lineQty', { defaultValue: 'Miktar' })}
-                      </th>
-                      <th className="w-28 px-2 py-1.5 text-right">
-                        {t('ap.bill.lineUnitPrice', { defaultValue: 'Birim Fiyat' })}
-                      </th>
-                      <th className="w-20 px-2 py-1.5 text-right">
-                        {t('ap.bill.lineTax', { defaultValue: 'KDV %' })}
-                      </th>
-                      <th className="w-28 px-2 py-1.5 text-right">
-                        {t('ap.bill.lineTotal', { defaultValue: 'Satır Toplamı' })}
-                      </th>
-                      <th className="w-8 px-2 py-1.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lines.map((l) => {
-                      const net = (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0);
-                      const lineTotal = net * (1 + (Number(l.taxRatePercent) || 0) / 100);
-                      return (
-                        <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
-                          <td className="px-2 py-1.5">
-                            <ProductPicker
-                              products={products}
-                              value={l.productId}
-                              disabled={!editable}
-                              onSelect={(productId) => onSelectProduct(l.key, productId)}
-                            />
-                          </td>
-                          {selectedPo && (
-                            <td className="px-2 py-1.5">
-                              <select
-                                value={l.purchaseOrderLineId}
-                                onChange={(e) => selectPoLine(l.key, e.target.value)}
-                                disabled={!editable}
-                                className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                              >
-                                <option value="">
-                                  {t('ap.bill.noPoLine', { defaultValue: '— eşleşme yok —' })}
-                                </option>
-                                {poLines.map((p) => (
-                                  <option key={p.id} value={p.id}>
-                                    {poLineLabel(p)}
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-                          )}
-                          <td className="px-2 py-1.5">
-                            <input
-                              type="number"
-                              min={0}
-                              step="any"
-                              value={l.quantity}
-                              onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
-                              disabled={!editable}
-                              className={cellInputClass}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <input
-                              type="number"
-                              min={0}
-                              step="any"
-                              value={l.unitPrice}
-                              onChange={(e) => updateLine(l.key, { unitPrice: e.target.value })}
-                              disabled={!editable}
-                              className={cellInputClass}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <input
-                              type="number"
-                              min={0}
-                              max={100}
-                              step="any"
-                              value={l.taxRatePercent}
-                              onChange={(e) =>
-                                updateLine(l.key, { taxRatePercent: e.target.value })
-                              }
-                              disabled={!editable}
-                              className={cellInputClass}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
-                            {formatCurrency(round2(lineTotal), locale, currency)}
-                          </td>
-                          <td className="px-2 py-1.5 text-center">
-                            <button
-                              type="button"
-                              onClick={() => removeLine(l.key)}
-                              disabled={!editable || lines.length === 1}
-                              className="rounded p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-30 dark:hover:bg-rose-500/10"
-                              aria-label={t('common.delete', { defaultValue: 'Sil' })}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {editable && (
+              {editable && selectedPo && poLines.length > 0 && (
                 <button
                   type="button"
-                  onClick={addLine}
-                  className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                  onClick={loadFromPo}
+                  className="shrink-0 self-end rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                 >
-                  <Plus size={12} />
-                  {t('ap.bill.addLine', { defaultValue: 'Satır ekle' })}
+                  {t('ap.bill.loadFromPo', { defaultValue: 'Siparişten doldur' })}
                 </button>
               )}
-            </div>
-          )}
-
-          <div className="space-y-0.5 text-right text-sm">
-            <div className="text-slate-500 dark:text-slate-400">
-              {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
-              {formatCurrency(headerSubtotal, locale, currency)}
-            </div>
-            <div className="text-slate-500 dark:text-slate-400">
-              {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}:{' '}
-              {formatCurrency(headerTax, locale, currency)}
-            </div>
-            <div className="font-bold text-slate-900 dark:text-slate-100">
-              {t('ap.bill.total', { defaultValue: 'Genel Toplam' })}:{' '}
-              {formatCurrency(total, locale, currency)}
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('ap.bill.notes', { defaultValue: 'Açıklama' })}
+              {t('ap.bill.number', { defaultValue: 'Fatura No' })} *
             </label>
             <input
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              maxLength={200}
+              value={billNumber}
+              onChange={(e) => setBillNumber(e.target.value)}
+              maxLength={64}
               disabled={!editable}
-              className={inputClass}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
             />
           </div>
-        </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t('common.cancel', { defaultValue: 'İptal' })}
-          </button>
-          {editable && (
-            <button
-              type="submit"
-              disabled={pending}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {pending
-                ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-                : t('common.save', { defaultValue: 'Kaydet' })}
-            </button>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.currency', { defaultValue: 'Para Birimi' })}
+            </label>
+            <input
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+              maxLength={3}
+              disabled={!editable}
+              className={`mt-1 uppercase ${fieldBaseClasses(false)}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.date', { defaultValue: 'Fatura Tarihi' })}
+            </label>
+            <input
+              type="date"
+              value={billDate}
+              onChange={(e) => setBillDate(e.target.value)}
+              disabled={!editable}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+              {t('ap.bill.due', { defaultValue: 'Vade Tarihi' })}
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              disabled={!editable}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
+            />
+          </div>
+          {!lineMode && (
+            <>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })} *
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={subtotal}
+                  onChange={(e) => setSubtotal(e.target.value)}
+                  disabled={!editable}
+                  className={`mt-1 text-right ${fieldBaseClasses(false)}`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={taxAmount}
+                  onChange={(e) => setTaxAmount(e.target.value)}
+                  disabled={!editable}
+                  className={`mt-1 text-right ${fieldBaseClasses(false)}`}
+                />
+              </div>
+            </>
           )}
         </div>
+
+        <label className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={lineMode}
+            onChange={(e) => setLineMode(e.target.checked)}
+            disabled={!editable}
+            className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-slate-600"
+          />
+          {t('ap.bill.itemized', { defaultValue: 'Kalemli giriş (ürün satırları)' })}
+        </label>
+
+        {lineMode && (
+          <div className="space-y-2">
+            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
+                  <tr>
+                    <th className="px-2 py-1.5 text-left">
+                      {t('ap.bill.lineProduct', { defaultValue: 'Ürün' })}
+                    </th>
+                    {selectedPo && (
+                      <th className="w-44 px-2 py-1.5 text-left">
+                        {t('ap.bill.linePoLine', { defaultValue: 'Sipariş Satırı' })}
+                      </th>
+                    )}
+                    <th className="w-24 px-2 py-1.5 text-right">
+                      {t('ap.bill.lineQty', { defaultValue: 'Miktar' })}
+                    </th>
+                    <th className="w-28 px-2 py-1.5 text-right">
+                      {t('ap.bill.lineUnitPrice', { defaultValue: 'Birim Fiyat' })}
+                    </th>
+                    <th className="w-20 px-2 py-1.5 text-right">
+                      {t('ap.bill.lineTax', { defaultValue: 'KDV %' })}
+                    </th>
+                    <th className="w-28 px-2 py-1.5 text-right">
+                      {t('ap.bill.lineTotal', { defaultValue: 'Satır Toplamı' })}
+                    </th>
+                    <th className="w-8 px-2 py-1.5" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {lines.map((l) => {
+                    const net = (Number(l.quantity) || 0) * (Number(l.unitPrice) || 0);
+                    const lineTotal = net * (1 + (Number(l.taxRatePercent) || 0) / 100);
+                    return (
+                      <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
+                        <td className="px-2 py-1.5">
+                          <ProductPicker
+                            products={products}
+                            value={l.productId}
+                            disabled={!editable}
+                            onSelect={(productId) => onSelectProduct(l.key, productId)}
+                          />
+                        </td>
+                        {selectedPo && (
+                          <td className="px-2 py-1.5">
+                            <select
+                              value={l.purchaseOrderLineId}
+                              onChange={(e) => selectPoLine(l.key, e.target.value)}
+                              disabled={!editable}
+                              className="w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            >
+                              <option value="">
+                                {t('ap.bill.noPoLine', { defaultValue: '— eşleşme yok —' })}
+                              </option>
+                              {poLines.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {poLineLabel(p)}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                        )}
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            step="any"
+                            value={l.quantity}
+                            onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
+                            disabled={!editable}
+                            className={cellInputClass}
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            step="any"
+                            value={l.unitPrice}
+                            onChange={(e) => updateLine(l.key, { unitPrice: e.target.value })}
+                            disabled={!editable}
+                            className={cellInputClass}
+                          />
+                        </td>
+                        <td className="px-2 py-1.5">
+                          <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            step="any"
+                            value={l.taxRatePercent}
+                            onChange={(e) => updateLine(l.key, { taxRatePercent: e.target.value })}
+                            disabled={!editable}
+                            className={cellInputClass}
+                          />
+                        </td>
+                        <td className="px-2 py-1.5 text-right font-mono text-xs text-slate-700 dark:text-slate-300">
+                          {formatCurrency(round2(lineTotal), locale, currency)}
+                        </td>
+                        <td className="px-2 py-1.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeLine(l.key)}
+                            disabled={!editable || lines.length === 1}
+                            className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-30 dark:hover:bg-danger-500/10"
+                            aria-label={t('common.delete', { defaultValue: 'Sil' })}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {editable && (
+              <button
+                type="button"
+                onClick={addLine}
+                className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Plus size={12} />
+                {t('ap.bill.addLine', { defaultValue: 'Satır ekle' })}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-0.5 text-right text-sm">
+          <div className="text-slate-500 dark:text-slate-400">
+            {t('ap.bill.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
+            {formatCurrency(headerSubtotal, locale, currency)}
+          </div>
+          <div className="text-slate-500 dark:text-slate-400">
+            {t('ap.bill.tax', { defaultValue: 'KDV Tutarı' })}:{' '}
+            {formatCurrency(headerTax, locale, currency)}
+          </div>
+          <div className="font-bold text-slate-900 dark:text-slate-100">
+            {t('ap.bill.total', { defaultValue: 'Genel Toplam' })}:{' '}
+            {formatCurrency(total, locale, currency)}
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+            {t('ap.bill.notes', { defaultValue: 'Açıklama' })}
+          </label>
+          <input
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={200}
+            disabled={!editable}
+            className={`mt-1 ${fieldBaseClasses(false)}`}
+          />
+        </div>
       </form>
-    </Shell>
+    </Modal>
   );
 };
 
@@ -679,11 +641,32 @@ export const VendorPaymentModal = ({
   };
 
   return (
-    <Shell
+    <Modal
+      open={true}
       title={`${t('ap.pay.title', { defaultValue: 'Tedarikçi Ödemesi' })} — ${bill.billNumber}`}
+      icon={<Wallet size={18} />}
       onClose={onClose}
+      size="xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button
+            type="submit"
+            form="vendor-payment-form"
+            variant="primary"
+            className="bg-success-600 hover:bg-success-700"
+            isLoading={payMutation.isPending}
+          >
+            {payMutation.isPending
+              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
+              : t('ap.pay.submit', { defaultValue: 'Ödeme Yap' })}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={submit} className="dense-form space-y-3 p-4">
+      <form id="vendor-payment-form" onSubmit={submit} className="dense-form space-y-3">
         <div className="rounded bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
           {bill.vendorName} · {t('ap.pay.due', { defaultValue: 'Kalan borç' })}:{' '}
           <span className="font-semibold">
@@ -701,7 +684,7 @@ export const VendorPaymentModal = ({
               step="any"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className={`${inputClass} text-right`}
+              className={`mt-1 text-right ${fieldBaseClasses(false)}`}
             />
           </div>
           <div>
@@ -712,7 +695,7 @@ export const VendorPaymentModal = ({
               type="date"
               value={paymentDate}
               onChange={(e) => setPaymentDate(e.target.value)}
-              className={inputClass}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
             />
           </div>
           <div className="col-span-2">
@@ -722,7 +705,7 @@ export const VendorPaymentModal = ({
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className={inputClass}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
             >
               <option value="BankTransfer">
                 {t('ap.pay.bankTransfer', { defaultValue: 'Havale/EFT' })}
@@ -740,29 +723,11 @@ export const VendorPaymentModal = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               maxLength={200}
-              className={inputClass}
+              className={`mt-1 ${fieldBaseClasses(false)}`}
             />
           </div>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {t('common.cancel', { defaultValue: 'İptal' })}
-          </button>
-          <button
-            type="submit"
-            disabled={payMutation.isPending}
-            className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-          >
-            {payMutation.isPending
-              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-              : t('ap.pay.submit', { defaultValue: 'Ödeme Yap' })}
-          </button>
-        </div>
       </form>
-    </Shell>
+    </Modal>
   );
 };

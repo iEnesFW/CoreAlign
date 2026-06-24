@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Check, MapPin, Pencil, Plus, Star, Trash2, X } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
-import { AddressRegionFields } from '@/features/lookups/ui/AddressRegionFields';
+import { AddressRegionFields } from '@/shared/ui/form/AddressRegionFields';
 import {
   useCreateCustomerAddress,
   useCustomerAddressesQuery,
@@ -148,7 +148,7 @@ export const CustomerAddressesTab = ({ customerId }: Props) => {
                     {a.label}
                   </span>
                   {a.isPrimary && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-warning-100 px-1.5 py-0.5 text-[10px] font-medium text-warning-700 dark:bg-warning-500/20 dark:text-warning-300">
                       <Star size={9} fill="currentColor" />
                       {t('customers.detail.addresses.primary')}
                     </span>
@@ -166,7 +166,7 @@ export const CustomerAddressesTab = ({ customerId }: Props) => {
                 <button
                   type="button"
                   onClick={() => startEdit(a)}
-                  className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
+                  className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-primary-600 dark:hover:bg-slate-800 dark:hover:text-primary-400"
                   aria-label={t('common.edit')}
                 >
                   <Pencil size={12} />
@@ -174,7 +174,7 @@ export const CustomerAddressesTab = ({ customerId }: Props) => {
                 <button
                   type="button"
                   onClick={() => remove(a)}
-                  className="rounded p-1 text-slate-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                  className="rounded p-1 text-slate-500 hover:bg-danger-50 hover:text-danger-600 dark:hover:bg-danger-500/10 dark:hover:text-danger-400"
                   aria-label={t('common.delete')}
                 >
                   <Trash2 size={12} />
@@ -225,7 +225,7 @@ const AddressForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/30 p-3 dark:border-indigo-500/30 dark:bg-indigo-500/5"
+      className="space-y-2 rounded-lg border border-primary-200 bg-primary-50/30 p-3 dark:border-primary-500/30 dark:bg-primary-500/5"
     >
       <Field
         label={t('customers.detail.addresses.fields.label')}
@@ -234,7 +234,7 @@ const AddressForm = ({
         <input
           {...register('label')}
           placeholder={t('customers.detail.addresses.fields.labelPlaceholder')}
-          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </Field>
       <Field
@@ -243,7 +243,7 @@ const AddressForm = ({
       >
         <input
           {...register('line1')}
-          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </Field>
       <Field
@@ -252,7 +252,7 @@ const AddressForm = ({
       >
         <input
           {...register('line2')}
-          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </Field>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -275,7 +275,7 @@ const AddressForm = ({
         >
           <input
             {...register('postalCode')}
-            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />
         </Field>
       </div>
@@ -287,7 +287,7 @@ const AddressForm = ({
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
         >
           <Check size={12} />
           {t('common.save')}
@@ -319,6 +319,6 @@ const Field = ({
       {label}
     </span>
     {children}
-    {error && <span className="mt-0.5 block text-[10px] text-red-500">{error}</span>}
+    {error && <span className="mt-0.5 block text-[10px] text-danger-500">{error}</span>}
   </label>
 );

@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, Sun, Moon, User, Sliders, LogOut, Command } from 'lucide-react';
-import { useTheme } from '@/app/providers/ThemeProvider';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useTheme } from '@/app/providers/themeContext';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { useLogout } from '@/features/auth/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { CommandPalette } from '@/shared/ui/CommandPalette/CommandPalette';
@@ -14,6 +14,32 @@ import { FxRateBadge } from '@/features/fx/ui/FxRateBadge';
 interface NavbarProps {
   toggleSidebar: () => void;
 }
+
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  '': 'dashboard',
+  dashboard: 'dashboard',
+  customers: 'customers',
+  orders: 'orders',
+  invoices: 'invoices',
+  vendors: 'vendors',
+  products: 'products',
+  inventory: 'inventory',
+  mrp: 'mrp',
+  reports: 'reports',
+  settings: 'settings',
+  accounting: 'accounting',
+  warranty: 'warranty',
+  installation: 'installation',
+  purchasing: 'purchasing',
+  activity: 'activity',
+  profile: 'profile',
+  admin: 'admin',
+  marketplace: 'marketplace',
+  'glass-enclosure': 'glassEnclosure',
+};
+
+const iconButton =
+  'grid h-8 w-8 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100';
 
 export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { theme, toggleTheme } = useTheme();
@@ -28,7 +54,6 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const { t } = useTranslation();
   const commandItems = useCommandItems(navigate);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -39,7 +64,6 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Global Cmd/Ctrl+K opens the command palette.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -51,148 +75,165 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Format page title from pathname
-  const getPageTitle = () => {
-    const path = location.pathname.split('/')[1];
-    if (!path || path === 'dashboard') return 'Dashboard';
-    return path.charAt(0).toUpperCase() + path.slice(1);
-  };
+  const pageTitle = useMemo(() => {
+    const segment = location.pathname.replace(/^\/dashboard\/?/, '').split('/')[0] ?? '';
+    const key = PAGE_TITLE_KEYS[segment];
+    const fallback = segment
+      ? segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
+      : t('Navbar.pageTitles.dashboard', { defaultValue: 'Dashboard' });
+    return key ? t(`Navbar.pageTitles.${key}`, { defaultValue: fallback }) : fallback;
+  }, [location.pathname, t]);
 
   const handleLogout = () => {
     logout.mutate();
   };
 
+  const fallbackName = t('common.user', { defaultValue: 'User' });
   const initials =
     user && user.firstName && user.lastName
       ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
       : 'U';
-  const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'User';
+  const name = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : fallbackName;
+  const subtitle = user?.tenantName ?? user?.roles?.[0] ?? fallbackName;
 
   return (
-    <header className="h-12 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-md border-b border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between px-3 sticky top-0 z-30 transition-colors duration-200">
-      {/* Left section: Mobile menu & Page Title */}
-      <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-30 flex h-12 items-center justify-between gap-3 border-b border-slate-200/70 bg-white/70 px-3 backdrop-blur-xl transition-colors duration-200 supports-[backdrop-filter]:bg-white/60 sm:px-4 dark:border-white/5 dark:bg-shell/70 dark:supports-[backdrop-filter]:bg-shell/60">
+      <div className="flex min-w-0 items-center gap-2.5">
         <button
+          type="button"
           onClick={toggleSidebar}
-          className="p-1.5 -ml-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 lg:hidden rounded-[5px] focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors"
+          aria-label={t('Navbar.openMenu', { defaultValue: 'Open menu' })}
+          className={`-ml-1 lg:hidden ${iconButton}`}
         >
           <Menu size={18} />
         </button>
-        <div className="hidden sm:block">
-          <h1 className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
-            {getPageTitle()}
+        <div className="hidden min-w-0 items-center gap-2 sm:flex">
+          <span
+            aria-hidden="true"
+            className="h-4 w-1 rounded-full bg-gradient-to-b from-primary-500 to-accent-500"
+          />
+          <h1 className="truncate text-[13px] font-semibold tracking-tight text-slate-900 dark:text-white">
+            {pageTitle}
           </h1>
         </div>
       </div>
 
-      {/* Middle section: Search Bar */}
-      <div className="flex-1 max-w-md px-4 hidden md:block">
-        <div className="relative group">
-          <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-            <Search className="h-3.5 w-3.5 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
-          </div>
-          <input
-            type="text"
-            readOnly
-            onFocus={() => setPaletteOpen(true)}
-            onClick={() => setPaletteOpen(true)}
-            className="block w-full cursor-pointer pl-8 pr-10 py-1.5 border border-slate-200/60 dark:border-slate-700/60 rounded-[5px] leading-4 bg-slate-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:bg-white dark:focus:bg-[#0B0F19] focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500 text-xs transition-all duration-300 shadow-sm"
-            placeholder={t('common.search', { defaultValue: 'Search anything…' })}
-          />
-          <div className="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
-            <div className="flex items-center gap-0.5 text-slate-400 text-[10px] font-medium bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[3px] px-1 py-0.5 shadow-sm">
-              <Command size={10} />
-              <span>K</span>
-            </div>
-          </div>
-        </div>
+      <div className="hidden max-w-md flex-1 px-2 md:block">
+        <button
+          type="button"
+          onClick={() => setPaletteOpen(true)}
+          aria-label={t('Navbar.openSearch', { defaultValue: 'Search' })}
+          className="group flex w-full items-center gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/70 py-1.5 pl-3 pr-2 text-left shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-white hover:shadow focus:outline-none focus-visible:border-primary-400 focus-visible:ring-2 focus-visible:ring-primary-500/25 dark:border-white/5 dark:bg-white/[0.04] dark:hover:border-white/10 dark:hover:bg-white/[0.06]"
+        >
+          <Search className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-colors group-hover:text-primary-500" />
+          <span className="flex-1 truncate text-xs text-slate-400 dark:text-slate-500">
+            {t('common.search', { defaultValue: 'Search anything…' })}
+          </span>
+          <kbd className="hidden items-center gap-0.5 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 shadow-sm sm:inline-flex dark:border-white/10 dark:bg-white/5 dark:text-slate-400">
+            <Command size={10} />K
+          </kbd>
+        </button>
       </div>
 
-      {/* Right section: Actions & Profile */}
-      <div className="flex items-center gap-1.5">
-        {/* Live FX Rate */}
-        <div className="hidden lg:inline-flex">
+      <div className="flex items-center gap-1">
+        <div className="mr-1 hidden lg:inline-flex">
           <FxRateBadge currencyCode="USD" />
         </div>
 
-        {/* Mobile Search Icon */}
         <button
+          type="button"
           onClick={() => setPaletteOpen(true)}
-          aria-label={t('common.search', { defaultValue: 'Search' })}
-          className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 md:hidden rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label={t('Navbar.openSearch', { defaultValue: 'Search' })}
+          className={`md:hidden ${iconButton}`}
         >
           <Search size={16} />
         </button>
 
-        {/* Theme Toggle */}
         <button
+          type="button"
           onClick={toggleTheme}
-          className="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-500"
-          aria-label="Toggle theme"
+          className={iconButton}
+          aria-label={t('Navbar.toggleTheme', { defaultValue: 'Toggle theme' })}
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
-        {/* Notifications */}
         <NotificationBell />
 
-        {/* Profile Dropdown */}
         <div className="relative ml-1" ref={profileRef}>
           <button
+            type="button"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 focus:outline-none rounded-[5px] p-1 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all"
+            aria-haspopup="menu"
+            aria-expanded={isProfileOpen}
+            aria-label={t('Navbar.profileMenu', { defaultValue: 'Profile menu' })}
+            className="flex items-center gap-2 rounded-xl border border-transparent p-1 pr-1.5 transition-all hover:border-slate-200/80 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 dark:hover:border-white/10 dark:hover:bg-white/5"
           >
-            <div className="h-6 w-6 rounded-[5px] bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-[10px] shadow-sm ring-1 ring-white dark:ring-[#0B0F19]">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-[11px] font-semibold text-white shadow-sm shadow-primary-500/30 ring-1 ring-white/70 dark:ring-white/10">
               {initials}
-            </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 leading-none">
+            </span>
+            <span className="hidden text-left leading-tight sm:block">
+              <span className="block max-w-[120px] truncate text-xs font-semibold text-slate-700 dark:text-slate-100">
                 {name}
-              </p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-                {user?.tenantName ?? user?.roles?.[0] ?? 'User'}
-              </p>
-            </div>
+              </span>
+              <span className="block max-w-[120px] truncate text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                {subtitle}
+              </span>
+            </span>
           </button>
 
-          {/* Dropdown Menu */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-48 rounded-[5px] shadow-lg bg-white dark:bg-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 divide-y divide-slate-100 dark:divide-slate-700/50 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-200 origin-top-right">
-              <div className="px-3 py-2 sm:hidden">
-                <p className="text-xs font-semibold text-slate-900 dark:text-white">{name}</p>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                  {user?.email}
-                </p>
+            <div
+              role="menu"
+              aria-label={t('Navbar.profileMenu', { defaultValue: 'Profile menu' })}
+              className="animate-zoom-in absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 shadow-xl shadow-slate-900/5 ring-1 ring-black/5 backdrop-blur-xl focus:outline-none dark:border-white/10 dark:bg-slate-900/95 dark:ring-white/5"
+            >
+              <div className="flex items-center gap-2.5 border-b border-slate-100 px-3 py-2.5 dark:border-white/5">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 text-xs font-semibold text-white shadow-sm shadow-primary-500/30">
+                  {initials}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold text-slate-900 dark:text-white">
+                    {name}
+                  </span>
+                  <span className="block truncate text-[10px] text-slate-500 dark:text-slate-400">
+                    {user?.email ?? subtitle}
+                  </span>
+                </span>
               </div>
 
-              <div className="px-1 py-1">
+              <div className="p-1">
                 <Link
                   to="/dashboard/profile"
+                  role="menuitem"
                   onClick={() => setIsProfileOpen(false)}
-                  className="group flex items-center px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 rounded-[5px] hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-medium text-slate-700 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-slate-300 dark:hover:bg-primary-500/10 dark:hover:text-primary-300"
                 >
-                  <User className="mr-2 h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  <User className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-primary-500" />
                   {t('auth.profile')}
                 </Link>
                 <Link
                   to="/dashboard/activity"
+                  role="menuitem"
                   onClick={() => setIsProfileOpen(false)}
-                  className="group flex items-center px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-300 rounded-[5px] hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-medium text-slate-700 transition-colors hover:bg-primary-50 hover:text-primary-700 dark:text-slate-300 dark:hover:bg-primary-500/10 dark:hover:text-primary-300"
                 >
-                  <Sliders className="mr-2 h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                  <Sliders className="h-3.5 w-3.5 text-slate-400 transition-colors group-hover:text-primary-500" />
                   {t('activity.title')}
                 </Link>
-                <div className="px-2 py-1">
+                <div className="px-1.5 py-1">
                   <LanguageSwitcher variant="inline" />
                 </div>
               </div>
 
-              <div className="px-1 py-1">
+              <div className="border-t border-slate-100 p-1 dark:border-white/5">
                 <button
+                  type="button"
+                  role="menuitem"
                   onClick={handleLogout}
-                  className="group flex w-full items-center px-2 py-1.5 text-[11px] font-medium text-red-600 dark:text-red-400 rounded-[5px] hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[11px] font-medium text-danger-600 transition-colors hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-500/10"
                 >
-                  <LogOut className="mr-2 h-3.5 w-3.5 text-red-500 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
+                  <LogOut className="h-3.5 w-3.5 text-danger-500 transition-colors" />
                   {t('auth.sign_out')}
                 </button>
               </div>

@@ -115,7 +115,7 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
     <>
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-2 dark:border-slate-800 dark:bg-slate-900/40">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {t('orders.actions.submit') /* fallback header */}
+          {t('orders.actions.submit')}
           <ChevronRight className="ml-1 inline" size={11} />
         </span>
         {actions.map((action) => {
@@ -128,8 +128,8 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
               disabled={isBusy}
               className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition disabled:opacity-50 ${
                 isCancel
-                  ? 'border-red-200 bg-white text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:bg-slate-900 dark:text-red-300 dark:hover:bg-red-500/10'
-                  : 'border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-slate-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10'
+                  ? 'border-danger-200 bg-white text-danger-700 hover:bg-danger-50 dark:border-danger-500/30 dark:bg-slate-900 dark:text-danger-300 dark:hover:bg-danger-500/10'
+                  : 'border-primary-200 bg-white text-primary-700 hover:bg-primary-50 dark:border-primary-500/30 dark:bg-slate-900 dark:text-primary-300 dark:hover:bg-primary-500/10'
               }`}
             >
               {ICONS[action]}
@@ -177,7 +177,7 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
                 type="button"
                 onClick={handleCancelConfirm}
                 disabled={cancelMutation.isPending}
-                className="inline-flex items-center gap-1.5 rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded bg-danger-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-danger-700 disabled:opacity-50"
               >
                 <XCircle size={14} />
                 {t('orders.actions.cancel')}

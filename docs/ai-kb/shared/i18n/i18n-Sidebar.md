@@ -1,0 +1,45 @@
+# Sidebar (CoreAlign UI)
+
+"Sidebar" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Sidebar" area (English / Türkçe):
+
+- Accounting / Muhasebe
+- Activity Log / Etkinlik Günlüğü
+- Balance Sheet / Bilanço
+- Chart of Accounts / Hesap Planı
+- Customers / Müşteriler
+- Dashboard / Panel
+- Error Logs / Hata Kayıtları
+- Income Statement / Gelir Tablosu
+- Installation / Montaj
+- Invoices / Faturalar
+- Journal Entries / Yevmiye Fişleri
+- MRP
+- MRP Workbench / MRP Çalışma Alanı
+- Orders / Siparişler
+- Accounting Periods / Muhasebe Dönemleri
+- Products / Ürünler
+- Projects / Projeler
+- Providers / Sağlayıcılar
+- Reconciliation / Mutabakat
+- Reports / Raporlar
+- Settings / Ayarlar
+- SMTP Settings / SMTP Ayarları
+- SSO Settings / SSO Ayarları
+- Stock / Stok
+- Trial Balance / Mizan
+- Vendors / Tedarikçiler
+- Warranty / Garanti
+- Year-End Close / Yıl Sonu Kapanışı
+- Primary navigation / Ana navigasyon
+- Accounting / Muhasebe
+- Administration / Yönetim
+- After Sales / Satış Sonrası
+- Analytics / Analitik
+- HR & Payroll / İK & Bordro
+- Inventory / Envanter
+- Overview / Genel Bakış
+- Production / Üretim
+- Projects / Projeler
+- Purchasing / Satınalma
+- Sales & CRM / Satış & CRM
+- System / Sistem

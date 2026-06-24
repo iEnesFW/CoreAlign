@@ -10,17 +10,17 @@ import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
 import { getErroredTabs, firstErroredTab } from '@/shared/lib/formTabs';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { CurrencySelect } from '@/features/lookups/ui/CurrencySelect';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import {
   MasterDataQuickModal,
   type QuickAddKind,
-} from '@/features/master-data/ui/MasterDataQuickModal';
+} from '@/shared/master-data/ui/MasterDataQuickModal';
 import {
   useBrandsQuery,
   useCategoriesQuery,
   useTaxRatesQuery,
   useUomsQuery,
-} from '@/features/master-data/hooks/useMasterData';
+} from '@/shared/master-data/hooks/useMasterData';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
 import { productSchema, type ProductFormValues } from '../model/productSchema';
 import type { ProcurementType, ProductStatus, Product } from '../model/product.types';
@@ -88,10 +88,10 @@ const PRODUCT_STATUSES: ProductStatus[] = ['Active', 'New', 'Discontinued', 'End
 const PROCUREMENT_TYPES: ProcurementType[] = ['Buy', 'Make'];
 
 const fieldCls =
-  'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 const labelCls = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300';
 const quickAddBtnCls =
-  'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10';
+  'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10';
 const sectionCls = 'space-y-3 border-t border-slate-200 pt-3 dark:border-slate-800';
 const sectionTitleCls = 'text-xs font-semibold uppercase tracking-wider text-slate-500';
 const checkboxLabelCls =
@@ -400,7 +400,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
           className="space-y-4 px-5 py-4"
         >
           <div className={tab === 'general' ? 'space-y-4' : 'hidden'}>
-            {/* Identity */}
             <section className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input
@@ -476,7 +475,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Units of measure */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.uom')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -533,7 +531,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
           </div>
 
           <div className={tab === 'pricing' ? 'space-y-4' : 'hidden'}>
-            {/* Pricing */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.pricing')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -591,7 +588,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                 <label className={`${checkboxLabelCls} sm:mt-6`}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600"
                     {...register('isPriceTaxInclusive')}
                   />
                   {t('products.fields.taxInclusive')}
@@ -599,14 +596,13 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Stock */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.stock')}</h3>
               <div className="flex flex-wrap gap-4">
                 <label className={checkboxLabelCls}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600"
                     {...register('isStockTracked')}
                   />
                   {t('products.fields.isStockTracked')}
@@ -614,7 +610,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                 <label className={checkboxLabelCls}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600"
                     {...register('isLotTracked')}
                   />
                   {t('products.fields.isLotTracked')}
@@ -622,7 +618,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                 <label className={checkboxLabelCls}>
                   <input
                     type="checkbox"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600"
                     {...register('isSerialTracked')}
                   />
                   {t('products.fields.isSerialTracked')}
@@ -670,7 +666,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Procurement (make vs buy) */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.procurement')}</h3>
               <Controller
@@ -695,7 +690,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                             selected
                               ? pt === 'Make'
                                 ? 'border-violet-500 bg-violet-50 dark:border-violet-500 dark:bg-violet-500/10'
-                                : 'border-sky-500 bg-sky-50 dark:border-sky-500 dark:bg-sky-500/10'
+                                : 'border-info-500 bg-info-50 dark:border-info-500 dark:bg-info-500/10'
                               : 'border-slate-200 bg-white hover:border-slate-300 dark:border-slate-700 dark:bg-slate-900'
                           }`}
                         >
@@ -715,7 +710,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
           </div>
 
           <div className={tab === 'logistics' ? 'space-y-4' : 'hidden'}>
-            {/* Logistics & dimensions */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.logistics')}</h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
@@ -752,7 +746,6 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Lifecycle */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.lifecycle')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

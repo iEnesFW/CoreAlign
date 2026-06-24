@@ -73,7 +73,7 @@ public class TenantThemeController : ControllerBase
 
         var tenantId = _tenantContext.RequireTenantId();
         await using var stream = file.OpenReadStream();
-        var dto = await _service.UploadAssetAsync(tenantId, kind, file.FileName, file.ContentType, file.Length, stream, ct);
+        var dto = await _service.UploadAssetAsync(tenantId, kind, file.FileName, file.ContentType, stream, ct);
         return Ok(dto);
     }
 }

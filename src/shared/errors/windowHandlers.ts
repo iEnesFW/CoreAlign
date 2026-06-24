@@ -2,6 +2,7 @@ import axios from 'axios';
 import { logger } from '@/shared/lib/logger';
 import { parseError, formatError } from './errorPipeline';
 import { queueToast } from '@/shared/api/toastQueue';
+import { reportClientError } from '@/shared/lib/clientErrorReporter';
 
 const seen = new WeakSet<object>();
 
@@ -28,6 +29,14 @@ const reportError = (source: 'unhandledrejection' | 'error', err: unknown): void
   });
 
   if (parsed.status === 0 && !parsed.isNetworkError && parsed.message === '') return;
+
+  reportClientError({
+    message: parsed.message || description || `window.${source}`,
+    severity: 'Error',
+    component: `window.${source}`,
+    stack: (err as { stack?: string })?.stack,
+    context: { status: parsed.status, code: parsed.code, traceId: parsed.traceId },
+  });
 
   const dedupeKey = `window:${parsed.status}:${parsed.code ?? parsed.message.slice(0, 80)}`;
   queueToast({ dedupeKey, description, variant: 'error' });

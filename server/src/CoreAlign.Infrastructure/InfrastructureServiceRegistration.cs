@@ -1,5 +1,6 @@
 using CoreAlign.Application.B2B;
 using CoreAlign.Application.Common.Audit;
+using Microsoft.AspNetCore.DataProtection;
 using CoreAlign.Application.Common.Caching;
 using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.GlassEnclosure.WorkOrderRevisions;
@@ -163,6 +164,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IStockReasonCodeRepository, StockReasonCodeRepository>();
         services.AddScoped<ILotRepository, LotRepository>();
         services.AddScoped<IAllocationService, AllocationService>();
+        services.AddScoped<IFefoLotSelector, FefoLotSelector>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<ICustomerLedgerRepository, CustomerLedgerRepository>();
@@ -412,6 +414,8 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Infrastructure.Repositories.EntityAuditLogRepository>();
         services.AddScoped<CoreAlign.Application.Compliance.Audit.IAuditLogExportService,
             CoreAlign.Infrastructure.Compliance.AuditLogExportService>();
+        services.AddScoped<CoreAlign.Application.Compliance.Audit.IAuditChainVerifier,
+            CoreAlign.Infrastructure.Compliance.AuditChainVerifier>();
         services.AddScoped<CoreAlign.Application.Compliance.Audit.IScheduledAuditExportConfigRepository,
             CoreAlign.Infrastructure.Compliance.ScheduledAuditExportConfigRepository>();
         services.AddScoped<CoreAlign.Application.Compliance.Audit.ScheduledAuditExportJob>();
@@ -450,6 +454,15 @@ public static class InfrastructureServiceRegistration
         // Singleton olamaz, Scoped yap. Aksi halde Singleton/Scoped lifetime mismatch hatasi atar.
         services.AddScoped<CoreAlign.Application.Auth.Services.IPasswordPolicyService,
             CoreAlign.Application.Auth.Services.PasswordPolicyService>();
+
+        // Server-side CAPTCHA verification (anti-automation on register/forgot-password).
+        // Fails open when Captcha:Enabled=false (default), so dev/test are unaffected.
+        services.Configure<CoreAlign.Infrastructure.Options.CaptchaOptions>(
+            configuration.GetSection(CoreAlign.Infrastructure.Options.CaptchaOptions.SectionName));
+        services.AddHttpClient(CoreAlign.Infrastructure.Services.GoogleReCaptchaVerifier.HttpClientName,
+            c => c.Timeout = TimeSpan.FromSeconds(10));
+        services.AddScoped<CoreAlign.Application.Auth.Services.ICaptchaVerifier,
+            CoreAlign.Infrastructure.Services.GoogleReCaptchaVerifier>();
 
         // Billing modul aktivasyonu + payment gateway registry
         services.AddScoped<CoreAlign.Application.Billing.IActiveModulesService,
@@ -497,6 +510,12 @@ public static class InfrastructureServiceRegistration
 
         services.AddScoped<IInstallationAcceptanceRepository, InstallationAcceptanceRepository>();
         services.AddScoped<IPunchListRepository, PunchListRepository>();
+
+        services.AddScoped<IPayrollParametersRepository, PayrollParametersRepository>();
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IPayrollRunRepository, PayrollRunRepository>();
+        services.AddScoped<IPayslipRepository, PayslipRepository>();
+        services.AddScoped<IEmployeeYtdTaxBaseRepository, EmployeeYtdTaxBaseRepository>();
 
         // F3.4 MRP Lite — purchase requisitions, MRP service, weekly background run,
         // outbox handler for MrpSuggestionsCreated downstream notifications.
@@ -554,9 +573,17 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<CoreAlign.Application.Mrp.IMrpDemoSeeder,
             CoreAlign.Infrastructure.Mrp.MrpDemoSeeder>();
 
-        // F1.8 IProviderRegistry pattern: all IEFaturaProvider registrations above
-        // feed the generic registry so tenant-resolved provider lookup works.
-        services.AddDataProtection();
+        var dataProtection = services.AddDataProtection().SetApplicationName("CoreAlign");
+        var keyDirectory = configuration.GetValue<string>("DataProtection:KeyDirectory");
+        if (!string.IsNullOrWhiteSpace(keyDirectory))
+        {
+            dataProtection.PersistKeysToFileSystem(new System.IO.DirectoryInfo(keyDirectory));
+        }
+        var protectionThumbprint = configuration.GetValue<string>("DataProtection:ProtectionCertificateThumbprint");
+        if (!string.IsNullOrWhiteSpace(protectionThumbprint))
+        {
+            dataProtection.ProtectKeysWithCertificate(protectionThumbprint);
+        }
         services.AddScoped<ITenantProviderConfigResolver, TenantProviderConfigResolver>();
         services.AddScoped<IProviderCredentialProtector, DataProtectionCredentialProtector>();
         services.AddScoped<ITenantProviderConfigRepository, TenantProviderConfigRepository>();
@@ -599,6 +626,8 @@ public static class InfrastructureServiceRegistration
         CoreAlign.Infrastructure.Storage.StorageRegistration.AddVirusScanningStorage(services, configuration);
         CoreAlign.Infrastructure.Caching.CachingRegistration.AddDistributedCaching(services, configuration);
         CoreAlign.Infrastructure.Storage.StorageProviderRegistration.AddStorageProvider(services, configuration);
+        services.AddScoped<CoreAlign.Application.Common.Upload.IFileUploadService,
+            CoreAlign.Infrastructure.Storage.FileUploadService>();
         CoreAlign.Infrastructure.Reports.Sprint9ReportingRegistration.AddSprint9Reporting(services, configuration);
 
         services.AddScoped<CoreAlign.Application.GlassEnclosure.Cutting.IGlass2DNestingOptimizer,
@@ -651,6 +680,10 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Infrastructure.Repositories.UserDeviceTokenRepository>();
         services.AddScoped<CoreAlign.Domain.Interfaces.INotificationRateCounterRepository,
             CoreAlign.Infrastructure.Repositories.NotificationRateCounterRepository>();
+        services.AddScoped<CoreAlign.Domain.Interfaces.IErrorLogRepository,
+            CoreAlign.Infrastructure.Repositories.ErrorLogRepository>();
+        services.AddSingleton<CoreAlign.Application.Common.Observability.IErrorLogWriter,
+            CoreAlign.Infrastructure.Observability.ErrorLogWriter>();
         services.AddOptions<CoreAlign.Application.Notifications.Delivery.NotificationDeliveryOptions>()
             .Bind(configuration.GetSection(CoreAlign.Application.Notifications.Delivery.NotificationDeliveryOptions.SectionName))
             .ValidateDataAnnotations()
@@ -687,6 +720,81 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Infrastructure.BI.DashboardService>();
         services.AddScoped<CoreAlign.Application.BI.ISavedReportService,
             CoreAlign.Infrastructure.BI.SavedReportService>();
+
+        services.AddOptions<CoreAlign.Application.AiHelper.AiHelperOptions>()
+            .Bind(configuration.GetSection(CoreAlign.Application.AiHelper.AiHelperOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        var aiHelperBaseUrl = configuration[$"{CoreAlign.Application.AiHelper.AiHelperOptions.SectionName}:BaseUrl"]
+            ?? "http://localhost:11434";
+        var aiHelperTimeoutSeconds = configuration.GetValue<int?>(
+            $"{CoreAlign.Application.AiHelper.AiHelperOptions.SectionName}:RequestTimeoutSeconds") ?? 120;
+        // WHY: trailing slash so relative "api/chat"/"api/embed" resolve under the host, not replace the last segment.
+        var aiHelperBaseUri = new Uri(aiHelperBaseUrl.TrimEnd('/') + "/");
+
+        services.AddHttpClient(CoreAlign.Infrastructure.AiHelper.Ollama.OllamaChatProvider.HttpClientName, c =>
+        {
+            c.BaseAddress = aiHelperBaseUri;
+            c.Timeout = TimeSpan.FromSeconds(aiHelperTimeoutSeconds);
+        });
+        services.AddHttpClient(CoreAlign.Infrastructure.AiHelper.Ollama.OllamaEmbeddingProvider.HttpClientName, c =>
+        {
+            c.BaseAddress = aiHelperBaseUri;
+            c.Timeout = TimeSpan.FromSeconds(aiHelperTimeoutSeconds);
+        });
+
+        var aiChatProvider = configuration[$"{CoreAlign.Application.AiHelper.AiHelperOptions.SectionName}:Provider"]
+            ?? "Ollama";
+        if (string.Equals(aiChatProvider, "Gemini", StringComparison.OrdinalIgnoreCase))
+        {
+            var geminiBaseUrl = configuration[$"{CoreAlign.Application.AiHelper.AiHelperOptions.SectionName}:ChatBaseUrl"]
+                ?? "https://generativelanguage.googleapis.com";
+            services.AddHttpClient(CoreAlign.Infrastructure.AiHelper.Gemini.GeminiChatProvider.HttpClientName, c =>
+            {
+                c.BaseAddress = new Uri(geminiBaseUrl.TrimEnd('/') + "/");
+                c.Timeout = TimeSpan.FromSeconds(aiHelperTimeoutSeconds);
+            });
+            services.AddScoped<CoreAlign.Application.AiHelper.Providers.IAiChatProvider,
+                CoreAlign.Infrastructure.AiHelper.Gemini.GeminiChatProvider>();
+        }
+        else
+        {
+            services.AddScoped<CoreAlign.Application.AiHelper.Providers.IAiChatProvider,
+                CoreAlign.Infrastructure.AiHelper.Ollama.OllamaChatProvider>();
+        }
+
+        services.AddScoped<CoreAlign.Application.AiHelper.Providers.IAiEmbeddingProvider,
+            CoreAlign.Infrastructure.AiHelper.Ollama.OllamaEmbeddingProvider>();
+
+        services.AddScoped<CoreAlign.Application.AiHelper.Tools.IAiToolRegistry,
+            CoreAlign.Application.AiHelper.Tools.AiToolRegistry>();
+        services.AddSingleton<CoreAlign.Application.AiHelper.Tools.IAiReadableResourceRegistry,
+            CoreAlign.Application.AiHelper.Tools.AiReadableResourceRegistry>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Tools.IAiTool,
+            CoreAlign.Application.AiHelper.Tools.GetRecordTool>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Tools.IAiTool,
+            CoreAlign.Application.AiHelper.Tools.SearchRecordsTool>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Tools.IAiTool,
+            CoreAlign.Application.AiHelper.Tools.GetRecentErrorsTool>();
+        services.AddScoped<CoreAlign.Application.AiHelper.IAiHelperConversationReader,
+            CoreAlign.Infrastructure.AiHelper.AiHelperConversationReader>();
+
+        services.AddScoped<CoreAlign.Application.AiHelper.Retrieval.IKnowledgeRetriever,
+            CoreAlign.Infrastructure.AiHelper.PostgresKnowledgeRetriever>();
+        services.AddScoped<CoreAlign.Domain.Interfaces.IAiKbRepository,
+            CoreAlign.Infrastructure.AiHelper.AiKbRepository>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Ingestion.IKbSourceProvider,
+            CoreAlign.Infrastructure.AiHelper.MarkdownKbSourceProvider>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Ingestion.IKbSourceProvider,
+            CoreAlign.Infrastructure.AiHelper.ModuleDocsKbSourceProvider>();
+        services.AddScoped<CoreAlign.Application.AiHelper.Ingestion.IKbSourceProvider,
+            CoreAlign.Infrastructure.AiHelper.SourceCodeKbSourceProvider>();
+
+        services.AddSingleton<CoreAlign.Application.AiHelper.IAiHelperTraceWriter,
+            CoreAlign.Infrastructure.AiHelper.AiHelperTraceWriter>();
+        services.AddSingleton<CoreAlign.Application.AiHelper.IAiHelperFeedbackWriter,
+            CoreAlign.Infrastructure.AiHelper.AiHelperFeedbackWriter>();
 
         return services;
     }

@@ -1,0 +1,683 @@
+# LandingPage (CoreAlign UI)
+
+"LandingPage" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "LandingPage" area (English / Türkçe):
+
+- Quoting, production, stock, and accounting share the same data. A change in one module flows to the others without re-keying. / Teklif, üretim, stok ve muhasebe aynı veriyi paylaşır. Bir modülde yapılan değişiklik, kopyalama olmadan diğerlerine yansır.
+- Single source of truth / Tek doğruluk kaynağı
+- Start with the module you need and expand as you grow. Modules are not separate products; they are parts of one backbone. / İhtiyacınız olan modülle başlayın, büyüdükçe genişletin. Modüller ayrı ürünler değil; tek omurganın parçalarıdır.
+- Modular yet unified / Modüler ama bütünleşik
+- In a multi-tenant architecture each company's data is logically separated; access and audit boundaries are designed in from the start. / Çok kiracılı mimaride her işletmenin verisi mantıksal olarak ayrılır; erişim ve denetim sınırları en baştan tasarlanmıştır.
+- Tenant-level isolation / Kiracı bazlı izolasyon
+- We are a pre-launch product. The real workflows of early adopters set the priorities on our roadmap. / Lansman öncesi bir ürünüz. Erken katılan işletmelerin gerçek iş akışları, yol haritamızın önceliklerini belirliyor.
+- A product shaped with you / Sizinle şekillenen ürün
+- OUR APPROACH / YAKLAŞIMIMIZ
+- CoreAlign is designed to unify every process — from glass façade design to production planning and accounting — on a single data backbone. These are the principles we hold to while building it. / CoreAlign, cam cephe tasarımından üretim planlamasına ve muhasebeye kadar tüm süreçleri tek bir veri omurgasında birleştirmek için tasarlandı. İşte bu omurgayı kurarken bağlı kaldığımız ilkeler.
+- Our mission and how we build the product / Misyonumuz ve ürünü inşa etme biçimimiz
+- Full encryption across database clusters and web endpoints, paired with continuous network auditing. / Tüm sunucu ve veri iletim katmanlarında uluslararası standartlara uygun tam şifreleme ve siber güvenlik.
+- Information Security (ISO 27001) / Bilgi Güvenliği (ISO 27001)
+- Absolute compliance with regional data processing laws, ensuring encrypted customer records. / Bayi, müşteri ve kullanıcı verilerinin yasalara tam uyumlu şekilde saklanması ve izole edilmesi.
+- Data Privacy (GDPR / CCPA) / Veri Koruma (GDPR / KVKK)
+- Redundant data center hosting with automated multi-region failovers for zero business disruption. / Redundant veri merkezleri ve yedekli cluster mimarisi ile sıfır kesintili operasyonel süreklilik.
+- Continuous Uptime SLA (99.99%) / Kesintisiz SLA (%99.99)
+- All administrative actions, data edits, and B2B parameters are tracked with cryptographically signed logs. / Veri işleme süreçlerinin düzenli olarak denetlenmesi ve kurumsal audit log altyapısının tutulması.
+- SOC 2 Type II Certified / SOC 2 Type II Sertifikasyonu
+- We certify data integrity, isolation, and operational uptime. / Şirket verilerinizin bütünlüğü ve erişilebilirliği güvencemiz altındadır.
+- Enterprise Compliance & Trust / Kurumsal Uyumluluk ve Güvenlik
+- See our approach up close — book a demo / Yaklaşımımızı yakından görün — demo planlayın
+- Accounting / Muhasebe
+- A single data line flowing between the CAD and quoting, MRP, inventory, purchasing, accounting, and BI modules / CAD ve teklif, MRP, envanter, satın alma, muhasebe ve BI modülleri arasında akan tek veri hattı
+- BI
+- CAD & CPQ
+- One data backbone: the same record flows across every module in real time / Tek veri omurgası: aynı kayıt tüm modüllerde gerçek zamanlı akar
+- Inventory / Envanter
+- MRP
+- Purchasing / Satın Alma
+- Founded in 2018, CoreAlign leads the end-to-end digital transformation of businesses, offering a comprehensive modular architecture that ranges from production to shipping, dealer networks to financial accounting. / 2018 yılında kurulan CoreAlign, üretimden sevkiyata, bayi ağından finansal muhasebeye kadar geniş bir modüler yapıda işletmelerin uçtan uca dijital dönüşümüne liderlik etmektedir.
+- Our History & Vision / Tarihçemiz ve Vizyonumuz
+- To maximize operational efficiency and reduce process losses to zero through our advanced data validation and integration technologies. / Gelişmiş veri doğrulama ve entegrasyon teknolojilerimizle operasyonel süreçlerdeki kayıpları sıfıra indirerek iş verimliliğini maksimize etmek.
+- Our Mission / Misyonumuz
+- Unifying your business's digital backbone under one roof. / İşletmenizin dijital omurgasını tek çatı altında topluyoruz.
+- Launched the first 2D/3D glass and profile configuration engine for instant draft designs. / İlk 3D/2D cam ve profil konfigürasyon çizim motorunun devreye alınması.
+- CAD Configurator Engine / CAD Çizim Motoru
+- 2018
+- Deployed B2B dealer ordering networks, digitalizing workflows and credit limit structures. / Çoklu kiracılı (multi-tenant) bayi ağ portalının yayına alınarak sipariş süreçlerinin dijitalleştirilmesi.
+- Multi-Tenant B2B Cloud / B2B Bulut Altyapısı
+- 2021
+- Linked CAD layouts with 2D cutting optimizations and furnace schedules, cutting scrap to 1.2%. / Üretim fırınlama planlaması ve 2D kesim algoritması ile fire oranlarının %1.2'ye düşürülmesi.
+- Full MRP & Nesting Sync / Entegre MRP Optimizasyonu
+- 2024
+- Automatic inventory replenishment, robotic account reconciliation, and service support automation. / Talep analizlerine göre otomatik stok ikmali, muhasebe mutabakat robotları ve servis entegrasyonları.
+- AI-Driven Forecasting / Yapay Zeka Destekli Tahmin
+- 2026+
+- Continually expanding our enterprise capabilities over the years. / Yıllar içinde sürekli genişleyen kurumsal kabiliyetlerimiz.
+- Our Strategic Journey / Gelişim Kilometre Taşlarımız
+- About CoreAlign / CoreAlign Hakkında
+- Dedication to data consistency, dealer-central integration, modular flexibility, and full alignment with global security standards. / Veri tutarlılığına adanmışlık, bayi-merkez entegrasyonu, modüler esneklik ve global güvenlik standartlarına tam uyum.
+- Core Values / Temel Değerlerimiz
+- We serve as the primary operating system for enterprise companies of all scales, particularly specializing in complex custom manufacturing industries like glass processing and metal structures. / Cam işleme, metal konstrüksiyon ve benzeri karmaşık siparişe özel imalat alanları başta olmak üzere tüm ölçeklerdeki kurumsal şirketlerin ana işletim sistemiyiz.
+- Who We Are / Biz Kimiz?
+- Ahmet Yilmaz / Ahmet Yılmaz
+- CEO VISION / CEO VİZYON
+- The biggest vulnerability of traditional ERP systems is disconnected data flow between operational units. Orders received from dealers via email or phone bear a significant margin of error during manual entry. This leads to severe revenue leakages, ranging from incorrect glass sizing to inconsistent billing. CoreAlign initiates dynamic constraint checks (credit limit, profile dimension restrictions, inventory blockages) the moment a dealer inputs an order. Our system instantly commits the order directly to the MRP production queue and bookkeeping journal entries. For CEOs and financial executives, this translates to real-time visibility into cash flow and manufacturing throughput, completely eliminating the need for manual end-of-day reconciliation. / Geleneksel ERP sistemlerinin en büyük zafiyeti, operasyonel birimler arasındaki kopuk veri akışıdır. Bayilerden e-posta veya telefon ile alınan siparişler, elle sisteme girilerken hata payı barındırır. Bu durum, yanlış ebatta cam kesilmesinden tutarsız faturalandırmaya kadar ciddi ciro kayıplarına yol açar. CoreAlign, bayinin sipariş girdiği andan itibaren dinamik kısıt doğrulamalarını (credit limit check, profile dimension constraints, inventory blockages) devreye alır. Sistemimiz, siparişi direkt olarak MRP üretim havuzuna ve muhasebedeki yevmiye fişlerine anlık olarak işler. CEO ve finans yöneticileri için bu, gün sonu mutabakatına gerek kalmadan şirketin nakit akışını ve üretim verimliliğini gerçek zamanlı izlemek demektir.
+- CEO, CoreAlign Inc.
+- Unlike traditional ERP models, the CoreAlign cloud architecture validates all data entries in real time. Designed with a goal of zero data loss during dealer-to-production handoffs, our infrastructure provides synchronous data reconciliation across ERP, MRP, and accounting layers. / Geleneksel ERP modellerinin aksine, CoreAlign bulut mimarisi tüm veri girişlerini anlık olarak doğrular. Bayi siparişlerinin üretime aktarılmasında sıfır kayıp hedefiyle tasarlanan altyapımız, ERP-MRP-Muhasebe katmanları arasında eşzamanlı veri mutabakatı sağlar.
+- Data Integrity in Cloud-Based ERP Systems / Bulut Tabanlı ERP Sistemlerinde Veri Bütünlüğü
+- Dr. Elif Kaya
+- MRP & PRODUCTION / MRP VE ÜRETİM
+- In sectors like glass and metal processing where material waste is a critical factor, production scheduling and cutting templates dictate profitability. In traditional operations, shop floor operators cut sheets based on personal intuition, causing an average raw material waste of 15% to 18%. The CoreAlign MRP module leverages 2D Cutting Optimization algorithms to automatically group incoming dealer orders, arranging them to ensure minimal scrap. Additionally, it tracks tempering furnace load ratios in real time to optimize energy consumption. This yields a 35% increase in production capacity while directly lowering raw material procurement expenses. / Cam ve metal işleme gibi malzeme firesinin kritik olduğu sektörlerde, siparişlerin üretim sırası ve kesim şablonları kârlılığı belirler. Geleneksel yöntemlerde, operatörler cam plakaları kendi deneyimlerine göre keserler ve bu da ortalama %15 ile %18 arasında hammadde israfına neden olur. CoreAlign MRP modülü, 2D Kesim Optimizasyon algoritmalarını kullanarak gelen tüm bayi siparişlerini otomatik gruplar ve minimum fire çıkartacak şekilde yerleştirir. Ayrıca, fırınlama ve temperleme fırınlarının kapasite doluluk oranlarını gerçek zamanlı takip ederek enerji tasarrufu sağlar. Bu sayede üretim kapasitesi %35 artarken, ham malzeme alım maliyetleri doğrudan aşağı çekilir.
+- MRP Product Manager / MRP Ürün Yöneticisi
+- In custom-made manufacturing sectors like glass enclosure and metal processing, the largest cost driver is waste. Our MRP engine, integrated with the CoreAlign Smart Glass Design module, performs cutting optimization to reduce raw material waste by 15% while preventing bottlenecks at work centers. / Cam balkon ve metal işleme gibi siparişe özel imalat sektörlerinde en büyük maliyet kalemi fire oranlarıdır. CoreAlign Akıllı Cam Tasarım modülü ile entegre çalışan MRP motorumuz, kesim optimizasyonu yaparak hammadde firesini %15 oranında azaltırken iş istasyonlarındaki darboğazları önler.
+- Resource Planning in Manufacturing: Waste & Capacity Optimization / İmalatta Kaynak Planlama: Fire ve Kapasite Optimizasyonu
+- Can Demir
+- DEALER RELATIONS / BAYİ İLİŞKİLERİ
+- A manufacturer's scaling capability is directly linked to the ordering speed and ease of its dealer network. Our B2B portal empowers dealers to draft 3D or 2D design layouts for bespoke dimensions. Once designed, CoreAlign backend APIs evaluate profile lengths, glass thickness tolerances, and wind-load metrics automatically. Orders containing structural anomalies are blocked from submission, showing real-time corrective suggestions to the dealer. Approved entries seamlessly populate dispatch logs and dealer ledgers. This end-to-end automation terminates administrative telephone confirmation cycles, transforming transaction times from hours to minutes. / Bir üreticinin büyümesi, bayi ağının sipariş verme kolaylığı ve hızı ile doğrudan ilişkilidir. B2B portalımız, bayilerin 3D veya 2D çizim yaparak özel ölçülerde siparişlerini oluşturabilmelerini sağlar. Bayi çizimi bitirdiğinde, arka planda çalışan CoreAlign API'leri profil uzunluklarını, cam kalınlığı toleranslarını ve rüzgar yükü hesaplarını otomatik test eder. Hatalı ölçü içeren siparişlerin sisteme kaydedilmesi engellenerek, bayiye anında düzeltme önerisi sunulur. Onaylanan sipariş, otomatik olarak sevkiyat planlamasına ve ilgili bayi cari kartına yansır. Bu uçtan uca otomasyon, telefonla onay mekanizmalarını ortadan kaldırarak operasyonel işlem sürelerini saatlerden dakikalara indirir.
+- Dealer Network Director / Bayi Ağ Yöneticisi
+- Mistakes made by dealers when ordering cause irreversible losses on the production line. Thanks to our integrated validation rules and real-time current account credit checks, we have reduced dealer order error rates to zero. Our mobile-responsive interface has sped up order approval times by 70%. / Bayilerin sipariş verirken yaptıkları hatalar üretim hattında geri dönüşü olmayan kayıplara yol açar. Geliştirdiğimiz entegre doğrulama kuralları ve anlık cari hesap limit kontrolleri sayesinde bayilerin hatalı sipariş verme oranını sıfıra indirdik. Mobil uyumlu arayüzümüz sipariş onay sürelerini %70 hızlandırdı.
+- Speed and Order Accuracy in B2B Dealer Portals / B2B Bayi Portallarında Hız ve Sipariş Doğruluğu
+- Murat Celik / Murat Çelik
+- INFRASTRUCTURE & SECURITY / ALTYAPI & GÜVENLİK
+- One of the chief concerns of enterprise companies utilizing SaaS ERP platforms is the risk of cross-tenant data leaks. CoreAlign addresses this directly by implementing tenant-scoped database query filters. Every database lookup automatically applies the local TenantKey constraint. Furthermore, all sensitive financial records, billing metadata, and hardware fingerprints are encrypted at-rest using AES-256 keys. This ensures that database administrators cannot view plaintext billing parameters directly from DB clusters. Our role-based access control (RBAC) structures prevent unauthorized API query requests, ensuring dealers are constrained solely to their localized portals. / Kurumsal SaaS ERP sistemlerinde en büyük endişelerden biri, bir firmanın verilerinin yanlışlıkla bir diğer firmaya sızmasıdır. CoreAlign, bu riski ortadan kaldırırmak için kiracı seviyesinde mantıksal veri izolasyonu uygular. Veritabanındaki her sorgu, otomatik olarak kiracı anahtarı (TenantKey) ile filtrelenir. Ek olarak, finansal ve biyometrik veriler AES-256 algoritmasıyla sunucu tarafında şifrelenir. Sistem yöneticileri bile doğrudan veritabanına eriştiğinde şifrelenmiş verileri göremez. API katmanındaki rol tabanlı yetkilendirme (RBAC) mekanizmaları sayesinde, bayi kullanıcıları sadece kendilerine izin verilen cihaz ve bayi sipariş alanlarına erişebilir. Bu yapı, şirketinizin verilerini endüstri standardı güvenlik protokolleri altında güvende tutar.
+- Head of Security & Infrastructure / Altyapı ve Güvenlik Yöneticisi
+- Corporate data confidentiality is of paramount importance in cloud ERP architectures. CoreAlign guarantees absolute records security through hybrid encryption keys and logically isolated schema namespaces. / Bulut ERP altyapılarında kurumsal verilerin gizliliği en hassas konudur. CoreAlign hibrit şifreleme ve kiracı seviyesinde izole edilmiş veritabanı şemaları ile bayilerinizin ve kurumsal operasyonlarınızın veri güvenliğini garanti altına alır.
+- Cloud Data Isolation in Multi-Tenant Architectures / Çoklu Kiracılı (Multi-Tenant) Yapılarda Veri İzolasyonu
+- RESOURCE HUB / KAYNAK MERKEZİ
+- Close / Kapat
+- Join the list / Listeye katıl
+- Want to know when new guides are published? Join the early-access list. / Yeni rehberler yayınlandıkça haberdar olmak ister misiniz? Erken erişim listesine katılın.
+- Read More / Devamını Oku
+- {{count}} min read / {{count}} dk okuma
+- Case studies of businesses digitizing with CoreAlign and industry insights. / CoreAlign ile dijitalleşen işletmelerin deneyimleri ve sektörel makaleler.
+- Educational guides on cloud ERP, MRP production planning, multi-tenant security, and glass design automation. We explain the concepts with examples to make your rollout decisions easier. / Bulut ERP, MRP üretim planlama, çoklu kiracı güvenliği ve cam tasarım otomasyonu üzerine eğitici rehberler. Kavramları örneklerle açıklıyor, kurulum kararlarınızı kolaylaştırıyoruz.
+- Strategy & Articles / Strateji ve Makaleler
+- Order → MRP → inventory → accounting: modules connected in a single data flow. / Sipariş → MRP → stok → muhasebe: tek bir veri akışında birbirine bağlanan modüller.
+- Order CAD Validation / Sipariş CAD Doğrulaması
+- Instant error-free validation via dynamic rules / Dinamik kurallarla anlık ve hatasız doğrulama
+- Error detection impossible, relies on operator / Hata tespiti imkansız, operatör inisiyatifinde
+- Requires manual check at production stage / Üretim aşamasında manuel kontrol gerekir
+- Financial Accounting Integration / Finansal Muhasebe Entegrasyonu
+- Automatic general ledger entry at the moment of order / Sipariş anında otomatik defter-i kebir kaydı
+- Manual double entry, reconciliation errors common / Manuel çift giriş, mutabakat hataları yaygın
+- Batch transfer at end-of-day or weekend / Gün sonu veya hafta sonu toplu aktarım
+- Live Machine Communication / Canlı Makine Haberleşmesi
+- Direct furnace integration via OPC UA & Modbus / OPC UA & Modbus ile doğrudan fırın entegrasyonu
+- Not supported, manual entry required / Desteklenmiyor, manuel veri girişi
+- Requires additional interface/hardware investment / Ek arayüz / donanım yatırımı gerektirir
+- Deployment & Onboarding / Entegrasyon ve Devreye Alma
+- Live in days with ready-to-use ETL templates / Hazır ETL şablonları ile birkaç günde canlıda
+- No infrastructure, instant but unsustainable / Altyapı yok, anlık kurulur fakat sürdürülemez
+- Months of consulting and high overhead costs / Aylar süren danışmanlık ve yüksek maliyet
+- Material Waste Rates / Hammadde Fire Oranları
+- Fixed at 1.2% with 2D Nesting Optimization / 2D Optimizasyon ile %1.2 seviyesinde sabit
+- No optimization, high waste at 15% and above / Optimizasyon yok, %15 ve üzeri yüksek fire
+- Between 8% - 12% with basic nesting algorithms / Sınırlı nesting algoritmaları ile %8 - %12 arası
+- COMPARISON / MUKAYESE
+- Evaluation Criteria / Değerlendirme Kriteri
+- CoreAlign Cloud Platform / CoreAlign Bulut Platformu
+- Excel / Manual Tracking / Excel / Manuel Takip
+- Traditional ERP / MRP / Geleneksel ERP / MRP
+- One end-to-end platform / Uçtan uca tek platform
+- Disconnected, manual, error-prone / Kopuk, manuel, hataya açık
+- Gaps between modules / Modüller arası boşluklar
+- Compare CoreAlign against traditional methods and legacy ERP systems. / CoreAlign'i geleneksel yöntemler ve eski nesil ERP sistemleri ile karşılaştırın.
+- See the difference in a demo / Farkı demoda görün
+- From CAD validation to quoting, from production planning to accounting, every step runs on the same data. Manual transfers, reconciliation errors and cross-module gaps disappear. / CAD doğrulamadan teklife, üretim planından muhasebeye kadar her adım aynı verinin üzerinde çalışır. Manuel aktarım, mutabakat hatası ve modüller arası kopukluk ortadan kalkar.
+- One system, one truth: say goodbye to disconnected tools / Tek sistem, tek gerçek: kopuk araçlara veda edin
+- Feature-by-feature comparison of the CoreAlign cloud platform against traditional ERP and spreadsheet methods. / CoreAlign bulut platformunun geleneksel ERP ve elektronik tablo yöntemleriyle özellik bazlı karşılaştırması.
+- Why CoreAlign? / Neden CoreAlign?
+- Instead of scattered spreadsheets and disconnected legacy systems, CAD, manufacturing, inventory and accounting converge into a single source of truth. / Dağınık tablolar ve birbiriyle konuşmayan eski sistemler yerine; CAD, üretim, stok ve muhasebe tek bir gerçeklik kaynağında birleşir.
+- Address: Technopark Istanbul, Block A No: 120, Pendik / Istanbul / Adres: Teknopark İstanbul, A Blok No: 120, Pendik / İstanbul
+- Our team is at Teknopark Istanbul office; please make an appointment for a meeting. / Ekibimiz Teknopark İstanbul ofisinde; toplantı için randevu alın.
+- CONTACT / İLETİŞİM
+- Your Email / E-posta Adresiniz
+- Sample address for general inquiries; your request will be routed to the right team. / Genel sorular için örnek adres; talebiniz doğru ekibe yönlendirilir.
+- Email: info@corealign.com / E-posta: info@corealign.com
+- Failed to send message, please try again. / Mesaj iletilemedi, lütfen tekrar deneyin.
+- Your information is used solely to respond to your request. / Bilgileriniz yalnızca talebinize yanıt vermek için kullanılır.
+- Leave a brief summary; our specialist matching your needs will get back to you. / Kısa bir özet bırakın; ihtiyacınıza uygun uzmanımız size geri dönsün.
+- Leave us a message / Bize mesaj bırakın
+- Business Hours: Weekdays 09:00 - 18:00 / Çalışma Saatleri: Hafta İçi 09:00 - 18:00
+- We receive requests through the form 24/7 and respond at the start of business hours. / Form üzerinden gelen talepleri 7/24 alır, mesai başında yanıtlarız.
+- You can reach us through the channels below. As we are still pre-launch, the contact information is for example purposes. / Aşağıdaki kanallardan bize ulaşabilirsiniz. Henüz lansman öncesi olduğumuz için iletişim bilgileri örnek niteliğindedir.
+- Contact Details / İrtibat Bilgileri
+- Your Message / Mesajınız
+- Your Name / Adınız Soyadınız
+- Phone: +90 (216) 555 01 00 / Telefon: +90 (216) 555 01 00
+- Sample phone number — please call during business hours for live support. / Örnek hat — canlı destek için mesai saatleri içinde arayın.
+- Your request is collected in a single flow, routed to the right specialist, and answered. / Talebiniz tek bir akışta toplanır, doğru uzmana yönlendirilir ve yanıtlanır.
+- What happens to your message? / Mesajınıza ne oluyor?
+- Sending... / Gönderiliyor...
+- Specialist / Uzman
+- Received / Alındı
+- Reply / Yanıt
+- Routed / Yönlendirildi
+- Assigned specialist for you / Size atanmış uzman
+- Single point of contact / Tek temas
+- Your data is secure / Verileriniz güvende
+- KVKK compliant / KVKK uyumlu
+- Target first response time / Hedef ilk yanıt süresi
+- < 1 business day / < 1 iş günü
+- Subject / Konu
+- Submit / Gönder
+- Fill out the form to deploy CoreAlign solutions in your business or to request technical support. / CoreAlign çözümlerini işletmenizde devreye almak veya teknik destek almak için formu doldurabilirsiniz.
+- Your message has been successfully sent! / Mesajınız başarıyla iletildi!
+- Get in Touch with Us / Bizimle İletişime Geçin
+- EARLY ACCESS / ERKEN ERİŞİM
+- Schedule a demo for early access / Erken erişim için demo planlayın
+- One-on-one onboarding with your team, data migration, and go-live support. / Ekibinizle birebir onboarding, veri taşıma ve canlıya geçiş desteği.
+- Priority setup & support / Öncelikli kurulum & destek
+- Your requests take priority; the product is shaped to fit your workflows. / Talepleriniz öncelik kazanır; ürün, iş akışınıza göre şekillenir.
+- Shape the product roadmap / Yol haritasına yön verin
+- Early adopters enjoy exclusive, flexible onboarding terms. / Erken katılan işletmelere özel, esnek başlangıç koşulları.
+- Founder customer advantage / Kurucu müşteri avantajı
+- CoreAlign is next-generation ERP. We grow with our founder customers—join early and shape the product to fit your processes. / CoreAlign yeni nesil bir ERP. Kurucu müşterilerimizle birlikte büyüyoruz — erken katılın, ürünü kendi süreçlerinize göre şekillendirin.
+- Secure your place among the early adopters / İlk kullananlar arasında yerinizi alın
+- Yes. CoreAlign can perform real-time or periodic data synchronization with Logo Go/Tiger, Mikro, Netsis, and global SAP systems through bi-directional REST APIs and pre-built ETL templates. When your dealers place orders, ledger transactions and invoices are automatically posted to your legacy accounting system. / Evet. CoreAlign, çift yönlü REST API'leri ve hazır ETL (Extract, Transform, Load) şablonları sayesinde Logo Go/Tiger, Mikro, Netsis ve global SAP sistemleriyle gerçek zamanlı veya periyodik veri senkronizasyonu yapabilir. Bayileriniz sipariş girdiğinde cari fişler ve faturalar otomatik olarak mevcut muhasebe sisteminize işlenir.
+- The built-in Smart CAD Drawing engine inspects dynamic rules and tolerance limits (glass thickness boundaries, wind-load tolerances, maximum panel widths) in real time at the order stage. Invalid dimensions or incorrect structures cannot be submitted; the system automatically offers corrective feedback to the dealer, reducing shop-floor scrap rates to zero. / CoreAlign bünyesindeki Akıllı CAD Çizim motoru, sipariş aşamasında dinamik kurallar ve tolerans sınırlarını (cam kalınlık limitleri, rüzgar yükü dayanımları, maksimum kanat genişlikleri) anlık olarak denetler. Hatalı çizimler veya geçersiz ebatlar siparişe eklenemez; bayiye otomatik düzeltme önerisi sunulur. Böylece üretimde hatalı kesim riski sıfıra indirilir.
+- CoreAlign applies tenant-level logical data isolation in a multi-tenant cloud architecture. All sensitive fields are encrypted at-rest using AES-256. For enterprise clients, we offer hosting options on dedicated cloud instances or within their local data centers (On-Premise). / CoreAlign, çoklu kiracılı (multi-tenant) bulut mimarisinde kiracı seviyesinde mantıksal veri izolasyonu uygular. Tüm hassas veriler sunucu tarafında AES-256 ile şifrelenir. Kurumsal müşterilerimiz için verilerin Türkiye sınırları içindeki özel sunucularda veya kendi yerel veri merkezlerinde (On-Premise) barındırılması seçeneklerini de sunuyoruz.
+- Our MRP module takes order dimensions and schedules sheets using 2D Cutting Optimization algorithms (cutting waste from 15% to 1.2%). Additionally, it groups tempering furnace runs based on glass thickness and weight to compute furnace load ratios, preventing empty furnace runs and saving significant energy costs. / MRP modülümüz, sipariş ölçülerini alarak 2D Kesim Optimizasyonu algoritmasıyla plakaları en az fire verecek şekilde yerleştirir (fireyi %15'ten %1.2'ye düşürür). Ayrıca temperleme fırınlarının doluluk oranlarını cam ağırlık ve kalınlıklarına göre hesaplayarak pişirme döngülerini gruplar. Bu sayede fırın boş çalıştırılmaz, enerji maliyetlerinde ciddi tasarruf elde edilir.
+- CoreAlign operates on a subscription (SaaS) model: you pay monthly or annually based on active users and the modules you use. Setup, maintenance, and version updates are included in the subscription fee; you do not need to purchase hardware or licensing servers. You activate modules as needed and scale as you grow. Our contracts contain line-by-line transparent items — we do not surprise you with hidden setup or usage fees. / CoreAlign abonelik (SaaS) modeliyle çalışır: aktif kullanıcı ve kullandığınız modüller üzerinden aylık veya yıllık ödenir. Kurulum, bakım ve sürüm güncellemeleri abonelik ücretine dahildir; donanım veya lisans sunucusu satın almanız gerekmez. Modülleri ihtiyaç duydukça açar, büyüdükçe ölçeklersiniz. Sözleşmede satır satır şeffaf kalemler yer alır — sürpriz kurulum veya kullanım bedeli çıkarmıyoruz.
+- Your data is entirely yours; CoreAlign is only the processor. You can export your customer, product, order, invoice, and accounting records at any time in standard formats (CSV, Excel, and structured JSON). If you cancel your subscription, we provide full data export during a defined transition window; after the retention period expires, your data is permanently deleted. We do not create lock-in that holds your data hostage. / Verileriniz tümüyle size aittir; CoreAlign yalnızca işleyen taraftır. İstediğiniz an müşteri, ürün, sipariş, fatura ve muhasebe kayıtlarınızı standart formatlarda (CSV, Excel ve yapısal JSON) dışa aktarabilirsiniz. Aboneliğinizi sonlandırırsanız, tanımlı bir geçiş penceresinde tam veri dışa aktarımı sağlanır; saklama süresi dolduğunda veriler kalıcı olarak silinir. Verinizi rehin alan bir kilitlenme (vendor lock-in) yaratmıyoruz.
+- Who owns my data? What happens to my data if I cancel my subscription? / Verilerimin sahibi kim? Aboneliği bırakırsam verilerime ne olur?
+- Both options are available. For most businesses, we recommend the cloud: backup, scaling, and updates are managed by us with no additional IT overhead. If regulatory requirements or corporate policy mandate that data remain on-premises, we offer dedicated server hosting within Turkey's borders or on-premise deployment in your own data center. Both deployments run the same codebase and the same multi-tenant isolation architecture. / İki seçenek de mevcut. Çoğu işletme için önerimiz buluttur: yedekleme, ölçekleme ve güncellemeler tarafımızca yönetilir, ek BT yükü olmaz. Düzenleyici gereksinim veya kurumsal politika nedeniyle verinin sizde kalması gerekiyorsa, Türkiye sınırları içindeki özel sunucularda barındırma ya da kendi veri merkezinizde (on-premise) kurulum sağlıyoruz. Her iki dağıtımda da aynı kod tabanı ve aynı çok-kiracılı izolasyon mimarisi çalışır.
+- Should we use it from the cloud or on our own server (on-premise)? / Buluttan mı yoksa kendi sunucumuzda (on-premise) mı kullanmalıyız?
+- The interface is available in Turkish, English, German, Russian, and Arabic; right-to-left (RTL) layout is supported for Arabic. Each user selects their own language, so your international distributors can enter orders in their languages while you continue working in Turkish. Date, number, and currency formats are displayed according to each user's locale; since data is stored in UTC and standard units in the background, reporting remains consistent. / Arayüz Türkçe, İngilizce, Almanca, Rusça ve Arapça olarak sunulur; Arapça için sağdan-sola (RTL) yerleşim desteklenir. Her kullanıcı kendi dilini seçer, böylece yurt dışı bayileriniz kendi dillerinde sipariş girerken siz Türkçe çalışmaya devam edersiniz. Tarih, sayı ve para birimi biçimleri kullanıcının yereline göre gösterilir; veriler arka planda UTC ve standart birimlerle tutulduğu için raporlama tutarlı kalır.
+- What languages does it support? Can we use it with our international distributors? / Hangi dilleri destekliyor? Yurt dışı bayilerimizle kullanabilir miyiz?
+- Migration is a structured process: we first map your accounts, product and inventory cards, open orders, and opening balances, then validate them in a test environment before going live. With ready-made import templates and validation controls, errors or missing records are caught during import. Our onboarding team conducts mapping and reconciliation with you; we plan the go-live window during low-traffic times, such as a weekend. / Geçiş yapılandırılmış bir süreçtir: önce cari hesap, ürün/stok kartları, açık siparişler ve açılış bakiyeleri eşlenir, ardından test ortamında doğrulanıp canlıya alınır. Hazır içe aktarma şablonları ve doğrulama kontrolleri sayesinde, hatalı veya eksik kayıtlar daha aktarım anında yakalanır. Onboarding ekibimiz eşleştirme ve mutabakatı sizinle birlikte yürütür; canlıya geçişi hafta sonu gibi düşük yoğunluklu bir pencerede planlarız.
+- How long does it take to migrate our existing system data to CoreAlign? / Mevcut sistemimizdeki verileri CoreAlign'e taşımak ne kadar sürer?
+- FAQ / S.S.S.
+- Commercial / Ticari
+- Data & Migration / Veri & Taşıma
+- Design & Manufacturing / Tasarım & Üretim
+- Integration / Entegrasyon
+- Security / Güvenlik
+- Can it integrate with our existing ERP and Accounting systems? / Mevcut ERP ve Muhasebe sistemimizle entegre çalışabilir mi?
+- How does it prevent drawing errors in dealer orders? / Bayi siparişlerindeki çizim hatalarını nasıl engelliyor?
+- What are the data security and hosting options? / Veri güvenliği ve barındırma seçenekleri nelerdir?
+- How is furnace capacity optimized in stock and production planning (MRP)? / Stok ve üretim planlamasında (MRP) fırın kapasitesi nasıl optimize ediliyor?
+- How does the pricing model work? Are there any hidden costs? / Fiyatlandırma modeli nasıl işliyor? Gizli maliyet var mı?
+- Flexible deployment / Esnek dağıtım
+- Cloud / On-prem / Bulut / On-prem
+- Server-side encryption / Sunucu tarafı şifreleme
+- TR · EN · DE · RU · AR
+- 5 languages / 5 dil
+- Targeted availability / Hedeflenen erişilebilirlik
+- 99.9% / %99.9
+- Learn about CoreAlign's enterprise integration, security, and operational benefits. / CoreAlign'in kurumsal entegrasyonu, güvenliği ve operasyonel faydaları hakkında merak edilenler.
+- Schedule a demo with an expert / Uzmanla demo planlayın
+- Let's discuss your industry-specific scenario together. Our team listens to your workflow and shows you step by step how CoreAlign can be tailored to your needs. / Sektöre özel senaryonuzu birlikte konuşalım. Ekibimiz işleyişinizi dinler ve CoreAlign'in nasıl uyarlanacağını adım adım gösterir.
+- Didn't find the answer you're looking for? / Aradığınız yanıt burada değil mi?
+- Frequently Asked Questions for Executives / Yöneticiler İçin Sıkça Sorulan Sorular
+- Diagram showing how a question signal passes through support layers to reach an answer / Soru sinyalinin destek katmanlarından geçip yanıta ulaşmasını gösteren şema
+- Request / Talep
+- Evaluation / Değerlendirme
+- Solution / Çözüm
+- Every request flows through a structured process: evaluation, mapping with the onboarding team, and a clear answer. / Her talep planlı bir akıştan geçer: değerlendirme, onboarding ekibiyle eşleştirme ve net yanıt.
+- From question to answer / Sorudan yanıta giden yol
+- System Version v2.3.25 Active / Sistem Sürümü v2.3.25 Devrede
+- Explore Our Solutions / Çözümlerimizi Keşfedin
+- Schedule Demo / Demo planlayın
+- Accounting / Muhasebe
+- Design / Tasarım
+- Production / Üretim
+- Quote / Teklif
+- Shipment / Sevkiyat
+- Active Dealer Network / Aktif Bayi Ağı
+- 1,420+ Concurrent Dealers / 1.420+ Eşzamanlı Bayi
+- Executive Security / Yönetici Güvenliği
+- ISO 27001 & GDPR Compliant / ISO 27001 & GDPR Uyumlu
+- Order Approval Speed / Sipariş Onay Hızı
+- 70% Faster Process / %70 Daha Hızlı Süreç
+- Waste Reduction / Fire Oranı Azalımı
+- 15% Savings via MRP / MRP ile %15 Tasarruf
+- CoreAlign is a next-generation cloud ERP platform that integrates dealer orders, material requirements planning (MRP), smart project configuration, and financial accounting. / CoreAlign; bayi siparişleri, üretim planlama (MRP), akıllı proje konfigürasyonu ve finansal muhasebe süreçlerini entegre yöneten yeni nesil bulut ERP platformudur.
+- Central Cloud Intelligence of Your Business / İşletmenizin Merkezi Bulut Zekası
+- INTEGRATION / ENTEGRASYON
+- MS SQL, PostgreSQL database connectors, and REST API / Webhook integration pipelines. / MS SQL, PostgreSQL veri tabanı konektörleri ve REST API / Webhook entegrasyon arayüzleri.
+- Database & APIs / Veritabanı & API
+- Schematic of the central CoreAlign data bus showing bi-directional data flow with external systems. / CoreAlign merkez veri yolu, dış sistemlerle çift yönlü veri akışını gösteren şema.
+- Every system connects to a single CoreAlign data bus; data flows in every direction in real time. / Tüm sistemler tek bir CoreAlign veri yoluna bağlanır; veri her yönde gerçek zamanlı akar.
+- Fully synchronized accounts, stock items, and billing vouchers flow with Logo Tiger/Go, Netsis, Mikro, and SAP ERP. / Logo Tiger/Go, Netsis, Mikro ve SAP ERP sistemleriyle tam senkronize cari, stok ve fatura fiş akışı.
+- ERP Integrations / ERP Entegrasyonları
+- Government e-Invoice/e-Archive integrators, bank POS reconciliation, and account-clearing flows match automatically. / GİB e-Fatura/e-Arşiv özel entegratörleri, banka POS mutabakatı ve cari hesap kapama akışları otomatik eşleşir.
+- e-Documents & Finance / e-Belge & Finans
+- Modbus TCP/IP and OPC UA hardware communication protocols for tempering furnaces and cutting machines. / Temperleme fırınları ve kesim makineleri için Modbus TCP/IP ve OPC UA donanımsal haberleşme protokolleri.
+- Hardware & Protocols / Donanım & Protokoller
+- One-click sign-in with corporate SSO; real-time field notifications via SMS, email, and webhook channels. / Kurumsal SSO ile tek tıkla giriş; SMS, e-posta ve webhook kanallarından gerçek zamanlı saha bildirimleri.
+- Identity & Notifications / Kimlik & Bildirim
+- Shipment tracking, supplier price lists, and glass/profile manufacturer catalogs feed the CPQ engine in real time. / Kargo takibi, tedarikçi fiyat listeleri ve cam/profil üretici katalogları CPQ motoruna canlı beslenir.
+- Logistics & Catalogs / Lojistik & Kataloglar
+- Encrypted & authorized / Şifreli & yetkilendirilmiş
+- OAuth 2.0
+- Webhook trigger target / Webhook tetikleme hedefi
+- < 2 s / < 2 sn
+- Synchronized data flow / Senkron veri akışı
+- Bi-directional / Çift yönlü
+- CoreAlign communicates bi-directionally with your active ERPs, databases, and shop-floor machines. / CoreAlign, fabrikanızdaki mevcut ERP'ler, veritabanları ve üretim makineleriyle çift yönlü konuşur.
+- Supported Integrations & Protocols Catalog / Desteklenen Entegrasyon ve Protokol Kataloğu
+- Financial fields are protected with AES-256 during transfer; your data is written only to your own tenant space. / Finansal alanlar aktarım sırasında AES-256 ile korunur; verileriniz yalnızca kendi kiracı (tenant) alanınıza yazılır.
+- End-to-End Encrypted / Uçtan uca şifreli
+- Every row is matched row-by-row from source to destination; record counts before and after transfer are subject to automatic reconciliation. / Her satır kaynaktan hedefe satır satır eşleştirilir; aktarım öncesi ve sonrası kayıt sayıları otomatik mutabakata tabidir.
+- Zero Data Loss / Sıfır veri kaybı
+- The transfer is first tried in an isolated session; if the result does not meet your expectations, it is rolled back with one click. / Aktarım önce yalıtılmış bir oturumda denenir; sonuç beklentinizi karşılamazsa tek tıkla geri alınır.
+- Reversible / Geri alınabilir
+- Auto Mapped / Oto Eşleşti
+- New Simulation / Yeni Simülasyon
+- Migrating... / Aktarılıyor...
+- Start Data Migration Simulation / Veri Aktarım Simülasyonunu Başlat
+- CoreAlign Field (Target) / CoreAlign Alanı (Hedef)
+- CoreAlign has bi-directional integration templates with popular ERP/accounting programs and global systems. You can import your existing data to be schema-compliant with a single click and start working immediately. / CoreAlign, Türkiye'deki popüler ERP/muhasebe programları ve global sistemlerle çift yönlü entegrasyon şablonlarına sahiptir. Mevcut verilerinizi tek tıkla şema uyumlu şekilde içe aktarabilir, anında çalışmaya başlayabilirsiniz.
+- Customer Cards (120/320) / Cari Kartlar (120/320)
+- General Ledger Chart of Accounts / Genel Muhasebe Hesap Planı
+- Product Catalog & Price List / Ürün Kataloğu & Fiyat Listesi
+- Error Count / Hata Sayısı
+- Contact Us / Bize Ulaşın
+- How does it work in three steps? / Üç adımda nasıl çalışır?
+- Records Imported / Aktarılan Kayıt
+- Legacy Field (Source) / Eski Alan (Kaynak)
+- [INFO] CSV/Excel data source successfully resolved. 248 records found. / [BİLGİ] CSV/Excel veri kaynağı başarıyla çözümlendi. 248 kayıt algılandı.
+- [WARN] Non-standard country format detected. Auto-normalizing: 'Turkey' -> 'Türkiye'. / [UYARI] Standart dışı ülke formatı tespit edildi. Otomatik normalleştiriliyor: 'Turkey' -> 'Türkiye'.
+- [INFO] Cryptographic validation active. Generating AES-256 transient keys. / [BİLGİ] Kriptografik doğrulama devrede. AES-256 geçici anahtarları üretiliyor.
+- [INFO] Schema matches CoreAlign Customer model. TenantKey: 'tenant_usr_01'. / [BİLGİ] Şema CoreAlign Cari modeline uygun eşleşti. TenantKey: 'tenant_usr_01'.
+- [SUCCESS] 1,240 records posted to double-entry ledger. Balanced debit/credit. / [BAŞARI] 1.240 kayıt çift taraflı defter-i kebire işlendi. Borç/Alacak dengelendi.
+- This mapping is preview-only. In the actual transfer, no data is overwritten; the transfer runs in an isolated session and can be rolled back before confirmation. / Bu eşleştirme yalnızca bir önizlemedir. Gerçek aktarımda hiçbir veri üzerine yazılmaz; aktarım yalıtılmış bir oturumda çalışır ve onaylamadan önce geri alabilirsiniz.
+- Schema Mapping Preview / Şema Eşleştirme Önizlemesi
+- LEGACY SYSTEM / ESKİ SİSTEM
+- MAP / EŞLEŞTİR
+- READ / OKU
+- VALIDATE / DOĞRULA
+- Live Data / Canlı Veri
+- A data flow diagram showing the journey from legacy system to CoreAlign database, passing through read-map-load stages / Eski sistemden CoreAlign veritabanına uzanan, oku-eşleştir-yükle adımlarından geçen veri akışı şeması
+- Data flow diagram from legacy system to CoreAlign live database. / Eski sistemden CoreAlign canlı veritabanına veri akış şeması.
+- Follow the journey from legacy tables to the live system: every record is read, mapped, validated, and safely loaded — without you manually moving a single piece of data. / Eski tablolardan canlı sisteme yolculuğu izleyin: her kayıt okunur, eşleştirilir, doğrulanır ve güvenle yüklenir — siz tek bir veriyi bile elle taşımadan.
+- What happens to your data as it travels to CoreAlign? / Verileriniz CoreAlign'a giderken ne oluyor?
+- 2. Select Data Type to Migrate / 2. Aktarılacak Veri Türünü Seçin
+- 1. Select Your Current ERP / Software / 1. Mevcut ERP / Yazılıminizi Seçin
+- Session ID / Oturum Kimliği
+- Records Skipped (Duplicates) / Atlanan Kayıt (Tekrarlı)
+- Records are transferred in a single transaction, in reversible format. / Kayıtlar tek bir işlem içinde, geri alınabilir biçimde aktarılır.
+- Load & Post / Yükle & Muhasebeleştir
+- Fields are mapped to the CoreAlign schema, format and mandatory rules are applied. / Alanlar CoreAlign şemasına bağlanır, biçim ve zorunluluk kuralları işler.
+- Map & Validate / Eşleştir & Doğrula
+- Headers from Excel, CSV, or ERP exports are automatically recognized. / Excel, CSV veya ERP dışa aktarımındaki başlıklar otomatik tanınır.
+- Read & Parse / Oku & Çöz
+- Status / Durum
+- Encrypting financial data with AES-256... / Finansal veriler AES-256 ile şifreleniyor...
+- Normalizing relational data (Country, currency etc.)... / İlişkili veriler normalleştiriliyor (Ülke, para birimi vb.)...
+- Posting customer balances and journal entries to ledger... / Cari bakiyeler ve yevmiye fişleri muhasebeleştiriliyor...
+- Reading source file and parsing headers... / Kaynak dosya okunuyor ve başlıklar çözümleniyor...
+- Validating record rows and data formats... / Kayız satırları ve veri biçimleri doğrulanıyor...
+- Migrate data from your active software into CoreAlign infrastructure with zero loss. / Aktif kullandığınız yazılımlardaki verileri sıfır kayıpla CoreAlign altyapısına göç ettirin.
+- Debit/credit balance has been validated and every record has been posted to the audit log. If you are not satisfied with the result, you can roll back this session with one click. / Borç/alacak dengesi doğrulandı ve her kayıt denetim günlüğüne işlendi. Sonuçtan memnun kalmazsanız bu oturumu tek tıkla geri alabilirsiniz.
+- All your data has passed schema integrity validation and was successfully imported. / Tüm verileriniz şema bütünlüğü kontrolünden geçerek başarıyla içeri aktarılmıştır.
+- Migration Completed and Verified! / Göç Tamamlandı ve Doğrulandı!
+- Easy Migration & Data Import Intelligence / Kolay Geçiş ve Veri Aktarım Zekası
+- About / Hakkımızda
+- Articles / Makaleler
+- Contact / İletişim
+- Home / Ana Sayfa
+- Solutions / Çözümler
+- Get a Custom Quote / Fiyat Teklifi Alın
+- Schedule a Demo / Demo Planlayın
+- For manufacturers looking to digitalize B2B dealer order channels and enforce CAD validation. / B2B bayi sipariş kanallarını dijitalleştirmek ve CAD kontrolü sağlamak isteyen üreticiler için.
+- Smart CAD Drawing Validation / Akıllı CAD Çizim Doğrulama
+- B2B Dealer Network Interface / B2B Bayi Ağı Arayüzü
+- Credit Limit & Risk Controls / Cari Limit & Risk Kontrolü
+- Multi-Currency Integration / Çoklu Para Birimi Desteği
+- Standard Support SLA / Standart Destek SLA
+- Growing Business / Büyüyen İşletme
+- For mid-scale factories aiming to maximize yield using furnace and cutting optimizations. / Üretim verimliliğini fırın ve kesim optimizasyonuyla maksimize etmek isteyen orta ölçekli fabrikalar.
+- All features in Starter Plan / Starter Planındaki Tüm Özellikler
+- MRP Production & Furnace Scheduling / MRP Üretim ve Fırın Planlama
+- 2D Nesting & Yield Optimization / 2D Kesim Optimizasyonu (Nesting)
+- Inventory & Multi-Warehouse Tracking / Stok & Çoklu Depo Yönetimi
+- Priority Email & Phone Support / Öncelikli E-posta & Telefon Desteği
+- Operational Scale / Operasyonel Güç
+- For market leaders requiring bi-directional ERP sync and comprehensive financial accounting. / Mevcut kurumsal ERP'leriyle çift yönlü entegrasyon ve tam finansal muhasebe uyumu arayan lider üreticiler.
+- All features in Scale Plan / Scale Planındaki Tüm Özellikler
+- Accounting & Double-Entry General Ledger / Muhasebe & Çift Taraflı Defter-i Kebir
+- Pre-built ERP Connectors (SAP, Logo, Mikro) / Hazır ERP Bağlayıcıları (SAP, Logo, Mikro)
+- Modbus / OPC UA Live Machine APIs / Modbus / OPC UA Canlı Makine API'leri
+- Dedicated Account Manager & 24/7 Support / Adanmış Müşteri Temsilcisi & 7/24 Destek
+- Enterprise Suite / Fabrika Çözümü
+- MOST POPULAR / EN POPÜLER
+- Flexible licensing and integration packages tailored to your production volume and dealer network. / Üretim hacminize ve bayi sayınıza göre esnek lisanslama ve entegrasyon paketleri.
+- Tailored Scaling Plans for Your Business / İşletmenize Uygun Ölçeklendirme Planları
+- With CoreAlign / CoreAlign ile
+- Annual Material Savings / Yıllık Hammadde Kazancı
+- ROI ANALYSIS / ROI ANALİZİ
+- Illustrative estimate — updates live with your inputs. / Açıklayıcı tahmin — girdilerinize göre anlık güncellenir.
+- Current process / Mevcut süreç
+- The bars update instantly as you move the sliders. The left bar reflects your current state; the right bar the level expected with CoreAlign optimization. / Sürgüleri oynattıkça çubuklar anında güncellenir. Soldaki çubuk mevcut durumunuzu, sağdaki CoreAlign optimizasyonuyla beklenen seviyeyi temsil eder.
+- Before and after CoreAlign: estimated impact / CoreAlign öncesi ve sonrası: tahmini etki
+- CoreAlign MRP limits raw material waste rate to 1.2%. Calculations are based on an average material cost of €140/m². / CoreAlign MRP algoritması ham malzeme firesini %1.2 seviyesinde sabitler. Bu hesaplama €140/m² ortalama malzeme birim maliyeti üzerinden yapılmıştır.
+- Adjust the sliders below to match your factory's monthly output and current waste ratios to calculate your projected annual savings with CoreAlign's 2D cutting nest optimization. / Aşağıdaki sürgüleri kullanarak fabrikanızın aylık üretim hacmini ve mevcut fire oranlarını girin. CoreAlign'in 2D kesim ve fırın optimizasyonuyla elde edeceğiniz yıllık net kazancı görün.
+- These figures are illustrative estimates only, based on industry-average assumptions, and are not a commitment. Actual results vary with your production profile. / Bu rakamlar yalnızca açıklayıcı tahminlerdir; sektör ortalaması varsayımlarına dayanır ve taahhüt içermez. Gerçek sonuçlar üretim profilinize göre değişir.
+- -{{count}} h / -{{count}} sa
+- {{count}} h / {{count}} sa
+- CoreAlign's nesting engine pulls waste toward the 1.2% target band — most of the gain is typically recovered within the first year. / CoreAlign nesting motoru fireyi %1.2 hedef bandına çeker — kazancın çoğu ilk yıl içinde geri döner.
+- Monthly Dealer Orders / Aylık Bayi Sipariş Adedi
+- Projected ROI Amortization / Yatırım Amortisman Süresi
+- {{count}} Month(s) / {{count}} Ay
+- Instantly calculate the raw material and administrative hours saved by deploying CoreAlign. / CoreAlign'in fabrikanızda sağlayacağı hammadde ve zaman tasarrufunu anlık hesaplayın.
+- Monthly Operational Hours / Aylık Operasyon Süresi
+- Administrative Time Saved / Kazanılan Operasyon Süresi
+- {{count}} Hours/Month / {{count}} Saat/Ay
+- Financial ROI & Raw Material Savings Calculator / Finansal ROI ve Hammadde Tasarrufu Hesaplayıcı
+- Monthly Glass / Profile Volume / Aylık Cam / Profil İşleme Hacmi
+- Material Waste / Malzeme Firesi
+- Current Material Waste Rate / Mevcut Malzeme Fire Oranı
+- ONE-ON-ONE DEMO / BİREBİR DEMO
+- Company Name / Şirket Unvanı
+- Company name / Şirket adı
+- Preferred Date / Tercih Ettiğiniz Tarih
+- Your Email / E-posta Adresiniz
+- example@company.com / ornek@sirket.com
+- From before the demo to the presentation, you'll know exactly where you are at every step. The process is transparent and fast. / Demo öncesinden sunuma kadar her adımda nerede olduğunuzu bilirsiniz. Süreç şeffaf ve hızlıdır.
+- What can you expect? / Sizi ne bekliyor?
+- Share a few details, and let us handle the rest. / Birkaç detay paylaşın, gerisini biz halledelim.
+- Appointment form / Randevu formu
+- hours / saat
+- Interested Module / İlginizi Çeken Modül
+- Your Name / Adınız Soyadınız
+- Full Name / Ad Soyad
+- B2B Dealer Network Portal / B2B Bayi Ağı Portal Yönetimi
+- Smart CAD Drawing Engine / Akıllı CAD Çizim Motoru
+- Accounting & Ledger / Muhasebe & Defter-i Kebir
+- MRP Production & Furnace Planning / MRP Üretim ve Fırın Planlama
+- No credit card or commitment required / Kredi kartı veya taahhüt yok
+- Your data is used only for the demo / Verileriniz yalnızca demo için kullanılır
+- Response within 24 hours / 24 saat içinde yanıt
+- Average first response time is under 24 hours / Ortalama ilk yanıt süresi 24 saatin altında
+- Target first response time / Hedeflenen ilk yanıt süresi
+- Scheduling... / Planlanıyor...
+- Your form is delivered to our team immediately, and you receive an automatic confirmation email. / Formu gönderdiğiniz an ekibimize iletilir, otomatik bir onay e-postası alırsınız.
+- Your request reaches us instantly / Talebiniz anında ulaşır
+- One of our specialists will call or message you to confirm convenient times. / Bir uzmanımız uygun saatleri netleştirmek için sizi arar veya yazar.
+- Response within 24 hours / 24 saat içinde dönüş
+- A 30-minute presentation tailored to your scenario on the module of your choice. / Seçtiğiniz modül üzerinden 30 dakikalık, senaryonuza göre uyarlanmış sunum.
+- Custom live demo for your business / İşinize özel canlı demo
+- Schedule Demo Meeting / Demo Randevusunu Planla
+- Book a 15-minute live personalized demo run with CoreAlign engineers to answer your factory's integration needs. / CoreAlign uzmanlarıyla işletmenize özel 15 dakikalık canlı bir demo planlayın, tüm sorularınızı yanıtlayalım.
+- Your demo request has been successfully submitted! Our team will reach out to you shortly. / Demo talebiniz başarıyla alınmıştır! Ekibimiz en kısa sürede sizinle iletişime geçecektir.
+- Schedule a Live Demo Session / Canlı Demo Randevusu Planlayın
+- LOGGING / KAYIT
+- Change tracking + actor/tenant stamping / Değişiklik takibi + aktör/kiracı damgası
+- INTEGRITY / BÜTÜNLÜK
+- Append-only + hash chaining / Yalnız-ekleme (append-only) + hash zinciri
+- RETENTION / SAKLAMA
+- Configurable retention + cold archive / Yapılandırılabilir saklama + soğuk arşiv
+- Audit trail design / Denetim izi tasarımı
+- SECURITY / GÜVENLİK
+- GDPR & KVKK PRINCIPLES / GDPR & KVKK İLKELERİ
+- ISO 27001 TARGET / ISO 27001 HEDEF
+- HIGH AVAILABILITY SLA / YÜKSEK ERİŞİLEBİLİRLİK SLA
+- SOC 2 READINESS / SOC 2 HAZIRLIK
+- Target compliance frameworks / Hedeflenen uyum çerçevesi
+- ALGORITHM / ALGORİTMA
+- AES-256-GCM (at rest + in transit) / AES-256-GCM (durağan + iletim)
+- KEY ROTATION / ANAHTAR DÖNGÜSÜ
+- Periodic rotation via Key Vault / Key Vault ile periyodik rotasyon
+- ENCRYPTED FIELDS / ŞİFRELİ ALANLAR
+- Tax ID, credit limit, banking details, API keys / Vergi no, kredi limiti, banka bilgisi, API anahtarı
+- Encryption key management / Şifreleme anahtar yönetimi
+- Financial, inventory, and permission changes are logged in an append-only journal with who/when/old-new details. / Para, stok ve yetki değişiklikleri kim/ne zaman/eski-yeni olarak yalnız-ekleme bir günlüğe kaydedilir.
+- Immutable audit trail / Değişmez denetim izi
+- Sensitive financial and personal fields are encrypted with AES-256 at rest and in transit; encryption keys are managed separately from the application. / Hassas finansal ve kişisel alanlar AES-256 ile durağan ve iletim halinde şifrelenir; anahtarlar uygulamadan ayrı tutulur.
+- End-to-end encryption / Uçtan uca şifreleme
+- Permissions are defined policy-based; every endpoint is protected by default, with least-privilege principles enforced. / Yetkiler policy tabanlı tanımlanır; her uç nokta varsayılan olarak korumalıdır, en az ayrıcalık ilkesi uygulanır.
+- Role-based access control (RBAC) / Rol tabanlı erişim (RBAC)
+- Every query is subject to automatic TenantId filtering; row-level security (RLS) is targeted as a second line of defense. / Her sorgu otomatik TenantId filtresine tabidir; satır seviyesi güvenlik (RLS) ikinci bir savunma katmanı olarak hedeflenir.
+- Tenant isolation / Kiracı izolasyonu
+- Data encryption / Veri şifreleme
+- Row-level / Satır seviyesi
+- CoreAlign is pre-launch. The controls below outline the security standards and architectural principles we are targeting; certification processes are ongoing. / CoreAlign lansman öncesindedir. Aşağıdaki kontroller hedeflediğimiz güvenlik standartlarını ve mimari ilkeleri tanımlar; sertifikasyon süreçleri devam etmektedir.
+- Isolation active / İzolasyon aktif
+- Architecture design principles / Mimari tasarım ilkeleri
+- Your business records are protected by international security standards, isolated namespaces, and advanced cryptographic protocols. / Verileriniz, uluslararası standartlarda izole edilmiş altyapı ve gelişmiş şifreleme protokolleri ile korunur.
+- Audit Trails / Denetim İzleri (Audit Log)
+- All administrative adjustments, records changes, and user permission updates are logged to an immutable and undeletable audit trail. User operations are captured with millisecond precision to verify SOC 2 auditing compliance. / Sistem üzerinde gerçekleşen tüm kritik işlemler, veri değişiklikleri ve yetki güncellemeleri silinemez ve değiştirilemez bir denetim günlüğüne (audit trail) kaydedilir. SOC 2 uyumluluğu için kullanıcı hareketleri saniye hassasiyetinde kayıt altına alınır.
+- Global Certifications / Global Sertifikasyonlar
+- CoreAlign operations fully comply with ISO 27001 Information Security standards, GDPR privacy regulations, and SOC 2 Type II trust principles. Active-active redundant server clusters guarantee an annual uptime SLA of 99.99%. / CoreAlign altyapısı ISO 27001 Bilgi Güvenliği Yönetim Sistemi, GDPR/KVKK veri koruma mevzuatları ve SOC 2 kurumsal güvenlik standartları ile tam uyumlu çalışır. Yedekli sunucu kümelerimizle yıllık %99.99 çalışma süresi (SLA) garanti edilir.
+- Data Encryption (AES-256) / Veri Şifreleme (AES-256)
+- CoreAlign encrypts data at-rest within database clusters and in-transit across networks using the AES-256 standard. No unauthorized actors, including system or database administrators, can view financial ledger records in plaintext. / CoreAlign, veritabanı seviyesinde durağan verileri (at-rest) ve ağ iletimi sırasındaki hareketli verileri (in-transit) AES-256 standardı ile şifreler. Sistem yöneticileri ve veritabanı yöneticileri dahil, yetkisiz hiç kimse finansal ve kişisel verileri düz metin olarak okuyamaz.
+- Tenant Isolation / Kiracı İzolasyonu
+- Our multi-tenant architecture logically isolates records between distinct enterprises. Every database lookup automatically applies the local TenantKey constraint, mathematically eliminating any risk of cross-tenant data leakages. / Çoklu kiracılı (multi-tenant) mimarimiz, her işletmenin verilerini mantıksal olarak birbirinden tamamen ayırır. Veritabanı katmanında çalışan tüm sorgular otomatik olarak TenantKey filtresine tabi tutulur, bu sayede çapraz kiracı veri sızıntısı riski matematiksel olarak sıfırlanır.
+- Security controls / Güvenlik kontrolleri
+- STRATEGY / STRATEJİ
+- Logical tenant restrictions / Mantıksal kiracı kısıtları
+- QUERY FILTERING / SORGU FİLTRESİ
+- Automatic TenantId filtering on all queries / Her sorguda otomatik TenantId filtresi
+- LEAK PREVENTION / SIZINTI ÖNLEME
+- Tenant-scoped caching + RLS defense-in-depth / Kiracıya özel önbellek + RLS savunma derinliği
+- Tenant isolation layers / Kiracı izolasyon katmanları
+- Enterprise Security & Infrastructure Integrity / Kurumsal Güvenlik ve Altyapı Bütünlüğü
+- MODULAR ARCHITECTURE / MODÜLER MİMARİ
+- Explore all modules in a live demo / Tüm modülleri canlı demoda keşfedin
+- Constraint-based panel capture: angle, span, and load limits are live-validated. / Kısıt tabanlı panel yakalama: açı, açıklık ve yük sınırları canlı kontrol edilir.
+- Provides profile cut tolerances, wind load statics, and 3D angle snapping algorithms to let your dealers submit zero-error drawing orders. / Profil kesim toleransları, rüzgar yükü statiği ve 3D açı yakalama algoritmaları ile bayilerinizin sıfır hata ile çizim siparişleri göndermesini sağlar.
+- Your dealers enter dimensions from a browser; the system instantly validates motor profile cutting tolerances, angle constraints, and wind load statics. Faulty drawings are blocked before reaching production, and every order arrives production-ready. / Bayileriniz tarayıcıdan ölçü girer; motor profil kesim toleranslarını, açı kısıtlarını ve rüzgâr yükü statiğini anında doğrular. Hatalı çizim üretime düşmeden engellenir, her sipariş imalata hazır gelir.
+- Drawing error rate / Çizim hata oranı
+- Angle capture / Açı yakalama
+- Max. panel span / Maks. panel açıklığı
+- Smart CAD Drawing Engine / Akıllı CAD Çizim Motoru
+- Optimal sheet placement and furnace batch planning; waste becomes value before it becomes scrap. / Levhaya optimum yerleşim ve fırın parti planlaması; boşluk fireye dönüşmeden değerlendirilir.
+- Reduces glass and metal sheet waste ratios to 1.2% with a 2D nesting algorithm, optimizing tempering furnace loading and baking run scheduling. / 2D yerleşim optimizasyonu (nesting) algoritması ile cam ve sac fire oranını %1.2'ye indirir, temperleme fırını doluluk oranını ve pişirme sürelerini optimize eder.
+- The nesting algorithm places glass and sheet metal with minimal waste; it plans tempering furnace capacity and baking batches. Material costs drop and furnace idle times shrink. / Yerleşim (nesting) algoritması cam ve sac levhalarını en az fire ile yerleştirir; temperleme fırını doluluğunu ve pişirme partilerini planlar. Hammadde maliyeti düşer, fırın bekleme süreleri kısalır.
+- Sheet efficiency / Levha verimliliği
+- Target waste rate / Hedef fire oranı
+- Furnace fill rate / Fırın doluluğu
+- MRP Furnace & Cut Optimizer / MRP Fırın & Kesim Optimizasyonu
+- The central hub broadcasts prices and stock to each dealer; orders and account movements flow back instantly. / Merkez hub her bayiye fiyat ve stok yayar; sipariş ve cari hareketleri anında geri akar.
+- Unifies dealer-specific pricing tiers, instant credit check gates, order templates, quotation drafting, and dispatch tracking in a single platform. / Bayilerinize özel dinamik fiyat listeleri, anlık cari limit kontrolleri, sipariş şablonları, teklif hazırlama ve sevkiyat takip süreçlerini tek platformda birleştirir.
+- Each dealer works from a single portal with their own price lists, credit limits, and order templates. Quotes, orders, and shipment status stay real-time synchronized; your dealer network is transparently managed from the center. / Her bayi kendi fiyat listesi, cari limiti ve sipariş şablonlarıyla tek portaldan çalışır. Teklif, sipariş ve sevkiyat durumu gerçek zamanlı senkron kalır; bayi ağınız merkezden şeffaf yönetilir.
+- Dealer self-service / Bayi self-servis
+- Credit limit enforcement / Cari limit kontrolü
+- Scalable dealers / Ölçeklenebilir bayi
+- B2B Dealer Network Portal / B2B Bayi Ağı Portal Yönetimi
+- Every journal entry balances on debit and credit sides; the ledger cannot close while out of balance. / Her yevmiye fişi borç ve alacak tarafıyla denkleşir; defter dengesizken kapanmaz.
+- Synchronizes transaction voucher generation directly from sales orders, providing trial balances, income statements, and tax withholding calculation controls. / Yevmiye fişlerinin siparişten otomatik oluşturulması, mizan raporları, gelir tablosu, bilanço, KDV tevkifat hesaplamaları ve muhasebe dönem kilitleri ile tam uyum.
+- Orders and invoices automatically become double-entry journal vouchers; trial balance, income statement, and balance sheet are instantly ready. With VAT withholding and period locks, your books always stay balanced. / Sipariş ve fatura, çift taraflı yevmiye fişlerine otomatik dönüşür; mizan, gelir tablosu ve bilanço anlık hazır olur. KDV tevkifatı ve dönem kilitleriyle defterleriniz her zaman dengede kalır.
+- Journal entry / Yevmiye kaydı
+- Every voucher balanced / Her fiş dengeli
+- Withholding support / Tevkifat desteği
+- Enterprise Finance & Ledger / Kurumsal Finans & Genel Muhasebe
+- Supplier quotes are lined up side-by-side; the best price is automatically highlighted. / Tedarikçi teklifleri yan yana sıralanır; en uygun fiyat otomatik işaretlenir.
+- Manages purchase requisitions, supplier requests for quotation (RFQ), warehouse receipt slips, and barcode-validated item storage logs. / İç taleplerden satın alma siparişlerine, tedarikçi fiyat tekliflerinden (RFQ) depo kabul ve barkodlu giriş işlemlerine kadar tedarik süreçlerinizi yönetir.
+- Manages the entire chain from internal demand to purchase orders, from supplier quote (RFQ) comparison to barcode-enabled warehouse receiving. Minimum stock levels trigger reorders, and the best quote rises to the top. / İç talepten satın alma siparişine, tedarikçi tekliflerinin (RFQ) karşılaştırmasından barkodlu depo kabulüne kadar tüm zinciri yönetir. Minimum stok seviyeleri yeniden sipariş tetikler, en uygun teklif öne çıkar.
+- Quote comparison / Teklif karşılaştırma
+- Auto reorder trigger / Yeniden sipariş tetiği
+- Warehouse receipt / Depo kabulü
+- Procurement & Supply Chain / Satınalma & Tedarik Zinciri
+- Request, assignment, repair, and digital acceptance steps are tracked against SLA time. / Talep, atama, onarım ve dijital kabul adımları SLA süresine karşı izlenir.
+- Tracks digital post-installation acceptance sign-offs, customer support tickets, technician scheduling, work order closures, and warranty contract lifecycles. / Kurulum sonrası bayi ve müşteri dijital kabul formları, servis destek biletleri (ticket), teknisyen atama, iş emri kapatma ve garanti sözleşmeleri takibi.
+- From digital acceptance forms after installation to service tickets, from technician assignment to work order closure—field processes are tracked in a single flow. SLA times are measured, and warranty contracts are followed without gap. / Kurulum sonrası dijital kabul formundan servis biletine, teknisyen atamasından iş emri kapanışına kadar saha süreçleri tek akışta izlenir. SLA süreleri ölçülür, garanti sözleşmeleri eksiksiz takip edilir.
+- Response time tracking / Yanıt süresi takibi
+- Acceptance signature / Kabul imzası
+- Contract tracking / Sözleşme izleme
+- Warranty, Acceptance & Service / Garanti, Kabul & Servis Yönetimi
+- Module Schematic · Live Preview / Modül Şeması · Canlı Önizleme
+- Integrated architecture covering all operational needs of glass processing, metal construction, and bespoke manufacturing sectors. / Cam işleme, metal konstrüksiyon ve özel imalat sektörlerinin tüm operasyonel ihtiyaçlarını karşılayan entegre mimari.
+- CoreAlign modules / CoreAlign modülleri
+- CoreAlign Enterprise Module Ecosystem / CoreAlign Enterprise Modül Eko-Sistemi
+- Enable your dealers to place their own orders, generate quotes, and manage current account statements and payment schedules online. / Bayilerinizin kendi siparişlerini girmesini, teklif oluşturmasını, cari hesap ekstrelerini ve ödeme planlarını online yönetmesini sağlayın.
+- B2B Dealer Network Interface / B2B Bayi Ağ Arayüzü
+- Full integration of trial balances, balance sheets, income statements, journal entries, and accounting periods with international standards. / Mizan, bilanço, gelir tablosu, yevmiye fişleri ve muhasebe dönemlerinin uluslararası standartlarla tam entegrasyonu.
+- Finance & Accounting / Finans & Muhasebe
+- Automatic data flow diagram from dealer order to accounting / Bayi siparişinden muhasebeye uzanan otomatik veri akışı şeması
+- The moment a dealer enters an order, the quote, production plan, shipment, and accounting entry automatically trigger in the background. The live diagram below shows how this chain progresses in a single flow. / Bir bayi siparişi girdiği anda; teklif, üretim planı, sevkiyat ve muhasebe kaydı arka planda otomatik tetiklenir. Aşağıdaki canlı şema bu zincirin tek bir akışta nasıl ilerlediğini gösterir.
+- Dealer Order / Bayi Siparişi
+- CAD & CPQ
+- MRP Manufacturing / MRP Üretim
+- Shipment / Sevkiyat
+- Accounting / Muhasebe
+- End-to-end single data flow / Uçtan uca tek veri akışı
+- Draw dynamic glass enclosure, guillotine, and facade cladding projects based on custom dimensions, generating instant cost and waste analyses. / Ölçülere göre dinamik cam balkon, giyotin ve cephe kaplama projeleri çizin, maliyet ve fire analizlerini anında yapın.
+- Smart Glass Project Designer / Akıllı Cam Proje Tasarımcısı
+- Multi-warehouse management, reorder points, ABC velocity analysis, and barcode-supported shipping processes. / Çoklu depo yönetimi, yeniden sipariş noktaları, ABC hız analizleri ve barkod destekli sevkiyat süreçleri.
+- Inventory & Logistics / Envanter & Lojistik
+- Material requirements planning starting from customer orders, work center capacity analysis, and baking/production scheduling. / Müşteri siparişlerinden başlayarak malzeme ihtiyaç planlaması, iş istasyonları kapasite analizi ve fırınlama/üretim sıralama.
+- MRP & Production Planning / MRP & Üretim Planlama
+- Every sale instantly reflects in accounting entries, cash flow, and reports. Tenant-based isolation guarantees data security. / Her satış hareketi anında muhasebe fişine, nakit akışına ve raporlara yansır. Kiracı bazlı izolasyon ile veri güvenliği garantidir.
+- Automatic double-entry journal posting / Otomatik çift taraflı yevmiye kaydı
+- Real-time cash flow and trial balance / Gerçek zamanlı nakit akışı ve mizan
+- Role-based access and tenant isolation / Rol bazlı yetki ve kiracı izolasyonu
+- Management & Finance / Yönetim & Finans
+- Dealers enter measurements from their portal, receive instant quotes, and see their credit limit. Orders go directly to production without phone calls. / Bayiler kendi portalından ölçü girer, anlık teklif alır ve cari limitini görür. Sipariş, telefon trafiği olmadan doğrudan üretime düşer.
+- Self-service quote and order entry / Self-servis teklif ve sipariş girişi
+- Real-time account statement and credit limit / Anlık cari hesap ekstresi ve kredi limiti
+- Automatic discount tiers by segment / Segmente göre otomatik iskonto kademeleri
+- Dealer & Sales Network / Bayi & Satış Ağı
+- Bill of materials, cutting optimization, and furnace load planning auto-generate from CAD measurements. Bottlenecks surface before production starts. / CAD ölçüsünden malzeme listesi, kesim optimizasyonu ve fırın doluluk planı otomatik çıkar. Darboğazlar üretim başlamadan görünür.
+- Automatic MRP and cutting optimization / Otomatik MRP ve kesim optimizasyonu
+- Temper furnace capacity and energy planning / Temper fırını kapasite ve enerji planı
+- Workstation capacity and queue management / İş istasyonu kapasite ve sıra yönetimi
+- Manufacturing & Planning / Üretim & Planlama
+- From dealers to production planning, finance to management—the same data flows in one stream. Everyone works from their screen; the system eliminates manual handoffs. / Bayiden üretim planlamaya, finanstan yönetime kadar aynı veri tek bir akışta birleşir. Herkes kendi ekranından çalışır, sistem arada manuel aktarım bırakmaz.
+- One platform, value for every team / Tek platform, her ekibe değer
+- APPROVED / ONAYLANDI
+- B2B ACCOUNT CARD / B2B CARİ KART
+- Dealer Segment / Bayi Segmenti
+- %{{percent}} Dealer Discount Applied / %{{percent}} Bayi İndirimi Uygulandı
+- Required Downpayment / Amt / Gerekli Peşinat Oranı / Tutarı
+- Credit Limit Status / Kredi Limiti Durumu
+- Net Order Amount / Net Sipariş Tutarı
+- NOT RESERVED / REZERVE EDİLMEDİ
+- Order Value (€) / Sipariş Tutarı (€)
+- CREDIT BLOCK / LOCKED / LİMİT AŞILDI / BLOKE
+- Allocated Stock Reservation / Rezerve Edilen Envanter
+- Dealer Account Analysis Results / Bayi Cari Analiz Sonuçları
+- Dealer Risk Profile / Bayi Risk Profili
+- Class A (Low) / A Sınıfı (Düşük)
+- Class B (Medium) / B Sınıfı (Orta)
+- Class C (High) / C Sınıfı (Yüksek)
+- Risk Group / Risk Grubu
+- High Risk (Collateral Required) / Yüksek (Teminat Gerekli)
+- Low Risk (Reliable) / Düşük (Sorunsuz)
+- Medium Risk (Monitored) / Orta (Takipte)
+- BLOCKED / TRANSACTION DENIED / BLOKE / İŞLEM ENGELLENDİ
+- AWAITING MANUAL APPROVAL / MANUEL ONAY BEKLİYOR
+- READY TO PROCESS / İŞLEME UYGUN
+- Advance (Cash) / Peşin (Nakit)
+- Net 30 Days / 30 Gün Cari
+- Net 60 Check / 60 Gün Çekli
+- Payment Terms / Vade Yapısı
+- Payment Terms / Ödeme Vadesi
+- Net 30 Days / 30 Gün Vadeli
+- Net 60 Days (Cheque) / 60 Gün Vadeli (Çekli)
+- Cash in Advance / Peşin Ödeme
+- Gold Dealer (10% Discount) / Gold Bayi (%10 İndirimli)
+- Premium Partner (20% Discount) / Premium Partner (%20 İndirimli)
+- Standard Dealer / Standart Bayi
+- WARNING / RISKY / RİSKLİ / UYARI
+- CoreAlign Live Engine Demo / CoreAlign Canlı Motor Demosu
+- MRP Optimization Analysis (Concurrent Simulation) / MRP Optimizasyon Analizi (Eşzamanlı Simülasyon)
+- Simulate & Calculate / Simüle Et ve Hesapla
+- Schedule a live demo with your own scenario / Kendi senaryonuzla canlı demo planlayın
+- Dealer Cost (Net) / Bayi Alış Fiyatı (Net)
+- Values here are illustrative and calculated only to demonstrate the flow. Let's review the actual results for your project together in a live demo. / Buradaki değerler temsilîdir ve yalnızca akışı göstermek için hesaplanır. Gerçek projenizdeki sonuçları canlı demoda birlikte inceleyelim.
+- Estimated Mfg Cost / Tahmini İmalat Maliyeti
+- 120 - Receivables Account / 120 - Alıcılar H.
+- 391 - Calculated VAT Account / 391 - Hes. KDV H.
+- 600 - Domestic Sales / 600 - Yurtiçi Satış
+- Account Code & Label / Hesap Kodu ve Adı
+- Calculated Output VAT (391) / Hesaplanan KDV (391)
+- Credit (Cr.) / Alacak Kaydı
+- Debit (Dr.) / Borç Kaydı
+- Invoice Value / Fatura Tutarı
+- Net Revenue (Excl. VAT) / Net Ciro (KDV Hariç)
+- Period Open (Auto Post Active) / Dönem Açık (Oto Post Aktif)
+- Active Fiscal Period Impact / Aktif Muhasebe Dönemi Etkisi
+- Resulting Double-Entry Journal (T-Account) / Oluşturulacak Çift Taraflı Muhasebe Kaydı (T-Tablosu)
+- POSTED / POST EDİLDİ
+- Dealer Receivables (120) / Bayi Cari Borcu (120)
+- Financial Impact Outputs / Finansal Etki Çıktıları
+- VAT Rate / KDV Oranı
+- Double Glazed Comfort (4+12+4) / Isıcam Konfor (4+12+4)
+- Laminated Safety Glass / Lamine Güvenlikli Cam
+- 4mm Tempered Single Glass / 4mm Temperli Tek Cam
+- Glass Type / Cam Tipi
+- Height (mm) / Yükseklik (mm)
+- Est. Dispatch Time / Tahmini Sevk Süresi
+- 3 Business Days (Production Line Ordered) / 3 İş Günü (Üretim Bandı Sıralı)
+- Bake Thickness: {{thickness}} mm / Pişirme Kalınlığı: {{thickness}} mm
+- Capacity: 1,200 kg / Charge / Kapasite: 1.200 kg / Şarj
+- {{count}} Cycle(s) / {{count}} Döngü
+- Required Baking Cycles / Gerekli Pişirme Döngüsü
+- Est. Baking Power Cost / Tahmini Enerji Maliyeti
+- Tempering Furnace Load (%) / Fırın Doluluk Oranı (%)
+- Furnace Load Ratio: %{{ratio}} / Fırın Yükleme Oranı: %{{ratio}}
+- MRP Furnace Capacity Outputs / MRP Fırın Kapasite Çıktıları
+- TEMPER FURNACE SLOT / TEMPER FIRINI SLOTU
+- Glass Thickness (mm) / Cam Kalınlığı (mm)
+- Total Glass Weight (kg) / Toplam Cam Ağırlığı (kg)
+- Number of Panels / Panel Sayısı
+- Parameters / Parametreler
+- Profile Selection / Profil Seçimi
+- Slim Line Minimalist Profile / Slim Line Minimalist Profil
+- Standard Aluminum Profile / Standart Alüminyum Profil
+- Premium Thermal Insulated Profile / Premium Isı Yalıtımlı Profil
+- Experience four main pillars of our cloud platform using live parameters. / ERP sistemimizin dört ana omurgasını canlı parametrelerle deneyimleyin.
+- B2B Dealer Credit / B2B Bayi Cari Limiti
+- Smart CAD Designer / Akıllı CAD Tasarımı
+- Double-Entry Ledger / Muhasebe Fişi Kaydı
+- MRP Furnace Scheduling / MRP Fırın Planlama
+- CoreAlign Interactive Module Simulators / CoreAlign Etkileşimli Modül Simülatörleri
+- Total Area / Toplam Alan
+- While traditional manufacturing incurs a 15% waste rate, CoreAlign's MRP 2D cutting optimization algorithm suppresses scrap to just 1.2%. / Geleneksel üretimde %15 olan fire oranı, CoreAlign MRP kesim optimizasyonu algoritması sayesinde %1.2 seviyesine çekilmiştir.
+- MRP Waste Rate / MRP Fire Oranı
+- Saved Waste Savings / Kazanılan Fire Tasarrufu
+- Width (mm) / Genişlik (mm)
+- Enable real-time collaboration across all departments of your business. / İşletmenizdeki tüm departmanların birbiriyle eşzamanlı çalışmasını sağlayın.
+- ERP & MRP Solutions / ERP ve MRP Çözümlerimiz
+- Track post-installation acceptance forms, warranty durations, and service support tickets originating from dealers or end-users. / Kurulum sonrası kabul formlarını, garanti sürelerini ve bayilerden veya son kullanıcılardan gelen servis destek taleplerini takip edin.
+- Warranty & Service Support / Garanti & Servis Destek
+- Read how leading manufacturing hubs optimized shop-floor operations by migrating to CoreAlign. / CoreAlign altyapısına geçerek üretim verimliliğini artıran lider fabrikaların deneyimleri.
+- Mehmet Sahin / Mehmet Şahin
+- Thanks to B2B order constraint verification, we reduced dealer drawing errors to absolute zero. The production line runs continuously. / B2B sipariş doğrulama sayesinde hatalı bayi çizimlerini sıfıra indirdik. Üretim bandı duraksamadan çalışıyor.
+- General Manager, AlumGlass Corp. / Genel Müdür, AlumGlass A.Ş.
+- Dr. Yavuz Selim
+- Temper furnace optimization and 2D nesting algorithms reduced our furnace power costs by 22%, locking our material waste rate at 1.2%. / Fırın doluluk optimizasyonu ve 2D kesim algoritmaları sayesinde fırın enerji tüketimimiz %22 azaldı, fire oranımız %1.2'de sabitlendi.
+- Operations Director, AynaYapı Inc. / Operasyon Direktörü, AynaYapı A.Ş.
+- Success Stories from Manufacturers / Üreticilerin Başarı Hikayeleri
+- DATA INTEGRITY AUTO-AUDIT: BALANCED (100% MATCHED) / VERİ BÜTÜNLÜĞÜ OTO-DENETİMİ: DENGELİ (%100 EŞLEŞTİ)
+- INTEGRATED WORKFLOW / ENTEGRE İŞ AKIŞI
+- Interactive Flow Simulation / Etkileşimli Akış Simülasyonu
+- LIVE RUNNING / CANLI ÇALIŞIYOR
+- Delivery / Teslim
+- Shipment, invoice, and warranty are automatically opened. / Sevkiyat, fatura ve garanti otomatik açılır.
+- Design / Tasarım
+- Facade is drawn with 3D CAD, rules are checked. / 3D CAD ile cephe çizilir, kurallar denetlenir.
+- Data flowing on a single line from order to delivery / Siparişten teslime tek hat üzerinde akan veri
+- Manufacturing / Üretim
+- Production schedule drops with MRP nesting. / MRP nesting ile üretim planına düşer.
+- Order / Sipariş
+- Dealer opens the order from the B2B portal. / Bayi B2B portalından siparişi açar.
+- Quote / Teklif
+- CPQ price and approval are generated instantly. / CPQ fiyatı ve onayı anında üretilir.
+- Height: {{h}} mm / Yükseklik: {{h}} mm
+- CAD Validation Status: APPROVED / CAD Doğrulama Durumu: ONAYLANDI
+- Width: {{w}} mm / Genişlik: {{w}} mm
+- Account Code / Name / Hesap Kodu / Adı
+- Debit and credit totals match down to the last cent; the journal entry is automatically balanced based on revenue derived from CAD measurements. / Borç ve alacak toplamları kuruşu kuruşuna eşleşir; yevmiye fişi CAD ölçülerinden türetilen gelir üzerinden otomatik dengelenir.
+- Credit / Alacak
+- Debit / Borç
+- General Ledger Entry (Auto-generated Book Record) / Muhasebe Cari Fişi (Otomatik Oluşturulan Yevmiye Kaydı)
+- Total / Toplam
+- Tempering Furnace Temp: 680°C / Temperleme Fırın Sıcaklığı: 680°C
+- MRP Algorithmic Plan / MRP Algoritma Planı
+- Optimized Scrap Rate: 1.2% (Zero Errors) / Optimize Edilen Fire Oranı: %1.2 (Sıfır Hata)
+- Manual data entry / Manuel veri girişi
+- 0
+- Single source of truth / Tek doğru veri
+- 1
+- Traceable record / İzlenebilir kayıt
+- 100%
+- Dealer draws the design in CAD, rules are checked dynamically. / Bayiniz siparişi CAD ile çizer, limitler otomatik denetlenir.
+- 1. Dealer Draft & Validation / 1. Bayi Çizim & Kontrol
+- Cutting patterns are grouped via 2D nesting and dispatched to shop floor. / Üretim şablonları 2D nesting ile gruplanır ve fırına gönderilir.
+- 2. MRP Optimization / 2. MRP Optimizasyon
+- Invoice and double-entry ledger entries are posted instantly. / Fatura ve çift taraflı defter-i kebir yevmiye fişi anında kesilir.
+- 3. Ledger Entry / 3. Muhasebe Postu
+- Examine the workflow step by step / Akışı adım adım inceleyin
+- Observe how the CoreAlign infrastructure automatically routes data between departments in real time. / CoreAlign altyapısının departmanlar arası veri akışını nasıl otomatik yönettiğini canlı inceleyin.
+- Live Flow from B2B Order to General Ledger / B2B Siparişten Defter-i Kebire Canlı Akış

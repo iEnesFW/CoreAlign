@@ -1,16 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calculator, FileDown } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import { useTrialBalanceQuery } from '@/features/accounting/hooks/useJournalEntryQueries';
 import type { AccountType } from '@/features/accounting/model/glAccount.types';
 
 const TYPE_STYLES: Record<AccountType, string> = {
-  Asset: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Liability: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Asset: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Liability: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Equity: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  Revenue: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Expense: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  CostOfGoodsSold: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+  Revenue: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Expense: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  CostOfGoodsSold: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
   Memorandum: 'bg-slate-200 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
 };
 
@@ -30,7 +33,7 @@ const yearEnd = (year: number) => `${year}-12-31`;
 const currentYear = () => new Date().getFullYear();
 
 export const TrialBalancePage = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
 
   const [year, setYear] = useState(currentYear());
@@ -48,7 +51,14 @@ export const TrialBalancePage = () => {
 
   const exportCsv = () => {
     if (!data) return;
-    const headers = ['Kod', 'Hesap Adı', 'Tip', 'Borç', 'Alacak', 'Bakiye'];
+    const headers = [
+      t('TrialBalance.colCode', { defaultValue: 'Kod' }),
+      t('TrialBalance.colAccountName', { defaultValue: 'Hesap Adı' }),
+      t('TrialBalance.colType', { defaultValue: 'Tip' }),
+      t('TrialBalance.colDebit', { defaultValue: 'Borç' }),
+      t('TrialBalance.colCredit', { defaultValue: 'Alacak' }),
+      t('TrialBalance.colBalance', { defaultValue: 'Bakiye' }),
+    ];
     const lines = [headers.join(',')];
     for (const r of rows) {
       lines.push(
@@ -62,7 +72,16 @@ export const TrialBalancePage = () => {
         ].join(','),
       );
     }
-    lines.push(['', 'TOPLAM', '', totalDebit.toFixed(2), totalCredit.toFixed(2), ''].join(','));
+    lines.push(
+      [
+        '',
+        t('TrialBalance.totalUpper', { defaultValue: 'TOPLAM' }),
+        '',
+        totalDebit.toFixed(2),
+        totalCredit.toFixed(2),
+        '',
+      ].join(','),
+    );
     const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -73,32 +92,33 @@ export const TrialBalancePage = () => {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-            Mizan (Trial Balance)
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            Belirtilen tarih aralığındaki post edilmiş yevmiye fişlerinden hesaplanan hesap
-            bakiyeleri.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={exportCsv}
-          disabled={!data || rows.length === 0}
-          className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-        >
-          <FileDown size={12} />
-          CSV İndir
-        </button>
-      </div>
-
+    <DetailPageTemplate
+      header={
+        <PageHeader
+          icon={<Calculator size={20} />}
+          title={t('TrialBalance.title', { defaultValue: 'Mizan (Trial Balance)' })}
+          subtitle={t('TrialBalance.subtitle', {
+            defaultValue:
+              'Belirtilen tarih aralığındaki post edilmiş yevmiye fişlerinden hesaplanan hesap bakiyeleri.',
+          })}
+          actions={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={exportCsv}
+              disabled={!data || rows.length === 0}
+            >
+              <FileDown size={14} />
+              {t('TrialBalance.exportCsv', { defaultValue: 'CSV İndir' })}
+            </Button>
+          }
+        />
+      }
+    >
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            Yıl
+            {t('TrialBalance.year', { defaultValue: 'Yıl' })}
           </label>
           <div className="mt-1 inline-flex items-center gap-1">
             <button
@@ -130,7 +150,7 @@ export const TrialBalancePage = () => {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            Başlangıç
+            {t('TrialBalance.startDate', { defaultValue: 'Başlangıç' })}
           </label>
           <input
             type="date"
@@ -141,7 +161,7 @@ export const TrialBalancePage = () => {
         </div>
         <div>
           <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-            Bitiş
+            {t('TrialBalance.endDate', { defaultValue: 'Bitiş' })}
           </label>
           <input
             type="date"
@@ -153,12 +173,17 @@ export const TrialBalancePage = () => {
         <div
           className={`ml-auto rounded-lg border px-3 py-1.5 text-xs font-semibold ${
             isBalanced
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300'
-              : 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300'
+              ? 'border-success-200 bg-success-50 text-success-700 dark:border-success-500/30 dark:bg-success-500/10 dark:text-success-300'
+              : 'border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300'
           }`}
         >
           <Calculator className="mr-1 inline" size={11} />
-          {isBalanced ? 'Mizan denk' : `Fark: ${(totalDebit - totalCredit).toFixed(2)}`}
+          {isBalanced
+            ? t('TrialBalance.balanced', { defaultValue: 'Mizan denk' })
+            : t('TrialBalance.difference', {
+                defaultValue: 'Fark: {{amount}}',
+                amount: (totalDebit - totalCredit).toFixed(2),
+              })}
         </div>
       </div>
 
@@ -166,26 +191,42 @@ export const TrialBalancePage = () => {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
             <tr>
-              <th className="px-3 py-2 text-left">Kod</th>
-              <th className="px-3 py-2 text-left">Hesap Adı</th>
-              <th className="px-3 py-2 text-left">Tip</th>
-              <th className="px-3 py-2 text-center">Yön</th>
-              <th className="px-3 py-2 text-right">Borç</th>
-              <th className="px-3 py-2 text-right">Alacak</th>
-              <th className="px-3 py-2 text-right">Bakiye</th>
+              <th className="px-3 py-2 text-left">
+                {t('TrialBalance.colCode', { defaultValue: 'Kod' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('TrialBalance.colAccountName', { defaultValue: 'Hesap Adı' })}
+              </th>
+              <th className="px-3 py-2 text-left">
+                {t('TrialBalance.colType', { defaultValue: 'Tip' })}
+              </th>
+              <th className="px-3 py-2 text-center">
+                {t('TrialBalance.colSide', { defaultValue: 'Yön' })}
+              </th>
+              <th className="px-3 py-2 text-right">
+                {t('TrialBalance.colDebit', { defaultValue: 'Borç' })}
+              </th>
+              <th className="px-3 py-2 text-right">
+                {t('TrialBalance.colCredit', { defaultValue: 'Alacak' })}
+              </th>
+              <th className="px-3 py-2 text-right">
+                {t('TrialBalance.colBalance', { defaultValue: 'Bakiye' })}
+              </th>
             </tr>
           </thead>
           <tbody>
             {report.isPending ? (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-500">
-                  Hesaplanıyor…
+                  {t('TrialBalance.calculating', { defaultValue: 'Hesaplanıyor…' })}
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-500">
-                  Belirtilen aralıkta post edilmiş yevmiye fişi bulunamadı.
+                  {t('TrialBalance.empty', {
+                    defaultValue: 'Belirtilen aralıkta post edilmiş yevmiye fişi bulunamadı.',
+                  })}
                 </td>
               </tr>
             ) : (
@@ -206,7 +247,9 @@ export const TrialBalancePage = () => {
                     </span>
                   </td>
                   <td className="px-3 py-2 text-center text-[10px] uppercase text-slate-500">
-                    {r.normalSide === 'Debit' ? 'Dr' : 'Cr'}
+                    {r.normalSide === 'Debit'
+                      ? t('TrialBalance.debitAbbr', { defaultValue: 'Dr' })
+                      : t('TrialBalance.creditAbbr', { defaultValue: 'Cr' })}
                   </td>
                   <td className="px-3 py-2 text-right font-mono text-xs">
                     {fmtMoney(r.debit, locale)}
@@ -225,7 +268,7 @@ export const TrialBalancePage = () => {
             <tfoot className="border-t-2 border-slate-300 bg-slate-50 font-semibold dark:border-slate-700 dark:bg-slate-800/50">
               <tr>
                 <td colSpan={4} className="px-3 py-2 text-right text-xs uppercase">
-                  Toplam
+                  {t('TrialBalance.total', { defaultValue: 'Toplam' })}
                 </td>
                 <td className="px-3 py-2 text-right font-mono text-xs">
                   {fmtMoney(totalDebit, locale)}
@@ -241,7 +284,7 @@ export const TrialBalancePage = () => {
           )}
         </table>
       </div>
-    </div>
+    </DetailPageTemplate>
   );
 };
 

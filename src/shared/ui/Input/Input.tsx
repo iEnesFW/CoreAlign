@@ -1,27 +1,42 @@
-import React, { forwardRef } from 'react';
-import { clsx } from 'clsx';
-import styles from './Input.module.css';
+import React, { forwardRef, useId } from 'react';
+import { cn } from '@/shared/lib/cn';
+import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
+import { Label } from '@/shared/ui/Label/Label';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   leftIcon?: React.ReactNode;
+  required?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, leftIcon, ...props }, ref) => {
+  ({ className, label, error, leftIcon, required, id, name, ...props }, ref) => {
+    const reactId = useId();
+    const inputId = id ?? name ?? reactId;
     return (
-      <div className={clsx(styles.wrapper, className)}>
-        {label && <label className={styles.label}>{label}</label>}
-        <div className={styles.inputContainer}>
-          {leftIcon && <span className={styles.leftIcon}>{leftIcon}</span>}
+      <div className={cn('flex w-full flex-col gap-1.5', className)}>
+        {label && (
+          <Label htmlFor={inputId} required={required}>
+            {label}
+          </Label>
+        )}
+        <div className="relative flex items-center">
+          {leftIcon && (
+            <span className="pointer-events-none absolute left-3 flex items-center text-slate-400 dark:text-slate-500">
+              {leftIcon}
+            </span>
+          )}
           <input
             ref={ref}
-            className={clsx(styles.input, leftIcon && styles.hasLeftIcon, error && styles.hasError)}
+            id={inputId}
+            name={name}
+            aria-invalid={error ? true : undefined}
+            className={cn(fieldBaseClasses(Boolean(error)), leftIcon && 'pl-9')}
             {...props}
           />
         </div>
-        {error && <span className={styles.error}>{error}</span>}
+        {error && <span className="text-xs text-danger-600 dark:text-danger-400">{error}</span>}
       </div>
     );
   },

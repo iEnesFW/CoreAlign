@@ -177,7 +177,7 @@ public class Payment : TenantEntity, IXminConcurrency
         VoidReason = reason;
         VoidedAtUtc = now;
         UpdatedAtUtc = now;
-        AddDomainEvent(new PaymentVoidedEvent(TenantId, Id, CustomerId, PaymentNumber, Amount, now));
+        AddDomainEvent(new PaymentVoidedEvent(TenantId, Id, CustomerId, PaymentNumber, Amount, Currency, now));
     }
 
     public void MarkRefunded()

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
@@ -48,7 +49,6 @@ interface Props<T, K extends string = string> {
   className?: string;
   stickyHeader?: boolean;
   zebra?: boolean;
-  /** Opt-in row selection (checkbox column). */
   selectable?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
@@ -79,6 +79,7 @@ export function DataTable<T, K extends string = string>({
   selectedIds,
   onSelectionChange,
 }: Props<T, K>) {
+  const { t } = useTranslation();
   const [internalSort, setInternalSort] = useState<SortState<K> | null>(null);
   const sort = externalSort ?? internalSort;
 
@@ -108,9 +109,6 @@ export function DataTable<T, K extends string = string>({
     }
   };
 
-  // Resolve the sort accessor outside the memo so the memo only re-runs when the
-  // *active sort* changes (or rows do) — not on every parent re-render which
-  // would normally produce a fresh `columns` array and waste a sort pass.
   const sortValueFn = sort ? (columns.find((c) => c.key === sort.key)?.sortValue ?? null) : null;
 
   const sortedRows = useMemo(() => {
@@ -143,7 +141,7 @@ export function DataTable<T, K extends string = string>({
     return (
       <EmptyState
         icon={emptyIcon}
-        title={emptyTitle ?? 'No data'}
+        title={emptyTitle ?? t('Common.NoData', { defaultValue: 'No data' })}
         description={emptyDescription}
         action={emptyAction}
         className={className}
@@ -170,7 +168,7 @@ export function DataTable<T, K extends string = string>({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-slate-200/70 bg-white shadow-sm dark:border-slate-800/70 dark:bg-slate-900 animate-fade-in',
+        'overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-slate-900 animate-fade-in',
         className,
       )}
     >
@@ -182,13 +180,13 @@ export function DataTable<T, K extends string = string>({
               stickyHeader && 'sticky top-0 z-10 backdrop-blur',
             )}
           >
-            <tr className="border-b border-slate-200/70 dark:border-slate-800/70">
+            <tr className="border-b border-slate-200/70 dark:border-white/10">
               {selectable && (
                 <th scope="col" className={cn('w-8', padX, padY)}>
                   <input
                     type="checkbox"
-                    aria-label="Select all"
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600"
+                    aria-label={t('Common.SelectAll', { defaultValue: 'Select all' })}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600"
                     checked={allSelected}
                     ref={(el) => {
                       if (el) el.indeterminate = someSelected;
@@ -206,7 +204,6 @@ export function DataTable<T, K extends string = string>({
                     : col.sticky === 'right'
                       ? 'sticky right-0 z-10 bg-slate-50/95 dark:bg-slate-900/95'
                       : '';
-                // a11y: announce sort state to assistive tech via aria-sort.
                 const ariaSort: 'ascending' | 'descending' | 'none' | undefined =
                   col.sortable && col.sortValue
                     ? isSorted
@@ -237,10 +234,10 @@ export function DataTable<T, K extends string = string>({
                         type="button"
                         onClick={() => toggleSort(col.key)}
                         className={cn(
-                          'inline-flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded',
+                          'inline-flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded',
                           align === 'right' && 'flex-row-reverse',
                           isSorted
-                            ? 'text-indigo-600 dark:text-indigo-300'
+                            ? 'text-primary-600 dark:text-primary-300'
                             : 'hover:text-slate-700 dark:hover:text-slate-200',
                         )}
                       >
@@ -269,12 +266,16 @@ export function DataTable<T, K extends string = string>({
                     padY,
                   )}
                 >
-                  {rowActionsHeader ?? <span className="sr-only">Actions</span>}
+                  {rowActionsHeader ?? (
+                    <span className="sr-only">
+                      {t('Common.Actions', { defaultValue: 'Actions' })}
+                    </span>
+                  )}
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
+          <tbody className="divide-y divide-slate-200/60 dark:divide-white/5">
             {sortedRows.map((row, rowIndex) => {
               const id = getRowId(row);
               const isSelected = selectedId === id;
@@ -285,8 +286,6 @@ export function DataTable<T, K extends string = string>({
                   key={id}
                   onClick={() => onRowClick?.(row)}
                   onDoubleClick={() => onRowDoubleClick?.(row)}
-                  // a11y: clickable rows act like buttons — make them keyboard
-                  // reachable and operable with Enter/Space.
                   tabIndex={clickable ? 0 : undefined}
                   role={clickable ? 'button' : undefined}
                   aria-selected={selectedId !== undefined ? isSelected : undefined}
@@ -303,15 +302,15 @@ export function DataTable<T, K extends string = string>({
                   className={cn(
                     'group transition-colors',
                     clickable &&
-                      'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-500',
+                      'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500',
                     isSelected
-                      ? 'bg-indigo-50/70 dark:bg-indigo-500/10'
+                      ? 'bg-primary-50/70 dark:bg-primary-500/10'
                       : zebra
                         ? rowIndex % 2 === 0
                           ? 'bg-white dark:bg-slate-900'
                           : 'bg-slate-50/40 dark:bg-slate-900/40'
                         : 'bg-white dark:bg-slate-900',
-                    'hover:bg-indigo-50/40 dark:hover:bg-indigo-500/[0.06]',
+                    'hover:bg-primary-50/40 dark:hover:bg-primary-500/[0.06]',
                     extra,
                   )}
                 >
@@ -322,8 +321,8 @@ export function DataTable<T, K extends string = string>({
                     >
                       <input
                         type="checkbox"
-                        aria-label="Select row"
-                        className="h-3.5 w-3.5 rounded border-slate-300 text-indigo-600"
+                        aria-label={t('Common.SelectRow', { defaultValue: 'Select row' })}
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600"
                         checked={selectedSet.has(id)}
                         onChange={() => toggleOne(id)}
                       />
@@ -392,8 +391,8 @@ export const RowActionButton = ({
 }: RowActionButtonProps) => {
   const toneClass =
     tone === 'danger'
-      ? 'text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:text-slate-400 dark:hover:bg-rose-500/10 dark:hover:text-rose-300'
-      : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300';
+      ? 'text-slate-500 hover:bg-danger-50 hover:text-danger-600 dark:text-slate-400 dark:hover:bg-danger-500/10 dark:hover:text-danger-300'
+      : 'text-slate-500 hover:bg-primary-50 hover:text-primary-600 dark:text-slate-400 dark:hover:bg-primary-500/10 dark:hover:text-primary-300';
   return (
     <button
       type="button"
@@ -401,7 +400,7 @@ export const RowActionButton = ({
       title={label}
       aria-label={label}
       className={cn(
-        'rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+        'rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500',
         toneClass,
       )}
     >

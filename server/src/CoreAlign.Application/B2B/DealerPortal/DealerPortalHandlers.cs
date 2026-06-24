@@ -250,7 +250,7 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
     private readonly IDealerOrderApprovalOutbox _outbox;
     private readonly IDealerAccountRepository _dealers;
     private readonly IPricingService _pricing;
-    private readonly ICustomerLedgerRepository _ledger;
+    private readonly ICreditLimitGuard _creditGuard;
 
     public CreateDealerOrderHandler(
         IPortalScopeService scope,
@@ -267,7 +267,7 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
         IDealerOrderApprovalOutbox outbox,
         IDealerAccountRepository dealers,
         IPricingService pricing,
-        ICustomerLedgerRepository ledger)
+        ICreditLimitGuard creditGuard)
     {
         _scope = scope;
         _dealerUsers = dealerUsers;
@@ -283,7 +283,7 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
         _outbox = outbox;
         _dealers = dealers;
         _pricing = pricing;
-        _ledger = ledger;
+        _creditGuard = creditGuard;
     }
 
     public async Task<OrderDto> Handle(CreateDealerOrderCommand request, CancellationToken cancellationToken)
@@ -417,7 +417,7 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
         order.ReplaceLines(resolvedLines);
         order.MarkOrigin(OrderOriginPersona.Dealer, customerUserId: null, dealerAccountId: dealerAccountId, dealerUserId: dealerUserId);
 
-        await EnforceCreditLimitAsync(customer, order.Total, cancellationToken);
+        await _creditGuard.EnsureWithinLimitAsync(customer, order.Total, cancellationToken);
 
         await _orders.AddAsync(order, cancellationToken);
         await _uow.SaveChangesAsync(cancellationToken);
@@ -438,21 +438,6 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
 
         order.Customer = customer;
         return OrderMapper.ToDto(order, dealer?.Name, null);
-    }
-
-    private async Task EnforceCreditLimitAsync(Customer customer, decimal orderTotal, CancellationToken cancellationToken)
-    {
-        if (customer.CreditLimit <= 0m)
-        {
-            return;
-        }
-        var ledgerBalance = await _ledger.GetCurrentBalanceAsync(customer.Id, cancellationToken);
-        var currentBalance = CreditSnapshotFactory.ResolveCurrentBalance(customer, ledgerBalance);
-        var projected = Math.Max(0m, currentBalance) + orderTotal;
-        if (projected > customer.CreditLimit)
-        {
-            throw new CreditLimitExceededException(customer.CreditLimit, projected);
-        }
     }
 
     private static CustomerAddress? ResolveAddressOrThrow(Guid? addressId, IReadOnlyList<CustomerAddress> available, CustomerAddress? fallback)

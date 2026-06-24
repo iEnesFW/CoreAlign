@@ -1,0 +1,44 @@
+# YearEndClose (CoreAlign UI)
+
+"YearEndClose" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "YearEndClose" area (English / Türkçe):
+
+- Account / Hesap Adı
+- {{year}} closed / {{year}} kapatıldı
+- {{year}} is already closed; showing the existing entry. / {{year}} zaten kapatılmış; mevcut fiş gösteriliyor.
+- Fiscal year {{year}} closed. / {{year}} yılı kapatıldı.
+- A closing entry already exists for this fiscal year. The operation is idempotent; running it again will not create a new entry. / Bu mali yıl için kapanış fişi zaten oluşturulmuş. İşlem idempotenttir; tekrar çalıştırmak yeni fiş üretmez.
+- Closing… / Kapatılıyor…
+- Closing Entry / Kapanış Fişi
+- Code / Kod
+- Create Closing Entry / Kapanışı Oluştur
+- A TDHP year-end closing entry will be created for {{year}}: 6xx income/expense accounts are swept into 690, and 690 is transferred to the 590/591 equity account. This produces a posted journal entry. / {{year}} yılı için TDHP yıl sonu kapanış fişi oluşturulacak: 6xx gelir/gider hesapları 690’a, 690 ise 590/591 özkaynak hesabına devredilecektir. Bu işlem post edilmiş yevmiye fişi üretir.
+- The {{year}} year-end close will be reversed (contra entry). Only do this if the opening entry has not yet been created. / {{year}} yıl sonu kapanışı ters çevrilecek (karşı kayıt). Yalnızca açılış fişi henüz oluşturulmamışsa yapın.
+- Year-End Close / Yıl Sonu Kapanışı
+- Credit / Alacak
+- Debit / Borç
+- Fiscal Year / Mali Yıl
+- Closing is a significant operation and produces a posted Closing (Kapanış) entry. Make sure the period trial balance is correct before continuing. / Kapanış önemli bir işlemdir ve post edilmiş bir Kapanış fişi üretir. Devam etmeden önce dönem mizanının doğru olduğundan emin olun.
+- Net Loss: {{value}} / Net Zarar: {{value}}
+- Net Profit: {{value}} / Net Kâr: {{value}}
+- Period Result / Dönem Sonucu
+- Next year / Sonraki yıl
+- {{year}} open / {{year}} açık
+- {{year}} opening entry created. / {{year}} açılış fişi oluşturuldu.
+- Opening… / Açılıyor…
+- {{year}} opening created / {{year}} açılışı yapıldı
+- Opening Entry ({{year}}) / Açılış Fişi ({{year}})
+- Posted / Post edildi
+- Previous year / Önceki yıl
+- View Closing / Kapanışı Görüntüle
+- Reverse / Geri Al
+- Reverse Close / Kapanışı Geri Al
+- Reverse Close / Kapanışı Geri Al
+- {{year}} close reversed. / {{year}} kapanışı geri alındı.
+- Reversing… / Geri alınıyor…
+- Run Year-End Close / Yıl Sonu Kapanışını Çalıştır
+- Create {{year}} Opening Entry / {{year}} Açılış Fişini Oluştur
+- TDHP year-end close: all 6xx income/expense accounts are transferred into 690 Period Profit/Loss, then 690 is rolled into 590 (profit) or 591 (loss) in equity. / TDHP yıl sonu kapanışı: tüm 6xx gelir/gider hesapları 690 Dönem Kârı/Zararı hesabına, oradan da 590 (kâr) veya 591 (zarar) özkaynak hesabına devredilir.
+- Year-End Close (Closing Entry) / Yıl Sonu Kapanış (Kapanış Fişi)
+- Total / Toplam
+- Period net loss transferred to equity / Dönem Net Zararı özkaynağa devredildi
+- Period net profit transferred to equity / Dönem Net Kârı özkaynağa devredildi

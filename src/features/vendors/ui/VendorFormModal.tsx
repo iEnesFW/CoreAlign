@@ -1,21 +1,28 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { X } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { Modal } from '@/shared/ui/Modal/Modal';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
+import { Label } from '@/shared/ui/Label/Label';
 import { PhoneField } from '@/shared/ui/PhoneField/PhoneField';
 import { useModalClose } from '@/shared/hooks/useModalClose';
-import { CurrencySelect } from '@/features/lookups/ui/CurrencySelect';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import { useCreateVendor, useUpdateVendor } from '../hooks/useVendorQueries';
 import type { CreateVendorRequest, Vendor, VendorType } from '../model/vendor.types';
 
 interface VendorFormModalProps {
-  /** When provided, the modal edits an existing vendor instead of creating. */
   vendor?: Vendor;
   onClose: () => void;
   onCreated?: (vendorId: string) => void;
 }
 
 export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalProps) => {
+  const { t } = useTranslation();
   const createMutation = useCreateVendor();
   const updateMutation = useUpdateVendor();
   const isEdit = !!vendor;
@@ -40,7 +47,7 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
   });
 
   const [dirty, setDirty] = useState(false);
-  const requestClose = useModalClose(dirty, onClose);
+  const requestClose = useModalClose(dirty, onClose, false);
 
   const set = <K extends keyof CreateVendorRequest>(key: K, value: CreateVendorRequest[K]) => {
     setDirty(true);
@@ -76,7 +83,7 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
             notes: form.notes?.trim() || null,
           },
         });
-        toast.success('Tedarikçi güncellendi.');
+        toast.success(t('Vendors.UpdateSuccess', { defaultValue: 'Tedarikçi güncellendi.' }));
       } else {
         const result = await createMutation.mutateAsync({
           ...form,
@@ -90,7 +97,9 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
           website: form.website?.trim() || undefined,
           notes: form.notes?.trim() || undefined,
         });
-        toast.success('Tedarikçi oluşturuldu (onay bekliyor).');
+        toast.success(
+          t('Vendors.CreateSuccess', { defaultValue: 'Tedarikçi oluşturuldu (onay bekliyor).' }),
+        );
         if (result.data?.id) onCreated?.(result.data.id);
       }
       onClose();
@@ -102,172 +111,130 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
-      onClick={requestClose}
-      role="presentation"
+    <Modal
+      open
+      title={
+        isEdit
+          ? t('Vendors.EditTitle', { defaultValue: 'Tedarikçiyi Düzenle' })
+          : t('Vendors.NewTitle', { defaultValue: 'Yeni Tedarikçi' })
+      }
+      icon={<Truck size={18} />}
+      onClose={requestClose}
+      size="xl"
+      footer={
+        <>
+          <Button variant="ghost" type="button" onClick={requestClose}>
+            {t('Common.Cancel', { defaultValue: 'İptal' })}
+          </Button>
+          <Button type="submit" form="vendor-form" isLoading={isPending}>
+            {isPending
+              ? t('Common.Saving', { defaultValue: 'Kaydediliyor…' })
+              : t('Common.Save', { defaultValue: 'Kaydet' })}
+          </Button>
+        </>
+      }
     >
-      <div
-        className="w-full max-w-2xl rounded-lg bg-white shadow-xl dark:bg-slate-900"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {isEdit ? 'Tedarikçiyi Düzenle' : 'Yeni Tedarikçi'}
-          </h2>
-          <button
-            type="button"
-            onClick={requestClose}
-            aria-label="Kapat"
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <X size={16} />
-          </button>
+      <form id="vendor-form" onSubmit={submit} className="grid grid-cols-2 gap-3">
+        <Input
+          className="col-span-2"
+          label={t('Vendors.NameLabel', { defaultValue: 'Tedarikçi Adı *' })}
+          type="text"
+          value={form.name}
+          onChange={(e) => set('name', e.target.value)}
+          required
+          maxLength={200}
+          placeholder={t('Vendors.NamePlaceholder', {
+            defaultValue: 'Örn. Acme Tedarik Ltd. Şti.',
+          })}
+        />
+        <Select
+          label={t('Vendors.TypeLabel', { defaultValue: 'Tip' })}
+          value={form.type}
+          onChange={(e) => set('type', e.target.value as VendorType)}
+        >
+          <option value="Business">{t('Vendors.TypeBusiness', { defaultValue: 'Şirket' })}</option>
+          <option value="Individual">
+            {t('Vendors.TypeIndividual', { defaultValue: 'Şahıs' })}
+          </option>
+        </Select>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="vendor-default-currency">
+            {t('Vendors.CurrencyLabel', { defaultValue: 'Para Birimi' })}
+          </Label>
+          <CurrencySelect
+            id="vendor-default-currency"
+            value={form.defaultCurrency ?? 'TRY'}
+            onChange={(v) => set('defaultCurrency', v)}
+          />
         </div>
-        <form onSubmit={submit} className="grid grid-cols-2 gap-3 p-4">
-          <div className="col-span-2">
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Tedarikçi Adı *
-            </label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={(e) => set('name', e.target.value)}
-              required
-              maxLength={200}
-              placeholder="Örn. Acme Tedarik Ltd. Şti."
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Tip
-            </label>
-            <select
-              value={form.type}
-              onChange={(e) => set('type', e.target.value as VendorType)}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            >
-              <option value="Business">Şirket</option>
-              <option value="Individual">Şahıs</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Para Birimi
-            </label>
-            <CurrencySelect
-              value={form.defaultCurrency ?? 'TRY'}
-              onChange={(v) => set('defaultCurrency', v)}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Kod
-            </label>
-            <input
-              type="text"
-              value={form.code ?? ''}
-              onChange={(e) => set('code', e.target.value)}
-              maxLength={32}
-              placeholder="Örn. TED-0001"
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm font-mono dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Ticari Ünvan
-            </label>
-            <input
-              type="text"
-              value={form.legalName ?? ''}
-              onChange={(e) => set('legalName', e.target.value)}
-              maxLength={200}
-              placeholder="Örn. Acme Tedarik Limited Şirketi"
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {form.type === 'Individual' ? 'TC Kimlik No' : 'Vergi No (VKN)'}
-            </label>
-            <input
-              type="text"
-              value={form.type === 'Individual' ? (form.nationalId ?? '') : (form.taxNumber ?? '')}
-              onChange={(e) =>
-                form.type === 'Individual'
-                  ? set('nationalId', e.target.value)
-                  : set('taxNumber', e.target.value)
-              }
-              maxLength={50}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm font-mono dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Vergi Dairesi
-            </label>
-            <input
-              type="text"
-              value={form.taxOffice ?? ''}
-              onChange={(e) => set('taxOffice', e.target.value)}
-              maxLength={100}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              E-posta
-            </label>
-            <input
-              type="email"
-              value={form.email ?? ''}
-              onChange={(e) => set('email', e.target.value)}
-              maxLength={256}
-              placeholder="Örn. satinalma@acme.com"
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div>
-            <PhoneField
-              label="Telefon"
-              value={form.phone ?? ''}
-              onChange={(v) => set('phone', v)}
-            />
-          </div>
-          <div className="col-span-2">
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Notlar
-            </label>
-            <textarea
-              value={form.notes ?? ''}
-              onChange={(e) => set('notes', e.target.value)}
-              maxLength={2000}
-              rows={2}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
-          <div className="col-span-2 flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={requestClose}
-              className="rounded border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {isPending ? 'Kaydediliyor…' : 'Kaydet'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <Input
+          label={t('Vendors.CodeLabel', { defaultValue: 'Kod' })}
+          type="text"
+          value={form.code ?? ''}
+          onChange={(e) => set('code', e.target.value)}
+          maxLength={32}
+          placeholder={t('Vendors.CodePlaceholder', { defaultValue: 'Örn. TED-0001' })}
+          className="font-mono"
+        />
+        <Input
+          label={t('Vendors.LegalNameLabel', { defaultValue: 'Ticari Ünvan' })}
+          type="text"
+          value={form.legalName ?? ''}
+          onChange={(e) => set('legalName', e.target.value)}
+          maxLength={200}
+          placeholder={t('Vendors.LegalNamePlaceholder', {
+            defaultValue: 'Örn. Acme Tedarik Limited Şirketi',
+          })}
+        />
+        <Input
+          label={
+            form.type === 'Individual'
+              ? t('Vendors.NationalIdLabel', { defaultValue: 'TC Kimlik No' })
+              : t('Vendors.TaxNumberLabel', { defaultValue: 'Vergi No (VKN)' })
+          }
+          type="text"
+          value={form.type === 'Individual' ? (form.nationalId ?? '') : (form.taxNumber ?? '')}
+          onChange={(e) =>
+            form.type === 'Individual'
+              ? set('nationalId', e.target.value)
+              : set('taxNumber', e.target.value)
+          }
+          maxLength={50}
+          className="font-mono"
+        />
+        <Input
+          label={t('Vendors.TaxOfficeLabel', { defaultValue: 'Vergi Dairesi' })}
+          type="text"
+          value={form.taxOffice ?? ''}
+          onChange={(e) => set('taxOffice', e.target.value)}
+          maxLength={100}
+        />
+        <Input
+          label={t('Vendors.EmailLabel', { defaultValue: 'E-posta' })}
+          type="email"
+          value={form.email ?? ''}
+          onChange={(e) => set('email', e.target.value)}
+          maxLength={256}
+          placeholder={t('Vendors.EmailPlaceholder', {
+            defaultValue: 'Örn. satinalma@acme.com',
+          })}
+        />
+        <div>
+          <PhoneField
+            label={t('Vendors.PhoneLabel', { defaultValue: 'Telefon' })}
+            value={form.phone ?? ''}
+            onChange={(v) => set('phone', v)}
+          />
+        </div>
+        <Textarea
+          className="col-span-2"
+          label={t('Vendors.NotesLabel', { defaultValue: 'Notlar' })}
+          value={form.notes ?? ''}
+          onChange={(e) => set('notes', e.target.value)}
+          maxLength={2000}
+          rows={2}
+        />
+      </form>
+    </Modal>
   );
 };

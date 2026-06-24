@@ -238,7 +238,7 @@ public class PaymentVoidedLedgerHandler : INotificationHandler<PaymentVoidedEven
         LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Debit, notification.Amount, "TRY",
+            LedgerEntryType.Debit, notification.Amount, notification.Currency,
             LedgerSourceType.PaymentReversal, notification.PaymentId, notification.PaymentNumber,
             "Payment voided (reversal)",
             cancellationToken);

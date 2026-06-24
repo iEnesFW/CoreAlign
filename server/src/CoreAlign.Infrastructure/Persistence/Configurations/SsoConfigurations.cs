@@ -29,7 +29,8 @@ public class TenantIdentityProviderConfiguration : IEntityTypeConfiguration<Tena
 
         builder.HasIndex(p => new { p.TenantId, p.Name })
             .IsUnique()
-            .HasDatabaseName("ux_tenant_identity_providers_tenant_name");
+            .HasDatabaseName("ux_tenant_identity_providers_tenant_name")
+            .HasFilter("is_deleted = false");
         builder.HasIndex(p => new { p.TenantId, p.IsActive })
             .HasDatabaseName("ix_tenant_identity_providers_tenant_active");
     }

@@ -22,29 +22,25 @@ export const LoginForm = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const loginMutation = useLogin();
   const { executeRecaptcha } = useGoogleReCaptcha();
-  const [view, setView] = useState<'email' | 'sso'>('email');
+  const [view, setView] = useState<'email' | 'sso'>(() =>
+    new URLSearchParams(window.location.search).get('error') ? 'sso' : 'email',
+  );
 
   useEffect(() => {
     const error = searchParams.get('error');
     if (error) {
       if (error === 'InvalidSsoProviderOrTenant') {
-        toast.error(
-          'Hatalı Tenant Kodu veya Sağlayıcı Adı girdiniz. Sistemde böyle bir SSO bağlantısı bulunamadı.',
-        );
+        toast.error(t('auth.login.errors.invalidSsoProviderOrTenant'));
       } else if (error === 'SsoConfigurationError') {
-        toast.error(
-          'SSO yönlendirmesi sırasında bir hata oluştu. Lütfen sistem yöneticinizle iletişime geçin.',
-        );
+        toast.error(t('auth.login.errors.ssoConfigurationError'));
       } else {
-        toast.error('Giriş başarısız oldu. Lütfen tekrar deneyin.');
+        toast.error(t('auth.login.errors.loginFailed'));
       }
 
-      // Remove error from URL without refreshing the page
       searchParams.delete('error');
       setSearchParams(searchParams, { replace: true });
-      setView('sso');
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, t]);
 
   const {
     register,
@@ -133,7 +129,7 @@ export const LoginForm = () => {
             </form>
 
             <div className={styles.divider}>
-              <span className={styles.dividerText}>veya</span>
+              <span className={styles.dividerText}>{t('auth.login.orDivider')}</span>
             </div>
 
             <Button
@@ -143,7 +139,7 @@ export const LoginForm = () => {
               onClick={() => setView('sso')}
             >
               <KeyRound size={16} className="mr-2 opacity-70" />
-              SSO ile Devam Et
+              {t('auth.login.ssoContinue')}
             </Button>
           </div>
         ) : (

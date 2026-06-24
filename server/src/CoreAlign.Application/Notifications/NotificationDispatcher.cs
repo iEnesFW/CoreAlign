@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using CoreAlign.Application.Notifications.Delivery;
 using CoreAlign.Application.Notifications.Providers;
 using CoreAlign.Application.Notifications.Repositories;
 using CoreAlign.Application.Notifications.Templates;
-using CoreAlign.Application.Providers;
 using CoreAlign.Domain.Entities.Notifications;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -26,10 +26,7 @@ public sealed class NotificationDispatcher : INotificationDispatcher
     private readonly IUserRepository _users;
     private readonly ICustomerRepository _customers;
     private readonly IUserDeviceTokenRepository _deviceTokens;
-    private readonly IProviderRegistry<IEmailProvider> _emailRegistry;
-    private readonly IProviderRegistry<ISmsProvider> _smsRegistry;
-    private readonly IProviderRegistry<IPushNotificationProvider> _pushRegistry;
-    private readonly IProviderRegistry<IWhatsAppProvider> _whatsAppRegistry;
+    private readonly INotificationDeliveryQueue _deliveryQueue;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<NotificationDispatcher> _logger;
 
@@ -40,10 +37,7 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         IUserRepository users,
         ICustomerRepository customers,
         IUserDeviceTokenRepository deviceTokens,
-        IProviderRegistry<IEmailProvider> emailRegistry,
-        IProviderRegistry<ISmsProvider> smsRegistry,
-        IProviderRegistry<IPushNotificationProvider> pushRegistry,
-        IProviderRegistry<IWhatsAppProvider> whatsAppRegistry,
+        INotificationDeliveryQueue deliveryQueue,
         IUnitOfWork unitOfWork,
         ILogger<NotificationDispatcher> logger)
     {
@@ -53,10 +47,7 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         _users = users;
         _customers = customers;
         _deviceTokens = deviceTokens;
-        _emailRegistry = emailRegistry;
-        _smsRegistry = smsRegistry;
-        _pushRegistry = pushRegistry;
-        _whatsAppRegistry = whatsAppRegistry;
+        _deliveryQueue = deliveryQueue;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -97,77 +88,92 @@ public sealed class NotificationDispatcher : INotificationDispatcher
 
             if (channel == NotificationChannel.Push)
             {
-                var pushResults = await DispatchPushAsync(request, rendered, payloadJson, recipientDeviceToken, utcNow, ct).ConfigureAwait(false);
-                results.AddRange(pushResults);
+                results.AddRange(await QueuePushAsync(request, rendered, payloadJson, recipientDeviceToken, utcNow, ct).ConfigureAwait(false));
                 continue;
             }
 
-            var address = ResolveChannelAddress(channel, recipientEmail, recipientPhone);
-            if (string.IsNullOrWhiteSpace(address) && channel != NotificationChannel.InApp)
+            var address = channel == NotificationChannel.InApp
+                ? ResolveInAppAddress(request)
+                : ResolveChannelAddress(channel, recipientEmail, recipientPhone);
+            if (string.IsNullOrWhiteSpace(address))
             {
                 _logger.LogWarning("No recipient address for channel {Channel}; skipping", channel);
                 continue;
             }
 
-            var resolvedAddress = address ?? string.Empty;
-            var hash = ComputeIdempotencyHash(request, channel, resolvedAddress);
-
-            var existing = await _messages.GetByHashAsync(request.TenantId, hash, ct).ConfigureAwait(false);
-            if (existing is not null && (existing.Status == NotificationStatus.Sent || existing.Status == NotificationStatus.Delivered || existing.Status == NotificationStatus.Read))
-            {
-                _logger.LogInformation("Duplicate dispatch suppressed for hash {Hash} / channel {Channel}; existing status {Status}", hash, channel, existing.Status);
-                results.Add(NotificationSendResult.Ok(existing.ProviderMessageId));
-                continue;
-            }
-
-            var message = existing ?? new NotificationMessage(
-                request.TenantId,
-                request.UserId,
-                request.CustomerId,
-                channel,
-                request.TemplateKey,
-                request.Locale,
-                resolvedAddress,
-                request.CategoryKey,
-                rendered.Subject,
-                rendered.BodyHtml,
-                payloadJson,
-                hash);
-
-            message.MarkQueued(utcNow);
-            await _messages.UpsertAsync(message, ct).ConfigureAwait(false);
-            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            NotificationSendResult sendResult;
-            try
-            {
-                sendResult = await DispatchToChannelAsync(request.TenantId, channel, resolvedAddress, rendered, ct).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Provider invocation threw for channel {Channel} / hash {Hash}", channel, hash);
-                message.MarkFailed(ex.Message, utcNow);
-                await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-                throw;
-            }
-
-            if (sendResult.Success)
-            {
-                message.MarkSent(InferProviderName(channel), sendResult.ProviderMessageId, utcNow);
-            }
-            else
-            {
-                message.MarkFailed(sendResult.FailureReason ?? "Unknown failure", utcNow);
-            }
-            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            results.Add(sendResult);
+            results.Add(await QueueChannelAsync(request, channel, address, rendered, payloadJson, utcNow, ct).ConfigureAwait(false));
         }
 
         return results;
     }
 
-    private async Task<IReadOnlyList<NotificationSendResult>> DispatchPushAsync(
+    private async Task<NotificationSendResult> QueueChannelAsync(
+        NotificationRequest request,
+        NotificationChannel channel,
+        string address,
+        RenderedTemplate rendered,
+        string payloadJson,
+        DateTime utcNow,
+        CancellationToken ct)
+    {
+        var hash = ComputeIdempotencyHash(request, channel, address);
+        var existing = await _messages.GetByHashAsync(request.TenantId, hash, ct).ConfigureAwait(false);
+        if (existing is not null && IsTerminal(existing.Status))
+        {
+            _logger.LogInformation("Duplicate dispatch suppressed for hash {Hash} / channel {Channel}; existing status {Status}", hash, channel, existing.Status);
+            return NotificationSendResult.Ok(existing.ProviderMessageId);
+        }
+
+        if (existing is not null && existing.Status is NotificationStatus.Queued or NotificationStatus.Sending)
+        {
+            return NotificationSendResult.Ok(existing.ProviderMessageId);
+        }
+
+        var message = existing ?? new NotificationMessage(
+            request.TenantId,
+            request.UserId,
+            request.CustomerId,
+            channel,
+            request.TemplateKey,
+            request.Locale,
+            address,
+            request.CategoryKey,
+            rendered.Subject,
+            rendered.BodyHtml,
+            payloadJson,
+            hash);
+
+        if (channel == NotificationChannel.InApp)
+        {
+            message.MarkSent(InferProviderName(channel), null, utcNow);
+            await _messages.UpsertAsync(message, ct).ConfigureAwait(false);
+            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+            return NotificationSendResult.Ok();
+        }
+
+        message.MarkQueued(utcNow);
+        await _messages.UpsertAsync(message, ct).ConfigureAwait(false);
+        await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        await _deliveryQueue.EnqueueChannelSendAsync(
+            new NotificationChannelSendPayload(
+                request.TenantId,
+                message.Id,
+                channel,
+                address,
+                rendered.Subject,
+                rendered.BodyHtml,
+                rendered.BodyText,
+                channel == NotificationChannel.Email ? request.ReplyToOverride : null,
+                Cc: null,
+                Bcc: null,
+                Attachments: channel == NotificationChannel.Email ? MapAttachments(request.Attachments) : null),
+            ct).ConfigureAwait(false);
+
+        return NotificationSendResult.Ok();
+    }
+
+    private async Task<IReadOnlyList<NotificationSendResult>> QueuePushAsync(
         NotificationRequest request,
         RenderedTemplate rendered,
         string payloadJson,
@@ -178,30 +184,20 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         var tokens = await ResolvePushTokensAsync(request, recipientDeviceTokenOverride, ct).ConfigureAwait(false);
         if (tokens.Count == 0)
         {
-            _logger.LogInformation(
-                "No active device tokens for user {UserId} / customer {CustomerId}; skipping push",
-                request.UserId,
-                request.CustomerId);
+            _logger.LogInformation("No active device tokens for user {UserId} / customer {CustomerId}; skipping push", request.UserId, request.CustomerId);
             return new[] { NotificationSendResult.Fail("NoDeviceTokens") };
         }
 
-        var provider = await _pushRegistry.TryResolveForTenantAsync(request.TenantId, ct).ConfigureAwait(false);
-        if (provider is null)
-        {
-            return new[] { NotificationSendResult.Fail("No push provider configured") };
-        }
-
-        var payloadData = BuildPushPayloadData(request.Payload);
-        var sendResults = new List<NotificationSendResult>(tokens.Count);
+        var pushData = BuildPushPayloadData(request.Payload);
+        var results = new List<NotificationSendResult>(tokens.Count);
 
         foreach (var tokenInfo in tokens)
         {
             var hash = ComputeIdempotencyHash(request, NotificationChannel.Push, tokenInfo.Token);
             var existing = await _messages.GetByHashAsync(request.TenantId, hash, ct).ConfigureAwait(false);
-            if (existing is not null && (existing.Status == NotificationStatus.Sent || existing.Status == NotificationStatus.Delivered || existing.Status == NotificationStatus.Read))
+            if (existing is not null && (IsTerminal(existing.Status) || existing.Status is NotificationStatus.Queued or NotificationStatus.Sending))
             {
-                _logger.LogInformation("Duplicate push suppressed for token hash {Hash}; existing status {Status}", hash, existing.Status);
-                sendResults.Add(NotificationSendResult.Ok(existing.ProviderMessageId));
+                results.Add(NotificationSendResult.Ok(existing.ProviderMessageId));
                 continue;
             }
 
@@ -223,38 +219,23 @@ public sealed class NotificationDispatcher : INotificationDispatcher
             await _messages.UpsertAsync(message, ct).ConfigureAwait(false);
             await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
 
-            var push = new PushMessage(tokenInfo.Token, rendered.Subject ?? "Notification", rendered.BodyText, payloadData);
-            NotificationSendResult sendResult;
-            try
-            {
-                sendResult = await provider.SendAsync(push, ct).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Push provider invocation threw for token hash {Hash}", hash);
-                message.MarkFailed(ex.Message, utcNow);
-                await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-                throw;
-            }
+            await _deliveryQueue.EnqueueChannelSendAsync(
+                new NotificationChannelSendPayload(
+                    request.TenantId,
+                    message.Id,
+                    NotificationChannel.Push,
+                    tokenInfo.Token,
+                    rendered.Subject,
+                    rendered.BodyHtml,
+                    rendered.BodyText,
+                    PushData: pushData,
+                    DeviceTokenId: tokenInfo.TokenId),
+                ct).ConfigureAwait(false);
 
-            if (sendResult.Success)
-            {
-                message.MarkSent(InferProviderName(NotificationChannel.Push), sendResult.ProviderMessageId, utcNow);
-                if (tokenInfo.TokenId.HasValue)
-                {
-                    await _deviceTokens.MarkLastUsedAsync(request.TenantId, tokenInfo.TokenId.Value, utcNow, ct).ConfigureAwait(false);
-                }
-            }
-            else
-            {
-                message.MarkFailed(sendResult.FailureReason ?? "Unknown failure", utcNow);
-            }
-            await _unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
-
-            sendResults.Add(sendResult);
+            results.Add(NotificationSendResult.Ok());
         }
 
-        return sendResults;
+        return results;
     }
 
     private async Task<IReadOnlyList<PushTokenRef>> ResolvePushTokensAsync(
@@ -280,6 +261,14 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         }
 
         return Array.Empty<PushTokenRef>();
+    }
+
+    private static IReadOnlyList<EmailAttachmentPayload>? MapAttachments(IReadOnlyList<EmailAttachment>? attachments)
+    {
+        if (attachments is null || attachments.Count == 0) return null;
+        return attachments
+            .Select(a => new EmailAttachmentPayload(a.FileName, a.ContentType, Convert.ToBase64String(a.Content)))
+            .ToList();
     }
 
     private static IReadOnlyDictionary<string, string>? BuildPushPayloadData(object payload)
@@ -332,6 +321,9 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         return (email, phone, device);
     }
 
+    private static string ResolveInAppAddress(NotificationRequest request) =>
+        request.UserId?.ToString("N") ?? request.CustomerId?.ToString("N") ?? "inapp";
+
     private static string? ResolveChannelAddress(NotificationChannel channel, string? email, string? phone) => channel switch
     {
         NotificationChannel.Email => email,
@@ -341,37 +333,8 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         _ => null
     };
 
-    private async Task<NotificationSendResult> DispatchToChannelAsync(Guid tenantId, NotificationChannel channel, string address, RenderedTemplate rendered, CancellationToken ct)
-    {
-        switch (channel)
-        {
-            case NotificationChannel.Email:
-            {
-                var provider = await _emailRegistry.TryResolveForTenantAsync(tenantId, ct).ConfigureAwait(false);
-                if (provider is null) return NotificationSendResult.Fail("No email provider configured");
-                var msg = new EmailMessage("noreply@corealign.local", "CoreAlign", address, rendered.Subject ?? string.Empty, rendered.BodyHtml, rendered.BodyText, null);
-                return await provider.SendAsync(msg, ct).ConfigureAwait(false);
-            }
-            case NotificationChannel.Sms:
-            {
-                var provider = await _smsRegistry.TryResolveForTenantAsync(tenantId, ct).ConfigureAwait(false);
-                if (provider is null) return NotificationSendResult.Fail("No SMS provider configured");
-                var msg = new SmsMessage(string.Empty, address, rendered.BodyText);
-                return await provider.SendAsync(msg, ct).ConfigureAwait(false);
-            }
-            case NotificationChannel.WhatsApp:
-            {
-                var provider = await _whatsAppRegistry.TryResolveForTenantAsync(tenantId, ct).ConfigureAwait(false);
-                if (provider is null) return NotificationSendResult.Fail("No WhatsApp provider configured");
-                var msg = new WhatsAppMessage(string.Empty, address, "generic", "en", rendered.BodyText);
-                return await provider.SendAsync(msg, ct).ConfigureAwait(false);
-            }
-            case NotificationChannel.InApp:
-                return NotificationSendResult.Ok();
-            default:
-                return NotificationSendResult.Fail($"Unknown channel: {channel}");
-        }
-    }
+    private static bool IsTerminal(NotificationStatus status) =>
+        status is NotificationStatus.Sent or NotificationStatus.Delivered or NotificationStatus.Read;
 
     private static string InferProviderName(NotificationChannel channel) => channel.ToString().ToLowerInvariant();
 

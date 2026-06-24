@@ -21,34 +21,37 @@ const variantConfig = {
   success: {
     icon: CheckCircle2,
     containerClass:
-      'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20',
-    iconClass: 'text-emerald-600 dark:text-emerald-400',
-    titleClass: 'text-emerald-800 dark:text-emerald-300',
-    messageClass: 'text-emerald-600 dark:text-emerald-400/80',
+      'bg-success-50 dark:bg-success-500/10 border-success-200 dark:border-success-500/20',
+    iconClass: 'text-success-600 dark:text-success-400',
+    titleClass: 'text-success-800 dark:text-success-300',
+    messageClass: 'text-success-600 dark:text-success-400/80',
     defaultTitleKey: 'common.success',
   },
   info: {
     icon: Info,
-    containerClass: 'bg-blue-50 dark:bg-blue-500/10 border-blue-200 dark:border-blue-500/20',
-    iconClass: 'text-blue-600 dark:text-blue-400',
-    titleClass: 'text-blue-800 dark:text-blue-300',
-    messageClass: 'text-blue-600 dark:text-blue-400/80',
+    containerClass:
+      'bg-primary-50 dark:bg-primary-500/10 border-primary-200 dark:border-primary-500/20',
+    iconClass: 'text-primary-600 dark:text-primary-400',
+    titleClass: 'text-primary-800 dark:text-primary-300',
+    messageClass: 'text-primary-600 dark:text-primary-400/80',
     defaultTitleKey: 'common.info',
   },
   warning: {
     icon: AlertTriangle,
-    containerClass: 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20',
-    iconClass: 'text-amber-600 dark:text-amber-400',
-    titleClass: 'text-amber-800 dark:text-amber-300',
-    messageClass: 'text-amber-600 dark:text-amber-400/80',
+    containerClass:
+      'bg-warning-50 dark:bg-warning-500/10 border-warning-200 dark:border-warning-500/20',
+    iconClass: 'text-warning-600 dark:text-warning-400',
+    titleClass: 'text-warning-800 dark:text-warning-300',
+    messageClass: 'text-warning-600 dark:text-warning-400/80',
     defaultTitleKey: 'common.warning',
   },
   error: {
     icon: AlertCircle,
-    containerClass: 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/20',
-    iconClass: 'text-red-600 dark:text-red-400',
-    titleClass: 'text-red-800 dark:text-red-300',
-    messageClass: 'text-red-600 dark:text-red-400/80',
+    containerClass:
+      'bg-danger-50 dark:bg-danger-500/10 border-danger-200 dark:border-danger-500/20',
+    iconClass: 'text-danger-600 dark:text-danger-400',
+    titleClass: 'text-danger-800 dark:text-danger-300',
+    messageClass: 'text-danger-600 dark:text-danger-400/80',
     defaultTitleKey: 'common.error',
   },
 };

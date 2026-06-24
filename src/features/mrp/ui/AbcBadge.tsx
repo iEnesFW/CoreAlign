@@ -7,8 +7,8 @@ interface Props {
 }
 
 const TONE: Record<Exclude<AbcClass, 'Unclassified'>, string> = {
-  A: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
-  B: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  A: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  B: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
   C: 'bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-300',
 };
 

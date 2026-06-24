@@ -13,8 +13,9 @@ import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import { useInvoiceQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { InvoiceLedgerTab } from '@/features/invoices/ui/InvoiceLedgerTab';
 import { InvoiceOverviewTab } from '@/features/invoices/ui/InvoiceOverviewTab';
+import { IssueCreditNoteModal } from '@/features/invoices/ui/IssueCreditNoteModal';
 import { PaymentsAppliedTab } from '@/features/invoices/ui/PaymentsAppliedTab';
-import { AuditTimeline } from '@/widgets/AuditTimeline';
+import { AuditTimeline } from '@/features/audit';
 import type { Invoice } from '@/features/invoices/model/invoice.types';
 
 interface Props {
@@ -64,6 +65,7 @@ export const InvoiceDetailPanel = ({
 }: Props) => {
   const { t, i18n } = useTranslation();
   const [tab, setTab] = useState<Tab>('overview');
+  const [creditNoteOpen, setCreditNoteOpen] = useState(false);
 
   const invoiceQuery = useInvoiceQuery(invoiceId);
   const invoice = invoiceQuery.data?.data ?? null;
@@ -117,6 +119,11 @@ export const InvoiceDetailPanel = ({
                 : undefined
             }
             onRecordPayment={onRecordPayment ? () => onRecordPayment(invoice.id) : undefined}
+            onIssueCreditNote={
+              ['Issued', 'Sent', 'PartiallyPaid', 'Paid', 'Overdue'].includes(invoice.status)
+                ? () => setCreditNoteOpen(true)
+                : undefined
+            }
           />
         )}
         {tab === 'lines' && invoice && <LinesTab invoice={invoice} locale={i18n.language} />}
@@ -144,6 +151,12 @@ export const InvoiceDetailPanel = ({
           </div>
         )}
       </div>
+
+      <IssueCreditNoteModal
+        invoice={invoice}
+        open={creditNoteOpen}
+        onClose={() => setCreditNoteOpen(false)}
+      />
     </DetailPanel>
   );
 };
@@ -250,9 +263,9 @@ const ActivityTab = ({ invoice, locale }: { invoice: Invoice; locale: string }) 
   }
 
   const tones: Record<'blue' | 'emerald' | 'red', string> = {
-    blue: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
-    emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-    red: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+    blue: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+    emerald: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+    red: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   };
 
   return (

@@ -1,7 +1,3 @@
-using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
-using CoreAlign.Application.Common.Caching;
 using CoreAlign.Application.Invoices.Commands;
 using CoreAlign.Application.Invoices.DTOs;
 using CoreAlign.Domain.Entities;
@@ -14,26 +10,21 @@ namespace CoreAlign.Application.Invoices.Handlers;
 
 public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteCommand, InvoiceDto>
 {
-    private static readonly TimeSpan IdempotencyWindow = TimeSpan.FromMinutes(10);
-
     private readonly IInvoiceRepository _invoiceRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
     private readonly IAccountingPeriodRepository _periodRepository;
     private readonly ITenantContext _tenantContext;
-    private readonly IDistributedCacheService? _cache;
 
     public IssueCreditNoteCommandHandler(
         IInvoiceRepository invoiceRepository,
         IDocumentSequenceRepository sequenceRepository,
         IAccountingPeriodRepository periodRepository,
-        ITenantContext tenantContext,
-        IDistributedCacheService? cache = null)
+        ITenantContext tenantContext)
     {
         _invoiceRepository = invoiceRepository;
         _sequenceRepository = sequenceRepository;
         _periodRepository = periodRepository;
         _tenantContext = tenantContext;
-        _cache = cache;
     }
 
     public async Task<InvoiceDto> Handle(IssueCreditNoteCommand request, CancellationToken cancellationToken)
@@ -51,17 +42,6 @@ public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteComm
         if (durableReplay is not null)
         {
             return durableReplay;
-        }
-
-        var fingerprint = BuildFingerprint(request);
-        var cacheKey = _cache is not null ? _cache.BuildKey(nameof(CacheRegion.Generic), origin.TenantId, fingerprint) : null;
-        if (_cache is not null && cacheKey is not null)
-        {
-            var cached = await _cache.GetAsync<InvoiceDto>(nameof(CacheRegion.Generic), cacheKey, cancellationToken);
-            if (cached is not null)
-            {
-                return cached;
-            }
         }
 
         var byId = origin.Lines.ToDictionary(l => l.Id);
@@ -116,12 +96,7 @@ public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteComm
             creditNote.Customer = origin.Customer;
         }
 
-        var dto = InvoiceMapper.ToDto(creditNote);
-        if (_cache is not null && cacheKey is not null)
-        {
-            await _cache.SetAsync(nameof(CacheRegion.Generic), cacheKey, dto, IdempotencyWindow, cancellationToken);
-        }
-        return dto;
+        return InvoiceMapper.ToDto(creditNote);
     }
 
     private async Task<InvoiceDto?> TryReplayFromReturnRequestAsync(
@@ -151,44 +126,12 @@ public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteComm
         return InvoiceMapper.ToDto(match);
     }
 
-    private static string BuildFingerprint(IssueCreditNoteCommand request)
-    {
-        if (request.OperationId is { } operationId && operationId != Guid.Empty)
-        {
-            return $"credit-note:op:{operationId:N}";
-        }
-
-        var lines = request.Lines
-            .GroupBy(l => l.InvoiceLineId)
-            .Select(g => (LineId: g.Key, Quantity: g.Sum(l => l.Quantity)))
-            .OrderBy(t => t.LineId)
-            .Select(t => $"{t.LineId:N}={t.Quantity.ToString(CultureInfo.InvariantCulture)}");
-
-        var raw = $"{request.InvoiceId:N}|{string.Join(",", lines)}|{request.ReturnRequestId:N}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
-        return $"credit-note:hash:{Convert.ToHexString(hash)}";
-    }
-
     private async Task<Dictionary<Guid, decimal>> GetAlreadyCreditedByLineAsync(
         Guid originInvoiceId,
         CancellationToken cancellationToken)
     {
         var existing = await _invoiceRepository.GetCreditNotesForInvoiceAsync(originInvoiceId, cancellationToken);
-        var totals = new Dictionary<Guid, decimal>();
-        foreach (var note in existing)
-        {
-            if (note.Status == InvoiceStatus.Cancelled || note.Status == InvoiceStatus.Void)
-            {
-                continue;
-            }
-            foreach (var line in note.Lines)
-            {
-                if (line.OriginOrderLineId is null) continue;
-                var key = line.OriginOrderLineId.Value;
-                totals[key] = totals.GetValueOrDefault(key) + line.Quantity;
-            }
-        }
-        return totals;
+        return CreditNoteCalculations.SumCreditedByOriginLine(existing);
     }
 
     private static InvoiceLine BuildCreditLine(InvoiceLine source, decimal quantity)

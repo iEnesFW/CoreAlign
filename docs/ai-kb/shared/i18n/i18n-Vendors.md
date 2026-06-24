@@ -1,0 +1,88 @@
+# Vendors (CoreAlign UI)
+
+"Vendors" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Vendors" area (English / Türkçe):
+
+- Code / Kod
+- e.g. VND-0001 / Örn. TED-0001
+- Vendor created (pending approval). / Tedarikçi oluşturuldu (onay bekliyor).
+- Currency / Para Birimi
+- Edit Vendor / Tedarikçiyi Düzenle
+- Email / E-posta
+- e.g. purchasing@acme.com / Örn. satinalma@acme.com
+- Legal Name / Ticari Ünvan
+- e.g. Acme Supply Limited Company / Örn. Acme Tedarik Limited Şirketi
+- Vendor Name _ / Tedarikçi Adı _
+- e.g. Acme Supply Co. Ltd. / Örn. Acme Tedarik Ltd. Şti.
+- National ID / TC Kimlik No
+- New Vendor / Yeni Tedarikçi
+- Notes / Notlar
+- Phone / Telefon
+- Tax Number (VKN) / Vergi No (VKN)
+- Tax Office / Vergi Dairesi
+- Company / Şirket
+- Individual / Şahıs
+- Type / Tip
+- Vendor updated. / Tedarikçi güncellendi.
+- Approve / Onayla
+- Archive / Arşivle
+- Block / Bloke et
+- Detail / Detay
+- Add / Ekle
+- Country / Ülke
+- District / İlçe
+- Primary address / Birincil adres
+- Label / Etiket
+- Head office / Warehouse / Billing / Merkez / Depo / Fatura
+- Address Line 1 / Adres Satırı 1
+- Address Line 2 / Adres Satırı 2
+- Postal Code / Posta Kodu
+- Province / İl
+- Address added. / Adres eklendi.
+- All Statuses / Tüm Durumlar
+- Vendor approved. / Tedarikçi onaylandı.
+- Archive / Arşivle
+- Archive this vendor? / Tedarikçi arşivlensin mi?
+- Vendor archived. / Tedarikçi arşivlendi.
+- Archive / Arşivle
+- Account Holder / Hesap Sahibi
+- Bank / Banka
+- Branch / Şube
+- Currency / Para Birimi
+- IBAN
+- Primary account / Birincil hesap
+- Bank account added. / Banka hesabı eklendi.
+- Reason for blocking _ / Bloke etme nedeni _
+- Block / Bloke Et
+- Vendor blocked. / Tedarikçi bloke edildi.
+- Block Vendor / Tedarikçiyi Bloke Et
+- Cancel / İptal
+- Balance / Bakiye
+- Code / Kod
+- Contact / İletişim
+- Overdue / Vadesi Geçen
+- Status / Durum
+- Tax No / VKN
+- Vendor / Tedarikçi
+- Email / E-posta
+- Primary contact / Birincil kontak
+- Full Name / Ad Soyad
+- Phone / Telefon
+- Role / Görev
+- Contact added. / Kontak eklendi.
+- Türkiye
+- No vendors match the filters. / Filtrelere uyan tedarikçi bulunamadı.
+- vendors / tedarikçi
+- Loading… / Yükleniyor…
+- New Address / Yeni Adres
+- New Bank Account / Yeni Banka Hesabı
+- New Contact / Yeni Kontak
+- New Vendor / Yeni Tedarikçi
+- Save / Kaydet
+- Saving… / Kaydediliyor…
+- Name, code, tax no, email… / Ad, kod, VKN, e-posta…
+- Active / Aktif
+- Archived / Arşiv
+- Blocked / Bloke
+- Pending Approval / Onay Bekliyor
+- Vendor master, current account, and bank details. / Tedarikçi master, cari hesap ve banka bilgileri.
+- Vendors / Tedarikçiler

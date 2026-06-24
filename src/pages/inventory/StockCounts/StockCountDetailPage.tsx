@@ -1,12 +1,19 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CheckCircle2, ChevronLeft, PlayCircle, Save, XCircle } from 'lucide-react';
+import { CheckCircle2, ClipboardList, PlayCircle, Save, XCircle } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { formatCurrency } from '@/shared/lib/format';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
+import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { Button } from '@/shared/ui/Button/Button';
+import { Input } from '@/shared/ui/Input/Input';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
+import { Badge } from '@/shared/ui/Badge/Badge';
+import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
 import {
   useCancelStockCount,
   usePostStockCount,
@@ -17,12 +24,12 @@ import {
 } from '@/features/inventory/hooks/useStockCountQueries';
 import type { StockCount, StockCountStatus } from '@/features/inventory/model/stockCount.types';
 
-const STATUS_TONE: Record<StockCountStatus, string> = {
-  Plan: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
-  Counting: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Reconciliation: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Posted: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Cancelled: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+const STATUS_VARIANT: Record<StockCountStatus, BadgeVariant> = {
+  Plan: 'neutral',
+  Counting: 'warning',
+  Reconciliation: 'info',
+  Posted: 'success',
+  Cancelled: 'danger',
 };
 
 const StockCountDetailPage = () => {
@@ -147,83 +154,88 @@ const StockCountDetailView = ({ entity }: ViewProps) => {
   };
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link
-            to="/dashboard/inventory/stock-counts"
-            className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-indigo-600"
-          >
-            <ChevronLeft size={12} />
-            {t('Inventory.StockCounts.backToList', { defaultValue: 'Sayımlara dön' })}
-          </Link>
-          <h1 className="mt-1 flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-            {entity.countNumber}
-            <span
-              className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${STATUS_TONE[entity.status]}`}
-            >
+    <DetailPageTemplate
+      header={
+        <PageHeader
+          icon={<ClipboardList size={20} />}
+          title={entity.countNumber}
+          subtitle={entity.warehouseName}
+          crumbs={[
+            {
+              label: t('Inventory.StockCounts.backToList', { defaultValue: 'Sayımlara dön' }),
+              to: '/dashboard/inventory/stock-counts',
+            },
+            { label: entity.countNumber },
+          ]}
+          trailing={
+            <Badge variant={STATUS_VARIANT[entity.status]}>
               {t(`Inventory.StockCounts.status.${entity.status}`, { defaultValue: entity.status })}
-            </span>
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {entity.warehouseName}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {entity.status === 'Plan' && (
-            <button
-              type="button"
-              onClick={onStart}
-              disabled={start.isPending}
-              className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              <PlayCircle size={13} />
-              {t('Inventory.StockCounts.start', { defaultValue: 'Sayımı Başlat' })}
-            </button>
-          )}
-          {entity.status === 'Counting' && (
-            <button
-              type="button"
-              onClick={onReconcile}
-              disabled={reconcile.isPending || !allCounted}
-              className="inline-flex items-center gap-1.5 rounded bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
-              title={
-                allCounted
-                  ? undefined
-                  : t('Inventory.StockCounts.allLinesRequired', {
-                      defaultValue: 'Tüm satırlar girilmelidir.',
-                    })
-              }
-            >
-              <CheckCircle2 size={13} />
-              {t('Inventory.StockCounts.reconcile', { defaultValue: 'Mutabakat' })}
-            </button>
-          )}
-          {entity.status === 'Reconciliation' && (
-            <button
-              type="button"
-              onClick={onPost}
-              disabled={post.isPending}
-              className="inline-flex items-center gap-1.5 rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
-            >
-              <CheckCircle2 size={13} />
-              {t('Inventory.StockCounts.post.button', { defaultValue: 'Sayımı İşle' })}
-            </button>
-          )}
-          {!readonly && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={cancel.isPending}
-              className="inline-flex items-center gap-1.5 rounded border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-rose-500/40 dark:bg-slate-900 dark:hover:bg-rose-500/10"
-            >
-              <XCircle size={13} />
-              {t('common.cancel', { defaultValue: 'İptal' })}
-            </button>
-          )}
-        </div>
-      </div>
-
+            </Badge>
+          }
+          actions={
+            <>
+              {entity.status === 'Plan' && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={onStart}
+                  isLoading={start.isPending}
+                  disabled={start.isPending}
+                >
+                  <PlayCircle size={13} />
+                  {t('Inventory.StockCounts.start', { defaultValue: 'Sayımı Başlat' })}
+                </Button>
+              )}
+              {entity.status === 'Counting' && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={onReconcile}
+                  isLoading={reconcile.isPending}
+                  disabled={reconcile.isPending || !allCounted}
+                  title={
+                    allCounted
+                      ? undefined
+                      : t('Inventory.StockCounts.allLinesRequired', {
+                          defaultValue: 'Tüm satırlar girilmelidir.',
+                        })
+                  }
+                >
+                  <CheckCircle2 size={13} />
+                  {t('Inventory.StockCounts.reconcile', { defaultValue: 'Mutabakat' })}
+                </Button>
+              )}
+              {entity.status === 'Reconciliation' && (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={onPost}
+                  isLoading={post.isPending}
+                  disabled={post.isPending}
+                >
+                  <CheckCircle2 size={13} />
+                  {t('Inventory.StockCounts.post.button', { defaultValue: 'Sayımı İşle' })}
+                </Button>
+              )}
+              {!readonly && (
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={onCancel}
+                  isLoading={cancel.isPending}
+                  disabled={cancel.isPending}
+                >
+                  <XCircle size={13} />
+                  {t('common.cancel', { defaultValue: 'İptal' })}
+                </Button>
+              )}
+            </>
+          }
+        />
+      }
+    >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
           <p className="text-[10px] uppercase tracking-wider text-slate-500">
@@ -287,12 +299,12 @@ const StockCountDetailView = ({ entity }: ViewProps) => {
                 </td>
                 <td className="px-3 py-2 text-right">
                   {entity.status === 'Counting' ? (
-                    <input
+                    <Input
                       type="number"
                       step="0.01"
                       value={drafts[l.id] ?? ''}
                       onChange={(e) => setDrafts((prev) => ({ ...prev, [l.id]: e.target.value }))}
-                      className="w-24 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-right font-mono text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                      className="w-24"
                     />
                   ) : (
                     <span className="font-mono text-xs text-slate-700 dark:text-slate-200">
@@ -306,8 +318,8 @@ const StockCountDetailView = ({ entity }: ViewProps) => {
                       l.varianceQuantity === 0
                         ? 'text-slate-500'
                         : l.varianceQuantity > 0
-                          ? 'text-emerald-600'
-                          : 'text-rose-600'
+                          ? 'text-success-600'
+                          : 'text-danger-600'
                     }
                   >
                     {l.varianceQuantity.toFixed(2)}
@@ -324,37 +336,34 @@ const StockCountDetailView = ({ entity }: ViewProps) => {
 
       {entity.status === 'Counting' && (
         <div className="flex justify-end">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={onSaveCounts}
+            isLoading={record.isPending}
             disabled={record.isPending}
-            className="inline-flex items-center gap-1.5 rounded bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
           >
             <Save size={13} />
             {t('Inventory.StockCounts.saveCounts', { defaultValue: 'Sayımları Kaydet' })}
-          </button>
+          </Button>
         </div>
       )}
 
       {entity.status === 'Counting' && (
         <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-          <label className="block text-xs">
-            <span className="mb-1 block text-slate-600 dark:text-slate-400">
-              {t('Inventory.StockCounts.reconcileNotes', {
-                defaultValue: 'Mutabakat Notları (opsiyonel)',
-              })}
-            </span>
-            <textarea
-              value={reconcileNotes}
-              onChange={(e) => setReconcileNotes(e.target.value)}
-              rows={2}
-              maxLength={1000}
-              className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            />
-          </label>
+          <Textarea
+            label={t('Inventory.StockCounts.reconcileNotes', {
+              defaultValue: 'Mutabakat Notları (opsiyonel)',
+            })}
+            value={reconcileNotes}
+            onChange={(e) => setReconcileNotes(e.target.value)}
+            rows={2}
+            maxLength={1000}
+          />
         </div>
       )}
-    </div>
+    </DetailPageTemplate>
   );
 };
 

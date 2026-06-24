@@ -1,0 +1,45 @@
+# quotes (CoreAlign UI)
+
+"quotes" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "quotes" area (English / Türkçe):
+
+- Accept / Kabul Et
+- Convert to Order / Siparişe Dönüştür
+- Delete / Sil
+- Reject / Reddet
+- Send / Gönder
+- Actions / İşlemler
+- Quote No / Teklif No
+- Valid Until / Geçerlilik Tarihi
+- Add Line / Satır Ekle
+- No lines added yet / Henüz satır eklenmedi
+- Remove line / Satırı kaldır
+- Select a customer / Müşteri seçin
+- Select a product / Ürün seçin
+- Creating... / Oluşturuluyor...
+- New Quote / Yeni Teklif
+- Please select a customer / Lütfen bir müşteri seçin
+- Add at least one line with a product and a quantity greater than zero / Ürün ve sıfırdan büyük miktar içeren en az bir satır ekleyin
+- Grand Total / Genel Toplam
+- Lines / Satırlar
+- Subtotal / Ara Toplam
+- Tax / Vergi
+- No quotes found / Teklif bulunamadı
+- Sales · Quotes / Satış · Teklifler
+- Currency / Para Birimi
+- Customer / Müşteri
+- Notes / Notlar
+- Quantity / Miktar
+- Quote Date / Teklif Tarihi
+- Tax Rate (%) / Vergi Oranı (%)
+- Unit Price / Birim Fiyat
+- Valid Until / Geçerlilik Tarihi
+- New Quote / Yeni Teklif
+- quotes / teklif
+- Search by number or customer... / Numara veya müşteri ara...
+- Quotes / Teklifler
+- Quote accepted / Teklif kabul edildi
+- Quote converted to order / Teklif siparişe dönüştürüldü
+- Quote created / Teklif oluşturuldu
+- Quote deleted / Teklif silindi
+- Quote rejected / Teklif reddedildi
+- Quote sent / Teklif gönderildi

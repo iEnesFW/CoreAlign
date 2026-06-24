@@ -17,19 +17,19 @@ const TYPE_TONE: Record<
     sign: 'positive',
   },
   Receipt: {
-    tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+    tone: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
     sign: 'positive',
   },
   Issue: {
-    tone: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+    tone: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
     sign: 'negative',
   },
   TransferIn: {
-    tone: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+    tone: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
     sign: 'positive',
   },
   TransferOut: {
-    tone: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
+    tone: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
     sign: 'negative',
   },
   AdjustmentPositive: {
@@ -41,15 +41,15 @@ const TYPE_TONE: Record<
     sign: 'negative',
   },
   CountVariancePositive: {
-    tone: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+    tone: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
     sign: 'positive',
   },
   CountVarianceNegative: {
-    tone: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+    tone: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
     sign: 'negative',
   },
   Reservation: {
-    tone: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+    tone: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
     sign: 'neutral',
   },
   UnReservation: {
@@ -101,7 +101,7 @@ export const StockMovementsTab = ({ productId }: Props) => {
             setType(e.target.value as StockMovementType | '');
             setPage(1);
           }}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">{t('inventory.movements.allTypes')}</option>
           {Object.keys(TYPE_TONE).map((k) => (
@@ -166,9 +166,9 @@ export const StockMovementsTab = ({ productId }: Props) => {
                     <td
                       className={`px-3 py-2 text-right font-mono ${
                         meta.sign === 'positive'
-                          ? 'text-emerald-700 dark:text-emerald-300'
+                          ? 'text-success-700 dark:text-success-300'
                           : meta.sign === 'negative'
-                            ? 'text-amber-700 dark:text-amber-300'
+                            ? 'text-warning-700 dark:text-warning-300'
                             : 'text-slate-700 dark:text-slate-300'
                       }`}
                     >

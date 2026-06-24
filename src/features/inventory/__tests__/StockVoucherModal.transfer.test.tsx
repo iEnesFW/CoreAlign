@@ -28,7 +28,7 @@ vi.mock('@/features/products/hooks/useProductQueries', () => ({
   }),
 }));
 
-vi.mock('@/features/master-data/hooks/useMasterData', () => ({
+vi.mock('@/shared/master-data/hooks/useMasterData', () => ({
   useWarehousesQuery: () => ({
     data: {
       data: [

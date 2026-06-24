@@ -234,6 +234,7 @@ public class InvoiceRepository : IInvoiceRepository
         CancellationToken cancellationToken = default) =>
         await _context.Invoices
             .AsNoTracking()
+            .Include(i => i.Lines)
             .Where(i => i.Type == InvoiceType.CreditNote && i.OriginInvoiceId == invoiceId)
             .OrderByDescending(i => i.IssueDate)
             .ToListAsync(cancellationToken);

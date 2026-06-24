@@ -45,13 +45,17 @@ public class AllocateOrderHandler : IRequestHandler<AllocateOrderCommand, OrderD
     private readonly IOrderRepository _orders;
     private readonly IWarehouseRepository _warehouses;
     private readonly IAllocationService _allocator;
+    private readonly IProductRepository _products;
+    private readonly IFefoLotSelector _fefo;
     private readonly IUnitOfWork _uow;
 
-    public AllocateOrderHandler(IOrderRepository orders, IWarehouseRepository warehouses, IAllocationService allocator, IUnitOfWork uow)
+    public AllocateOrderHandler(IOrderRepository orders, IWarehouseRepository warehouses, IAllocationService allocator, IProductRepository products, IFefoLotSelector fefo, IUnitOfWork uow)
     {
         _orders = orders;
         _warehouses = warehouses;
         _allocator = allocator;
+        _products = products;
+        _fefo = fefo;
         _uow = uow;
     }
 
@@ -88,11 +92,27 @@ public class AllocateOrderHandler : IRequestHandler<AllocateOrderCommand, OrderD
             throw new NoWarehouseConfiguredException();
         }
 
+        var now = DateTime.UtcNow;
         foreach (var line in order.Lines.Where(l => l.QuantityAllocated < l.Quantity))
         {
             var qty = line.Quantity - line.QuantityAllocated;
             var warehouseId = line.WarehouseId ?? defaultWarehouse.Id;
-            await _allocator.ReserveAsync(new AllocationRequest(order.Id, line.Id, line.ProductId, warehouseId, qty), ct);
+            var product = await _products.GetByIdAsync(line.ProductId, ct);
+
+            if (product is not null && product.IsLotTracked)
+            {
+                var plan = await _fefo.SelectAsync(line.ProductId, warehouseId, qty, now, ct);
+                foreach (var lot in plan)
+                {
+                    await _allocator.ReserveAsync(
+                        new AllocationRequest(order.Id, line.Id, line.ProductId, warehouseId, lot.Quantity, lot.LotId), ct);
+                }
+            }
+            else
+            {
+                await _allocator.ReserveAsync(new AllocationRequest(order.Id, line.Id, line.ProductId, warehouseId, qty), ct);
+            }
+
             line.RecordAllocation(qty);
         }
 

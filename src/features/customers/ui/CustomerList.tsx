@@ -38,14 +38,14 @@ const typeIcon: Record<CustomerType, React.ReactNode> = {
 };
 
 const typeTone: Record<CustomerType, string> = {
-  Individual: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  Business: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
-  Government: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
+  Individual: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Business: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
+  Government: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
 };
 
 const statusTone: Record<CustomerStatus, string> = {
-  Active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Blocked: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Active: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Blocked: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Archived: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
 };
 
@@ -101,7 +101,7 @@ export const CustomerList = ({
           <button
             type="button"
             onClick={onCreate}
-            className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700"
+            className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-primary-700"
           >
             {t('customers.addNew')}
           </button>
@@ -117,9 +117,9 @@ export const CustomerList = ({
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500/15 to-purple-500/15 text-[10px] font-bold uppercase text-indigo-700 ring-1 ring-indigo-200/50 dark:text-indigo-300 dark:ring-indigo-500/30',
+                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500/15 to-purple-500/15 text-[10px] font-bold uppercase text-primary-700 ring-1 ring-primary-200/50 dark:text-primary-300 dark:ring-primary-500/30',
                   c.status === 'Blocked' &&
-                    'from-rose-500/15 to-pink-500/15 text-rose-700 ring-rose-200/50 dark:text-rose-300 dark:ring-rose-500/30',
+                    'from-danger-500/15 to-pink-500/15 text-danger-700 ring-danger-200/50 dark:text-danger-300 dark:ring-danger-500/30',
                 )}
               >
                 {initials(c.name)}
@@ -132,7 +132,7 @@ export const CustomerList = ({
                   {c.status === 'Blocked' && (
                     <span
                       title={c.blockReason ?? 'Blocked'}
-                      className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300"
+                      className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-danger-100 text-danger-600 dark:bg-danger-500/20 dark:text-danger-300"
                     >
                       <ShieldOff size={9} />
                     </span>
@@ -187,16 +187,16 @@ export const CustomerList = ({
                   className={cn(
                     'font-mono text-xs font-semibold tabular-nums',
                     balance > 0
-                      ? 'text-amber-600 dark:text-amber-400'
+                      ? 'text-warning-600 dark:text-warning-400'
                       : balance < 0
-                        ? 'text-emerald-600 dark:text-emerald-400'
+                        ? 'text-success-600 dark:text-success-400'
                         : 'text-slate-700 dark:text-slate-200',
                   )}
                 >
                   {fmtCurrency(balance, c.defaultCurrency, locale)}
                 </div>
                 {overdue > 0 && (
-                  <div className="text-[9px] font-medium text-rose-600 dark:text-rose-400">
+                  <div className="text-[9px] font-medium text-danger-600 dark:text-danger-400">
                     {fmtCurrency(overdue, c.defaultCurrency, locale)} overdue
                   </div>
                 )}
@@ -218,12 +218,12 @@ export const CustomerList = ({
             const pct = Math.min(120, (c.currentBalance / c.creditLimit) * 100);
             const tone =
               pct >= 100
-                ? 'bg-rose-500'
+                ? 'bg-danger-500'
                 : pct >= 80
-                  ? 'bg-amber-500'
+                  ? 'bg-warning-500'
                   : pct >= 50
-                    ? 'bg-yellow-500'
-                    : 'bg-emerald-500';
+                    ? 'bg-warning-500'
+                    : 'bg-success-500';
             return (
               <div className="flex flex-col items-end gap-1">
                 <div className="text-[10px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">
@@ -274,7 +274,7 @@ export const CustomerList = ({
             to={`/dashboard/customers/${c.id}`}
             title={t('common.view')}
             aria-label={t('common.view')}
-            className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-indigo-300"
+            className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-primary-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-primary-300"
           >
             <Eye size={14} />
           </Link>

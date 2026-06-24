@@ -16,8 +16,11 @@ public record FeedbackTicketDto(
     string? PageUrl,
     string? CreatedByName,
     string? AdminResponse,
+    string? AttachmentFileName,
     DateTime CreatedAtUtc,
     DateTime? ResolvedAtUtc);
+
+public record FeedbackAttachmentDescriptor(string RelativePath, string FileName, string ContentType);
 
 public record CreateFeedbackCommand(
     FeedbackType Type,
@@ -38,3 +41,8 @@ public record ListFeedbackQuery(FeedbackStatus? Status, FeedbackType? Type)
     : IRequest<IReadOnlyList<FeedbackTicketDto>>;
 
 public record GetFeedbackByIdQuery(Guid Id) : IRequest<FeedbackTicketDto?>;
+
+public record AttachFeedbackFileCommand(Guid Id, string RelativePath, string FileName, string ContentType)
+    : IRequest<FeedbackTicketDto>, ITransactionalRequest;
+
+public record GetFeedbackAttachmentQuery(Guid Id) : IRequest<FeedbackAttachmentDescriptor?>;

@@ -68,7 +68,6 @@ public class StockItemConfiguration : IEntityTypeConfiguration<StockItem>
             .IsUnique()
             .HasDatabaseName("ix_stock_items_tenant_product_warehouse_lot_unique");
         builder.HasIndex(s => new { s.TenantId, s.WarehouseId });
-        builder.HasIndex(s => new { s.TenantId, s.ProductId });
 
         builder.Ignore(s => s.AvailableToPromise);
     }
@@ -98,7 +97,6 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
         builder.HasOne(m => m.Lot).WithMany().HasForeignKey(m => m.LotId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(m => m.ReasonCode).WithMany().HasForeignKey(m => m.ReasonCodeId).OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(m => new { m.TenantId, m.OccurredAtUtc }).IsDescending(false, true);
         builder.HasIndex(m => new { m.TenantId, m.ProductId, m.OccurredAtUtc }).IsDescending(false, false, true);
         builder.HasIndex(m => new { m.TenantId, m.WarehouseId, m.OccurredAtUtc }).IsDescending(false, false, true);
         builder.HasIndex(m => new { m.TenantId, m.SourceDocumentType, m.SourceDocumentId });

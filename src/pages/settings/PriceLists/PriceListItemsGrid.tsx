@@ -12,7 +12,7 @@ import {
   useUpdatePriceListItem,
 } from '@/features/pricing/hooks/usePricingRulesQueries';
 import type { PriceListItem } from '@/features/pricing/model/pricingRules.types';
-import type { PriceList } from '@/features/master-data/model/masterData.types';
+import type { PriceList } from '@/shared/master-data/model/masterData.types';
 
 interface Props {
   priceList: PriceList;
@@ -151,7 +151,7 @@ export const PriceListItemsGrid = ({ priceList }: Props) => {
           <button
             type="button"
             onClick={beginAdd}
-            className="inline-flex items-center gap-1 rounded bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+            className="inline-flex items-center gap-1 rounded bg-primary-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
           >
             <Plus size={12} /> {t('Settings.PriceLists.Lines.Add')}
           </button>
@@ -223,7 +223,7 @@ export const PriceListItemsGrid = ({ priceList }: Props) => {
                     <button
                       type="button"
                       onClick={() => handleRemove(item)}
-                      className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
+                      className="rounded p-1 text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/30"
                       aria-label={t('Common.Delete')}
                     >
                       <Trash2 size={12} />
@@ -277,7 +277,7 @@ const DraftRow = ({
 }: DraftRowProps) => {
   const { t } = useTranslation();
   return (
-    <tr className="bg-indigo-50/40 dark:bg-indigo-900/10">
+    <tr className="bg-primary-50/40 dark:bg-primary-900/10">
       <td className="px-2 py-1.5">
         <select
           value={draft.productId}
@@ -333,7 +333,7 @@ const DraftRow = ({
         <button
           type="button"
           onClick={onSave}
-          className="mr-1 rounded bg-indigo-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+          className="mr-1 rounded bg-primary-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
         >
           {t('Common.Save')}
         </button>

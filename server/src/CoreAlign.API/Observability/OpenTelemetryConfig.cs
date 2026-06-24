@@ -64,6 +64,16 @@ public static class OpenTelemetryConfig
                 metrics
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
+                    .AddMeter(CoreAlign.Infrastructure.Observability.ErrorLogMetrics.MeterName)
+                    .AddMeter(CoreAlign.Infrastructure.AiHelper.AiHelperMetrics.MeterName)
+                    .AddView("aihelper_top_score", new OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
+                    {
+                        Boundaries = new[] { 0.1, 0.2, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1.0 },
+                    })
+                    .AddView("aihelper_context_chunks", new OpenTelemetry.Metrics.ExplicitBucketHistogramConfiguration
+                    {
+                        Boundaries = new double[] { 0, 1, 2, 3, 4, 5, 6, 8, 10, 15 },
+                    })
                     .AddPrometheusExporter();
 
                 if (!string.IsNullOrWhiteSpace(otlpEndpoint))

@@ -57,7 +57,7 @@ export const NotificationPreferencesEditor = () => {
                       checked={enabled}
                       onChange={() => toggle(cat, channel, enabled)}
                       disabled={upsert.isPending}
-                      className="h-3.5 w-3.5 rounded text-indigo-600"
+                      className="h-3.5 w-3.5 rounded text-primary-600"
                     />
                   </td>
                 );

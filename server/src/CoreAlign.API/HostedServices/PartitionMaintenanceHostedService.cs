@@ -31,6 +31,10 @@ public sealed class PartitionMaintenanceHostedService : BackgroundService
         ("outbox_messages", "created_at_utc"),
         ("stock_movements", "occurred_at_utc"),
         ("customer_transactions", "occurred_at_utc"),
+        ("error_logs", "occurred_at_utc"),
+        ("customer_ledger_entries", "occurred_at_utc"),
+        ("vendor_ledger_entries", "occurred_at_utc"),
+        ("stock_transactions", "occurred_at_utc"),
     };
 
     private readonly IServiceScopeFactory _scopeFactory;

@@ -58,7 +58,7 @@ export const SubmitRequestForm = ({ defaultEmail, onSubmitted }: Props) => {
           id="privacy-request-type"
           value={requestType}
           onChange={(e) => setRequestType(e.target.value as DataSubjectRequestType)}
-          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         >
           {REQUEST_TYPES.map((rt) => (
             <option key={rt} value={rt}>
@@ -81,7 +81,7 @@ export const SubmitRequestForm = ({ defaultEmail, onSubmitted }: Props) => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>
 
@@ -97,14 +97,14 @@ export const SubmitRequestForm = ({ defaultEmail, onSubmitted }: Props) => {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
       </div>
 
       <button
         type="submit"
         disabled={submitter.isPending || !email}
-        className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
       >
         <Send size={14} />
         {submitter.isPending ? t('Privacy.Request.Submitting') : t('Privacy.Request.Submit')}

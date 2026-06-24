@@ -20,21 +20,21 @@ interface Props {
 }
 
 const toneAccent: Record<NonNullable<Props['tone']>, string> = {
-  indigo: 'from-indigo-500/30 to-transparent',
-  emerald: 'from-emerald-500/30 to-transparent',
+  indigo: 'from-primary-500/30 to-transparent',
+  emerald: 'from-success-500/30 to-transparent',
   violet: 'from-violet-500/30 to-transparent',
-  amber: 'from-amber-500/30 to-transparent',
-  rose: 'from-rose-500/30 to-transparent',
-  sky: 'from-sky-500/30 to-transparent',
+  amber: 'from-warning-500/30 to-transparent',
+  rose: 'from-danger-500/30 to-transparent',
+  sky: 'from-info-500/30 to-transparent',
 };
 
 const toneIconBg: Record<NonNullable<Props['tone']>, string> = {
-  indigo: 'from-indigo-500 to-purple-600',
-  emerald: 'from-emerald-500 to-teal-600',
+  indigo: 'from-primary-500 to-purple-600',
+  emerald: 'from-success-500 to-teal-600',
   violet: 'from-violet-500 to-fuchsia-600',
-  amber: 'from-amber-500 to-orange-600',
-  rose: 'from-rose-500 to-pink-600',
-  sky: 'from-sky-500 to-cyan-600',
+  amber: 'from-warning-500 to-warning-600',
+  rose: 'from-danger-500 to-pink-600',
+  sky: 'from-info-500 to-cyan-600',
 };
 
 export const PageHeader = ({
@@ -73,7 +73,7 @@ export const PageHeader = ({
                   {c.to ? (
                     <Link
                       to={c.to}
-                      className="transition-colors hover:text-indigo-600 dark:hover:text-indigo-300"
+                      className="transition-colors hover:text-primary-600 dark:hover:text-primary-300"
                     >
                       {c.label}
                     </Link>
@@ -95,7 +95,7 @@ export const PageHeader = ({
             {icon && (
               <div
                 className={cn(
-                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg shadow-indigo-500/20 ring-1 ring-white/20',
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-lg shadow-primary-500/20 ring-1 ring-white/20',
                   toneIconBg[tone],
                 )}
               >
@@ -104,7 +104,7 @@ export const PageHeader = ({
             )}
             <div className="min-w-0">
               {eyebrow && (
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary-500 dark:text-primary-400">
                   {eyebrow}
                 </div>
               )}

@@ -1,11 +1,14 @@
+using CoreAlign.Application.Common.Behaviors;
 using CoreAlign.Application.Common.Caching;
 using CoreAlign.Application.Invoices.Commands;
+using CoreAlign.Application.Invoices.DTOs;
 using CoreAlign.Application.Invoices.Handlers;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
 using CoreAlign.Infrastructure.Caching;
 using CoreAlign.Infrastructure.Options;
+using MediatR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
@@ -24,6 +27,7 @@ public class IssueCreditNoteIdempotencyTests
     private readonly ITenantContext _tenantContext = Substitute.For<ITenantContext>();
     private readonly IDistributedCacheService _cache;
     private readonly IssueCreditNoteCommandHandler _sut;
+    private readonly IssueCreditNoteIdempotencyBehavior _behavior;
 
     private int _sequenceCounter;
 
@@ -37,9 +41,15 @@ public class IssueCreditNoteIdempotencyTests
             Options.Create(new CacheRegionOptions()));
         _invoiceRepository.GetCreditNotesForInvoiceAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<Invoice>());
+        _tenantContext.HasTenant.Returns(true);
+        _tenantContext.RequireTenantId().Returns(TenantId);
         _sut = new IssueCreditNoteCommandHandler(
-            _invoiceRepository, _sequenceRepository, _periodRepository, _tenantContext, _cache);
+            _invoiceRepository, _sequenceRepository, _periodRepository, _tenantContext);
+        _behavior = new IssueCreditNoteIdempotencyBehavior(_tenantContext, _cache);
     }
+
+    private Task<InvoiceDto> InvokePipelineAsync(IssueCreditNoteCommand command) =>
+        _behavior.Handle(command, () => _sut.Handle(command, default), default);
 
     [Fact]
     public async Task FirstCreditNote_ConsumesSequenceAndAddsInvoiceOnce()
@@ -48,9 +58,8 @@ public class IssueCreditNoteIdempotencyTests
         var line = invoice.Lines.First();
         _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
 
-        var result = await _sut.Handle(
-            new IssueCreditNoteCommand(invoice.Id, new[] { new IssueCreditNoteLineInput(line.Id, 1m) }),
-            default);
+        var result = await InvokePipelineAsync(
+            new IssueCreditNoteCommand(invoice.Id, new[] { new IssueCreditNoteLineInput(line.Id, 1m) }));
 
         result.Type.Should().Be(InvoiceType.CreditNote);
         await _invoiceRepository.Received(1).AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
@@ -75,8 +84,8 @@ public class IssueCreditNoteIdempotencyTests
 
         var command = new IssueCreditNoteCommand(invoice.Id, new[] { new IssueCreditNoteLineInput(line.Id, 1m) });
 
-        await _sut.Handle(command, default);
-        await _sut.Handle(command, default);
+        await InvokePipelineAsync(command);
+        await InvokePipelineAsync(command);
 
         firstCreated.Should().NotBeNull();
         secondCreated.Should().BeNull("idempotency suppresses the duplicate AddAsync");
@@ -94,12 +103,45 @@ public class IssueCreditNoteIdempotencyTests
         var command = new IssueCreditNoteCommand(
             invoice.Id, new[] { new IssueCreditNoteLineInput(line.Id, 1m) }, OperationId: operationId);
 
-        var first = await _sut.Handle(command, default);
-        var second = await _sut.Handle(command, default);
+        var first = await InvokePipelineAsync(command);
+        var second = await InvokePipelineAsync(command);
 
         second.Id.Should().Be(first.Id);
         _sequenceCounter.Should().Be(1);
         await _invoiceRepository.Received(1).AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task RolledBackFirstAttempt_DoesNotPoisonCache_RetryRunsHandlerAgain()
+    {
+        var invoice = BuildIssuedInvoice();
+        var line = invoice.Lines.First();
+        _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+        var command = new IssueCreditNoteCommand(
+            invoice.Id, new[] { new IssueCreditNoteLineInput(line.Id, 1m) }, OperationId: Guid.NewGuid());
+
+        Func<Task> firstAttempt = () => _behavior.Handle(
+            command,
+            async () =>
+            {
+                await _sut.Handle(command, default);
+                throw new InvalidOperationException("commit failed");
+            },
+            default);
+        await firstAttempt.Should().ThrowAsync<InvalidOperationException>();
+
+        var handlerInvocations = 0;
+        var second = await _behavior.Handle(
+            command,
+            () =>
+            {
+                handlerInvocations++;
+                return _sut.Handle(command, default);
+            },
+            default);
+
+        handlerInvocations.Should().Be(1, "a rolled-back attempt must not cache a phantom; the retry executes the handler fresh");
+        second.Type.Should().Be(InvoiceType.CreditNote);
     }
 
     [Fact]

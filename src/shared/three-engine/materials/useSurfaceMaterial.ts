@@ -35,7 +35,6 @@ export function useSurfaceMaterial(
     params.emissiveHex,
     params.emissiveIntensity,
   ]);
-  // Free the previous GPU material when params change or the mesh unmounts.
   useEffect(() => () => material.dispose(), [material]);
   return material;
 }

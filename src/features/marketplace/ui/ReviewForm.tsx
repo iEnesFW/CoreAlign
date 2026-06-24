@@ -51,13 +51,13 @@ export const ReviewForm = ({ templateId, onSubmitted }: ReviewFormProps) => {
         rows={3}
         maxLength={4000}
         placeholder={t('Marketplace.Reviews.CommentPlaceholder', 'Share your experience...')}
-        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-success-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
       />
       <div className="flex justify-end">
         <button
           type="submit"
           disabled={mutation.isPending}
-          className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+          className="rounded-md bg-success-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-success-700 disabled:opacity-50"
         >
           {mutation.isPending
             ? t('Marketplace.Reviews.Submitting', 'Submitting...')

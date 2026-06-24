@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, Clock, Download, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock, Download, Send, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -14,6 +14,7 @@ import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { usePdfDownload } from '@/shared/lib/usePdfDownload';
 import { dealerApi } from '@/features/portal/api';
 import { dealerKeys, useDealerOrder } from '@/features/portal/hooks';
+import { ForwardDocumentModal } from '@/features/portal/ForwardDocumentModal';
 import { CommentsTab } from '@/features/collaboration/CommentsTab';
 
 export const OrderDetailPage = () => {
@@ -24,6 +25,7 @@ export const OrderDetailPage = () => {
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useDealerOrder(id);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [forwardOpen, setForwardOpen] = useState(false);
   const pdf = usePdfDownload(
     `/dealer-portal/orders/${id ?? ''}/pdf`,
     `Order-${data?.orderNumber ?? id ?? ''}.pdf`,
@@ -90,6 +92,9 @@ export const OrderDetailPage = () => {
           <Button variant="secondary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
             <Download size={14} /> {t('b2b.common.downloadPdf')}
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => setForwardOpen(true)}>
+            <Send size={14} /> {t('b2b.forward.action')}
+          </Button>
           {canCancel ? (
             <Button variant="danger" size="sm" onClick={openCancelConfirm} disabled={cancelling}>
               {cancelling ? <Spinner size={14} className="text-white" /> : null}
@@ -100,6 +105,14 @@ export const OrderDetailPage = () => {
           )}
         </div>
       </div>
+
+      <ForwardDocumentModal
+        open={forwardOpen}
+        onClose={() => setForwardOpen(false)}
+        documentType="Order"
+        documentId={id ?? ''}
+        documentNumber={data.orderNumber}
+      />
 
       <Modal
         open={cancelConfirmOpen}

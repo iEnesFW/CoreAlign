@@ -109,6 +109,7 @@ public class DemoDataSeeder : BackgroundService
         await SeedModuleCatalogAsync(sp, ct);
         await GlassEnclosureSeeder.SeedGlobalAsync(sp, ct);
         await ProjectTemplateSeeder.SeedSystemTemplatesAsync(sp, ct);
+        await PayrollParametersSeed.SeedGlobalAsync(sp, ct);
 
         if (await users.ExistsByEmailAsync(AdminEmail, ct))
         {

@@ -147,13 +147,13 @@ const TransferProductCard = ({
             data-testid="transfer-suggestion-row"
             className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200"
           >
-            <MoveRight className="h-4 w-4 shrink-0 text-indigo-500 dark:text-indigo-300" />
+            <MoveRight className="h-4 w-4 shrink-0 text-primary-500 dark:text-primary-300" />
             <span className="inline-flex items-center gap-1.5">
-              <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+              <span className="rounded bg-success-100 px-2 py-0.5 text-xs font-semibold text-success-700 dark:bg-success-500/20 dark:text-success-300">
                 {transfer.fromWarehouseCode}
               </span>
               <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-              <span className="rounded bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">
+              <span className="rounded bg-info-100 px-2 py-0.5 text-xs font-semibold text-info-700 dark:bg-info-500/20 dark:text-info-300">
                 {transfer.toWarehouseCode}
               </span>
             </span>
@@ -177,7 +177,7 @@ const TransferProductCard = ({
                 data-testid="transfer-execute-button"
                 disabled={isExecuting}
                 onClick={() => onExecute(transfer)}
-                className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+                className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 hover:bg-primary-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20"
               >
                 <Send className="h-3.5 w-3.5" />
                 {executingKey === transferSuggestionKey(transfer)
@@ -203,13 +203,13 @@ const ExternalReplenishmentList = ({
   return (
     <div
       data-testid="external-replenishment"
-      className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-500/10"
+      className="rounded-lg border border-warning-200 bg-warning-50 p-4 dark:border-warning-700 dark:bg-warning-500/10"
     >
-      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
+      <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-warning-800 dark:text-warning-200">
         <PackageX className="h-4 w-4" />
         {t('Mrp.Workbench.Distribution.ExternalReplenishment')}
       </div>
-      <ul className="space-y-1 text-xs text-amber-800 dark:text-amber-200">
+      <ul className="space-y-1 text-xs text-warning-800 dark:text-warning-200">
         {items.map((item, idx) => (
           <li key={`${item.productId}-${item.warehouseId}-${idx}`}>
             {t('Mrp.Workbench.Distribution.ExternalRow', {
@@ -276,8 +276,8 @@ const NetPositionsTable = ({
               <td
                 className={`px-3 py-2 text-right font-semibold tabular-nums ${
                   pos.net < 0
-                    ? 'text-rose-600 dark:text-rose-300'
-                    : 'text-emerald-600 dark:text-emerald-300'
+                    ? 'text-danger-600 dark:text-danger-300'
+                    : 'text-success-600 dark:text-success-300'
                 }`}
               >
                 {formatNumber(pos.net, locale)}

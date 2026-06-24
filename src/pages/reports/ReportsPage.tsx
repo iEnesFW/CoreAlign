@@ -22,6 +22,9 @@ import {
   useTopProductsQuery,
 } from '@/features/reports/hooks/useReportQueries';
 import type { SalesBucket, SalesPeriodPoint } from '@/features/reports/model/reports.types';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { Button } from '@/shared/ui/Button/Button';
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
@@ -101,9 +104,6 @@ export const ReportsPage = () => {
     [fromDate, toDate],
   );
 
-  // Wrap each query param object in useMemo so React Query sees a stable key
-  // across renders — otherwise the inline object literals re-create the key
-  // on every parent state change and force a refetch.
   const topCustomersParams = useMemo(() => ({ limit: 10, ...dateRange }), [dateRange]);
   const topProductsParams = useMemo(() => ({ limit: 10, ...dateRange }), [dateRange]);
 
@@ -118,24 +118,22 @@ export const ReportsPage = () => {
   const aging = agingQuery.data?.data ?? null;
 
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-            {t('reports.title')}
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{t('reports.subtitle')}</p>
-        </div>
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<BarChart3 size={20} />}
+          title={t('reports.title')}
+          subtitle={t('reports.subtitle')}
+          actions={
+            <Button size="sm" onClick={() => navigate('/dashboard/reports/library')}>
+              <FileDown size={14} />
+              {t('reports.library.openLibrary')}
+            </Button>
+          }
+        />
+      }
+      toolbar={
         <div className="flex flex-wrap items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => navigate('/dashboard/reports/library')}
-            className="inline-flex items-center gap-1.5 rounded border border-indigo-300 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300"
-          >
-            <FileDown size={11} />
-            {t('reports.library.openLibrary')}
-          </button>
-          <span className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-800" />
           <PresetToggle current={preset} value="30d" onClick={() => applyPreset('30d')}>
             30d
           </PresetToggle>
@@ -172,8 +170,8 @@ export const ReportsPage = () => {
             className="rounded border border-slate-200 bg-white px-2 py-1 text-[11px] dark:border-slate-700 dark:bg-slate-900"
           />
         </div>
-      </header>
-
+      }
+    >
       <SalesKpiRow sales={sales} locale={locale} />
 
       <section className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
@@ -218,7 +216,7 @@ export const ReportsPage = () => {
       </div>
 
       <TopProductsPanel rows={topProducts} locale={locale} loading={topProductsQuery.isPending} />
-    </div>
+    </ListPageTemplate>
   );
 };
 
@@ -238,7 +236,7 @@ const PresetToggle = ({
     onClick={onClick}
     className={`rounded border px-2 py-1 text-[10px] font-medium transition ${
       current === value
-        ? 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300'
+        ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
     }`}
   >
@@ -262,7 +260,7 @@ const BucketToggle = ({
     onClick={onClick}
     className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-medium transition ${
       current === value
-        ? 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-500/40 dark:bg-indigo-500/10 dark:text-indigo-300'
+        ? 'border-primary-300 bg-primary-50 text-primary-700 dark:border-primary-500/40 dark:bg-primary-500/10 dark:text-primary-300'
         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
     }`}
   >
@@ -314,11 +312,11 @@ const SalesKpiRow = ({
 };
 
 const kpiTone: Record<'indigo' | 'emerald' | 'blue' | 'violet' | 'red' | 'slate', string> = {
-  indigo: 'border-indigo-200 bg-indigo-50/30 dark:border-indigo-500/30 dark:bg-indigo-500/10',
-  emerald: 'border-emerald-200 bg-emerald-50/30 dark:border-emerald-500/30 dark:bg-emerald-500/10',
-  blue: 'border-blue-200 bg-blue-50/30 dark:border-blue-500/30 dark:bg-blue-500/10',
+  indigo: 'border-primary-200 bg-primary-50/30 dark:border-primary-500/30 dark:bg-primary-500/10',
+  emerald: 'border-success-200 bg-success-50/30 dark:border-success-500/30 dark:bg-success-500/10',
+  blue: 'border-primary-200 bg-primary-50/30 dark:border-primary-500/30 dark:bg-primary-500/10',
   violet: 'border-violet-200 bg-violet-50/30 dark:border-violet-500/30 dark:bg-violet-500/10',
-  red: 'border-red-200 bg-red-50/30 dark:border-red-500/30 dark:bg-red-500/10',
+  red: 'border-danger-200 bg-danger-50/30 dark:border-danger-500/30 dark:bg-danger-500/10',
   slate: 'border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900',
 };
 
@@ -389,11 +387,11 @@ const SalesTrendChart = ({
               title={`${p.label}: ${fmtCurrency(p.revenue, currency, locale)} (${p.invoiceCount})`}
             >
               <div
-                className="w-full rounded-t-sm bg-indigo-500 transition-all group-hover:bg-indigo-600"
+                className="w-full rounded-t-sm bg-primary-500 transition-all group-hover:bg-primary-600"
                 style={{ height: `${Math.max(2, revH)}%` }}
               />
               <div
-                className="absolute bottom-0 left-0 w-full rounded-t-sm bg-emerald-500/70"
+                className="absolute bottom-0 left-0 w-full rounded-t-sm bg-success-500/70"
                 style={{ height: `${Math.max(0, paidH)}%`, opacity: 0.85 }}
               />
             </div>
@@ -406,11 +404,11 @@ const SalesTrendChart = ({
       </div>
       <div className="mt-2 flex items-center gap-3 text-[10px] text-slate-500 dark:text-slate-400">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-indigo-500" />
+          <span className="inline-block h-2 w-2 rounded-full bg-primary-500" />
           {t('reports.kpi.revenue')}
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500/70" />
+          <span className="inline-block h-2 w-2 rounded-full bg-success-500/70" />
           {t('reports.kpi.collected')}
         </span>
       </div>
@@ -456,12 +454,12 @@ const AgingPanel = ({
     {
       label: t('payments.aging.current', { defaultValue: 'Current' }),
       amount: aging.current,
-      color: 'bg-emerald-500',
+      color: 'bg-success-500',
     },
-    { label: '1-30', amount: aging.days1To30, color: 'bg-yellow-500' },
-    { label: '31-60', amount: aging.days31To60, color: 'bg-amber-500' },
-    { label: '61-90', amount: aging.days61To90, color: 'bg-orange-500' },
-    { label: '90+', amount: aging.daysOver90, color: 'bg-red-500' },
+    { label: '1-30', amount: aging.days1To30, color: 'bg-warning-500' },
+    { label: '31-60', amount: aging.days31To60, color: 'bg-warning-500' },
+    { label: '61-90', amount: aging.days61To90, color: 'bg-warning-500' },
+    { label: '90+', amount: aging.daysOver90, color: 'bg-danger-500' },
   ];
 
   return (
@@ -521,7 +519,7 @@ const AgingPanel = ({
                   {row.customerName}
                 </span>
                 <span
-                  className={`shrink-0 font-mono tabular-nums ${row.daysOver90 > 0 ? 'text-red-600 dark:text-red-400' : row.days31To60 + row.days61To90 > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'}`}
+                  className={`shrink-0 font-mono tabular-nums ${row.daysOver90 > 0 ? 'text-danger-600 dark:text-danger-400' : row.days31To60 + row.days61To90 > 0 ? 'text-warning-600 dark:text-warning-400' : 'text-slate-700 dark:text-slate-200'}`}
                 >
                   {fmtCurrency(row.totalOutstanding, row.currency, locale)}
                 </span>
@@ -580,7 +578,7 @@ const TopCustomersPanel = ({
                   onClick={() => onOpen(row.customerId)}
                   className="flex w-full items-center gap-2 rounded border border-slate-200 px-2 py-1.5 text-left transition hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/50"
                 >
-                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-indigo-100 text-[10px] font-bold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
+                  <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-primary-100 text-[10px] font-bold text-primary-700 dark:bg-primary-500/20 dark:text-primary-300">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -600,8 +598,8 @@ const TopCustomersPanel = ({
                       <span
                         className={
                           row.outstanding > 0
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-warning-600 dark:text-warning-400'
+                            : 'text-success-600 dark:text-success-400'
                         }
                       >
                         {t('reports.topCustomers.outstanding')}:{' '}
@@ -609,7 +607,7 @@ const TopCustomersPanel = ({
                       </span>
                     </div>
                     <div className="mt-1 h-0.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
-                      <div className="h-full bg-indigo-500" style={{ width: `${pct}%` }} />
+                      <div className="h-full bg-primary-500" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 </button>
@@ -693,3 +691,5 @@ const TopProductsPanel = ({
     </section>
   );
 };
+
+export default ReportsPage;

@@ -36,7 +36,7 @@ export const WidgetGrid = ({ widgets, renderWidget, onRemove }: Props) => {
                 type="button"
                 aria-label={t('BI.Dashboard.RemoveWidget', { defaultValue: 'Remove widget' })}
                 onClick={() => onRemove(w)}
-                className="absolute right-2 top-2 rounded-full bg-white/80 px-2 text-xs text-slate-500 hover:bg-red-50 hover:text-red-600 dark:bg-slate-800/80 dark:text-slate-400"
+                className="absolute right-2 top-2 rounded-full bg-white/80 px-2 text-xs text-slate-500 hover:bg-danger-50 hover:text-danger-600 dark:bg-slate-800/80 dark:text-slate-400"
               >
                 {'×'}
               </button>

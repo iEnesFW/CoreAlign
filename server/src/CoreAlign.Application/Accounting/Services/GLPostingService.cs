@@ -49,6 +49,14 @@ public static class GLPostingDefaults
         GLPostingKey.PurchasePriceVariance => "631",
         GLPostingKey.FxGain => "646",
         GLPostingKey.FxLoss => "656",
+        GLPostingKey.LaborExpense => "720",
+        GLPostingKey.AdminLaborExpense => "632",
+        GLPostingKey.PersonnelNetPayable => "335",
+        GLPostingKey.TaxesPayable => "360",
+        GLPostingKey.SgkPayable => "361",
+        GLPostingKey.ShippingIncome => "602",
+        GLPostingKey.RoundingGain => "679",
+        GLPostingKey.RoundingLoss => "689",
         _ => null,
     };
 }

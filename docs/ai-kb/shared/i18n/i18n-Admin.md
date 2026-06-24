@@ -1,0 +1,134 @@
+# Admin (CoreAlign UI)
+
+"Admin" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Admin" area (English / Türkçe):
+
+- Message / Mesaj
+- Severity / Seviye
+- Source / Kaynak
+- Status / Durum
+- When / Zaman
+- Where / Nerede
+- Server and client errors captured with full detail — search, inspect, and resolve. / Sunucu ve istemci hataları tüm detaylarıyla kayıt altında — ara, incele ve çözümle.
+- Correlation id / Korelasyon id
+- Exception type / İstisna tipi
+- Mark resolved / Çözüldü işaretle
+- Message / Mesaj
+- Resolution notes / Çözüm notları
+- Resolved. {{notes}} / Çözüldü. {{notes}}
+- Severity / Seviye
+- Stack trace / Yığın izi
+- Status / Durum
+- Error detail / Hata detayı
+- User / Kullanıcı
+- When / Zaman
+- Where / Nerede
+- No errors match the current filters. / Mevcut filtrelere uyan hata yok.
+- Administration / Yönetim
+- All severities / Tüm seviyeler
+- All sources / Tüm kaynaklar
+- Correlation id / Korelasyon id
+- Only unresolved / Sadece çözülmemiş
+- Search message / page… / Mesaj / sayfa ara…
+- Failed to load error logs. / Hata kayıtları yüklenemedi.
+- Next / Sonraki
+- Previous / Önceki
+- Error Logs / Hata Kayıtları
+- Could not resolve the error. / Hata çözümlenemedi.
+- Error marked resolved. / Hata çözüldü olarak işaretlendi.
+- Check health / Durumu kontrol et
+- Configure / Yapılandır
+- Disabled / Devre dışı
+- Enabled / Etkin
+- Run test suite / Test paketini çalıştır
+- Set as default / Varsayılan yap
+- Webhooks / Webhook'lar
+- E-Invoice / E-Fatura
+- Laser Meter / Lazer Metre
+- Other / Diğer
+- Payment / Ödeme
+- Provider category tabs / Sağlayıcı kategori sekmeleri
+- Default / Varsayılan
+- Configure third-party integrations for your tenant. / Kiracınız için üçüncü taraf entegrasyonlarını yapılandırın.
+- No providers registered in this category. / Bu kategoride kayıtlı sağlayıcı yok.
+- Administration / Yönetim
+- API key / API anahtarı
+- Display name / Görünen ad
+- Endpoint URL / Uç nokta URL'si
+- Enabled / Etkin
+- Enables routing through this provider. / Bu sağlayıcı üzerinden yönlendirmeyi etkinleştirir.
+- Sandbox mode / Sandbox modu
+- Production environment. Real charges and filings will be made. / Canlı ortam. Gerçek tahsilatlar ve gönderimler yapılır.
+- Test environment. No real charges or filings. / Test ortamı. Gerçek tahsilat veya gönderim yapılmaz.
+- Secret key / Gizli anahtar
+- Leave blank to keep existing values. Secrets are encrypted at rest. / Mevcut değerleri korumak için boş bırakın. Gizli bilgiler şifrelenerek saklanır.
+- Configure {{name}} / {{name}} yapılandır
+- Webhook secret / Webhook gizli anahtarı
+- Last checked / Son kontrol
+- Failed to load providers. / Sağlayıcılar yüklenemedi.
+- Production / Canlı
+- Sandbox
+- Degraded / Kısmen sorunlu
+- Healthy / Sağlıklı
+- Not configured / Yapılandırılmadı
+- Unhealthy / Sorunlu
+- Unknown / Bilinmiyor
+- Failed / Başarısız
+- No test result available. / Test sonucu bulunamadı.
+- Outcome / Sonuç
+- Running test suite… / Test paketi çalıştırılıyor…
+- Step {{n}} / Adım {{n}}
+- Passed / Başarılı
+- Test suite — {{name}} / Test paketi — {{name}}
+- Test suite requires a configured, enabled sandbox provider. / Test paketi yalnızca yapılandırılmış ve etkin sandbox sağlayıcılarda çalıştırılabilir.
+- Provider Integrations / Sağlayıcı Entegrasyonları
+- Default provider updated. / Varsayılan sağlayıcı güncellendi.
+- Provider disabled. / Sağlayıcı devre dışı bırakıldı.
+- Provider enabled. / Sağlayıcı etkinleştirildi.
+- Health check failed. / Sağlık kontrolü başarısız.
+- Provider is healthy. / Sağlayıcı sağlıklı.
+- Provider configuration could not be saved. / Sağlayıcı yapılandırması kaydedilemedi.
+- Provider configuration saved. / Sağlayıcı yapılandırması kaydedildi.
+- Failed to replay webhook. / Webhook yeniden işlenemedi.
+- Webhook replayed. / Webhook yeniden işlendi.
+- Actions / İşlemler
+- All statuses / Tüm durumlar
+- No webhook events match the current filters. / Geçerli filtrelerle eşleşen webhook olayı yok.
+- Error / Hata
+- Event / Olay
+- From / Başlangıç
+- Page {{page}} of {{totalPages}} ({{total}} events) / Sayfa {{page}} / {{totalPages}} ({{total}} olay)
+- Received / Alındı
+- Replay / Yeniden işle
+- Reset filters / Filtreleri sıfırla
+- Retries / Yeniden denemeler
+- Status / Durum
+- Discarded / Yok sayıldı
+- Failed / Başarısız
+- Pending / Beklemede
+- Processed / İşlendi
+- Received / Alındı
+- Retrying / Yeniden deneniyor
+- Webhook history — {{name}} / Webhook geçmişi — {{name}}
+- To / Bitiş
+- Configure the outgoing mail server used to send notifications and forwarded documents. / Bildirimleri ve iletilen belgeleri göndermek için kullanılan giden posta sunucusunu yapılandırın.
+- Administration / Yönetim
+- From address / Gönderen adresi
+- From name / Gönderen adı
+- SMTP host / SMTP sunucusu
+- Enabled / Etkin
+- Turn outgoing email on or off for this tenant. / Bu kiracı için giden e-postayı açın veya kapatın.
+- Password / Parola
+- Leave blank to keep the current password. / Mevcut parolayı korumak için boş bırakın.
+- Port
+- Use TLS/SSL / TLS/SSL kullan
+- Recommended. Uses STARTTLS when available. / Önerilir. Mümkün olduğunda STARTTLS kullanır.
+- Username / Kullanıcı adı
+- Test email failed. / Test e-postası başarısız oldu.
+- Verify your SMTP settings by sending a test message. / SMTP ayarlarınızı bir test mesajı göndererek doğrulayın.
+- Recipient email / Alıcı e-posta
+- Send test / Test gönder
+- Test email accepted for delivery. / Test e-postası gönderim için kabul edildi.
+- Send a test email / Test e-postası gönder
+- SMTP Settings / SMTP Ayarları
+- Could not save SMTP settings. / SMTP ayarları kaydedilemedi.
+- SMTP settings saved. / SMTP ayarları kaydedildi.

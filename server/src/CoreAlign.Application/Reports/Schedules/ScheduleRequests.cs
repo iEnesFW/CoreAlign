@@ -15,7 +15,7 @@ internal static class ScheduleJson
     };
 }
 
-public sealed class ScheduleValidationException : Exception
+public sealed class ScheduleValidationException : CoreAlign.Domain.Exceptions.DomainException
 {
     public ScheduleValidationException(string message) : base(message) { }
 }

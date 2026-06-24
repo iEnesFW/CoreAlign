@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -20,5 +21,49 @@ public sealed class RequiredEncryptedStringConverter : ValueConverter<string, st
             v => protector.Protect(v ?? string.Empty),
             v => protector.Unprotect(v ?? string.Empty))
     {
+    }
+}
+
+public sealed class ResilientEncryptedStringConverter : ValueConverter<string?, string?>
+{
+    public ResilientEncryptedStringConverter(IDataProtector protector)
+        : base(
+            v => v == null ? null : protector.Protect(v),
+            v => ResilientFieldDecryption.DecryptOrPassthrough(protector, v))
+    {
+    }
+}
+
+public sealed class RequiredResilientEncryptedStringConverter : ValueConverter<string, string>
+{
+    public RequiredResilientEncryptedStringConverter(IDataProtector protector)
+        : base(
+            v => protector.Protect(v ?? string.Empty),
+            v => ResilientFieldDecryption.DecryptOrPassthrough(protector, v) ?? string.Empty)
+    {
+    }
+}
+
+internal static class ResilientFieldDecryption
+{
+    public static string? DecryptOrPassthrough(IDataProtector protector, string? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return protector.Unprotect(value);
+        }
+        catch (CryptographicException)
+        {
+            return value;
+        }
+        catch (FormatException)
+        {
+            return value;
+        }
     }
 }

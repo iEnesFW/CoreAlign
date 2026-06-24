@@ -1,6 +1,8 @@
 using CoreAlign.Application.Auth.Commands;
+using CoreAlign.Application.Auth.Services;
 using CoreAlign.Application.Common;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
 
@@ -12,6 +14,7 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
     private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IEmailService _emailService;
+    private readonly ICaptchaVerifier _captchaVerifier;
     private readonly IUnitOfWork _unitOfWork;
 
     public ForgotPasswordCommandHandler(
@@ -19,17 +22,24 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
         IPasswordResetTokenRepository passwordResetTokenRepository,
         IJwtTokenService jwtTokenService,
         IEmailService emailService,
+        ICaptchaVerifier captchaVerifier,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _passwordResetTokenRepository = passwordResetTokenRepository;
         _jwtTokenService = jwtTokenService;
         _emailService = emailService;
+        _captchaVerifier = captchaVerifier;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<bool> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
+        if (!await _captchaVerifier.VerifyAsync(request.CaptchaToken, "forgot_password", cancellationToken))
+        {
+            throw new CaptchaValidationException();
+        }
+
         var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
 
         if (user is not null)

@@ -1,4 +1,16 @@
 {
+  "AiHelper": {
+    "Launcher": "AI Assistant",
+    "Title": "CoreAlign Assistant",
+    "Subtitle": "Ask anything about the app",
+    "Placeholder": "Ask a question...",
+    "Send": "Send",
+    "Close": "Close",
+    "Welcome": "Hi! I'm your CoreAlign assistant. How can I help you?",
+    "Sources": "Sources",
+    "Error": "Something went wrong. Please try again.",
+    "Thinking": "Thinking..."
+  },
   "inventory": {
     "summary": {
       "totalOnHand": "Gesamtbestand",
@@ -185,7 +197,7 @@
     "Required": "Dieses Feld ist erforderlich.",
     "InvalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
     "EmailTooLong": "E-Mail-Adresse ist zu lang.",
-    "PasswordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein.",
+    "PasswordTooShort": "Das Passwort muss mindestens 12 Zeichen lang sein.",
     "PasswordMismatch": "Die Passwörter stimmen nicht überein.",
     "PasswordNeedsUppercase": "Das Passwort muss mindestens einen Großbuchstaben enthalten.",
     "PasswordNeedsLowercase": "Das Passwort muss mindestens einen Kleinbuchstaben enthalten.",
@@ -2204,6 +2216,18 @@
       "NoSelection": "Wählen Sie einen Lauf oder ein Panel in der 3D-Szene.",
       "DefaultRunLabel": "Lauf",
       "RunAdded": "Lauf hinzugefügt",
+      "FloatingWarning": "⚠ {{count}} Objekt(e) ohne Auflage (schwebend)",
+      "CatalogWarning": "⚠ {{count}} Läufe überschreiten Kataloggrenzen (Panelmaß/-gewicht)",
+      "ArrayOverlap": "{{placed}} Kopien hinzugefügt, {{skipped}} wegen Überschneidung übersprungen.",
+      "Export": {
+        "Title": "Exportieren",
+        "Dxf": "DXF (2D-Plan)",
+        "Glb": "glTF/GLB (3D)",
+        "Pdf": "PDF (Druck)",
+        "CatalogConfirm": "{{count}} Läufe überschreiten Kataloggrenzen (nicht fertigbar). Trotzdem exportieren?",
+        "CatalogWarn": "⚠ {{count}} Läufe überschreiten Kataloggrenzen",
+        "CatalogNotLoadedConfirm": "Katalog konnte nicht geladen werden; Fertigbarkeit nicht geprüft. Trotzdem exportieren?"
+      },
       "ConnectionInspector": "Eckverbindung",
       "ViewSplit": "Geteilt",
       "ViewPlan": "Grundriss (2D)",
@@ -2975,7 +2999,9 @@
       "Sort.Rating": "Beste Bewertung",
       "Sort.Alphabetical": "Alphabetisch"
     },
-    "Card": { "NoPreview": "Keine Vorschau" },
+    "Card": {
+      "NoPreview": "Keine Vorschau"
+    },
     "Detail": {
       "Back": "Zurück zum Marktplatz",
       "Install": "Vorlage installieren",
@@ -3748,6 +3774,704 @@
       "Button": "Exportieren",
       "Success": "Export heruntergeladen",
       "Failed": "Export fehlgeschlagen"
+    }
+  },
+  "Vendors": {
+    "title": "Lieferanten",
+    "subtitle": "Lieferantenstammdaten, Kontokorrent und Bankverbindung.",
+    "newVendor": "Neuer Lieferant",
+    "searchPlaceholder": "Name, Code, Steuernr., E-Mail…",
+    "allStatuses": "Alle Status",
+    "itemLabel": "Lieferanten",
+    "loading": "Wird geladen…",
+    "empty": "Keine Lieferanten entsprechen den Filtern.",
+    "cols": {
+      "code": "Code",
+      "vendor": "Lieferant",
+      "taxNumber": "Steuernr.",
+      "contact": "Kontakt",
+      "status": "Status",
+      "balance": "Saldo",
+      "overdue": "Überfällig"
+    },
+    "status": {
+      "Active": "Aktiv",
+      "Blocked": "Gesperrt",
+      "Archived": "Archiviert",
+      "PendingApproval": "Genehmigung ausstehend"
+    },
+    "actions": {
+      "approve": "Genehmigen",
+      "block": "Sperren",
+      "archive": "Archivieren",
+      "detail": "Details"
+    },
+    "approve": {
+      "success": "Lieferant genehmigt."
+    },
+    "archive": {
+      "title": "Archivieren",
+      "message": "Diesen Lieferanten archivieren?",
+      "confirm": "Archivieren",
+      "success": "Lieferant archiviert."
+    },
+    "block": {
+      "title": "Lieferant sperren",
+      "reasonLabel": "Grund für die Sperrung *",
+      "submit": "Sperren",
+      "success": "Lieferant gesperrt."
+    },
+    "cancel": "Abbrechen",
+    "saving": "Wird gespeichert…",
+    "save": "Speichern",
+    "add": "Hinzufügen",
+    "modal": {
+      "newAddress": "Neue Adresse",
+      "newContact": "Neuer Kontakt",
+      "newBankAccount": "Neues Bankkonto"
+    },
+    "address": {
+      "label": "Bezeichnung",
+      "line1": "Adresszeile 1",
+      "line2": "Adresszeile 2",
+      "labelPlaceholder": "Zentrale / Lager / Rechnung",
+      "postalCode": "Postleitzahl",
+      "country": "Land",
+      "province": "Provinz",
+      "district": "Bezirk",
+      "isPrimary": "Primäradresse",
+      "success": "Adresse hinzugefügt."
+    },
+    "contact": {
+      "name": "Vollständiger Name",
+      "role": "Funktion",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "isPrimary": "Primärkontakt",
+      "success": "Kontakt hinzugefügt."
+    },
+    "bank": {
+      "bankName": "Bank",
+      "branchName": "Filiale",
+      "accountHolder": "Kontoinhaber",
+      "iban": "IBAN",
+      "currency": "Währung",
+      "isPrimary": "Primärkonto",
+      "success": "Bankkonto hinzugefügt."
+    },
+    "defaultCountry": "Türkei"
+  },
+  "VendorDetail": {
+    "notFound": "Lieferant nicht gefunden.",
+    "loading": "Wird geladen…",
+    "backToList": "Zurück zu Lieferanten",
+    "edit": "Bearbeiten",
+    "currentBalance": "Kontokorrentsaldo",
+    "overdue": "Überfällig",
+    "tabs": {
+      "overview": "Übersicht",
+      "addresses": "Adressen",
+      "contacts": "Kontakte",
+      "bank": "Bankverbindung",
+      "ledger": "Kontokorrent"
+    },
+    "fields": {
+      "code": "Code",
+      "taxNumber": "Steuernr.",
+      "taxOffice": "Finanzamt",
+      "email": "E-Mail",
+      "phone": "Tel.",
+      "type": "Typ",
+      "currency": "Währung",
+      "paymentTerms": "Zahlungsbedingungen",
+      "territory": "Region",
+      "classification": "Klassifizierung",
+      "website": "Web",
+      "approval": "Genehmigung",
+      "rating": "Leistung",
+      "blockReason": "Sperrgrund",
+      "notes": "Notizen"
+    },
+    "business": "Firma",
+    "individual": "Einzelperson",
+    "notApproved": "Noch nicht genehmigt",
+    "star": "{{count}} Stern",
+    "rating": {
+      "success": "Leistungsbewertung aktualisiert."
+    },
+    "delete": {
+      "title": "Löschen",
+      "message": "{{label}} löschen?",
+      "confirm": "Löschen",
+      "success": "Gelöscht."
+    },
+    "primary": "Primär",
+    "addresses": {
+      "empty": "Noch keine Adressen definiert.",
+      "add": "Adresse hinzufügen"
+    },
+    "contacts": {
+      "empty": "Noch keine Kontakte definiert.",
+      "add": "Kontakt hinzufügen"
+    },
+    "bank": {
+      "empty": "Noch keine Bankkonten definiert.",
+      "add": "Bankkonto hinzufügen"
+    },
+    "ledger": {
+      "date": "Datum",
+      "document": "Beleg",
+      "description": "Beschreibung",
+      "debit": "Soll",
+      "credit": "Haben",
+      "balance": "Saldo",
+      "empty": "Noch keine Kontokorrentbewegungen."
+    }
+  },
+  "VendorBills": {
+    "threeWayMatch": {
+      "allVendors": "Alle Lieferanten",
+      "cols": {
+        "billed": "Berechnet",
+        "billedAmount": "Rechnungsbetrag",
+        "expected": "Erwartet",
+        "flags": "Abweichungen",
+        "po": "Bestell-Nr.",
+        "product": "Produkt",
+        "received": "Erhalten",
+        "vendor": "Lieferant",
+        "match": "Abgleich"
+      },
+      "codes": {
+        "UnderReceived": "Zu wenig erhalten",
+        "OverReceived": "Zu viel erhalten",
+        "UnderBilled": "Zu wenig berechnet",
+        "OverBilled": "Zu viel berechnet",
+        "BillExceedsPo": "Rechnung übersteigt Bestellung"
+      },
+      "count": "{{count}} Zeilen",
+      "empty": "Alle Bestellung-Wareneingang-Rechnung-Ketten stimmen überein.",
+      "navLabel": "3-Wege-Abgleich",
+      "subtitle": "Listet Abweichungen zwischen Bestellung ↔ Wareneingang ↔ Rechnung auf. Nach Abweichungscode filtern.",
+      "title": "3-Wege-Abgleich-Bericht",
+      "matched": "Übereinstimmend",
+      "mismatch": "Abweichend"
+    },
+    "Status": {
+      "Draft": "Entwurf",
+      "Posted": "Gebucht",
+      "PartiallyPaid": "Teilweise bezahlt",
+      "Paid": "Bezahlt",
+      "Cancelled": "Storniert",
+      "PendingApproval": "In Wartestellung / Genehmigung erforderlich"
+    }
+  },
+  "VendorPayments": {
+    "applications": {
+      "amount": "Betrag",
+      "date": "Datum",
+      "empty": "Keine Zahlungen zugeordnet.",
+      "paymentNo": "Zahlungsnr.",
+      "title": "Zugeordnete Zahlungen"
+    },
+    "apply": {
+      "amount": "Betrag",
+      "amountDue": "Fälliger Betrag",
+      "billTotal": "Rechnungssumme",
+      "maxHint": "Maximal {{m}}",
+      "noEligible": "Keine anwendbaren Zahlungen für diesen Lieferanten gefunden.",
+      "notes": "Notizen",
+      "payment": "Zahlung",
+      "pickPayment": "Zahlung auswählen…",
+      "submit": "Anwenden",
+      "subtitle": "Wählen Sie die Zahlung, die auf Rechnung {{n}} angewendet werden soll.",
+      "title": "Lieferantenzahlung anwenden",
+      "unapplied": "nicht zugeordnet"
+    },
+    "applyPayment": "Vorhandene Zahlung anwenden",
+    "applySuccess": "Zahlung auf Rechnung angewendet.",
+    "viewApplications": "Zugeordnete Zahlungen"
+  },
+  "grn": {
+    "page": {
+      "title": "Wareneingänge",
+      "subtitle": "Wareneingangsbelege anzeigen und bei Bedarf stornieren."
+    },
+    "count": "{{count}} Belege",
+    "empty": "Keine Wareneingänge gefunden.",
+    "toggleLines": "Positionen ein-/ausblenden",
+    "filter": {
+      "vendor": "Lieferant",
+      "status": "Status",
+      "allVendors": "Alle Lieferanten",
+      "allStatuses": "Alle Status"
+    },
+    "status": {
+      "Posted": "Gebucht",
+      "Reversed": "Storniert"
+    },
+    "cols": {
+      "number": "WE-Nr.",
+      "vendor": "Lieferant",
+      "po": "Bestellung",
+      "date": "Datum",
+      "lines": "Positionen",
+      "total": "Betrag",
+      "status": "Status"
+    },
+    "line": {
+      "product": "Produkt",
+      "qty": "Menge",
+      "unitCost": "Stückkosten",
+      "lineCost": "Positionsbetrag"
+    },
+    "reverse": {
+      "action": "Stornieren",
+      "title": "Wareneingang stornieren",
+      "hint": "Die Stornierung macht Lagerbewegungen und die erhaltene Bestellmenge rückgängig und storniert die Buchung.",
+      "reasonLabel": "Stornogrund",
+      "submit": "Stornieren",
+      "done": "Wareneingang storniert."
+    }
+  },
+  "BalanceSheet": {
+    "title": "Bilanz",
+    "subtitle": "Vermögenswerte, Verbindlichkeiten und Eigenkapital zum gewählten Stichtag. Der Periodengewinn wird vor dem Abschluss in das Eigenkapital eingerechnet.",
+    "balanced": "Bilanz ausgeglichen",
+    "variance": "Differenz: {{value}}",
+    "computing": "Wird berechnet…",
+    "empty": "Zum gewählten Stichtag wurden keine gebuchten Journalbuchungen gefunden.",
+    "assets": "Aktiva",
+    "liabilities": "Verbindlichkeiten",
+    "equity": "Eigenkapital",
+    "currentYearEarnings": "Periodenergebnis (vor Abschluss)",
+    "totalAssets": "Summe Aktiva",
+    "totalLiabilitiesAndEquity": "Summe Passiva"
+  },
+  "IncomeStatement": {
+    "title": "Gewinn- und Verlustrechnung",
+    "subtitle": "Erträge, Wareneinsatz und Betriebsaufwendungen aus den gebuchten Journalbuchungen des gewählten Zeitraums.",
+    "computing": "Wird berechnet…",
+    "empty": "Im gewählten Zeitraum wurden keine gebuchten Journalbuchungen gefunden.",
+    "netProfit": "Periodenüberschuss: {{value}}",
+    "netLoss": "Periodenfehlbetrag: {{value}}",
+    "revenue": "Erträge",
+    "totalRevenue": "Summe Erträge",
+    "cogs": "Wareneinsatz (COGS)",
+    "grossProfit": "Bruttoergebnis",
+    "opex": "Betriebsaufwendungen",
+    "netIncomeRow": "Periodenüberschuss",
+    "netLossRow": "Periodenfehlbetrag"
+  },
+  "YearEndClose": {
+    "title": "Jahresabschluss (Abschlussbuchung)",
+    "subtitle": "TDHP-Jahresabschluss: Alle 6xx-Ertrags-/Aufwandskonten werden auf 690 Periodengewinn/-verlust übertragen, dann wird 690 in 590 (Gewinn) oder 591 (Verlust) im Eigenkapital umgebucht.",
+    "fiscalYear": "Geschäftsjahr",
+    "prevYear": "Vorheriges Jahr",
+    "nextYear": "Nächstes Jahr",
+    "alreadyClosed": "{{year}} abgeschlossen",
+    "open": "{{year}} offen",
+    "closedHint": "Für dieses Geschäftsjahr existiert bereits eine Abschlussbuchung. Der Vorgang ist idempotent; eine erneute Ausführung erzeugt keine neue Buchung.",
+    "guardHint": "Der Abschluss ist ein bedeutender Vorgang und erzeugt eine gebuchte Abschlussbuchung (Kapanış). Stellen Sie sicher, dass die Periodensaldenbilanz korrekt ist, bevor Sie fortfahren.",
+    "runClose": "Jahresabschluss ausführen",
+    "closing": "Wird abgeschlossen…",
+    "refresh": "Abschluss anzeigen",
+    "runOpen": "Eröffnungsbuchung {{year}} erstellen",
+    "opening": "Wird eröffnet…",
+    "openingDone": "Eröffnung {{year}} erstellt",
+    "reverseClose": "Abschluss stornieren",
+    "reversing": "Wird storniert…",
+    "confirmTitle": "Jahresabschluss",
+    "confirmMessage": "Für {{year}} wird eine TDHP-Jahresabschlussbuchung erstellt: 6xx-Ertrags-/Aufwandskonten werden auf 690 übertragen, und 690 wird auf das Eigenkapitalkonto 590/591 umgebucht. Dies erzeugt eine gebuchte Buchung.",
+    "confirmAction": "Abschlussbuchung erstellen",
+    "confirmReverse": "Der Jahresabschluss {{year}} wird storniert (Gegenbuchung). Führen Sie dies nur aus, wenn die Eröffnungsbuchung noch nicht erstellt wurde.",
+    "reverseTitle": "Abschluss stornieren",
+    "reverseAction": "Stornieren",
+    "closed": "Geschäftsjahr {{year}} abgeschlossen.",
+    "opened": "Eröffnungsbuchung {{year}} erstellt.",
+    "reversed": "Abschluss {{year}} storniert.",
+    "alreadyExistedToast": "{{year}} ist bereits abgeschlossen; die vorhandene Buchung wird angezeigt.",
+    "netResult": "Periodenergebnis",
+    "netProfit": "Nettogewinn: {{value}}",
+    "netLoss": "Nettoverlust: {{value}}",
+    "transferProfit": "Periodennettogewinn ins Eigenkapital übertragen",
+    "transferLoss": "Periodennettoverlust ins Eigenkapital übertragen",
+    "closingEntryCaption": "Abschlussbuchung",
+    "openingEntryCaption": "Eröffnungsbuchung ({{year}})",
+    "posted": "Gebucht",
+    "code": "Code",
+    "accountName": "Konto",
+    "debit": "Soll",
+    "credit": "Haben",
+    "total": "Summe"
+  },
+  "Accounting": {
+    "glPostingMap": {
+      "help": "Legen Sie hier fest, auf welches Sachkonto jede Rolle bucht, wenn automatische Journalbuchungen (Verkauf, Zahlungseingang, Lieferantenrechnungen/-zahlungen, Wareneingang, Wareneinsatz) erstellt werden. Leere Zeilen verwenden den Standard-TDHP-Code; wird kein passendes Konto gefunden, wird die Buchung stillschweigend übersprungen und der Hauptprozess nicht unterbrochen.",
+      "columns": {
+        "role": "Rolle",
+        "default": "Standard",
+        "accountCode": "Kontonummer",
+        "account": "Konto",
+        "status": "Status"
+      },
+      "roles": {
+        "AccountsReceivable": "Forderungen (AR)",
+        "SalesRevenue": "Umsatzerlöse",
+        "OutputVat": "Umsatzsteuer",
+        "Cash": "Kasse",
+        "Bank": "Bank",
+        "AccountsPayable": "Verbindlichkeiten (AP)",
+        "InputVat": "Vorsteuer",
+        "Inventory": "Bestand",
+        "CostOfGoodsSold": "Wareneinsatz (COGS)",
+        "GoodsReceiptClearing": "Wareneingangsverrechnung (GR/IR)",
+        "PurchaseExpense": "Einkaufsaufwand",
+        "InventoryWriteOff": "Bestandsabschreibung"
+      },
+      "loading": "Wird geladen…",
+      "loadError": "Zuordnungen konnten nicht geladen werden.",
+      "empty": "Keine Zuordnungen gefunden.",
+      "codeRequired": "Kontonummer ist erforderlich.",
+      "saved": "Kontozuordnung gespeichert.",
+      "customized": "angepasst",
+      "resolved": "aufgelöst",
+      "unresolved": "Konto nicht gefunden"
+    },
+    "Reconciliation": {
+      "title": "Abstimmung",
+      "subtitle": "Salden der Kontrollkonten im Hauptbuch im Vergleich zu ihren Nebenbuchsummen zum ausgewählten Datum.",
+      "asOf": "Stichtag",
+      "computing": "Wird berechnet…",
+      "empty": "Zum ausgewählten Datum gibt es keine abzustimmenden Kontrollkonten.",
+      "allReconciled": "Alles abgestimmt",
+      "notReconciled": "Abweichungen festgestellt",
+      "controlAccount": "Kontrollkonto",
+      "subledger": "Nebenbuch",
+      "glBalance": "Hauptbuchsaldo",
+      "subledgerBalance": "Nebenbuchsaldo",
+      "variance": "Abweichung",
+      "reconciled": "Abgestimmt?",
+      "yes": "Ja",
+      "no": "Nein"
+    }
+  },
+  "Settings": {
+    "tabs": {
+      "glPostingMap": "GL-Zuordnung"
+    }
+  },
+  "Sidebar": {
+    "sections": {
+      "hrPayroll": "HR & Gehaltsabrechnung"
+    }
+  },
+  "Payroll": {
+    "nav": {
+      "employees": "Mitarbeiter",
+      "payrollRuns": "Abrechnungsläufe",
+      "parameters": "Abrechnungsparameter"
+    },
+    "employmentStatus": {
+      "Active": "Aktiv",
+      "OnLeave": "Im Urlaub",
+      "Terminated": "Ausgeschieden"
+    },
+    "runStatus": {
+      "Draft": "Entwurf",
+      "Calculated": "Berechnet",
+      "Approved": "Genehmigt",
+      "Posted": "Gebucht",
+      "Paid": "Bezahlt"
+    },
+    "componentType": {
+      "BaseSalary": "Base Salary",
+      "Meal": "Meal",
+      "Transport": "Transport",
+      "Bonus": "Bonus",
+      "Premium": "Premium",
+      "Overtime": "Overtime",
+      "Family": "Family Allowance",
+      "Child": "Child Allowance"
+    },
+    "deductionType": {
+      "Advance": "Vorschuss",
+      "Garnishment": "Pfändung",
+      "UnionDues": "Union Dues",
+      "PrivatePensionBES": "Private Pension (BES)",
+      "Custom": "Other"
+    },
+    "employees": {
+      "title": "Mitarbeiter",
+      "subtitle": "Mitarbeiterdaten, Gehälter und Abzüge verwalten.",
+      "new": "Neuer Mitarbeiter",
+      "searchPlaceholder": "Name, Nummer oder Abteilung suchen…",
+      "statusAria": "Nach Status filtern",
+      "all": "Alle",
+      "resultCountLabel": "Mitarbeiter",
+      "empty": "Keine Mitarbeiter gefunden.",
+      "cols": {
+        "number": "Nr.",
+        "name": "Name",
+        "tc": "Ausweis-Nr.",
+        "department": "Abteilung",
+        "status": "Status",
+        "baseSalary": "Bruttogehalt",
+        "hireDate": "Eintritt"
+      }
+    },
+    "employeeForm": {
+      "newTitle": "Neuer Mitarbeiter",
+      "editTitle": "Mitarbeiter bearbeiten",
+      "nameRequired": "Vor- und Nachname sind erforderlich.",
+      "tcRequired": "Ausweisnummer ist erforderlich.",
+      "salaryRequired": "Gültiges Gehalt eingeben.",
+      "created": "Mitarbeiter erstellt.",
+      "updated": "Mitarbeiter aktualisiert.",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "nationalId": "Ausweis-Nr.",
+      "employeeNumber": "Personalnr.",
+      "jobTitle": "Position",
+      "department": "Abteilung",
+      "email": "E-Mail",
+      "phone": "Telefon",
+      "iban": "IBAN",
+      "bankName": "Bank",
+      "baseSalary": "Bruttogehalt",
+      "currency": "Währung",
+      "hireDate": "Eintrittsdatum",
+      "employmentType": "Employment Type",
+      "salaryBasis": "Salary Basis",
+      "dependentCount": "Dependents",
+      "spouseEmployed": "Spouse Employed"
+    },
+    "employeeDetail": {
+      "notFound": "Mitarbeiter nicht gefunden.",
+      "backToList": "Mitarbeiter",
+      "baseSalary": "Bruttogehalt",
+      "putOnLeave": "Beurlauben",
+      "returnFromLeave": "Zurückholen",
+      "terminate": "Kündigen",
+      "terminateTitle": "Kündigung",
+      "terminateConfirm": "{{name}} kündigen?",
+      "terminated": "Mitarbeiter gekündigt.",
+      "leaveDone": "Urlaub erfasst.",
+      "returnDone": "Rückkehr erfasst.",
+      "addComponent": "Komponente hinzufügen",
+      "addDeduction": "Abzug hinzufügen",
+      "componentsEmpty": "Keine Gehaltskomponenten.",
+      "deductionsEmpty": "Keine Abzüge.",
+      "deleteComponentTitle": "Komponente löschen",
+      "deleteComponentConfirm": "{{name}} löschen?",
+      "componentDeleted": "Komponente gelöscht.",
+      "deleteDeductionTitle": "Abzug löschen",
+      "deleteDeductionConfirm": "{{name}} löschen?",
+      "deductionDeleted": "Abzug gelöscht.",
+      "tabs": {
+        "overview": "Übersicht",
+        "components": "Gehaltskomponenten",
+        "deductions": "Abzüge"
+      },
+      "fields": {
+        "number": "Nr.",
+        "tc": "Ausweis-Nr.",
+        "iban": "IBAN",
+        "department": "Abteilung",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "hireDate": "Eintritt",
+        "terminationDate": "Austrittsdatum",
+        "currency": "Währung",
+        "payFrequency": "Zahlungsintervall",
+        "bankName": "Bank",
+        "componentsCount": "Komponenten",
+        "notes": "Notizen"
+      }
+    },
+    "componentForm": {
+      "newTitle": "Gehaltskomponente hinzufügen",
+      "editTitle": "Gehaltskomponente bearbeiten",
+      "nameRequired": "Komponentenname ist erforderlich.",
+      "amountRequired": "Gültigen Betrag eingeben.",
+      "created": "Komponente hinzugefügt.",
+      "updated": "Komponente aktualisiert.",
+      "type": "Typ",
+      "name": "Name",
+      "amount": "Betrag",
+      "effectiveFrom": "Gültig ab",
+      "effectiveTo": "Gültig bis",
+      "recurring": "Wiederkehrend",
+      "taxable": "Steuerpflichtig"
+    },
+    "deductionForm": {
+      "newTitle": "Abzug hinzufügen",
+      "editTitle": "Abzug bearbeiten",
+      "nameRequired": "Abzugsname ist erforderlich.",
+      "amountRequired": "Gültigen Betrag eingeben.",
+      "created": "Abzug hinzugefügt.",
+      "updated": "Abzug aktualisiert.",
+      "type": "Typ",
+      "name": "Name",
+      "amount": "Gesamtbetrag",
+      "remaining": "Rest",
+      "installment": "Rate",
+      "effectiveFrom": "Von",
+      "effectiveTo": "Bis",
+      "recurring": "Jede Periode wiederholen"
+    },
+    "runs": {
+      "title": "Abrechnungsläufe",
+      "subtitle": "Monatliche Abrechnungsperioden erstellen, berechnen und auszahlen.",
+      "new": "Neuer Lauf",
+      "newTitle": "Neuer Abrechnungslauf",
+      "create": "Erstellen",
+      "created": "Abrechnungslauf erstellt.",
+      "statusAria": "Nach Status filtern",
+      "all": "Alle",
+      "resultCountLabel": "Läufe",
+      "empty": "Keine Abrechnungsläufe gefunden.",
+      "year": "Jahr",
+      "month": "Monat",
+      "cols": {
+        "number": "Nr.",
+        "period": "Periode",
+        "employees": "Mitarbeiter",
+        "status": "Status",
+        "gross": "Brutto",
+        "net": "Netto",
+        "payDate": "Zahltag"
+      }
+    },
+    "runDetail": {
+      "notFound": "Abrechnungslauf nicht gefunden.",
+      "backToList": "Abrechnungsläufe",
+      "netTotal": "Netto gesamt",
+      "actionDone": "Aktion abgeschlossen.",
+      "calculate": "Berechnen",
+      "recalculate": "Neu berechnen",
+      "approve": "Genehmigen",
+      "reopen": "Wieder öffnen",
+      "post": "Buchen",
+      "pay": "Nettogehälter zahlen",
+      "payTaxes": "Steuern zahlen",
+      "paySgk": "SGK zahlen",
+      "fullyPaid": "Diese Periode wurde bezahlt.",
+      "approveTitle": "Abrechnung genehmigen",
+      "approveConfirm": "Nach der Genehmigung muss der Lauf für Änderungen wieder geöffnet werden. Fortfahren?",
+      "reopenTitle": "Abrechnung wieder öffnen",
+      "reopenConfirm": "Der Lauf wird auf Entwurf zurückgesetzt. Fortfahren?",
+      "postTitle": "Buchen",
+      "postConfirm": "Die Abrechnung wird in die Buchhaltung gebucht. Fortfahren?",
+      "gross": "Brutto",
+      "sgkEmployee": "SGK Arbeitnehmer",
+      "incomeTax": "Einkommensteuer",
+      "stampTax": "Stempelsteuer",
+      "net": "Netto",
+      "employerCost": "Arbeitgeberkosten",
+      "payslips": "Lohnabrechnungen",
+      "payslipsEmpty": "Noch keine Abrechnungen. Schritt Berechnen ausführen.",
+      "viewPayslip": "Lohnabrechnung",
+      "calculatedAt": "Berechnet",
+      "approvedAt": "Genehmigt",
+      "postedAt": "Gebucht",
+      "paidAt": "Bezahlt",
+      "cols": {
+        "employee": "Mitarbeiter",
+        "gross": "Brutto",
+        "deductions": "Abzüge",
+        "net": "Netto",
+        "employerCost": "Arbeitgeberkosten"
+      }
+    },
+    "payslip": {
+      "noLines": "Keine Abrechnungszeilen.",
+      "code": "Code",
+      "description": "Beschreibung",
+      "category": "Kategorie",
+      "amount": "Betrag",
+      "categoryLabel": {
+        "Earning": "Verdienst",
+        "Deduction": "Abzug",
+        "EmployerCost": "Arbeitgeberkosten"
+      }
+    },
+    "payslipPrint": {
+      "button": "Drucken",
+      "heading": "Lohnabrechnung",
+      "employer": "Arbeitgeber",
+      "employee": "Mitarbeiter",
+      "iban": "IBAN",
+      "payDate": "Zahltag",
+      "earnings": "Verdienste",
+      "baseSalary": "Bruttogehalt",
+      "earningsTotal": "Zusätzliche Verdienste",
+      "gross": "Brutto gesamt",
+      "deductions": "Abzüge",
+      "sgkEmployee": "SGK Arbeitnehmeranteil",
+      "unemploymentEmployee": "Arbeitslosenversicherung AN",
+      "incomeTax": "Einkommensteuer",
+      "stampTax": "Stempelsteuer",
+      "minWageExemption": "Mindestlohnbefreiung",
+      "otherDeductions": "Sonstige Abzüge",
+      "totalDeductions": "Abzüge gesamt",
+      "netPay": "Nettoauszahlung",
+      "employerCostTitle": "Arbeitgeberkosten",
+      "sgkEmployer": "SGK Arbeitgeberanteil",
+      "unemploymentEmployer": "Arbeitslosenversicherung AG",
+      "employerCost": "Arbeitgeberkosten gesamt",
+      "footer": "Diese Lohnabrechnung wurde elektronisch erstellt.",
+      "daysWorked": "Days Worked",
+      "minWageExemptionNote": "Income tax is calculated after applying a minimum-wage exemption of {{amount}}.",
+      "otherDeductionLines": "Other Deduction Items"
+    },
+    "parameters": {
+      "title": "Abrechnungsparameter",
+      "subtitle": "SGK-, Arbeitslosen-, Stempel- und Einkommensteuersätze sowie Mindestlohn je Gültigkeitsperiode definieren.",
+      "new": "Neuer Satz",
+      "empty": "Keine Parametersätze gefunden.",
+      "system": "System",
+      "tenant": "Mandant",
+      "readOnly": "Schreibgeschützt",
+      "cols": {
+        "name": "Satzname",
+        "effectiveFrom": "Gültigkeit",
+        "minWage": "Mindestlohn",
+        "scope": "Geltungsbereich"
+      }
+    },
+    "parametersForm": {
+      "newTitle": "Neuer Parametersatz",
+      "editTitle": "Abrechnungsparameter bearbeiten",
+      "nameRequired": "Name des Parametersatzes ist erforderlich.",
+      "minWageRequired": "Gültigen Mindestlohn eingeben.",
+      "created": "Parametersatz erstellt.",
+      "updated": "Parameter aktualisiert.",
+      "name": "Satzname",
+      "currency": "Währung",
+      "effectiveFrom": "Gültig ab",
+      "effectiveTo": "Gültig bis",
+      "minimumWage": "Mindestlohn (Brutto)",
+      "sgkEmployee": "SGK Arbeitnehmer %",
+      "sgkEmployer": "SGK Arbeitgeber %",
+      "unemploymentEmployee": "Arbeitslosen AN %",
+      "unemploymentEmployer": "Arbeitslosen AG %",
+      "stampTax": "Stempelsteuer %",
+      "sgkBaseCeiling": "SGK Bemessungsgrenze",
+      "minWageExemption": "Mindestlohn Einkommens-/Stempelsteuerbefreiung anwenden",
+      "brackets": "Einkommensteuerstufen",
+      "addBracket": "Stufe hinzufügen",
+      "upperLimit": "Obergrenze (leer = unbegrenzt)",
+      "ratePercent": "Satz %"
+    },
+    "employmentType": {
+      "FullTime": "Full Time",
+      "PartTime": "Part Time",
+      "Seasonal": "Seasonal"
+    },
+    "salaryBasis": {
+      "Gross": "Gross",
+      "Net": "Net"
     }
   }
 }

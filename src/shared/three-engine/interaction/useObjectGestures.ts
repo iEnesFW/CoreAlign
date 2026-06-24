@@ -23,9 +23,8 @@ export interface PlanGestureAdapter {
   centerYMm: number;
   moveProbes: PlanPoint[];
   footprintAt: (dxMm: number, dyMm: number, rotationDeg: number) => PlanFootprintSet;
-  // Optional stacking law: the resting elevation (m) for a previewed move, so
-  // the object climbs onto whatever it overlaps instead of passing through it.
   liftYMAt?: (dxMm: number, dyMm: number) => number;
+  altLiftYMAt?: (dxMm: number, dyMm: number) => number;
 }
 
 export interface PlanRotationCommit {
@@ -45,7 +44,7 @@ export interface UseObjectGesturesOptions {
   snapTargets: PlanSnapTargets;
   obstacles: PlanFootprint[];
   onPick: () => void;
-  onMoveCommit: (delta: PlanMoveDelta) => void;
+  onMoveCommit: (delta: PlanMoveDelta, meta: { alt: boolean }) => void;
   onRotateCommit: (commit: PlanRotationCommit) => void;
   onMovePreview?: (delta: PlanMoveDelta) => void;
   onRotatePreview?: (sweepDeg: number) => void;
@@ -61,6 +60,7 @@ const MM = 1000;
 const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 const ZERO_MOVE: PlanMoveDelta = { dxMm: 0, dyMm: 0 };
+const SNAP_CONTACT_KEEP_MM = 2;
 
 export function useObjectGestures({
   adapter,
@@ -82,6 +82,7 @@ export function useObjectGestures({
   const lastMoveRef = useRef<PlanMoveDelta>(ZERO_MOVE);
   const lastAngleRef = useRef(0);
   const startedRef = useRef(false);
+  const altLatchRef = useRef(false);
 
   const resetTransform = () => {
     const group = groupRef.current;
@@ -100,8 +101,9 @@ export function useObjectGestures({
       return;
     }
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
-    // Holding Alt bypasses collision so objects can be stacked / overlapped freely.
-    const slid = isAltPressed()
+    const altStack = isAltPressed();
+    altLatchRef.current = altStack;
+    const slid = altStack
       ? snapped
       : slidePlanMove(
           (dx, dy) => adapter.footprintAt(dx, dy, adapter.rotationDeg),
@@ -109,14 +111,18 @@ export function useObjectGestures({
           snapped.dxMm,
           snapped.dyMm,
         );
-    const blocked = slid.dxMm !== snapped.dxMm || slid.dyMm !== snapped.dyMm;
-    setSnapGuides(blocked ? [] : snapped.guides);
+    const divergenceMm = Math.hypot(slid.dxMm - snapped.dxMm, slid.dyMm - snapped.dyMm);
+    setSnapGuides(divergenceMm <= SNAP_CONTACT_KEEP_MM ? snapped.guides : []);
     lastMoveRef.current = slid;
     const group = groupRef.current;
     if (group) {
+      const liftM =
+        altStack && adapter.altLiftYMAt
+          ? adapter.altLiftYMAt(slid.dxMm, slid.dyMm)
+          : (adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ?? adapter.baseYM);
       group.position.set(
         (adapter.originXMm + slid.dxMm) / MM,
-        adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ?? adapter.baseYM,
+        liftM,
         (adapter.originYMm + slid.dyMm) / MM,
       );
     }
@@ -138,7 +144,6 @@ export function useObjectGestures({
       RAD2DEG;
     const sweep = ((((toDeg - fromDeg) % 360) + 540) % 360) - 180;
     const target = adapter.rotationDeg + sweep;
-    // Holding Ctrl frees the rotation from the fixed angle snap for fine control.
     return isCtrlPressed() ? Math.round(target) : snapAngleDeg(target);
   };
 
@@ -174,10 +179,7 @@ export function useObjectGestures({
       resetTransform();
       return;
     }
-    // Leave the group (and sibling previews) at the previewed destination; the
-    // store commit re-renders them at the same place, so there is no one-frame
-    // snap back to the original position.
-    onMoveCommit(delta);
+    onMoveCommit(delta, { alt: altLatchRef.current });
   };
 
   const commitRotate = () => {
@@ -218,9 +220,6 @@ export function useObjectGestures({
       adapter.centerYMm,
       sweepDeg,
     );
-    // Park the group AND its previewed siblings on the clamped result so they
-    // match the committed store state instead of flashing through the original
-    // (group) or the un-clamped target (siblings) orientation.
     const group = groupRef.current;
     if (group) {
       group.position.set(origin.x / MM, adapter.baseYM, origin.y / MM);
@@ -239,8 +238,6 @@ export function useObjectGestures({
     constraint: { mode: 'ground' },
     enabled: gestureEnabled,
     onMove: (delta) => {
-      // Select (and snapshot siblings) only once a real drag begins, so a plain
-      // click does not double-fire selection alongside the mesh onClick.
       if (!startedRef.current) {
         startedRef.current = true;
         onPick();

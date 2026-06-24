@@ -72,7 +72,8 @@ public class NotificationTemplateConfiguration : IEntityTypeConfiguration<Notifi
 
         builder.HasIndex(t => new { t.TenantId, t.Key, t.Channel, t.Locale })
             .HasDatabaseName("ux_notification_templates_tenant_key_channel_locale")
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("is_deleted = false");
     }
 }
 

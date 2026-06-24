@@ -4,32 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows, Environment, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Check, X } from 'lucide-react';
-import axios from 'axios';
 import { RunGroup } from '@/features/glass-enclosure/scene/builders/RunGroup';
-import type { ApiResponse } from '@/shared/types/api';
+import {
+  glassShareApi,
+  type ShareViewerProjectDto,
+} from '@/features/glass-enclosure/api/glassShareApi';
+import { safeRequest, resolveErrorMessage } from '@/shared/lib/safeRequest';
 import type { SceneState } from '@/features/glass-enclosure/model/project.types';
-
-interface ShareViewerProjectDto {
-  projectId: string;
-  code: string;
-  projectName: string;
-  customerName: string | null;
-  status: string;
-  currency: string;
-  grandTotal: number;
-  version: number;
-  sceneJson: string;
-  validUntilUtc: string;
-  alreadyDecided: boolean;
-}
-
-interface ShareViewerActionResultDto {
-  accepted: boolean;
-  rejected: boolean;
-  decidedAtUtc: string;
-}
-
-const publicClient = axios.create({ baseURL: '/api/v1', withCredentials: false });
 
 export function GlassShareView() {
   const { token } = useParams<{ token: string }>();
@@ -55,25 +36,24 @@ export function GlassShareView() {
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    publicClient
-      .get<ApiResponse<ShareViewerProjectDto>>(`/share/glass/${token}`)
-      .then((r) => {
-        if (cancelled) return;
+    void (async () => {
+      const [project, error] = await safeRequest(glassShareApi.getSharedProject(token));
+      if (cancelled) return;
+      if (error) {
         setState((s) => ({
           ...s,
           loading: false,
-          project: r.data.data,
-          decision: r.data.data?.alreadyDecided ? 'done' : 'pending',
+          error: resolveErrorMessage(error) ?? 'load_failed',
         }));
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setState((s) => ({
-          ...s,
-          loading: false,
-          error: err?.response?.data?.error?.message ?? 'load_failed',
-        }));
-      });
+        return;
+      }
+      setState((s) => ({
+        ...s,
+        loading: false,
+        project,
+        decision: project?.alreadyDecided ? 'done' : 'pending',
+      }));
+    })();
     return () => {
       cancelled = true;
     };
@@ -102,24 +82,28 @@ export function GlassShareView() {
     if (!token) return;
     setState((s) => ({ ...s, decision: accept ? 'accepting' : 'rejecting' }));
     const signatureDataUrl = accept ? (signatureRef.current?.toDataURL('image/png') ?? null) : null;
-    try {
-      const response = await publicClient.post<ApiResponse<ShareViewerActionResultDto>>(
-        `/share/glass/${token}/action`,
-        { accept, reason: accept ? null : rejectReason || null, signatureDataUrl },
-      );
-      const data = response.data.data;
-      if (!data) return;
+    const [data, error] = await safeRequest(
+      glassShareApi.submitDecision(token, {
+        accept,
+        reason: accept ? null : rejectReason || null,
+        signatureDataUrl,
+      }),
+    );
+    if (error) {
       setState((s) => ({
         ...s,
-        decision: 'done',
-        decidedAt: data.decidedAtUtc,
-        accepted: data.accepted,
+        decision: 'pending',
+        error: resolveErrorMessage(error) ?? 'action_failed',
       }));
-    } catch (err) {
-      const message = (err as { response?: { data?: { error?: { message?: string } } } })?.response
-        ?.data?.error?.message;
-      setState((s) => ({ ...s, decision: 'pending', error: message ?? 'action_failed' }));
+      return;
     }
+    if (!data) return;
+    setState((s) => ({
+      ...s,
+      decision: 'done',
+      decidedAt: data.decidedAtUtc,
+      accepted: data.accepted,
+    }));
   };
 
   if (state.loading) {
@@ -146,7 +130,7 @@ export function GlassShareView() {
             <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t('GlassEnclosure.Share.GrandTotal')}
             </div>
-            <div className="font-mono text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+            <div className="font-mono text-2xl font-bold text-success-700 dark:text-success-300">
               {currencyFormatter.format(state.project.grandTotal)}
             </div>
           </div>
@@ -246,7 +230,7 @@ export default GlassShareView;
 
 const FullScreen = ({ message, tone }: { message: string; tone?: 'error' }) => (
   <div
-    className={`flex min-h-screen items-center justify-center text-sm ${tone === 'error' ? 'text-red-600' : 'text-slate-500'}`}
+    className={`flex min-h-screen items-center justify-center text-sm ${tone === 'error' ? 'text-danger-600' : 'text-slate-500'}`}
   >
     {message}
   </div>
@@ -272,8 +256,8 @@ const DecisionBanner = ({
     <div
       className={`rounded-md border p-3 text-sm ${
         accepted
-          ? 'border-emerald-500/60 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/30 dark:text-emerald-300'
-          : 'border-red-500/60 bg-red-50 text-red-700 dark:border-red-500/40 dark:bg-red-950/30 dark:text-red-300'
+          ? 'border-success-500/60 bg-success-50 text-success-700 dark:border-success-500/40 dark:bg-success-950/30 dark:text-success-300'
+          : 'border-danger-500/60 bg-danger-50 text-danger-700 dark:border-danger-500/40 dark:bg-danger-950/30 dark:text-danger-300'
       }`}
     >
       <div className="mb-1 flex items-center gap-2 font-semibold">
@@ -372,7 +356,7 @@ const DecisionPanel = ({
         type="button"
         onClick={onAccept}
         disabled={busy}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700 disabled:opacity-50"
       >
         <Check size={16} />
         {t('GlassEnclosure.Share.Accept')}
@@ -392,7 +376,7 @@ const DecisionPanel = ({
           type="button"
           onClick={onReject}
           disabled={busy}
-          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-red-500/50 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:hover:bg-red-950/30"
+          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md border border-danger-500/50 px-4 py-2 text-sm font-medium text-danger-600 hover:bg-danger-50 disabled:opacity-50 dark:hover:bg-danger-950/30"
         >
           <X size={16} />
           {t('GlassEnclosure.Share.Reject')}

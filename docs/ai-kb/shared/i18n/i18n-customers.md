@@ -1,0 +1,197 @@
+# customers (CoreAlign UI)
+
+"customers" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "customers" area (English / Türkçe):
+
+- New customer / Yeni müşteri
+- ahead of due / vadeden önce
+- Avg. days to pay / Ort. ödeme gecikmesi
+- Avg/mo / Aylık ort.
+- Avg. order / Ort. sipariş
+- d / g
+- Invoices by status / Fatura durum dağılımı
+- Invoices / Fatura
+- Late / Gecikmeli
+- Lifetime value / Yaşam boyu değer
+- Revenue trend ({{count}} months) / Ciro trendi ({{count}} ay)
+- Not enough data for analytics yet. / Analitik için yeterli veri yok.
+- On-time / Zamanında
+- Orders by status / Sipariş durum dağılımı
+- past due / vade sonrası
+- Payment behavior / Ödeme davranışı
+- payments / ödeme
+- Peak month / Zirve ay
+- Months active / Aktif ay
+- Excellent / Mükemmel
+- Fair / Orta
+- Poor / Zayıf
+- Top products by revenue / Ciroya göre top ürünler
+- Total paid / Toplam tahsilat
+- Total / Toplam
+- {{deleted}} deleted, {{failed}} failed. / {{deleted}} silindi, {{failed}} başarısız.
+- {{count}} selected / {{count}} seçili
+- Actions / İşlemler
+- Balance / Bakiye
+- Credit / Kredi
+- Email / E-posta
+- Name / Ad
+- Phone / Telefon
+- Status / Durum
+- Delete "{{name}}"? / "{{name}}" silinsin mi?
+- New invoice / Yeni fatura
+- New order / Yeni sipariş
+- Record payment / Ödeme al
+- Invoice / Fatura
+- Order / Sipariş
+- Payment / Ödeme
+- Add address / Adres ekle
+- Delete address "{{label}}"? / "{{label}}" adresi silinsin mi?
+- No addresses yet. / Henüz adres yok.
+- City / İl / Şehir
+- Country / Ülke
+- Set as primary / Birincil yap
+- Label / Etiket
+- Billing, Shipping... / Fatura, Sevkiyat...
+- Address Line 1 / Adres Satırı 1
+- Address Line 2 / Adres Satırı 2
+- Postal Code / Posta Kodu
+- State / Region / İlçe / Bölge
+- Primary / Birincil
+- Address added. / Adres eklendi.
+- Address deleted. / Adres silindi.
+- Address updated. / Adres güncellendi.
+- Customer is blocked / Müşteri bloke edildi
+- Add contact / Kişi ekle
+- Delete contact "{{name}}"? / "{{name}}" kişisi silinsin mi?
+- No contacts yet. / Henüz kişi yok.
+- Email / E-posta
+- Set as primary / Birincil yap
+- Name / Ad
+- Notes / Notlar
+- Phone / Telefon
+- Role / Görev
+- Accountant, Buyer... / Muhasebe, Satın alma...
+- Primary / Birincil
+- Contact added. / Kişi eklendi.
+- Contact deleted. / Kişi silindi.
+- Contact updated. / Kişi güncellendi.
+- Body / İçerik
+- Mail "{{subject}}" queued (preview only). / "{{subject}}" konulu mail kuyruğa alındı (önizleme).
+- Outbound mail is not yet wired to an SMTP provider — this is a preview. / Mail gönderimi henüz bir SMTP sağlayıcıya bağlı değil — önizleme amaçlıdır.
+- Send / Gönder
+- Subject / Konu
+- To / Alıcı
+- Group / Grup
+- Net {{count}}d / Net {{count}}g
+- Terms / Vade
+- Price list / Fiyat listesi
+- Sales rep / Satış temsilcisi
+- Available / Kullanılabilir
+- Balance / Bakiye
+- Credit limit / Kredi limiti
+- Credit & Balance / Kredi & Bakiye
+- Credit used / Kullanılan kredi
+- invoices / fatura
+- Total Invoiced / Toplam Fatura
+- Orders / Sipariş
+- Outstanding / Bakiye
+- Over limit / Limit aşımı
+- Overdue / Vadesi geçen
+- Total Paid / Tahsil Edilen
+- No invoices for this customer yet. / Bu müşteri için henüz fatura yok.
+- No notes for this customer. / Bu müşteri için not yok.
+- No orders for this customer yet. / Bu müşteri için henüz sipariş yok.
+- No primary address set. / Birincil adres tanımlı değil.
+- No primary contact set. / Birincil kişi tanımlı değil.
+- No recent activity. / Henüz hareket yok.
+- No transactions yet. / Henüz hareket yok.
+- Overdue receivables: {{amount}} / Vadesi geçen alacak: {{amount}}
+- Primary address / Birincil adres
+- Primary contact / Birincil kişi
+- Recent activity / Son hareketler
+- Snapshot / Özet bilgiler
+- Customer overview, orders and invoices. / Müşteri özeti, siparişler ve faturalar.
+- Addresses / Adresler
+- Analytics / Analitik
+- Contacts / Kişiler
+- Invoices / Faturalar
+- Send Mail / Mail Gönder
+- Notes / Notlar
+- Orders / Siparişler
+- Overview / Genel
+- Transactions / Hareketler
+- Adjustment / Düzeltme
+- Invoice Issued / Fatura Düzenlendi
+- Payment / Ödeme
+- Refund / İade
+- No customers yet. / Henüz müşteri yok.
+- Add your first customer to start tracking orders, invoices and payments. / İlk müşterinizi ekleyerek sipariş, fatura ve ödemeleri takip etmeye başlayın.
+- Sales · CRM / Satış · CRM
+- Address / Adres
+- Street, city, country / Cadde, ilçe, şehir
+- Code / Kod
+- Currency / Para birimi
+- Email / E-posta
+- billing@acme.com / muhasebe@acme.com
+- Active / Aktif
+- Legal name / Tüzel ad
+- Name / Ad
+- Acme Inc. / Acme A.Ş.
+- National ID / TCKN
+- Notes / Notlar
+- Internal notes / Dahili notlar
+- Phone / Telefon
+- +1 555 010 9999 / +90 555 010 9999
+- Tax Number / Vergi No
+- Tax / VAT ID / Vergi / KDV No
+- Tax Office / Vergi Dairesi
+- Trade name / Ticari ad
+- Type / Tür
+- All / Tümü
+- Credit ≥ 80% / Kredi ≥ 80%
+- Has overdue / Vadesi geçen
+- Filter by status / Duruma göre filtrele
+- Cancel / İptal
+- Merging... / Birleştiriliyor...
+- Select both a source and a target customer. / Lütfen kaynak ve hedef müşteriyi seçin.
+- Search customers... / Müşteri ara...
+- Source Customer / Kaynak Müşteri
+- Target Customer / Hedef Müşteri
+- Merge Customers / Müşterileri Birleştir
+- All records of the source customer will be moved to the target customer. This action cannot be undone. / Kaynak müşterinin tüm kayıtları hedef müşteriye taşınacaktır. Bu işlem geri alınamaz.
+- New customer / Yeni müşteri
+- Edit customer / Müşteriyi düzenle
+- Next / Sonraki
+- Previous / Önceki
+- {{from}}-{{to}} of {{total}} / {{from}}-{{to}} / {{total}}
+- results / sonuç
+- Search by name, email, phone... / İsim, e-posta, telefon ara...
+- Downloading... / İndiriliyor...
+- From / Başlangıç
+- Open statement options / Ekstre seçeneklerini aç
+- Choose a date range and download the statement. / Tarih aralığını seçip cari ekstresini indirin.
+- To / Bitiş
+- Credit at risk (≥80%) / Kredi riski (≥80%)
+- Tap to filter / Filtrelemek için tıklayın
+- Outstanding (page) / Açık bakiye (sayfa)
+- Across {{count}} customers / {{count}} müşteri üzerinden
+- Overdue receivables / Vadesi geçen alacak
+- {{count}} customers / {{count}} müşteri
+- Total customers / Toplam müşteri
+- Active / Aktif
+- Archived / Arşivli
+- Blocked / Bloke
+- Manage customer records. / Müşteri kayıtlarını yönet.
+- Commercial Terms / Ticari Koşullar
+- General / Genel Bilgiler
+- Notes / Notlar
+- Add Tag / Etiket Ekle
+- Available tags / Kullanılabilir etiketler
+- No tags. / Etiket yok.
+- Tags / Etiketler
+- Customers / Müşteriler
+- Customer created. / Müşteri oluşturuldu.
+- Customer deleted. / Müşteri silindi.
+- Customer updated. / Müşteri güncellendi.
+- Business / Kurumsal
+- Government / Kamu
+- Individual / Bireysel

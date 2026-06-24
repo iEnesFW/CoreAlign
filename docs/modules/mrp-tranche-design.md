@@ -1,7 +1,7 @@
 # MRP Tranche T1 — Buildable Design (This Sprint)
 
 > Companion to `docs/modules/mrp-analysis.md`. Concrete design for the leap from shallow reorder-point to real MRP.
-> Three non-overlapping build groups with explicit file scopes. Follows CLAUDE.md 1–16, INVARIANTS.md, and the parallel-agent guard (no ModelSnapshot / *.csproj edits; idempotent migration applied this pass; blocker follow-up in `docs/mrp-blockers.md`).
+> Three non-overlapping build groups with explicit file scopes. Follows CLAUDE.md 1–16, INVARIANTS.md, and the parallel-agent guard (no ModelSnapshot / \*.csproj edits; idempotent migration applied this pass; blocker follow-up in `docs/mrp-blockers.md`).
 
 ---
 
@@ -47,15 +47,15 @@ public enum ForecastModel { MovingAverage = 0, ExponentialSmoothing = 1 }
 
 Add to `Product` (private set + a single `SetPlanningPolicy(...)` mutator; do **not** widen the existing `Update(...)` signature to avoid churn — add a dedicated method):
 
-| Field | Type | Default | Purpose |
-| --- | --- | --- | --- |
-| `LotSizingPolicy` | `LotSizingPolicy` | `MinMax` | which lot-sizing rule the engine applies |
-| `FixedOrderQuantity` | `decimal` | `0` | FOQ batch size (when policy = FOQ) |
-| `OrderMultiple` | `decimal` | `0` | round planned qty up to this multiple (0 = no rounding) |
-| `EoqAnnualDemand` | `decimal` | `0` | optional override; if 0, derive from forecast |
-| `OrderingCost` | `decimal` | `0` | EOQ S (cost per order) |
-| `HoldingCostRate` | `decimal` | `0` | EOQ H as fraction of unit cost/yr |
-| `ServiceLevelTarget` | `decimal` | `0` | e.g. `0.95`; drives z-factor for safety stock (0 = use stored SafetyStock as-is) |
+| Field                | Type              | Default  | Purpose                                                                          |
+| -------------------- | ----------------- | -------- | -------------------------------------------------------------------------------- |
+| `LotSizingPolicy`    | `LotSizingPolicy` | `MinMax` | which lot-sizing rule the engine applies                                         |
+| `FixedOrderQuantity` | `decimal`         | `0`      | FOQ batch size (when policy = FOQ)                                               |
+| `OrderMultiple`      | `decimal`         | `0`      | round planned qty up to this multiple (0 = no rounding)                          |
+| `EoqAnnualDemand`    | `decimal`         | `0`      | optional override; if 0, derive from forecast                                    |
+| `OrderingCost`       | `decimal`         | `0`      | EOQ S (cost per order)                                                           |
+| `HoldingCostRate`    | `decimal`         | `0`      | EOQ H as fraction of unit cost/yr                                                |
+| `ServiceLevelTarget` | `decimal`         | `0`      | e.g. `0.95`; drives z-factor for safety stock (0 = use stored SafetyStock as-is) |
 
 `MinOrderQuantity`, `MinStock`, `MaxStock`, `SafetyStock`, `LeadTimeDays`, `ReorderPoint` already exist and are reused.
 
@@ -65,17 +65,17 @@ Add to `Product` (private set + a single `SetPlanningPolicy(...)` mutator; do **
 
 Header for one MRP execution. `TenantEntity, IHasConcurrencyToken`.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `Number` | `string` | sequence `MrpPlanRunNumber` ("MRP", width 5) |
-| `Status` | `MrpPlanRunStatus` | Preview never persisted; only Committed runs are written |
-| `AsOfDateUtc` | `DateTime` | plan anchor (UTC-normalized in ctor, INVARIANTS §24) |
-| `BucketKind` | `MrpBucketKind` | Day/Week |
-| `HorizonDays` | `int` | planning horizon |
-| `IdempotencyKey` | `string` | natural key `"{AsOfDate:yyyyMMdd}:{BucketKind}:{HorizonDays}"` — dedup re-runs (fixes MRP-BUG-2) |
-| `ProductsEvaluated` / `PlannedOrderCount` / `ActionMessageCount` | `int` | run summary |
-| `CreatedByUserId` | `Guid` | planner |
-| Children: `PlannedOrders`, `ActionMessages` | collections | |
+| Field                                                            | Type               | Notes                                                                                            |
+| ---------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------ |
+| `Number`                                                         | `string`           | sequence `MrpPlanRunNumber` ("MRP", width 5)                                                     |
+| `Status`                                                         | `MrpPlanRunStatus` | Preview never persisted; only Committed runs are written                                         |
+| `AsOfDateUtc`                                                    | `DateTime`         | plan anchor (UTC-normalized in ctor, INVARIANTS §24)                                             |
+| `BucketKind`                                                     | `MrpBucketKind`    | Day/Week                                                                                         |
+| `HorizonDays`                                                    | `int`              | planning horizon                                                                                 |
+| `IdempotencyKey`                                                 | `string`           | natural key `"{AsOfDate:yyyyMMdd}:{BucketKind}:{HorizonDays}"` — dedup re-runs (fixes MRP-BUG-2) |
+| `ProductsEvaluated` / `PlannedOrderCount` / `ActionMessageCount` | `int`              | run summary                                                                                      |
+| `CreatedByUserId`                                                | `Guid`             | planner                                                                                          |
+| Children: `PlannedOrders`, `ActionMessages`                      | collections        |                                                                                                  |
 
 Methods: ctor (UTC-normalize), `AddPlannedOrder`, `AddActionMessage`, `MarkCommitted`, `BumpConcurrencyToken`.
 
@@ -83,52 +83,52 @@ Methods: ctor (UTC-normalize), `AddPlannedOrder`, `AddActionMessage`, `MarkCommi
 
 One planned supply order produced by netting. T1 routes all to purchase (make-vs-buy in T2).
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `PlanRunId` | `Guid` | FK |
-| `ProductId` | `Guid` | |
-| `LowLevelCode` | `int` | BOM depth (0 = end item); planning order |
-| `Quantity` | `decimal` | lot-sized net requirement |
-| `DueDateUtc` | `DateTime` | when stock is needed (receipt date) |
-| `ReleaseDateUtc` | `DateTime` | `DueDate − LeadTimeDays` (lead-time offset) |
-| `PreferredSupplierId` | `Guid?` | |
-| `EstimatedUnitCost` | `decimal` | |
-| `SourcePolicy` | `LotSizingPolicy` | which rule produced the qty |
-| `IsFirmed` | `bool` | default false (T3 will honor on re-plan) |
-| `ConvertedRequisitionId` | `Guid?` | set when released into a requisition |
+| Field                    | Type              | Notes                                       |
+| ------------------------ | ----------------- | ------------------------------------------- |
+| `PlanRunId`              | `Guid`            | FK                                          |
+| `ProductId`              | `Guid`            |                                             |
+| `LowLevelCode`           | `int`             | BOM depth (0 = end item); planning order    |
+| `Quantity`               | `decimal`         | lot-sized net requirement                   |
+| `DueDateUtc`             | `DateTime`        | when stock is needed (receipt date)         |
+| `ReleaseDateUtc`         | `DateTime`        | `DueDate − LeadTimeDays` (lead-time offset) |
+| `PreferredSupplierId`    | `Guid?`           |                                             |
+| `EstimatedUnitCost`      | `decimal`         |                                             |
+| `SourcePolicy`           | `LotSizingPolicy` | which rule produced the qty                 |
+| `IsFirmed`               | `bool`            | default false (T3 will honor on re-plan)    |
+| `ConvertedRequisitionId` | `Guid?`           | set when released into a requisition        |
 
 ### 1.5 `MrpActionMessage` (new, persisted) — `CoreAlign.Domain/Entities/Mrp/MrpActionMessage.cs`
 
 The planner's triage queue.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `PlanRunId` | `Guid` | FK |
-| `ProductId` | `Guid` | |
-| `ActionType` | `MrpActionType` | Release / Reschedule-In/Out / Expedite / Cancel-Supply / Below-Safety / Projected-Stockout |
-| `Severity` | `MrpActionSeverity` | |
-| `Quantity` | `decimal` | suggested/affected qty |
-| `CurrentDateUtc` | `DateTime?` | existing receipt date (for reschedule) |
-| `SuggestedDateUtc` | `DateTime?` | needed date |
-| `RelatedPurchaseOrderId` | `Guid?` | for reschedule/cancel of existing PO |
-| `RelatedPlannedOrderId` | `Guid?` | for Release |
-| `DaysUntilStockOut` | `int` | triage sort |
-| `IsDismissed` / `DismissedByUserId` / `DismissedAtUtc` | snooze/dismiss state | |
-| `Message` | `string` | rendered human text |
+| Field                                                  | Type                 | Notes                                                                                      |
+| ------------------------------------------------------ | -------------------- | ------------------------------------------------------------------------------------------ |
+| `PlanRunId`                                            | `Guid`               | FK                                                                                         |
+| `ProductId`                                            | `Guid`               |                                                                                            |
+| `ActionType`                                           | `MrpActionType`      | Release / Reschedule-In/Out / Expedite / Cancel-Supply / Below-Safety / Projected-Stockout |
+| `Severity`                                             | `MrpActionSeverity`  |                                                                                            |
+| `Quantity`                                             | `decimal`            | suggested/affected qty                                                                     |
+| `CurrentDateUtc`                                       | `DateTime?`          | existing receipt date (for reschedule)                                                     |
+| `SuggestedDateUtc`                                     | `DateTime?`          | needed date                                                                                |
+| `RelatedPurchaseOrderId`                               | `Guid?`              | for reschedule/cancel of existing PO                                                       |
+| `RelatedPlannedOrderId`                                | `Guid?`              | for Release                                                                                |
+| `DaysUntilStockOut`                                    | `int`                | triage sort                                                                                |
+| `IsDismissed` / `DismissedByUserId` / `DismissedAtUtc` | snooze/dismiss state |                                                                                            |
+| `Message`                                              | `string`             | rendered human text                                                                        |
 
 ### 1.6 `MrpPegging` (new, persisted) — `CoreAlign.Domain/Entities/Mrp/MrpPegging.cs`
 
 Links a component requirement to the parent demand that drove it (captured during explosion).
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `PlanRunId` | `Guid` | FK |
-| `ComponentProductId` | `Guid` | the child needing supply |
-| `RequirementQuantity` | `decimal` | gross req contributed by this source |
-| `DueDateUtc` | `DateTime` | when needed |
-| `SourceKind` | `string` | `"SalesOrder"` / `"PlannedOrder"` / `"Forecast"` |
-| `SourceParentProductId` | `Guid?` | parent item (if dependent demand) |
-| `SourceOrderLineId` | `Guid?` | originating sales order line (independent demand) |
+| Field                   | Type       | Notes                                             |
+| ----------------------- | ---------- | ------------------------------------------------- |
+| `PlanRunId`             | `Guid`     | FK                                                |
+| `ComponentProductId`    | `Guid`     | the child needing supply                          |
+| `RequirementQuantity`   | `decimal`  | gross req contributed by this source              |
+| `DueDateUtc`            | `DateTime` | when needed                                       |
+| `SourceKind`            | `string`   | `"SalesOrder"` / `"PlannedOrder"` / `"Forecast"`  |
+| `SourceParentProductId` | `Guid?`    | parent item (if dependent demand)                 |
+| `SourceOrderLineId`     | `Guid?`    | originating sales order line (independent demand) |
 
 ---
 
@@ -161,16 +161,18 @@ Links a component requirement to the parent demand that drove it (captured durin
 ### 4. Lot-Sizing (Group A) — `LotSizingCalculator`
 
 `Calculate(policy, netRequirement, product, periodNetReqs) → decimal`:
+
 - **LotForLot:** exactly `netRequirement`.
 - **FixedOrderQuantity:** smallest integer multiple of `FixedOrderQuantity ≥ netRequirement`.
 - **MinMax:** `maxStockTarget − projectedAvailable` (today's behavior preserved; `maxStockTarget = MaxStock>0 ? MaxStock : ROP·2`).
 - **EconomicOrderQuantity:** `EOQ = ceil(√(2·D·S / H))` where `D = annual demand` (`EoqAnnualDemand` or `avgDaily·365`), `S = OrderingCost`, `H = HoldingCostRate · unitCost`; if inputs are 0, fall back to MinMax. Then satisfy `netRequirement` in EOQ multiples.
-- **PeriodOrderQuantity:** group net requirements across the next *N* buckets into one order (N derived from EOQ or a default of 1 week).
+- **PeriodOrderQuantity:** group net requirements across the next _N_ buckets into one order (N derived from EOQ or a default of 1 week).
 - **Post-processing for all policies:** round up to `OrderMultiple` (if >0), then enforce `MinOrderQuantity` (if set). Order of operations documented in the calculator and tested.
 
 ### 5. Data Loader (Group A) — `IMrpPlanningDataLoader` / `MrpPlanningDataLoader`
 
 Loads one `MrpPlanningSnapshot` in a **bounded** number of round-trips (N+1 budget asserted in integration tests, INVARIANTS §34/§39):
+
 - products (1) · BOM tree (wave-batched, O(depth)) · on-hand+reserved by product (1 batch) · open PO lines + PO `ExpectedDate` (1) · committed order lines + parent order dates (1) · demand history for forecast (1).
 - Lives in `CoreAlign.Infrastructure/Mrp/Planning/`. Uses `_context.Set<T>()` and the existing repositories; **no DbContext edit** for reads.
 
@@ -183,6 +185,7 @@ Loads one `MrpPlanningSnapshot` in a **bounded** number of round-trips (N+1 budg
 ### 7. Exception Message Generation (Group A) — `ActionMessageGenerator`
 
 From the netted plan per item:
+
 - **Release** — a planned release exists in bucket 0..n (route to a requisition).
 - **Expedite** — planned release date < today (shortage inside lead time).
 - **Reschedule-In** — an open PO's `ExpectedDate` is **later** than the bucket where its quantity is first needed.
@@ -190,7 +193,7 @@ From the netted plan per item:
 - **Cancel-Supply** — an open PO whose quantity is never consumed within the horizon.
 - **Below-Safety-Stock** — `ProjectedOnHand[t]` dips below `SafetyStock`.
 - **Projected-Stockout** — `ProjectedOnHand[t] < 0`.
-Each carries severity, quantity, current/suggested dates, related PO/planned-order id, and `DaysUntilStockOut` for sort.
+  Each carries severity, quantity, current/suggested dates, related PO/planned-order id, and `DaysUntilStockOut` for sort.
 
 ---
 
@@ -199,6 +202,7 @@ Each carries severity, quantity, current/suggested dates, related PO/planned-ord
 New file `CoreAlign.Application/Mrp/MrpPlanningContracts.cs` (keep separate from existing `MrpContracts.cs` to avoid collision with co-edits):
 
 **Queries (read-only preview — no writes):**
+
 - `RunMrpPreviewQuery(DateTime? AsOfDateUtc, MrpBucketKind BucketKind = Day, int HorizonDays = 60) : IRequest<MrpPlanResultDto>` — runs the engine, returns the grid without persisting.
 - `GetMrpItemPlanQuery(Guid ProductId, DateTime? AsOfDateUtc, MrpBucketKind, int HorizonDays) : IRequest<MrpItemPlanDto?>` — single-item drill (buckets + pegging).
 - `ListMrpActionMessagesQuery(Guid? PlanRunId, MrpActionType?, MrpActionSeverity?, Guid? SupplierId, bool IncludeDismissed=false, int Page=1, int PageSize=25) : IRequest<PagedResult<MrpActionMessageDto>>` — the action queue (paginated).
@@ -206,6 +210,7 @@ New file `CoreAlign.Application/Mrp/MrpPlanningContracts.cs` (keep separate from
 - `ListMrpPlanRunsQuery(int Page, int PageSize) : IRequest<PagedResult<MrpPlanRunDto>>`.
 
 **Commands (Group B — transactional):**
+
 - `CommitMrpPlanCommand(DateTime? AsOfDateUtc, MrpBucketKind, int HorizonDays, Guid OperationId) : IRequest<MrpPlanRunDto>, ITransactionalRequest` — runs the engine and **persists** plan run + planned orders + actions + pegging; idempotent on `IdempotencyKey` (re-run returns the existing run — fixes MRP-BUG-2).
 - `ReleasePlannedOrdersCommand(Guid PlanRunId, IReadOnlyList<Guid> PlannedOrderIds, Guid OperationId) : IRequest<ReleaseResultDto>, ITransactionalRequest` — converts selected planned orders into purchase requisition(s) grouped by supplier; sets `ConvertedRequisitionId`. **Reuses `CreatePurchaseRequisitionHandler` semantics**; fixes the missing-SaveChanges (MRP-BUG-1) by following the manual path's `EnsureExists → SaveChanges → Consume` order.
 - `FirmPlannedOrderCommand(Guid PlannedOrderId, decimal? OverrideQuantity, DateTime? OverrideDueDateUtc, Guid OperationId) : IRequest<MrpPlannedOrderDto>, ITransactionalRequest` — firm/adjust before release (T1 persists the flag; T3 honors it on re-plan).
@@ -215,6 +220,7 @@ New file `CoreAlign.Application/Mrp/MrpPlanningContracts.cs` (keep separate from
 **Validators:** new `CoreAlign.Application/Mrp/MrpPlanningValidators.cs` — one per Command/Query (INVARIANTS §21): horizon 1–365, page-size 1–200, release list non-empty, override qty `GreaterThan(0)` when present, `OperationId` non-empty on money/stock-mutating commands (INVARIANTS §26).
 
 **Service interface** (extend, don't break the existing `IMrpService`): new `IMrpPlanningService` in `CoreAlign.Application/Mrp/IMrpPlanningService.cs`:
+
 ```csharp
 Task<MrpPlanResult> RunPreviewAsync(DateTime asOfUtc, MrpBucketKind kind, int horizonDays, CancellationToken ct);
 Task<MrpItemPlan?> GetItemPlanAsync(Guid productId, DateTime asOfUtc, MrpBucketKind kind, int horizonDays, CancellationToken ct);
@@ -227,7 +233,9 @@ Task<ReleaseResult> ReleaseAsync(Guid planRunId, IReadOnlyList<Guid> plannedOrde
 ## 9. Persistence + Migration (Group B)
 
 ### 9.1 EF configurations (new — via `ApplyConfigurationsFromAssembly`, NO DbContext edit)
+
 `CoreAlign.Infrastructure/Persistence/Configurations/Mrp/`:
+
 - `MrpPlanRunConfiguration` — table `mrp_plan_runs`; unique index `(tenant_id, idempotency_key)`; concurrency token; money/qty `numeric(18,4)`; dates `timestamptz`.
 - `MrpPlannedOrderConfiguration` — `mrp_planned_orders`; FK→run (Cascade); index `(tenant_id, plan_run_id)`, `(tenant_id, product_id)`.
 - `MrpActionMessageConfiguration` — `mrp_action_messages`; FK→run (Cascade); index `(tenant_id, plan_run_id, action_type)`, `(tenant_id, is_dismissed)`.
@@ -236,16 +244,20 @@ Task<ReleaseResult> ReleaseAsync(Guid planRunId, IReadOnlyList<Guid> plannedOrde
 Access via `_context.Set<MrpPlanRun>()` etc. — **no `DbSet` added to `CoreAlignDbContext`** (preferred path per the guard). If the parallel agent's tree makes `Set<T>()` insufficient, a single surgical disjoint `DbSet` Edit is the fallback (last resort).
 
 ### 9.2 Migration — `20260616000000_Phase72MrpPlanning.cs` (idempotent, applied this pass)
+
 `Up()` via `migrationBuilder.Sql(...)`:
+
 - `ALTER TABLE products ADD COLUMN IF NOT EXISTS lot_sizing_policy integer NOT NULL DEFAULT 2;` + the other 6 product columns (`fixed_order_quantity`, `order_multiple`, `eoq_annual_demand`, `ordering_cost`, `holding_cost_rate`, `service_level_target` — all `numeric(18,4) NOT NULL DEFAULT 0`).
 - `CREATE TABLE IF NOT EXISTS mrp_plan_runs (...)`, `mrp_planned_orders`, `mrp_action_messages`, `mrp_peggings` with FKs + `tenant_id`.
 - `CREATE UNIQUE INDEX IF NOT EXISTS ix_mrp_plan_runs_tenant_idempotency ON mrp_plan_runs (tenant_id, idempotency_key);` + the per-table indexes above (all `IF NOT EXISTS`).
 - Sequence type: add `DocumentSequenceType.MrpPlanRunNumber` enum member (code-only; seeded lazily by `EnsureExistsAsync`).
-`Down()`: `DROP TABLE IF EXISTS` (children first) + `ALTER TABLE products DROP COLUMN IF EXISTS ...`.
-A `.Designer.cs` with empty `BuildTargetModel` per the INVARIANTS §28 hand-authored pattern. **`CoreAlignDbContextModelSnapshot.cs` NOT touched** → ERP-MRP-001 in `docs/mrp-blockers.md`.
+  `Down()`: `DROP TABLE IF EXISTS` (children first) + `ALTER TABLE products DROP COLUMN IF EXISTS ...`.
+  A `.Designer.cs` with empty `BuildTargetModel` per the INVARIANTS §28 hand-authored pattern. **`CoreAlignDbContextModelSnapshot.cs` NOT touched** → ERP-MRP-001 in `docs/mrp-blockers.md`.
 
 ### 9.3 Repositories (new)
+
 `CoreAlign.Infrastructure/Repositories/MrpPlanRunRepository.cs` (+ interface in `CoreAlign.Domain/Interfaces/IMrpPlanRunRepository.cs`):
+
 - `AddAsync(run)`, `GetByIdAsync(id, includeChildren)`, `GetByIdempotencyKeyAsync(key)` (dedup), `SearchPlanRunsAsync(page, pageSize)`, `SearchActionMessagesAsync(filters, page, pageSize)`, `GetPlannedOrdersAsync(planRunId, ids)`, `GetPeggingAsync(planRunId, componentProductId)`, `Update(run)`. All tenant-filtered, `AsNoTracking` on reads, paginated.
 
 ---
@@ -254,17 +266,17 @@ A `.Designer.cs` with empty `BuildTargetModel` per the INVARIANTS §28 hand-auth
 
 All `[Authorize]`; gate planning mutations behind a `Planner`/`PurchasingManager` policy (follow the existing controller's `[Authorize]` convention; add `[Authorize(Roles = ...)]` where the repo's role scheme supports it). All list endpoints paginated. Responses wrapped in `ApiResponse<T>` (INVARIANTS §33).
 
-| Method | Route | Maps to |
-| --- | --- | --- |
-| `GET` | `mrp/plan/preview?asOf=&bucket=&horizon=` | `RunMrpPreviewQuery` |
-| `GET` | `mrp/plan/item/{productId:guid}?asOf=&bucket=&horizon=` | `GetMrpItemPlanQuery` |
-| `POST` | `mrp/plan/commit` | `CommitMrpPlanCommand` |
-| `GET` | `mrp/plan/runs?page=&pageSize=` | `ListMrpPlanRunsQuery` |
-| `GET` | `mrp/action-messages?planRunId=&type=&severity=&supplierId=&includeDismissed=&page=&pageSize=` | `ListMrpActionMessagesQuery` |
-| `POST` | `mrp/action-messages/{id:guid}/dismiss` | `DismissMrpActionMessageCommand` |
-| `GET` | `mrp/pegging/{planRunId:guid}/{componentProductId:guid}` | `GetMrpPeggingQuery` |
-| `POST` | `mrp/plan/{planRunId:guid}/release` | `ReleasePlannedOrdersCommand` |
-| `POST` | `mrp/planned-orders/{id:guid}/firm` | `FirmPlannedOrderCommand` |
+| Method | Route                                                                                          | Maps to                          |
+| ------ | ---------------------------------------------------------------------------------------------- | -------------------------------- |
+| `GET`  | `mrp/plan/preview?asOf=&bucket=&horizon=`                                                      | `RunMrpPreviewQuery`             |
+| `GET`  | `mrp/plan/item/{productId:guid}?asOf=&bucket=&horizon=`                                        | `GetMrpItemPlanQuery`            |
+| `POST` | `mrp/plan/commit`                                                                              | `CommitMrpPlanCommand`           |
+| `GET`  | `mrp/plan/runs?page=&pageSize=`                                                                | `ListMrpPlanRunsQuery`           |
+| `GET`  | `mrp/action-messages?planRunId=&type=&severity=&supplierId=&includeDismissed=&page=&pageSize=` | `ListMrpActionMessagesQuery`     |
+| `POST` | `mrp/action-messages/{id:guid}/dismiss`                                                        | `DismissMrpActionMessageCommand` |
+| `GET`  | `mrp/pegging/{planRunId:guid}/{componentProductId:guid}`                                       | `GetMrpPeggingQuery`             |
+| `POST` | `mrp/plan/{planRunId:guid}/release`                                                            | `ReleasePlannedOrdersCommand`    |
+| `POST` | `mrp/planned-orders/{id:guid}/firm`                                                            | `FirmPlannedOrderCommand`        |
 
 Fixed-path routes precede `{id:guid}` (INVARIANTS §27). Existing `dashboard`/`stock-projection`/`demand-forecast`/`generate-suggestions` untouched.
 
@@ -275,11 +287,13 @@ Fixed-path routes precede `{id:guid}` (INVARIANTS §27). Existing `dashboard`/`s
 New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand pegging drawer. The existing `MrpDashboardPage` becomes a thin summary that links into the workbench. The card-list `PurchaseRequisitionsPage` gains a status-aware action menu (incl. **Convert→PO**, wiring the orphaned `useConvertRequisition` — fixes MRP-BUG-3) and a reason prompt for reject/cancel (fixes MRP-BUG-7).
 
 **Feature files** (`src/features/mrp/`):
+
 - `model/mrp-planning.types.ts` — `MrpBucket`, `MrpItemPlan`, `MrpPlanResult`, `MrpActionMessage`, `MrpPlannedOrder`, `MrpPlanRun`, `MrpPegging`, enums.
 - `api/mrpPlanningApi.ts` — preview/item/commit/runs/action-messages/dismiss/pegging/release/firm; `cachedGet` for reads, `mutate` + `invalidateHttpCache` for writes (mirror existing `mrpApi.ts`).
 - `hooks/useMrpWorkbench.ts`, `hooks/useMrpActionMessages.ts`, `hooks/useMrpPlanRun.ts` — `useQuery`/`useMutation` wrappers (data-access-in-hooks rule).
 
 **UI components** (`src/features/mrp/ui/`):
+
 - `MrpPlanningGrid.tsx` — spreadsheet grid: one row per item, columns = buckets (Gross / Sched. Receipts / Proj-On-Hand / Net / Planned Releases); proj-on-hand cell turns red below ROP/safety. Replaces the CSS-bar chart.
 - `MrpTimePhasedChart.tsx` — **recharts** supply/demand line + ROP reference line + below-ROP marker (replaces `StockProjectionChart`'s div bars).
 - `ActionMessageQueue.tsx` — typed, sortable, multi-selectable exception table; row actions Release / Dismiss / Open-in-grid; bulk bar "Release selected".
@@ -293,7 +307,9 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 ## 12. Test Plan
 
 ### Unit (Group A — pure compute, Sqlite/InMemory not required)
+
 `server/tests/CoreAlign.Application.Tests/Mrp/Planning/`:
+
 - **BOM explosion correctness:** 3-level bill (A→B×2→C×3); low-level coding assigns shared component its **max** depth; gross req propagates `parent.release · qty`; single-plan-per-part. Diamond BOM (component used by two parents) sums correctly.
 - **Lead-time offset:** release = due − leadTime; past release → bucket 0 + Expedite action.
 - **Lot-sizing math:** one `[Theory]` per policy — L4L exact; FOQ ceil-to-multiple; MinMax = today's number (regression lock); EOQ = `√(2DS/H)` rounded + multiples; POQ groups N buckets; `OrderMultiple` + `MinOrderQuantity` post-processing order.
@@ -302,7 +318,9 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 - **MRP-BUG-4 regression:** demand bucketed by order date not `UpdatedAtUtc`.
 
 ### Integration (Group B — endpoints, tenant isolation, N+1)
+
 `server/tests/CoreAlign.Integration.Tests/MrpPlanningControllerIntegrationTests.cs`:
+
 - **Fresh-tenant first run (MRP-BUG-1 regression):** commit on a tenant with **no** pre-seeded `PurchaseRequisitionNumber`/`MrpPlanRunNumber` sequence → 200, not 500. (RED-before by reverting the SaveChanges order.)
 - **Idempotency (MRP-BUG-2):** two commits with the same `IdempotencyKey`/`OperationId` → one `MrpPlanRun`, identical result (assert row count == 1, not just 200).
 - **Tenant isolation:** TenantA token + TenantB plan-run/action-message/pegging id → `{404,403}` only (INVARIANTS §40/§54). One cross-tenant `[Fact]` per new GET-by-id endpoint (append to `CrossTenantIsolationTests`).
@@ -310,6 +328,7 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 - **Release flow:** release N planned orders → grouped requisition(s) created, `ConvertedRequisitionId` set, FSM intact.
 
 ### Frontend (Group C)
+
 `src/features/mrp/__tests__/` (vitest + RTL, INVARIANTS §44–46): grid renders buckets with red below-ROP cell; action queue multi-select + bulk release calls the mutation; pegging drawer shows source orders; convert-to-PO button reachable and calls `useConvertRequisition` (MRP-BUG-3 regression); reject/cancel prompt collects a reason (MRP-BUG-7). Accessible queries per INVARIANTS §55.
 
 ---
@@ -319,7 +338,9 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 > Hard rule: a file appears in exactly ONE group. Shared types flow A→B→C by contract, not by co-editing. No group touches `CoreAlignDbContextModelSnapshot.cs` or `*.csproj`.
 
 ### GROUP A — Backend Planning Engine (pure compute; fixes MRP-BUG-4)
+
 **Owns / creates:**
+
 - `server/src/CoreAlign.Domain/Enums/MrpEnums.cs` (new enums)
 - `server/src/CoreAlign.Application/Mrp/Planning/` (all VOs: `MrpBucket`, `MrpItemPlan`, `MrpPlanResult`, `*Draft`)
 - `server/src/CoreAlign.Application/Mrp/IMrpPlanningService.cs`
@@ -329,10 +350,12 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 - `server/src/CoreAlign.Infrastructure/Mrp/Planning/ActionMessageGenerator.cs`
 - `server/src/CoreAlign.Infrastructure/Mrp/Planning/MrpPlanningDataLoader.cs` (+ `IMrpPlanningDataLoader`)
 - `server/tests/CoreAlign.Application.Tests/Mrp/Planning/*` (all unit tests in §12)
-**May add (additive, single surgical Edit each, re-Read first):** the 7 `Product` planning fields + `SetPlanningPolicy(...)` in `Product.cs`; `DemandForecaster` reuses existing forecast queries. **Does NOT** create entities, migrations, controllers, or persistence.
+  **May add (additive, single surgical Edit each, re-Read first):** the 7 `Product` planning fields + `SetPlanningPolicy(...)` in `Product.cs`; `DemandForecaster` reuses existing forecast queries. **Does NOT** create entities, migrations, controllers, or persistence.
 
 ### GROUP B — Backend Workbench API + Persistence + Migration (fixes MRP-BUG-1, MRP-BUG-2)
+
 **Owns / creates:**
+
 - `server/src/CoreAlign.Domain/Entities/Mrp/{MrpPlanRun,MrpPlannedOrder,MrpActionMessage,MrpPegging}.cs`
 - `server/src/CoreAlign.Domain/Interfaces/IMrpPlanRunRepository.cs`
 - `server/src/CoreAlign.Application/Mrp/MrpPlanningContracts.cs`, `MrpPlanningHandlers.cs`, `MrpPlanningValidators.cs`
@@ -345,10 +368,12 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 - DI registration for the new service/repository (in the existing Infrastructure DI module — single surgical Edit; mirrors `MrpService` registration)
 - `server/tests/CoreAlign.Integration.Tests/MrpPlanningControllerIntegrationTests.cs` + cross-tenant `[Fact]`s appended to `CrossTenantIsolationTests`
 - `docs/mrp-blockers.md` (ERP-MRP-001 snapshot follow-up; ERP-MRP-002 PO-line dates)
-**Depends on A:** consumes A's VOs + `IMrpPlanningService` contract. **Does NOT** edit anything under A's folders or any frontend file. **Does NOT** touch ModelSnapshot/*.csproj.
+  **Depends on A:** consumes A's VOs + `IMrpPlanningService` contract. **Does NOT** edit anything under A's folders or any frontend file. **Does NOT** touch ModelSnapshot/\*.csproj.
 
 ### GROUP C — Frontend Workbench (fixes MRP-BUG-3, MRP-BUG-7)
+
 **Owns / creates:**
+
 - `src/pages/mrp/MrpWorkbenchPage.tsx` (new)
 - `src/features/mrp/model/mrp-planning.types.ts`
 - `src/features/mrp/api/mrpPlanningApi.ts`
@@ -356,11 +381,12 @@ New page `src/pages/mrp/MrpWorkbenchPage.tsx` — 3-tab workbench + right-hand p
 - `src/features/mrp/ui/{MrpPlanningGrid,MrpTimePhasedChart,ActionMessageQueue,PeggingDrawer,KpiStrip}.tsx`
 - `src/features/mrp/__tests__/*` (Group C tests)
 - i18n keys `Mrp.*` in `tr.json` + `en.json`; `httpCache.ts` `TTL_RULES` regex additions
-**May edit (additive, re-Read first):** `MrpDashboardPage.tsx` (link into workbench), `PurchaseRequisitionsPage.tsx` (Convert→PO action + reject/cancel reason prompt — wires existing `useConvertRequisition`), route registration. **Does NOT** touch any backend file. Consumes B's endpoints by contract (the DTO shapes in §8).
+  **May edit (additive, re-Read first):** `MrpDashboardPage.tsx` (link into workbench), `PurchaseRequisitionsPage.tsx` (Convert→PO action + reject/cancel reason prompt — wires existing `useConvertRequisition`), route registration. **Does NOT** touch any backend file. Consumes B's endpoints by contract (the DTO shapes in §8).
 
 ---
 
 ## 14. Blocker Follow-ups (write to `docs/mrp-blockers.md`)
+
 - **ERP-MRP-001** (snapshot): `Phase72MrpPlanning` adds 7 product columns + 4 tables via idempotent SQL but does **not** touch `CoreAlignDbContextModelSnapshot.cs`. The EF runtime model includes them (via config), so the next `dotnet ef migrations add` will diff and try to re-add them. Snapshot owner must add the new entities + product properties to the snapshot before the next scaffold. Do NOT run `migrations add` until reconciled.
 - **ERP-MRP-002** (data model): `PurchaseOrderLine` has no per-line due date; T1 buckets scheduled receipts by PO **header** `ExpectedDate`. Per-line PO due dates would tighten time-phasing — future migration.
 - **MRP-BUG-5** (deferred): convert-to-PO still hardcodes tax 0% / FX 1.0; release flow inherits this until purchasing tax/FX is threaded through (track for a Purchasing sprint).

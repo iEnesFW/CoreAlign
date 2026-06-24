@@ -1,4 +1,20 @@
 {
+  "aiHelper": {
+    "launcher": "AI Assistant",
+    "title": "CoreAlign Assistant",
+    "subtitle": "Ask anything about the portal",
+    "placeholder": "Ask a question...",
+    "send": "Send",
+    "close": "Close",
+    "welcome": "Hi! How can I help you?",
+    "sources": "Sources",
+    "error": "Something went wrong. Please try again.",
+    "thinking": "Thinking...",
+    "noSource": "Based on general knowledge — no specific CoreAlign source matched.",
+    "feedbackHelpful": "Helpful",
+    "feedbackNotHelpful": "Not helpful",
+    "feedbackThanks": "Thanks for your feedback."
+  },
   "app": {
     "name": "CoreAlign Customer",
     "tagline": "Customer Portal"
@@ -46,6 +62,18 @@
     "approvals": "Pending Approvals",
     "profile": "Profile"
   },
+  "forward": {
+    "action": "Forward by email",
+    "title": "Forward by email",
+    "subtitle": "Send {{number}} as a PDF attachment to a recipient.",
+    "recipient": "Recipient email",
+    "hint": "The document is sent as a PDF from your supplier. Replies go to your email address.",
+    "send": "Send",
+    "sending": "Sending…",
+    "success": "Sent to {{email}}.",
+    "error": "Could not send the document.",
+    "invalidEmail": "Enter a valid email address."
+  },
   "common": {
     "loading": "Loading…",
     "noData": "No data to display.",
@@ -86,7 +114,16 @@
     "submitting": "Signing in…",
     "wrongPersona": "This portal is for customers only. Please contact your tenant administrator.",
     "loginFailed": "Sign-in failed. Please check your credentials.",
-    "loggedOut": "Signed out."
+    "loggedOut": "Signed out.",
+    "twoFactorHint": "Enter the 6-digit code from your authenticator app.",
+    "twoFactorBackupHint": "Enter one of your saved backup codes.",
+    "twoFactorCode": "Verification code",
+    "twoFactorBackupCode": "Backup code",
+    "twoFactorSubmit": "Verify",
+    "twoFactorUseBackup": "Use a backup code instead",
+    "twoFactorUseApp": "Use authenticator code instead",
+    "twoFactorBack": "Back to sign in",
+    "twoFactorInvalid": "Invalid or expired code. Please try again."
   },
   "dashboard": {
     "title": "Overview",
@@ -410,7 +447,12 @@
   "errors": {
     "forbidden": "You don't have permission to perform this action.",
     "network": "Could not reach the server.",
-    "unknown": "An unexpected error occurred."
+    "unknown": "An unexpected error occurred.",
+    "boundary": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please reload the page.",
+      "reload": "Reload"
+    }
   },
   "comments": {
     "title": "Conversation",

@@ -19,13 +19,13 @@ const STATUS_VALUES: GlassProjectStatus[] = [
 const STATUS_BADGE: Record<GlassProjectStatus, string> = {
   Draft: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200',
   Surveyed: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300',
-  Quoted: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  Quoted: 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300',
   Confirmed: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  InProduction: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  InProduction: 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300',
   Ready: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
-  InTransit: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
-  Installed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  Defective: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  InTransit: 'bg-warning-100 text-warning-700 dark:bg-warning-900/40 dark:text-warning-300',
+  Installed: 'bg-success-100 text-success-700 dark:bg-success-900/40 dark:text-success-300',
+  Defective: 'bg-danger-100 text-danger-700 dark:bg-danger-900/40 dark:text-danger-300',
   Cancelled: 'bg-slate-100 text-slate-500 line-through dark:bg-slate-800',
 };
 
@@ -71,7 +71,7 @@ export function GlassProjectsPage() {
           type="button"
           onClick={() => navigate('/dashboard/glass-enclosure/projects/new')}
           data-tour="new-project-button"
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          className="inline-flex items-center gap-1.5 rounded-md bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
         >
           <Plus size={16} /> {t('GlassEnclosure.Projects.New')}
         </button>
@@ -149,7 +149,7 @@ export function GlassProjectsPage() {
                 <Td>
                   <Link
                     to={`/dashboard/glass-enclosure/projects/${item.id}`}
-                    className="font-mono text-blue-600 hover:underline"
+                    className="font-mono text-primary-600 hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {item.code}

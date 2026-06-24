@@ -1,0 +1,154 @@
+{
+  "description": "Golden Q&A set for the CoreAlign AI Helper RAG. Each case asserts that retrieval surfaces a relevant source (recall@k) and avoids forbidden sources. A source matches when its title OR sourceRef contains (case-insensitive) any string in expectAny; a case fails its guard when any source matches forbidAny.",
+  "topK": 8,
+  "cases": [
+    {
+      "id": "quote-to-order-tr",
+      "question": "Teklifi siparişe nasıl çeviririm?",
+      "locale": "tr",
+      "expectAny": ["siparişe dönüştür", "/dashboard/quotes"],
+      "forbidAny": ["mrp", "reorder", "talebi iptal"]
+    },
+    {
+      "id": "quote-to-order-en",
+      "question": "How do I convert a quote to an order?",
+      "locale": "en",
+      "expectAny": ["convert a quote", "/dashboard/quotes"],
+      "forbidAny": ["mrp", "reorder"]
+    },
+    {
+      "id": "create-invoice-tr",
+      "question": "Fatura nasıl oluştururum?",
+      "locale": "tr",
+      "expectAny": ["fatura oluştur", "/dashboard/invoices"],
+      "forbidAny": []
+    },
+    {
+      "id": "stock-count-tr",
+      "question": "Stok sayımı nasıl yapılır?",
+      "locale": "tr",
+      "expectAny": ["stok sayım", "/dashboard/inventory/stock-counts"],
+      "forbidAny": []
+    },
+    {
+      "id": "three-way-match-tr",
+      "question": "Three-way match nedir ve nasıl yapılır?",
+      "locale": "tr",
+      "expectAny": ["eşleştirme", "three-way", "/dashboard/purchasing/three-way-match"],
+      "forbidAny": []
+    },
+    {
+      "id": "create-po-tr",
+      "question": "Satınalma siparişi nasıl oluştururum?",
+      "locale": "tr",
+      "expectAny": ["satınalma sipariş", "purchase order", "/dashboard/purchasing/purchase-orders"],
+      "forbidAny": []
+    },
+    {
+      "id": "receive-goods-tr",
+      "question": "Mal kabulü nasıl yaparım?",
+      "locale": "tr",
+      "expectAny": ["mal kabul", "goods receipt", "/dashboard/purchasing/goods-receipts"],
+      "forbidAny": []
+    },
+    {
+      "id": "vendor-bill-tr",
+      "question": "Tedarikçi faturası nasıl girilir?",
+      "locale": "tr",
+      "expectAny": ["tedarikçi fatura", "vendor bill", "/dashboard/purchasing/vendor-bills"],
+      "forbidAny": []
+    },
+    {
+      "id": "run-payroll-tr",
+      "question": "Bordro dönemi nasıl çalıştırılır?",
+      "locale": "tr",
+      "expectAny": ["bordro", "payroll", "/dashboard/hr/payroll-runs"],
+      "forbidAny": []
+    },
+    {
+      "id": "year-end-close-tr",
+      "question": "Dönem sonu kapanışı nasıl yapılır?",
+      "locale": "tr",
+      "expectAny": ["kapanış", "year-end", "/dashboard/accounting/year-end-close"],
+      "forbidAny": []
+    },
+    {
+      "id": "run-mrp-tr",
+      "question": "MRP planı nasıl çalıştırılır?",
+      "locale": "tr",
+      "expectAny": ["mrp", "/dashboard/mrp"],
+      "forbidAny": []
+    },
+    {
+      "id": "ship-order-tr",
+      "question": "Siparişi nasıl sevk ederim?",
+      "locale": "tr",
+      "expectAny": ["sevk", "ship", "/dashboard/orders"],
+      "forbidAny": []
+    },
+    {
+      "id": "record-payment-tr",
+      "question": "Tahsilatı faturaya nasıl uygularım?",
+      "locale": "tr",
+      "expectAny": ["tahsilat", "payment", "/dashboard/invoices"],
+      "forbidAny": []
+    },
+    {
+      "id": "create-customer-tr",
+      "question": "Yeni müşteri nasıl eklerim?",
+      "locale": "tr",
+      "expectAny": ["müşteri", "customer", "/dashboard/customers"],
+      "forbidAny": []
+    },
+    {
+      "id": "issue-credit-note-tr",
+      "question": "Bir faturadan alacak dekontu nasıl keserim?",
+      "locale": "tr",
+      "expectAny": ["alacak dekontu", "credit note"],
+      "forbidAny": []
+    },
+    {
+      "id": "withholding-invoice-tr",
+      "question": "KDV tevkifatlı fatura nasıl oluşturulur?",
+      "locale": "tr",
+      "expectAny": ["tevkifat", "withholding"],
+      "forbidAny": []
+    },
+    {
+      "id": "stock-transfer-tr",
+      "question": "Bir ürünü iki depo arasında nasıl transfer ederim?",
+      "locale": "tr",
+      "expectAny": ["depolar arası", "stok transfer", "stock between", "/dashboard/inventory"],
+      "forbidAny": ["mrp", "reorder"]
+    },
+    {
+      "id": "offtopic-en",
+      "question": "What is the weather today?",
+      "locale": "en",
+      "expectAnswerContains": [
+        "does not contain",
+        "no specific",
+        "do not have",
+        "not available",
+        "cannot help",
+        "not covered",
+        "no information"
+      ]
+    },
+    {
+      "id": "offtopic-tr",
+      "question": "Bugün hava durumu nasıl?",
+      "locale": "tr",
+      "expectAnswerContains": [
+        "bulunmuyor",
+        "içermiyor",
+        "mevcut değil",
+        "yer almıyor",
+        "özel bir",
+        "bilgi bulun",
+        "sahip değil",
+        "bulamad"
+      ]
+    }
+  ]
+}

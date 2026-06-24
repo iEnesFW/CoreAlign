@@ -19,7 +19,7 @@ import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import { useOrderQuery } from '@/features/orders/hooks/useOrderQueries';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
-import { AuditTimeline } from '@/widgets/AuditTimeline';
+import { AuditTimeline } from '@/features/audit';
 import type { Customer } from '@/features/customers/model/customer.types';
 import type { Order, OrderLine, OrderStatus } from '@/features/orders/model/order.types';
 import { OrderAllocationsTab } from './OrderAllocationsTab';
@@ -281,7 +281,7 @@ const CustomerTab = ({ customer, loading }: { customer: Customer | null; loading
       <Row label={t('customers.fields.name')}>
         <Link
           to={`/dashboard/customers/${customer.id}`}
-          className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
+          className="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
         >
           {customer.name}
           <ExternalLink size={10} />

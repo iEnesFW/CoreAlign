@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ExternalLink, Package, Truck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { safeHref } from '@/shared/lib/safeHref';
 import {
   useCancelShipment,
   useDeliverShipment,
@@ -22,12 +23,12 @@ interface Props {
 
 const STATUS_STYLES: Record<ShipmentStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  Picked: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
+  Picked: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
   Packed: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  Dispatched: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
-  Delivered: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  Cancelled: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
-  Returned: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
+  Dispatched: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Delivered: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Returned: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 const fmtDateTime = (iso: string | null, locale: string) => {
@@ -224,7 +225,7 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
         </details>
 
         {showDeliver && (
-          <div className="mt-2 rounded border border-emerald-200 bg-emerald-50/60 p-2 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+          <div className="mt-2 rounded border border-success-200 bg-success-50/60 p-2 dark:border-success-500/30 dark:bg-success-500/10">
             <label className="block text-[11px] font-medium text-slate-700 dark:text-slate-300">
               {t('orders.shipments.receivedBy')}
             </label>
@@ -244,7 +245,7 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
               <button
                 type="button"
                 onClick={() => run('deliver')}
-                className="rounded bg-emerald-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-emerald-700"
+                className="rounded bg-success-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-success-700"
               >
                 {t('orders.actions.deliverShipment')}
               </button>
@@ -270,9 +271,9 @@ const ActionButton = ({ onClick, label, icon, primary, danger }: ActionButtonPro
     onClick={onClick}
     className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-medium transition ${
       danger
-        ? 'border-red-200 bg-white text-red-700 hover:bg-red-50 dark:border-red-500/30 dark:bg-slate-900 dark:text-red-300 dark:hover:bg-red-500/10'
+        ? 'border-danger-200 bg-white text-danger-700 hover:bg-danger-50 dark:border-danger-500/30 dark:bg-slate-900 dark:text-danger-300 dark:hover:bg-danger-500/10'
         : primary
-          ? 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-300'
+          ? 'border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-500/40 dark:bg-primary-500/20 dark:text-primary-300'
           : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
     }`}
   >
@@ -295,12 +296,12 @@ const InfoChip = ({
       {label}
     </div>
     <div className="truncate text-xs font-medium text-slate-800 dark:text-slate-200">
-      {link ? (
+      {safeHref(link) ? (
         <a
-          href={link}
+          href={safeHref(link) ?? undefined}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400"
+          className="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
         >
           {value} <ExternalLink size={10} />
         </a>
@@ -394,7 +395,7 @@ const DispatchShipmentModal = ({ shipment, onClose }: DispatchModalProps) => {
             type="button"
             onClick={handleSubmit}
             disabled={dispatchMutation.isPending}
-            className="inline-flex items-center gap-1.5 rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
           >
             <Truck size={14} />
             {t('orders.actions.dispatchShipment')}
@@ -427,7 +428,7 @@ const Field = ({
       type={type}
       step={step}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
     />
   </div>
 );

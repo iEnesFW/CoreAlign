@@ -18,7 +18,7 @@ export const ProjectListPage = () => {
       {isLoading ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Common.Loading')}</div>
       ) : isError ? (
-        <div className="text-sm text-red-600">{t('CustomerPortal.Common.LoadError')}</div>
+        <div className="text-sm text-danger-600">{t('CustomerPortal.Common.LoadError')}</div>
       ) : items.length === 0 ? (
         <div className="text-sm text-slate-500">{t('CustomerPortal.Project.Empty')}</div>
       ) : (
@@ -32,7 +32,7 @@ export const ProjectListPage = () => {
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <Link
                     to={`/customer-portal/projects/${p.id}`}
-                    className="font-medium text-blue-600 hover:underline truncate"
+                    className="font-medium text-primary-600 hover:underline truncate"
                   >
                     {p.projectName}
                   </Link>

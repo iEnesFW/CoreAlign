@@ -17,7 +17,8 @@ public record RegisterCommand(
     string Email,
     string Password,
     string? FirstName = null,
-    string? LastName = null
+    string? LastName = null,
+    string? CaptchaToken = null
 ) : IRequest<AuthResponseDto>, ITransactionalRequest;
 
 public record RefreshTokenCommand(
@@ -27,7 +28,8 @@ public record RefreshTokenCommand(
 ) : IRequest<AuthResponseDto>, ITransactionalRequest;
 
 public record ForgotPasswordCommand(
-    string Email
+    string Email,
+    string? CaptchaToken = null
 ) : IRequest<bool>, ITransactionalRequest;
 
 public record ResetPasswordCommand(

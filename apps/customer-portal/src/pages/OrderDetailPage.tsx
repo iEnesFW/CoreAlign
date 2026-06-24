@@ -1,7 +1,9 @@
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft, Download, Send } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/shared/ui/Button';
+import { ForwardDocumentModal } from '@/features/portal/ForwardDocumentModal';
 import { Card, CardBody, CardHeader } from '@/shared/ui/Card';
 import { Spinner } from '@/shared/ui/Spinner';
 import { OrderStatusBadge } from '@/shared/ui/StatusBadge';
@@ -17,6 +19,7 @@ export const OrderDetailPage = () => {
   const locale = useFormatLocale();
   const navigate = useNavigate();
   const { data, isLoading, isError } = usePortalOrder(id);
+  const [forwardOpen, setForwardOpen] = useState(false);
   const pdf = usePdfDownload(
     `/customer-portal/orders/${id ?? ''}/pdf`,
     `Order-${data?.orderNumber ?? id ?? ''}.pdf`,
@@ -50,10 +53,23 @@ export const OrderDetailPage = () => {
         >
           <ArrowLeft size={14} /> {t('orders.title')}
         </Link>
-        <Button variant="primary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
-          <Download size={14} /> {t('common.downloadPdf')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" onClick={pdf.download} disabled={pdf.isLoading}>
+            <Download size={14} /> {t('common.downloadPdf')}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setForwardOpen(true)}>
+            <Send size={14} /> {t('forward.action')}
+          </Button>
+        </div>
       </div>
+
+      <ForwardDocumentModal
+        open={forwardOpen}
+        onClose={() => setForwardOpen(false)}
+        documentType="Order"
+        documentId={id ?? ''}
+        documentNumber={data.orderNumber}
+      />
 
       <Card>
         <CardHeader

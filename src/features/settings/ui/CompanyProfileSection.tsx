@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useCompanyProfileQuery, useUpdateCompanyProfile } from '../hooks/useSettingsQueries';
@@ -36,14 +37,23 @@ const TextField = ({
 );
 
 export const CompanyProfileSection = () => {
+  const { t } = useTranslation();
   const profile = useCompanyProfileQuery();
   const updateMutation = useUpdateCompanyProfile();
   const data = profile.data?.data;
 
-  // Keyed remount via the loaded id ensures the form initializes once from
-  // server data without a sync-effect.
-  if (profile.isPending) return <div className="p-6 text-sm text-slate-500">Yükleniyor…</div>;
-  if (!data) return <div className="p-6 text-sm text-slate-500">Firma bilgisi yüklenemedi.</div>;
+  if (profile.isPending)
+    return (
+      <div className="p-6 text-sm text-slate-500">
+        {t('CompanyProfile.Loading', { defaultValue: 'Yükleniyor…' })}
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="p-6 text-sm text-slate-500">
+        {t('CompanyProfile.LoadFailed', { defaultValue: 'Firma bilgisi yüklenemedi.' })}
+      </div>
+    );
 
   return <CompanyProfileForm key={data.id} initial={data} onSave={updateMutation} />;
 };
@@ -57,6 +67,7 @@ const CompanyProfileForm = ({
     : never;
   onSave: ReturnType<typeof useUpdateCompanyProfile>;
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState<UpdateCompanyProfileRequest>({
     name: initial.name,
     legalName: initial.legalName ?? '',
@@ -101,7 +112,9 @@ const CompanyProfileForm = ({
         reportingCurrency: form.reportingCurrency || null,
         foundedOn: form.foundedOn || null,
       });
-      toast.success('Firma bilgileri kaydedildi.');
+      toast.success(
+        t('CompanyProfile.SaveSuccess', { defaultValue: 'Firma bilgileri kaydedildi.' }),
+      );
     } catch (err) {
       toastApiError(err);
     }
@@ -110,59 +123,61 @@ const CompanyProfileForm = ({
   return (
     <form onSubmit={submit} className="space-y-5">
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Kimlik</h3>
+        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('CompanyProfile.IdentitySection', { defaultValue: 'Kimlik' })}
+        </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <TextField
-            label="Firma Adı *"
+            label={t('CompanyProfile.CompanyName', { defaultValue: 'Firma Adı *' })}
             value={form.name}
             onChange={(v) => set('name', v)}
             required
             maxLength={150}
           />
           <TextField
-            label="Ticari Ünvan"
+            label={t('CompanyProfile.LegalName', { defaultValue: 'Ticari Ünvan' })}
             value={form.legalName ?? ''}
             onChange={(v) => set('legalName', v)}
             maxLength={200}
           />
           <TextField
-            label="Marka Adı"
+            label={t('CompanyProfile.TradeName', { defaultValue: 'Marka Adı' })}
             value={form.tradeName ?? ''}
             onChange={(v) => set('tradeName', v)}
             maxLength={200}
           />
           <TextField
-            label="Vergi No (VKN)"
+            label={t('CompanyProfile.TaxNumber', { defaultValue: 'Vergi No (VKN)' })}
             value={form.taxNumber ?? ''}
             onChange={(v) => set('taxNumber', v)}
             maxLength={50}
           />
           <TextField
-            label="Vergi Dairesi"
+            label={t('CompanyProfile.TaxOffice', { defaultValue: 'Vergi Dairesi' })}
             value={form.taxOffice ?? ''}
             onChange={(v) => set('taxOffice', v)}
             maxLength={100}
           />
           <TextField
-            label="TC Kimlik No"
+            label={t('CompanyProfile.NationalId', { defaultValue: 'TC Kimlik No' })}
             value={form.nationalId ?? ''}
             onChange={(v) => set('nationalId', v)}
             maxLength={32}
           />
           <TextField
-            label="MERSIS No"
+            label={t('CompanyProfile.MersisNumber', { defaultValue: 'MERSIS No' })}
             value={form.mersisNumber ?? ''}
             onChange={(v) => set('mersisNumber', v)}
             maxLength={32}
           />
           <TextField
-            label="Ticaret Sicil No"
+            label={t('CompanyProfile.TradeRegistryNumber', { defaultValue: 'Ticaret Sicil No' })}
             value={form.tradeRegistryNumber ?? ''}
             onChange={(v) => set('tradeRegistryNumber', v)}
             maxLength={64}
           />
           <TextField
-            label="Sektör"
+            label={t('CompanyProfile.Sector', { defaultValue: 'Sektör' })}
             value={form.sector ?? ''}
             onChange={(v) => set('sector', v)}
             maxLength={100}
@@ -171,11 +186,13 @@ const CompanyProfileForm = ({
       </section>
 
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">Adres</h3>
+        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('CompanyProfile.AddressSection', { defaultValue: 'Adres' })}
+        </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="sm:col-span-3">
             <TextField
-              label="Adres Satırı 1"
+              label={t('CompanyProfile.AddressLine1', { defaultValue: 'Adres Satırı 1' })}
               value={form.addressLine1 ?? ''}
               onChange={(v) => set('addressLine1', v)}
               maxLength={200}
@@ -183,32 +200,32 @@ const CompanyProfileForm = ({
           </div>
           <div className="sm:col-span-3">
             <TextField
-              label="Adres Satırı 2"
+              label={t('CompanyProfile.AddressLine2', { defaultValue: 'Adres Satırı 2' })}
               value={form.addressLine2 ?? ''}
               onChange={(v) => set('addressLine2', v)}
               maxLength={200}
             />
           </div>
           <TextField
-            label="İl/Şehir"
+            label={t('CompanyProfile.City', { defaultValue: 'İl/Şehir' })}
             value={form.city ?? ''}
             onChange={(v) => set('city', v)}
             maxLength={100}
           />
           <TextField
-            label="İlçe/Eyalet"
+            label={t('CompanyProfile.StateProvince', { defaultValue: 'İlçe/Eyalet' })}
             value={form.stateProvince ?? ''}
             onChange={(v) => set('stateProvince', v)}
             maxLength={100}
           />
           <TextField
-            label="Posta Kodu"
+            label={t('CompanyProfile.PostalCode', { defaultValue: 'Posta Kodu' })}
             value={form.postalCode ?? ''}
             onChange={(v) => set('postalCode', v)}
             maxLength={20}
           />
           <TextField
-            label="Ülke"
+            label={t('CompanyProfile.Country', { defaultValue: 'Ülke' })}
             value={form.country ?? ''}
             onChange={(v) => set('country', v)}
             maxLength={100}
@@ -217,29 +234,31 @@ const CompanyProfileForm = ({
       </section>
 
       <section>
-        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">İletişim</h3>
+        <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('CompanyProfile.ContactSection', { defaultValue: 'İletişim' })}
+        </h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <TextField
-            label="Telefon"
+            label={t('CompanyProfile.Phone', { defaultValue: 'Telefon' })}
             value={form.phone ?? ''}
             onChange={(v) => set('phone', v)}
             maxLength={30}
           />
           <TextField
-            label="Faks"
+            label={t('CompanyProfile.Fax', { defaultValue: 'Faks' })}
             value={form.fax ?? ''}
             onChange={(v) => set('fax', v)}
             maxLength={30}
           />
           <TextField
-            label="E-posta"
+            label={t('CompanyProfile.Email', { defaultValue: 'E-posta' })}
             value={form.email ?? ''}
             onChange={(v) => set('email', v)}
             type="email"
             maxLength={256}
           />
           <TextField
-            label="Web Sitesi"
+            label={t('CompanyProfile.Website', { defaultValue: 'Web Sitesi' })}
             value={form.website ?? ''}
             onChange={(v) => set('website', v)}
             maxLength={500}
@@ -249,38 +268,40 @@ const CompanyProfileForm = ({
 
       <section>
         <h3 className="mb-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Yerel ve Finansal Varsayılanlar
+          {t('CompanyProfile.LocaleFinancialSection', {
+            defaultValue: 'Yerel ve Finansal Varsayılanlar',
+          })}
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <TextField
-            label="Varsayılan Para Birimi"
+            label={t('CompanyProfile.DefaultCurrency', { defaultValue: 'Varsayılan Para Birimi' })}
             value={form.defaultCurrency}
             onChange={(v) => set('defaultCurrency', v.toUpperCase())}
             maxLength={3}
             required
           />
           <TextField
-            label="Raporlama Para Birimi"
+            label={t('CompanyProfile.ReportingCurrency', { defaultValue: 'Raporlama Para Birimi' })}
             value={form.reportingCurrency ?? ''}
             onChange={(v) => set('reportingCurrency', v.toUpperCase())}
             maxLength={3}
-            placeholder="(opsiyonel)"
+            placeholder={t('CompanyProfile.OptionalPlaceholder', { defaultValue: '(opsiyonel)' })}
           />
           <TextField
-            label="Yerel Kod"
+            label={t('CompanyProfile.LocaleCode', { defaultValue: 'Yerel Kod' })}
             value={form.localeCode}
             onChange={(v) => set('localeCode', v)}
             maxLength={10}
           />
           <TextField
-            label="Saat Dilimi"
+            label={t('CompanyProfile.TimeZone', { defaultValue: 'Saat Dilimi' })}
             value={form.timeZoneId}
             onChange={(v) => set('timeZoneId', v)}
             maxLength={64}
           />
           <div>
             <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              Mali Yıl Başı (Ay)
+              {t('CompanyProfile.FiscalYearStartMonth', { defaultValue: 'Mali Yıl Başı (Ay)' })}
             </label>
             <input
               type="number"
@@ -298,9 +319,11 @@ const CompanyProfileForm = ({
         <button
           type="submit"
           disabled={onSave.isPending}
-          className="rounded bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded bg-primary-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
         >
-          {onSave.isPending ? 'Kaydediliyor…' : 'Kaydet'}
+          {onSave.isPending
+            ? t('CompanyProfile.Saving', { defaultValue: 'Kaydediliyor…' })
+            : t('CompanyProfile.Save', { defaultValue: 'Kaydet' })}
         </button>
       </div>
     </form>

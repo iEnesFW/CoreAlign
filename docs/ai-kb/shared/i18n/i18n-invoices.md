@@ -1,0 +1,183 @@
+# invoices (CoreAlign UI)
+
+"invoices" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "invoices" area (English / Türkçe):
+
+- Cancel invoice / Faturayı iptal et
+- Mark as paid / Ödenmiş olarak işaretle
+- Print invoice / Faturayı yazdır
+- Record payment / Ödeme al
+- Actions / İşlemler
+- Customer / Müşteri
+- Due Date / Vade
+- Invoice # / Fatura No
+- Issue Date / Düzenleme
+- Status / Durum
+- Total / Toplam
+- Cancel invoice {{number}}? / {{number}} faturası iptal edilsin mi?
+- Mark {{number}} as paid? / {{number}} ödenmiş olarak işaretlensin mi?
+- Select the lines and quantities to credit. A credit note will be issued against this invoice. / Alacak dekontuna dahil edilecek satırları ve miktarları seçin. Bu fatura için bir alacak dekontu oluşturulacaktır.
+- Invoiced / Faturalanan
+- Product / Ürün
+- Quantity / Miktar
+- Reason / Gerekçe
+- Enter the reason for the credit note (optional) / İade/iptal gerekçesini girin (opsiyonel)
+- Remaining / Kalan
+- Select line {{sku}} / {{sku}} satırını seç
+- Issue Credit Note / Alacak Dekontu Oluştur
+- Subtotal / Ara Toplam
+- Issue Credit Note / Alacak Dekontu Oluştur
+- Credit note issued. / Alacak dekontu oluşturuldu.
+- Unit Price / Birim Fiyat
+- Cancelled / İptal Edildi
+- Created / Oluşturuldu
+- Issued / Düzenlendi
+- Paid / Ödendi
+- E-Invoice / E-Fatura
+- Status / Durum
+- E-Invoice UUID / E-Fatura UUID
+- Issued at / Düzenleme zamanı
+- Source order / Kaynak sipariş
+- Due / Bakiye
+- Lines / Satır
+- Paid / Ödenen
+- Invoice total / Fatura toplamı
+- No notes on this invoice. / Bu fatura için not yok.
+- No payments applied yet. / Henüz ödeme uygulanmadı.
+- Payment progress / Ödeme ilerlemesi
+- Applied payments / Uygulanan ödemeler
+- Posted to ledger / Muhasebeye yansıdı
+- Activity / Hareket
+- Ledger & dunning / Muhasebe & takip
+- Lines / Satırlar
+- Notes / Notlar
+- Overview / Genel
+- Payments / Ödemeler
+- Amount / Tutar
+- Base / Matrah
+- Rate / Oran
+- Tax breakdown / Vergi dökümü
+- Invoice / Fatura
+- Due soon / Vade yakın
+- No invoices yet. / Henüz fatura yok.
+- Generate invoices from orders or create new ones manually. / Siparişlerden fatura oluşturun veya manuel olarak yeni fatura ekleyin.
+- Finance · Receivables / Finans · Alacaklar
+- Cancelled At / İptal
+- Currency / Para Birimi
+- Due Date / Vade Tarihi
+- Issue Date / Düzenleme Tarihi
+- Line Total / Satır Toplam
+- Notes / Notlar
+- Paid At / Ödendi
+- Posting date / Kayıt tarihi
+- Product / Ürün
+- Qty / Mik.
+- Total / Toplam
+- Type / Tür
+- Unit Price / Birim Fiyat
+- All / Tümü
+- Cancelled / İptal
+- Due in ≤7d / Vade ≤7 gün
+- Open / Açık
+- Overdue / Vadesi Geçen
+- Paid / Ödenen
+- Account / Hesap
+- Balanced / Dengeli
+- Credit / Alacak
+- Credit note / İade faturası
+- Debit / Borç
+- Description / Açıklama
+- Send reminder email / Hatırlatma maili gönder
+- Send second notice / İkinci bildirim gönder
+- Escalate to collections / Tahsilata aktar
+- Clear / Temiz
+- Days overdue / Vade aşımı (g)
+- Invoice is past due by {{count}} days. Consider issuing a reminder or escalating to collections. / Fatura {{count}} gün gecikmiş. Hatırlatma veya tahsilata yönlendirme önerilir.
+- Friendly reminder / İlk hatırlatma
+- Second notice / İkinci hatırlatma
+- Final notice / Son uyarı
+- No action needed / Aksiyon gerekmiyor
+- Recommended action / Önerilen aksiyon
+- Collection status / Tahsilat takibi
+- GL posting preview / Muhasebe fiş önizleme
+- Linked documents / Bağlı belgeler
+- Pending / Beklemede
+- Original invoice / Asıl fatura
+- Posted / Yansıdı
+- Escalate to collections / Tahsilata aktar
+- Final notice / Son uyarı
+- Invoice sent / Fatura gönderildi
+- Follow-up reminder / Takip hatırlatması
+- Outbound reminders are queued — connect SMTP to enable sending. / Hatırlatma maili gönderimi SMTP entegrasyonu yapılınca aktifleşir.
+- Send reminder / Hatırlat
+- Suggested now / Şimdi öneriliyor
+- Reminder history / Hatırlatma geçmişi
+- Total / Toplam
+- Out of balance / Dengesiz
+- Next / Sonraki
+- Previous / Önceki
+- {{from}}-{{to}} of {{total}} / {{from}}-{{to}} / {{total}}
+- Bank transfer / Banka Havalesi
+- Cash / Nakit
+- Check / Çek
+- Credit card / Kredi Kartı
+- Debit card / Banka Kartı
+- Online gateway / Online Ödeme
+- Other / Diğer
+- Promissory note / Senet
+- Confirmed / Onaylı
+- Draft / Taslak
+- Fully applied / Tam Uygulanmış
+- Partially applied / Kısmi Uygulanmış
+- Refunded / İade Edildi
+- Void / Geçersiz
+- Bill to / Müşteri
+- Print / Yazdır
+- Thank you for your business. / Tercih ettiğiniz için teşekkürler.
+- Issued by / Düzenleyen
+- INVOICE / FATURA
+- invoices / fatura
+- Search by number or customer... / Numara veya müşteri ara...
+- Add Line / Satır Ekle
+- Invoice created. / Fatura oluşturuldu.
+- Creating... / Oluşturuluyor...
+- Currency / Para Birimi
+- Customer / Müşteri
+- Due Days / Vade (Gün)
+- Internal Notes / Dahili Notlar
+- Issue Date / Fatura Tarihi
+- Item name / Kalem adı
+- Quantity / Miktar
+- SKU / Stok Kodu
+- Tax Rate (%) / KDV Oranı (%)
+- Unit Price / Birim Fiyat
+- Public Notes / Genel Notlar
+- Remove line / Satırı kaldır
+- Select a customer / Müşteri seçin
+- Create Standalone Invoice / Bağımsız Fatura Oluştur
+- Please select a customer. / Lütfen bir müşteri seçin.
+- Add at least one line with SKU, name and a positive quantity. / En az bir satıra stok kodu, ad ve sıfırdan büyük miktar girin.
+- Collected (page) / Tahsilat (sayfa)
+- open / açık
+- Outstanding / Açık Alacak
+- Overdue / Vadesi Geçen
+- overdue invoices / vadesi geçen fatura
+- Invoices (page) / Faturalar (sayfa)
+- {{count}} of {{all}} / {{count}} / {{all}}
+- Cancelled / İptal
+- Draft / Taslak
+- Issued / Düzenlendi
+- Overdue / Vadesi Geçti
+- Paid / Ödendi
+- Partially paid / Kısmi Ödenmiş
+- Sent / Gönderildi
+- Void / İptal (Geçersiz)
+- Change status / Durumu değiştir
+- Issued invoices and payments. / Düzenlenen faturalar ve ödemeler.
+- Invoices / Faturalar
+- Invoice cancelled. / Fatura iptal edildi.
+- Invoice marked as paid. / Fatura ödenmiş olarak işaretlendi.
+- Advance / Avans
+- Credit note / İade faturası
+- Debit note / Borç dekontu
+- Pro forma / Proforma
+- Sales invoice / Satış faturası

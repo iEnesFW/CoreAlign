@@ -1,0 +1,53 @@
+# VendorDetail (CoreAlign UI)
+
+"VendorDetail" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "VendorDetail" area (English / Türkçe):
+
+- Add address / Adres ekle
+- No addresses defined yet. / Henüz adres tanımlanmadı.
+- Back to vendors / Tedarikçilere dön
+- Add bank account / Banka hesabı ekle
+- No bank accounts defined yet. / Henüz banka hesabı tanımlanmadı.
+- Company / Şirket
+- Add contact / Kontak ekle
+- No contacts defined yet. / Henüz kontak tanımlanmadı.
+- Current Balance / Cari Bakiye
+- Delete / Sil
+- Delete {{label}}? / {{label}} silinsin mi?
+- Deleted. / Silindi.
+- Delete / Sil
+- Edit / Düzenle
+- Approval / Onay
+- Block Reason / Bloke Nedeni
+- Classification / Sınıflandırma
+- Code / Kod
+- Currency / Para Birimi
+- Email / E-posta
+- Notes / Notlar
+- Payment Terms / Ödeme Vadesi
+- Phone / Tel
+- Performance / Performans
+- Tax No / VKN
+- Tax Office / VD
+- Territory / Bölge
+- Type / Tip
+- Web
+- Individual / Şahıs
+- Balance / Bakiye
+- Credit / Alacak
+- Date / Tarih
+- Debit / Borç
+- Description / Açıklama
+- Document / Belge
+- No current-account transactions yet. / Henüz cari hareket yok.
+- Loading… / Yükleniyor…
+- Not approved yet / Henüz onaylanmadı
+- Vendor not found. / Tedarikçi bulunamadı.
+- Overdue / Vadesi geçen
+- Primary / Birincil
+- Performance rating updated. / Performans puanı güncellendi.
+- {{count}} star / {{count}} yıldız
+- Addresses / Adresler
+- Bank Details / Banka Bilgileri
+- Contacts / Kontaklar
+- Current Account / Cari Hesap
+- Overview / Genel

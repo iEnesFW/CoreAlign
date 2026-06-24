@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using CoreAlign.API.Authorization;
+using CoreAlign.API.Configuration;
 using CoreAlign.API.Hangfire;
 using CoreAlign.API.HostedServices;
 using CoreAlign.API.Middleware;
@@ -21,6 +22,11 @@ using Microsoft.OpenApi;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load secrets from the configured external vault (Azure KeyVault / AWS SSM) before
+// other config is consumed, so vault values override appsettings. No-op unless
+// Configuration:VaultProvider is set — dev/test are unaffected.
+builder.Configuration.AddVaultConfiguration(builder.Configuration);
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
@@ -53,6 +59,13 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.WithProperty("Application", "CoreAlign.API")
     .WriteTo.Async(a => a.Console())
     .WriteTo.Async(a => a.File("logs/corealign-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)));
+
+CoreAlign.API.Observability.SentryStartupExtensions.AddCoreAlignSentry(builder);
+
+CoreAlign.API.Observability.OpenTelemetryConfig.AddCoreAlignOpenTelemetry(builder);
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(o =>
+    o.Filters.Add<CoreAlign.API.Common.CorrelationResultFilter>());
 
 builder.Services.AddOptions<CorsOptions>()
     .Bind(builder.Configuration.GetSection(CorsOptions.SectionName))
@@ -218,6 +231,26 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+    // Emit a Retry-After header + the standard ApiResponse envelope on throttle so
+    // clients back off correctly and parse the error like every other API failure.
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        var response = context.HttpContext.Response;
+        response.StatusCode = StatusCodes.Status429TooManyRequests;
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            response.Headers.RetryAfter =
+                ((int)retryAfter.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+        if (!response.HasStarted)
+        {
+            await response.WriteAsJsonAsync(
+                CoreAlign.Application.Common.ApiResponse<object>.Failure(
+                    "Too many requests. Please retry later.", StatusCodes.Status429TooManyRequests),
+                cancellationToken);
+        }
+    };
+
     // Helper: build a composite partition key so a single attacker can't bypass
     // the limit by simply walking through endpoints. We mix IP + path + the
     // authenticated user id (when present) — that way a logged-in user's bucket
@@ -258,6 +291,33 @@ builder.Services.AddRateLimiter(options =>
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 200,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+
+    // Tight cap for the anonymous client-error ingest endpoint so a flood can't
+    // bloat error_logs. Partitioned by (ip + path); login-page errors still report.
+    options.AddPolicy("client-errors", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: CompositePartitionKey(httpContext, "client-errors"),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
+
+    // Tight per-(subject + path) cap for the anonymous AI Helper endpoint so a
+    // flood can't drive expensive embedding + LLM inference. Composite key throttles
+    // both a single IP and a single authenticated user.
+    options.AddPolicy("ai-helper", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: CompositePartitionKey(httpContext, "ai-helper"),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = builder.Configuration.GetValue<int?>("AiHelper:AuthedRateLimitPerMinute") ?? 30,
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0,
@@ -306,6 +366,7 @@ builder.Services.AddHostedService<CoreAlign.API.HostedServices.PartitionMaintena
 // edilen demo seed konfigurasyonu app'i hemen kapatir (silent run yerine fail-fast).
 CoreAlign.API.HostedServices.DemoDataSeeder.IsSeedingEnabled(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.PayrollSystemDataSeeder>();
 
 // Hangfire recurring-job host. Real environments use PostgreSQL storage (Hangfire
 // creates its own "hangfire" schema). Skipped under the test flag
@@ -412,6 +473,12 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();
+
+if (app.Configuration.GetSection("OpenTelemetry").GetValue<bool?>("MetricsEnabled") ?? true)
+{
+    app.UseOpenTelemetryPrometheusScrapingEndpoint();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 

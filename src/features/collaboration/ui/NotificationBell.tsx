@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Bell, BellOff, CheckCheck } from 'lucide-react';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
@@ -15,12 +15,6 @@ import { useRelativeTime } from './useRelativeTime';
 const POLL_INTERVAL_MS = 30 * 1000;
 const MAX_BADGE = 99;
 
-/**
- * Build a deep-link URL for the entity that fired the notification. Order +
- * VendorBill open their respective list pages with the detail panel and the
- * comments tab pre-selected; Shipments deep-link by shipment id (the orders
- * page picks it up).
- */
 const buildTarget = (n: Notification): string => {
   switch (n.entityType) {
     case 'Order':
@@ -82,11 +76,11 @@ export const NotificationBell = () => {
         onClick={() => setOpen((v) => !v)}
         aria-label={t('collab.notifications.title')}
         aria-expanded={open}
-        className="relative p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        className="relative p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-[5px] hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-1 focus:ring-primary-500"
       >
         <Bell size={16} />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] items-center justify-center rounded-full bg-rose-500 px-[3px] text-[9px] font-bold leading-[14px] text-white shadow-sm ring-1 ring-white dark:ring-[#0B0F19]">
+          <span className="absolute -right-0.5 -top-0.5 inline-flex min-w-[14px] items-center justify-center rounded-full bg-danger-500 px-[3px] text-[9px] font-bold leading-[14px] text-white shadow-sm ring-1 ring-white dark:ring-shell">
             {badgeText}
           </span>
         )}
@@ -102,7 +96,7 @@ export const NotificationBell = () => {
               type="button"
               onClick={handleMarkAll}
               disabled={unreadCount === 0 || markAllRead.isPending}
-              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary-600 hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40 dark:text-primary-300 dark:hover:bg-primary-500/10"
             >
               <CheckCheck size={11} />
               {t('collab.notifications.markAllRead')}
@@ -134,7 +128,7 @@ export const NotificationBell = () => {
                     >
                       <div className="flex w-full items-center gap-1.5">
                         {!n.isRead && (
-                          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+                          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" />
                         )}
                         <span className="truncate text-[11px] font-semibold text-slate-800 dark:text-slate-100">
                           {n.title}

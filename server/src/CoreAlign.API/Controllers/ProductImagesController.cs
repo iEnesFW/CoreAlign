@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using CoreAlign.API.Common;
+using CoreAlign.Application.Common;
 using CoreAlign.Application.Products.Images;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +40,7 @@ public class ProductImagesController : ControllerBase
     {
         if (file is null || file.Length == 0)
         {
-            return BadRequest();
+            return BadRequest(ApiResponse<object>.Failure("A non-empty file is required.", StatusCodes.Status400BadRequest));
         }
 
         await using var stream = file.OpenReadStream();

@@ -2,19 +2,12 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { usePersistedState } from '@/shared/hooks/usePersistedState';
 
 export interface CollapsibleSectionProps {
-  /** Stable key — the collapsed/expanded state is persisted in localStorage under it. */
   storageKey: string;
-  /** Toggle label, e.g. "Özet kartları". */
   label: string;
   defaultCollapsed?: boolean;
   children: React.ReactNode;
 }
 
-/**
- * Wraps content (e.g. the stat strip) in a header-toggle whose collapsed state
- * the browser remembers per user. Lets users hide the top summary to give the
- * table + inline detail card more vertical room.
- */
 export const CollapsibleSection = ({
   storageKey,
   label,

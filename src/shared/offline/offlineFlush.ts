@@ -1,46 +1,28 @@
 import { logger } from '@/shared/lib/logger';
-import { installationAcceptanceApi } from '@/features/installation-acceptance/api/installationAcceptanceApi';
-import type {
-  AcceptInstallationInput,
-  AddPunchListItemInput,
-  CaptureSignatureInput,
-  RejectInstallationInput,
-  ResolvePunchListItemInput,
-  UpdateChecklistItemInput,
-  UploadPhotoInput,
-} from '@/features/installation-acceptance/model/installationAcceptance.types';
-import { MAX_RETRIES, offlineQueueDb, type OfflineMutation } from './offlineQueueDb';
+import {
+  MAX_RETRIES,
+  offlineQueueDb,
+  type OfflineMutation,
+  type OfflineMutationType,
+} from './offlineQueueDb';
+
+type OfflineExecutor = (payload: unknown) => Promise<void>;
+
+const executors = new Map<OfflineMutationType, OfflineExecutor>();
+
+export const registerOfflineExecutor = (
+  type: OfflineMutationType,
+  executor: OfflineExecutor,
+): void => {
+  executors.set(type, executor);
+};
 
 const executeMutation = async (mutation: OfflineMutation): Promise<void> => {
-  switch (mutation.type) {
-    case 'updateChecklist':
-      await installationAcceptanceApi.updateChecklist(mutation.payload as UpdateChecklistItemInput);
-      return;
-    case 'addPhoto':
-      await installationAcceptanceApi.addPhoto(mutation.payload as UploadPhotoInput);
-      return;
-    case 'captureSignature':
-      await installationAcceptanceApi.captureSignature(mutation.payload as CaptureSignatureInput);
-      return;
-    case 'acceptInstallation':
-      await installationAcceptanceApi.accept(mutation.payload as AcceptInstallationInput);
-      return;
-    case 'rejectInstallation':
-      await installationAcceptanceApi.reject(mutation.payload as RejectInstallationInput);
-      return;
-    case 'addPunchListItem':
-      await installationAcceptanceApi.addPunchListItem(mutation.payload as AddPunchListItemInput);
-      return;
-    case 'resolvePunchListItem':
-      await installationAcceptanceApi.resolvePunchListItem(
-        mutation.payload as ResolvePunchListItemInput,
-      );
-      return;
-    default: {
-      const exhaustive: never = mutation.type;
-      throw new Error(`Unknown offline mutation type: ${String(exhaustive)}`);
-    }
+  const executor = executors.get(mutation.type);
+  if (!executor) {
+    throw new Error(`No offline executor registered for mutation type: ${mutation.type}`);
   }
+  await executor(mutation.payload);
 };
 
 export interface FlushResult {

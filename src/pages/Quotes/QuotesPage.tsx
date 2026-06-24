@@ -185,7 +185,7 @@ export const QuotesPage = () => {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-500"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-primary-500"
           >
             <Plus size={13} />
             {t('quotes.newButton')}
@@ -344,11 +344,11 @@ type Tone = 'primary' | 'success' | 'danger' | 'default';
 
 const toneClasses: Record<Tone, string> = {
   primary:
-    'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-200 dark:hover:bg-indigo-900/60',
+    'border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-200 dark:hover:bg-primary-900/60',
   success:
-    'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200 dark:hover:bg-emerald-900/60',
+    'border-success-300 bg-success-50 text-success-700 hover:bg-success-100 dark:border-success-700 dark:bg-success-900/40 dark:text-success-200 dark:hover:bg-success-900/60',
   danger:
-    'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-900/40 dark:text-rose-200 dark:hover:bg-rose-900/60',
+    'border-danger-300 bg-danger-50 text-danger-700 hover:bg-danger-100 dark:border-danger-700 dark:bg-danger-900/40 dark:text-danger-200 dark:hover:bg-danger-900/60',
   default:
     'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800',
 };

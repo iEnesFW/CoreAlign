@@ -42,25 +42,25 @@ export const KpiStrip = ({ plan }: Props) => {
         icon={AlertTriangle}
         label={t('Mrp.Workbench.Kpi.StockoutRisk')}
         value={plan.stockoutRiskCount}
-        tone="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+        tone="bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300"
       />
       <Kpi
         icon={PackageX}
         label={t('Mrp.Workbench.Kpi.ProjectedStockouts')}
         value={plan.projectedStockoutCount}
-        tone="bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"
+        tone="bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300"
       />
       <Kpi
         icon={ShieldAlert}
         label={t('Mrp.Workbench.Kpi.OpenExceptions')}
         value={plan.actionMessageCount}
-        tone="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
+        tone="bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300"
       />
       <Kpi
         icon={Truck}
         label={t('Mrp.Workbench.Kpi.OnOrder')}
         value={plan.onOrderCount}
-        tone="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+        tone="bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300"
       />
     </div>
   );

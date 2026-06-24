@@ -1,0 +1,71 @@
+# Warranty (CoreAlign UI)
+
+"Warranty" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Warranty" area (English / Türkçe):
+
+- Cancel / İptal Et
+- Cancellation reason is required. / İptal nedeni gereklidir.
+- Warranty cancelled. / Garanti iptal edildi.
+- Create Warranty / Garanti Oluştur
+- Extend / Uzat
+- Warranty extended. / Garanti uzatıldı.
+- Months / Ay
+- Reason (optional) / Neden (isteğe bağlı)
+- Reason / Neden
+- Resume / Devam Ettir
+- Suspend / Askıya Al
+- Warranties expiring soon / Süresi yaklaşan garantiler
+- {{count}} expiring soon / {{count}} tanesi yakında sona eriyor
+- Full Service / Tam Servis
+- Installation / Montaj
+- Limited / Sınırlı
+- Manufacturer Defect / Üretici Hatası
+- No warranty contracts for the current filters. / Mevcut filtrelere uygun garanti sözleşmesi yok.
+- End / Bitiş
+- Mark Completed / Tamamlandı Olarak İşaretle
+- Schedule Maintenance / Bakım Planla
+- No maintenance scheduled. / Planlanmış bakım yok.
+- Last Completed / Son Tamamlanan
+- Next Due / Sonraki Tarih
+- Maintenance Schedules / Bakım Planları
+- Custom / Özel
+- Annual Maintenance / Yıllık Bakım
+- Quarterly / Üç Aylık
+- Semi-Annual / Altı Aylık
+- mo / ay
+- Assign / Ata
+- Cancel / İptal Et
+- Resolve / Çöz
+- Submit Ticket / Talep Gönder
+- Description / Açıklama
+- No tickets for the current filters. / Mevcut filtrelere uygun talep yok.
+- Open Service Ticket / Servis Talebi Aç
+- High / Yüksek
+- Priority / Öncelik
+- Low / Düşük
+- Normal
+- Urgent / Acil
+- Reported / Bildirim Tarihi
+- Assigned / Atandı
+- Cancelled / İptal Edildi
+- In Progress / Devam Ediyor
+- Status / Durum
+- Open / Açık
+- Resolved / Çözüldü
+- Customer reports and scheduled maintenance. / Müşteri bildirimleri ve planlı bakım.
+- Service Tickets / Servis Talepleri
+- Service ticket assigned. / Servis talebi atandı.
+- Service ticket created. / Servis talebi oluşturuldu.
+- Service ticket resolved. / Servis talebi çözüldü.
+- Inspection / İnceleme
+- Type / Tür
+- Out-of-Warranty Repair / Garanti Dışı Onarım
+- Preventive Maintenance / Önleyici Bakım
+- Warranty Claim / Garanti Talebi
+- Title and description are required. / Başlık ve açıklama gereklidir.
+- Start / Başlangıç
+- Active / Aktif
+- Cancelled / İptal Edildi
+- Expired / Süresi Doldu
+- Suspended / Askıya Alındı
+- Track warranty coverage, expiry dates, and extensions. / Garanti kapsamını, bitiş tarihlerini ve uzatmaları takip edin.
+- Warranty Contracts / Garanti Sözleşmeleri

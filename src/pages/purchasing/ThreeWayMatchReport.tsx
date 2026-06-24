@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle2, ListChecks } from 'lucide-react';
+import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
+import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Input } from '@/shared/ui/Input/Input';
+import { Select } from '@/shared/ui/Select/Select';
+import { Badge } from '@/shared/ui/Badge/Badge';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { formatCurrency } from '@/shared/lib/format';
 import { useThreeWayMatchQuery } from '@/features/purchasing/hooks/useVendorBilling';
@@ -22,57 +27,54 @@ const ThreeWayMatchReport = () => {
   const items = rows.data?.data ?? [];
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-            <ListChecks size={20} />
-            {t('VendorBills.threeWayMatch.title', { defaultValue: '3-Way Match Raporu' })}
-          </h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-            {t('VendorBills.threeWayMatch.subtitle', {
-              defaultValue:
-                'Sipariş ↔ Mal Kabul ↔ Fatura uyumsuzluklarını listeler. Discrepancy kodlarına göre filtreleyin.',
-            })}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={vendorId}
-          onChange={(e) => setVendorId(e.target.value)}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        >
-          <option value="">
-            {t('VendorBills.threeWayMatch.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
-          </option>
-          {(vendors.data?.data?.items ?? []).map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="date"
-          value={fromUtc}
-          onChange={(e) => setFromUtc(e.target.value)}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        />
-        <input
-          type="date"
-          value={toUtc}
-          onChange={(e) => setToUtc(e.target.value)}
-          className="rounded border border-slate-200 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        />
-        <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
-          {t('VendorBills.threeWayMatch.count', {
-            defaultValue: '{{count}} satır',
-            count: items.length,
+    <ListPageTemplate
+      header={
+        <PageHeader
+          icon={<ListChecks size={20} />}
+          title={t('VendorBills.threeWayMatch.title', { defaultValue: '3-Way Match Raporu' })}
+          subtitle={t('VendorBills.threeWayMatch.subtitle', {
+            defaultValue:
+              'Sipariş ↔ Mal Kabul ↔ Fatura uyumsuzluklarını listeler. Discrepancy kodlarına göre filtreleyin.',
           })}
-        </span>
-      </div>
-
+        />
+      }
+      toolbar={
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={vendorId}
+            onChange={(e) => setVendorId(e.target.value)}
+            className="w-full sm:w-56"
+          >
+            <option value="">
+              {t('VendorBills.threeWayMatch.allVendors', { defaultValue: 'Tüm tedarikçiler' })}
+            </option>
+            {(vendors.data?.data?.items ?? []).map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </Select>
+          <Input
+            type="date"
+            value={fromUtc}
+            onChange={(e) => setFromUtc(e.target.value)}
+            className="w-full sm:w-44"
+          />
+          <Input
+            type="date"
+            value={toUtc}
+            onChange={(e) => setToUtc(e.target.value)}
+            className="w-full sm:w-44"
+          />
+          <span className="ml-auto text-[11px] text-slate-500 dark:text-slate-400">
+            {t('VendorBills.threeWayMatch.count', {
+              defaultValue: '{{count}} satır',
+              count: items.length,
+            })}
+          </span>
+        </div>
+      }
+    >
       <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
         {rows.isPending ? (
           <div className="px-3 py-8 text-center text-sm text-slate-500">
@@ -147,27 +149,24 @@ const ThreeWayMatchReport = () => {
                   </td>
                   <td className="px-3 py-2 text-center">
                     {r.discrepancies.length === 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">
+                      <Badge variant="success" className="gap-1">
                         <CheckCircle2 size={10} />
                         {t('VendorBills.threeWayMatch.matched', { defaultValue: 'Uyumlu' })}
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">
+                      <Badge variant="danger" className="gap-1">
                         <AlertTriangle size={10} />
                         {t('VendorBills.threeWayMatch.mismatch', { defaultValue: 'Uyumsuz' })}
-                      </span>
+                      </Badge>
                     )}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-wrap items-center gap-1">
                       {r.discrepancies.map((code) => (
-                        <span
-                          key={code}
-                          className="inline-flex items-center gap-1 rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300"
-                        >
+                        <Badge key={code} variant="danger" className="gap-1">
                           <AlertTriangle size={10} />
                           {t(`VendorBills.threeWayMatch.codes.${code}`, { defaultValue: code })}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   </td>
@@ -177,7 +176,7 @@ const ThreeWayMatchReport = () => {
           </table>
         )}
       </div>
-    </div>
+    </ListPageTemplate>
   );
 };
 

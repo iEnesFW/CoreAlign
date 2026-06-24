@@ -57,7 +57,7 @@ export function SegmentedControl<T extends string>({
                 className={cn(
                   'ml-0.5 rounded-full px-1.5 py-px text-[9px] font-semibold tabular-nums',
                   active
-                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300'
                     : 'bg-slate-200/80 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
                 )}
               >

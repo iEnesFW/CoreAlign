@@ -63,7 +63,7 @@ export const ReportBuilderPage = () => {
           <button
             type="button"
             onClick={handleSave}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+            className="rounded bg-primary-600 px-3 py-1.5 text-sm text-white hover:bg-primary-700"
           >
             {t('BI.Builder.Save', { defaultValue: 'Save' })}
           </button>

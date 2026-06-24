@@ -161,7 +161,7 @@ export const CookieBanner = () => {
                     onChange={cat.onChange}
                     disabled={cat.disabled}
                     aria-label={cat.title}
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                   {cat.disabled ? t('consent.banner.alwaysOn') : null}
                 </label>
@@ -199,7 +199,7 @@ export const CookieBanner = () => {
           <button
             type="button"
             onClick={acceptAll}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+            className="rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
           >
             {t('consent.banner.acceptAll')}
           </button>

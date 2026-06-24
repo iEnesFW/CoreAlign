@@ -15,10 +15,6 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
-/**
- * Renders one top-level comment plus its (1-level) replies, with an inline
- * "reply" toggle and an author-only delete button.
- */
 export const CommentItem = ({
   comment,
   replies,
@@ -51,7 +47,7 @@ export const CommentItem = ({
           <button
             type="button"
             onClick={() => setReplying((v) => !v)}
-            className="rounded px-1.5 py-0.5 font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+            className="rounded px-1.5 py-0.5 font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10"
           >
             {replying ? t('common.cancel') : t('collab.comments.reply')}
           </button>
@@ -61,7 +57,7 @@ export const CommentItem = ({
             type="button"
             onClick={() => onDelete(comment.id)}
             disabled={busyDeleting}
-            className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 font-medium text-danger-600 hover:bg-danger-50 disabled:opacity-50 dark:text-danger-300 dark:hover:bg-danger-500/10"
           >
             <Trash2 size={10} />
             {t('common.delete')}
@@ -132,7 +128,7 @@ const ReplyItem = ({ comment, currentUserId, busyDeleting, onDelete }: ReplyItem
             type="button"
             onClick={() => onDelete(comment.id)}
             disabled={busyDeleting}
-            className="mt-1 inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+            className="mt-1 inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[10px] font-medium text-danger-600 hover:bg-danger-50 disabled:opacity-50 dark:text-danger-300 dark:hover:bg-danger-500/10"
           >
             <Trash2 size={9} />
             {t('common.delete')}

@@ -10,9 +10,9 @@ import type { ProjectTemplateVisibility } from '@/features/marketplace/api/marke
 
 const visibilityBadge: Record<ProjectTemplateVisibility, string> = {
   Private: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
-  Pending: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  Public: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  Rejected: 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300',
+  Pending: 'bg-warning-100 text-warning-800 dark:bg-warning-900/30 dark:text-warning-300',
+  Public: 'bg-success-100 text-success-800 dark:bg-success-900/30 dark:text-success-300',
+  Rejected: 'bg-danger-100 text-danger-800 dark:bg-danger-900/30 dark:text-danger-300',
 };
 
 const formatDate = (iso: string | null): string => {
@@ -41,7 +41,7 @@ export const MyMarketplaceSubmissionsPage = () => {
           <button
             type="button"
             onClick={() => setSubmitOpen(true)}
-            className="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center gap-2 rounded-md bg-success-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-success-700"
           >
             <Upload size={14} />
             {t('Marketplace.MySubmissions.New', 'Submit another')}
@@ -101,7 +101,7 @@ export const MyMarketplaceSubmissionsPage = () => {
                         {submission.visibility}
                       </span>
                       {submission.visibility === 'Rejected' && submission.rejectionReason && (
-                        <p className="mt-1 max-w-xs text-[11px] text-rose-600 dark:text-rose-400">
+                        <p className="mt-1 max-w-xs text-[11px] text-danger-600 dark:text-danger-400">
                           {submission.rejectionReason}
                         </p>
                       )}

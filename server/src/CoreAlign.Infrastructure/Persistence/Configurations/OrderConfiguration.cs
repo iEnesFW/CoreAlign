@@ -68,7 +68,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.HasIndex(o => new { o.TenantId, o.OrderNumber }).IsUnique();
         builder.HasIndex(o => new { o.TenantId, o.CustomerId });
-        builder.HasIndex(o => new { o.TenantId, o.Status });
+        builder.HasIndex(o => new { o.TenantId, o.Status, o.OrderDate }).IsDescending(false, false, true);
         builder.HasIndex(o => new { o.TenantId, o.OrderDate }).IsDescending(false, true);
         builder.HasIndex(o => new { o.TenantId, o.DueDate });
 
@@ -94,6 +94,7 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.Property(l => l.QuantityInvoiced).HasColumnType("numeric(18,4)");
         builder.Property(l => l.QuantityReturned).HasColumnType("numeric(18,4)");
         builder.Property(l => l.QuantityCancelled).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.QuantityScrapped).HasColumnType("numeric(18,4)");
         builder.Property(l => l.UnitPrice).HasColumnType("numeric(18,4)");
         builder.Property(l => l.ListPriceSnapshot).HasColumnType("numeric(18,4)");
         builder.Property(l => l.LineDiscountPercent).HasColumnType("numeric(6,3)");
@@ -160,7 +161,7 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
 
         builder.HasIndex(s => new { s.TenantId, s.ShipmentNumber }).IsUnique();
         builder.HasIndex(s => new { s.TenantId, s.OrderId });
-        builder.HasIndex(s => new { s.TenantId, s.Status });
+        builder.HasIndex(s => new { s.TenantId, s.Status, s.CreatedDate }).IsDescending(false, false, true);
         builder.HasIndex(s => new { s.TenantId, s.CustomerId });
     }
 }

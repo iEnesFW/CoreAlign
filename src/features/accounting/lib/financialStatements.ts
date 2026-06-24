@@ -1,9 +1,6 @@
 import type { AccountType } from '../model/glAccount.types';
 import type { TrialBalanceRow } from '../model/journalEntry.types';
 
-/** Signed balance in the account's *normal* direction (always positive when the
- *  account carries its natural balance). Avoids relying on the report's balance
- *  sign convention. */
 export const naturalBalance = (r: TrialBalanceRow): number =>
   r.normalSide === 'Debit' ? r.debit - r.credit : r.credit - r.debit;
 
@@ -66,7 +63,6 @@ export const buildBalanceSheet = (rows: TrialBalanceRow[]): BalanceSheet => {
   const assets = sectionFor(rows, ['Asset']);
   const liabilities = sectionFor(rows, ['Liability']);
   const equity = sectionFor(rows, ['Equity']);
-  // Period net income rolls into equity so the sheet balances before closing entries.
   const { netIncome } = buildIncomeStatement(rows);
   const totalLiabilitiesAndEquity = liabilities.total + equity.total + netIncome;
   const isBalanced = Math.abs(assets.total - totalLiabilitiesAndEquity) < 0.01;

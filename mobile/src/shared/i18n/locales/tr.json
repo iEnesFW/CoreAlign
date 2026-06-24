@@ -50,7 +50,16 @@
     "punchPlaceholder": "Eksiği tanımla",
     "addPunch": "Ekle",
     "notes": "Notlar",
-    "notesPlaceholder": "Ek notlar"
+    "notesPlaceholder": "Ek notlar",
+    "statusPass": "Uygun",
+    "statusFail": "Hata",
+    "statusNa": "Yok",
+    "photoRequired": "Fotoğraf gerekli",
+    "cameraErrorTitle": "Kamera",
+    "signatureErrorTitle": "İmza",
+    "photoSynced": "eşitlendi",
+    "photoPending": "bekliyor",
+    "resolve": "Çöz"
   },
   "ticket": {
     "listTitle": "Servis taleplerim",
@@ -84,7 +93,13 @@
       "Resolved": "Çözüldü",
       "Closed": "Kapalı"
     },
-    "empty": "Atanmış talep yok"
+    "empty": "Atanmış talep yok",
+    "priorityLevels": {
+      "Low": "Düşük",
+      "Normal": "Normal",
+      "High": "Yüksek",
+      "Critical": "Kritik"
+    }
   },
   "project": {
     "notFound": "Proje bulunamadı",

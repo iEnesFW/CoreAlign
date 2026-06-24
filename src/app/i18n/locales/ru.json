@@ -1,4 +1,16 @@
 {
+  "AiHelper": {
+    "Launcher": "AI Assistant",
+    "Title": "CoreAlign Assistant",
+    "Subtitle": "Ask anything about the app",
+    "Placeholder": "Ask a question...",
+    "Send": "Send",
+    "Close": "Close",
+    "Welcome": "Hi! I'm your CoreAlign assistant. How can I help you?",
+    "Sources": "Sources",
+    "Error": "Something went wrong. Please try again.",
+    "Thinking": "Thinking..."
+  },
   "inventory": {
     "summary": {
       "totalOnHand": "Всего в наличии",
@@ -185,7 +197,7 @@
     "Required": "Это поле обязательно.",
     "InvalidEmail": "Введите корректный адрес электронной почты.",
     "EmailTooLong": "Адрес электронной почты слишком длинный.",
-    "PasswordTooShort": "Пароль должен содержать минимум 8 символов.",
+    "PasswordTooShort": "Пароль должен содержать минимум 12 символов.",
     "PasswordMismatch": "Пароли не совпадают.",
     "PasswordNeedsUppercase": "Пароль должен содержать хотя бы одну заглавную букву.",
     "PasswordNeedsLowercase": "Пароль должен содержать хотя бы одну строчную букву.",
@@ -2204,6 +2216,18 @@
       "NoSelection": "Выберите прогон или панель в 3D-сцене.",
       "DefaultRunLabel": "Прогон",
       "RunAdded": "Прогон добавлен",
+      "FloatingWarning": "⚠ {{count}} объект(ов) без опоры (висит в воздухе)",
+      "CatalogWarning": "⚠ {{count}} секц. превышают лимиты каталога (размер/вес панели)",
+      "ArrayOverlap": "Добавлено копий: {{placed}}, пропущено из-за пересечения: {{skipped}}.",
+      "Export": {
+        "Title": "Экспорт",
+        "Dxf": "DXF (2D-план)",
+        "Glb": "glTF/GLB (3D)",
+        "Pdf": "PDF (печать)",
+        "CatalogConfirm": "{{count}} секц. превышают лимиты каталога (не изготовить). Всё равно экспортировать?",
+        "CatalogWarn": "⚠ {{count}} секц. превышают лимиты каталога",
+        "CatalogNotLoadedConfirm": "Каталог не загружен; изготовимость не проверена. Всё равно экспортировать?"
+      },
       "ConnectionInspector": "Угловое соединение",
       "ViewSplit": "Разделённый вид",
       "ViewPlan": "План (2D)",
@@ -2979,7 +3003,9 @@
       "Sort.Rating": "Высокий рейтинг",
       "Sort.Alphabetical": "По алфавиту"
     },
-    "Card": { "NoPreview": "Нет превью" },
+    "Card": {
+      "NoPreview": "Нет превью"
+    },
     "Detail": {
       "Back": "Назад к маркетплейсу",
       "Install": "Установить шаблон",
@@ -3752,6 +3778,704 @@
       "Button": "Eksport",
       "Success": "Eksport zagruzhen",
       "Failed": "Oshibka eksporta"
+    }
+  },
+  "Vendors": {
+    "title": "Поставщики",
+    "subtitle": "Карточка поставщика, взаиморасчёты и банковские реквизиты.",
+    "newVendor": "Новый поставщик",
+    "searchPlaceholder": "Имя, код, ИНН, эл. почта…",
+    "allStatuses": "Все статусы",
+    "itemLabel": "поставщиков",
+    "loading": "Загрузка…",
+    "empty": "Нет поставщиков, соответствующих фильтрам.",
+    "cols": {
+      "code": "Код",
+      "vendor": "Поставщик",
+      "taxNumber": "ИНН",
+      "contact": "Контакт",
+      "status": "Статус",
+      "balance": "Баланс",
+      "overdue": "Просрочено"
+    },
+    "status": {
+      "Active": "Активен",
+      "Blocked": "Заблокирован",
+      "Archived": "В архиве",
+      "PendingApproval": "Ожидает подтверждения"
+    },
+    "actions": {
+      "approve": "Подтвердить",
+      "block": "Заблокировать",
+      "archive": "Архивировать",
+      "detail": "Подробнее"
+    },
+    "approve": {
+      "success": "Поставщик подтверждён."
+    },
+    "archive": {
+      "title": "Архивировать",
+      "message": "Архивировать этого поставщика?",
+      "confirm": "Архивировать",
+      "success": "Поставщик архивирован."
+    },
+    "block": {
+      "title": "Заблокировать поставщика",
+      "reasonLabel": "Причина блокировки *",
+      "submit": "Заблокировать",
+      "success": "Поставщик заблокирован."
+    },
+    "cancel": "Отмена",
+    "saving": "Сохранение…",
+    "save": "Сохранить",
+    "add": "Добавить",
+    "modal": {
+      "newAddress": "Новый адрес",
+      "newContact": "Новый контакт",
+      "newBankAccount": "Новый банковский счёт"
+    },
+    "address": {
+      "label": "Метка",
+      "line1": "Адрес, строка 1",
+      "line2": "Адрес, строка 2",
+      "labelPlaceholder": "Главный офис / Склад / Счёт",
+      "postalCode": "Почтовый индекс",
+      "country": "Страна",
+      "province": "Область",
+      "district": "Район",
+      "isPrimary": "Основной адрес",
+      "success": "Адрес добавлен."
+    },
+    "contact": {
+      "name": "ФИО",
+      "role": "Должность",
+      "email": "Эл. почта",
+      "phone": "Телефон",
+      "isPrimary": "Основной контакт",
+      "success": "Контакт добавлен."
+    },
+    "bank": {
+      "bankName": "Банк",
+      "branchName": "Отделение",
+      "accountHolder": "Владелец счёта",
+      "iban": "IBAN",
+      "currency": "Валюта",
+      "isPrimary": "Основной счёт",
+      "success": "Банковский счёт добавлен."
+    },
+    "defaultCountry": "Турция"
+  },
+  "VendorDetail": {
+    "notFound": "Поставщик не найден.",
+    "loading": "Загрузка…",
+    "backToList": "К списку поставщиков",
+    "edit": "Редактировать",
+    "currentBalance": "Текущий баланс",
+    "overdue": "Просрочено",
+    "tabs": {
+      "overview": "Обзор",
+      "addresses": "Адреса",
+      "contacts": "Контакты",
+      "bank": "Банковские реквизиты",
+      "ledger": "Взаиморасчёты"
+    },
+    "fields": {
+      "code": "Код",
+      "taxNumber": "ИНН",
+      "taxOffice": "Налоговая",
+      "email": "Эл. почта",
+      "phone": "Тел.",
+      "type": "Тип",
+      "currency": "Валюта",
+      "paymentTerms": "Условия оплаты",
+      "territory": "Регион",
+      "classification": "Классификация",
+      "website": "Веб",
+      "approval": "Подтверждение",
+      "rating": "Эффективность",
+      "blockReason": "Причина блокировки",
+      "notes": "Заметки"
+    },
+    "business": "Компания",
+    "individual": "Физлицо",
+    "notApproved": "Ещё не подтверждён",
+    "star": "{{count}} звезда",
+    "rating": {
+      "success": "Оценка эффективности обновлена."
+    },
+    "delete": {
+      "title": "Удалить",
+      "message": "Удалить {{label}}?",
+      "confirm": "Удалить",
+      "success": "Удалено."
+    },
+    "primary": "Основной",
+    "addresses": {
+      "empty": "Адреса ещё не заданы.",
+      "add": "Добавить адрес"
+    },
+    "contacts": {
+      "empty": "Контакты ещё не заданы.",
+      "add": "Добавить контакт"
+    },
+    "bank": {
+      "empty": "Банковские счета ещё не заданы.",
+      "add": "Добавить банковский счёт"
+    },
+    "ledger": {
+      "date": "Дата",
+      "document": "Документ",
+      "description": "Описание",
+      "debit": "Дебет",
+      "credit": "Кредит",
+      "balance": "Баланс",
+      "empty": "Движений по взаиморасчётам пока нет."
+    }
+  },
+  "VendorBills": {
+    "threeWayMatch": {
+      "allVendors": "Все поставщики",
+      "cols": {
+        "billed": "Выставлено",
+        "billedAmount": "Сумма счёта",
+        "expected": "Ожидается",
+        "flags": "Расхождения",
+        "po": "№ заказа",
+        "product": "Товар",
+        "received": "Получено",
+        "vendor": "Поставщик",
+        "match": "Сопоставление"
+      },
+      "codes": {
+        "UnderReceived": "Недополучено",
+        "OverReceived": "Получено сверх нормы",
+        "UnderBilled": "Недовыставлено",
+        "OverBilled": "Перевыставлено",
+        "BillExceedsPo": "Счёт превышает заказ"
+      },
+      "count": "{{count}} строк",
+      "empty": "Все цепочки «заказ-приёмка-счёт» совпадают.",
+      "navLabel": "Трёхстороннее сопоставление",
+      "subtitle": "Перечисляет расхождения «заказ ↔ приёмка ↔ счёт». Фильтруйте по коду расхождения.",
+      "title": "Отчёт о трёхстороннем сопоставлении",
+      "matched": "Совпадает",
+      "mismatch": "Расхождение"
+    },
+    "Status": {
+      "Draft": "Черновик",
+      "Posted": "Проведён",
+      "PartiallyPaid": "Частично оплачен",
+      "Paid": "Оплачен",
+      "Cancelled": "Отменён",
+      "PendingApproval": "На удержании / требуется подтверждение"
+    }
+  },
+  "VendorPayments": {
+    "applications": {
+      "amount": "Сумма",
+      "date": "Дата",
+      "empty": "Платежи не применены.",
+      "paymentNo": "№ платежа",
+      "title": "Применённые платежи"
+    },
+    "apply": {
+      "amount": "Сумма",
+      "amountDue": "К оплате",
+      "billTotal": "Итого по счёту",
+      "maxHint": "Максимум {{m}}",
+      "noEligible": "Для этого поставщика нет применимых платежей.",
+      "notes": "Заметки",
+      "payment": "Платёж",
+      "pickPayment": "Выберите платёж…",
+      "submit": "Применить",
+      "subtitle": "Выберите платёж для применения к счёту {{n}}.",
+      "title": "Применить платёж поставщику",
+      "unapplied": "не применено"
+    },
+    "applyPayment": "Применить существующий платёж",
+    "applySuccess": "Платёж применён к счёту.",
+    "viewApplications": "Применённые платежи"
+  },
+  "grn": {
+    "page": {
+      "title": "Приёмки товаров",
+      "subtitle": "Просматривайте акты приёмки и при необходимости отменяйте их."
+    },
+    "count": "{{count}} приёмок",
+    "empty": "Приёмки товаров не найдены.",
+    "toggleLines": "Показать/скрыть строки",
+    "filter": {
+      "vendor": "Поставщик",
+      "status": "Статус",
+      "allVendors": "Все поставщики",
+      "allStatuses": "Все статусы"
+    },
+    "status": {
+      "Posted": "Проведена",
+      "Reversed": "Отменена"
+    },
+    "cols": {
+      "number": "Номер",
+      "vendor": "Поставщик",
+      "po": "Заказ",
+      "date": "Дата",
+      "lines": "Строки",
+      "total": "Сумма",
+      "status": "Статус"
+    },
+    "line": {
+      "product": "Товар",
+      "qty": "Количество",
+      "unitCost": "Себестоимость",
+      "lineCost": "Сумма строки"
+    },
+    "reverse": {
+      "action": "Отменить",
+      "title": "Отмена приёмки товаров",
+      "hint": "Отмена возвращает движения склада и принятое количество по заказу и сторнирует бухгалтерскую проводку.",
+      "reasonLabel": "Причина отмены",
+      "submit": "Отменить",
+      "done": "Приёмка товаров отменена."
+    }
+  },
+  "BalanceSheet": {
+    "title": "Баланс",
+    "subtitle": "Активы, обязательства и капитал на выбранную дату. Прибыль периода включается в капитал до закрытия.",
+    "balanced": "Баланс сходится",
+    "variance": "Расхождение: {{value}}",
+    "computing": "Вычисление…",
+    "empty": "На выбранную дату проведённых журнальных записей не найдено.",
+    "assets": "Активы",
+    "liabilities": "Обязательства",
+    "equity": "Капитал",
+    "currentYearEarnings": "Чистая прибыль/убыток (до закрытия)",
+    "totalAssets": "Итого активы",
+    "totalLiabilitiesAndEquity": "Итого пассивы"
+  },
+  "IncomeStatement": {
+    "title": "Отчёт о прибылях и убытках",
+    "subtitle": "Выручка, себестоимость и операционные расходы по проведённым журнальным записям за выбранный период.",
+    "computing": "Вычисление…",
+    "empty": "За выбранный период проведённых журнальных записей не найдено.",
+    "netProfit": "Чистая прибыль: {{value}}",
+    "netLoss": "Чистый убыток: {{value}}",
+    "revenue": "Выручка",
+    "totalRevenue": "Итого выручка",
+    "cogs": "Себестоимость продаж (COGS)",
+    "grossProfit": "Валовая прибыль",
+    "opex": "Операционные расходы",
+    "netIncomeRow": "Чистая прибыль",
+    "netLossRow": "Чистый убыток"
+  },
+  "YearEndClose": {
+    "title": "Закрытие года (Заключительная проводка)",
+    "subtitle": "Закрытие года по TDHP: все счета доходов/расходов 6xx переносятся на 690 Прибыль/убыток периода, затем 690 переносится на 590 (прибыль) или 591 (убыток) в капитале.",
+    "fiscalYear": "Финансовый год",
+    "prevYear": "Предыдущий год",
+    "nextYear": "Следующий год",
+    "alreadyClosed": "{{year}} закрыт",
+    "open": "{{year}} открыт",
+    "closedHint": "Для этого финансового года уже существует заключительная проводка. Операция идемпотентна; повторный запуск не создаст новую проводку.",
+    "guardHint": "Закрытие — важная операция, которая создаёт проведённую заключительную проводку (Kapanış). Перед продолжением убедитесь, что оборотно-сальдовая ведомость периода верна.",
+    "runClose": "Выполнить закрытие года",
+    "closing": "Закрытие…",
+    "refresh": "Показать закрытие",
+    "runOpen": "Создать вступительную проводку {{year}}",
+    "opening": "Открытие…",
+    "openingDone": "Открытие {{year}} создано",
+    "reverseClose": "Отменить закрытие",
+    "reversing": "Отмена…",
+    "confirmTitle": "Закрытие года",
+    "confirmMessage": "Для {{year}} будет создана заключительная проводка года по TDHP: счета доходов/расходов 6xx переносятся на 690, а 690 переносится на счет капитала 590/591. Это создаёт проведённую проводку.",
+    "confirmAction": "Создать заключительную проводку",
+    "confirmReverse": "Закрытие года {{year}} будет отменено (сторнирующая проводка). Делайте это только если вступительная проводка ещё не создана.",
+    "reverseTitle": "Отменить закрытие",
+    "reverseAction": "Отменить",
+    "closed": "Финансовый год {{year}} закрыт.",
+    "opened": "Вступительная проводка {{year}} создана.",
+    "reversed": "Закрытие {{year}} отменено.",
+    "alreadyExistedToast": "{{year}} уже закрыт; показана существующая проводка.",
+    "netResult": "Результат периода",
+    "netProfit": "Чистая прибыль: {{value}}",
+    "netLoss": "Чистый убыток: {{value}}",
+    "transferProfit": "Чистая прибыль периода перенесена в капитал",
+    "transferLoss": "Чистый убыток периода перенесён в капитал",
+    "closingEntryCaption": "Заключительная проводка",
+    "openingEntryCaption": "Вступительная проводка ({{year}})",
+    "posted": "Проведено",
+    "code": "Код",
+    "accountName": "Счёт",
+    "debit": "Дебет",
+    "credit": "Кредит",
+    "total": "Итого"
+  },
+  "Accounting": {
+    "glPostingMap": {
+      "help": "Укажите, на какой счёт ГК проводится каждая роль при создании автоматических журнальных записей (продажи, поступления, счета/платежи поставщиков, приёмка товаров, себестоимость). Пустые строки используют код TDHP по умолчанию; если подходящий счёт не найден, запись молча пропускается и основной процесс не прерывается.",
+      "columns": {
+        "role": "Роль",
+        "default": "По умолчанию",
+        "accountCode": "Код счёта",
+        "account": "Счёт",
+        "status": "Статус"
+      },
+      "roles": {
+        "AccountsReceivable": "Дебиторская задолженность (AR)",
+        "SalesRevenue": "Выручка от продаж",
+        "OutputVat": "НДС к уплате",
+        "Cash": "Касса",
+        "Bank": "Банк",
+        "AccountsPayable": "Кредиторская задолженность (AP)",
+        "InputVat": "НДС к вычету",
+        "Inventory": "Запасы",
+        "CostOfGoodsSold": "Себестоимость продаж (COGS)",
+        "GoodsReceiptClearing": "Клиринг приёмки товаров (GR/IR)",
+        "PurchaseExpense": "Расходы на закупку",
+        "InventoryWriteOff": "Списание запасов"
+      },
+      "loading": "Загрузка…",
+      "loadError": "Не удалось загрузить сопоставления.",
+      "empty": "Сопоставления не найдены.",
+      "codeRequired": "Код счёта обязателен.",
+      "saved": "Сопоставление счёта сохранено.",
+      "customized": "настроено",
+      "resolved": "сопоставлено",
+      "unresolved": "счёт не найден"
+    },
+    "Reconciliation": {
+      "title": "Сверка",
+      "subtitle": "Сальдо контрольных счетов в главной книге в сравнении с итогами вспомогательных книг на выбранную дату.",
+      "asOf": "По состоянию на",
+      "computing": "Расчёт…",
+      "empty": "На выбранную дату нет контрольных счетов для сверки.",
+      "allReconciled": "Всё сверено",
+      "notReconciled": "Обнаружены расхождения",
+      "controlAccount": "Контрольный счёт",
+      "subledger": "Вспомогательная книга",
+      "glBalance": "Сальдо главной книги",
+      "subledgerBalance": "Сальдо вспомогательной книги",
+      "variance": "Расхождение",
+      "reconciled": "Сверено?",
+      "yes": "Да",
+      "no": "Нет"
+    }
+  },
+  "Settings": {
+    "tabs": {
+      "glPostingMap": "Сопоставление ГК"
+    }
+  },
+  "Sidebar": {
+    "sections": {
+      "hrPayroll": "Кадры и зарплата"
+    }
+  },
+  "Payroll": {
+    "nav": {
+      "employees": "Сотрудники",
+      "payrollRuns": "Расчёты зарплаты",
+      "parameters": "Параметры расчёта"
+    },
+    "employmentStatus": {
+      "Active": "Активен",
+      "OnLeave": "В отпуске",
+      "Terminated": "Уволен"
+    },
+    "runStatus": {
+      "Draft": "Черновик",
+      "Calculated": "Рассчитано",
+      "Approved": "Утверждено",
+      "Posted": "Проведено",
+      "Paid": "Оплачено"
+    },
+    "componentType": {
+      "BaseSalary": "Base Salary",
+      "Meal": "Meal",
+      "Transport": "Transport",
+      "Bonus": "Bonus",
+      "Premium": "Premium",
+      "Overtime": "Overtime",
+      "Family": "Family Allowance",
+      "Child": "Child Allowance"
+    },
+    "deductionType": {
+      "Advance": "Аванс",
+      "Garnishment": "Удержание",
+      "UnionDues": "Union Dues",
+      "PrivatePensionBES": "Private Pension (BES)",
+      "Custom": "Other"
+    },
+    "employees": {
+      "title": "Сотрудники",
+      "subtitle": "Управление данными сотрудников, зарплатами и удержаниями.",
+      "new": "Новый сотрудник",
+      "searchPlaceholder": "Поиск по имени, номеру или отделу…",
+      "statusAria": "Фильтр по статусу",
+      "all": "Все",
+      "resultCountLabel": "сотрудников",
+      "empty": "Сотрудники не найдены.",
+      "cols": {
+        "number": "№",
+        "name": "ФИО",
+        "tc": "ИНН",
+        "department": "Отдел",
+        "status": "Статус",
+        "baseSalary": "Оклад (брутто)",
+        "hireDate": "Приём"
+      }
+    },
+    "employeeForm": {
+      "newTitle": "Новый сотрудник",
+      "editTitle": "Изменить сотрудника",
+      "nameRequired": "Имя и фамилия обязательны.",
+      "tcRequired": "ИНН обязателен.",
+      "salaryRequired": "Введите корректную зарплату.",
+      "created": "Сотрудник создан.",
+      "updated": "Сотрудник обновлён.",
+      "firstName": "Имя",
+      "lastName": "Фамилия",
+      "nationalId": "ИНН",
+      "employeeNumber": "Таб. №",
+      "jobTitle": "Должность",
+      "department": "Отдел",
+      "email": "Эл. почта",
+      "phone": "Телефон",
+      "iban": "IBAN",
+      "bankName": "Банк",
+      "baseSalary": "Оклад (брутто)",
+      "currency": "Валюта",
+      "hireDate": "Дата приёма",
+      "employmentType": "Employment Type",
+      "salaryBasis": "Salary Basis",
+      "dependentCount": "Dependents",
+      "spouseEmployed": "Spouse Employed"
+    },
+    "employeeDetail": {
+      "notFound": "Сотрудник не найден.",
+      "backToList": "Сотрудники",
+      "baseSalary": "Оклад (брутто)",
+      "putOnLeave": "Отправить в отпуск",
+      "returnFromLeave": "Вернуть на работу",
+      "terminate": "Уволить",
+      "terminateTitle": "Увольнение",
+      "terminateConfirm": "Уволить {{name}}?",
+      "terminated": "Сотрудник уволен.",
+      "leaveDone": "Отпуск записан.",
+      "returnDone": "Возврат из отпуска записан.",
+      "addComponent": "Добавить компонент",
+      "addDeduction": "Добавить удержание",
+      "componentsEmpty": "Нет компонентов зарплаты.",
+      "deductionsEmpty": "Нет удержаний.",
+      "deleteComponentTitle": "Удалить компонент",
+      "deleteComponentConfirm": "Удалить {{name}}?",
+      "componentDeleted": "Компонент удалён.",
+      "deleteDeductionTitle": "Удалить удержание",
+      "deleteDeductionConfirm": "Удалить {{name}}?",
+      "deductionDeleted": "Удержание удалено.",
+      "tabs": {
+        "overview": "Обзор",
+        "components": "Компоненты зарплаты",
+        "deductions": "Удержания"
+      },
+      "fields": {
+        "number": "№",
+        "tc": "ИНН",
+        "iban": "IBAN",
+        "department": "Отдел",
+        "email": "Эл. почта",
+        "phone": "Телефон",
+        "hireDate": "Приём",
+        "terminationDate": "Дата увольнения",
+        "currency": "Валюта",
+        "payFrequency": "Периодичность выплат",
+        "bankName": "Банк",
+        "componentsCount": "Компоненты",
+        "notes": "Заметки"
+      }
+    },
+    "componentForm": {
+      "newTitle": "Добавить компонент зарплаты",
+      "editTitle": "Изменить компонент зарплаты",
+      "nameRequired": "Имя компонента обязательно.",
+      "amountRequired": "Введите корректную сумму.",
+      "created": "Компонент добавлен.",
+      "updated": "Компонент обновлён.",
+      "type": "Тип",
+      "name": "Имя",
+      "amount": "Сумма",
+      "effectiveFrom": "Действует с",
+      "effectiveTo": "Действует до",
+      "recurring": "Периодический",
+      "taxable": "Облагается налогом"
+    },
+    "deductionForm": {
+      "newTitle": "Добавить удержание",
+      "editTitle": "Изменить удержание",
+      "nameRequired": "Имя удержания обязательно.",
+      "amountRequired": "Введите корректную сумму.",
+      "created": "Удержание добавлено.",
+      "updated": "Удержание обновлено.",
+      "type": "Тип",
+      "name": "Имя",
+      "amount": "Общая сумма",
+      "remaining": "Остаток",
+      "installment": "Взнос",
+      "effectiveFrom": "С",
+      "effectiveTo": "До",
+      "recurring": "Повторять каждый период"
+    },
+    "runs": {
+      "title": "Расчёты зарплаты",
+      "subtitle": "Создание, расчёт и выплата ежемесячных периодов зарплаты.",
+      "new": "Новый расчёт",
+      "newTitle": "Новый расчёт зарплаты",
+      "create": "Создать",
+      "created": "Расчёт создан.",
+      "statusAria": "Фильтр по статусу",
+      "all": "Все",
+      "resultCountLabel": "расчётов",
+      "empty": "Расчёты не найдены.",
+      "year": "Год",
+      "month": "Месяц",
+      "cols": {
+        "number": "№",
+        "period": "Период",
+        "employees": "Сотрудники",
+        "status": "Статус",
+        "gross": "Брутто",
+        "net": "Нетто",
+        "payDate": "Выплата"
+      }
+    },
+    "runDetail": {
+      "notFound": "Расчёт не найден.",
+      "backToList": "Расчёты зарплаты",
+      "netTotal": "Итого нетто",
+      "actionDone": "Действие выполнено.",
+      "calculate": "Рассчитать",
+      "recalculate": "Пересчитать",
+      "approve": "Утвердить",
+      "reopen": "Открыть заново",
+      "post": "Провести",
+      "pay": "Выплатить нетто",
+      "payTaxes": "Уплатить налоги",
+      "paySgk": "Уплатить SGK",
+      "fullyPaid": "Этот период оплачен.",
+      "approveTitle": "Утвердить расчёт",
+      "approveConfirm": "После утверждения для изменений расчёт нужно открыть заново. Продолжить?",
+      "reopenTitle": "Открыть расчёт заново",
+      "reopenConfirm": "Расчёт вернётся в черновик. Продолжить?",
+      "postTitle": "Провести",
+      "postConfirm": "Расчёт будет проведён в учёт. Продолжить?",
+      "gross": "Брутто",
+      "sgkEmployee": "SGK работник",
+      "incomeTax": "Подоходный налог",
+      "stampTax": "Гербовый сбор",
+      "net": "Нетто",
+      "employerCost": "Затраты работодателя",
+      "payslips": "Расчётные листы",
+      "payslipsEmpty": "Листов пока нет. Запустите шаг «Рассчитать».",
+      "viewPayslip": "Расчётный лист",
+      "calculatedAt": "Рассчитано",
+      "approvedAt": "Утверждено",
+      "postedAt": "Проведено",
+      "paidAt": "Оплачено",
+      "cols": {
+        "employee": "Сотрудник",
+        "gross": "Брутто",
+        "deductions": "Удержания",
+        "net": "Нетто",
+        "employerCost": "Затраты работодателя"
+      }
+    },
+    "payslip": {
+      "noLines": "Нет строк расчётного листа.",
+      "code": "Код",
+      "description": "Описание",
+      "category": "Категория",
+      "amount": "Сумма",
+      "categoryLabel": {
+        "Earning": "Начисление",
+        "Deduction": "Удержание",
+        "EmployerCost": "Затраты работодателя"
+      }
+    },
+    "payslipPrint": {
+      "button": "Печать",
+      "heading": "Расчётный лист",
+      "employer": "Работодатель",
+      "employee": "Сотрудник",
+      "iban": "IBAN",
+      "payDate": "Дата выплаты",
+      "earnings": "Начисления",
+      "baseSalary": "Оклад (брутто)",
+      "earningsTotal": "Дополнительные начисления",
+      "gross": "Итого брутто",
+      "deductions": "Удержания",
+      "sgkEmployee": "SGK доля работника",
+      "unemploymentEmployee": "Страх. от безработицы (работник)",
+      "incomeTax": "Подоходный налог",
+      "stampTax": "Гербовый сбор",
+      "minWageExemption": "Льгота по МРОТ",
+      "otherDeductions": "Прочие удержания",
+      "totalDeductions": "Итого удержания",
+      "netPay": "К выплате (нетто)",
+      "employerCostTitle": "Затраты работодателя",
+      "sgkEmployer": "SGK доля работодателя",
+      "unemploymentEmployer": "Страх. от безработицы (работодатель)",
+      "employerCost": "Итого затраты работодателя",
+      "footer": "Этот расчётный лист сформирован электронно.",
+      "daysWorked": "Days Worked",
+      "minWageExemptionNote": "Income tax is calculated after applying a minimum-wage exemption of {{amount}}.",
+      "otherDeductionLines": "Other Deduction Items"
+    },
+    "parameters": {
+      "title": "Параметры расчёта",
+      "subtitle": "Определите ставки SGK, страхования от безработицы, гербового и подоходного налога и МРОТ по периодам действия.",
+      "new": "Новый набор",
+      "empty": "Наборы параметров не найдены.",
+      "system": "Системный",
+      "tenant": "Организация",
+      "readOnly": "Только чтение",
+      "cols": {
+        "name": "Название набора",
+        "effectiveFrom": "Действие",
+        "minWage": "МРОТ",
+        "scope": "Область"
+      }
+    },
+    "parametersForm": {
+      "newTitle": "Новый набор параметров",
+      "editTitle": "Изменить параметры расчёта",
+      "nameRequired": "Название набора обязательно.",
+      "minWageRequired": "Введите корректный МРОТ.",
+      "created": "Набор параметров создан.",
+      "updated": "Параметры обновлены.",
+      "name": "Название набора",
+      "currency": "Валюта",
+      "effectiveFrom": "Действует с",
+      "effectiveTo": "Действует до",
+      "minimumWage": "МРОТ (брутто)",
+      "sgkEmployee": "SGK работник %",
+      "sgkEmployer": "SGK работодатель %",
+      "unemploymentEmployee": "Безработица работник %",
+      "unemploymentEmployer": "Безработица работодатель %",
+      "stampTax": "Гербовый сбор %",
+      "sgkBaseCeiling": "Потолок базы SGK",
+      "minWageExemption": "Применять льготу по МРОТ (подоходный/гербовый)",
+      "brackets": "Шкала подоходного налога",
+      "addBracket": "Добавить ступень",
+      "upperLimit": "Верхний предел (пусто = без ограничения)",
+      "ratePercent": "Ставка %"
+    },
+    "employmentType": {
+      "FullTime": "Full Time",
+      "PartTime": "Part Time",
+      "Seasonal": "Seasonal"
+    },
+    "salaryBasis": {
+      "Gross": "Gross",
+      "Net": "Net"
     }
   }
 }

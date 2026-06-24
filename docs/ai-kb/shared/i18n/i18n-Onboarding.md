@@ -1,0 +1,55 @@
+# Onboarding (CoreAlign UI)
+
+"Onboarding" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Onboarding" area (English / Türkçe):
+
+- Finish / Bitir
+- Next / İleri
+- Back / Geri
+- Restart / Yeniden başlat
+- Skip / Atla
+- Restart guided tours or view their status. / Rehberli turları yeniden başlatın veya durumlarını görüntüleyin.
+- Reset all tours / Tüm turları sıfırla
+- Reset / Sıfırla
+- Completed / Tamamlandı
+- Pending / Beklemede
+- Skipped / Atlandı
+- Onboarding tour / Tanıtım turu
+- Projects are managed here. Click to start a new glass project. / Projeler burada yönetilir. Yeni bir cam projesi başlatmak için tıklayın.
+- Glass projects / Cam projeleri
+- Four steps: Category → Template → Info → Measurements. / Dört adım: Kategori → Şablon → Bilgi → Ölçüler.
+- New project wizard / Yeni proje sihirbazı
+- Switch between Simple (big buttons) and Pro (technical detail). / Basit (büyük düğmeler) ile Pro (teknik ayrıntı) arasında geçiş yapın.
+- Persona mode / Persona modu
+- Production planning, requisitions, and stock forecasts. / Üretim planlama, ihtiyaçlar ve stok tahminleri.
+- Production & purchasing / Üretim ve satın alma
+- Design your glass space here. Add runs, split panels, pick hardware. / Cam mekanınızı burada tasarlayın. Cephe ekleyin, panelleri bölün, aksesuar seçin.
+- Designer canvas / Tasarım tuvali
+- Add facade runs from the left panel. / Sol panelden cephe ekleyin.
+- Runs / Cepheler
+- Details of the selected part on the right. Change glass, color, and hardware. / Seçili parçanın ayrıntıları sağda. Cam, renk ve aksesuarları değiştirin.
+- Inspector / Denetçi
+- The bill of materials and cost are calculated automatically. / Malzeme listesi ve maliyet otomatik olarak hesaplanır.
+- BOM & cost / Malzeme listesi ve maliyet
+- Acceptance checklist. Mark each item Pass/Fail/N/A. / Kabul kontrol listesi. Her maddeyi Geçti/Kaldı/Yok olarak işaretleyin.
+- Checklist / Kontrol listesi
+- Upload photos from the installation site. / Montaj yerinden fotoğraf yükleyin.
+- Take a photo / Fotoğraf çek
+- Add missing or defective parts to the punch list. / Eksik veya kusurlu parçaları eksik listesine ekleyin.
+- Punch list / Eksik listesi
+- Capture the customer's signature on the tablet. The form locks afterwards. / Müşteri imzasını tablette alın. Form ardından kilitlenir.
+- Customer signature / Müşteri imzası
+- Overview: critical items, open requisitions, stock levels. / Özet: kritik kalemler, açık ihtiyaçlar, stok seviyeleri.
+- MRP dashboard / MRP paneli
+- Generate demand suggestions from orders and stock. / Siparişlerden ve stoklardan ihtiyaç önerileri oluşturun.
+- Generate suggestions / Öneri oluştur
+- Review candidates and convert them into purchase requisitions. / Adayları inceleyin ve satın alma taleplerine dönüştürün.
+- Candidates / Adaylar
+- View, approve, or cancel all requisitions. / Tüm talepleri görüntüleyin, onaylayın veya iptal edin.
+- Requisitions / Talepler
+- Dashboard / Gösterge Paneli
+- Designer / Tasarımcı
+- Field acceptance / Saha kabulü
+- Production planning / Üretim planlama
+- A quick tour walks you through the key screens. / Kısa bir tur temel ekranları tanıtır.
+- Start tour / Tura başla
+- Welcome! / Hoş geldiniz!

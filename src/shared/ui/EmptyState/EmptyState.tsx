@@ -30,7 +30,7 @@ export const EmptyState = ({
       )}
     >
       {icon && (
-        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500/15 to-purple-500/15 text-indigo-500 ring-1 ring-indigo-200/60 dark:text-indigo-300 dark:ring-indigo-500/30">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/15 to-purple-500/15 text-primary-500 ring-1 ring-primary-200/60 dark:text-primary-300 dark:ring-primary-500/30">
           {icon}
         </div>
       )}

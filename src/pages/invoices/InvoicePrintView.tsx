@@ -3,18 +3,18 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Printer } from 'lucide-react';
 import { useInvoiceQuery } from '@/features/invoices/hooks/useInvoiceQueries';
-import { useAuthStore } from '@/features/auth/model/authStore';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import type { InvoiceStatus } from '@/features/invoices/model/invoice.types';
 
 const statusStyles: Record<InvoiceStatus, string> = {
   Draft: 'bg-slate-100 text-slate-700',
-  Issued: 'bg-blue-100 text-blue-700',
-  Sent: 'bg-sky-100 text-sky-700',
-  PartiallyPaid: 'bg-amber-100 text-amber-800',
-  Paid: 'bg-emerald-100 text-emerald-700',
-  Overdue: 'bg-red-100 text-red-800',
-  Void: 'bg-rose-100 text-rose-700',
-  Cancelled: 'bg-red-100 text-red-700',
+  Issued: 'bg-primary-100 text-primary-700',
+  Sent: 'bg-info-100 text-info-700',
+  PartiallyPaid: 'bg-warning-100 text-warning-800',
+  Paid: 'bg-success-100 text-success-700',
+  Overdue: 'bg-danger-100 text-danger-800',
+  Void: 'bg-danger-100 text-danger-700',
+  Cancelled: 'bg-danger-100 text-danger-700',
 };
 
 const formatCurrency = (value: number, currency: string, locale: string) => {
@@ -69,7 +69,7 @@ export const InvoicePrintView = () => {
           <button
             type="button"
             onClick={() => window.print()}
-            className="inline-flex items-center gap-1 rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-flex items-center gap-1 rounded bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
           >
             <Printer size={14} />
             {t('invoices.print.button')}

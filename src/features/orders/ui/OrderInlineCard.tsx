@@ -16,7 +16,7 @@ export const OrderInlineCard = ({
   onClose,
   onOpenPanel,
 }: OrderInlineCardProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const orderQuery = useOrderQuery(orderId);
   const order = orderQuery.data?.data;
@@ -24,18 +24,22 @@ export const OrderInlineCard = ({
 
   return (
     <InlineDetailCard
-      title={order?.orderNumber ?? fallbackTitle ?? 'Sipariş'}
+      title={
+        order?.orderNumber ??
+        fallbackTitle ??
+        t('OrderCard.FallbackTitle', { defaultValue: 'Sipariş' })
+      }
       subtitle={order ? `${order.customerName} · ${order.status}` : undefined}
       onOpenPanel={onOpenPanel}
       onClose={onClose}
     >
       {orderQuery.isPending ? (
         <div className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Yükleniyor…
+          {t('OrderCard.Loading', { defaultValue: 'Yükleniyor…' })}
         </div>
       ) : !order ? (
         <div className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Sipariş bulunamadı.
+          {t('OrderCard.NotFound', { defaultValue: 'Sipariş bulunamadı.' })}
         </div>
       ) : (
         <div className="space-y-4">
@@ -44,12 +48,24 @@ export const OrderInlineCard = ({
               <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
                 <tr>
                   <th className="px-2 py-1.5 text-left">#</th>
-                  <th className="px-2 py-1.5 text-left">Ürün</th>
-                  <th className="px-2 py-1.5 text-right">Miktar</th>
-                  <th className="px-2 py-1.5 text-right">Birim Fiyat</th>
-                  <th className="px-2 py-1.5 text-right">İsk %</th>
-                  <th className="px-2 py-1.5 text-right">KDV %</th>
-                  <th className="px-2 py-1.5 text-right">Tutar</th>
+                  <th className="px-2 py-1.5 text-left">
+                    {t('OrderCard.ColumnProduct', { defaultValue: 'Ürün' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('OrderCard.ColumnQuantity', { defaultValue: 'Miktar' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('OrderCard.ColumnUnitPrice', { defaultValue: 'Birim Fiyat' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('OrderCard.ColumnDiscountPercent', { defaultValue: 'İsk %' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('OrderCard.ColumnTaxPercent', { defaultValue: 'KDV %' })}
+                  </th>
+                  <th className="px-2 py-1.5 text-right">
+                    {t('OrderCard.ColumnLineTotal', { defaultValue: 'Tutar' })}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -88,25 +104,35 @@ export const OrderInlineCard = ({
           </div>
 
           <div className="flex flex-col items-end gap-0.5 text-xs">
-            <Row label="Ara Toplam" value={formatCurrency(order.subtotal, locale, currency)} />
+            <Row
+              label={t('OrderCard.Subtotal', { defaultValue: 'Ara Toplam' })}
+              value={formatCurrency(order.subtotal, locale, currency)}
+            />
             {order.lineDiscountTotal > 0 && (
               <Row
-                label="İskonto"
+                label={t('OrderCard.Discount', { defaultValue: 'İskonto' })}
                 value={`-${formatCurrency(order.lineDiscountTotal, locale, currency)}`}
               />
             )}
-            <Row label="KDV" value={formatCurrency(order.taxTotal, locale, currency)} />
+            <Row
+              label={t('OrderCard.Tax', { defaultValue: 'KDV' })}
+              value={formatCurrency(order.taxTotal, locale, currency)}
+            />
             {order.withholdingTotal > 0 && (
               <Row
-                label="Tevkifat"
+                label={t('OrderCard.Withholding', { defaultValue: 'Tevkifat' })}
                 value={`-${formatCurrency(order.withholdingTotal, locale, currency)}`}
               />
             )}
             {order.shippingCost > 0 && (
-              <Row label="Kargo" value={formatCurrency(order.shippingCost, locale, currency)} />
+              <Row
+                label={t('OrderCard.Shipping', { defaultValue: 'Kargo' })}
+                value={formatCurrency(order.shippingCost, locale, currency)}
+              />
             )}
             <div className="mt-1 border-t border-slate-200 pt-1 text-sm font-bold text-slate-900 dark:border-slate-700 dark:text-slate-100">
-              Genel Toplam: {formatCurrency(order.total, locale, currency)}
+              {t('OrderCard.GrandTotal', { defaultValue: 'Genel Toplam' })}:{' '}
+              {formatCurrency(order.total, locale, currency)}
             </div>
           </div>
         </div>

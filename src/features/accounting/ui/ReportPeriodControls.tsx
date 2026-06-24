@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   year: number;
@@ -22,6 +23,7 @@ export const ReportPeriodControls = ({
   onToChange,
   right,
 }: Props) => {
+  const { t } = useTranslation();
   const setYear = (y: number) => {
     onYearChange(y);
     onFromChange(yearStart(y));
@@ -31,7 +33,9 @@ export const ReportPeriodControls = ({
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div>
-        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">Yıl</label>
+        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
+          {t('ReportPeriod.Year', { defaultValue: 'Yıl' })}
+        </label>
         <div className="mt-1 inline-flex items-center gap-1">
           <button
             type="button"
@@ -52,7 +56,7 @@ export const ReportPeriodControls = ({
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Başlangıç
+          {t('ReportPeriod.StartDate', { defaultValue: 'Başlangıç' })}
         </label>
         <input
           type="date"
@@ -63,7 +67,7 @@ export const ReportPeriodControls = ({
       </div>
       <div>
         <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-          Bitiş
+          {t('ReportPeriod.EndDate', { defaultValue: 'Bitiş' })}
         </label>
         <input
           type="date"

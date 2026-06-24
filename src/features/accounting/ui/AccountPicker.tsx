@@ -10,11 +10,6 @@ interface Props {
   placeholder?: string;
 }
 
-/**
- * Searchable GL account selector backed by a native datalist: the user can type
- * a code or pick "code — name". Stores the account code. Reused by the GL
- * posting-map config and journal-entry forms so account selection is consistent.
- */
 export const AccountPicker = ({
   value,
   onChange,

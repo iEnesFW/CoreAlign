@@ -94,8 +94,6 @@ function StretchFace({ face }: { face: StretchFaceDef }) {
       setDragging(false);
       setDeltaMm(0);
       applyOffset(0);
-      // Only snap the body preview back when nothing is committed; on a real
-      // commit the owner resets it as the new geometry mounts (no flash).
       if (Math.round(delta.x) !== 0) face.onCommit(delta.x);
       else face.onPreview(0);
     },

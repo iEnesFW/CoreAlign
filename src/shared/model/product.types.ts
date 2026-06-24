@@ -1,0 +1,53 @@
+export type ProductStatus = 'Active' | 'New' | 'Discontinued' | 'EndOfLife';
+
+export type ProcurementType = 'Buy' | 'Make';
+
+export interface Product {
+  id: string;
+  sku: string;
+  barcode: string | null;
+  mpn: string | null;
+  name: string;
+  shortDescription: string | null;
+  description: string | null;
+  slug: string | null;
+  brandId: string | null;
+  categoryId: string | null;
+  parentProductId: string | null;
+  variantAttributesJson: string | null;
+  tagsJson: string | null;
+  unit: string;
+  baseUomId: string | null;
+  purchaseUomId: string | null;
+  salesUomId: string | null;
+  price: number;
+  listPrice: number;
+  minSellingPrice: number;
+  standardCost: number;
+  lastPurchaseCost: number;
+  averageCost: number;
+  currency: string;
+  taxRateId: string | null;
+  isPriceTaxInclusive: boolean;
+  stockQuantity: number;
+  isStockTracked: boolean;
+  isLotTracked: boolean;
+  isSerialTracked: boolean;
+  minStock: number;
+  maxStock: number;
+  reorderPoint: number;
+  safetyStock: number;
+  leadTimeDays: number;
+  procurementType: ProcurementType;
+  weightKg: number | null;
+  widthCm: number | null;
+  heightCm: number | null;
+  depthCm: number | null;
+  volumeM3: number | null;
+  status: ProductStatus;
+  launchDate: string | null;
+  endOfLifeDate: string | null;
+  isActive: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string;
+}

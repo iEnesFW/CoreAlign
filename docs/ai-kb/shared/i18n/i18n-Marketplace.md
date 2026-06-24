@@ -1,0 +1,93 @@
+# Marketplace (CoreAlign UI)
+
+"Marketplace" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Marketplace" area (English / Türkçe):
+
+- Actions / İşlemler
+- Cancel / İptal
+- Code / Kod
+- Reject / Reddet
+- No pending marketplace submissions. / Bekleyen pazaryeri başvurusu yok.
+- Queue is empty / Kuyruk boş
+- Platform admin / Platform Yöneticisi
+- Failed to load pending submissions / Bekleyen başvurular yüklenemedi
+- Name / Ad
+- Publish / Yayınla
+- Failed to publish template / Şablon yayınlanamadı
+- Template published / Şablon yayınlandı
+- Reject / Reddet
+- Failed to reject submission / Başvuru reddedilemedi
+- Rejection reason / Ret nedeni
+- Rejection reason is required / Ret nedeni zorunludur
+- Reject submission / Başvuruyu reddet
+- Submission rejected / Başvuru reddedildi
+- Rejecting... / Reddediliyor...
+- Submitted / Gönderilme
+- Approve or reject community submissions before publishing. / Topluluk başvurularını yayınlamadan önce onaylayın veya reddedin.
+- Marketplace review queue / Pazaryeri inceleme kuyruğu
+- No preview / Önizleme yok
+- Back to marketplace / Pazaryerine dön
+- Connector / Bağlantı elemanı
+- Downloads / İndirme
+- Geometry / Geometri
+- Install template / Şablonu kur
+- Failed to install template / Şablon kurulamadı
+- Template installed / Şablon kuruldu
+- Installing... / Kuruluyor...
+- Failed to load template / Şablon yüklenemedi
+- Missing template id / Şablon ID eksik
+- Mounting / Montaj
+- No description provided. / Açıklama girilmemiş.
+- No preview available / Önizleme mevcut değil
+- Published / Yayınlanma
+- Run presets / Çalıştırma ön ayarları
+- Specifications / Özellikler
+- Subtype / Alt tür
+- All categories / Tüm kategoriler
+- Any / Tümü
+- Category / Kategori
+- Minimum rating / Minimum puan
+- Sort / Sıralama
+- Alphabetical / Alfabetik
+- Newest / En yeni
+- Popularity / Popülerlik
+- Top rated / En yüksek puan
+- Try a different category or lower the minimum rating. / Farklı bir kategori deneyin veya minimum puanı düşürün.
+- No templates match these filters / Bu filtrelerle eşleşen şablon yok
+- Community / Topluluk
+- Failed to load templates / Şablonlar yüklenemedi
+- Submit a template / Şablon gönder
+- Browse community templates and install them into your workspace. / Topluluk şablonlarına göz atın ve çalışma alanınıza kurun.
+- Template marketplace / Şablon Pazaryeri
+- Code / Kod
+- Downloads / İndirme
+- Submit your own template to share with the community. / Toplulukla paylaşmak için kendi şablonunuzu gönderin.
+- No submissions yet / Henüz başvuru yok
+- Marketplace / Pazaryeri
+- Failed to load submissions / Başvurular yüklenemedi
+- Name / Ad
+- Submit another / Yeni gönder
+- Published / Yayınlanma
+- Status / Durum
+- Submitted / Gönderilme
+- Track templates you submitted to the community marketplace. / Topluluk pazaryerine gönderdiğiniz şablonları takip edin.
+- My submissions / Başvurularım
+- Share your experience... / Deneyiminizi paylaşın...
+- No reviews yet. / Henüz değerlendirme yok.
+- Leave a review / Değerlendirme yap
+- Loading reviews... / Değerlendirmeler yükleniyor...
+- Please select a rating / Lütfen bir puan seçin
+- Submit / Gönder
+- Failed to submit review / Değerlendirme gönderilemedi
+- Review submitted / Değerlendirme gönderildi
+- Submitting... / Gönderiliyor...
+- Reviews / Değerlendirmeler
+- User / Kullanıcı
+- Cancel / İptal
+- Failed to submit template / Şablon gönderilemedi
+- Submit / Gönder
+- Submission sent for review / Başvuru incelemeye gönderildi
+- Submitting... / Gönderiliyor...
+- Share your private template with the community after approval. / Özel şablonunuzu onay sonrasında toplulukla paylaşın.
+- Template ID / Şablon ID
+- Template ID is required / Şablon ID zorunludur
+- Submit a template / Şablon gönder

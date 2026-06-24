@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
@@ -8,16 +9,19 @@ import {
 } from '../hooks/useSettingsQueries';
 import type { DocumentSequenceConfig, DocumentSequenceType } from '../model/settings.types';
 
-const TYPE_LABELS: Partial<Record<DocumentSequenceType, string>> = {
-  CustomerCode: 'Müşteri Kodu',
-  ProductSku: 'Ürün Kodu (SKU)',
-  OrderNumber: 'Sipariş No',
-  InvoiceNumber: 'Fatura No',
-  CreditNoteNumber: 'İade Faturası No',
-  DebitNoteNumber: 'Borç Dekontu No',
-  PaymentNumber: 'Tahsilat/Ödeme No',
-  ShipmentNumber: 'Sevkiyat No',
-  JournalNumber: 'Yevmiye Fişi No',
+const getTypeLabel = (t: TFunction, type: DocumentSequenceType): string => {
+  const labels: Partial<Record<DocumentSequenceType, string>> = {
+    CustomerCode: t('numbering.typeCustomerCode', { defaultValue: 'Müşteri Kodu' }),
+    ProductSku: t('numbering.typeProductSku', { defaultValue: 'Ürün Kodu (SKU)' }),
+    OrderNumber: t('numbering.typeOrderNumber', { defaultValue: 'Sipariş No' }),
+    InvoiceNumber: t('numbering.typeInvoiceNumber', { defaultValue: 'Fatura No' }),
+    CreditNoteNumber: t('numbering.typeCreditNoteNumber', { defaultValue: 'İade Faturası No' }),
+    DebitNoteNumber: t('numbering.typeDebitNoteNumber', { defaultValue: 'Borç Dekontu No' }),
+    PaymentNumber: t('numbering.typePaymentNumber', { defaultValue: 'Tahsilat/Ödeme No' }),
+    ShipmentNumber: t('numbering.typeShipmentNumber', { defaultValue: 'Sevkiyat No' }),
+    JournalNumber: t('numbering.typeJournalNumber', { defaultValue: 'Yevmiye Fişi No' }),
+  };
+  return labels[type] ?? type;
 };
 
 export const NumberingSection = () => {
@@ -28,11 +32,16 @@ export const NumberingSection = () => {
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Belge numaralarının önekini, basamak sayısını ve formatını belirleyin. Format kullanılırsa{' '}
-        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{P}'}</code> önek,{' '}
-        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{Y}'}</code> yıl,{' '}
-        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{N}'}</code> sıra
-        numarasıdır.
+        {t('numbering.formatHelpIntro', {
+          defaultValue:
+            'Belge numaralarının önekini, basamak sayısını ve formatını belirleyin. Format kullanılırsa',
+        })}{' '}
+        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{P}'}</code>{' '}
+        {t('numbering.formatHelpPrefix', { defaultValue: 'önek,' })}{' '}
+        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{Y}'}</code>{' '}
+        {t('numbering.formatHelpYear', { defaultValue: 'yıl,' })}{' '}
+        <code className="rounded bg-slate-100 px-1 dark:bg-slate-800">{'{N}'}</code>{' '}
+        {t('numbering.formatHelpSequence', { defaultValue: 'sıra numarasıdır.' })}
       </p>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
@@ -118,10 +127,10 @@ const SequenceRow = ({ seq }: { seq: DocumentSequenceConfig }) => {
     <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
       <td className="px-3 py-2">
         <div className="font-medium text-slate-800 dark:text-slate-100">
-          {TYPE_LABELS[seq.type] ?? seq.type}
+          {getTypeLabel(t, seq.type)}
         </div>
         {!seq.isConfigured && (
-          <span className="text-[10px] text-amber-600 dark:text-amber-400">
+          <span className="text-[10px] text-warning-600 dark:text-warning-400">
             {t('numbering.notConfigured', { defaultValue: 'henüz ayarlanmadı' })}
           </span>
         )}
@@ -170,7 +179,7 @@ const SequenceRow = ({ seq }: { seq: DocumentSequenceConfig }) => {
           type="button"
           onClick={save}
           disabled={!dirty || configure.isPending}
-          className="rounded bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-indigo-700 disabled:opacity-40"
+          className="rounded bg-primary-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-primary-700 disabled:opacity-40"
         >
           {t('common.save', { defaultValue: 'Kaydet' })}
         </button>

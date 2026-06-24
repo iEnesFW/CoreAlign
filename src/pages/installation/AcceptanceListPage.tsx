@@ -11,7 +11,7 @@ export const AcceptanceListPage = () => {
   return (
     <div className="flex flex-col gap-4 px-4 py-4 md:px-6">
       <header className="flex items-center gap-3">
-        <ClipboardCheck className="size-6 text-blue-600" />
+        <ClipboardCheck className="size-6 text-primary-600" />
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           {t('InstallationAcceptance.Title')}
         </h1>
@@ -36,7 +36,7 @@ export const AcceptanceListPage = () => {
               <span>{item.description}</span>
               <Link
                 to={`/dashboard/installation/acceptances/${item.acceptanceId}`}
-                className="text-xs text-blue-600 hover:underline dark:text-blue-300"
+                className="text-xs text-primary-600 hover:underline dark:text-primary-300"
               >
                 {t('InstallationAcceptance.OpenForm')}
               </Link>

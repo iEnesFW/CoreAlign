@@ -1,0 +1,45 @@
+# Accounting (CoreAlign UI)
+
+"Accounting" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "Accounting" area (English / Türkçe):
+
+- All reconciled / Tümü mutabık
+- As of / Tarih itibarıyla
+- Calculating… / Hesaplanıyor…
+- Control Account / Kontrol Hesabı
+- No control accounts to reconcile as of the selected date. / Seçilen tarih itibarıyla mutabakat yapılacak kontrol hesabı bulunamadı.
+- GL Balance / Büyük Defter Bakiyesi
+- No / Hayır
+- Discrepancies found / Farklar tespit edildi
+- Reconciled? / Mutabık mı?
+- Subledger / Yardımcı Defter
+- Subledger Balance / Yardımcı Defter Bakiyesi
+- Control account balances in the general ledger compared against their subledger totals as of the selected date. / Seçilen tarih itibarıyla büyük defterdeki kontrol hesabı bakiyelerinin yardımcı defter toplamlarıyla karşılaştırması.
+- Reconciliation / Mutabakat
+- Variance / Fark
+- Yes / Evet
+- Account code is required. / Hesap kodu zorunludur.
+- Account / Hesap
+- Account Code / Hesap Kodu
+- Default / Varsayılan
+- Role / Rol
+- Status / Durum
+- customized / özelleştirildi
+- No mappings found. / Eşleştirme bulunamadı.
+- Choose which GL account each role posts to when automatic journal entries (sales, collections, vendor bills/payments, goods receipt, COGS) are created. Rows left empty use the default TDHP code; if no matching account is found that entry is silently skipped and the main workflow is not interrupted. / Otomatik muhasebe fişleri (satış, tahsilat, tedarikçi faturası/ödemesi, mal kabul, SMM) oluşturulurken her rolün hangi muhasebe hesabına işleneceğini buradan belirleyin. Boş bırakılan satırlar varsayılan TDHP koduyla çalışır; eşleşen hesap bulunamazsa o fiş sessizce atlanır ve ana işlem akışı bozulmaz.
+- Failed to load mappings. / Eşleştirmeler yüklenemedi.
+- Loading… / Yükleniyor…
+- resolved / çözümlendi
+- Accounts Payable (AP) / Satıcılar (AP)
+- Accounts Receivable (AR) / Alıcılar (AR)
+- Bank / Banka
+- Cash / Kasa
+- Cost of Goods Sold (COGS) / Satılan Malın Maliyeti (SMM)
+- Goods Receipt Clearing (GR/IR) / Mal Alım Tahakkuk (GR/IR)
+- Input VAT / İndirilecek KDV
+- Inventory / Stok
+- Inventory Write-Off / Fire/Zayi Gideri
+- Output VAT / Hesaplanan KDV
+- Purchase Expense / Alım Gideri
+- Sales Revenue / Satış Geliri
+- Account mapping saved. / Hesap eşleştirmesi kaydedildi.
+- account not found / hesap bulunamadı

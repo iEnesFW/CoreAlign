@@ -12,13 +12,13 @@ interface CustomerInlineCardProps {
 }
 
 const KIND_META: Record<string, { icon: typeof FileText; cls: string }> = {
-  Order: { icon: FileText, cls: 'text-sky-500' },
+  Order: { icon: FileText, cls: 'text-info-500' },
   Invoice: { icon: FileText, cls: 'text-violet-500' },
-  Payment: { icon: Wallet, cls: 'text-emerald-500' },
+  Payment: { icon: Wallet, cls: 'text-success-500' },
 };
 
 export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerInlineCardProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const overviewQuery = useCustomerOverviewQuery(customer.id);
   const ov = overviewQuery.data?.data;
@@ -37,37 +37,37 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
       onClose={onClose}
     >
       {overviewQuery.isPending ? (
-        <div className="py-6 text-center text-sm text-slate-500">Yükleniyor…</div>
+        <div className="py-6 text-center text-sm text-slate-500">
+          {t('CustomerCard.Loading', { defaultValue: 'Yükleniyor…' })}
+        </div>
       ) : (
         <div className="space-y-4">
-          {/* Balance KPIs */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Metric
-              label="Cari Bakiye"
+              label={t('CustomerCard.CurrentBalance', { defaultValue: 'Cari Bakiye' })}
               value={formatCurrency(balance, locale, currency)}
               tone={balance > 0 ? 'rose' : 'emerald'}
             />
             <Metric
-              label="Vadesi Geçen"
+              label={t('CustomerCard.Overdue', { defaultValue: 'Vadesi Geçen' })}
               value={formatCurrency(outstanding, locale, currency)}
               tone={outstanding > 0 ? 'rose' : 'slate'}
             />
             <Metric
-              label="Kredi Limiti"
+              label={t('CustomerCard.CreditLimit', { defaultValue: 'Kredi Limiti' })}
               value={formatCurrency(creditLimit, locale, currency)}
               tone="slate"
             />
             <Metric
-              label="Kullanılabilir Kredi"
+              label={t('CustomerCard.CreditAvailable', { defaultValue: 'Kullanılabilir Kredi' })}
               value={formatCurrency(creditAvailable, locale, currency)}
               tone="emerald"
             />
           </div>
 
-          {/* Recent activity */}
           <div>
             <h4 className="mb-1.5 text-[11px] font-semibold uppercase text-slate-500">
-              Son Hareketler
+              {t('CustomerCard.RecentActivity', { defaultValue: 'Son Hareketler' })}
             </h4>
             {ov && ov.recentActivity.length > 0 ? (
               <ul className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -92,7 +92,7 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
                       <span
                         className={`inline-flex items-center gap-0.5 font-mono font-semibold ${
                           inflow
-                            ? 'text-emerald-600 dark:text-emerald-400'
+                            ? 'text-success-600 dark:text-success-400'
                             : 'text-slate-700 dark:text-slate-200'
                         }`}
                       >
@@ -104,19 +104,44 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
                 })}
               </ul>
             ) : (
-              <p className="py-3 text-center text-xs text-slate-400">Henüz hareket yok.</p>
+              <p className="py-3 text-center text-xs text-slate-400">
+                {t('CustomerCard.NoActivity', { defaultValue: 'Henüz hareket yok.' })}
+              </p>
             )}
           </div>
 
-          {/* Quick facts */}
           <div className="flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-slate-500">
-            {ov?.paymentTermsName && <span>Ödeme: {ov.paymentTermsName}</span>}
-            {ov?.salesRepName && <span>Temsilci: {ov.salesRepName}</span>}
+            {ov?.paymentTermsName && (
+              <span>
+                {t('CustomerCard.PaymentTerms', {
+                  defaultValue: 'Ödeme: {{value}}',
+                  value: ov.paymentTermsName,
+                })}
+              </span>
+            )}
+            {ov?.salesRepName && (
+              <span>
+                {t('CustomerCard.SalesRep', {
+                  defaultValue: 'Temsilci: {{value}}',
+                  value: ov.salesRepName,
+                })}
+              </span>
+            )}
             {ov?.lastOrderAtUtc && (
-              <span>Son sipariş: {formatDate(ov.lastOrderAtUtc, locale)}</span>
+              <span>
+                {t('CustomerCard.LastOrder', {
+                  defaultValue: 'Son sipariş: {{value}}',
+                  value: formatDate(ov.lastOrderAtUtc, locale),
+                })}
+              </span>
             )}
             {ov?.lastPaymentAtUtc && (
-              <span>Son ödeme: {formatDate(ov.lastPaymentAtUtc, locale)}</span>
+              <span>
+                {t('CustomerCard.LastPayment', {
+                  defaultValue: 'Son ödeme: {{value}}',
+                  value: formatDate(ov.lastPaymentAtUtc, locale),
+                })}
+              </span>
             )}
           </div>
         </div>
@@ -126,8 +151,8 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
 };
 
 const toneMap = {
-  rose: 'text-rose-600 dark:text-rose-400',
-  emerald: 'text-emerald-600 dark:text-emerald-400',
+  rose: 'text-danger-600 dark:text-danger-400',
+  emerald: 'text-success-600 dark:text-success-400',
   slate: 'text-slate-900 dark:text-slate-100',
 } as const;
 

@@ -1,3 +1,4 @@
+using CoreAlign.Application.CustomerPortal.Credit;
 using CoreAlign.Application.Orders.Commands;
 using CoreAlign.Application.Orders.DTOs;
 using CoreAlign.Application.Orders.EventHandlers;
@@ -17,6 +18,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
     private readonly IProductRepository _productRepository;
     private readonly IProductComponentRepository _componentRepository;
     private readonly IAllocationService _allocationService;
+    private readonly ICreditLimitGuard _creditGuard;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateOrderCommandHandler(
@@ -25,6 +27,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         IProductRepository productRepository,
         IProductComponentRepository componentRepository,
         IAllocationService allocationService,
+        ICreditLimitGuard creditGuard,
         IUnitOfWork unitOfWork)
     {
         _orderRepository = orderRepository;
@@ -32,6 +35,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         _productRepository = productRepository;
         _componentRepository = componentRepository;
         _allocationService = allocationService;
+        _creditGuard = creditGuard;
         _unitOfWork = unitOfWork;
     }
 
@@ -61,6 +65,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         if (WillTransitionToConfirmed(order.Status, request.Status))
         {
             await EnsureSufficientStockAsync(order, cancellationToken);
+            await EnforceCreditLimitAsync(order, cancellationToken);
         }
 
         if (order.Status != request.Status)
@@ -89,6 +94,14 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
 
     private static bool WillTransitionToConfirmed(OrderStatus from, OrderStatus to)
         => from == OrderStatus.Draft && to == OrderStatus.Confirmed;
+
+    private async Task EnforceCreditLimitAsync(Order order, CancellationToken cancellationToken)
+    {
+        var customer = order.Customer
+            ?? await _customerRepository.GetByIdAsync(order.CustomerId, cancellationToken)
+            ?? throw new CustomerNotFoundException();
+        await _creditGuard.EnsureWithinLimitAsync(customer, order.Total, cancellationToken);
+    }
 
     private async Task EnsureSufficientStockAsync(Order order, CancellationToken cancellationToken)
     {

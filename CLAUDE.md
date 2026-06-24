@@ -1,12 +1,75 @@
 # CoreAlign — Proje Kuralları
 
 > Bu dosya, CoreAlign üzerinde yapılan **her** değişiklikte (kod yazma, refaktör, dosyalama, DB, dokümantasyon) bağlayıcıdır. Aşağıdaki kurallar **non-negotiable** kabul edilir; istisna gerekiyorsa açıkça istemden geçer.
+>
+> **Bu dosya nasıl okunur (her task başında):** (1) bu çekirdeği oku; (2) aşağıdaki `@import` ile **otomatik yüklenen** `docs/INVARIANTS.md`'yi (bir-daha-aynı-hatayı-yapma defteri) uygula; (3) dokunacağın alanı **"Sistem Haritası & Modül Guardrail İndeksi"**nde (§0.1) bul, oradaki tuzakları ve "önce-oku" dokümanını aç. Bir işi yaparken başka bir modülü bozmamanın yolu bu indekstir.
+
+@docs/INVARIANTS.md
 
 ## 0. Proje Kimliği
 
-- **Tip:** Web ERP (multi-tenant, abonelik tabanlı).
-- **Stack:** React 19 + Vite 7 + TypeScript + Tailwind v4 (frontend) · .NET 10 + EF Core + PostgreSQL (backend) · JWT (access + refresh) auth.
-- **Mimarî:** Frontend = Feature-Sliced Design (FSD). Backend = Clean Architecture + CQRS (Application katmanı).
+- **Tip:** Web ERP (multi-tenant, abonelik tabanlı, B2B + B2C portallı).
+- **Stack:** React 19 + Vite 7 + TypeScript + Tailwind v4 (web) · Expo 52 + React Native + NativeWind (mobil) · .NET 10 + EF Core + PostgreSQL (backend) · JWT (access + refresh) auth.
+- **Mimarî:** Frontend = Feature-Sliced Design (FSD). Backend = Clean Architecture + CQRS (MediatR pipeline) + Outbox.
+- **Ölçek (2026-06, gerçek):** ~2200 `.cs`, ~400 Domain entity, ~108 controller, ~113 migration, ~55 backend Application modülü, 3 web SPA + 1 mobil uygulama. Yani "küçük proje" varsayımıyla davranma; her değişiklik mevcut büyük yüzeyle uyumlu olmalı.
+
+### Dört frontend yüzeyi (KARIŞTIRMA — yanlış yüzeye kod = sessiz bozulma)
+
+| Yüzey               | Kök                         | Kim için                                 | i18n yolu                                                   | Notlar                                                                                                                                     |
+| ------------------- | --------------------------- | ---------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Admin SPA**       | `src/`                      | Tenant iç kullanıcıları (ERP'nin tamamı) | `src/app/i18n/locales/{tr,en}.json` (+ar,de,ru fallback=en) | Ana yüzey; FSD; design system burada (`src/index.css` `@theme`)                                                                            |
+| **Customer Portal** | `apps/customer-portal/src/` | Tenant'ın son müşterileri (B2C)          | `apps/customer-portal/src/app/locales/{tr,en}.json`         | Kendi FSD ağacı + `shared/` + `widgets/` + `observability/`; kendi client-error reporter'ı                                                 |
+| **B2B Portal**      | `apps/b2b/src/`             | Bayi/dealer (B2B)                        | `apps/b2b/src/app/locales/{tr,en}.json`                     | Kendi FSD ağacı; dealer order flow + portal comments                                                                                       |
+| **Mobil (saha)**    | `mobile/`                   | Saha montaj/keşif ekibi                  | `mobile/src/shared/i18n/locales/{tr,en}.json`               | **Expo Router + NativeWind** (Tailwind v3, web v4 DEĞİL); offline `expo-sqlite`; `react-native-signature-canvas`; imza/foto/keşif akışları |
+
+> Bir görev "portal", "bayi", "müşteri uygulaması", "mobil/saha" derse **önce hangi kök** olduğunu belirle. Her yüzeyin **kendi** `shared/`, `widgets/`, i18n ve error-reporter altyapısı vardır; admin `src/`'ten import etme, çapraz-yüzey kod paylaşımı yok.
+
+### Backend alt-sistemler (VAR — yenisini icat etme, mevcut olanı kullan)
+
+| Alt-sistem                 | Nerede                                            | Kural                                                                                                                             |
+| -------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **MediatR pipeline**       | `Application/Common/Behaviors/`                   | Sıra sabit (§3.9). State-mutasyonu `ITransactionalRequest` ile atomik save+commit+audit+outbox.                                   |
+| **Outbox**                 | `*Outbox*.cs` + `OutboxDrainBehavior`             | Domain event/yan-etki **outbox'a** yazılır, aynı transaction'da persist; ad-hoc `BackgroundService` ile event fırlatma. ADR-0004. |
+| **Hangfire**               | `Infrastructure` (PostgreSQL storage + dashboard) | Zamanlanmış/tekrarlı iş **Hangfire job**'u; yeni `IHostedService` scheduler kurma. ADR-0007.                                      |
+| **QuestPDF**               | `Application`/`Infrastructure` Documents          | PDF üretimi QuestPDF ile (fatura/credit-note/sipariş/packing-slip). Başka PDF lib ekleme. ADR-0006.                               |
+| **iyzico / E-Fatura**      | `Application/EInvoice`, Payments providers        | TR ödeme = iyzico (ADR-0008); e-fatura entegrasyonu mevcut. Provider soyutlamasını kullan.                                        |
+| **Sentry + OpenTelemetry** | `Program.cs`, `Observability`                     | Hata izleme + `/metrics`. `Add*/Use*` çağrılı mı doğrula (§3.4).                                                                  |
+| **Error log (DB)**         | `error_logs` + `ExceptionHandlingMiddleware`      | Her 5xx + anlamlı 4xx kalıcı; correlation tek id (§3.4).                                                                          |
+| **Auth/Identity**          | `Application/Auth`, `Identity`                    | Derin yatırım — koru (§5).                                                                                                        |
+
+---
+
+## 0.1 Sistem Haritası & Modül Guardrail İndeksi
+
+> **Amaç:** "Bir işi yaparken diğerini bozma." Dokunacağın alanı bul; **Tuzaklar**'ı uygula, **Önce oku**'yu aç. Detay kural numaraları (§x.y) bu dosyadadır; `INV` = `docs/INVARIANTS.md` (otomatik yüklü).
+
+| Alan / Modül                                                   | Kod yeri                                                                                                  | Bozmaması gereken (tuzaklar)                                                                                                                                                                             | Önce oku                                                                                               |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Para · Muhasebe · Fatura · Ödeme · Ledger · Tax · Treasury** | `Application/{Accounting,Invoices,Payments,Vendors,Tax,Treasury}`, Domain ledger entity'leri              | `decimal(18,4)` (asla float); **`IXminConcurrency`** (§4.6); GL `Σdebit=Σcredit`; `document_sequences` atomik tüketim; idempotency **durable natural key** (cache değil); FX tek scale (`decimal(18,6)`) | §4.3, §4.6, §16; INV satır 59-70; `docs/modules/error-handling.md`                                     |
+| **Stok · Envanter · Ürün · Katalog**                           | `Application/{Inventory,Stock,Products,Catalog}`                                                          | Negatif stok reddi (handler+domain); `StockItem`/`ProductVariant` **`IHasConcurrencyToken`** (§4.6); batch-load (N+1 yok); `(ProductId,LotId)` composite lookup                                          | §4.6, §4.11; INV 63-68                                                                                 |
+| **Sipariş · Teklif · Satış · Satınalma · İade · Sevkiyat**     | `Application/{Orders,Quotes,Sales,Purchasing,Returns,Shipments}`                                          | FSM guard'ları (her geçiş + reddedilen geçiş test); idempotency **FSM doğal** (§16); `ITransactionalRequest` ile tek transaction                                                                         | §3.9, §14; INV 23, 48, 62                                                                              |
+| **Cam Mekan (Glass Enclosure)**                                | `Application/GlassEnclosure` (141 dosya), `src/features/glass-enclosure` (157), `src/shared/three-engine` | **Büyük modül**; 3D tasarımcı (three.js r128 sınırı); `IHasConcurrencyToken`; `glass_*_change_logs` partition adayı; `sky` domain rengi korunur                                                          | `docs/Cam_Mekan_Modul_Plan.md`; tasarım memory                                                         |
+| **MRP**                                                        | `Application/Mrp`, `src/features/mrp`                                                                     | Tranche tasarımı; bilinen açık işler blocker'da                                                                                                                                                          | `docs/modules/mrp-analysis.md`, `mrp-tranche-design.md`, `docs/mrp-blockers.md`                        |
+| **Bildirim · Provider · Outbox · E-Fatura**                    | `Application/{Notifications,Providers,EInvoice}`, `*Outbox*`                                              | Outbox pattern; tenant-aware SMTP (`TenantProviderConfig`); doküman-forward IDOR-safe; provider creds prod'da sandbox-only                                                                               | `docs/modules/notification-service.md`; `.claude/memory/project_corealign_notification_integration.md` |
+| **Auth · Identity · Subscription**                             | `Application/{Auth,Identity}`, Domain auth entity'leri                                                    | Mevcut entity'leri silme/parçalama (§5); BCrypt; refresh rotation + reuse-detect; httpOnly cookie (§8.0); `LoginAuditLog`                                                                                | §5, §8.0                                                                                               |
+| **Multi-tenant (çapraz-kesen)**                                | `Domain/Common/TenantEntity`, `CoreAlignDbContext`                                                        | Yeni veri-entity'si `TenantEntity` türer; her sorgu tenant-filter; `IgnoreQueryFilters` bilinçli + re-scope; cross-tenant izolasyon testi zorunlu                                                        | §4.7, §8.1; INV 49, 54, 56                                                                             |
+| **Hata yönetimi · Gözlemlenebilirlik (çapraz)**                | `ExceptionHandlingMiddleware`, `error_logs`, `src/shared/errors`                                          | `ApiResponse<T>` zarfı; exception fırlat, status kodlama; 5xx detayı sızdırma; correlation tek id; `Add*/Use*` çağrılı                                                                                   | §3.4, §2.4; `docs/modules/error-handling.md`; error memory                                             |
+| **Frontend (4 yüzey · design system · i18n)**                  | §0 tablosu                                                                                                | Doğru yüzey; FSD yön kuralı; `t()` + tr&en senkron; dark+responsive; `primary-*` token (raw `indigo-*` değil)                                                                                            | §2; `docs/DESIGN_SYSTEM.md`; design memory                                                             |
+| **DB · Migration (çapraz)**                                    | `Infrastructure/Persistence`                                                                              | İleri-tarihli Phase ID; idempotent; aynı-tur uygula; tabula-rasa testi; snapshot drift yok; xmin sadece Npgsql                                                                                           | §4, §12, §17; INV 28, 59, 63                                                                           |
+| **Zamanlanmış işler**                                          | Hangfire                                                                                                  | Yeni scheduler kurma → Hangfire job; ADR-0007                                                                                                                                                            | `docs/adr/0007-hangfire-for-scheduled-jobs.md`                                                         |
+
+> Listede olmayan küçük modüller de **aynı disiplinle**: en yakın mevcut modülü örnek al (§13.1), `INVARIANTS.md`'yi tara, tenant + para + hata-yönetimi kurallarını uygula.
+
+---
+
+## 0.2 Geliştirme Ön-Gereksinimleri & Servisler (AI Helper)
+
+> AI Helper (RAG tabanlı yardımcı bot) için gereken yerel/sunucu servisleri. Detay + kurulum: `docs/ai-helper-setup.md`. Mimari: `docs/modules/ai-helper.md`. Yeni PC/sunucuda bu adımlar atlanırsa AI Helper endpoint'i çalışmaz (uygulamanın geri kalanı degrade-güvenli kalmalı).
+
+- **PostgreSQL (mevcut):** AI Helper bilgi tabanı tabloları (`ai_kb_documents`, `ai_kb_chunks`) ana `corealign` DB'sinde yaşar. **pgvector GEREKMEZ** — embedding'ler native `real[]` kolonda, cosine `IKnowledgeRetriever` arkasında hesaplanır (her Postgres'te çalışır, taşınabilir). pgvector-yetenekli sunucuda HNSW'li retriever config ile devreye alınabilir; varsayılan değildir.
+- **Ollama (LLM + embedding runtime):** yerel/ücretsiz; sağlayıcı-bağımsız soyutlama (`IAiChatProvider`/`IAiEmbeddingProvider`) arkasında. Varsayılan modeller `qwen2.5:7b` (chat) + `bge-m3` (embedding). Dev: winget (`Ollama.Ollama`); sunucu/Docker: `docker-compose.full.yml` `ollama` servisi. Tek config noktası: `appsettings` `AiHelper` bloğu.
+- **Sağlayıcı değiştirilebilir (zorunlu ilke):** LLM'i bulut sağlayıcıya/GPU sunucuya taşımak = `AiHelper:Provider` + Infrastructure DI'daki tek kayıt; iş mantığı/frontend DEĞİŞMEZ. Frontend asla LLM'e doğrudan gitmez, yalnız `/api/v1/ai-helper/ask`.
+- **Güvenlik:** API key/secret yalnız sunucuda (user-secrets/env), commit edilmez; login-öncesi endpoint yalnız public KB + rate-limit; login-sonrası retrieval tenant+rol scope'lu (cross-tenant sızıntı yasak).
 
 ---
 
@@ -24,6 +87,8 @@
 ## 2. Frontend — Feature-Sliced Design
 
 ### 2.1 Klasör Anatomisi
+
+> **Önce yüzeyi seç (§0).** Aşağıdaki anatomi **admin SPA (`src/`)** içindir; `apps/customer-portal`, `apps/b2b` aynı FSD ağacını kendi kökünde tekrarlar; `mobile/` Expo Router kullanır. Yanlış kökte dosya açmak sessiz bozulmadır.
 
 Mevcut yapıya **uyulur**, ihlal edilmez:
 
@@ -48,7 +113,7 @@ Kurallar:
 
 - **Yönelim aşağı doğru:** `shared` → `features` → `widgets` → `pages` → `app`. Yukarı import yasak. Aynı katmanda feature → feature import yasak (paylaşılan şey varsa `shared`'a taşınır).
 - **Page-specific componentlar** ilgili sayfa klasörü altında `components/` klasöründe tutulur. Genel olmayan kod `shared/`'a koyulmaz.
-- **Tek doğru i18n yolu** vardır: `src/app/i18n/`. `src/shared/lib/i18n/` duplicate — refaktör fırsatında silinir, _yeni kod_ sadece `app/i18n` ile çalışır.
+- **Tek doğru i18n yolu** (admin SPA): `src/app/i18n/` (`locales/{tr,en,ar,de,ru}.json`, fallback=en). Eski `src/shared/lib/i18n/` duplicate'i **silindi** — yeni kod yalnız `app/i18n` ile çalışır. Portallar/mobil kendi locale yollarını kullanır (§0).
 
 ### 2.2 Stil & Tasarım
 
@@ -68,12 +133,19 @@ Kurallar:
 
 ### 2.4 Hata Yönetimi (Frontend)
 
+> Tam rehber + kod kalıpları: `docs/modules/error-handling.md`.
+
 - **`try/catch` doğrudan kullanılmaz.** `shared/lib/safeRequest.ts` sarmalı kullanılır:
   - `safeRequest`: `[data, error]` tuple döner, sessiz yakalar.
   - `safeRequestWithNotify`: Toast gösterir (success/error).
-  - `safeBatchRequest`: Promise.all sarmalı.
+  - `safeBatchRequest` / `safeBatchRequestSettled`: paralel istek sarmalı.
 - Eğer bu sarmal henüz yoksa, **ilk ihtiyaçta** kurulur ve standartlaştırılır.
-- API hata gövdesi backend `ErrorResponse` şemasına (madde 3.4) göre parse edilir.
+- API hata gövdesi backend **`ApiResponse<T>`** zarfına (madde 3.4: `isSuccess/errors/fieldErrors/statusCode/traceId`) göre parse edilir; `apiClient` interceptor'ı `isSuccess=false`'u normalize edip fırlatır, `safeRequest*` yakalar.
+- **Correlation:** `apiClient` her isteğe `X-Correlation-Id` ekler, yanıttakini `getLastCorrelationId()` ile saklar — frontend hatası bu id ile backend isteğine bağlanır.
+- **Beklenmeyen hata yakalama (zorunlu).** Her SPA önyüklemede global capture kurar ve kökü `<ErrorBoundary>` ile sarar; üçü de window `error` + `unhandledrejection` + render hatasını yakalayıp `POST /api/v1/client-errors`'a (throttle'lı, **asla throw etmeyen** `reportClientError`) gönderir → `error_logs` (`Source=Frontend`):
+  - Root admin SPA (`src/`): `shared/errors/windowHandlers.ts` → `installWindowErrorHandlers()`.
+  - Portallar (`apps/customer-portal`, `apps/b2b`): `shared/lib/clientErrorReporter.ts` → `installGlobalErrorReporting()`.
+  - Yeni bir SPA eklenmedikçe bu altyapı kuruludur — yenisini kurma. Yeni SPA'da: `main.tsx`'te install + `<ErrorBoundary>` + `apiClient` correlation header'ı.
 
 ### 2.5 i18n Disiplini
 
@@ -84,13 +156,13 @@ Kurallar:
 ### 2.6 Logging
 
 - `src/shared/lib/logger.ts`: dev'de console, prod'da no-op (veya remote sink). `logger.info/warn/error`.
-- `apiClient` interceptor'lerindeki mevcut `console.log/error` çağrıları **logger ile değiştirilir** (mevcut borç).
+- `apiClient` interceptor'leri `logger` kullanır (console temizlendi). Yeni kodda da `console.*` değil `logger.*`.
 
 ### 2.7 TypeScript
 
 - `strict: true` zorunlu. `any` kullanmak için somut gerekçe lazım — alternatif `unknown` + narrowing.
 - DTO/Model tipleri **`src/shared/model/`** veya feature'a aitse `features/<x>/model/types.ts`.
-- Backend ile şema uyumu manuel tutulmaz — uzun vadede OpenAPI tabanlı tip üretimine geçilir (NSwag/orval). Yeni endpoint eklenirken tip eşleşmesi kontrol edilir.
+- Backend ile şema uyumu — **NSwag/OpenAPI kurulu** (`nswag.json` + `openapi/`). Yeni endpoint eklenirken tip eşleşmesi kontrol edilir; üretilmiş client'ı elle ezme.
 
 ---
 
@@ -121,15 +193,32 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 - Endpoint başına ≤ 10 satır gövde. Aksi halde Application'a indirilir.
 - `[Authorize]` / `[AllowAnonymous]` her endpoint'te **bilinçli** olarak işaretlenir; default güvenli (`[Authorize]`).
 
-### 3.4 Global Hata Yönetimi
+### 3.4 Global Hata Yönetimi & Gözlemlenebilirlik
 
-- `CoreAlign.API/Middleware/ExceptionHandlingMiddleware.cs` tek noktadır. Tüm exception'lar buradan çıkar.
-- Standart hata gövdesi:
+> Tam rehber + kod kalıpları + "kullanıcı hata aldı" araştırma akışı: `docs/modules/error-handling.md`. Aşağısı bağlayıcı özet.
+
+- **Tek nokta:** `CoreAlign.API/Middleware/ExceptionHandlingMiddleware.cs`. Tüm exception'lar buradan tek tip gövdeyle çıkar.
+- **Yanıt zarfı `ApiResponse<T>`** (`CoreAlign.Application.Common`) — başarı **ve** hata aynı zarfta. Eski `{ "error": { code, message, details } }` şekli **kullanılmaz**. Gerçek şema:
   ```json
-  { "error": { "code": "VALIDATION_FAILED", "message": "...", "details": [...], "traceId": "..." } }
+  {
+    "isSuccess": false,
+    "data": null,
+    "errors": ["..."],
+    "fieldErrors": { "Email": ["..."] },
+    "statusCode": 409,
+    "traceId": "..."
+  }
   ```
-- Domain/Application'da `throw new <SpecificException>(message)` — middleware HTTP status'a map eder (Validation→400, NotFound→404, Forbidden→403, Conflict→409, Unauthorized→401, internal→500).
-- **Try/catch sadece sınırlarda.** İş mantığında yutmak yasak.
+  Başarı: `ApiResponse<T>.Success(data)`. `traceId` her yanıtta bulunur (madde 3.5/4 correlation).
+- **Hatayı exception ile bildir, status'u KODLAMA.** Domain/Application'da `throw new <SpecificException>(...)`; middleware soyut tabana göre map eder:
+  `NotFoundException`→404 · `ConflictException`→409 · `ForbiddenException`→403 · `AuthenticationException`→401 · `RateLimitExceededException`→429 · diğer `DomainException`→400 · FluentValidation `ValidationException`→400 (+`fieldErrors`) · `DbUpdateException` 23505/23503 & `DbUpdateConcurrencyException`→409 · eşleşmeyen→**500 (gövde generic)**.
+- **Yeni hata tipi** `CoreAlign.Domain/Exceptions/` altında doğru **soyut tabandan** türetilir (`: NotFoundException` vb.) — `switch` koluna dokunma; mapping + DB capture otomatik gelir. Exception mesajı kullanıcı-görür + PII-siz olur (4xx'te client'a gider).
+- **5xx detayı client'a SIZMAZ.** 500'de gövde her zaman generic ("An unexpected error occurred."); tam mesaj + stack yalnız sunucu logu + `error_logs`'a yazılır. `ex.Message`/`ex.ToString()` response'a **konmaz**. Controller'da `catch → return new { error = ex.Message }` yasak.
+- **Try/catch sadece sınırlarda.** İş mantığında yutmak yasak; exception middleware'e akar.
+- **DB error log (kalıcılık zorunlu):** her 5xx + anlamlı 4xx `error_logs` tablosuna yazılır (`IErrorLogWriter`; capture kararı `ShouldCapture` — Validation/Auth/NotFound/401/404 hariç). Tablo `BaseEntity`'dir (tenant-filter dışı, PlatformAdmin hepsini görür). Yazıcı kendi scope'unda, **asla throw etmez**, truncate + 5sn timeout. Kullanıcı "şurada hata aldım" dediğinde admin `error_logs`'tan `traceId`/sayfa/tarih ile bulur — yeni endpoint için ek iş yok.
+- **Correlation tek id (madde 4):** `CorrelationIdMiddleware` `X-Correlation-Id` üretir/yansıtır; aynı id `error_logs.correlation_id` + yanıt `traceId` + Serilog + Sentry'de görünür. Yeni custom response `ApiResponse<T>` veya en az `ITraceableResponse` olmalı (zinciri kırma).
+- **Admin görünürlük:** `GET /api/v1/admin/error-logs` (`PlatformAdmin` tümünü, `TenantAdmin` kendi tenant'ını). Frontend istemci hataları: `POST /api/v1/client-errors` (madde 2.4) aynı tabloya `Source=Frontend` düşer.
+- **/metrics:** OTel sayaçları (`errorlog_persisted_total`, `errorlog_write_failed_total`) `Program.cs`'te bağlı (`AddCoreAlignOpenTelemetry` + `UseOpenTelemetryPrometheusScrapingEndpoint`, `OpenTelemetry:MetricsEnabled` guard'lı). `/metrics` auth'suzdur (Prometheus tasarımı) → **ingress/network seviyesinde kısıtla**.
 
 ### 3.5 Middleware & Yetkilendirme
 
@@ -156,6 +245,20 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 - Email, GUID, length, range, format tek noktadan (FluentValidation).
 - HTML/script gelmesi mümkün alanlar (örn. note, description) için sanitization veya output encoding.
 
+### 3.9 MediatR Pipeline Sırası (SABİT — bozma)
+
+Gerçek kayıt sırası (`ApplicationServiceRegistration`): **dıştan içe** wrap eder, yani ilk kayıt en dış, handler en iç.
+
+```
+Logging → Validation → ConcurrencyToken → Transaction → SaveChanges → Audit → Outbox → [Handler]
+```
+
+- **`ITransactionalRequest` opt-in'i kritik:** `SaveChangesBehavior` yalnız request `ITransactionalRequest` ise `SaveChangesAsync` çağırır; `TransactionBehavior` da yalnız o zaman transaction açar. **Para/stok/durum mutasyonu yapan her Command `ITransactionalRequest` olmalı** — yoksa save+commit+audit+outbox atomikliği yok, yarım iş kalır.
+- **Audit + Outbox handler'dan SONRA ama SaveChanges'ten ÖNCE çalışır (stage eder):** domain değişikliği + audit log + outbox mesajı **tek `SaveChangesAsync`** ile, **tek transaction**'da persist edilir. Bu yüzden handler'da manuel `SaveChanges`/transaction yönetme (ITransactionalRequest isen); domain event'ini outbox'a yaz, behavior persist eder.
+- **`ConcurrencyTokenBehavior`** `DbUpdateConcurrencyException`'ı **409 `DomainConcurrencyException`**'a çevirir (§4.6).
+- **Cache-yazımı sıralaması (INV 69):** idempotency cache'i transaction commit'inden **önce** yazma — rollback olursa öksüz DTO replay edilir. Tercihen durable natural key (DB re-query); cache yalnız ikincil savunma.
+- Sırayı/davranışları değiştirmek = sistemik finansal bütünlük riski. Yeni behavior eklemek gerekiyorsa yerini bilinçli seç ve gerekçeyi yaz.
+
 ---
 
 ## 4. Database — PostgreSQL Mühendislik Standardı
@@ -171,7 +274,7 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 
 ### 4.2 Migrations & Governance
 
-- Migration adı açıklayıcı (`AddSubscriptionStatusColumn`); EF `YYYYMMDDHHMMSS_` prefix'i verir. **Phase numarası tekilliği:** iki migration aynı `Phase##` etiketini taşımaz; üretmeden önce mevcut migration klasörünü tara (§1.1 migration sanity sweep).
+- Migration adı açıklayıcı (`AddSubscriptionStatusColumn`); EF `YYYYMMDDHHMMSS_` prefix'i verir. **Asıl tekillik = timestamp ID sırası** (ileri-tarihli Phase ID disiplini §4.12), label değil: `Phase##` insan-grubudur ve **kasıtlı gruplarda çoğullanabilir** (mevcut: `Phase52` ×3 customer-merge+concurrency, `Phase30/31/54/59/60/61/66` ×2 — bunlar drift değil, dokunma). Üretmeden önce yine de klasörü tara: yasak olan **aynı tablo+sütun için duplicate `AddColumn`/`CreateTable`/`CreateIndex`** (concurrent-merge çakışması, §17.1) — bunu canonical=en küçük ID ile temizle.
 - **Production'a giden migration silinmez/değiştirilmez** (tarihçe immutable).
 - **Idempotent yaz** (§12.7): `CREATE TABLE/INDEX IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `ADD CONSTRAINT ... IF NOT EXISTS` (raw SQL ile), `DROP ... IF EXISTS`. EF auto-üretilen migration'lar bunu garanti etmez — yıkıcı/raw adımlarda guard'la.
 - **Boş/scratch migration teslim edilmez.** `TempPendingProbe`, boş `Up/Down`, placeholder migration dev'de silinir; repoya bırakılmaz (Global Rule "No Scratch Files").
@@ -221,7 +324,11 @@ Bağımlılık yönü: `API → Application → Domain`, `Infrastructure → App
 
 ### 4.6 Concurrency & ERP Doğruluğu (§16 ile)
 
-- **Optimistic concurrency = `xmin`.** Yarışabilen tablolarda `.UseXminAsConcurrencyToken()` (zero-storage, otomatik, raw-SQL writer'a bağışık). **Zorunlu liste:** `invoices`, `payments`, `orders`, `journal_entries`, `customer_ledger_entries`, `vendor_ledger_entries`, `vendor_bills`, `vendor_payments`, `stock_items`. Manuel `long` token tercih edilmez (bump unutulur, raw-SQL bypass eder). Çakışma → `DbUpdateConcurrencyException` → **409** (zaten `ConcurrencyTokenBehavior` ile bağlı), sessiz overwrite yok.
+- **Optimistic concurrency = İKİ mekanizma, bilinçli seçilir (HYBRID — bunu bozma).** Çakışma her ikisinde de `DbUpdateConcurrencyException` → **409 `DomainConcurrencyException`** (`ConcurrencyTokenBehavior` ile bağlı), sessiz overwrite yok. Yeni yarışabilen entity'de **birini** seç (ikisini aynı entity'ye takma); mevcut seçimi gerekçesiz değiştirme:
+  - **`IXminConcurrency`** → Postgres `xmin` sistem kolonu, **DDL yok**, zero-storage. `CoreAlignDbContext.ApplyXminConcurrencyTokens` convention'ı ile uygulanır ve **`Database.IsNpgsql()` ile guard'lıdır**. Kullananlar: `Invoice, Payment, Order, JournalEntry, CustomerLedgerEntry, VendorLedgerEntry, VendorBill, VendorPayment, Employee, PayrollRun, Payslip` (Postgres-öncelikli finansal/işlemsel aggregate'ler).
+  - **`IHasConcurrencyToken`** → app-managed `long ConcurrencyToken` + açık `BumpConcurrencyToken()`. **Hem Npgsql hem SQLite test provider'ında çalışır.** Kullananlar: `ProductVariant, StockItem (Phase71), FxRate, DataSubjectRequest, GlassProject ailesi (FieldSurvey/GlassProject/GlassProjectPanel/GlassProjectRun/GlassWorkOrder)`.
+  - **NEDEN ikisi (kritik tuzak):** `xmin` **yalnız Npgsql**'de bedava gelir; SQLite `EnsureCreated` test yolu onu **gerçek NOT NULL kolon** olarak materialize eder ve her insert patlar (commit `fc66c68`: xmin unconditional çalışınca **161 entegrasyon testi kırıldı**; `IsNpgsql()` guard'ı ile düzeldi). Bu yüzden: **`xmin`'i asla guard'sız/unconditional uygulama.** Concurrency'si **SQLite testinde kanıtlanması gereken** veya app-kontrollü bump isteyen entity → `IHasConcurrencyToken`. Mevcut `IHasConcurrencyToken` entity'sini "xmin'e taşı" diye değiştirme — test paritesini kırarsın.
+  - Concurrency token'ın gerçekten çalıştığını **InMemory provider kanıtlamaz** (`IsConcurrencyToken` ignore); SQLite `:memory:` + iki context ile doğrula (INV 64).
 - **Gapless döküman numarası atomik:** `document_sequences` tüketimi **tek atomik statement** — `UPDATE document_sequences SET next_number = next_number + 1 WHERE tenant_id=@t AND type=@ty RETURNING next_number - 1`. Read-modify-write (`NextNumber++`) **yasak** (lost-update + duplicate + 23505→500 cascade). Gerçek DB-gaplessness gerekmiyorsa per-(tenant,type) Postgres `SEQUENCE`.
 - **Ledger append serialize:** `running_balance_after` hesaplayan ledger insert'i müşteri/satıcı başına `pg_advisory_xact_lock(hashtextextended(<party>_id))` ile serialize edilir (pattern: `QuoteRepository.AcquireConversionLockAsync`). Kilitsiz "son bakiyeyi oku" kalıcı bakiye bozulmasıdır.
 - **Idempotency (§16.2):** para/stok mutasyonu idempotency key + unique constraint ile; retry çift kayıt üretmez. **Transaction sınırı (§16.3):** çok-tablolu tutarlılık (sipariş+stok+fatura+ledger) tek UnitOfWork.
@@ -296,6 +403,7 @@ Login akışı zaten **derin yatırım yapılmış** bir bölüm. Üzerinde çal
 
 Sırayla, atlanmaz:
 
+0. **Yönel (önce).** Hangi **frontend yüzeyi** (§0) ve hangi **modül** (§0.1 indeks)? O satırın tuzaklarını + "önce oku" dokümanını ve `INVARIANTS.md`'yi oku. En yakın mevcut modülü örnek al (§13.1).
 1. **Planla** — etkilenen modüller, DB, API, UI listele. Tasarım kararını kullanıcıya 2-3 cümle ile özetle.
 2. **Domain & DB** — Entity ekle/değiştir, EF Configuration güncelle, migration yarat.
 3. **Application** — Query/Command + Validator + DTO + Handler.
@@ -349,8 +457,12 @@ Hızlı kontrol listesi (mental):
 
 ## 8.2 Test Standartları
 
-**Konum:** `server/tests/CoreAlign.Application.Tests/`
-**Stack:** xUnit + NSubstitute + FluentAssertions. `TreatWarningsAsErrors` + global using'ler (Xunit, NSubstitute, FluentAssertions) csproj'de bind.
+**İki backend test projesi (ikisi de yeşil kalmalı):**
+
+1. **`server/tests/CoreAlign.Application.Tests/`** — Unit/handler. xUnit + NSubstitute + FluentAssertions. Repo/UoW mock'lı.
+2. **`server/tests/CoreAlign.Integration.Tests/`** — Gerçek-DB (SQLite/Npgsql). **Her yeni endpoint için:** happy + auth-reddi + **cross-tenant izolasyon** (`CrossTenantIsolationTests`/`PortalScopeIsolationTests` append-only, `AcceptableDeny`={404,403}) + **N+1 round-trip bütçesi** (`DbCommandRoundTripInterceptor`, tight bütçe 3-4). Concurrency'yi SQLite `:memory:` çift-context ile kanıtla (INV 64). xmin guard'ı burada test parity'yi etkiler (§4.6).
+
+**Stack notu:** `TreatWarningsAsErrors` + global using'ler (Xunit, NSubstitute, FluentAssertions) csproj'de bind.
 
 **Kapsam:**
 
@@ -362,7 +474,12 @@ Hızlı kontrol listesi (mental):
 
 **Yazılması gereken testler:** yeni handler eklediğinde, en az happy path + 1 failure path. State machine bulunan handler'larda her geçiş ayrı test.
 
-**Komut:** `dotnet test server/tests/CoreAlign.Application.Tests`
+**Komutlar:**
+
+```bash
+dotnet test server/tests/CoreAlign.Application.Tests
+dotnet test server/tests/CoreAlign.Integration.Tests
+```
 
 ### 8.2.1 Frontend Tests — Vitest
 
@@ -385,6 +502,17 @@ npm run test:watch     # Watch mode
 npm run test:ui        # UI mode (browser)
 npm run test:coverage  # v8 coverage report
 ```
+
+### 8.2.2 E2E — Playwright
+
+- **Konum:** `e2e/` (config `e2e/playwright.config.ts`); projeler: `admin`, `customer-portal`, `b2b` (üç SPA için ayrı).
+- Kritik akışlar (login, ana modül smoke, glass-enclosure) e2e ile korunur. Yeni kritik kullanıcı-akışı eklerken ilgili proje altına e2e ekle.
+- **Komutlar:** `npm run e2e` (hepsi) · `npm run e2e:admin` / `e2e:customer` / `e2e:b2b` · `npm run e2e:ui` · `npm run e2e:report`. İlk kurulum: `npm run e2e:install`.
+
+### 8.2.3 Diğer kalite kapıları
+
+- **Bundle bütçesi (3 SPA):** `npm run check:bundle:all` — per-chunk limit (INV 43/52/58, `scripts/check-bundle-size.mjs`, exemption tablosu `docs/performance-budget.md`).
+- **Mutation (Stryker):** yeni Application kodu eşiğin altına çekmez (§14.3).
 
 ---
 
@@ -423,31 +551,17 @@ DbContext'e `DbSet<Project> Projects => Set<Project>();` ekle, Configuration yaz
 
 ---
 
-## 9. Foundation Durumu (2026-05-12)
+## 9. Mevcut Durum (Snapshot — güncel)
 
-**Tamamlanmış altyapı:**
+> Bu bölüm "ne var" der; "nereye dokunursan neyi bozma" için **§0.1 Modül Guardrail İndeksi**. Bilinen açık işler/teknik borç: **`docs/sprint{8..13}-blockers.md`, `docs/mrp-blockers.md`, `docs/DB_RECONCILE_FOLLOWUP.md`** — task başında ilgili olanı tara.
 
-- Backend: Clean Architecture + CQRS (MediatR), FluentValidation pipeline, `ExceptionHandlingMiddleware` (traceId + standart envelope), `JwtOptions` + DataAnnotations validation (`ValidateOnStart`), `CorsOptions` validated, snake_case naming convention (`ApplySnakeCaseNaming()` extension).
-- Serilog — console + günlük rolling file (`logs/corealign-YYYYMMDD.log`).
-- API versioning — `/api/v1/...` (URL segment reader).
-- Swagger UI Bearer auth desteği (Authorize butonu).
-- Rate limiter — IP-bazlı fixed window: `auth` policy (10/dk, login/register/forgot/reset için) + `global` policy (200/dk).
-- Health check — `/health` (PostgreSQL kontrolü dahil).
-- CORS — `WithOrigins` whitelist; Authorization+ContentType+Accept header ile sınırlı.
-- AutoMapper kaldırıldı (CVE'li sürüm + kullanılmıyordu).
-- Tek `InitialSchema` migration — snake_case tablolar (`users`, `user_roles`, `refresh_tokens`, ...).
-- Frontend: `shared/types/api.ts` (ApiResponse/ApiError tipler), `shared/lib/{logger,env,safeRequest,mutationToast}`, `apiClient` (`/api/v1` base, console.log temizlendi, logger entegre), tek `app/i18n` (duplicate silindi), `ErrorBoundary`, `AppToaster` (sonner), `LoginForm` (react-hook-form + zod + i18n validation key'leri).
-- Tooling: Prettier + ESLint (prettier rule), Husky pre-commit + lint-staged, `npm run typecheck/lint/format`.
-- Docker Compose — `docker compose up -d` ile PostgreSQL 17.
+**Olgun altyapı (kurulu — yeniden kurma):** Clean Architecture + CQRS (MediatR, 7-behavior pipeline §3.9), FluentValidation, `ExceptionHandlingMiddleware` + `ApiResponse<T>` + correlation + `error_logs`, Serilog (rolling file), API versioning `/api/v1`, Swagger Bearer, rate limiter (auth 10/dk + global 200/dk), `/health`, CORS whitelist, snake_case convention, Sentry + OpenTelemetry `/metrics`, **Hangfire** (job), **Outbox**, **QuestPDF**, multi-tenant (`TenantEntity` + global filter + RLS), **NSwag/OpenAPI** üretimi (`nswag.json` + `openapi/`).
 
-**TreatWarningsAsErrors** her backend csproj'de açık, lint `--max-warnings=0` — sıfır toleranslı CI.
+**Canlı ERP modülleri (~55 Application modülü, kısmi liste):** Accounting (TDHP, trial balance, balance sheet, income statement, year-end close), Invoices, Payments, Customers, Vendors, Orders, Quotes, Purchasing (PO/PR/GoodsReceipt/3-way-match), Inventory/Stock, Products/Catalog, Pricing, Returns, Shipments, Tax, Treasury, Fx, Payroll, MRP, **GlassEnclosure (Cam Mekan — büyük)**, B2B (dealer flow), CustomerPortal, Notifications/Providers, EInvoice, Compliance/Privacy/Consents (KVKK), Imports, BI/Reports, Warranty, Installation, Whitelabel, Sso, Tags, MasterData, Lookups.
 
-**Multi-tenant + İlk ERP modülü:** `Customer` entity (`TenantEntity` türevli) — pattern'in canlı kanıtı. Backend: Repository + CQRS handlers + Controller + Validator. Frontend: `features/customers/{api,hooks,model,ui}` + `pages/customers/CustomersPage` + RHF+zod form + sonner toast + Tailwind responsive table.
+**Frontend:** 3 web SPA (admin `src/` + `apps/{customer-portal,b2b}`) + 1 Expo mobil (`mobile/`). Design system Phase-3 olgun (`docs/DESIGN_SYSTEM.md` + design memory). 5-dil locale (fallback=en).
 
-**Ertelenmiş işler (server gerekli):**
-
-- NSwag / openapi-typescript — backend swagger.json'dan frontend TS client üretimi. Server `dotnet run` çalışıyorken kurulabilir.
-- `docker compose up -d` ile Postgres yerine yerel PG 18 kullanılabilir; `appsettings.json` connection string'i revize edilebilir.
+**CI/kalite:** `TreatWarningsAsErrors` her backend csproj'de; lint `--max-warnings=0`; Husky pre-commit + lint-staged; Vitest + Playwright e2e + bundle bütçesi + Stryker. PostgreSQL Docker Compose (`docker compose up -d`).
 
 ---
 
@@ -462,20 +576,31 @@ dotnet build server/src/CoreAlign.API/CoreAlign.API.csproj
 dotnet ef migrations add <Name> -p server/src/CoreAlign.Infrastructure -s server/src/CoreAlign.API -o Persistence/Migrations
 dotnet ef database update -p server/src/CoreAlign.Infrastructure -s server/src/CoreAlign.API
 
-# Tests (xUnit + NSubstitute + FluentAssertions)
+# Tests (backend — ikisi de)
 dotnet test server/tests/CoreAlign.Application.Tests
+dotnet test server/tests/CoreAlign.Integration.Tests
 
-# Frontend
+# Frontend (admin SPA)
 npm run dev          # http://localhost:5273
-npm run build
+npm run build        # tsc -b && vite build && prerender-seo (SEO shell üretir)
 npm run typecheck    # tsc -b --noEmit
 npm run lint         # 0 warning zorunlu
 npm run lint:fix
 npm run format       # prettier write
-npm run format:check
 npm run test         # Vitest (frontend unit tests)
-npm run test:watch
 npm run test:coverage
+
+# E2E (3 SPA) + bundle bütçesi
+npm run e2e          # admin + customer-portal + b2b   (ilk: npm run e2e:install)
+npm run e2e:admin    # / e2e:customer / e2e:b2b
+npm run check:bundle:all
+
+# Portallar (root workspaces YOK → --prefix kullan, INV 50)
+npm --prefix apps/customer-portal run build
+npm --prefix apps/b2b run build
+
+# Mobil (Expo)
+cd mobile && npm install && npx expo start
 
 # Full-stack (VS Code)
 F5 → "Full Stack (Backend + Frontend)" compound
@@ -570,9 +695,58 @@ Prompt'ta unutulsa bile atlanmaması gerekenler kalıcı hafızada tutulur: **`d
 
 Para ve stok hatası kabul edilemez; eşzamanlılık ve retry senaryoları **baştan** düşünülür.
 
-1. **Optimistic concurrency.** Yarışabilen kayıtlarda (stok, hesap bakiyesi, fatura/ödeme durumu) `xmin`/rowversion concurrency token kullanılır. Çakışmada **409**, sessiz overwrite yok.
+1. **Optimistic concurrency.** Yarışabilen kayıtlarda (stok, hesap bakiyesi, fatura/ödeme durumu) concurrency token kullanılır — **hangi mekanizma (`IXminConcurrency` / `IHasConcurrencyToken`) ve neden ikisi: §4.6**. Çakışmada **409**, sessiz overwrite yok.
 2. **Idempotency.** Para/stok hareketi yaratan komutlar (ödeme uygula, sipariş onayla, stok düş) idempotency key ile çalışır; retry çift kayıt üretmez.
 3. **Transaction sınırı.** Çok-tablolu tutarlılık (sipariş + stock ledger + fatura) tek transaction / UnitOfWork içinde; yarım kalmış durum bırakılmaz.
 4. **Cache disiplini.** Cache key **tenant-scoped**; cross-tenant okuma imkânsız. Yazma sonrası ilgili key invalidate edilir; stale para/stok gösterilmez. TTL bilinçli seçilir.
 5. **Audit.** Para/stok/yetki değişiklikleri audit'lenir (kim, ne zaman, eski → yeni).
 6. **Decimal & TZ.** Para her zaman `decimal(18,4)` ya da minor-unit `bigint`; `float`/`double` yasak. Zaman `timestamptz`, UTC saklanır, yalnız sınırda dönüştürülür.
+
+---
+
+## 17. Post-Sprint Validation Routine (Long-Sprint Drift Önleme)
+
+Uzun sprint sonrası (40+ saatlik aralıklı çalışma veya 3+ migration ekleme sonrası), **bir sonraki çalışmaya başlamadan** veya **branch merge öncesi** şu sıralı kontrolü yap. §1.1 migration sanity, §4/§12 DB ve §13.5 gate'leri bu rutini tamamlar.
+
+1. **Migration sanity sweep:** Migration klasöründe duplicate `AddColumn`/`CreateTable`/`CreateIndex` (aynı tablo+sütun / aynı isim) ara — concurrent merge çakışması en sık burada birikir. Bul + canonical = en küçük migration ID kuralıyla temizle (§4.12).
+2. **DB tabula rasa testi:** `DROP DATABASE → CREATE → dotnet ef database update` ile tüm zinciri sıfırdan apply et. Build hatası veya `column already/does not exist` çıkarsa hemen düzelt — production deploy'unu önler (§4.2 sıfırdan apply).
+3. **DI ValidateOnBuild/Start:** Dev ortamda açık olmalı. API'yi bir kez start et — eksik registration, lifetime mismatch, concrete-not-registered hatalarını tek seferde gör. Hatasız startup şart.
+4. **Smoke test ana sayfalar:** Login + Dashboard + Customers + Products + Orders + Reports + Accounting/TrialBalance + GlassEnclosure list'ini UI'dan tıkla. `InvalidOperationException` (LINQ untranslatable), `Document sequence not seeded`, `null violation` görür görmez ticket aç.
+5. **Cleanup commit:** `git status`'ta `?? dummy_*`, `?? temp_*` gibi izleme dışı dosya görürsen sil veya `.gitignore`'a ekle (§1 No Scratch Files).
+6. **Seed extensibility:** Yeni `DocumentSequenceType` enum değeri eklendiyse `DemoDataSeeder`'a da eklendi mi kontrol et (Customer/Product/Order/Invoice/GlassProject/PurchaseOrder/VendorPayment/Journal/PurchaseRequisition sequence'leri eksiksiz olmalı).
+
+Bu rutin olmadan F5 sonrası "Demo sales flow X failed", "column does not exist", "Document sequence not seeded" gibi rastgele hataları sırayla debug etmek zorunda kalınır — saatler kaybedilir. **Rutini atlamak = teknik borcu ertelemek.**
+
+---
+
+## 18. Claude Code Çalışma Düzeni (bu repo)
+
+CoreAlign'a özel Claude Code varlıkları `.claude/` altında, **repoyla taşınır** (detay: `.claude/README.md`).
+
+### 18.1 Otomatik yüklenen bağlam
+
+- **`CLAUDE.md`** (bu dosya) + **`@docs/INVARIANTS.md`** (üstteki import) her oturumda otomatik yüklenir. Başka hiçbir doküman otomatik yüklenmez — §0.1 indeksindeki "önce oku"ları **sen açarsın**.
+- `.claude/memory/` Claude Code tarafından instruction olarak **otomatik yüklenmez**; canlı memory store'un git-aynasıdır (senkron: `.claude/README.md`). Kalıcı kural buraya değil, CLAUDE.md/INVARIANTS'a yazılır.
+
+### 18.2 Slash komutları (`.claude/commands/`)
+
+- **`/pre-ship`** — "bitti" demeden önce ZORUNLU: build (0 warning) + lint + typecheck + ilgili testler + (dokunulduysa) tabula-rasa migration testi. §13.5/§8.
+- **`/new-endpoint`** — yeni endpoint checklist'i (slim controller → Application → validator → tenant filter → cross-tenant + N+1 testi → i18n). §3/§6/§14.
+- **`/new-module`** — FSD + CQRS iskeleti (doğru yüzey + TenantEntity + repo + handler + DTO + UI + tr/en).
+- **`/db-migration`** — migration üretme protokolü (ileri-tarihli ID, idempotent, aynı-tur uygula, snapshot drift, tabula-rasa). §4.2/§4.12/§17.
+
+### 18.3 Reviewer subagent (`.claude/agents/`)
+
+- **`corealign-reviewer`** — değişiklik sonrası §8 checklist'ini bağımsız uygular (yorum/console/`@ts-ignore`, t() + tr/en senkron, N+1/sınırsız query, tenant filter + `[Authorize]`, para tipi/concurrency, DTO sızıntısı, dark+responsive). "Bitti" demeden önce çalıştır; bulduklarını düzelt.
+
+### 18.4 Güvenlik izinleri (`.claude/settings.json`)
+
+- Yıkıcı komutlar (**`DROP DATABASE`**, `git push --force`, `rm -rf`, `ef database update/drop` prod'a) **onay (`ask`) ister** — §7 risk-eylem kuralını mekanik olarak zorlar. Onaysız çalıştırma; kullanıcıya neden gerektiğini söyle.
+
+### 18.5 Hooks
+
+- Düzenleme sonrası ilgili dosyada prettier/eslint çalışır (lint debt birikmesini önler). Hook'un raporladığı hatayı **geçiştirme** (§1.2) — kök neden düzelt.
+
+### 18.6 Paralel/büyük iş
+
+- Çok-dosyalı tekrarlı dönüşümlerde (codemod, toplu sayfa migration'ı) izole subagent/worktree kullan; her batch'i ayrı doğrula. Snapshot/migration tutan başka ajan varsa §12.9 (el-yazımı idempotent + dokunma) uygula.

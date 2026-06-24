@@ -61,7 +61,7 @@ export const TagMultiSelect = ({ value, onChange }: TagMultiSelectProps) => {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-left text-[13px] text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        className="flex w-full items-center justify-between gap-2 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-left text-[13px] text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       >
         <span className="flex flex-wrap items-center gap-1">
           {selectedTags.length === 0 ? (
@@ -91,7 +91,7 @@ export const TagMultiSelect = ({ value, onChange }: TagMultiSelectProps) => {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder={t('tags.searchOrCreate')}
-              className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
           <ul className="max-h-44 overflow-y-auto py-1">
@@ -106,7 +106,7 @@ export const TagMultiSelect = ({ value, onChange }: TagMultiSelectProps) => {
                   >
                     <TagChip name={tg.name} colorHex={tg.colorHex} />
                     {checked && (
-                      <Check size={13} className="text-indigo-600 dark:text-indigo-400" />
+                      <Check size={13} className="text-primary-600 dark:text-primary-400" />
                     )}
                   </button>
                 </li>
@@ -123,7 +123,7 @@ export const TagMultiSelect = ({ value, onChange }: TagMultiSelectProps) => {
               type="button"
               onClick={handleCreate}
               disabled={createTag.isPending}
-              className="flex w-full items-center gap-1.5 border-t border-slate-100 px-2.5 py-2 text-left text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50 dark:border-slate-800 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+              className="flex w-full items-center gap-1.5 border-t border-slate-100 px-2.5 py-2 text-left text-xs font-medium text-primary-600 hover:bg-primary-50 disabled:opacity-50 dark:border-slate-800 dark:text-primary-300 dark:hover:bg-primary-500/10"
             >
               <Plus size={12} />
               {t('tags.createNamed', { name: filter.trim() })}

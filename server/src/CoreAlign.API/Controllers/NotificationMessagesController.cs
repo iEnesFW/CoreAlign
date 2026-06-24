@@ -1,7 +1,9 @@
 using Asp.Versioning;
+using CoreAlign.Application.Notifications.Messages;
 using CoreAlign.Application.Notifications.Repositories;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +17,13 @@ public class NotificationMessagesController : ControllerBase
 {
     private readonly INotificationMessageRepository _messages;
     private readonly ITenantContext _tenantContext;
+    private readonly IMediator _mediator;
 
-    public NotificationMessagesController(INotificationMessageRepository messages, ITenantContext tenantContext)
+    public NotificationMessagesController(INotificationMessageRepository messages, ITenantContext tenantContext, IMediator mediator)
     {
         _messages = messages;
         _tenantContext = tenantContext;
+        _mediator = mediator;
     }
 
     [HttpGet]
@@ -66,9 +70,7 @@ public class NotificationMessagesController : ControllerBase
     [HttpPost("{id:guid}/resend")]
     public async Task<IActionResult> ResendAsync(Guid id, CancellationToken ct)
     {
-        var tenantId = _tenantContext.RequireTenantId();
-        var entity = await _messages.GetByIdAsync(tenantId, id, ct);
-        if (entity is null) return NotFound();
-        return Accepted(new { entity.Id, queued = true });
+        await _mediator.Send(new ResendNotificationMessageCommand(id), ct);
+        return Accepted(new { id, queued = true });
     }
 }

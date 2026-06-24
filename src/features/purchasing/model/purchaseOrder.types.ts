@@ -79,6 +79,7 @@ export interface ReceiptLineInput {
 export interface ReceivePurchaseOrderInput {
   id: string;
   lines: ReceiptLineInput[];
+  idempotencyKey: string;
   warehouseId?: string | null;
   notes?: string | null;
 }

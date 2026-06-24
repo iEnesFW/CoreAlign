@@ -81,13 +81,13 @@ const iconByKind: Record<EventKind, React.ReactNode> = {
 
 const toneBg: Record<AuditEvent['tone'], string> = {
   slate: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
-  sky: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
-  indigo: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+  sky: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  indigo: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
   violet: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  amber: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+  amber: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
   teal: 'bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-300',
-  emerald: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  red: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300',
+  emerald: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  red: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
 };
 
 export const OrderAuditTab = ({ order, locale }: Props) => {

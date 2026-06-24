@@ -1,4 +1,20 @@
 {
+  "aiHelper": {
+    "launcher": "AI Asistan",
+    "title": "CoreAlign Asistanı",
+    "subtitle": "Portal hakkında her şeyi sorun",
+    "placeholder": "Bir soru sorun...",
+    "send": "Gönder",
+    "close": "Kapat",
+    "welcome": "Merhaba! Size nasıl yardımcı olabilirim?",
+    "sources": "Kaynaklar",
+    "error": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "thinking": "Düşünüyor...",
+    "noSource": "Genel bilgiye dayanıyor — CoreAlign'a özel bir kaynak eşleşmedi.",
+    "feedbackHelpful": "Faydalı",
+    "feedbackNotHelpful": "Faydalı değil",
+    "feedbackThanks": "Geri bildiriminiz için teşekkürler."
+  },
   "app": {
     "name": "CoreAlign Müşteri",
     "tagline": "Müşteri Portalı"
@@ -46,6 +62,18 @@
     "approvals": "Onay Bekleyenler",
     "profile": "Profil"
   },
+  "forward": {
+    "action": "E-posta ile ilet",
+    "title": "E-posta ile ilet",
+    "subtitle": "{{number}} numaralı belgeyi PDF eki olarak bir alıcıya gönderin.",
+    "recipient": "Alıcı e-posta",
+    "hint": "Belge tedarikçinizden PDF olarak gönderilir. Yanıtlar sizin e-posta adresinize gelir.",
+    "send": "Gönder",
+    "sending": "Gönderiliyor…",
+    "success": "{{email}} adresine gönderildi.",
+    "error": "Belge gönderilemedi.",
+    "invalidEmail": "Geçerli bir e-posta adresi girin."
+  },
   "common": {
     "loading": "Yükleniyor…",
     "noData": "Gösterilecek veri yok.",
@@ -86,7 +114,16 @@
     "submitting": "Giriş yapılıyor…",
     "wrongPersona": "Bu portal müşteriler içindir. Lütfen tenant yöneticinizle iletişime geçin.",
     "loginFailed": "Giriş başarısız. Bilgilerinizi kontrol edin.",
-    "loggedOut": "Çıkış yapıldı."
+    "loggedOut": "Çıkış yapıldı.",
+    "twoFactorHint": "Doğrulayıcı uygulamanızdaki 6 haneli kodu girin.",
+    "twoFactorBackupHint": "Kayıtlı yedek kodlarınızdan birini girin.",
+    "twoFactorCode": "Doğrulama kodu",
+    "twoFactorBackupCode": "Yedek kod",
+    "twoFactorSubmit": "Doğrula",
+    "twoFactorUseBackup": "Bunun yerine yedek kod kullan",
+    "twoFactorUseApp": "Bunun yerine doğrulayıcı kodu kullan",
+    "twoFactorBack": "Girişe dön",
+    "twoFactorInvalid": "Kod geçersiz veya süresi dolmuş. Lütfen tekrar deneyin."
   },
   "dashboard": {
     "title": "Genel Bakış",
@@ -410,7 +447,12 @@
   "errors": {
     "forbidden": "Bu işlem için yetkiniz yok.",
     "network": "Sunucuya ulaşılamadı.",
-    "unknown": "Beklenmeyen bir hata oluştu."
+    "unknown": "Beklenmeyen bir hata oluştu.",
+    "boundary": {
+      "title": "Bir şeyler ters gitti",
+      "description": "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.",
+      "reload": "Yenile"
+    }
   },
   "comments": {
     "title": "Mesajlar",

@@ -35,7 +35,7 @@ export const ConflictResolutionModal = ({
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
       >
         {t('Common.Cancel')}
       </button>
@@ -45,10 +45,10 @@ export const ConflictResolutionModal = ({
         disabled={!canOverwrite}
         title={canOverwrite ? undefined : t('Conflict.OverwriteWarning')}
         className={cn(
-          'rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500',
+          'rounded-md px-3 py-1.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-500',
           canOverwrite
-            ? 'bg-red-600 text-white hover:bg-red-700'
-            : 'cursor-not-allowed bg-red-200 text-red-700/70 dark:bg-red-900/40 dark:text-red-300/60',
+            ? 'bg-danger-600 text-white hover:bg-danger-700'
+            : 'cursor-not-allowed bg-danger-200 text-danger-700/70 dark:bg-danger-900/40 dark:text-danger-300/60',
         )}
       >
         {t('Conflict.OverwriteButton')}
@@ -57,7 +57,7 @@ export const ConflictResolutionModal = ({
         type="button"
         onClick={onReload}
         autoFocus
-        className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="rounded-md bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
       >
         {t('Conflict.ReloadButton')}
       </button>
@@ -80,11 +80,11 @@ export const ConflictResolutionModal = ({
         {conflictingFields.length > 0 && (
           <section
             aria-labelledby="conflict-fields-heading"
-            className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30"
+            className="rounded-lg border border-warning-200 bg-warning-50 p-3 dark:border-warning-900/50 dark:bg-warning-950/30"
           >
             <h3
               id="conflict-fields-heading"
-              className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300"
+              className="text-xs font-semibold uppercase tracking-wide text-warning-800 dark:text-warning-300"
             >
               {t('Conflict.ConflictingFields')}
             </h3>
@@ -92,7 +92,7 @@ export const ConflictResolutionModal = ({
               {conflictingFields.map((field) => (
                 <li
                   key={field}
-                  className="rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-900/50 dark:text-amber-100"
+                  className="rounded-md bg-warning-100 px-2 py-0.5 text-xs font-medium text-warning-900 dark:bg-warning-900/50 dark:text-warning-100"
                 >
                   {field}
                 </li>
@@ -103,7 +103,7 @@ export const ConflictResolutionModal = ({
 
         <p
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+          className="rounded-md border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-700 dark:border-danger-900/50 dark:bg-danger-950/30 dark:text-danger-300"
         >
           {t('Conflict.OverwriteWarning')}
         </p>

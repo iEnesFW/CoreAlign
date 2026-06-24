@@ -76,14 +76,14 @@ export const OrderStatusTimeline = ({ order, locale }: Props) => {
         {t('orders.timeline.title')}
       </h4>
       {isCancelled ? (
-        <div className="flex items-center gap-2 rounded border border-red-200 bg-red-50/60 p-3 text-sm dark:border-red-500/30 dark:bg-red-500/10">
-          <X size={14} className="text-red-600 dark:text-red-400" />
+        <div className="flex items-center gap-2 rounded border border-danger-200 bg-danger-50/60 p-3 text-sm dark:border-danger-500/30 dark:bg-danger-500/10">
+          <X size={14} className="text-danger-600 dark:text-danger-400" />
           <div className="flex-1">
-            <div className="font-medium text-red-700 dark:text-red-300">
+            <div className="font-medium text-danger-700 dark:text-danger-300">
               {t('orders.timeline.cancelledAt')}
             </div>
             {order.cancelledAtUtc && (
-              <div className="text-[11px] text-red-600/80 dark:text-red-400/80">
+              <div className="text-[11px] text-danger-600/80 dark:text-danger-400/80">
                 {fmtDateTime(order.cancelledAtUtc, locale)}
                 {order.cancelReason && ` · ${order.cancelReason}`}
               </div>
@@ -103,9 +103,9 @@ export const OrderStatusTimeline = ({ order, locale }: Props) => {
                 <div
                   className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] ${
                     isComplete
-                      ? 'bg-emerald-500 text-white'
+                      ? 'bg-success-500 text-white'
                       : isCurrent
-                        ? 'bg-indigo-500 text-white'
+                        ? 'bg-primary-500 text-white'
                         : 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500'
                   }`}
                 >
@@ -115,7 +115,7 @@ export const OrderStatusTimeline = ({ order, locale }: Props) => {
                   <div
                     className={`text-xs font-medium ${
                       isCurrent
-                        ? 'text-indigo-700 dark:text-indigo-300'
+                        ? 'text-primary-700 dark:text-primary-300'
                         : isComplete
                           ? 'text-slate-700 dark:text-slate-300'
                           : 'text-slate-400 dark:text-slate-500'

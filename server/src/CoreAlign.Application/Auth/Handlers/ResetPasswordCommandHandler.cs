@@ -53,6 +53,9 @@ public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand,
         if (user is null)
             throw new UserNotFoundException();
 
+        await _passwordPolicyService.ValidateAsync(
+            user.Id, request.NewPassword, PasswordPolicyContextFactory.For(user), cancellationToken);
+
         var previousHash = user.PasswordHash;
         user.PasswordHash = _passwordHasher.Hash(request.NewPassword);
         user.ResetSecurityStamp();

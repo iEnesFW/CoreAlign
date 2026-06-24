@@ -128,10 +128,12 @@ public class VendorsController : ControllerBase
         => (await _mediator.Send(new DeleteVendorContactCommand(contactId), ct)).ToOk();
 
     [HttpGet("{id:guid}/bank-accounts")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> BankAccounts(Guid id, CancellationToken ct)
         => (await _mediator.Send(new GetVendorBankAccountsQuery(id), ct)).ToOk();
 
     [HttpPost("{id:guid}/bank-accounts")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> CreateBankAccount(Guid id, [FromBody] CreateVendorBankAccountCommand cmd, CancellationToken ct)
     {
         if (id != cmd.VendorId) return BadRequest(ApiResponse<object>.Failure("Route id mismatch.", 400));
@@ -139,6 +141,7 @@ public class VendorsController : ControllerBase
     }
 
     [HttpPut("bank-accounts/{accountId:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> UpdateBankAccount(Guid accountId, [FromBody] UpdateVendorBankAccountCommand cmd, CancellationToken ct)
     {
         if (accountId != cmd.Id) return BadRequest(ApiResponse<object>.Failure("Route id mismatch.", 400));
@@ -146,6 +149,7 @@ public class VendorsController : ControllerBase
     }
 
     [HttpDelete("bank-accounts/{accountId:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> DeleteBankAccount(Guid accountId, CancellationToken ct)
         => (await _mediator.Send(new DeleteVendorBankAccountCommand(accountId), ct)).ToOk();
 

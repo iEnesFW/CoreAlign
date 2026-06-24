@@ -1,0 +1,65 @@
+# InstallationAcceptance (CoreAlign UI)
+
+"InstallationAcceptance" alanındaki ekran ve özelliklerde geçen terimler / terms used in the "InstallationAcceptance" area (English / Türkçe):
+
+- Accept / Kabul Et
+- Capture Signature / İmza Al
+- Reject / Reddet
+- Rejection reason / Reddetme nedeni
+- Start Acceptance / Kabulü Başlat
+- Update Checklist / Kontrol Listesini Güncelle
+- Upload Photo / Fotoğraf Yükle
+- Dimensions / Ölçüler
+- Glass / Cam
+- Hardware / Aksesuar
+- Mechanical / Mekanik
+- Seal / Sızdırmazlık
+- Diagonal equality / Köşegen eşitliği
+- Height tolerance ±2mm / Yükseklik toleransı ±2mm
+- Width tolerance ±2mm / Genişlik toleransı ±2mm
+- Glass edges polished / Cam kenarları rodajlı
+- Glass panels undamaged / Cam paneller hasarsız
+- Panel alignment / Panel hizalaması
+- CE marking visible / CE işareti görünür
+- Handles operational / Kollar çalışıyor
+- Hinge alignment / Menteşe hizalaması
+- Hinges lubricated / Menteşeler yağlanmış
+- Locks operational / Kilitler çalışıyor
+- Anchor bolts tight / Ankraj cıvataları sıkılı
+- Frame rigidity acceptable / Çerçeve rijitliği uygun
+- Horizontal/vertical levelness <2mm/m / Yatay/dikey terazi <2mm/m
+- Screw fastenings complete / Vida bağlantıları tamamlanmış
+- Seal has no gaps / Sızdırmazlıkta boşluk yok
+- Silicone applied / Silikon uygulanmış
+- Water tightness tested / Su sızdırmazlığı test edildi
+- Notes... / Notlar...
+- Fail / Uygun Değil
+- N/A / G/D
+- Pass / Uygun
+- Open Form / Formu Aç
+- Open Punch List Items / Açık Eksik Maddeleri
+- {{count}} photo(s) / {{count}} fotoğraf
+- Pick from Gallery / Galeriden Seç
+- Take Photo / Fotoğraf Çek
+- Add / Ekle
+- Description / Açıklama
+- No open items. / Açık madde yok.
+- Resolve / Çöz
+- Critical / Kritik
+- Minor / Küçük
+- Moderate / Orta
+- Deferred / Ertelendi
+- In Progress / Devam Ediyor
+- Open / Açık
+- Resolved / Çözüldü
+- Punch List / Eksik Listesi
+- Clear / Temizle
+- Customer representative name / Müşteri temsilcisinin adı
+- Please sign in the area below. / Lütfen aşağıdaki alana imza atın.
+- Save Signature / İmzayı Kaydet
+- Accepted / Kabul Edildi
+- Draft / Taslak
+- In Progress / Devam Ediyor
+- Rejected / Reddedildi
+- Signed by Customer / Müşteri Tarafından İmzalandı
+- Installation Acceptance / Montaj Kabulü

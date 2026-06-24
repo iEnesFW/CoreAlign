@@ -7,15 +7,15 @@ const SOURCE_META: Record<PriceSource, { tone: string; icon: React.ReactNode }> 
     icon: <Tag size={10} />,
   },
   PriceList: {
-    tone: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+    tone: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
     icon: <TrendingDown size={10} />,
   },
   CustomerProductPrice: {
-    tone: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+    tone: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
     icon: <User size={10} />,
   },
   Promotion: {
-    tone: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300',
+    tone: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
     icon: <Sparkles size={10} />,
   },
   ManualOverride: {

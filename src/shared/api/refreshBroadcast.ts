@@ -1,17 +1,5 @@
 import { logger } from '@/shared/lib/logger';
 
-/**
- * Cross-tab broadcast for auth-token rotation.
- *
- * The access token lives in memory (never localStorage) so a refresh in tab A
- * doesn't reach tab B by itself. Without coordination, tab B's queued requests
- * after `waitForRefreshLock` would retry with their stale token → 401 loop.
- *
- * BroadcastChannel is same-origin only, so the token never leaves the browser
- * profile. We fall back to a localStorage "ping" channel for browsers without
- * BroadcastChannel support (older Safari < 15.4).
- */
-
 const CHANNEL_NAME = 'corealign:auth';
 const STORAGE_KEY = 'corealign:auth:bc-fallback';
 
@@ -48,16 +36,13 @@ const fanout = (msg: AuthBroadcastMessage) => {
 };
 
 if (typeof window !== 'undefined') {
-  // Fallback for browsers without BroadcastChannel — localStorage 'storage' event
-  // fires across tabs of the same origin. We never persist anything; we write a
-  // single payload then immediately remove it to keep the token off-disk.
   window.addEventListener('storage', (e) => {
     if (e.key !== STORAGE_KEY || !e.newValue) return;
     try {
       const parsed = JSON.parse(e.newValue) as AuthBroadcastMessage;
       fanout(parsed);
     } catch {
-      /* ignore malformed payload */
+      // WHY: malformed cross-tab payloads are ignored by design
     }
   });
 }
@@ -78,12 +63,10 @@ export const broadcastRefresh = (msg: AuthBroadcastMessage): void => {
       logger.warn('refreshBroadcast.post-failed', { err: (err as Error)?.message });
     }
   }
-  // Storage-event fallback
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(msg));
-    // Remove immediately so the token doesn't sit on disk.
     window.localStorage.removeItem(STORAGE_KEY);
   } catch {
-    /* localStorage unavailable */
+    // WHY: localStorage may be unavailable (private mode); broadcast is best-effort
   }
 };

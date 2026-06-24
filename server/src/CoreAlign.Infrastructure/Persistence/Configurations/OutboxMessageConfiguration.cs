@@ -21,6 +21,6 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.Property(m => m.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(m => new { m.TenantId, m.Status, m.CreatedAtUtc });
-        builder.HasIndex(m => new { m.Status, m.NextAttemptUtc });
+        builder.HasIndex(m => m.NextAttemptUtc).HasFilter("status IN ('Pending', 'Deferred')");
     }
 }

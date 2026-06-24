@@ -26,9 +26,9 @@ const fmtDate = (iso: string, locale: string) => {
 };
 
 const statusTone: Record<AllocationStatus, string> = {
-  Active: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
-  PartiallyConsumed: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300',
-  Consumed: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300',
+  Active: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  PartiallyConsumed: 'bg-warning-100 text-warning-700 dark:bg-warning-500/20 dark:text-warning-300',
+  Consumed: 'bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300',
   Released: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
 };
 
@@ -125,7 +125,7 @@ export const OrderAllocationsTab = ({ orderId, locale }: Props) => {
                   </div>
                   <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
                     <div
-                      className="h-full rounded-full bg-amber-500"
+                      className="h-full rounded-full bg-warning-500"
                       style={{ width: `${usedPct}%` }}
                     />
                   </div>
@@ -153,9 +153,9 @@ export const OrderAllocationsTab = ({ orderId, locale }: Props) => {
 
 const kpiTones: Record<'slate' | 'indigo' | 'amber' | 'emerald', string> = {
   slate: 'border-slate-200 dark:border-slate-800',
-  indigo: 'border-indigo-200 dark:border-indigo-500/30',
-  amber: 'border-amber-200 dark:border-amber-500/30',
-  emerald: 'border-emerald-200 dark:border-emerald-500/30',
+  indigo: 'border-primary-200 dark:border-primary-500/30',
+  amber: 'border-warning-200 dark:border-warning-500/30',
+  emerald: 'border-success-200 dark:border-success-500/30',
 };
 
 const Kpi = ({

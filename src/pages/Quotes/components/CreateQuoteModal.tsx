@@ -273,7 +273,7 @@ export const CreateQuoteModal = ({ open, onClose, onCreated }: Props) => {
                 <button
                   type="button"
                   onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
-                  className="self-center rounded-md p-1.5 text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-900/40"
+                  className="self-center rounded-md p-1.5 text-danger-600 hover:bg-danger-50 dark:text-danger-300 dark:hover:bg-danger-900/40"
                   aria-label={t('quotes.create.removeLine')}
                 >
                   <Trash2 size={14} />
@@ -324,7 +324,7 @@ const Field = ({
   <label className="flex flex-col gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
     <span>
       {label}
-      {required ? <span className="text-rose-500"> *</span> : null}
+      {required ? <span className="text-danger-500"> *</span> : null}
     </span>
     {children}
   </label>

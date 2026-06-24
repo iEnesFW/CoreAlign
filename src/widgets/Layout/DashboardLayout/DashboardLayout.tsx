@@ -13,7 +13,6 @@ const shouldPrefetchPages = (): boolean => {
   const conn = (navigator as Navigator & { connection?: NavigatorConnection }).connection;
   if (!conn) return true;
   if (conn.saveData) return false;
-  // 2g/slow-2g/3g networks: skip optimistic prefetching to save data and CPU.
   return conn.effectiveType ? !/(2g|3g)/.test(conn.effectiveType) : true;
 };
 
@@ -27,12 +26,10 @@ export const DashboardLayout: React.FC = () => {
     }
   }, []);
 
-  // Stable callback identity so the memoized Navbar doesn't re-render on every
-  // layout state change.
   const toggleSidebar = useCallback(() => setIsSidebarOpen((open) => !open), []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50/50 dark:bg-[#060913] transition-colors duration-300">
+    <div className="flex h-screen overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100/70 transition-colors duration-300 dark:from-canvas dark:to-shell">
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}

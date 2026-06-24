@@ -10,8 +10,8 @@ import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
-import { CurrencySelect } from '@/features/lookups/ui/CurrencySelect';
-import { MasterDataQuickModal } from '@/features/master-data/ui/MasterDataQuickModal';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
+import { MasterDataQuickModal } from '@/shared/master-data/ui/MasterDataQuickModal';
 import {
   useCustomersQuery,
   useCustomerAddressesQuery,
@@ -24,7 +24,7 @@ import {
   useTaxRatesQuery,
   useUomsQuery,
   useWarehousesQuery,
-} from '@/features/master-data/hooks/useMasterData';
+} from '@/shared/master-data/hooks/useMasterData';
 import { orderSchema, type OrderFormValues } from '../model/orderSchema';
 import {
   ORDER_STATUSES,
@@ -56,12 +56,12 @@ const ORDER_SOURCES: OrderSource[] = [
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
 const fieldCls =
-  'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
+  'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 const labelCls = 'mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300';
 const sectionCls = 'space-y-3 border-t border-slate-200 pt-3 dark:border-slate-800';
 const sectionTitleCls = 'text-xs font-semibold uppercase tracking-wider text-slate-500';
 const quickAddBtnCls =
-  'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10';
+  'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium text-primary-600 hover:bg-primary-50 dark:text-primary-300 dark:hover:bg-primary-500/10';
 
 const emptyValues: OrderFormValues = {
   orderNumber: '',
@@ -138,7 +138,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
   const [quickAdd, setQuickAdd] = useState<'paymentTerm' | 'priceList' | null>(null);
   const [tab, setTab] = useState<'info' | 'lines'>('info');
 
-  // Focus the new row's product input after a keyboard- or button-triggered add.
   const productRefs = useRef(new Map<string, HTMLInputElement | null>());
   const focusNewLine = useRef(false);
   useEffect(() => {
@@ -210,7 +209,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
   const currency = (watchedCurrency || 'USD').toUpperCase();
   const locale = i18n.language;
 
-  // Client-side estimate for live feedback; the backend recomputes authoritative totals on save.
   const summary = useMemo(() => {
     const lines = watchedLines ?? [];
     let subtotal = 0;
@@ -248,11 +246,9 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
     setValue(`lines.${index}.unitPrice`, product.price);
-    // Carry the product's sales unit of measure across.
     const uom = uoms.find((u) => u.id === product.salesUomId);
     setValue(`lines.${index}.uomId`, product.salesUomId ?? '');
     setValue(`lines.${index}.uomCode`, uom?.code ?? product.unit ?? '');
-    // Default the line VAT from the product's tax rate.
     const rate = product.taxRateId ? taxRates.find((r) => r.id === product.taxRateId) : undefined;
     setValue(`lines.${index}.taxRateId`, rate?.id ?? '');
     setValue(`lines.${index}.taxRatePercent`, rate ? String(rate.ratePercent) : '');
@@ -405,7 +401,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
           className="space-y-4 px-5 py-4"
         >
           <div className={tab === 'info' ? 'space-y-4' : 'hidden'}>
-            {/* General */}
             <section className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Input
@@ -435,7 +430,7 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
                   ))}
                 </select>
                 {errors.customerId?.message && (
-                  <span className="mt-1 block text-xs text-red-500">
+                  <span className="mt-1 block text-xs text-danger-500">
                     {translateError(errors.customerId.message)}
                   </span>
                 )}
@@ -475,7 +470,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Commercial terms */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('orders.sections.commercial')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -573,7 +567,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Addresses */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('orders.sections.addresses')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -612,7 +605,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
               </div>
             </section>
 
-            {/* Notes */}
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('orders.sections.notes')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -638,7 +630,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
           </div>
 
           <div className={tab === 'lines' ? 'space-y-4' : 'hidden'}>
-            {/* Lines */}
             <section className={sectionCls}>
               <div className="flex items-center justify-between">
                 <h3 className={sectionTitleCls}>{t('orders.fields.lines')}</h3>
@@ -646,7 +637,7 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
                   type="button"
                   disabled={!isDraft}
                   onClick={addLine}
-                  className="inline-flex items-center gap-1 rounded bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 dark:bg-indigo-500/10 dark:text-indigo-300 dark:hover:bg-indigo-500/20"
+                  className="inline-flex items-center gap-1 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20"
                 >
                   <Plus size={12} />
                   {t('orders.lines.add')}
@@ -654,7 +645,9 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
               </div>
 
               {errors.lines?.message && (
-                <div className="text-xs text-red-500">{translateError(errors.lines.message)}</div>
+                <div className="text-xs text-danger-500">
+                  {translateError(errors.lines.message)}
+                </div>
               )}
 
               <div className="space-y-2">
@@ -686,7 +679,6 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
                 ))}
               </div>
 
-              {/* Totals */}
               <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/50">
                 <dl className="space-y-1">
                   <SummaryRow

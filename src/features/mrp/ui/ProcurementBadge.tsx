@@ -9,7 +9,7 @@ interface Props {
 
 const TONE: Record<ProcurementType, string> = {
   Make: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300',
-  Buy: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300',
+  Buy: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
 };
 
 export const ProcurementBadge = ({ type, className = '' }: Props) => {

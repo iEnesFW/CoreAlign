@@ -1,4 +1,4 @@
-import type { AddressSnapshot, CustomerSnapshot } from '@/features/orders/model/order.types';
+import type { AddressSnapshot, CustomerSnapshot } from '@/shared/model/documentSnapshot.types';
 
 export type InvoiceStatus =
   | 'Draft'
@@ -145,6 +145,12 @@ export interface IssueCreditNotePayload {
   lines: IssueCreditNoteLineInput[];
   reason?: string | null;
   returnRequestId?: string | null;
+  operationId?: string | null;
+}
+
+export interface CreditedLineQuantity {
+  invoiceLineId: string;
+  creditedQuantity: number;
 }
 
 export interface StandaloneInvoiceLineInput {

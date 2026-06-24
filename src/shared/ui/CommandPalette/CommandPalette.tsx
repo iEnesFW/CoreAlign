@@ -18,15 +18,12 @@ interface Props {
   placeholder?: string;
 }
 
-// Mount this only while open (e.g. `{open && <CommandPalette … />}`) so each
-// open starts from a clean query/highlight without resetting state in an effect.
 export const CommandPalette = ({ onClose, items, placeholder }: Props) => {
   const [query, setQuery] = useState('');
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  // Focus is a DOM side effect, so it stays in an effect; deferred until paint.
   useEffect(() => {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
@@ -111,7 +108,7 @@ export const CommandPalette = ({ onClose, items, placeholder }: Props) => {
                     onMouseEnter={() => setHighlight(i)}
                     className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm ${
                       i === activeIndex
-                        ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300'
+                        ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-300'
                         : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800/60'
                     }`}
                   >

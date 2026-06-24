@@ -33,7 +33,6 @@ public class PurchaseOrderConfiguration : IEntityTypeConfiguration<PurchaseOrder
         builder.HasIndex(p => new { p.TenantId, p.PoNumber }).IsUnique();
         builder.HasIndex(p => new { p.TenantId, p.VendorId });
         builder.HasIndex(p => new { p.TenantId, p.Status });
-        builder.HasIndex(p => new { p.TenantId, p.OrderDate }).IsDescending(false, true);
 
         builder.Ignore(p => p.IsEditable);
         builder.Ignore(p => p.IsCancellable);

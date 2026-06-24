@@ -51,3 +51,7 @@ e2e/playwright-report/
 e2e/test-results/
 blob-report/
 .playwright/
+
+# DataProtection key-ring (encrypted at rest; never commit keys)
+App_Data/dataprotection-keys/
+**/dataprotection-keys/

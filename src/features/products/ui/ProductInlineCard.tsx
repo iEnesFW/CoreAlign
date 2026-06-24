@@ -15,7 +15,7 @@ interface ProductInlineCardProps {
 }
 
 export const ProductInlineCard = ({ product, onClose, onOpenPanel }: ProductInlineCardProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const summaryQuery = useStockSummaryQuery(product.id);
   const byWarehouseQuery = useStockByProductQuery(product.id);
@@ -32,46 +32,71 @@ export const ProductInlineCard = ({ product, onClose, onOpenPanel }: ProductInli
       onClose={onClose}
     >
       {summaryQuery.isPending ? (
-        <div className="py-6 text-center text-sm text-slate-500">Yükleniyor…</div>
+        <div className="py-6 text-center text-sm text-slate-500">
+          {t('ProductCard.Loading', { defaultValue: 'Yükleniyor…' })}
+        </div>
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Metric label="Toplam Stok" value={formatNumber(summary?.totalOnHand ?? 0, locale)} />
-            <Metric label="Rezerve" value={formatNumber(summary?.totalReserved ?? 0, locale)} />
             <Metric
-              label="Kullanılabilir"
+              label={t('ProductCard.TotalStock', { defaultValue: 'Toplam Stok' })}
+              value={formatNumber(summary?.totalOnHand ?? 0, locale)}
+            />
+            <Metric
+              label={t('ProductCard.Reserved', { defaultValue: 'Rezerve' })}
+              value={formatNumber(summary?.totalReserved ?? 0, locale)}
+            />
+            <Metric
+              label={t('ProductCard.Available', { defaultValue: 'Kullanılabilir' })}
               value={formatNumber(summary?.totalAvailable ?? 0, locale)}
               tone={summary && summary.totalAvailable <= 0 ? 'rose' : 'emerald'}
             />
             <Metric
-              label="Ort. Maliyet"
+              label={t('ProductCard.AverageCost', { defaultValue: 'Ort. Maliyet' })}
               value={formatCurrency(summary?.averageCost ?? 0, locale, currency)}
             />
           </div>
 
           {summary?.isBelowReorder && (
-            <div className="flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
+            <div className="flex items-center gap-1.5 rounded-lg bg-warning-50 px-3 py-1.5 text-xs text-warning-800 dark:bg-warning-500/10 dark:text-warning-300">
               <AlertTriangle size={13} />
-              Bu ürün yeniden sipariş seviyesinin altında.
+              {t('ProductCard.BelowReorderLevel', {
+                defaultValue: 'Bu ürün yeniden sipariş seviyesinin altında.',
+              })}
             </div>
           )}
 
           <div>
             <h4 className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase text-slate-500">
               <Warehouse size={12} />
-              Depo Bazında Stok ({summary?.warehouseCount ?? items.length})
+              {t('ProductCard.StockByWarehouse', {
+                defaultValue: 'Depo Bazında Stok ({{count}})',
+                count: summary?.warehouseCount ?? items.length,
+              })}
             </h4>
             {items.length > 0 ? (
               <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
                 <table className="w-full text-xs">
                   <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
                     <tr>
-                      <th className="px-2 py-1.5 text-left">Depo</th>
-                      <th className="px-2 py-1.5 text-left">Lot</th>
-                      <th className="px-2 py-1.5 text-right">Eldeki</th>
-                      <th className="px-2 py-1.5 text-right">Rezerve</th>
-                      <th className="px-2 py-1.5 text-right">Kullanılabilir</th>
-                      <th className="px-2 py-1.5 text-left">Son Hareket</th>
+                      <th className="px-2 py-1.5 text-left">
+                        {t('ProductCard.ColWarehouse', { defaultValue: 'Depo' })}
+                      </th>
+                      <th className="px-2 py-1.5 text-left">
+                        {t('ProductCard.ColLot', { defaultValue: 'Lot' })}
+                      </th>
+                      <th className="px-2 py-1.5 text-right">
+                        {t('ProductCard.ColOnHand', { defaultValue: 'Eldeki' })}
+                      </th>
+                      <th className="px-2 py-1.5 text-right">
+                        {t('ProductCard.Reserved', { defaultValue: 'Rezerve' })}
+                      </th>
+                      <th className="px-2 py-1.5 text-right">
+                        {t('ProductCard.Available', { defaultValue: 'Kullanılabilir' })}
+                      </th>
+                      <th className="px-2 py-1.5 text-left">
+                        {t('ProductCard.ColLastMovement', { defaultValue: 'Son Hareket' })}
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -103,7 +128,9 @@ export const ProductInlineCard = ({ product, onClose, onOpenPanel }: ProductInli
               </div>
             ) : (
               <p className="py-3 text-center text-xs text-slate-400">
-                Bu ürün için stok kaydı bulunamadı.
+                {t('ProductCard.NoStockRecords', {
+                  defaultValue: 'Bu ürün için stok kaydı bulunamadı.',
+                })}
               </p>
             )}
           </div>
@@ -114,8 +141,8 @@ export const ProductInlineCard = ({ product, onClose, onOpenPanel }: ProductInli
 };
 
 const toneMap = {
-  rose: 'text-rose-600 dark:text-rose-400',
-  emerald: 'text-emerald-600 dark:text-emerald-400',
+  rose: 'text-danger-600 dark:text-danger-400',
+  emerald: 'text-success-600 dark:text-success-400',
   slate: 'text-slate-900 dark:text-slate-100',
 } as const;
 
