@@ -249,15 +249,13 @@ export function GlassProjectDesignerPage() {
       });
       return;
     }
-    // Runs/panels/hardware create server-side, so duplicate falls back to the
-    // copy + click-to-place flow. Other kinds (connection/features) are no-ops.
     if (selection.kind === 'run' || selection.kind === 'panel' || selection.kind === 'hardware') {
       handleCopy();
       handleArmPaste();
     }
   }, [handleCopy, handleArmPaste]);
 
-  const { deleteRun, deletePanel } = useDesignerEntityActions();
+  const { deleteRun, deletePanel, persistRun } = useDesignerEntityActions();
   const { deleteMultiSelection } = useMultiSelectionDelete();
 
   const handleDeleteSelection = useCallback(() => {
@@ -329,6 +327,43 @@ export function GlassProjectDesignerPage() {
       clear();
     }
   }, [deleteRun, deletePanel, deleteMultiSelection]);
+
+  // Arrow-key nudge of the selected placed object in the plan (X/Y mm). Runs need the
+  // structured persist (origin lives on the DTO); walls/slabs/surfaces ride the scene blob.
+  const handleNudge = useCallback(
+    (dxMm: number, dyMm: number) => {
+      const state = useDesignerStore.getState();
+      const sel = state.selection;
+      if (sel.kind === 'run' && sel.runId) {
+        const run = state.scene.runs.find((r) => r.id === sel.runId);
+        if (!run) return;
+        state.updateRun(sel.runId, { originX: run.originX + dxMm, originY: run.originY + dyMm });
+        const updated = useDesignerStore.getState().scene.runs.find((r) => r.id === sel.runId);
+        if (updated) void persistRun(updated);
+      } else if (sel.kind === 'wall' && sel.wallId) {
+        const wall = (state.scene.walls ?? []).find((w) => w.id === sel.wallId);
+        if (wall)
+          state.updateWall(sel.wallId, {
+            originX: wall.originX + dxMm,
+            originY: wall.originY + dyMm,
+          });
+      } else if (sel.kind === 'slab' && sel.slabId) {
+        const slab = (state.scene.slabs ?? []).find((s) => s.id === sel.slabId);
+        if (slab)
+          state.updateSlab(sel.slabId, {
+            originX: slab.originX + dxMm,
+            originY: slab.originY + dyMm,
+          });
+      } else if (sel.kind === 'surface' && sel.surfaceId) {
+        const surface = (state.scene.surfaces ?? []).find((s) => s.id === sel.surfaceId);
+        if (surface)
+          state.updateSurface(sel.surfaceId, {
+            points: surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
+          });
+      }
+    },
+    [persistRun],
+  );
 
   const project = projectQuery.data?.data ?? null;
   const profileSystems = useMemo(
@@ -437,13 +472,24 @@ export function GlassProjectDesignerPage() {
         e.preventDefault();
         handleArmPaste();
       } else if (e.key === 'Delete') {
-        // Delete only — Backspace is too easy to hit reflexively and would
-        // destructively remove the selection (also a server-side delete).
         e.preventDefault();
         handleDeleteSelection();
+      } else if (!meta && !e.altKey && e.key.startsWith('Arrow')) {
+        const step = e.shiftKey ? 1 : 10;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          handleNudge(-step, 0);
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          handleNudge(step, 0);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          handleNudge(0, -step);
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          handleNudge(0, step);
+        }
       } else if (e.key === 'Escape') {
-        // Cancel ladder: drop the active op first, then selections, and only
-        // fall back to the select tool when there is nothing left to cancel.
         const state = useDesignerStore.getState();
         const hasMulti =
           state.multiSelection.runIds.length +
@@ -494,6 +540,7 @@ export function GlassProjectDesignerPage() {
     handleArmPaste,
     handleDuplicate,
     handleDeleteSelection,
+    handleNudge,
     armPlacement,
     autofill,
   ]);
@@ -865,7 +912,7 @@ const ViewModeButton = ({
     onClick={onClick}
     className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition ${
       active
-        ? 'bg-blue-600 text-white'
+        ? 'bg-primary-600 text-white'
         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
     }`}
     aria-pressed={active}

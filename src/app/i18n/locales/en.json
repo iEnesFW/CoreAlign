@@ -2584,6 +2584,7 @@
           "Autofill": "Fill the selected wall's openings with glass",
           "Placement": "Add run / wall / floor / roof — sticks to the cursor, click to place",
           "Delete": "Delete selected item",
+          "Nudge": "Nudge the selected object — 10 mm (Shift: 1 mm)",
           "Cancel": "Cancel tool and placement",
           "Lasso": "Multi-select with the lasso — delete them all with Del",
           "CtrlSelect": "Ctrl+click adds/removes items to the multi-selection — align, join, match and fill from the top-right bar",

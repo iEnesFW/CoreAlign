@@ -2584,6 +2584,7 @@
           "Autofill": "Seçili duvarın boşluklarını camla doldur",
           "Placement": "Hat / Duvar / Zemin / Çatı ekle — imlece yapışır, tıklayınca yerleşir",
           "Delete": "Seçili öğeyi sil",
+          "Nudge": "Seçili nesneyi kaydır — 10 mm (Shift: 1 mm)",
           "Cancel": "Aracı ve yerleştirmeyi iptal et",
           "Lasso": "Lasso ile çoklu seçim — Del ile topluca silin",
           "CtrlSelect": "Öğeleri çoklu seçime ekle/çıkar — sağ üstten hizala, uç uca birleştir, eşitle, araları doldur",

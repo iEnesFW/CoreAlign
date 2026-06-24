@@ -165,6 +165,12 @@ export const ShortcutsHelp = ({ triggerClassName, iconSize = 14 }: ShortcutsHelp
           }),
         },
         {
+          keys: '↑ ↓ ← →',
+          text: t('GlassEnclosure.Designer.Help.Tools.Nudge', {
+            defaultValue: 'Seçili nesneyi kaydır — 10 mm (Shift: 1 mm)',
+          }),
+        },
+        {
           keys: 'Esc',
           text: t('GlassEnclosure.Designer.Help.Tools.Cancel', {
             defaultValue: 'Aracı ve yerleştirmeyi iptal et',
