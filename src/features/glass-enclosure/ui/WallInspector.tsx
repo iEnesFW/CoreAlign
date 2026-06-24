@@ -132,8 +132,8 @@ export function WallInspector() {
     });
   };
 
-  const handleAddOpening = (kind: SceneWallOpening['kind']) => {
-    const opening = createOpening(kind, wall.lengthMm, wall.openings ?? []);
+  const handleAddOpening = (kind: SceneWallOpening['kind'], dims?: OpeningDims) => {
+    const opening = createOpening(kind, wall.lengthMm, wall.openings ?? [], dims);
     if (!opening) {
       queueToast({
         dedupeKey: 'glass-wall-opening-full',
@@ -464,6 +464,32 @@ export function WallInspector() {
                 </button>
               </div>
             </div>
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                {t('GlassEnclosure.Designer.Wall.OpeningPresets', {
+                  defaultValue: 'Hazır ölçüler',
+                })}
+              </span>
+              {OPENING_PRESETS.map((preset) => {
+                const Icon = preset.kind === 'door' ? DoorOpen : RectangleHorizontal;
+                const kindLabel =
+                  preset.kind === 'door'
+                    ? t('GlassEnclosure.Designer.Wall.Door', { defaultValue: 'Kapı' })
+                    : t('GlassEnclosure.Designer.Wall.Window', { defaultValue: 'Pencere' });
+                return (
+                  <button
+                    key={`${preset.kind}-${preset.widthMm}x${preset.heightMm}`}
+                    type="button"
+                    onClick={() => handleAddOpening(preset.kind, preset)}
+                    title={`${kindLabel} ${preset.widthMm}×${preset.heightMm}`}
+                    className="inline-flex items-center gap-1 rounded border border-slate-300 px-1.5 py-0.5 text-[10px] text-slate-600 hover:border-primary-500 hover:text-primary-600 dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary-400"
+                  >
+                    <Icon size={10} />
+                    {preset.widthMm}×{preset.heightMm}
+                  </button>
+                );
+              })}
+            </div>
             {(wall.openings ?? []).length === 0 ? (
               <p className="text-[11px] text-slate-400">
                 {t('GlassEnclosure.Designer.Wall.NoOpenings', {
@@ -628,15 +654,33 @@ const findFreeOffset = (
   return null;
 };
 
+interface OpeningDims {
+  widthMm: number;
+  heightMm: number;
+  sillMm: number;
+}
+
+const OPENING_PRESETS: ({ kind: SceneWallOpening['kind'] } & OpeningDims)[] = [
+  { kind: 'door', widthMm: 900, heightMm: 2100, sillMm: 0 },
+  { kind: 'door', widthMm: 800, heightMm: 2000, sillMm: 0 },
+  { kind: 'door', widthMm: 1800, heightMm: 2100, sillMm: 0 },
+  { kind: 'window', widthMm: 1200, heightMm: 1200, sillMm: 900 },
+  { kind: 'window', widthMm: 1500, heightMm: 1200, sillMm: 900 },
+  { kind: 'window', widthMm: 600, heightMm: 600, sillMm: 1200 },
+  { kind: 'window', widthMm: 2400, heightMm: 2400, sillMm: 0 },
+];
+
 const createOpening = (
   kind: SceneWallOpening['kind'],
   wallLengthMm: number,
   existing: SceneWallOpening[],
+  dims?: OpeningDims,
 ): SceneWallOpening | null => {
   const base =
-    kind === 'door'
+    dims ??
+    (kind === 'door'
       ? { sillMm: 0, widthMm: 900, heightMm: 2100 }
-      : { sillMm: 900, widthMm: 1200, heightMm: 1200 };
+      : { sillMm: 900, widthMm: 1200, heightMm: 1200 });
   const offsetMm = findFreeOffset(base.widthMm, wallLengthMm, existing);
   if (offsetMm === null) return null;
   return { id: crypto.randomUUID(), kind, offsetMm, ...base };
