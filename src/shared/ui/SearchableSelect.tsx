@@ -99,8 +99,8 @@ export function SearchableSelect({
         onClick={toggleOpen}
         className="flex w-full items-center justify-between gap-2 rounded border border-slate-300 bg-white px-2 py-1 text-left text-sm text-slate-900 focus:border-primary-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
       >
-        <span className={cn('truncate', !selected && 'text-slate-400')}>
-          {selected?.render ?? selected?.label ?? placeholder ?? ''}
+        <span className={cn('min-w-0 flex-1 truncate', !selected && 'text-slate-400')}>
+          {selected?.label ?? placeholder ?? ''}
         </span>
         <ChevronDown size={14} className="shrink-0 text-slate-400" />
       </button>

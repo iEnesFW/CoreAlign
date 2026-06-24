@@ -398,7 +398,27 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
             options={glassTypes.map((g) => ({
               value: g.id,
               label: `${g.name} · ${g.thicknessMm} mm`,
-              keywords: String(g.thicknessMm),
+              keywords: `${g.code} ${g.thicknessMm} ${g.structure} ${g.uValue} ${g.soundDb}`,
+              render: (
+                <span className="flex w-full items-center justify-between gap-2">
+                  <span className="min-w-0 flex-1 truncate">{g.name}</span>
+                  <span className="flex shrink-0 items-center gap-1 text-[10px]">
+                    <span className="rounded bg-slate-100 px-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {g.thicknessMm}mm
+                    </span>
+                    {g.uValue > 0 && (
+                      <span className="rounded bg-sky-100 px-1 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">
+                        U {g.uValue}
+                      </span>
+                    )}
+                    {g.soundDb > 0 && (
+                      <span className="rounded bg-violet-100 px-1 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
+                        {g.soundDb}dB
+                      </span>
+                    )}
+                  </span>
+                </span>
+              ),
             }))}
             ariaLabel={t('GlassEnclosure.Field.GlassType')}
             searchPlaceholder={t('GlassEnclosure.Designer.SearchPlaceholder', {
