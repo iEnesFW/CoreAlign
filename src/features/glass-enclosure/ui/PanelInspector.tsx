@@ -6,7 +6,6 @@ import { presetPolygonPoints, serializePanelPolygonPoints } from '../model/panel
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { HardwareManager } from './HardwareManager';
 import { PanelPolygonEditor } from './PanelPolygonEditor';
-import { SearchableSelect } from '@/shared/ui/SearchableSelect';
 import type {
   GlassOpeningType,
   GlassTypeDto,
@@ -392,40 +391,19 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
 
       {show('glass') && (
         <Field label={t('GlassEnclosure.Field.GlassType')}>
-          <SearchableSelect
+          <select
             value={draft.glassTypeId}
-            onChange={(v) => commit({ glassTypeId: v })}
-            options={glassTypes.map((g) => ({
-              value: g.id,
-              label: `${g.name} · ${g.thicknessMm} mm`,
-              keywords: `${g.code} ${g.thicknessMm} ${g.structure} ${g.uValue} ${g.soundDb}`,
-              render: (
-                <span className="flex w-full items-center justify-between gap-2">
-                  <span className="min-w-0 flex-1 truncate">{g.name}</span>
-                  <span className="flex shrink-0 items-center gap-1 text-[10px]">
-                    <span className="rounded bg-slate-100 px-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      {g.thicknessMm}mm
-                    </span>
-                    {g.uValue > 0 && (
-                      <span className="rounded bg-sky-100 px-1 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300">
-                        U {g.uValue}
-                      </span>
-                    )}
-                    {g.soundDb > 0 && (
-                      <span className="rounded bg-violet-100 px-1 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">
-                        {g.soundDb}dB
-                      </span>
-                    )}
-                  </span>
-                </span>
-              ),
-            }))}
-            ariaLabel={t('GlassEnclosure.Field.GlassType')}
-            searchPlaceholder={t('GlassEnclosure.Designer.SearchPlaceholder', {
-              defaultValue: 'Ara…',
-            })}
-            emptyText={t('GlassEnclosure.Designer.NoResults', { defaultValue: 'Sonuç yok' })}
-          />
+            onChange={(e) => commit({ glassTypeId: e.target.value })}
+            className={inputClass}
+          >
+            {glassTypes.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} · {g.thicknessMm}mm
+                {g.uValue > 0 ? ` · U${g.uValue}` : ''}
+                {g.soundDb > 0 ? ` · ${g.soundDb}dB` : ''}
+              </option>
+            ))}
+          </select>
         </Field>
       )}
 

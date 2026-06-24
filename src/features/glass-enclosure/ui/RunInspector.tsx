@@ -4,7 +4,6 @@ import { useDesignerStore } from '../model/designerStore';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { minArcRadiusMm } from '../model/arcGeometry';
 import { RunArcSection } from './RunArcSection';
-import { SearchableSelect } from '@/shared/ui/SearchableSelect';
 import type {
   ColorOptionDto,
   GlassTypeDto,
@@ -75,19 +74,20 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
           </Field>
 
           <Field label={t('GlassEnclosure.Field.ProfileSystem')}>
-            <SearchableSelect
+            <select
               value={draft.profileSystemId}
-              onChange={(v) => {
-                setDraft({ ...draft, profileSystemId: v });
-                commit({ profileSystemId: v });
+              onChange={(e) => {
+                setDraft({ ...draft, profileSystemId: e.target.value });
+                commit({ profileSystemId: e.target.value });
               }}
-              options={profileSystems.map((s) => ({ value: s.id, label: s.name }))}
-              ariaLabel={t('GlassEnclosure.Field.ProfileSystem')}
-              searchPlaceholder={t('GlassEnclosure.Designer.SearchPlaceholder', {
-                defaultValue: 'Ara…',
-              })}
-              emptyText={t('GlassEnclosure.Designer.NoResults', { defaultValue: 'Sonuç yok' })}
-            />
+              className={inputClass}
+            >
+              {profileSystems.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <Field label={t('GlassEnclosure.Field.Color')}>
