@@ -2493,6 +2493,8 @@
       "MaxThickness": "Max. thickness",
       "NoSelection": "Select a run or panel in the 3D scene.",
       "DefaultRunLabel": "Run",
+      "SearchPlaceholder": "Search…",
+      "NoResults": "No results",
       "RunAdded": "Run added",
       "FloatingWarning": "⚠ {{count}} object(s) unsupported (floating)",
       "CatalogWarning": "⚠ {{count}} run(s) exceed catalog limits (panel size/weight)",

@@ -2493,6 +2493,8 @@
       "MaxThickness": "Maks. kalınlık",
       "NoSelection": "3D sahnede bir hat veya panel seçin.",
       "DefaultRunLabel": "Hat",
+      "SearchPlaceholder": "Ara…",
+      "NoResults": "Sonuç yok",
       "RunAdded": "Hat eklendi",
       "FloatingWarning": "⚠ {{count}} nesne desteksiz (boşlukta)",
       "CatalogWarning": "⚠ {{count}} hat katalog limitini aşıyor (panel ölçü/ağırlık)",

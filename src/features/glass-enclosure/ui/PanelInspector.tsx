@@ -6,6 +6,7 @@ import { presetPolygonPoints, serializePanelPolygonPoints } from '../model/panel
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { HardwareManager } from './HardwareManager';
 import { PanelPolygonEditor } from './PanelPolygonEditor';
+import { SearchableSelect } from '@/shared/ui/SearchableSelect';
 import type {
   GlassOpeningType,
   GlassTypeDto,
@@ -391,17 +392,20 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
 
       {show('glass') && (
         <Field label={t('GlassEnclosure.Field.GlassType')}>
-          <select
+          <SearchableSelect
             value={draft.glassTypeId}
-            onChange={(e) => commit({ glassTypeId: e.target.value })}
-            className={inputClass}
-          >
-            {glassTypes.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name} · {g.thicknessMm} mm
-              </option>
-            ))}
-          </select>
+            onChange={(v) => commit({ glassTypeId: v })}
+            options={glassTypes.map((g) => ({
+              value: g.id,
+              label: `${g.name} · ${g.thicknessMm} mm`,
+              keywords: String(g.thicknessMm),
+            }))}
+            ariaLabel={t('GlassEnclosure.Field.GlassType')}
+            searchPlaceholder={t('GlassEnclosure.Designer.SearchPlaceholder', {
+              defaultValue: 'Ara…',
+            })}
+            emptyText={t('GlassEnclosure.Designer.NoResults', { defaultValue: 'Sonuç yok' })}
+          />
         </Field>
       )}
 
