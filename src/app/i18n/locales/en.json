@@ -2649,7 +2649,7 @@
         "ArcDropsFeatures": "Converting to a curve removed this wall's openings/shapes.",
         "Arc": { "straight": "Straight", "left": "Curve left", "right": "Curve right" },
         "Openings": "Openings",
-        "OpeningPresets": "Standard sizes",
+        "OpeningPresets": "Add standard size",
         "AddWindow": "Window",
         "AddDoor": "Door",
         "NoOpenings": "No openings — add a window or a door.",

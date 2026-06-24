@@ -2649,7 +2649,7 @@
         "ArcDropsFeatures": "Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.",
         "Arc": { "straight": "Düz", "left": "Sol kavis", "right": "Sağ kavis" },
         "Openings": "Boşluklar",
-        "OpeningPresets": "Hazır ölçüler",
+        "OpeningPresets": "Hazır ölçü ekle",
         "AddWindow": "Pencere",
         "AddDoor": "Kapı",
         "NoOpenings": "Boşluk yok — pencere veya kapı ekleyin.",

@@ -464,32 +464,35 @@ export function WallInspector() {
                 </button>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-1">
-              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            <select
+              aria-label={t('GlassEnclosure.Designer.Wall.OpeningPresets', {
+                defaultValue: 'Hazır ölçü ekle',
+              })}
+              value=""
+              onChange={(e) => {
+                const preset = OPENING_PRESETS[Number(e.target.value)];
+                if (preset) handleAddOpening(preset.kind, preset);
+              }}
+              className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-600 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+            >
+              <option value="">
+                +{' '}
                 {t('GlassEnclosure.Designer.Wall.OpeningPresets', {
-                  defaultValue: 'Hazır ölçüler',
+                  defaultValue: 'Hazır ölçü ekle',
                 })}
-              </span>
-              {OPENING_PRESETS.map((preset) => {
-                const Icon = preset.kind === 'door' ? DoorOpen : RectangleHorizontal;
+              </option>
+              {OPENING_PRESETS.map((preset, i) => {
                 const kindLabel =
                   preset.kind === 'door'
                     ? t('GlassEnclosure.Designer.Wall.Door', { defaultValue: 'Kapı' })
                     : t('GlassEnclosure.Designer.Wall.Window', { defaultValue: 'Pencere' });
                 return (
-                  <button
-                    key={`${preset.kind}-${preset.widthMm}x${preset.heightMm}`}
-                    type="button"
-                    onClick={() => handleAddOpening(preset.kind, preset)}
-                    title={`${kindLabel} ${preset.widthMm}×${preset.heightMm}`}
-                    className="inline-flex items-center gap-1 rounded border border-slate-300 px-1.5 py-0.5 text-[10px] text-slate-600 hover:border-primary-500 hover:text-primary-600 dark:border-slate-600 dark:text-slate-300 dark:hover:border-primary-400"
-                  >
-                    <Icon size={10} />
-                    {preset.widthMm}×{preset.heightMm}
-                  </button>
+                  <option key={`${preset.kind}-${preset.widthMm}x${preset.heightMm}`} value={i}>
+                    {kindLabel} {preset.widthMm}×{preset.heightMm}
+                  </option>
                 );
               })}
-            </div>
+            </select>
             {(wall.openings ?? []).length === 0 ? (
               <p className="text-[11px] text-slate-400">
                 {t('GlassEnclosure.Designer.Wall.NoOpenings', {
