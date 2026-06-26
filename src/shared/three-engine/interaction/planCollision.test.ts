@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AUTO_STACK_MIN_PUSH_MM,
+  autoStackEngaged,
   buildPlanFootprint,
   buildPolygonFootprint,
   isFloating,
@@ -174,5 +176,28 @@ describe('isFloating', () => {
   it('does not flag a roof embedded in a wall taller than its base', () => {
     const roof = buildPlanFootprint('roof', 0, -200, 2000, 0, 400, 2000, 2150);
     expect(isFloating(roof, [wallTop], 50)).toBe(false);
+  });
+});
+
+describe('autoStackEngaged (plain-drag climb-on-top trigger)', () => {
+  const push = AUTO_STACK_MIN_PUSH_MM;
+  it('engages when a firm push is blocked AND lands on a higher surface', () => {
+    expect(autoStackEngaged(push + 1, 2.6, 0)).toBe(true);
+  });
+
+  it('does not engage for a gentle butt-flush (small block, no deep push)', () => {
+    expect(autoStackEngaged(push - 1, 2.6, 0)).toBe(false);
+  });
+
+  it('does not engage when there is no surface to rest on (rest == base)', () => {
+    expect(autoStackEngaged(push + 200, 0, 0)).toBe(false);
+  });
+
+  it('does not engage when the rest surface is below the current base (a drop, not a climb)', () => {
+    expect(autoStackEngaged(push + 200, 0.5, 1)).toBe(false);
+  });
+
+  it('engages when climbing from an already-elevated base onto something higher', () => {
+    expect(autoStackEngaged(push + 50, 2.6, 1)).toBe(true);
   });
 });

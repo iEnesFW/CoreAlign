@@ -1,7 +1,12 @@
 import { useRef } from 'react';
 import { useDrag3D } from './useDrag3D';
 import { applyPlanMoveSnap } from './planSnap';
-import { clampPlanRotation, normalizePlanAngleDeg, slidePlanMove } from './planCollision';
+import {
+  autoStackEngaged,
+  clampPlanRotation,
+  normalizePlanAngleDeg,
+  slidePlanMove,
+} from './planCollision';
 import { rotatePlanPointDeg } from './planTransform';
 import { snapAngleDeg } from './angleSnap';
 import { clearSnapGuides, setSnapGuides } from './snapGuides';
@@ -103,14 +108,12 @@ export function useObjectGestures({
       return;
     }
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
-    // Stack-on-top is the momentary Alt modifier OR a sticky toolbar toggle (forceStack) — the
-    // latter is discoverable + survives the Windows "Alt focuses the menu" focus loss.
-    const altStack = isAltPressed() || Boolean(forceStack);
-    altLatchRef.current = altStack;
-    // WHY: Alt = stack-on-top, which deliberately needs plan overlap (the body rests on the
-    // other in Z); the no-deepen collision gate must NOT run here or stacking is impossible.
-    // Plain moves go through slidePlanMove, which now forbids deepening any overlap.
-    const slid = altStack
+    // Explicit stack-on-top: the momentary Alt modifier OR the sticky toolbar toggle (forceStack)
+    // — discoverable + survives the Windows "Alt focuses the menu" focus loss. Plan overlap is
+    // allowed (the body rests on the other in Z), so the no-deepen gate must NOT run.
+    const explicitStack = isAltPressed() || Boolean(forceStack);
+    // The no-deepen lateral slide for a plain drag (also the baseline for auto-stack detection).
+    const lateral = explicitStack
       ? snapped
       : slidePlanMove(
           (dx, dy) => adapter.footprintAt(dx, dy, adapter.rotationDeg),
@@ -118,13 +121,28 @@ export function useObjectGestures({
           snapped.dxMm,
           snapped.dyMm,
         );
+    // Auto-stack: a plain drag pushed firmly INTO something it can rest on climbs on top instead
+    // of being blocked (the slide deviated past a deliberate push AND the desired spot rests on a
+    // higher surface). A gentle butt-flush (small deviation) stays lateral. Only stack-capable
+    // objects opt in via adapter.altLiftYMAt.
+    let stacking = explicitStack;
+    let slid = lateral;
+    if (!explicitStack && adapter.altLiftYMAt) {
+      const blockedMm = Math.hypot(snapped.dxMm - lateral.dxMm, snapped.dyMm - lateral.dyMm);
+      const restM = adapter.altLiftYMAt(snapped.dxMm, snapped.dyMm);
+      if (autoStackEngaged(blockedMm, restM, adapter.baseYM)) {
+        stacking = true;
+        slid = snapped;
+      }
+    }
+    altLatchRef.current = stacking;
     const divergenceMm = Math.hypot(slid.dxMm - snapped.dxMm, slid.dyMm - snapped.dyMm);
     setSnapGuides(divergenceMm <= SNAP_CONTACT_KEEP_MM ? snapped.guides : []);
     lastMoveRef.current = slid;
     const group = groupRef.current;
     if (group) {
       const liftM =
-        altStack && adapter.altLiftYMAt
+        stacking && adapter.altLiftYMAt
           ? adapter.altLiftYMAt(slid.dxMm, slid.dyMm)
           : (adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ?? adapter.baseYM);
       group.position.set(
