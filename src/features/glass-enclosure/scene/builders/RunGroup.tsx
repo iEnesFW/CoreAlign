@@ -211,8 +211,10 @@ export function RunGroup({
     restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, baseElevMm);
   const centerXMm = run.originX + (run.lengthMm / 2) * dirX;
   const centerYMm = run.originY + (run.lengthMm / 2) * dirY;
+  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, baseElevMm);
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
+  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
 
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
   const canStack = Boolean(onStackRun) && !isMultiMember;
@@ -228,6 +230,7 @@ export function RunGroup({
     footprintAt: (dxMm, dyMm, rotationDeg) => buildRunFootprint(run, dxMm, dyMm, rotationDeg),
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
+    restingAtStart,
   };
 
   const gestures = useObjectGestures({

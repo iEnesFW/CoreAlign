@@ -174,8 +174,10 @@ export function ArcRunGroup({
     restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, baseElevMm);
   const centerXMm = (run.originX + endWorldX) / 2;
   const centerYMm = (run.originY + endWorldY) / 2;
+  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dx: number, dy: number) =>
-    restElevationAtPointMm(centerXMm + dx, centerYMm + dy, stackSupports, baseElevMm);
+    restElevationAtPointMm(centerXMm + dx, centerYMm + dy, stackSupports, 0);
+  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
   const canStack = Boolean(onStackRun) && !isMultiMember;
 
   const adapter: PlanGestureAdapter = {
@@ -192,6 +194,7 @@ export function ArcRunGroup({
     footprintAt: (dx, dy, rotationDeg) => buildRunFootprint(run, dx, dy, rotationDeg),
     altLiftYMAt: canStack ? (dx, dy) => restElevAt(dx, dy) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dx, dy) => centerRestAt(dx, dy) / 1000 : undefined,
+    restingAtStart,
   };
 
   const gestures = useObjectGestures({

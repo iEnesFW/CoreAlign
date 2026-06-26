@@ -27,9 +27,14 @@ export interface PlanGestureAdapter {
   // Rest elevation (m) for an EXPLICIT stack (Alt/toggle): top of any overlapped support, else
   // the object's current base (so it keeps its height when not over anything).
   altLiftYMAt?: (dxMm: number, dyMm: number) => number;
-  // Rest elevation (m) under the object's CENTRE — the precise auto-stack test (climb on only
-  // when the centre is clearly over a higher support), else the object's current base.
+  // Rest elevation (m) under the object's CENTRE — top of the support the centre sits over, else
+  // GROUND (0). Drives both the precise auto-stack (climb when it rises above the base) and the
+  // gravity drop when a resting object is dragged off its support.
   centerLiftYMAt?: (dxMm: number, dyMm: number) => number;
+  // Was the object resting on something (ground or a support directly under it) at drag start? If
+  // so it follows gravity (drops back down when slid off); a free, deliberately-elevated object
+  // (e.g. mid-wall) instead KEEPS its height unless dragged onto something higher.
+  restingAtStart?: boolean;
 }
 
 export interface PlanRotationCommit {
@@ -117,9 +122,12 @@ export function useObjectGestures({
     //  - precise auto: the object's CENTRE is dragged clearly over a HIGHER support → it climbs
     //    on. Merely butting/pushing beside does not put the centre over it, so it stays lateral.
     const explicitStack = isAltPressed() || Boolean(forceStack);
-    const centerLiftM = adapter.centerLiftYMAt?.(snapped.dxMm, snapped.dyMm) ?? adapter.baseYM;
-    const autoStack = !explicitStack && centerLiftM > adapter.baseYM + AUTO_STACK_MIN_RISE_M;
-    const stacking = explicitStack || autoStack;
+    // The support under the object's CENTRE at the desired spot (else ground). Rising above the
+    // base = climbing onto something → allow overlap to land on it; otherwise lateral no-deepen.
+    const centerRestSnapped =
+      adapter.centerLiftYMAt?.(snapped.dxMm, snapped.dyMm) ?? adapter.baseYM;
+    const climbing = centerRestSnapped > adapter.baseYM + AUTO_STACK_MIN_RISE_M;
+    const stacking = explicitStack || climbing;
     const slid = stacking
       ? snapped
       : slidePlanMove(
@@ -128,12 +136,21 @@ export function useObjectGestures({
           snapped.dxMm,
           snapped.dyMm,
         );
+    // Resolve the committed elevation at the final position: explicit stack → any overlapped
+    // support; a resting object → gravity (rest on what's under, drop to ground); a free object →
+    // keep its height unless it climbed onto something higher.
     let liftM = adapter.baseYM;
-    if (autoStack) liftM = centerLiftM;
-    else if (explicitStack && adapter.altLiftYMAt)
-      liftM = adapter.altLiftYMAt(slid.dxMm, slid.dyMm);
-    else if (adapter.liftYMAt) liftM = adapter.liftYMAt(slid.dxMm, slid.dyMm) ?? adapter.baseYM;
-    stackElevRef.current = stacking ? Math.round(liftM * MM) : null;
+    if (adapter.centerLiftYMAt) {
+      if (explicitStack && adapter.altLiftYMAt) {
+        liftM = adapter.altLiftYMAt(slid.dxMm, slid.dyMm);
+      } else {
+        const centerRest = adapter.centerLiftYMAt(slid.dxMm, slid.dyMm);
+        liftM = adapter.restingAtStart ? centerRest : Math.max(adapter.baseYM, centerRest);
+      }
+    } else if (adapter.liftYMAt) {
+      liftM = adapter.liftYMAt(slid.dxMm, slid.dyMm) ?? adapter.baseYM;
+    }
+    stackElevRef.current = adapter.centerLiftYMAt ? Math.round(liftM * MM) : null;
     const divergenceMm = Math.hypot(slid.dxMm - snapped.dxMm, slid.dyMm - snapped.dyMm);
     setSnapGuides(divergenceMm <= SNAP_CONTACT_KEEP_MM ? snapped.guides : []);
     lastMoveRef.current = slid;

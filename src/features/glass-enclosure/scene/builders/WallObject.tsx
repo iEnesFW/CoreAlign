@@ -112,13 +112,13 @@ interface WallObjectProps {
   onPenFaceClick?: (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pt: { x: number; z: number },
   ) => void;
   onPenFaceArc?: (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pts: { x: number; z: number }[],
   ) => void;
   onPenFaceFinish?: () => void;
@@ -476,8 +476,10 @@ export function WallObject({
       stackSupports,
       baseWallElevMm,
     );
+  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, baseWallElevMm);
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
+  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseWallElevMm) < 5;
 
   const adapter: PlanGestureAdapter = {
     originXMm: wall.originX,
@@ -498,6 +500,7 @@ export function WallObject({
     },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
+    restingAtStart,
   };
 
   const gestures = useObjectGestures({
@@ -567,15 +570,6 @@ export function WallObject({
     TMP_VEC.copy(point);
     group.worldToLocal(TMP_VEC);
     return { x: TMP_VEC.x * 1000, z: TMP_VEC.y * 1000, side: TMP_VEC.z >= 0 ? 1 : -1 };
-  };
-
-  const clampDrawPoint = (xMm: number, zMm: number): SceneWallFeaturePoint => {
-    const x = clampValue(xMm, FEATURE_EDGE_MARGIN_MM, wall.lengthMm - FEATURE_EDGE_MARGIN_MM);
-    const topLimit =
-      Math.min(wallHeightAtMm(wall, 0), wallHeightAtMm(wall, wall.lengthMm)) -
-      FEATURE_EDGE_MARGIN_MM;
-    const z = clampValue(zMm, FEATURE_EDGE_MARGIN_MM / 2, topLimit);
-    return { x, z };
   };
 
   const drawDims = (): WallBoxDims => ({
@@ -810,11 +804,22 @@ export function WallObject({
     if (marker) marker.visible = false;
   };
 
-  const penFacePoint = (point: Vector3): { x: number; z: number; side: 1 | -1 } | null => {
-    const local = localPointMm(point);
-    if (!local) return null;
-    const clamped = clampDrawPoint(local.x, local.z);
-    return { x: clamped.x, z: clamped.z, side: local.side };
+  // The pen draws on whichever face the FIRST click hit (from its surface normal); every later
+  // point on the same wall projects onto that same face's (u,v). Mirrors the draw tool's 6-face
+  // mapping so a hole/recess can be penned on a side/top/bottom face, not just front/back.
+  const penFacePoint = (
+    point: Vector3,
+    faceNormal?: { x: number; y: number; z: number },
+  ): { x: number; z: number; side: WallFeatureSide } | null => {
+    const session = useDesignerStore.getState().penFace;
+    const established =
+      session && session.hostId === wall.id ? normalizeWallSide(session.side) : null;
+    const side: WallFeatureSide =
+      established ?? (faceNormal && !isArcWall ? sideFromLocalNormal(faceNormal) : 'front');
+    const uv = faceUvMm(point, side);
+    if (!uv) return null;
+    const clamped = clampToFace(uv.u, uv.v, side);
+    return { x: clamped.x, z: clamped.z, side };
   };
 
   const penArcRef = useRef<{ active: boolean; end: { x: number; z: number } } | null>(null);
@@ -831,7 +836,7 @@ export function WallObject({
     const session = useDesignerStore.getState().penFace;
     if (!isShiftPressed() || !session || session.hostId !== wall.id || session.points.length < 1)
       return;
-    const local = penFacePoint(e.point);
+    const local = penFacePoint(e.point, e.face?.normal);
     if (local) {
       penArcRef.current = { active: true, end: { x: local.x, z: local.z } };
       setOrbitEnabled(false);
@@ -853,7 +858,7 @@ export function WallObject({
     if (!arc?.active) return;
     (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
     const session = useDesignerStore.getState().penFace;
-    const local = penFacePoint(e.point);
+    const local = penFacePoint(e.point, e.face?.normal);
     if (!session || !local) return;
     penSuppressClickRef.current = true;
     const anchor = session.points[session.points.length - 1];
@@ -870,7 +875,7 @@ export function WallObject({
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
     const arc = penArcRef.current;
-    const local = penFacePoint(e.point);
+    const local = penFacePoint(e.point, e.face?.normal);
     if (!local) return;
     if (arc?.active) {
       const session = useDesignerStore.getState().penFace;
@@ -906,7 +911,7 @@ export function WallObject({
       return;
     }
     if (e.nativeEvent.detail > 1) return;
-    const local = penFacePoint(e.point);
+    const local = penFacePoint(e.point, e.face?.normal);
     if (local) onPenFaceClick?.('wall', wall.id, local.side, { x: local.x, z: local.z });
   };
 
@@ -951,9 +956,41 @@ export function WallObject({
     const pts = penArcPreview ? [...penArcPreview] : [...penFace.points];
     if (!penArcPreview && penFace.cursor) pts.push(penFace.cursor);
     if (pts.length < 1) return null;
-    const z0 = (thicknessM / 2 + FEATURE_FACE_LIFT_M) * (penFace.side as number);
-    return pts.map((p): [number, number, number] => [p.x / 1000, p.z / 1000, z0]);
-  }, [penActive, penFace, penArcPreview, wall.id, thicknessM]);
+    // Map the face (u,v) points onto whichever face is being penned (front/back fall back to the
+    // flat XY plane unchanged), lifted slightly off the surface along its normal.
+    const frame = wallFaceFrame(normalizeWallSide(penFace.side), {
+      lengthM: wall.lengthMm / 1000,
+      heightM: Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000,
+      thicknessM: wall.thicknessMm / 1000,
+    });
+    return pts.map((p): [number, number, number] => {
+      const u = p.x / 1000;
+      const v = p.z / 1000;
+      return [
+        frame.origin.x +
+          u * frame.uAxis.x +
+          v * frame.vAxis.x +
+          frame.normal.x * FEATURE_FACE_LIFT_M,
+        frame.origin.y +
+          u * frame.uAxis.y +
+          v * frame.vAxis.y +
+          frame.normal.y * FEATURE_FACE_LIFT_M,
+        frame.origin.z +
+          u * frame.uAxis.z +
+          v * frame.vAxis.z +
+          frame.normal.z * FEATURE_FACE_LIFT_M,
+      ];
+    });
+  }, [
+    penActive,
+    penFace,
+    penArcPreview,
+    wall.id,
+    wall.lengthMm,
+    wall.heightMm,
+    wall.heightEndMm,
+    wall.thicknessMm,
+  ]);
 
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
   const heightLevels = collectHeightLevels(fullScene, wall.id);

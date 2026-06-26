@@ -33,6 +33,7 @@ import {
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
+import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanMoveDelta } from '../interaction/planSnap';
 import { useDesignerStore } from '../../model/designerStore';
@@ -74,13 +75,13 @@ interface SlabObjectProps {
   onPenFaceClick?: (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pt: { x: number; z: number },
   ) => void;
   onPenFaceArc?: (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pts: { x: number; z: number }[],
   ) => void;
   onPenFaceFinish?: () => void;
@@ -280,8 +281,10 @@ export function SlabObject({
     );
   const centerXMm = slab.originX + (slab.lengthMm / 2) * dirX - (slab.depthMm / 2) * dirY;
   const centerYMm = slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX;
+  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, supportFootprints, baseElevMm);
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, supportFootprints, 0);
+  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
 
   // While co-moving a multi-selection, sibling members travel with this slab, so
   // their footprints must not register as collisions during the drag.
@@ -306,6 +309,7 @@ export function SlabObject({
     footprintAt: (dxMm, dyMm, rotationDeg) => buildSlabFootprint(slab, dxMm, dyMm, rotationDeg),
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
+    restingAtStart,
   };
 
   const gestures = useObjectGestures({
@@ -631,7 +635,11 @@ export function SlabObject({
       }
       if (event.nativeEvent.detail > 1) return;
       const local = penFacePoint(event.point);
-      if (local) onPenFaceClick?.('slab', slab.id, local.side, { x: local.x, z: local.z });
+      if (local)
+        onPenFaceClick?.('slab', slab.id, local.side === 1 ? 'front' : 'back', {
+          x: local.x,
+          z: local.z,
+        });
       return;
     }
     if (gestures.consumeClick() || drawDrag.consumeClick()) return;
@@ -661,7 +669,7 @@ export function SlabObject({
     const pts = penArcPreview ? [...penArcPreview] : [...penFace.points];
     if (!penArcPreview && penFace.cursor) pts.push(penFace.cursor);
     if (pts.length < 1) return null;
-    const yFace = penFace.side === 1 ? thicknessM + FACE_LIFT_M : -FACE_LIFT_M;
+    const yFace = penFace.side === 'front' ? thicknessM + FACE_LIFT_M : -FACE_LIFT_M;
     return pts.map((p): [number, number, number] => [p.x / 1000, yFace, p.z / 1000]);
   }, [penActive, penFace, penArcPreview, slab.id, thicknessM]);
 
