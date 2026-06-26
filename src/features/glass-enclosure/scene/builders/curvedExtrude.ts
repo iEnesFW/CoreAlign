@@ -89,8 +89,14 @@ export const buildCurvedShapedGeometry = (
   }
   const cols = Math.max(24, Math.ceil(span / SHAPED_COL_STEP_RAD));
   const columns: { x: number; lo: number; hi: number }[] = [];
+  // WHY: spanAtX is half-open (needs an endpoint strictly > x), so sampling exactly at minX/maxX
+  // misses the edge crossing and drops that column — truncating the pane's leading/trailing edge.
+  // Nudge the extreme samples just inside the silhouette so both edge columns register.
+  const edgeEps = (maxX - minX) * 1e-4 + 1e-3;
   for (let i = 0; i <= cols; i += 1) {
-    const x = minX + ((maxX - minX) * i) / cols;
+    let x = minX + ((maxX - minX) * i) / cols;
+    if (i === 0) x = minX + edgeEps;
+    else if (i === cols) x = maxX - edgeEps;
     const s = spanAtX(outlineMm, x);
     if (s && s[1] - s[0] > 0.5) columns.push({ x, lo: s[0], hi: s[1] });
   }
