@@ -26,7 +26,6 @@ import {
 import { useDesignerStore } from '../../model/designerStore';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { panelIsShaped } from '../../model/panelOutline';
-import { findAttachedWallIds } from '../../model/wallAttachment';
 import type { HardwareDragDelta } from './HardwareObject';
 import type {
   ColorOptionDto,
@@ -195,15 +194,15 @@ export function RunGroup({
     RUN_PLAN_THICKNESS_MM / 2,
   );
 
-  const stackSupports = useMemo(() => {
-    const all = supports ?? EMPTY_OBSTACLES;
-    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
-    return all.filter((o) => o.ownerId !== run.id && !attached.has(o.ownerId));
-  }, [supports, run, sceneState.walls]);
-  // Stacking is an explicit Alt-drag (default drag stays lateral so runs still butt
-  // flush / sit side by side). The rest elevation falls back to the GROUND (0), not
-  // the run's current geomZ, so dragging a stacked run off its support drops it back
-  // to the floor instead of ratcheting upward.
+  // Stacking is an explicit Alt-drag (default drag stays lateral so runs still butt flush /
+  // sit side by side). Every support counts — including a wall the run sits beside — so the
+  // run can rest ON it (Alt = "stack on whatever I'm over"); excluding nearby walls was what
+  // broke resting a run on a wall. Rest falls back to the GROUND (0), not the run's current
+  // geomZ, so dragging a stacked run off its support drops it back to the floor, no ratchet.
+  const stackSupports = useMemo(
+    () => (supports ?? EMPTY_OBSTACLES).filter((o) => o.ownerId !== run.id),
+    [supports, run.id],
+  );
   const restElevAt = (dxMm: number, dyMm: number) =>
     restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, 0);
 
