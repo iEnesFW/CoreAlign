@@ -320,6 +320,19 @@ const arcCornerEdge = (a: WallEndpoint, b: WallEndpoint): GapEdge | null => {
   };
 };
 
+// Slide an endpoint along its wall's END FACE (the thickness-wide segment across the wall
+// axis, centred on the centreline end) to the point NEAREST the partner. For thin walls this
+// stays on the centreline (the projection clamps to ~0); for thick / cube walls it lands on
+// the near corner so the infill bridges the walls' closest corners, not their centres.
+const refineEndpointToFace = (ep: WallEndpoint, partner: WallEndpoint): WallEndpoint => {
+  const rad = ep.wall.rotationDeg * DEG2RAD;
+  const ax = -Math.sin(rad);
+  const ay = Math.cos(rad);
+  const half = ep.wall.thicknessMm / 2;
+  const t = Math.max(-half, Math.min(half, (partner.x - ep.x) * ax + (partner.y - ep.y) * ay));
+  return { ...ep, x: ep.x + t * ax, y: ep.y + t * ay };
+};
+
 const connectorLeavesOutward = (a: WallEndpoint, b: WallEndpoint): boolean => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -356,7 +369,12 @@ export const computeMultiWallGapRuns = (
   for (let i = 0; i < free.length; i += 1) {
     for (let j = i + 1; j < free.length; j += 1) {
       if (free[j].wall.id === free[i].wall.id) continue;
-      const distance = Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y);
+      // Rank by NEAREST-CORNER distance (each end slid to its near face), so the greedy pass
+      // joins the corners that are actually closest — not centreline ends that can mis-rank
+      // for thick walls and pick a far corner.
+      const ai = refineEndpointToFace(free[i], free[j]);
+      const bj = refineEndpointToFace(free[j], free[i]);
+      const distance = Math.hypot(bj.x - ai.x, bj.y - ai.y);
       if (distance < MIN_GAP_MM || distance > MAX_GAP_MM) continue;
       if (!connectorLeavesOutward(free[i], free[j])) continue;
       pairs.push({ i, j, distance });
@@ -368,8 +386,10 @@ export const computeMultiWallGapRuns = (
   let cornerGroup = 0;
   for (const pair of pairs) {
     if (used.has(pair.i) || used.has(pair.j)) continue;
-    const a = free[pair.i];
-    const b = free[pair.j];
+    // Bridge the walls' NEAREST corners (not their centrelines): slide each gap endpoint
+    // along its own end face toward the other wall. Decides the attach points for every mode.
+    const a = refineEndpointToFace(free[pair.i], free[pair.j]);
+    const b = refineEndpointToFace(free[pair.j], free[pair.i]);
 
     if (mode === 'arc') {
       // A bent-glass run rounding the corner; bulge sits in empty space outside the

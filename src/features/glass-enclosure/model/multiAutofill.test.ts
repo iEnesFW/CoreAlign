@@ -133,14 +133,29 @@ describe('computeMultiWallGapRuns', () => {
     expect(edges[0].heightMm).toBe(2200);
   });
 
-  it('closes both open ends of two parallel offset walls (two runs)', () => {
+  it('closes both open ends of two parallel offset walls between their near faces (two runs)', () => {
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 0, 2000, 2000, 0);
     const edges = computeMultiWallGapRuns([a, b], [a, b], []);
     expect(edges).toHaveLength(2);
     for (const edge of edges) {
-      expect(edge.lengthMm).toBeGreaterThanOrEqual(1900);
-      expect(edge.lengthMm).toBeLessThanOrEqual(2000);
+      // Centrelines are 2000 apart; each 200mm-thick wall's near face is 100mm in, so the
+      // infill bridges the 1800mm gap between the faces (nearest corners), not the centres.
+      expect(edge.lengthMm).toBeGreaterThanOrEqual(1700);
+      expect(edge.lengthMm).toBeLessThanOrEqual(1900);
+    }
+  });
+
+  it('bridges the NEAREST corners of two thick (cube) walls, not their centrelines', () => {
+    const a = wall('a', 0, 0, 2000, 0, 2600, 1000);
+    const b = wall('b', 0, 3000, 2000, 0, 2600, 1000);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], []);
+    expect(edges.length).toBeGreaterThanOrEqual(1);
+    for (const edge of edges) {
+      // Wall faces: a tops out at y=500, b starts at y=2500 → 2000mm face-to-face gap.
+      // A centreline bridge would be 3000mm and would bury the glass 500mm into each wall.
+      expect(edge.lengthMm).toBeLessThanOrEqual(2100);
+      expect(Math.abs(edge.originY)).toBeGreaterThan(300);
     }
   });
 
@@ -186,9 +201,11 @@ describe('computeMultiWallGapRuns', () => {
     const rad = (edge.rotationDeg * Math.PI) / 180;
     const endX = edge.originX + local.xMm * Math.cos(rad) - local.yMm * Math.sin(rad);
     const endY = edge.originY + local.xMm * Math.sin(rad) + local.yMm * Math.cos(rad);
+    // Endpoints are refined to the walls' near corners (slid along each end face toward the
+    // other wall by thickness/2 = 100mm), so the arc spans those, not the centreline ends.
     const gapEnds = [
-      { x: 2000, y: 0 },
-      { x: 2500, y: 500 },
+      { x: 2000, y: 100 },
+      { x: 2400, y: 500 },
     ];
     const near = (px: number, py: number) =>
       gapEnds.some((g) => Math.hypot(g.x - px, g.y - py) < 20);
