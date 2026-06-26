@@ -117,7 +117,6 @@ export function RunGroup({
   supports,
 }: RunGroupProps) {
   const activeTool = useDesignerStore((s) => s.activeTool);
-  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const sceneState = useDesignerStore((s) => s.scene);
   const multiSiblingsRef = useRef<AttachedRunSnapshot[]>([]);
@@ -326,10 +325,7 @@ export function RunGroup({
   const heightLabel = (d: number) =>
     labelMm(Math.max(MIN_RUN_HEIGHT_MM, run.heightMm + stickyDelta(run.heightMm, d)));
 
-  const stretchActive =
-    (activeTool === 'stretch' || (transformActive && isRunSelected)) &&
-    Boolean(onStretchRun) &&
-    !run.locked;
+  const stretchActive = activeTool === 'stretch' && Boolean(onStretchRun) && !run.locked;
   const endFaceM = RUN_PLAN_THICKNESS_MM / 1000;
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [

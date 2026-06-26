@@ -19,6 +19,7 @@ import {
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
+import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
@@ -328,11 +329,11 @@ export function WallObject({
   const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
   // Length/height stretch handles assume a straight body; an arc wall is resized via
   // its radius/sweep in the inspector instead (#6a).
-  const stretchActive =
-    (activeTool === 'stretch' || (transformActive && isSelected)) &&
-    interactive &&
-    !wall.locked &&
-    !isArcWall;
+  // The 's' tool shows bounding resize faces; Q (transform) shows draggable CORNER points to
+  // reshape the footprint — two distinct affordances, not the same handles.
+  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
+  const vertexEditActive =
+    transformActive && isSelected && interactive && !wall.locked && !isArcWall;
   const {
     body: geometry,
     featureItems,
@@ -1089,76 +1090,102 @@ export function WallObject({
   };
 
   return (
-    <group
-      ref={setGroupRef}
-      position={[wall.originX / 1000, (wall.geomZ ?? 0) / 1000, wall.originY / 1000]}
-      rotation={[0, -wall.rotationDeg * DEG2RAD, 0]}
-    >
-      <group ref={drawAnchorRef} />
-      <group ref={bodyRef}>
-        <mesh
-          geometry={geometry}
-          rotation={isArcWall ? [-Math.PI / 2, 0, 0] : undefined}
-          castShadow
-          receiveShadow
-          {...wallHandlers}
-          onClick={handleClick}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            document.body.style.cursor = penActive || drawActive ? 'crosshair' : 'pointer';
-          }}
-          onPointerOut={() => {
-            document.body.style.cursor = 'auto';
-            if (drawActive && drawIsSplit) hideSplitHover();
-          }}
-        >
-          <meshStandardMaterial
-            key={materialTexture ? (wall.materialKey ?? 'plain') : 'plain'}
-            color={materialTexture ? '#ffffff' : (wall.colorHex ?? WALL_COLOR)}
-            map={materialTexture ?? undefined}
-            roughness={0.9}
-            metalness={0.05}
+    <>
+      <group
+        ref={setGroupRef}
+        position={[wall.originX / 1000, (wall.geomZ ?? 0) / 1000, wall.originY / 1000]}
+        rotation={[0, -wall.rotationDeg * DEG2RAD, 0]}
+      >
+        <group ref={drawAnchorRef} />
+        <group ref={bodyRef}>
+          <mesh
+            geometry={geometry}
+            rotation={isArcWall ? [-Math.PI / 2, 0, 0] : undefined}
+            castShadow
+            receiveShadow
+            {...wallHandlers}
+            onClick={handleClick}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              document.body.style.cursor = penActive || drawActive ? 'crosshair' : 'pointer';
+            }}
+            onPointerOut={() => {
+              document.body.style.cursor = 'auto';
+              if (drawActive && drawIsSplit) hideSplitHover();
+            }}
+          >
+            <meshStandardMaterial
+              key={materialTexture ? (wall.materialKey ?? 'plain') : 'plain'}
+              color={materialTexture ? '#ffffff' : (wall.colorHex ?? WALL_COLOR)}
+              map={materialTexture ?? undefined}
+              roughness={0.9}
+              metalness={0.05}
+            />
+            {!presentation && (
+              <Edges color={isSelected ? WALL_SELECTED : WALL_EDGE} threshold={15} />
+            )}
+          </mesh>
+        </group>
+        {featureItems.map((item) => (
+          <WallFeatureObject
+            key={item.feature.id}
+            wall={wall}
+            item={item}
+            fallbackColor={wall.colorHex ?? WALL_COLOR}
+            fallbackMap={materialTexture}
+            interactive={interactive}
+            thicknessM={thicknessM}
+            presentation={presentation}
           />
-          {!presentation && <Edges color={isSelected ? WALL_SELECTED : WALL_EDGE} threshold={15} />}
-        </mesh>
+        ))}
+        {openingFrames.length > 0 && (
+          <WallOpeningFrames
+            frames={openingFrames}
+            thicknessMm={wall.thicknessMm}
+            quality={quality}
+          />
+        )}
+        {drawActive && drawIsSplit && (
+          <mesh ref={splitHoverRef} visible={false} raycast={() => null}>
+            <boxGeometry args={[SPLIT_PREVIEW_WIDTH_M, 1, thicknessM + 0.02]} />
+            <meshBasicMaterial color={SPLIT_COLOR} transparent opacity={0.8} depthWrite={false} />
+          </mesh>
+        )}
+        {draft && <DraftPreview draft={draft} thicknessM={thicknessM} />}
+        {penLine && penLine.length >= 2 && (
+          <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
+        )}
+        {penLine?.map((p, i) => (
+          <mesh key={i} position={p} raycast={() => null}>
+            <sphereGeometry args={[0.03, 8, 8]} />
+            <meshBasicMaterial color={REGION_COLOR} />
+          </mesh>
+        ))}
+        {stretchActive && <StretchFaces faces={stretchFaces} />}
       </group>
-      {featureItems.map((item) => (
-        <WallFeatureObject
-          key={item.feature.id}
-          wall={wall}
-          item={item}
-          fallbackColor={wall.colorHex ?? WALL_COLOR}
-          fallbackMap={materialTexture}
-          interactive={interactive}
-          thicknessM={thicknessM}
-          presentation={presentation}
+      {vertexEditActive && (
+        <FootprintCornerHandles
+          box={{
+            originX: wall.originX,
+            originY: wall.originY,
+            lengthMm: wall.lengthMm,
+            crossMm: wall.thicknessMm,
+            rotationDeg: wall.rotationDeg,
+          }}
+          topYM={
+            ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
+          }
+          onCommit={(next) =>
+            updateWall(wall.id, {
+              originX: next.originX,
+              originY: next.originY,
+              lengthMm: next.lengthMm,
+              thicknessMm: next.crossMm,
+            })
+          }
         />
-      ))}
-      {openingFrames.length > 0 && (
-        <WallOpeningFrames
-          frames={openingFrames}
-          thicknessMm={wall.thicknessMm}
-          quality={quality}
-        />
       )}
-      {drawActive && drawIsSplit && (
-        <mesh ref={splitHoverRef} visible={false} raycast={() => null}>
-          <boxGeometry args={[SPLIT_PREVIEW_WIDTH_M, 1, thicknessM + 0.02]} />
-          <meshBasicMaterial color={SPLIT_COLOR} transparent opacity={0.8} depthWrite={false} />
-        </mesh>
-      )}
-      {draft && <DraftPreview draft={draft} thicknessM={thicknessM} />}
-      {penLine && penLine.length >= 2 && (
-        <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
-      )}
-      {penLine?.map((p, i) => (
-        <mesh key={i} position={p} raycast={() => null}>
-          <sphereGeometry args={[0.03, 8, 8]} />
-          <meshBasicMaterial color={REGION_COLOR} />
-        </mesh>
-      ))}
-      {stretchActive && <StretchFaces faces={stretchFaces} />}
-    </group>
+    </>
   );
 }
 

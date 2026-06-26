@@ -229,12 +229,14 @@ export function PolygonSurfaceObject({
     if (next !== surface.elevationMm) updateSurface(surface.id, { elevationMm: next });
   };
 
-  const stretchActive =
-    interactive &&
-    (activeTool === 'stretch' || (transformActive && isSelected)) &&
-    Boolean(geometry) &&
-    !surface.locked;
-  const stretchFaces: StretchFaceDef[] = stretchActive
+  // 's' tool → resize faces (thickness/elevation); Q → vertex points to reshape the outline.
+  // Vertex handles show under both; resize faces show only under the 's' tool.
+  const stretchToolActive =
+    interactive && activeTool === 'stretch' && Boolean(geometry) && !surface.locked;
+  const vertexEditActive =
+    interactive && transformActive && isSelected && Boolean(geometry) && !surface.locked;
+  const handlesActive = stretchToolActive || vertexEditActive;
+  const stretchFaces: StretchFaceDef[] = stretchToolActive
     ? [
         {
           id: 'top',
@@ -296,8 +298,8 @@ export function PolygonSurfaceObject({
           <Edges color={isSelected ? SELECTED_EDGE : EDGE_COLOR} threshold={EDGE_THRESHOLD_DEG} />
         )}
       </mesh>
-      {stretchActive && <StretchFaces faces={stretchFaces} />}
-      {stretchActive && (
+      {stretchToolActive && <StretchFaces faces={stretchFaces} />}
+      {handlesActive && (
         <SurfaceVertexHandles
           points={surface.points}
           centroidXMm={centroid.cx}
