@@ -49,6 +49,7 @@ import {
 import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
 import { findAttachedWallIds } from '../model/wallAttachment';
 import { rotatePlanPointDeg } from './interaction/planTransform';
+import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
   FEATURE_EDGE_MARGIN_MM,
   FREE_SIMPLIFY_TOLERANCE_MM,
@@ -79,6 +80,7 @@ import type {
   SceneSlabState,
   SceneSurfaceState,
   SceneWallState,
+  WallFeatureSideValue,
 } from '../model/project.types';
 
 interface DesignerCanvasProps {
@@ -613,13 +615,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
       return;
     }
+    // Stored side uses 1/-1 for front/back, the string for the four side faces (slab → 1/-1).
+    const featureSide: WallFeatureSideValue =
+      session.side === 'front' ? 1 : session.side === 'back' ? -1 : session.side;
     const feature = {
       id: crypto.randomUUID(),
       shape: 'free' as const,
       // A pen-drawn shape on a face is a through aperture (a shaped window/hole) by
       // default so it visibly applies; switch to recess/protrude in the inspector.
       mode: 'hole' as const,
-      side: session.side,
+      side: featureSide,
       offsetMm,
       centerZMm,
       widthMm,
@@ -642,7 +647,26 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         });
         return;
       }
-      if (!featureFitsWall(wall, outline)) {
+      // Front/back fit against the wall length×height; a side face fits against that face's own
+      // bounds (uMax×vMax from wallFaceFrame) — the outline is already in the face's (u,v).
+      const fits =
+        session.side === 'front' || session.side === 'back'
+          ? featureFitsWall(wall, outline)
+          : (() => {
+              const frame = wallFaceFrame(session.side, {
+                lengthM: wall.lengthMm / 1000,
+                heightM: Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000,
+                thicknessM: wall.thicknessMm / 1000,
+              });
+              const m = FEATURE_EDGE_MARGIN_MM / 2;
+              return (
+                minX >= m &&
+                maxX <= frame.uMaxM * 1000 - m &&
+                minZ >= m &&
+                maxZ <= frame.vMaxM * 1000 - m
+              );
+            })();
+      if (!fits) {
         queueToast({
           dedupeKey: 'glass-pen-no-fit',
           variant: 'warning',
@@ -703,7 +727,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const onPenFaceClick = (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pt: { x: number; z: number },
   ) => {
     const session = useDesignerStore.getState().penFace;
@@ -727,7 +751,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const onPenFaceArc = (
     hostKind: 'wall' | 'slab',
     hostId: string,
-    side: 1 | -1,
+    side: WallFeatureSide,
     pts: { x: number; z: number }[],
   ) => {
     if (pts.length === 0) return;

@@ -106,7 +106,9 @@ export interface PenFacePoint {
 export interface PenFaceSession {
   hostKind: 'wall' | 'slab';
   hostId: string;
-  side: 1 | -1;
+  // Which of the host's six faces the pen is drawing on (slabs use front/back only). The points
+  // below are in that face's in-plane (u,v) mm.
+  side: 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right';
   points: PenFacePoint[];
   cursor: PenFacePoint | null;
 }
