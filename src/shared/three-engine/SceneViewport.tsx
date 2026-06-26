@@ -141,16 +141,16 @@ export function SceneViewport({
           onPointerMissed={onPointerMissed}
         >
           <color attach="background" args={[resolvedAppearance.background]} />
-          <PerspectiveCamera makeDefault position={cameraPosition} fov={45} near={0.1} far={250} />
+          <PerspectiveCamera makeDefault position={cameraPosition} fov={45} near={0.1} far={120} />
           <OrbitControls
             makeDefault
             enableDamping
             dampingFactor={0.08}
             target={cameraTarget}
             minDistance={1.2}
-            maxDistance={80}
-            minPolarAngle={0.05}
-            maxPolarAngle={Math.PI - 0.05}
+            maxDistance={40}
+            minPolarAngle={Math.PI / 6}
+            maxPolarAngle={Math.PI / 2.05}
           />
           <CameraSync initialCamera={initialCamera} onChange={onCameraChange} />
 
@@ -177,7 +177,7 @@ export function SceneViewport({
 
           {resolvedAppearance.ground && (
             <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow>
-              <circleGeometry args={[60, 64]} />
+              <circleGeometry args={[40, 64]} />
               <meshStandardMaterial
                 color={resolvedAppearance.ground}
                 roughness={0.95}
@@ -188,14 +188,14 @@ export function SceneViewport({
 
           {!presentation && (
             <Grid
-              args={[80, 80]}
+              args={[40, 40]}
               cellSize={0.5}
               cellThickness={0.5}
               cellColor="#cbd5e1"
               sectionSize={2}
               sectionThickness={1}
               sectionColor="#94a3b8"
-              fadeDistance={60}
+              fadeDistance={32}
               fadeStrength={1}
               followCamera={false}
               infiniteGrid={false}
@@ -207,7 +207,7 @@ export function SceneViewport({
             <ContactShadows
               position={[0, 0.001, 0]}
               opacity={0.55}
-              scale={60}
+              scale={40}
               blur={2.5}
               far={4}
               resolution={1024}
