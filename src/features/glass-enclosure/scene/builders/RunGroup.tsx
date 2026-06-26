@@ -238,10 +238,11 @@ export function RunGroup({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta, meta) => {
-      // Alt-drag stacks the run onto whatever it overlaps (rest-on-top); a plain
-      // drag stays lateral so it can butt flush against neighbours.
-      if (canStack && onStackRun && meta.alt) {
+    onMoveCommit: (delta) => {
+      // Every drop settles the run on whatever is below it (rest elevation; ground when nothing),
+      // so a stacked run dragged off its support falls back to the floor. The plan position is
+      // already lateral for a plain drag and overlap-allowed for an explicit stack (engine).
+      if (canStack && onStackRun) {
         onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
         return;
       }

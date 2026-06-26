@@ -1420,6 +1420,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             {...sharedProps}
             onMoveRun={interactionsEnabled ? onMoveRun : undefined}
             onRotateRun={interactionsEnabled ? onRotateRun : undefined}
+            onStretchRun={interactionsEnabled ? onStretchRun : undefined}
             onStackRun={interactionsEnabled ? onStackRun : undefined}
             snapTargets={snapTargets}
             obstacles={runObstacles}

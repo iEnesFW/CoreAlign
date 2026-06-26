@@ -9,7 +9,14 @@ import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { panelIsShaped } from '../../model/panelOutline';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { registerSceneRef } from '../interaction/sceneRefs';
-import { buildRunFootprint, restElevationMm } from '../interaction/planCollision';
+import {
+  RUN_PLAN_THICKNESS_MM,
+  buildRunFootprint,
+  penetratesAny,
+  restElevationMm,
+} from '../interaction/planCollision';
+import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
+import type { RunStretchPatch } from './RunGroup';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
 import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
@@ -50,6 +57,7 @@ interface ArcRunGroupProps {
   ) => void;
   onMoveRun?: (runId: string, delta: PlanMoveDelta) => void;
   onRotateRun?: (runId: string, commit: PlanRotationCommit) => void;
+  onStretchRun?: (runId: string, patch: RunStretchPatch) => void;
   onStackRun?: (runId: string, delta: PlanMoveDelta, geomZMm: number) => void;
   snapTargets?: PlanSnapTargets;
   obstacles?: PlanFootprint[];
@@ -60,6 +68,7 @@ const PROFILE_CROSS_SECTION = { width: 50, height: 60 };
 const EMPTY_OBSTACLES: PlanFootprint[] = [];
 const MULLION_CROSS_SECTION = { width: 30, height: 40 };
 const DEFAULT_HEX_COLOR = '#cfd5d9';
+const MIN_RUN_LENGTH_MM = 100;
 
 export function ArcRunGroup({
   run,
@@ -78,6 +87,7 @@ export function ArcRunGroup({
   onDragHardware,
   onMoveRun,
   onRotateRun,
+  onStretchRun,
   onStackRun,
   snapTargets,
   obstacles,
@@ -121,9 +131,11 @@ export function ArcRunGroup({
   const showMullions = run.hasMullions !== false;
 
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const sceneState = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
+  const vertexEditActive = transformActive && isRunSelected && Boolean(onStretchRun) && !run.locked;
   const multiSiblingsRef = useRef<AttachedRunSnapshot[]>([]);
   const groupRef = useRef<Group>(null);
   const setGroupRef = (group: Group | null) => {
@@ -190,8 +202,10 @@ export function ArcRunGroup({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta, meta) => {
-      if (canStack && onStackRun && meta.alt) {
+    onMoveCommit: (delta) => {
+      // Every drop settles the arc run on whatever is below (rest elevation; ground when nothing),
+      // so a stacked arc run dragged off its support falls back to the floor.
+      if (canStack && onStackRun) {
         onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
         return;
       }
@@ -201,196 +215,235 @@ export function ArcRunGroup({
   });
 
   return (
-    <group
-      ref={setGroupRef}
-      position={[run.originX / 1000, (run.geomZ ?? 0) / 1000, run.originY / 1000]}
-      rotation={[0, (-run.rotationDeg * Math.PI) / 180, 0]}
-      {...gestures.handlers}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (gestures.consumeClick()) return;
-        onSelectRun(run.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        const canDrag = activeTool === 'move' || (activeTool === 'select' && isRunSelected);
-        document.body.style.cursor = canDrag && !run.locked ? 'grab' : 'pointer';
-      }}
-      onPointerOut={() => {
-        document.body.style.cursor = 'auto';
-      }}
-    >
-      {!isSingleShapedPanel &&
-        layout.barSegments.map((seg, i) => (
-          <group
-            key={`arcbar-${i}`}
-            position={[seg.midX, 0, seg.midZ]}
-            rotation={[0, -seg.yawRad, 0]}
-          >
-            {showTopRail && (
-              <ProfileBar
-                lengthM={seg.chordM * 1.02}
-                crossSectionMm={PROFILE_CROSS_SECTION}
-                hexColor={profileColor}
-                finish={finish}
-                quality={quality}
-                position={[0, heightM, 0]}
-              />
-            )}
-            {showBottomRail && (
-              <ProfileBar
-                lengthM={seg.chordM * 1.02}
-                crossSectionMm={PROFILE_CROSS_SECTION}
-                hexColor={profileColor}
-                finish={finish}
-                quality={quality}
-                position={[0, 0, 0]}
-              />
-            )}
-          </group>
-        ))}
+    <>
+      <group
+        ref={setGroupRef}
+        position={[run.originX / 1000, (run.geomZ ?? 0) / 1000, run.originY / 1000]}
+        rotation={[0, (-run.rotationDeg * Math.PI) / 180, 0]}
+        {...gestures.handlers}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (gestures.consumeClick()) return;
+          onSelectRun(run.id);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          const canDrag = activeTool === 'move' || (activeTool === 'select' && isRunSelected);
+          document.body.style.cursor = canDrag && !run.locked ? 'grab' : 'pointer';
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        {!isSingleShapedPanel &&
+          layout.barSegments.map((seg, i) => (
+            <group
+              key={`arcbar-${i}`}
+              position={[seg.midX, 0, seg.midZ]}
+              rotation={[0, -seg.yawRad, 0]}
+            >
+              {showTopRail && (
+                <ProfileBar
+                  lengthM={seg.chordM * 1.02}
+                  crossSectionMm={PROFILE_CROSS_SECTION}
+                  hexColor={profileColor}
+                  finish={finish}
+                  quality={quality}
+                  position={[0, heightM, 0]}
+                />
+              )}
+              {showBottomRail && (
+                <ProfileBar
+                  lengthM={seg.chordM * 1.02}
+                  crossSectionMm={PROFILE_CROSS_SECTION}
+                  hexColor={profileColor}
+                  finish={finish}
+                  quality={quality}
+                  position={[0, 0, 0]}
+                />
+              )}
+            </group>
+          ))}
 
-      {!isSingleShapedPanel &&
-        layout.boundaries.map((b, i) => {
-          const isFirst = i === 0;
-          const isLast = i === layout.boundaries.length - 1;
-          const isOuter = isFirst || isLast;
-          const visible = isOuter ? (isFirst ? showLeftRail : showRightRail) : showMullions;
-          if (!visible) return null;
-          return (
-            <group key={`arcpost-${i}`} position={[b.x, 0, b.z]} rotation={[0, -b.tangentRad, 0]}>
-              <ProfileBar
-                lengthM={heightM}
-                crossSectionMm={isOuter ? PROFILE_CROSS_SECTION : MULLION_CROSS_SECTION}
-                hexColor={profileColor}
-                finish={finish}
+        {!isSingleShapedPanel &&
+          layout.boundaries.map((b, i) => {
+            const isFirst = i === 0;
+            const isLast = i === layout.boundaries.length - 1;
+            const isOuter = isFirst || isLast;
+            const visible = isOuter ? (isFirst ? showLeftRail : showRightRail) : showMullions;
+            if (!visible) return null;
+            return (
+              <group key={`arcpost-${i}`} position={[b.x, 0, b.z]} rotation={[0, -b.tangentRad, 0]}>
+                <ProfileBar
+                  lengthM={heightM}
+                  crossSectionMm={isOuter ? PROFILE_CROSS_SECTION : MULLION_CROSS_SECTION}
+                  hexColor={profileColor}
+                  finish={finish}
+                  quality={quality}
+                  position={[0, heightM / 2, 0]}
+                  rotation={[0, 0, Math.PI / 2]}
+                />
+              </group>
+            );
+          })}
+
+        {layout.panelSpans.map((span, i) => {
+          const panel = panels[i];
+          const chord = layout.panelChords[i];
+          if (!panel || !chord) return null;
+          const glass = glassTypes.get(panel.glassTypeId);
+          const facetWidthMm = Math.round(Math.max(0.05, chord.chordM - 0.012) * 1000);
+          const facetHeightMm =
+            panel.heightMm ?? Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
+          const shapeSpec = {
+            widthMm: facetWidthMm,
+            heightMm: facetHeightMm,
+            topShape: panel.topShape,
+            topRightHeightMm: panel.topRightHeightMm,
+            archRiseMm: panel.archRiseMm,
+            cornerRadiiMm: panel.cornerRadiiMm,
+            cornerNotchMm: panel.cornerNotchMm,
+            shapeKind: panel.shapeKind,
+            points:
+              panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
+          };
+          if (run.arcGlassBent) {
+            return (
+              <CurvedPanelMesh
+                key={panel.id}
+                panelId={panel.id}
+                radiusM={radiusM}
+                direction={layout.direction}
+                phiStart={span.phiStart}
+                phiEnd={span.phiEnd}
+                chord={chord}
+                baseY={profileHalf}
+                heightM={Math.max(0.05, heightM - 2 * profileHalf)}
+                thicknessMm={glass?.thicknessMm ?? 8}
+                glassStructure={glass?.structure}
+                openingType={panel.openingType}
+                hasHandle={panel.hasHandle}
+                hasLock={panel.hasLock}
+                hardware={panel.hardware}
+                selectedHardwareId={selectedHardwareId}
+                onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
+                onDragHardware={
+                  onDragHardware
+                    ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
+                    : undefined
+                }
                 quality={quality}
-                position={[0, heightM / 2, 0]}
-                rotation={[0, 0, Math.PI / 2]}
+                showAnnotations={showAnnotations}
+                panelIndex={panel.panelIndex}
+                isSelected={selectedPanelId === panel.id}
+                onSelect={() => onSelectPanel(run.id, panel.id)}
+                shapeSpec={shapeSpec}
+              />
+            );
+          }
+          return (
+            <group
+              key={panel.id}
+              position={[chord.midX, 0, chord.midZ]}
+              rotation={[0, -chord.yawRad, 0]}
+            >
+              <PanelMesh
+                panelId={panel.id}
+                centerX={0}
+                baseY={profileHalf}
+                widthM={Math.max(0.05, chord.chordM - 0.012)}
+                heightM={facetHeightMm / 1000}
+                shapeSpec={shapeSpec}
+                frameColor={profileColor}
+                thicknessMm={glass?.thicknessMm ?? 8}
+                glassStructure={glass?.structure}
+                openingType={panel.openingType}
+                hasHandle={panel.hasHandle}
+                hasLock={panel.hasLock}
+                hasBrushSeal={panel.hasBrushSeal}
+                hardware={panel.hardware}
+                selectedHardwareId={selectedHardwareId}
+                onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
+                onDragHardware={
+                  onDragHardware
+                    ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
+                    : undefined
+                }
+                quality={quality}
+                showAnnotations={showAnnotations}
+                panelIndex={panel.panelIndex}
+                isSelected={selectedPanelId === panel.id}
+                onSelect={() => onSelectPanel(run.id, panel.id)}
               />
             </group>
           );
         })}
 
-      {layout.panelSpans.map((span, i) => {
-        const panel = panels[i];
-        const chord = layout.panelChords[i];
-        if (!panel || !chord) return null;
-        const glass = glassTypes.get(panel.glassTypeId);
-        const facetWidthMm = Math.round(Math.max(0.05, chord.chordM - 0.012) * 1000);
-        const facetHeightMm =
-          panel.heightMm ?? Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
-        const shapeSpec = {
-          widthMm: facetWidthMm,
-          heightMm: facetHeightMm,
-          topShape: panel.topShape,
-          topRightHeightMm: panel.topRightHeightMm,
-          archRiseMm: panel.archRiseMm,
-          cornerRadiiMm: panel.cornerRadiiMm,
-          cornerNotchMm: panel.cornerNotchMm,
-          shapeKind: panel.shapeKind,
-          points:
-            panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
-        };
-        if (run.arcGlassBent) {
-          return (
-            <CurvedPanelMesh
-              key={panel.id}
-              panelId={panel.id}
-              radiusM={radiusM}
-              direction={layout.direction}
-              phiStart={span.phiStart}
-              phiEnd={span.phiEnd}
-              chord={chord}
-              baseY={profileHalf}
-              heightM={Math.max(0.05, heightM - 2 * profileHalf)}
-              thicknessMm={glass?.thicknessMm ?? 8}
-              glassStructure={glass?.structure}
-              openingType={panel.openingType}
-              hasHandle={panel.hasHandle}
-              hasLock={panel.hasLock}
-              hardware={panel.hardware}
-              selectedHardwareId={selectedHardwareId}
-              onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
-              onDragHardware={
-                onDragHardware
-                  ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
-                  : undefined
-              }
-              quality={quality}
-              showAnnotations={showAnnotations}
-              panelIndex={panel.panelIndex}
-              isSelected={selectedPanelId === panel.id}
-              onSelect={() => onSelectPanel(run.id, panel.id)}
-              shapeSpec={shapeSpec}
-            />
-          );
-        }
-        return (
-          <group
-            key={panel.id}
-            position={[chord.midX, 0, chord.midZ]}
-            rotation={[0, -chord.yawRad, 0]}
-          >
-            <PanelMesh
-              panelId={panel.id}
-              centerX={0}
-              baseY={profileHalf}
-              widthM={Math.max(0.05, chord.chordM - 0.012)}
-              heightM={facetHeightMm / 1000}
-              shapeSpec={shapeSpec}
-              frameColor={profileColor}
-              thicknessMm={glass?.thicknessMm ?? 8}
-              glassStructure={glass?.structure}
-              openingType={panel.openingType}
-              hasHandle={panel.hasHandle}
-              hasLock={panel.hasLock}
-              hasBrushSeal={panel.hasBrushSeal}
-              hardware={panel.hardware}
-              selectedHardwareId={selectedHardwareId}
-              onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
-              onDragHardware={
-                onDragHardware
-                  ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
-                  : undefined
-              }
-              quality={quality}
-              showAnnotations={showAnnotations}
-              panelIndex={panel.panelIndex}
-              isSelected={selectedPanelId === panel.id}
-              onSelect={() => onSelectPanel(run.id, panel.id)}
-            />
-          </group>
-        );
-      })}
-
-      {showAnnotations && (
-        <Billboard position={[layout.apex.x, heightM + 0.5, layout.apex.z]} follow>
-          <Text
-            fontSize={0.12}
-            color={isRunSelected ? '#1d4ed8' : '#0f172a'}
-            anchorX="center"
-            anchorY="bottom"
-            outlineWidth={0.004}
-            outlineColor="#ffffff"
-          >
-            {`${run.label} · R${Math.round(radiusMm)} · ${run.lengthMm} × ${run.heightMm} mm`}
-          </Text>
-          {system && (
+        {showAnnotations && (
+          <Billboard position={[layout.apex.x, heightM + 0.5, layout.apex.z]} follow>
             <Text
-              position={[0, -0.16, 0]}
-              fontSize={0.07}
-              color="#64748b"
+              fontSize={0.12}
+              color={isRunSelected ? '#1d4ed8' : '#0f172a'}
               anchorX="center"
-              anchorY="top"
-              outlineWidth={0.003}
+              anchorY="bottom"
+              outlineWidth={0.004}
               outlineColor="#ffffff"
             >
-              {system.name}
+              {`${run.label} · R${Math.round(radiusMm)} · ${run.lengthMm} × ${run.heightMm} mm`}
             </Text>
-          )}
-        </Billboard>
+            {system && (
+              <Text
+                position={[0, -0.16, 0]}
+                fontSize={0.07}
+                color="#64748b"
+                anchorX="center"
+                anchorY="top"
+                outlineWidth={0.003}
+                outlineColor="#ffffff"
+              >
+                {system.name}
+              </Text>
+            )}
+          </Billboard>
+        )}
+      </group>
+      {vertexEditActive && (
+        <FootprintCornerHandles
+          box={{
+            originX: run.originX,
+            originY: run.originY,
+            // An arc is curved; approximate its plan extent with the START→END chord as the box.
+            lengthMm: Math.hypot(endWorldX - run.originX, endWorldY - run.originY),
+            crossMm: RUN_PLAN_THICKNESS_MM,
+            rotationDeg:
+              (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI,
+          }}
+          topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
+          onCommit={(next) => {
+            // Scale the arc's developed length by the chord ratio (radius/sweep fixed), and shift
+            // the origin along the chord — projected so the curved run only changes length.
+            const oldChord = Math.hypot(endWorldX - run.originX, endWorldY - run.originY) || 1;
+            const chordDeg = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
+            const dirX = Math.cos(chordDeg);
+            const dirY = Math.sin(chordDeg);
+            const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
+            const lengthMm = Math.max(
+              MIN_RUN_LENGTH_MM,
+              Math.round((run.lengthMm * next.lengthMm) / oldChord),
+            );
+            const originX = Math.round(run.originX + along * dirX);
+            const originY = Math.round(run.originY + along * dirY);
+            const resized = buildRunFootprint(
+              { ...run, originX, originY, lengthMm },
+              0,
+              0,
+              run.rotationDeg,
+            );
+            if (penetratesAny(resized, gestureObstacles)) return;
+            onStretchRun?.(run.id, { lengthMm, originX, originY });
+          }}
+        />
       )}
-    </group>
+    </>
   );
 }

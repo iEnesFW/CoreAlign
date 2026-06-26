@@ -313,8 +313,10 @@ export function SlabObject({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta, meta) => {
-      if (canStack && meta.alt) {
+    onMoveCommit: (delta) => {
+      // Every drop settles the slab on whatever is below it (rest elevation; ground when
+      // nothing), so a stacked slab dragged off its support falls back to the floor.
+      if (canStack) {
         updateSlab(slab.id, {
           originX: Math.round(slab.originX + delta.dxMm),
           originY: Math.round(slab.originY + delta.dyMm),
@@ -986,31 +988,34 @@ export function SlabObject({
       {vertexEditActive && (
         <FootprintCornerHandles
           box={{
-            originX: slab.originX,
-            originY: slab.originY,
+            // WHY: a slab's depth extends one-sided (local 0..depth), but boxCornersMm centres the
+            // cross on ±depth/2 (correct for walls/runs, whose body is centred). Shift the box
+            // origin onto the depth centreline so the handles land on the slab's real corners —
+            // same offset buildSlabFootprint uses for the (proven) collision footprint.
+            originX: slab.originX - Math.sin(slab.rotationDeg * DEG2RAD) * (slab.depthMm / 2),
+            originY: slab.originY + Math.cos(slab.rotationDeg * DEG2RAD) * (slab.depthMm / 2),
             lengthMm: slab.lengthMm,
             crossMm: slab.depthMm,
             rotationDeg: slab.rotationDeg,
           }}
           topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
           onCommit={(next) => {
+            // Convert the centreline box origin back to the slab's one-sided (corner) origin.
+            const nr = next.rotationDeg * DEG2RAD;
+            const backHalf = next.crossMm / 2;
+            const originX = Math.round(next.originX + Math.sin(nr) * backHalf);
+            const originY = Math.round(next.originY - Math.cos(nr) * backHalf);
             // Reject a corner resize that would grow the slab into a neighbour.
             const resized = buildSlabFootprint(
-              {
-                ...slab,
-                originX: next.originX,
-                originY: next.originY,
-                lengthMm: next.lengthMm,
-                depthMm: next.crossMm,
-              },
+              { ...slab, originX, originY, lengthMm: next.lengthMm, depthMm: next.crossMm },
               0,
               0,
               next.rotationDeg,
             );
             if (penetratesAny(resized, planObstacles)) return;
             updateSlab(slab.id, {
-              originX: next.originX,
-              originY: next.originY,
+              originX,
+              originY,
               lengthMm: next.lengthMm,
               depthMm: next.crossMm,
             });

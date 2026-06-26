@@ -510,10 +510,11 @@ export function WallObject({
     onMovePreview: (delta) => previewSnapshotsMove(attachedRef.current, delta.dxMm, delta.dyMm),
     onRotatePreview: (sweepDeg) =>
       previewSnapshotsRotation(attachedRef.current, centerXMm, centerYMm, sweepDeg),
-    onMoveCommit: (delta, meta) => {
-      // Alt-drag a bare wall to drop it at its resting elevation (stack-on-top); a
-      // plain drag stays lateral so it can butt flush and carry any group/runs.
-      if (canStack && onStackWall && meta.alt) {
+    onMoveCommit: (delta) => {
+      // A standalone bare wall (canStack ⇒ no group / attached runs) settles on whatever is below
+      // at the drop point (rest elevation; ground when nothing), so a stacked wall dragged off its
+      // support drops to the floor. A wall carrying a group / runs moves laterally via onCommitMove.
+      if (canStack && onStackWall) {
         onStackWall(wall.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
         return;
       }
