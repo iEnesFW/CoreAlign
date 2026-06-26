@@ -4,8 +4,9 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
-import { buildCurvedBandGeometry } from './curvedExtrude';
+import { buildCurvedBandGeometry, buildCurvedShapedGeometry } from './curvedExtrude';
 import type { PanelGlassSpec } from './panelGeometry';
+import { panelIsShaped, panelOutlinePointsMm } from '../../model/panelOutline';
 import { arcPointAt, type ArcChord } from '../../model/arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { GlassOpeningType, GlassStructure } from '../../model/glassEnclosure.types';
@@ -68,6 +69,7 @@ export function CurvedPanelMesh({
   panelIndex,
   isSelected,
   onSelect,
+  shapeSpec,
 }: CurvedPanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -77,13 +79,63 @@ export function CurvedPanelMesh({
   });
   const thicknessM = thicknessMm / 1000;
 
-  // WHY: a shaped silhouette can't yet ride the arc — bending an ExtrudeGeometry cap (no
-  // interior x-tessellation) facets the curve, so a curved run always renders the smooth
-  // uniform band. Shaped-on-curve is deferred until the flat pane is x-subdivided pre-bend.
-  const geometry = useMemo(
-    () => buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM),
-    [radiusM, direction, phiStart, phiEnd, thicknessM, heightM],
-  );
+  // A shaped pane (triangle / oval / polygon / raked / arched / corners) follows the arc by
+  // sampling its silhouette straight into cylindrical coords (smooth, no faceting); a plain
+  // rectangle stays the uniform curved band.
+  const shaped = Boolean(shapeSpec && panelIsShaped(shapeSpec));
+  const sw = shapeSpec?.widthMm;
+  const sh = shapeSpec?.heightMm;
+  const st = shapeSpec?.topShape ?? null;
+  const str = shapeSpec?.topRightHeightMm ?? null;
+  const sa = shapeSpec?.archRiseMm ?? null;
+  const sc = shapeSpec?.cornerRadiiMm ?? null;
+  const sn = shapeSpec?.cornerNotchMm ?? null;
+  const sk = shapeSpec?.shapeKind ?? null;
+  const sp = shapeSpec?.points ?? null;
+  const geometry = useMemo(() => {
+    if (shaped && sw !== undefined && sh !== undefined) {
+      const outline = panelOutlinePointsMm({
+        widthMm: sw,
+        heightMm: sh,
+        topShape: st,
+        topRightHeightMm: str,
+        archRiseMm: sa,
+        cornerRadiiMm: sc,
+        cornerNotchMm: sn,
+        shapeKind: sk,
+        points: sp,
+      });
+      if (outline.length >= 3) {
+        return buildCurvedShapedGeometry(
+          outline,
+          sw,
+          radiusM,
+          direction,
+          phiStart,
+          phiEnd,
+          thicknessM,
+        );
+      }
+    }
+    return buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM);
+  }, [
+    shaped,
+    sw,
+    sh,
+    st,
+    str,
+    sa,
+    sc,
+    sn,
+    sk,
+    sp,
+    radiusM,
+    direction,
+    phiStart,
+    phiEnd,
+    thicknessM,
+    heightM,
+  ]);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
   const annotationAnchor = useMemo(
