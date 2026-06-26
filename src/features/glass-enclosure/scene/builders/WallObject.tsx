@@ -2,7 +2,15 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Edges, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
-import { DoubleSide, ExtrudeGeometry, Path, ShapeGeometry, Vector3 } from 'three';
+import {
+  DoubleSide,
+  ExtrudeGeometry,
+  Matrix4,
+  Path,
+  Quaternion,
+  ShapeGeometry,
+  Vector3,
+} from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
 import { buildCurvedBandGeometry } from './curvedExtrude';
@@ -41,7 +49,14 @@ import {
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
-import { applyWallFaceFeatures, normalizeWallSide } from './wallFaces';
+import {
+  applyWallFaceFeatures,
+  normalizeWallSide,
+  sideFromLocalNormal,
+  wallFaceFrame,
+  type WallBoxDims,
+  type WallFeatureSide,
+} from './wallFaces';
 import { effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
@@ -136,7 +151,7 @@ const EMPTY_OBSTACLES: PlanFootprint[] = [];
 const TMP_VEC = new Vector3();
 
 interface DraftFeature extends FeatureOutlineSpec {
-  side: 1 | -1;
+  side: WallFeatureSide;
 }
 
 interface WallFeatureItem extends ComposedFeature {
@@ -388,9 +403,10 @@ export function WallObject({
   const drawSessionRef = useRef<{
     x0: number;
     z0: number;
-    side: 1 | -1;
+    side: WallFeatureSide;
     points: SceneWallFeaturePoint[];
   } | null>(null);
+  const drawFaceRef = useRef<WallFeatureSide>('front');
   const draftRef = useRef<DraftFeature | null>(null);
   const [draft, setDraftState] = useState<DraftFeature | null>(null);
   const planObstacles = obstacles ?? EMPTY_OBSTACLES;
@@ -554,6 +570,63 @@ export function WallObject({
     return { x, z };
   };
 
+  const drawDims = (): WallBoxDims => ({
+    lengthM: wall.lengthMm / 1000,
+    heightM: Math.max(wallHeightAtMm(wall, 0), wallHeightAtMm(wall, wall.lengthMm)) / 1000,
+    thicknessM: wall.thicknessMm / 1000,
+  });
+
+  // Project a world hit onto a face's in-plane (u,v) in mm (u = face width, v = face height).
+  const faceUvMm = (point: Vector3, side: WallFeatureSide): { u: number; v: number } | null => {
+    const group = groupRef.current;
+    if (!group) return null;
+    TMP_VEC.copy(point);
+    group.worldToLocal(TMP_VEC);
+    const frame = wallFaceFrame(side, drawDims());
+    const rx = TMP_VEC.x - frame.origin.x;
+    const ry = TMP_VEC.y - frame.origin.y;
+    const rz = TMP_VEC.z - frame.origin.z;
+    const u = (rx * frame.uAxis.x + ry * frame.uAxis.y + rz * frame.uAxis.z) * 1000;
+    const v = (rx * frame.vAxis.x + ry * frame.vAxis.y + rz * frame.vAxis.z) * 1000;
+    return { u, v };
+  };
+
+  const clampToFace = (uMm: number, vMm: number, side: WallFeatureSide): SceneWallFeaturePoint => {
+    const frame = wallFaceFrame(side, drawDims());
+    const uMax = frame.uMaxM * 1000;
+    const vMax = frame.vMaxM * 1000;
+    const m = FEATURE_EDGE_MARGIN_MM;
+    return {
+      x: clampValue(uMm, m, Math.max(m, uMax - m)),
+      z: clampValue(vMm, m / 2, Math.max(m / 2, vMax - m / 2)),
+    };
+  };
+
+  // Orient the invisible draw anchor so the drag plane + its (u,v) axes match the clicked face.
+  // The third basis axis is u×v (always right-handed) so the plane normal sign never flips the
+  // drag axes; front/back resolve to identity (unchanged behaviour).
+  const orientDrawAnchor = (side: WallFeatureSide) => {
+    const anchor = drawAnchorRef.current;
+    if (!anchor) return;
+    const frame = wallFaceFrame(side, drawDims());
+    const w = new Vector3().crossVectors(frame.uAxis, frame.vAxis);
+    anchor.quaternion.setFromRotationMatrix(new Matrix4().makeBasis(frame.uAxis, frame.vAxis, w));
+    anchor.updateWorldMatrix(true, false);
+  };
+
+  const featureFitsFace = (side: WallFeatureSide, outline: { x: number; z: number }[]): boolean => {
+    if (side === 'front' || side === 'back') return featureFitsWall(wall, outline);
+    const frame = wallFaceFrame(side, drawDims());
+    const b = outlineBoundsMm(outline);
+    const m = FEATURE_EDGE_MARGIN_MM / 2;
+    return (
+      b.minX >= m &&
+      b.maxX <= frame.uMaxM * 1000 - m &&
+      b.minZ >= m &&
+      b.maxZ <= frame.vMaxM * 1000 - m
+    );
+  };
+
   const commitDraft = (spec: DraftFeature) => {
     if (isArcWall) {
       queueToast({
@@ -604,7 +677,8 @@ export function WallObject({
       // Default a drawn shape to a through aperture (shaped window/hole) so it visibly
       // applies; switch to recess/protrude (with depth) in the inspector.
       mode: 'hole',
-      side: spec.side,
+      // Stored side uses 1/-1 for front/back, the string for the four side faces.
+      side: spec.side === 'front' ? 1 : spec.side === 'back' ? -1 : spec.side,
       offsetMm: Math.round(offsetMm),
       centerZMm: Math.round(centerZMm),
       widthMm: Math.round(widthMm),
@@ -615,7 +689,7 @@ export function WallObject({
       colorHex: null,
     };
     const outline = featureOutlineMm(feature);
-    if (!featureFitsWall(wall, outline)) {
+    if (!featureFitsFace(spec.side, outline)) {
       queueToast({
         dedupeKey: 'glass-wall-feature-fit',
         variant: 'warning',
@@ -648,7 +722,7 @@ export function WallObject({
         setDraft(null);
         return;
       }
-      const cur = clampDrawPoint(session.x0 + delta.x, session.z0 + delta.y);
+      const cur = clampToFace(session.x0 + delta.x, session.z0 + delta.y, session.side);
       if (drawShape === 'free') {
         const last = session.points[session.points.length - 1];
         if (!last || Math.hypot(cur.x - last.x, cur.z - last.z) >= FREE_SAMPLE_STEP_MM) {
@@ -697,10 +771,16 @@ export function WallObject({
 
   const handleDrawPointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.nativeEvent.button === 0) {
-      const local = localPointMm(e.point);
-      if (local) {
-        const start = clampDrawPoint(local.x, local.z);
-        drawSessionRef.current = { x0: start.x, z0: start.z, side: local.side, points: [start] };
+      // The clicked face decides which of the six faces the feature lands on; the drag plane +
+      // (u,v) axes are oriented to it. Arc walls keep front/back (their body is rotated).
+      const normal = e.face?.normal;
+      const side: WallFeatureSide = normal && !isArcWall ? sideFromLocalNormal(normal) : 'front';
+      drawFaceRef.current = side;
+      orientDrawAnchor(side);
+      const uv = faceUvMm(e.point, side);
+      if (uv) {
+        const start = clampToFace(uv.u, uv.v, side);
+        drawSessionRef.current = { x0: start.x, z0: start.z, side, points: [start] };
       }
     }
     drawDrag.handlers.onPointerDown(e);
@@ -1180,7 +1260,7 @@ export function WallObject({
             <meshBasicMaterial color={SPLIT_COLOR} transparent opacity={0.8} depthWrite={false} />
           </mesh>
         )}
-        {draft && <DraftPreview draft={draft} thicknessM={thicknessM} />}
+        {draft && <DraftPreview draft={draft} dims={drawDims()} />}
         {penLine && penLine.length >= 2 && (
           <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
         )}
@@ -1455,8 +1535,19 @@ function WallFeatureObject({
   );
 }
 
-function DraftPreview({ draft, thicknessM }: { draft: DraftFeature; thicknessM: number }) {
-  const zOffset = draft.side * (thicknessM / 2 + FEATURE_FACE_LIFT_M);
+function DraftPreview({ draft, dims }: { draft: DraftFeature; dims: WallBoxDims }) {
+  // Orient the preview onto whichever face is being drawn (front/back resolve to the flat
+  // XY plane unchanged); the outline (u,v) maps to the face's u/v axes, lifted along its normal.
+  const frame = wallFaceFrame(draft.side, dims);
+  const w = new Vector3().crossVectors(frame.uAxis, frame.vAxis);
+  const previewQuat = new Quaternion().setFromRotationMatrix(
+    new Matrix4().makeBasis(frame.uAxis, frame.vAxis, w),
+  );
+  const position: [number, number, number] = [
+    frame.origin.x + frame.normal.x * FEATURE_FACE_LIFT_M,
+    frame.origin.y + frame.normal.y * FEATURE_FACE_LIFT_M,
+    frame.origin.z + frame.normal.z * FEATURE_FACE_LIFT_M,
+  ];
   // Live size readout in the shared HUD while the shape is being drawn; cleared on unmount
   // (draw committed/cancelled → draft becomes null → this component unmounts).
   useEffect(() => {
@@ -1477,7 +1568,7 @@ function DraftPreview({ draft, thicknessM }: { draft: DraftFeature; thicknessM: 
   }, [outline, draft.shape]);
   if (outline.length < 2) return null;
   return (
-    <group position={[0, 0, zOffset]}>
+    <group position={position} quaternion={previewQuat}>
       {fillGeometry && (
         <mesh geometry={fillGeometry} raycast={() => null}>
           <meshBasicMaterial

@@ -18,6 +18,17 @@ export const normalizeWallSide = (
   return side === -1 ? 'back' : 'front';
 };
 
+// A picked triangle's normal (in the wall body's local frame X=length, Y=height, Z=thickness)
+// → which of the six faces was clicked. Lets a click create a feature on that exact face.
+export const sideFromLocalNormal = (n: { x: number; y: number; z: number }): WallFeatureSide => {
+  const ax = Math.abs(n.x);
+  const ay = Math.abs(n.y);
+  const az = Math.abs(n.z);
+  if (az >= ax && az >= ay) return n.z >= 0 ? 'front' : 'back';
+  if (ax >= ay) return n.x >= 0 ? 'right' : 'left';
+  return n.y >= 0 ? 'top' : 'bottom';
+};
+
 export interface WallBoxDims {
   lengthM: number;
   heightM: number;
