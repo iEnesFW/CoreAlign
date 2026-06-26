@@ -279,6 +279,8 @@ const cornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null 
   // Each corner leg extends its OWN wall outward, so it inherits that wall's top
   // height and base elevation — a leg must reach the top of the wall it belongs to,
   // not the shorter of the pair (which would leave a mixed-height corner misaligned).
+  // L legs run ALONG each wall's centreline axis to the corner, so they stay axis-aligned —
+  // the nearest-corner refinement (for straight/arc) is intentionally NOT applied here.
   const legs: CornerLeg[] = [];
   const legA = edgeBetween(a, corner, a.heightMm, a.baseZMm);
   if (legA) legs.push({ edge: legA, ownWallId: a.wall.id });
@@ -425,8 +427,10 @@ export const computeMultiWallGapRuns = (
       ...wallBlockers.filter((w) => w.ownerId !== ownWallId),
       ...gapRunBlockers,
     ];
-    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first.
-    const corner = mode === 'straight' ? null : cornerCandidates(a, b);
+    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Validate the
+    // corner from the centreline endpoints (their outward rays are correct), build legs from
+    // the refined near-corner endpoints a/b.
+    const corner = mode === 'straight' ? null : cornerCandidates(free[pair.i], free[pair.j]);
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
       .map((leg) => trimEdge(leg.edge, legBlockers(leg.ownWallId)))

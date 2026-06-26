@@ -89,6 +89,18 @@ describe('computeMultiWallGapRuns', () => {
     expect(rotations).toEqual([0, 90]);
   });
 
+  it('fills a perpendicular corner of THICK (cube) walls with L legs (validation uses centrelines)', () => {
+    // 1m-thick walls, spaced so the legs have room: the nearest-corner refinement (now applied
+    // only to straight/arc connectors) used to be fed into cornerCandidates and broke its
+    // outward check, making L mode return nothing for thick walls.
+    const a = wall('a', 0, 0, 2000, 0, 2600, 1000);
+    const b = wall('b', 3500, 1500, 2000, 90, 2600, 1000);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'L');
+    expect(edges.length).toBeGreaterThanOrEqual(1);
+    const rotations = edges.map((e) => Math.round(e.rotationDeg) % 180).sort((x, y) => x - y);
+    expect(rotations[0]).toBe(0); // a leg runs along the X wall
+  });
+
   it('never returns an edge that would pass through an unselected wall in between', () => {
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 6000, 0, 2000, 0);
