@@ -371,14 +371,19 @@ export const computeMultiWallGapRuns = (
   for (let i = 0; i < free.length; i += 1) {
     for (let j = i + 1; j < free.length; j += 1) {
       if (free[j].wall.id === free[i].wall.id) continue;
-      // Rank by NEAREST-CORNER distance (each end slid to its near face), so the greedy pass
-      // joins the corners that are actually closest — not centreline ends that can mis-rank
-      // for thick walls and pick a far corner.
+      // Gate the gap on the CENTRELINE distance between the free ends (the real gap). A thick
+      // perpendicular corner whose near FACES nearly touch collapses both refined endpoints to
+      // the same corner point (refined distance ≈ 0), which wrongly failed MIN_GAP and dropped a
+      // perfectly valid L corner before any leg was tried.
+      const centreDistance = Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y);
+      if (centreDistance < MIN_GAP_MM || centreDistance > MAX_GAP_MM) continue;
+      if (!connectorLeavesOutward(free[i], free[j])) continue;
+      // Rank by NEAREST-CORNER distance (each end slid to its near face) so the greedy pass
+      // joins the corners that are actually closest — not centreline ends that can mis-rank for
+      // thick walls and pick a far corner.
       const ai = refineEndpointToFace(free[i], free[j]);
       const bj = refineEndpointToFace(free[j], free[i]);
       const distance = Math.hypot(bj.x - ai.x, bj.y - ai.y);
-      if (distance < MIN_GAP_MM || distance > MAX_GAP_MM) continue;
-      if (!connectorLeavesOutward(free[i], free[j])) continue;
       pairs.push({ i, j, distance });
     }
   }
@@ -423,17 +428,26 @@ export const computeMultiWallGapRuns = (
       ...wallBlockers.filter((w) => w.ownerId !== a.wall.id && w.ownerId !== b.wall.id),
       ...gapRunBlockers,
     ];
-    const legBlockers = (ownWallId: string): PlanFootprint[] => [
-      ...wallBlockers.filter((w) => w.ownerId !== ownWallId),
+    // An L leg extends one wall TO the corner it shares with the other (partner) wall, so it
+    // legitimately reaches right up to the partner — excluding the partner from the leg's
+    // trimming blockers stops the partner wall's own footprint from trimming the leg to nothing
+    // (the bug that made thick/close perpendicular walls return no L fill). Other walls + already
+    // placed gap runs still block.
+    const legBlockers = (ownWallId: string, partnerWallId: string): PlanFootprint[] => [
+      ...wallBlockers.filter((w) => w.ownerId !== ownWallId && w.ownerId !== partnerWallId),
       ...gapRunBlockers,
     ];
-    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Validate the
-    // corner from the centreline endpoints (their outward rays are correct), build legs from
-    // the refined near-corner endpoints a/b.
+    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Corner detection +
+    // legs both use the centreline endpoints (the refinement is only for straight/arc).
     const corner = mode === 'straight' ? null : cornerCandidates(free[pair.i], free[pair.j]);
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
-      .map((leg) => trimEdge(leg.edge, legBlockers(leg.ownWallId)))
+      .map((leg) =>
+        trimEdge(
+          leg.edge,
+          legBlockers(leg.ownWallId, leg.ownWallId === a.wall.id ? b.wall.id : a.wall.id),
+        ),
+      )
       .filter((candidate): candidate is EdgeCandidate => candidate !== null);
     // 'L' forces legs only — no straight fallback (skip the pair if legs don't fit).
     if (trimmed.length === 0 && mode !== 'L') {
