@@ -289,6 +289,33 @@ const cornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null 
   return legs.length > 0 ? legs : null;
 };
 
+// PARALLEL / near-parallel free ends can't form an outward-ray corner, but they CAN form an L:
+// run one leg outward along a wall's axis until it is level with the partner, turn 90°, and run
+// the perpendicular leg across the offset to the partner's free end. Two right-angle legs, never
+// a diagonal. (Used as the 'L'-mode fallback when cornerCandidates rejects the pair.)
+const parallelCornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null => {
+  const tryCandidate = (own: WallEndpoint, partner: WallEndpoint): CornerLeg[] | null => {
+    const axis = own.outwardDeg * DEG2RAD;
+    const ux = Math.cos(axis);
+    const uy = Math.sin(axis);
+    const dx = partner.x - own.x;
+    const dy = partner.y - own.y;
+    const along = dx * ux + dy * uy; // axis-leg length (signed: + is outward from the wall)
+    const across = Math.hypot(dx - along * ux, dy - along * uy); // perpendicular-leg length
+    // The axis leg must travel OUTWARD; a non-positive projection would run it back over the wall.
+    if (along < MIN_RUN_MM || across < MIN_RUN_MM) return null;
+    const corner = { x: own.x + ux * along, y: own.y + uy * along };
+    const legOwn = edgeBetween(own, corner, own.heightMm, own.baseZMm);
+    const legCross = edgeBetween(corner, partner, partner.heightMm, partner.baseZMm);
+    if (!legOwn || !legCross) return null;
+    return [
+      { edge: legOwn, ownWallId: own.wall.id },
+      { edge: legCross, ownWallId: partner.wall.id },
+    ];
+  };
+  return tryCandidate(a, b) ?? tryCandidate(b, a);
+};
+
 // A single curved run from A to B that bulges toward the outside corner (the
 // intersection of the two walls' outward rays). The run-arc convention (arcGeometry):
 // a run placed at A heading `rotationDeg` whose local chord subtends `dir·sweep/2`,
@@ -439,7 +466,13 @@ export const computeMultiWallGapRuns = (
     ];
     // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Corner detection +
     // legs both use the centreline endpoints (the refinement is only for straight/arc).
-    const corner = mode === 'straight' ? null : cornerCandidates(free[pair.i], free[pair.j]);
+    // Perpendicular pairs go through cornerCandidates; an 'L' on PARALLEL walls falls back to the
+    // right-angle parallel-L generator (kept out of 'auto' so it still bridges collinear straight).
+    const corner =
+      mode === 'straight'
+        ? null
+        : (cornerCandidates(free[pair.i], free[pair.j]) ??
+          (mode === 'L' ? parallelCornerCandidates(free[pair.i], free[pair.j]) : null));
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
       .map((leg) =>

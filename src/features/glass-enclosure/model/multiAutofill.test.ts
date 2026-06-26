@@ -202,6 +202,18 @@ describe('computeMultiWallGapRuns', () => {
     expect(computeMultiWallGapRuns([a, b], [a, b], [], 'L')).toHaveLength(0);
   });
 
+  it("'L' mode builds a right-angle L between two PARALLEL walls offset diagonally", () => {
+    // The common failing case: two walls created without rotating either (both rot 0) placed
+    // diagonally apart. L must still produce two right-angle legs (axis leg + perpendicular leg),
+    // never a diagonal — and never the "no fillable gap" warning.
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 3000, 1000, 2000, 0);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'L');
+    expect(edges.length).toBeGreaterThanOrEqual(2);
+    const rotations = edges.map((e) => Math.round(e.rotationDeg) % 180).sort((x, y) => x - y);
+    expect(rotations).toEqual([0, 90]); // one axis leg + one perpendicular leg = a real L
+  });
+
   it("'arc' mode emits one bent run whose far end lands on the second gap endpoint", () => {
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 2500, 500, 2000, 90);
