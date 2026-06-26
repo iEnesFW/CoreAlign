@@ -103,6 +103,9 @@ export function useObjectGestures({
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
     const altStack = isAltPressed();
     altLatchRef.current = altStack;
+    // WHY: Alt = stack-on-top, which deliberately needs plan overlap (the body rests on the
+    // other in Z); the no-deepen collision gate must NOT run here or stacking is impossible.
+    // Plain moves go through slidePlanMove, which now forbids deepening any overlap.
     const slid = altStack
       ? snapped
       : slidePlanMove(

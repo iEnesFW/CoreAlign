@@ -97,8 +97,11 @@ describe('slidePlanMove / clampPlanMoveNoDeepen (objects never interpenetrate fu
     const r = run('r', 500, 90, 1000); // Y band [65,115], already overlaps the wall
     const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
     expect(penetratesAny(fp(0, 0), [wallFp])).toBe(true);
-    const slid = slidePlanMove(fp, [wallFp], 0, -80); // push deeper into the wall
-    expect(Math.abs(slid.dyMm)).toBeLessThan(20); // deepening is blocked
+    const slid = slidePlanMove(fp, [wallFp], 0, -80); // push deeper into the wall (−Y)
+    // The deepening move is essentially fully blocked — at most the no-deepen epsilon of
+    // travel toward the wall, never the requested 80 mm. (Retreat is covered by the next test.)
+    expect(slid.dyMm).toBeLessThanOrEqual(0);
+    expect(slid.dyMm).toBeGreaterThanOrEqual(-5);
   });
 
   it('lets an already-overlapping run slide free of the overlap', () => {
