@@ -51,6 +51,7 @@ import type { StretchFaceDef } from '../interaction/StretchFaces';
 import type { PlanPoint, PlanSnapTargets } from '../interaction/planSnap';
 import type { PlanFootprint } from '../interaction/planCollision';
 import type { ComposedFeature, FeatureOutlineSpec } from '../../model/wallFeatureGeometry';
+import { featureSideSignZ } from '../../model/project.types';
 import type {
   SceneSlabState,
   SceneWallFeature,
@@ -888,7 +889,7 @@ export function SlabObject({
         },
         ...featureItems.map(({ feature, bounds }): StretchFaceDef => {
           const signedDepthMm = featureSignedDepthMm(feature);
-          const s = feature.side;
+          const s = featureSideSignZ(feature.side);
           const outwardM = Math.max(signedDepthMm, 0) / 1000 + FEATURE_FACE_LIFT_M;
           const faceY = s === 1 ? thicknessM + outwardM : -outwardM;
           return {

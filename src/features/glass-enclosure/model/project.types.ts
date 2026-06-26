@@ -382,11 +382,19 @@ export interface SceneWallFeaturePoint {
   z: number;
 }
 
+// Front/back keep the legacy 1 / -1 (existing draw + geometry path); the four side faces use
+// named values and are cut into the body via CSG (see wallFaces.ts).
+export type WallFeatureSideValue = 1 | -1 | 'top' | 'bottom' | 'left' | 'right';
+
+// The ±Z sign for the legacy front/back plug rendering. Side-face features render via CSG into
+// the wall body (not these plug meshes), so they harmlessly fall back to +1 here.
+export const featureSideSignZ = (side: WallFeatureSideValue): 1 | -1 => (side === -1 ? -1 : 1);
+
 export interface SceneWallFeature {
   id: string;
   shape: WallFeatureShape;
   mode: WallFeatureMode;
-  side: 1 | -1;
+  side: WallFeatureSideValue;
   offsetMm: number;
   centerZMm: number;
   widthMm: number;

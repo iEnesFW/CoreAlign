@@ -7,7 +7,7 @@ import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeature
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
 import { buildCurvedBandGeometry } from './curvedExtrude';
 import type { ThreeEvent } from '@react-three/fiber';
-import type { Group, Mesh, Texture } from 'three';
+import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
   getProceduralTexture,
   isProceduralMaterialKey,
@@ -39,6 +39,8 @@ import {
   restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
+import { featureSideSignZ } from '../../model/project.types';
+import { applyWallFaceFeatures, normalizeWallSide } from './wallFaces';
 import { effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
@@ -181,7 +183,7 @@ const buildWallGeometries = (
   wall: SceneWallState,
   cutFeatures = true,
 ): {
-  body: ExtrudeGeometry;
+  body: BufferGeometry;
   featureItems: WallFeatureItem[];
   openingFrames: OpeningFrameRect[];
 } => {
@@ -252,8 +254,15 @@ const buildWallGeometries = (
     });
     openingFrames.push(rect);
   }
+  // Front/back features keep the extrude-with-holes + plug path; the four side faces are cut
+  // into the body via CSG below (a single extrude can't carve a localised hole on a side face).
+  const allFeatures = wall.features ?? [];
+  const frontBackFeatures = allFeatures.filter((f) => f.side === 1 || f.side === -1);
+  const sideFaceFeatures = allFeatures.filter(
+    (f) => f.side === 'top' || f.side === 'bottom' || f.side === 'left' || f.side === 'right',
+  );
   const composed = composeSurfaceFeatures(
-    wall.features ?? [],
+    frontBackFeatures,
     (outline) => featureFitsWall(wall, outline),
     openingBounds,
     thicknessMm,
@@ -288,6 +297,20 @@ const buildWallGeometries = (
   }
   const body = new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false });
   body.translate(0, 0, -thicknessM / 2);
+  if (cutFeatures && sideFaceFeatures.length > 0) {
+    const finalBody = applyWallFaceFeatures(
+      body,
+      sideFaceFeatures.map((f) => ({
+        outlineMm: featureOutlineMm(f),
+        side: normalizeWallSide(f.side),
+        mode: f.mode === 'protrude' ? 'protrude' : f.mode === 'hole' ? 'hole' : 'recess',
+        depthMm: f.depthMm,
+      })),
+      { lengthM, heightM: Math.max(heightStartM, heightEndM), thicknessM },
+    );
+    if (finalBody !== body) body.dispose();
+    return { body: finalBody, featureItems, openingFrames };
+  }
   return { body, featureItems, openingFrames };
 };
 
@@ -1055,7 +1078,7 @@ export function WallObject({
         },
         ...featureItems.map(({ feature, bounds }): StretchFaceDef => {
           const signedDepthMm = featureSignedDepthMm(feature);
-          const s = feature.side;
+          const s = featureSideSignZ(feature.side);
           const faceZ =
             s * (thicknessM / 2) +
             (s * Math.max(signedDepthMm, 0)) / 1000 +
@@ -1328,7 +1351,7 @@ function WallFeatureObject({
       );
     }
     return (
-      <group position={[0, 0, feature.side * (thicknessM / 2 + FACE_LIFT_M)]}>
+      <group position={[0, 0, featureSideSignZ(feature.side) * (thicknessM / 2 + FACE_LIFT_M)]}>
         <Line
           points={regionPoints}
           color={feature.colorHex ?? REGION_COLOR}
@@ -1372,7 +1395,7 @@ function WallFeatureObject({
             )}
           </mesh>
         ) : (
-          <group position={[0, 0, feature.side * (thicknessM / 2 + FACE_LIFT_M)]}>
+          <group position={[0, 0, featureSideSignZ(feature.side) * (thicknessM / 2 + FACE_LIFT_M)]}>
             {!presentation && (
               <Line
                 points={regionPoints}

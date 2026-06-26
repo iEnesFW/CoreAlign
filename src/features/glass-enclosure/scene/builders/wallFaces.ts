@@ -158,9 +158,15 @@ export const applyWallFaceFeatures = (
     const depthM = f.mode === 'hole' ? frame.depthM : Math.max(0.002, f.depthMm / 1000);
     const geo = buildFaceFeatureGeometry(f.outlineMm, frame, depthM, outward);
     if (!geo) continue;
-    const tool = new Mesh(geo);
-    tool.updateMatrix();
-    mesh = outward ? CSG.union(mesh, tool) : CSG.subtract(mesh, tool);
+    // WHY: a single degenerate cutter must never break the whole wall mesh — skip it and keep
+    // the body built so far, rather than throwing out of the geometry builder.
+    try {
+      const tool = new Mesh(geo);
+      tool.updateMatrix();
+      mesh = outward ? CSG.union(mesh, tool) : CSG.subtract(mesh, tool);
+    } catch {
+      // leave mesh as-is for this feature
+    }
     geo.dispose();
   }
   mesh.updateMatrix();

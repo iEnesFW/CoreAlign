@@ -2733,6 +2733,15 @@
       },
       "WallFeature": {
         "Title": "Duvar katmanı",
+        "Face": "Yüz",
+        "FaceName": {
+          "front": "Ön",
+          "back": "Arka",
+          "left": "Sol",
+          "right": "Sağ",
+          "top": "Üst",
+          "bottom": "Alt"
+        },
         "Mode": "Davranış",
         "Depth": "Derinlik",
         "Offset": "Konum X",
