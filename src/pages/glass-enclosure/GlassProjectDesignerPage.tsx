@@ -64,7 +64,9 @@ import {
   buildWallFootprint,
   buildSlabFootprint,
   buildSurfaceFootprint,
-  penetratesAny,
+  clampPlanMoveNoDeepen,
+  type PlanFootprint,
+  type PlanFootprintSet,
 } from '@/features/glass-enclosure/scene/interaction/planCollision';
 import type { DesignerTool, PlacementKind } from '@/features/glass-enclosure/model/designerStore';
 import type { SceneState } from '@/features/glass-enclosure/model/project.types';
@@ -346,16 +348,18 @@ export function GlassProjectDesignerPage() {
       const walls = scene.walls ?? [];
       const slabs = scene.slabs ?? [];
       const surfaces = scene.surfaces ?? [];
-      // WHY: a nudge may only block when it would CREATE a new overlap; an object that
-      // already overlaps (e.g. a glass run autofilled into a wall opening) must stay free to
-      // move out. Slabs/surfaces are floors that underlie walls/runs, so they never act as
-      // obstacles for them (only same-kind bodies do) — mirrors the drag obstacle set.
-      const blocks = (
-        footprintAt: (dx: number, dy: number) => Parameters<typeof penetratesAny>[0],
-        obstacles: Parameters<typeof penetratesAny>[1],
-      ) =>
-        penetratesAny(footprintAt(dxMm, dyMm), obstacles) &&
-        !penetratesAny(footprintAt(0, 0), obstacles);
+      // WHY: a nudge can never deepen an existing overlap nor create a new one
+      // (clampPlanMoveNoDeepen) — an object already overlapping (e.g. a glass run autofilled
+      // into a wall opening) may still slide out, and a nudge toward a neighbour travels only
+      // up to contact. Slabs/surfaces are floors that underlie walls/runs, so only same-kind
+      // bodies obstruct them — mirrors the drag obstacle set.
+      const clamp = (
+        footprintAt: (dx: number, dy: number) => PlanFootprintSet,
+        obstacles: PlanFootprint[],
+      ): { dxMm: number; dyMm: number } | null => {
+        const d = clampPlanMoveNoDeepen(footprintAt, obstacles, dxMm, dyMm);
+        return d.dxMm === 0 && d.dyMm === 0 ? null : d;
+      };
       if (sel.kind === 'run' && sel.runId) {
         const run = runs.find((r) => r.id === sel.runId);
         if (!run) return;
@@ -365,8 +369,12 @@ export function GlassProjectDesignerPage() {
             .filter((r) => r.id !== run.id)
             .map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
         ];
-        if (blocks((dx, dy) => buildRunFootprint(run, dx, dy, run.rotationDeg), obstacles)) return;
-        state.updateRun(sel.runId, { originX: run.originX + dxMm, originY: run.originY + dyMm });
+        const d = clamp((dx, dy) => buildRunFootprint(run, dx, dy, run.rotationDeg), obstacles);
+        if (!d) return;
+        state.updateRun(sel.runId, {
+          originX: run.originX + d.dxMm,
+          originY: run.originY + d.dyMm,
+        });
         const updated = useDesignerStore.getState().scene.runs.find((r) => r.id === sel.runId);
         if (updated) void persistRun(updated);
       } else if (sel.kind === 'wall' && sel.wallId) {
@@ -378,11 +386,11 @@ export function GlassProjectDesignerPage() {
             .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
           ...runs.map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
         ];
-        if (blocks((dx, dy) => buildWallFootprint(wall, dx, dy, wall.rotationDeg), obstacles))
-          return;
+        const d = clamp((dx, dy) => buildWallFootprint(wall, dx, dy, wall.rotationDeg), obstacles);
+        if (!d) return;
         state.updateWall(sel.wallId, {
-          originX: wall.originX + dxMm,
-          originY: wall.originY + dyMm,
+          originX: wall.originX + d.dxMm,
+          originY: wall.originY + d.dyMm,
         });
       } else if (sel.kind === 'slab' && sel.slabId) {
         const slab = slabs.find((s) => s.id === sel.slabId);
@@ -390,11 +398,11 @@ export function GlassProjectDesignerPage() {
         const obstacles = slabs
           .filter((s) => s.id !== slab.id)
           .map((s) => buildSlabFootprint(s, 0, 0, s.rotationDeg));
-        if (blocks((dx, dy) => buildSlabFootprint(slab, dx, dy, slab.rotationDeg), obstacles))
-          return;
+        const d = clamp((dx, dy) => buildSlabFootprint(slab, dx, dy, slab.rotationDeg), obstacles);
+        if (!d) return;
         state.updateSlab(sel.slabId, {
-          originX: slab.originX + dxMm,
-          originY: slab.originY + dyMm,
+          originX: slab.originX + d.dxMm,
+          originY: slab.originY + d.dyMm,
         });
       } else if (sel.kind === 'surface' && sel.surfaceId) {
         const surface = surfaces.find((s) => s.id === sel.surfaceId);
@@ -402,9 +410,10 @@ export function GlassProjectDesignerPage() {
         const obstacles = surfaces
           .filter((s) => s.id !== surface.id)
           .map((s) => buildSurfaceFootprint(s, 0, 0));
-        if (blocks((dx, dy) => buildSurfaceFootprint(surface, dx, dy), obstacles)) return;
+        const d = clamp((dx, dy) => buildSurfaceFootprint(surface, dx, dy), obstacles);
+        if (!d) return;
         state.updateSurface(sel.surfaceId, {
-          points: surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
+          points: surface.points.map((p) => ({ x: p.x + d.dxMm, y: p.y + d.dyMm })),
         });
       }
     },

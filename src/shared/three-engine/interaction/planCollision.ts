@@ -326,6 +326,106 @@ const sweptBoundary = (
   return null;
 };
 
+const NO_DEEPEN_EPS_MM = 1;
+
+// True SAT penetration depth = the MIN overlap across separating axes (smallest push to
+// separate). obbOverlapExtent above returns the MAX overlap (a separation test), which stays
+// constant when a long-thin box slides deeper along its long axis — so it cannot detect
+// deepening. This MIN form can.
+const obbPenetrationDepth = (ca: Vec[], cb: Vec[]): number => {
+  const axes: Vec[] = [];
+  for (const corners of [ca, cb]) {
+    for (let i = 0; i < 2; i += 1) {
+      const ax = corners[i + 1].x - corners[i].x;
+      const ay = corners[i + 1].y - corners[i].y;
+      const len = Math.hypot(ax, ay);
+      if (len < 1e-6) continue;
+      axes.push({ x: -ay / len, y: ax / len });
+    }
+  }
+  let minOverlap = Infinity;
+  for (const axis of axes) {
+    const overlap = projectOverlap(ca, cb, axis.x, axis.y);
+    if (overlap <= 0) return 0;
+    if (overlap < minOverlap) minOverlap = overlap;
+  }
+  return Number.isFinite(minOverlap) ? minOverlap : 0;
+};
+
+// Penetration DEPTH (mm) of a into b beyond the contact tolerance, with the same Z-gate
+// footprintsPenetrate uses. 0 means clear, touching, or vertically separated. Lets a move be
+// judged by how MUCH it overlaps, not just whether it overlaps.
+const penetrationDepthMm = (a: PlanFootprint, b: PlanFootprint): number => {
+  if (a.zMaxMm <= b.zMinMm + CONTACT_EPS_MM || b.zMaxMm <= a.zMinMm + CONTACT_EPS_MM) return 0;
+  if (a.polygon || b.polygon) {
+    if (aabbSeparated(a, b)) return 0;
+    if (!polygonsOverlap(footprintOutline(a), footprintOutline(b))) return 0;
+    const ba = outlineAabb(footprintOutline(a));
+    const bb = outlineAabb(footprintOutline(b));
+    const ox = Math.min(ba.maxX, bb.maxX) - Math.max(ba.minX, bb.minX);
+    const oy = Math.min(ba.maxY, bb.maxY) - Math.max(ba.minY, bb.minY);
+    return Math.max(0, Math.min(ox, oy));
+  }
+  const depth = obbPenetrationDepth(footprintCorners(a), footprintCorners(b));
+  const jointTolerance = Math.min(a.halfWidthMm, b.halfWidthMm) + CONTACT_EPS_MM;
+  return depth > jointTolerance ? depth - jointTolerance : 0;
+};
+
+const maxDepthAgainst = (footprints: PlanFootprint[], o: PlanFootprint): number => {
+  let depth = 0;
+  for (const fp of footprints) {
+    if (o.ownerId === fp.ownerId) continue;
+    const d = penetrationDepthMm(fp, o);
+    if (d > depth) depth = d;
+  }
+  return depth;
+};
+
+// Clamp a move so it never INCREASES penetration with any obstacle beyond where it started.
+// Sliding free of an existing overlap (depth shrinks) and parallel travel (depth constant) are
+// allowed; pushing deeper into something already touched — or into a fresh body — is blocked.
+// This is the hard "objects never interpenetrate further" guarantee.
+export const clampPlanMoveNoDeepen = (
+  footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
+  obstacles: PlanFootprint[],
+  dxMm: number,
+  dyMm: number,
+): PlanMoveDelta => {
+  if (obstacles.length === 0) return { dxMm, dyMm };
+  const toArr = (s: PlanFootprintSet) => (Array.isArray(s) ? s : [s]);
+  const startFps = toArr(footprintAt(0, 0));
+  const baseline = obstacles.map((o) => maxDepthAgainst(startFps, o));
+  const ok = (frac: number): boolean => {
+    const fps = toArr(footprintAt(dxMm * frac, dyMm * frac));
+    for (let i = 0; i < obstacles.length; i += 1) {
+      if (maxDepthAgainst(fps, obstacles[i]) > baseline[i] + NO_DEEPEN_EPS_MM) return false;
+    }
+    return true;
+  };
+  if (ok(1)) return { dxMm, dyMm };
+  const pathLen = Math.hypot(dxMm, dyMm);
+  const steps = Math.min(
+    SWEEP_MAX_STEPS,
+    Math.max(SWEEP_MIN_STEPS, Math.ceil(pathLen / minObstacleBandMm(obstacles))),
+  );
+  let lastOk = 0;
+  for (let i = 1; i <= steps; i += 1) {
+    const t = i / steps;
+    if (!ok(t)) {
+      let lo = lastOk;
+      let hi = t;
+      for (let k = 0; k < CLAMP_ITERATIONS; k += 1) {
+        const mid = (lo + hi) / 2;
+        if (ok(mid)) lo = mid;
+        else hi = mid;
+      }
+      return { dxMm: Math.round(dxMm * lo), dyMm: Math.round(dyMm * lo) };
+    }
+    lastOk = t;
+  }
+  return { dxMm, dyMm };
+};
+
 export const slidePlanMove = (
   footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
   obstacles: PlanFootprint[],
@@ -340,15 +440,22 @@ export const slidePlanMove = (
   const active = penetratesAny(startFp, obstacles)
     ? obstacles.filter((o) => !penetratesAny(startFp, [o]))
     : obstacles;
+  let result: PlanMoveDelta;
   if (!penetratesAny(footprintAt(dxMm, dyMm), active)) {
-    return sweptBoundary(footprintAt, active, dxMm, dyMm) ?? { dxMm, dyMm };
+    result = sweptBoundary(footprintAt, active, dxMm, dyMm) ?? { dxMm, dyMm };
+  } else {
+    const alongX = clampPlanMove(footprintAt, active, dxMm, 0);
+    const alongY = clampPlanMove(footprintAt, active, 0, dyMm);
+    if (!penetratesAny(footprintAt(alongX.dxMm, alongY.dyMm), active)) {
+      result = { dxMm: alongX.dxMm, dyMm: alongY.dyMm };
+    } else {
+      result = clampPlanMove(footprintAt, active, dxMm, dyMm);
+    }
   }
-  const alongX = clampPlanMove(footprintAt, active, dxMm, 0);
-  const alongY = clampPlanMove(footprintAt, active, 0, dyMm);
-  if (!penetratesAny(footprintAt(alongX.dxMm, alongY.dyMm), active)) {
-    return { dxMm: alongX.dxMm, dyMm: alongY.dyMm };
-  }
-  return clampPlanMove(footprintAt, active, dxMm, dyMm);
+  // Final hard gate against the FULL obstacle set: the `active` filter only stops the body
+  // being trapped by an overlap it starts inside — this stops it being pushed any DEEPER
+  // into that same overlap (slide-out still allowed because depth only shrinks).
+  return clampPlanMoveNoDeepen(footprintAt, obstacles, result.dxMm, result.dyMm);
 };
 
 export const clampPlanStretch = (

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildRunFootprint, buildWallFootprint, penetratesAny } from './planCollision';
+import {
+  buildRunFootprint,
+  buildWallFootprint,
+  clampPlanMoveNoDeepen,
+  penetratesAny,
+  slidePlanMove,
+} from './planCollision';
 import type { SceneRunState, SceneWallState } from '../../model/project.types';
 
 const wall = (id: string, originX: number, originY: number, lengthMm: number): SceneWallState => ({
@@ -73,5 +79,38 @@ describe('wall <-> run collision (no interpenetration)', () => {
     expect((straight.polygon ?? []).length).toBeLessThanOrEqual(4);
     expect(curved.polygon).toBeDefined();
     expect((curved.polygon ?? []).length).toBeGreaterThan(6);
+  });
+});
+
+describe('slidePlanMove / clampPlanMoveNoDeepen (objects never interpenetrate further)', () => {
+  const wallFp = buildWallFootprint(wall('w', 0, 0, 2000), 0, 0, 0); // X[0,2000] Y[-100,100]
+
+  it('clamps a clear run before it penetrates a wall (no new overlap)', () => {
+    const r = run('r', 500, 140, 1000); // Y band [115,165], clear of the wall (top 100)
+    const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
+    const slid = slidePlanMove(fp, [wallFp], 0, -100); // drive straight into the wall
+    expect(Math.abs(slid.dyMm)).toBeLessThan(100); // stopped at contact, not full travel
+    expect(penetratesAny(fp(slid.dxMm, slid.dyMm), [wallFp])).toBe(false);
+  });
+
+  it('does not let an already-overlapping run be pushed deeper', () => {
+    const r = run('r', 500, 90, 1000); // Y band [65,115], already overlaps the wall
+    const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
+    expect(penetratesAny(fp(0, 0), [wallFp])).toBe(true);
+    const slid = slidePlanMove(fp, [wallFp], 0, -80); // push deeper into the wall
+    expect(Math.abs(slid.dyMm)).toBeLessThan(20); // deepening is blocked
+  });
+
+  it('lets an already-overlapping run slide free of the overlap', () => {
+    const r = run('r', 500, 90, 1000);
+    const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
+    const slid = slidePlanMove(fp, [wallFp], 0, 80); // move away from the wall
+    expect(slid.dyMm).toBe(80); // full retreat allowed (depth only shrinks)
+  });
+
+  it('clampPlanMoveNoDeepen returns the full move when nothing is in the way', () => {
+    const r = run('r', 0, 0, 1000);
+    const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
+    expect(clampPlanMoveNoDeepen(fp, [], 250, 0)).toEqual({ dxMm: 250, dyMm: 0 });
   });
 });

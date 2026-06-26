@@ -18,6 +18,7 @@ export {
   firstPenetratingOwner,
   footprintsPenetrate,
   clampPlanMove,
+  clampPlanMoveNoDeepen,
   slidePlanMove,
   clampPlanStretch,
   clampPlanRotation,
