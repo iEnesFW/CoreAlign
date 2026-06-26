@@ -36,6 +36,7 @@ import {
   buildRunFootprint,
   buildWallFootprint,
   clampPlanStretch,
+  penetratesAny,
   restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
@@ -357,11 +358,15 @@ export function WallObject({
   const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
   const vertexEditActive =
     transformActive && isSelected && interactive && !wall.locked && !isArcWall;
+  // WHY: always cut the features (don't suppress while stretching) — the depth handle that
+  // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
+  // hid the result on every face until the user happened to leave the tool. Depth commits on
+  // release, so the CSG/extrude rebuilds once per edit, not per frame.
   const {
     body: geometry,
     featureItems,
     openingFrames,
-  } = useMemo(() => buildWallGeometries(wall, !stretchActive), [wall, stretchActive]);
+  } = useMemo(() => buildWallGeometries(wall, true), [wall]);
   useEffect(
     () => () => {
       geometry.dispose();
@@ -1198,14 +1203,29 @@ export function WallObject({
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
-          onCommit={(next) =>
+          onCommit={(next) => {
+            // Reject a corner resize that would grow the wall into a neighbour (the Stretch
+            // tool clamps; the corner handles must not be a collision-free back door).
+            const resized = buildWallFootprint(
+              {
+                ...wall,
+                originX: next.originX,
+                originY: next.originY,
+                lengthMm: next.lengthMm,
+                thicknessMm: next.crossMm,
+              },
+              0,
+              0,
+              next.rotationDeg,
+            );
+            if (penetratesAny(resized, planObstacles)) return;
             updateWall(wall.id, {
               originX: next.originX,
               originY: next.originY,
               lengthMm: next.lengthMm,
               thicknessMm: next.crossMm,
-            })
-          }
+            });
+          }}
         />
       )}
     </>

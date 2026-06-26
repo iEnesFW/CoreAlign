@@ -27,6 +27,7 @@ import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
 import {
   buildSlabFootprint,
   clampPlanStretch,
+  penetratesAny,
   restElevationMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
@@ -217,10 +218,9 @@ export function SlabObject({
   const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
   const vertexEditActive =
     transformActive && isSelected && interactive && !slab.locked && !isBarrelRoof;
-  const { body, featureItems } = useMemo(
-    () => buildSlabGeometries(slab, !stretchActive),
-    [slab, stretchActive],
-  );
+  // WHY: always cut features even while stretching — suppressing the cut during the Stretch
+  // tool (where depth is given) hid the recess/hole on the slab face until the tool was left.
+  const { body, featureItems } = useMemo(() => buildSlabGeometries(slab, true), [slab]);
   useEffect(
     () => () => {
       body.dispose();
@@ -993,14 +993,28 @@ export function SlabObject({
             rotationDeg: slab.rotationDeg,
           }}
           topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
-          onCommit={(next) =>
+          onCommit={(next) => {
+            // Reject a corner resize that would grow the slab into a neighbour.
+            const resized = buildSlabFootprint(
+              {
+                ...slab,
+                originX: next.originX,
+                originY: next.originY,
+                lengthMm: next.lengthMm,
+                depthMm: next.crossMm,
+              },
+              0,
+              0,
+              next.rotationDeg,
+            );
+            if (penetratesAny(resized, planObstacles)) return;
             updateSlab(slab.id, {
               originX: next.originX,
               originY: next.originY,
               lengthMm: next.lengthMm,
               depthMm: next.crossMm,
-            })
-          }
+            });
+          }}
         />
       )}
     </>

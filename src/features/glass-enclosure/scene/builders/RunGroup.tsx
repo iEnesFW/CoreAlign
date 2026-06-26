@@ -22,6 +22,7 @@ import {
   buildRunFootprint,
   clampPlanStretch,
   firstPenetratingOwner,
+  penetratesAny,
   restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
@@ -567,11 +568,18 @@ export function RunGroup({
             // WHY: a run keeps its thin glass cross + axis — project the corner shift onto the
             // run direction so it only changes length, never drifts sideways.
             const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
-            onStretchRun?.(run.id, {
-              lengthMm: Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm)),
-              originX: Math.round(run.originX + along * dirX),
-              originY: Math.round(run.originY + along * dirY),
-            });
+            const lengthMm = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
+            const originX = Math.round(run.originX + along * dirX);
+            const originY = Math.round(run.originY + along * dirY);
+            // Reject a resize that would grow the run into a neighbour.
+            const resized = buildRunFootprint(
+              { ...run, originX, originY, lengthMm },
+              0,
+              0,
+              run.rotationDeg,
+            );
+            if (penetratesAny(resized, planObstacles)) return;
+            onStretchRun?.(run.id, { lengthMm, originX, originY });
           }}
         />
       )}
