@@ -1,5 +1,6 @@
 import { type BufferGeometry, ExtrudeGeometry, Matrix4, Mesh, Shape, Vector3 } from 'three';
 import { CSG } from 'three-csg-ts';
+import { logger } from '@/shared/lib/logger';
 import type { FeatureOutlinePoint } from '../../model/wallFeatureGeometry';
 
 export type WallFeatureSide = 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right';
@@ -130,6 +131,7 @@ export const buildFaceFeatureGeometry = (
   const basis = new Matrix4().makeBasis(frame.uAxis, frame.vAxis, depthAxis);
   basis.setPosition(frame.origin);
   geo.applyMatrix4(basis);
+  geo.computeVertexNormals();
   return geo;
 };
 
@@ -164,11 +166,14 @@ export const applyWallFaceFeatures = (
       const tool = new Mesh(geo);
       tool.updateMatrix();
       mesh = outward ? CSG.union(mesh, tool) : CSG.subtract(mesh, tool);
-    } catch {
-      // leave mesh as-is for this feature
+    } catch (error) {
+      // Skip a degenerate cutter rather than break the whole wall, but surface why so a real
+      // CSG failure isn't invisible.
+      logger.error('wall face CSG failed', { side: f.side, mode: f.mode, error });
     }
     geo.dispose();
   }
+  mesh.geometry.computeVertexNormals();
   mesh.updateMatrix();
   return mesh.geometry;
 };

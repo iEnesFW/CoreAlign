@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Box3, BoxGeometry } from 'three';
+import { Box3, BoxGeometry, ExtrudeGeometry, Shape } from 'three';
 import {
   applyWallFaceFeatures,
   buildFaceFeatureGeometry,
@@ -78,6 +78,39 @@ describe('applyWallFaceFeatures (CSG)', () => {
   it('returns the body unchanged when there are no features', () => {
     const b = body();
     expect(applyWallFaceFeatures(b, [], dims)).toBe(b);
+  });
+
+  it('subtracts a top-face hole from a real ExtrudeGeometry wall body (the production path)', () => {
+    // Mirror buildWallGeometries: a rectangle profile extruded along thickness, then centred.
+    const shape = new Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(3, 0);
+    shape.lineTo(3, 2.6);
+    shape.lineTo(0, 2.6);
+    shape.closePath();
+    const extrudeBody = new ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
+    extrudeBody.translate(0, 0, -0.1);
+    const before = extrudeBody.getAttribute('position').count;
+    const result = applyWallFaceFeatures(
+      extrudeBody,
+      [
+        {
+          outlineMm: [
+            { x: 1300, z: 50 },
+            { x: 1700, z: 50 },
+            { x: 1700, z: 150 },
+            { x: 1300, z: 150 },
+          ],
+          side: 'top',
+          mode: 'hole',
+          depthMm: 0,
+        },
+      ],
+      dims,
+    );
+    expect(result.getAttribute('position').count).toBeGreaterThan(0);
+    // the cut must actually change the mesh (more triangles than the plain box body)
+    expect(result.getAttribute('position').count).not.toBe(before);
   });
 
   it('subtracts a top-face hole and still yields a solid geometry', () => {

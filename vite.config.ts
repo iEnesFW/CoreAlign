@@ -92,6 +92,9 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
+    // Force a single three instance so three-csg-ts shares the app's THREE classes — a second
+    // copy makes its instanceof checks fail and CSG cuts silently produce nothing.
+    dedupe: ['three'],
   },
   server: {
     port: 5273,

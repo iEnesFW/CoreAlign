@@ -35,8 +35,10 @@ export function WallFeatureInspector() {
 
   const currentSide = normalizeWallSide(feature.side);
 
-  // Switching to another face re-centres the feature on it (its width/height keep meaning, but
-  // its offset/centre would be out of range on a different face), so it lands valid and visible.
+  // Switching to another face re-centres the feature on it (its offset/centre would be out of
+  // range on a different face) AND scales it (incl. free-draw points) to fit that face — a
+  // narrow side face is only as wide as the wall is thick, so an un-scaled outline would spill
+  // outside the body and the CSG cut would degenerate to nothing.
   const changeFace = (side: WallFeatureSide) => {
     if (side === currentSide) return;
     const frame = wallFaceFrame(side, {
@@ -46,12 +48,22 @@ export function WallFeatureInspector() {
     });
     const uMaxMm = frame.uMaxM * 1000;
     const vMaxMm = frame.vMaxM * 1000;
+    const scale = Math.min(
+      1,
+      (uMaxMm * 0.8) / Math.max(1, feature.widthMm),
+      (vMaxMm * 0.8) / Math.max(1, feature.heightMm),
+    );
+    const points =
+      feature.points && scale < 1
+        ? feature.points.map((p) => ({ x: Math.round(p.x * scale), z: Math.round(p.z * scale) }))
+        : feature.points;
     updateWallFeature(wall.id, feature.id, {
       side: toSideValue(side),
       offsetMm: Math.round(uMaxMm / 2),
       centerZMm: Math.round(vMaxMm / 2),
-      widthMm: Math.round(Math.min(feature.widthMm, uMaxMm * 0.8)),
-      heightMm: Math.round(Math.min(feature.heightMm, vMaxMm * 0.8)),
+      widthMm: Math.round(feature.widthMm * scale),
+      heightMm: Math.round(feature.heightMm * scale),
+      points,
     });
   };
 
