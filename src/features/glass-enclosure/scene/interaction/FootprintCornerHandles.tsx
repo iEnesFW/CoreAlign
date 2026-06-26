@@ -87,9 +87,16 @@ function CornerHandle({ index, box, cornerX, cornerY, topYM, onCommit }: CornerH
           setHovered(false);
           document.body.style.cursor = 'auto';
         }}
+        renderOrder={999}
       >
         <sphereGeometry args={[HANDLE_RADIUS_M, 16, 16]} />
-        <meshBasicMaterial color={hovered ? HANDLE_HOVER_COLOR : HANDLE_COLOR} />
+        {/* WHY: depthTest off so corners behind the object body still show (were occluded). */}
+        <meshBasicMaterial
+          color={hovered ? HANDLE_HOVER_COLOR : HANDLE_COLOR}
+          depthTest={false}
+          depthWrite={false}
+          transparent
+        />
       </mesh>
     </group>
   );

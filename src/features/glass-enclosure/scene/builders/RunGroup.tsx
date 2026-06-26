@@ -6,6 +6,7 @@ import { ProfileBar } from './ProfileBar';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
+import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
@@ -324,7 +325,9 @@ export function RunGroup({
   const heightLabel = (d: number) =>
     labelMm(Math.max(MIN_RUN_HEIGHT_MM, run.heightMm + stickyDelta(run.heightMm, d)));
 
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const stretchActive = activeTool === 'stretch' && Boolean(onStretchRun) && !run.locked;
+  const vertexEditActive = transformActive && isRunSelected && Boolean(onStretchRun) && !run.locked;
   const endFaceM = RUN_PLAN_THICKNESS_MM / 1000;
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [
@@ -368,187 +371,211 @@ export function RunGroup({
     : [];
 
   return (
-    <group
-      ref={setGroupRef}
-      position={[run.originX / 1000, baseY, run.originY / 1000]}
-      rotation={[0, -run.rotationDeg * DEG2RAD, 0]}
-      {...gestures.handlers}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (gestures.consumeClick()) return;
-        onSelectRun(run.id);
-      }}
-      onPointerOver={(e) => {
-        e.stopPropagation();
-        const canDrag = activeTool === 'move' || (activeTool === 'select' && isRunSelected);
-        document.body.style.cursor = canDrag ? 'grab' : 'pointer';
-      }}
-      onPointerOut={() => {
-        document.body.style.cursor = 'auto';
-      }}
-    >
-      <group ref={bodyRef}>
-        <group position={[halfWidth, 0, 0]}>
-          {!isSingleShapedPanel && (
-            <>
-              {showTopRail && (
-                <ProfileBar
-                  lengthM={lengthM}
-                  crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-                  hexColor={profileColor}
-                  finish={finish}
-                  quality={quality}
-                  position={[0, heightM, 0]}
-                />
-              )}
-              {showBottomRail && (
-                <ProfileBar
-                  lengthM={lengthM}
-                  crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-                  hexColor={profileColor}
-                  finish={finish}
-                  quality={quality}
-                  position={[0, 0, 0]}
-                />
-              )}
-              {showLeftRail && (
-                <ProfileBar
-                  lengthM={heightM}
-                  crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-                  hexColor={profileColor}
-                  finish={finish}
-                  quality={quality}
-                  position={[-halfWidth, heightM / 2, 0]}
-                  rotation={[0, 0, Math.PI / 2]}
-                />
-              )}
-              {showRightRail && (
-                <ProfileBar
-                  lengthM={heightM}
-                  crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
-                  hexColor={profileColor}
-                  finish={finish}
-                  quality={quality}
-                  position={[halfWidth, heightM / 2, 0]}
-                  rotation={[0, 0, Math.PI / 2]}
-                />
-              )}
-            </>
-          )}
-          {showMullions &&
-            panelLayout.length > 1 &&
-            panelLayout.slice(0, -1).map((layout, i) => {
-              const dividerX = layout.centerX + layout.widthM / 2;
-              const leftPanel = panels[i];
-              const rightPanel = panels[i + 1];
-              const isLastDivider = i + 1 === panels.length - 1;
-              const resizesLeft = Boolean(onResizePanel) && selectedPanelId === leftPanel?.id;
-              const resizesRight =
-                Boolean(onResizePanel) && isLastDivider && selectedPanelId === rightPanel?.id;
+    <>
+      <group
+        ref={setGroupRef}
+        position={[run.originX / 1000, baseY, run.originY / 1000]}
+        rotation={[0, -run.rotationDeg * DEG2RAD, 0]}
+        {...gestures.handlers}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (gestures.consumeClick()) return;
+          onSelectRun(run.id);
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          const canDrag = activeTool === 'move' || (activeTool === 'select' && isRunSelected);
+          document.body.style.cursor = canDrag ? 'grab' : 'pointer';
+        }}
+        onPointerOut={() => {
+          document.body.style.cursor = 'auto';
+        }}
+      >
+        <group ref={bodyRef}>
+          <group position={[halfWidth, 0, 0]}>
+            {!isSingleShapedPanel && (
+              <>
+                {showTopRail && (
+                  <ProfileBar
+                    lengthM={lengthM}
+                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    hexColor={profileColor}
+                    finish={finish}
+                    quality={quality}
+                    position={[0, heightM, 0]}
+                  />
+                )}
+                {showBottomRail && (
+                  <ProfileBar
+                    lengthM={lengthM}
+                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    hexColor={profileColor}
+                    finish={finish}
+                    quality={quality}
+                    position={[0, 0, 0]}
+                  />
+                )}
+                {showLeftRail && (
+                  <ProfileBar
+                    lengthM={heightM}
+                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    hexColor={profileColor}
+                    finish={finish}
+                    quality={quality}
+                    position={[-halfWidth, heightM / 2, 0]}
+                    rotation={[0, 0, Math.PI / 2]}
+                  />
+                )}
+                {showRightRail && (
+                  <ProfileBar
+                    lengthM={heightM}
+                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    hexColor={profileColor}
+                    finish={finish}
+                    quality={quality}
+                    position={[halfWidth, heightM / 2, 0]}
+                    rotation={[0, 0, Math.PI / 2]}
+                  />
+                )}
+              </>
+            )}
+            {showMullions &&
+              panelLayout.length > 1 &&
+              panelLayout.slice(0, -1).map((layout, i) => {
+                const dividerX = layout.centerX + layout.widthM / 2;
+                const leftPanel = panels[i];
+                const rightPanel = panels[i + 1];
+                const isLastDivider = i + 1 === panels.length - 1;
+                const resizesLeft = Boolean(onResizePanel) && selectedPanelId === leftPanel?.id;
+                const resizesRight =
+                  Boolean(onResizePanel) && isLastDivider && selectedPanelId === rightPanel?.id;
+                return (
+                  <Mullion
+                    key={`mullion-${i}`}
+                    positionX={dividerX}
+                    heightM={heightM}
+                    hexColor={profileColor}
+                    finish={finish}
+                    quality={quality}
+                    interactive={resizesLeft || resizesRight}
+                    onCommit={(deltaMm) => {
+                      if (!onResizePanel) return;
+                      if (resizesLeft && leftPanel) onResizePanel(run.id, leftPanel.id, deltaMm);
+                      else if (resizesRight && rightPanel)
+                        onResizePanel(run.id, rightPanel.id, -deltaMm);
+                    }}
+                    onSelect={() => {
+                      if (leftPanel) onSelectPanel(run.id, leftPanel.id);
+                    }}
+                  />
+                );
+              })}
+            {panelLayout.map(({ panel, centerX, widthM }) => {
+              const glass = glassTypes.get(panel.glassTypeId);
+              const glassWidthMm = Math.round(Math.max(0.05, widthM - 0.012) * 1000);
+              const runGlassHeightMm = Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
+              const panelGlassHeightMm = panel.heightMm ?? runGlassHeightMm;
+              const shapeSpec = {
+                widthMm: glassWidthMm,
+                heightMm: panelGlassHeightMm,
+                topShape: panel.topShape,
+                topRightHeightMm: panel.topRightHeightMm,
+                archRiseMm: panel.archRiseMm,
+                cornerRadiiMm: panel.cornerRadiiMm,
+                cornerNotchMm: panel.cornerNotchMm,
+                shapeKind: panel.shapeKind,
+                points:
+                  panel.shapeKind === 'polygon'
+                    ? parsePanelPolygonPoints(panel.shapePointsJson)
+                    : null,
+              };
               return (
-                <Mullion
-                  key={`mullion-${i}`}
-                  positionX={dividerX}
-                  heightM={heightM}
-                  hexColor={profileColor}
-                  finish={finish}
+                <PanelMesh
+                  key={panel.id}
+                  panelId={panel.id}
+                  centerX={centerX}
+                  baseY={profileHalf}
+                  widthM={Math.max(0.05, widthM - 0.012)}
+                  heightM={panelGlassHeightMm / 1000}
+                  shapeSpec={shapeSpec}
+                  frameColor={profileColor}
+                  showFrameBand={isSingleShapedPanel}
+                  thicknessMm={glass?.thicknessMm ?? 8}
+                  glassStructure={glass?.structure}
+                  openingType={panel.openingType}
+                  hasHandle={panel.hasHandle}
+                  hasLock={panel.hasLock}
+                  hasBrushSeal={panel.hasBrushSeal}
+                  hardware={panel.hardware}
+                  selectedHardwareId={selectedHardwareId}
+                  onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
+                  onDragHardware={
+                    onDragHardware
+                      ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
+                      : undefined
+                  }
                   quality={quality}
-                  interactive={resizesLeft || resizesRight}
-                  onCommit={(deltaMm) => {
-                    if (!onResizePanel) return;
-                    if (resizesLeft && leftPanel) onResizePanel(run.id, leftPanel.id, deltaMm);
-                    else if (resizesRight && rightPanel)
-                      onResizePanel(run.id, rightPanel.id, -deltaMm);
-                  }}
-                  onSelect={() => {
-                    if (leftPanel) onSelectPanel(run.id, leftPanel.id);
-                  }}
+                  showAnnotations={showAnnotations}
+                  panelIndex={panel.panelIndex}
+                  isSelected={selectedPanelId === panel.id}
+                  onSelect={() => onSelectPanel(run.id, panel.id)}
                 />
               );
             })}
-          {panelLayout.map(({ panel, centerX, widthM }) => {
-            const glass = glassTypes.get(panel.glassTypeId);
-            const glassWidthMm = Math.round(Math.max(0.05, widthM - 0.012) * 1000);
-            const runGlassHeightMm = Math.round(Math.max(0.05, heightM - 2 * profileHalf) * 1000);
-            const panelGlassHeightMm = panel.heightMm ?? runGlassHeightMm;
-            const shapeSpec = {
-              widthMm: glassWidthMm,
-              heightMm: panelGlassHeightMm,
-              topShape: panel.topShape,
-              topRightHeightMm: panel.topRightHeightMm,
-              archRiseMm: panel.archRiseMm,
-              cornerRadiiMm: panel.cornerRadiiMm,
-              cornerNotchMm: panel.cornerNotchMm,
-              shapeKind: panel.shapeKind,
-              points:
-                panel.shapeKind === 'polygon'
-                  ? parsePanelPolygonPoints(panel.shapePointsJson)
-                  : null,
-            };
-            return (
-              <PanelMesh
-                key={panel.id}
-                panelId={panel.id}
-                centerX={centerX}
-                baseY={profileHalf}
-                widthM={Math.max(0.05, widthM - 0.012)}
-                heightM={panelGlassHeightMm / 1000}
-                shapeSpec={shapeSpec}
-                frameColor={profileColor}
-                showFrameBand={isSingleShapedPanel}
-                thicknessMm={glass?.thicknessMm ?? 8}
-                glassStructure={glass?.structure}
-                openingType={panel.openingType}
-                hasHandle={panel.hasHandle}
-                hasLock={panel.hasLock}
-                hasBrushSeal={panel.hasBrushSeal}
-                hardware={panel.hardware}
-                selectedHardwareId={selectedHardwareId}
-                onSelectHardware={(hardwareId) => onSelectHardware(run.id, panel.id, hardwareId)}
-                onDragHardware={
-                  onDragHardware
-                    ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
-                    : undefined
-                }
-                quality={quality}
-                showAnnotations={showAnnotations}
-                panelIndex={panel.panelIndex}
-                isSelected={selectedPanelId === panel.id}
-                onSelect={() => onSelectPanel(run.id, panel.id)}
-              />
-            );
-          })}
-          {showAnnotations && (
-            <Billboard position={[0, heightM + 0.5, 0]} follow>
-              <Text
-                fontSize={0.12}
-                color={isRunSelected ? '#1d4ed8' : '#0f172a'}
-                anchorX="center"
-                anchorY="bottom"
-                outlineWidth={0.004}
-                outlineColor="#ffffff"
-              >
-                {`${run.label} · ${run.lengthMm} × ${run.heightMm} mm`}
-              </Text>
-              {system && (
+            {showAnnotations && (
+              <Billboard position={[0, heightM + 0.5, 0]} follow>
                 <Text
-                  position={[0, -0.16, 0]}
-                  fontSize={0.07}
-                  color="#64748b"
+                  fontSize={0.12}
+                  color={isRunSelected ? '#1d4ed8' : '#0f172a'}
                   anchorX="center"
-                  anchorY="top"
-                  outlineWidth={0.003}
+                  anchorY="bottom"
+                  outlineWidth={0.004}
                   outlineColor="#ffffff"
                 >
-                  {system.name}
+                  {`${run.label} · ${run.lengthMm} × ${run.heightMm} mm`}
                 </Text>
-              )}
-            </Billboard>
-          )}
+                {system && (
+                  <Text
+                    position={[0, -0.16, 0]}
+                    fontSize={0.07}
+                    color="#64748b"
+                    anchorX="center"
+                    anchorY="top"
+                    outlineWidth={0.003}
+                    outlineColor="#ffffff"
+                  >
+                    {system.name}
+                  </Text>
+                )}
+              </Billboard>
+            )}
+          </group>
         </group>
+        {stretchActive && <StretchFaces faces={stretchFaces} />}
       </group>
-      {stretchActive && <StretchFaces faces={stretchFaces} />}
-    </group>
+      {vertexEditActive && (
+        <FootprintCornerHandles
+          box={{
+            originX: run.originX,
+            originY: run.originY,
+            lengthMm: run.lengthMm,
+            crossMm: RUN_PLAN_THICKNESS_MM,
+            rotationDeg: run.rotationDeg,
+          }}
+          topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
+          onCommit={(next) => {
+            // WHY: a run keeps its thin glass cross + axis — project the corner shift onto the
+            // run direction so it only changes length, never drifts sideways.
+            const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
+            onStretchRun?.(run.id, {
+              lengthMm: Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm)),
+              originX: Math.round(run.originX + along * dirX),
+              originY: Math.round(run.originY + along * dirY),
+            });
+          }}
+        />
+      )}
+    </>
   );
 }
 

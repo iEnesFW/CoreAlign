@@ -16,6 +16,7 @@ import {
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
+import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
@@ -210,9 +211,12 @@ export function SlabObject({
   const thicknessM = slab.thicknessMm / 1000;
   const elevationM = slab.elevationMm / 1000;
 
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const isBarrelRoof = slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0;
   // Length/depth stretch assumes a flat slab; a barrel roof is resized via its rise.
   const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
+  const vertexEditActive =
+    transformActive && isSelected && interactive && !slab.locked && !isBarrelRoof;
   const { body, featureItems } = useMemo(
     () => buildSlabGeometries(slab, !stretchActive),
     [slab, stretchActive],
@@ -917,65 +921,89 @@ export function SlabObject({
   };
 
   return (
-    <group
-      ref={setGroupRef}
-      position={[slab.originX / 1000, elevationM, slab.originY / 1000]}
-      rotation={[0, -slab.rotationDeg * DEG2RAD, 0]}
-    >
-      <group ref={bodyRef}>
-        <mesh
-          geometry={body}
-          castShadow
-          receiveShadow
-          {...slabHandlers}
-          onClick={handleClick}
-          onPointerOver={(e) => {
-            e.stopPropagation();
-            document.body.style.cursor = penActive || drawActive ? 'crosshair' : 'pointer';
-          }}
-          onPointerOut={() => {
-            document.body.style.cursor = 'auto';
-          }}
-        >
-          <meshStandardMaterial
-            key={materialTexture ? (slab.materialKey ?? 'plain') : 'plain'}
-            color={
-              materialTexture
-                ? '#ffffff'
-                : (slab.colorHex ?? (slab.kind === 'roof' ? ROOF_COLOR : FLOOR_COLOR))
-            }
-            map={materialTexture ?? undefined}
-            roughness={0.85}
-            metalness={0.05}
+    <>
+      <group
+        ref={setGroupRef}
+        position={[slab.originX / 1000, elevationM, slab.originY / 1000]}
+        rotation={[0, -slab.rotationDeg * DEG2RAD, 0]}
+      >
+        <group ref={bodyRef}>
+          <mesh
+            geometry={body}
+            castShadow
+            receiveShadow
+            {...slabHandlers}
+            onClick={handleClick}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              document.body.style.cursor = penActive || drawActive ? 'crosshair' : 'pointer';
+            }}
+            onPointerOut={() => {
+              document.body.style.cursor = 'auto';
+            }}
+          >
+            <meshStandardMaterial
+              key={materialTexture ? (slab.materialKey ?? 'plain') : 'plain'}
+              color={
+                materialTexture
+                  ? '#ffffff'
+                  : (slab.colorHex ?? (slab.kind === 'roof' ? ROOF_COLOR : FLOOR_COLOR))
+              }
+              map={materialTexture ?? undefined}
+              roughness={0.85}
+              metalness={0.05}
+            />
+            {!presentation && (
+              <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />
+            )}
+          </mesh>
+        </group>
+        {featureItems.map((item) => (
+          <SlabFeatureObject
+            key={item.feature.id}
+            slab={slab}
+            item={item}
+            fallbackColor={slab.colorHex ?? (slab.kind === 'roof' ? ROOF_COLOR : FLOOR_COLOR)}
+            fallbackMap={materialTexture}
+            interactive={interactive}
+            thicknessM={thicknessM}
+            presentation={presentation}
+            worldToLocalDelta={worldToLocalDelta}
           />
-          {!presentation && <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />}
-        </mesh>
+        ))}
+        {draft && <SlabDraftPreview draft={draft} thicknessM={thicknessM} />}
+        {penLine && penLine.length >= 2 && (
+          <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
+        )}
+        {penLine?.map((p, i) => (
+          <mesh key={i} position={p} raycast={() => null}>
+            <sphereGeometry args={[0.03, 8, 8]} />
+            <meshBasicMaterial color={REGION_COLOR} />
+          </mesh>
+        ))}
+        {stretchActive && <StretchFaces faces={stretchFaces} />}
       </group>
-      {featureItems.map((item) => (
-        <SlabFeatureObject
-          key={item.feature.id}
-          slab={slab}
-          item={item}
-          fallbackColor={slab.colorHex ?? (slab.kind === 'roof' ? ROOF_COLOR : FLOOR_COLOR)}
-          fallbackMap={materialTexture}
-          interactive={interactive}
-          thicknessM={thicknessM}
-          presentation={presentation}
-          worldToLocalDelta={worldToLocalDelta}
+      {vertexEditActive && (
+        <FootprintCornerHandles
+          box={{
+            originX: slab.originX,
+            originY: slab.originY,
+            lengthMm: slab.lengthMm,
+            crossMm: slab.depthMm,
+            rotationDeg: slab.rotationDeg,
+          }}
+          topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
+          onCommit={(next) =>
+            updateSlab(slab.id, {
+              originX: next.originX,
+              originY: next.originY,
+              lengthMm: next.lengthMm,
+              depthMm: next.crossMm,
+            })
+          }
         />
-      ))}
-      {draft && <SlabDraftPreview draft={draft} thicknessM={thicknessM} />}
-      {penLine && penLine.length >= 2 && (
-        <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
       )}
-      {penLine?.map((p, i) => (
-        <mesh key={i} position={p} raycast={() => null}>
-          <sphereGeometry args={[0.03, 8, 8]} />
-          <meshBasicMaterial color={REGION_COLOR} />
-        </mesh>
-      ))}
-      {stretchActive && <StretchFaces faces={stretchFaces} />}
-    </group>
+    </>
   );
 }
 
