@@ -449,10 +449,10 @@ export const computeMultiWallGapRuns = (
         ),
       )
       .filter((candidate): candidate is EdgeCandidate => candidate !== null);
-    // 'L' prefers corner legs but still falls back to a single straight connector when the legs
-    // don't fit (near-parallel walls, or legs trimmed away) — so L-fill produces something for
-    // almost any selected pair instead of silently warning.
-    if (trimmed.length === 0) {
+    // 'L' is corner-legs ONLY — never a single straight, because a straight between two
+    // perpendicular walls is a wrong-looking diagonal. 'auto' (and the default) still fall back
+    // to a straight connector for collinear/near-parallel walls.
+    if (trimmed.length === 0 && mode !== 'L') {
       isCorner = false;
       // A flat connector run can only carry one elevation; bridge the pair at the
       // lower of the two wall bases so it still reaches both ends.
@@ -487,45 +487,6 @@ export const computeMultiWallGapRuns = (
         geomZ: Math.round(candidate.baseZMm),
         cornerGroup: group,
       });
-    }
-  }
-  // Last resort: if every pair was rejected but two distinct free ends exist, bridge the closest
-  // pair with a single straight run so the user never just gets the "no fillable gap" warning.
-  if (edges.length === 0 && mode !== 'arc') {
-    let best: { a: WallEndpoint; b: WallEndpoint; d: number } | null = null;
-    for (let i = 0; i < free.length; i += 1) {
-      for (let j = i + 1; j < free.length; j += 1) {
-        if (free[j].wall.id === free[i].wall.id) continue;
-        const a = refineEndpointToFace(free[i], free[j]);
-        const b = refineEndpointToFace(free[j], free[i]);
-        const d = Math.hypot(b.x - a.x, b.y - a.y);
-        if (d >= MIN_RUN_MM && (!best || d < best.d)) best = { a, b, d };
-      }
-    }
-    if (best) {
-      const straight = edgeBetween(
-        best.a,
-        best.b,
-        Math.round(Math.min(best.a.heightMm, best.b.heightMm)),
-        Math.min(best.a.baseZMm, best.b.baseZMm),
-      );
-      const blockers: PlanFootprint[] = [
-        ...wallBlockers.filter(
-          (w) => w.ownerId !== best!.a.wall.id && w.ownerId !== best!.b.wall.id,
-        ),
-        ...gapRunBlockers,
-      ];
-      const candidate = straight ? trimEdge(straight, blockers) : null;
-      if (candidate) {
-        edges.push({
-          originX: Math.round(candidate.originX),
-          originY: Math.round(candidate.originY),
-          rotationDeg: candidate.rotationDeg,
-          lengthMm: Math.round(candidate.lengthMm),
-          heightMm: candidate.heightMm,
-          geomZ: Math.round(candidate.baseZMm),
-        });
-      }
     }
   }
   return edges;
