@@ -9,6 +9,7 @@ import {
   getProceduralTexture,
   isProceduralMaterialKey,
   isShiftPressed,
+  setDragReadout,
   stickyDimensionMm,
   useDrag3D,
 } from '@/shared/three-engine';
@@ -19,7 +20,7 @@ import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
-import { chordBulgeMm, tessellateArc } from '../interaction/penArc';
+import { arcMetricsFromBulge, chordBulgeMm, tessellateArc } from '../interaction/penArc';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
 import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
 import {
@@ -39,6 +40,7 @@ import {
   MIN_FEATURE_SIZE_MM,
   composeSurfaceFeatures,
   featureOutlineMm,
+  formatDraftDimensionMm,
   outlineBoundsMm,
   outlineFitsRect,
   shrinkOutlineMm,
@@ -586,10 +588,25 @@ export function SlabObject({
           bulge,
         );
         setPenArcPreview([anchor, ...preview.map((p) => ({ x: p.x, z: p.y }))]);
+        const { radiusMm, angleDeg } = arcMetricsFromBulge(
+          { x: anchor.x, y: anchor.z },
+          { x: arc.end.x, y: arc.end.z },
+          bulge,
+        );
+        setDragReadout(
+          radiusMm > 0
+            ? `R ${Math.round(radiusMm)} mm · ${Math.round(angleDeg)}°`
+            : `${Math.round(Math.hypot(arc.end.x - anchor.x, arc.end.z - anchor.z))} mm`,
+        );
       }
       return;
     }
     if (e.nativeEvent.detail > 0) return;
+    const session = useDesignerStore.getState().penFace;
+    const anchor = session?.points[session.points.length - 1];
+    if (anchor && session?.hostId === slab.id) {
+      setDragReadout(`${Math.round(Math.hypot(local.x - anchor.x, local.z - anchor.z))} mm`);
+    }
     setPenFaceCursor(slab.id, { x: local.x, z: local.z });
   };
 
@@ -1188,6 +1205,11 @@ function SlabFeatureObject({
 
 function SlabDraftPreview({ draft, thicknessM }: { draft: DraftFeature; thicknessM: number }) {
   const faceY = draft.side === 1 ? thicknessM + FEATURE_FACE_LIFT_M : -FEATURE_FACE_LIFT_M;
+  // Live size readout in the shared HUD while drawing; cleared when the draft unmounts.
+  useEffect(() => {
+    setDragReadout(formatDraftDimensionMm(draft));
+    return () => setDragReadout(null);
+  }, [draft]);
   const outline = useMemo(() => featureOutlineMm(draft), [draft]);
   const fillGeometry = useMemo(() => {
     if (draft.shape === 'free' || outline.length < 3) return null;

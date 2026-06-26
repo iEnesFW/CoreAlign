@@ -108,6 +108,18 @@ export const outlineBoundsMm = (outline: FeatureOutlinePoint[]): FeatureBounds =
   return { minX, maxX, minZ, maxZ };
 };
 
+// Live size label for a shape being drawn: diameter for a circle, W × H for everything else.
+export const formatDraftDimensionMm = (draft: {
+  shape: string;
+  widthMm: number;
+  heightMm: number;
+}): string => {
+  const w = Math.round(draft.widthMm);
+  const h = Math.round(draft.heightMm);
+  if (draft.shape === 'circle') return `⌀ ${Math.max(w, h)} mm`;
+  return `${w} × ${h} mm`;
+};
+
 export const shrinkOutlineMm = (
   outline: FeatureOutlinePoint[],
   insetMm: number,

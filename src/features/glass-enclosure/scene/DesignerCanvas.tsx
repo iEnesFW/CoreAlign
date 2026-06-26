@@ -5,6 +5,7 @@ import {
   SnapGuideOverlay,
   isCtrlPressed,
   isShiftPressed,
+  setDragReadout,
   trackModifierKeys,
 } from '@/shared/three-engine';
 import { RunGroup } from './builders/RunGroup';
@@ -313,6 +314,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   useEffect(() => {
     if (placement !== 'pen') useDesignerStore.getState().setPenFace(null);
   }, [placement]);
+
+  // The pen draw readout is set live in WallObject/SlabObject while a face session is open;
+  // clear it once the session ends (committed, finished, or tool switched away).
+  useEffect(() => {
+    if (!penFace) setDragReadout(null);
+  }, [penFace]);
 
   useEffect(() => trackModifierKeys(), []);
 

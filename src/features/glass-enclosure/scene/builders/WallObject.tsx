@@ -12,6 +12,7 @@ import {
   getProceduralTexture,
   isProceduralMaterialKey,
   isShiftPressed,
+  setDragReadout,
   stickyDimensionMm,
   useDrag3D,
 } from '@/shared/three-engine';
@@ -23,7 +24,7 @@ import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
-import { chordBulgeMm, tessellateArc } from '../interaction/penArc';
+import { arcMetricsFromBulge, chordBulgeMm, tessellateArc } from '../interaction/penArc';
 import {
   captureRunSnapshots,
   previewSnapshotsMove,
@@ -47,6 +48,7 @@ import {
   composeSurfaceFeatures,
   featureFitsWall,
   featureOutlineMm,
+  formatDraftDimensionMm,
   outlineBoundsMm,
   shrinkOutlineMm,
   simplifyFreePoints,
@@ -761,10 +763,21 @@ export function WallObject({
         const bulge = chordBulgeMm(m, end, { x: local.x, y: local.z });
         const preview = tessellateArc(m, end, bulge);
         setPenArcPreview([anchor, ...preview.map((p) => ({ x: p.x, z: p.y }))]);
+        const { radiusMm, angleDeg } = arcMetricsFromBulge(m, end, bulge);
+        setDragReadout(
+          radiusMm > 0
+            ? `R ${Math.round(radiusMm)} mm · ${Math.round(angleDeg)}°`
+            : `${Math.round(Math.hypot(end.x - m.x, end.y - m.y))} mm`,
+        );
       }
       return;
     }
     if (e.nativeEvent.detail > 0) return;
+    const session = useDesignerStore.getState().penFace;
+    const anchor = session?.points[session.points.length - 1];
+    if (anchor && session?.hostId === wall.id) {
+      setDragReadout(`${Math.round(Math.hypot(local.x - anchor.x, local.z - anchor.z))} mm`);
+    }
     setPenFaceCursor(wall.id, { x: local.x, z: local.z });
   };
 
@@ -1373,6 +1386,12 @@ function WallFeatureObject({
 
 function DraftPreview({ draft, thicknessM }: { draft: DraftFeature; thicknessM: number }) {
   const zOffset = draft.side * (thicknessM / 2 + FEATURE_FACE_LIFT_M);
+  // Live size readout in the shared HUD while the shape is being drawn; cleared on unmount
+  // (draw committed/cancelled → draft becomes null → this component unmounts).
+  useEffect(() => {
+    setDragReadout(formatDraftDimensionMm(draft));
+    return () => setDragReadout(null);
+  }, [draft]);
   const outline = useMemo(() => featureOutlineMm(draft), [draft]);
   const fillGeometry = useMemo(() => {
     if (draft.shape === 'free' || outline.length < 3) return null;

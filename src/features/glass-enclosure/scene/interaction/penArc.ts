@@ -15,6 +15,22 @@ export const chordBulgeMm = (a: ArcPoint, b: ArcPoint, m: ArcPoint): number => {
   return ((m.x - a.x) * -dy + (m.y - a.y) * dx) / len;
 };
 
+// Radius + swept angle of the arc the pen would draw, for a live readout. Mirrors the
+// chord→radius math in tessellateArc; a sagitta past the radius means the major (reflex) arc.
+export const arcMetricsFromBulge = (
+  a: ArcPoint,
+  b: ArcPoint,
+  bulgeMm: number,
+): { radiusMm: number; angleDeg: number } => {
+  const chord = Math.hypot(b.x - a.x, b.y - a.y);
+  const s = Math.abs(bulgeMm);
+  if (chord < 1e-6 || s < MIN_BULGE_MM) return { radiusMm: 0, angleDeg: 0 };
+  const radius = (chord * chord) / 4 / s / 2 + s / 2;
+  const half = Math.asin(Math.min(1, chord / 2 / radius));
+  const angleRad = s > radius ? 2 * (Math.PI - half) : 2 * half;
+  return { radiusMm: radius, angleDeg: (angleRad * 180) / Math.PI };
+};
+
 export const tessellateArc = (a: ArcPoint, b: ArcPoint, bulgeMm: number): ArcPoint[] => {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
