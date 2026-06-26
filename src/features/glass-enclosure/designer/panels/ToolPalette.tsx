@@ -7,6 +7,7 @@ import {
   Hexagon,
   Home,
   LassoSelect,
+  Layers,
   MousePointer2,
   Move,
   MoveHorizontal,
@@ -118,6 +119,8 @@ export function ToolPalette() {
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const drawShape = useDesignerStore((s) => s.drawShape);
+  const stackOnDrop = useDesignerStore((s) => s.stackOnDrop);
+  const toggleStackOnDrop = useDesignerStore((s) => s.toggleStackOnDrop);
   const setActiveTool = useDesignerStore((s) => s.setActiveTool);
   const setPlacement = useDesignerStore((s) => s.setPlacement);
   const setPaintColor = useDesignerStore((s) => s.setPaintColor);
@@ -151,6 +154,16 @@ export function ToolPalette() {
           onClick={() => void autofill()}
         >
           <Wand2 size={15} />
+        </PaletteButton>
+        <PaletteButton
+          title={label(
+            'StackOnDrop',
+            'Üst üste bırak — sürüklediğin objeyi üzerine geldiğinin üstüne koyar (Alt ile de olur)',
+          )}
+          active={stackOnDrop}
+          onClick={toggleStackOnDrop}
+        >
+          <Layers size={15} />
         </PaletteButton>
         <span className="mx-0.5 h-5 w-px bg-slate-300 dark:bg-slate-700" />
         {PLACEMENTS.map(({ kind, labelKey, defaultLabel, shortcut, Icon }) => (

@@ -2706,6 +2706,7 @@
         "Paint": "Boya",
         "Erase": "Sil",
         "Autofill": "Boşlukları camla doldur",
+        "StackOnDrop": "Üst üste bırak — sürüklediğin objeyi üzerine geldiğinin üstüne koyar (Alt ile de olur)",
         "AddRun": "Hat ekle",
         "AddWall": "Duvar ekle",
         "AddFloor": "Zemin ekle",

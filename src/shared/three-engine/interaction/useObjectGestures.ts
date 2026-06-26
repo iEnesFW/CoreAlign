@@ -41,6 +41,7 @@ export interface UseObjectGesturesOptions {
   groupRef: RefObject<Group | null>;
   enabled: boolean;
   mode: ObjectGestureMode;
+  forceStack?: boolean;
   snapTargets: PlanSnapTargets;
   obstacles: PlanFootprint[];
   onPick: () => void;
@@ -67,6 +68,7 @@ export function useObjectGestures({
   groupRef,
   enabled,
   mode,
+  forceStack,
   snapTargets,
   obstacles,
   onPick,
@@ -101,7 +103,9 @@ export function useObjectGestures({
       return;
     }
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
-    const altStack = isAltPressed();
+    // Stack-on-top is the momentary Alt modifier OR a sticky toolbar toggle (forceStack) — the
+    // latter is discoverable + survives the Windows "Alt focuses the menu" focus loss.
+    const altStack = isAltPressed() || Boolean(forceStack);
     altLatchRef.current = altStack;
     // WHY: Alt = stack-on-top, which deliberately needs plan overlap (the body rests on the
     // other in Z); the no-deepen collision gate must NOT run here or stacking is impossible.

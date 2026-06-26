@@ -2706,6 +2706,7 @@
         "Paint": "Paint",
         "Erase": "Erase",
         "Autofill": "Fill openings with glass",
+        "StackOnDrop": "Stack on drop — rests the dragged object on top of whatever it overlaps (Alt does it too)",
         "AddRun": "Add run",
         "AddWall": "Add wall",
         "AddFloor": "Add floor",

@@ -18,11 +18,12 @@ export function useObjectGestures({
   ...options
 }: DesignerObjectGestureOptions): ObjectGestures {
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const stackOnDrop = useDesignerStore((s) => s.stackOnDrop);
   const mode =
     activeTool === 'move' || activeTool === 'rotate'
       ? activeTool
       : activeTool === 'select' && selectedForDrag
         ? 'move'
         : null;
-  return useEngineObjectGestures({ ...options, mode });
+  return useEngineObjectGestures({ ...options, mode, forceStack: stackOnDrop });
 }

@@ -149,10 +149,13 @@ interface DesignerState {
   multiSelection: MultiSelection;
   penFace: PenFaceSession | null;
   transformHandlesActive: boolean;
+  stackOnDrop: boolean;
 
   setActiveTool: (tool: DesignerTool) => void;
   toggleTransformHandles: () => void;
   setTransformHandles: (active: boolean) => void;
+  toggleStackOnDrop: () => void;
+  setStackOnDrop: (active: boolean) => void;
   setPlacement: (placement: PlacementKind | null) => void;
   setPaintColor: (color: PaintColor | null) => void;
   setPaintMaterial: (materialKey: string | null) => void;
@@ -525,6 +528,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   multiSelection: EMPTY_MULTI_SELECTION,
   penFace: null,
   transformHandlesActive: false,
+  stackOnDrop: false,
 
   setActiveTool: (activeTool) =>
     set((s) => ({
@@ -540,6 +544,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     })),
   toggleTransformHandles: () => set((s) => ({ transformHandlesActive: !s.transformHandlesActive })),
   setTransformHandles: (transformHandlesActive) => set({ transformHandlesActive }),
+  toggleStackOnDrop: () => set((s) => ({ stackOnDrop: !s.stackOnDrop })),
+  setStackOnDrop: (stackOnDrop) => set({ stackOnDrop }),
   setPlacement: (placement) =>
     set(placement === null ? { placement } : { placement, activeTool: 'select' }),
   setPaintColor: (paintColor) => set({ paintColor, paintMaterial: null }),
