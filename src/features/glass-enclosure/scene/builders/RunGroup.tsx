@@ -167,12 +167,11 @@ export function RunGroup({
   const groupRef = useRef<Group>(null);
   const bodyRef = useRef<Group>(null);
   const planObstacles = obstacles ?? EMPTY_OBSTACLES;
-  const gestureObstacles = useMemo(() => {
-    const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
-    return attached.size === 0
-      ? planObstacles
-      : planObstacles.filter((o) => !attached.has(o.ownerId));
-  }, [planObstacles, run, sceneState.walls]);
+  // WHY: every wall stays a collision obstacle for a dragged run — a run does NOT co-move the
+  // walls it sits beside (unlike a wall, which carries its attached runs), so excluding them
+  // let a run be pushed straight THROUGH a wall. The no-deepen gate still lets a mounted run
+  // slide ALONG a wall (depth constant) and out of an existing overlap; it just can't go deeper.
+  const gestureObstacles = planObstacles;
 
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
