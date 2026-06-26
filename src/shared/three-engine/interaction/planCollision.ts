@@ -230,18 +230,6 @@ export const restElevationMm = (
   return top;
 };
 
-// A plain (no Alt / no toggle) drag climbs ONTO what it is pushed into — instead of the
-// no-deepen slide just blocking it — when two things hold: the slide had to deviate from the
-// desired spot by more than a deliberate push (so a gentle butt-flush stays lateral), AND the
-// desired spot rests on a surface higher than the object's current base (something to climb on).
-export const AUTO_STACK_MIN_PUSH_MM = 120;
-export const AUTO_STACK_MIN_RISE_M = 0.02;
-export const autoStackEngaged = (
-  blockedMm: number,
-  restElevM: number,
-  baseElevM: number,
-): boolean => blockedMm > AUTO_STACK_MIN_PUSH_MM && restElevM > baseElevM + AUTO_STACK_MIN_RISE_M;
-
 export const isFloating = (
   moved: PlanFootprint,
   supports: PlanFootprint[],

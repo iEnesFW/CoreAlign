@@ -1,12 +1,7 @@
 import { useRef } from 'react';
 import { useDrag3D } from './useDrag3D';
 import { applyPlanMoveSnap } from './planSnap';
-import {
-  autoStackEngaged,
-  clampPlanRotation,
-  normalizePlanAngleDeg,
-  slidePlanMove,
-} from './planCollision';
+import { clampPlanRotation, normalizePlanAngleDeg, slidePlanMove } from './planCollision';
 import { rotatePlanPointDeg } from './planTransform';
 import { snapAngleDeg } from './angleSnap';
 import { clearSnapGuides, setSnapGuides } from './snapGuides';
@@ -108,12 +103,13 @@ export function useObjectGestures({
       return;
     }
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
-    // Explicit stack-on-top: the momentary Alt modifier OR the sticky toolbar toggle (forceStack)
-    // — discoverable + survives the Windows "Alt focuses the menu" focus loss. Plan overlap is
-    // allowed (the body rests on the other in Z), so the no-deepen gate must NOT run.
+    // Stacking is EXPLICIT only — Alt modifier or the sticky toolbar toggle (forceStack). A plain
+    // drag is always lateral (no-deepen slide), so objects never auto-climb and can be butted
+    // flush reliably; stack-on-top deliberately allows plan overlap (rests in Z) and skips the
+    // gate. (Auto-stack-on-push was removed: it interpenetrated on overshoot and triggered when
+    // the user only wanted to place beside.)
     const explicitStack = isAltPressed() || Boolean(forceStack);
-    // The no-deepen lateral slide for a plain drag (also the baseline for auto-stack detection).
-    const lateral = explicitStack
+    const slid = explicitStack
       ? snapped
       : slidePlanMove(
           (dx, dy) => adapter.footprintAt(dx, dy, adapter.rotationDeg),
@@ -121,30 +117,19 @@ export function useObjectGestures({
           snapped.dxMm,
           snapped.dyMm,
         );
-    // Auto-stack: a plain drag pushed firmly INTO something it can rest on climbs on top instead
-    // of being blocked (the slide deviated past a deliberate push AND the desired spot rests on a
-    // higher surface). A gentle butt-flush (small deviation) stays lateral. Only stack-capable
-    // objects opt in via adapter.altLiftYMAt.
-    let stacking = explicitStack;
-    let slid = lateral;
-    if (!explicitStack && adapter.altLiftYMAt) {
-      const blockedMm = Math.hypot(snapped.dxMm - lateral.dxMm, snapped.dyMm - lateral.dyMm);
-      const restM = adapter.altLiftYMAt(snapped.dxMm, snapped.dyMm);
-      if (autoStackEngaged(blockedMm, restM, adapter.baseYM)) {
-        stacking = true;
-        slid = snapped;
-      }
-    }
-    altLatchRef.current = stacking;
+    altLatchRef.current = explicitStack;
     const divergenceMm = Math.hypot(slid.dxMm - snapped.dxMm, slid.dyMm - snapped.dyMm);
     setSnapGuides(divergenceMm <= SNAP_CONTACT_KEEP_MM ? snapped.guides : []);
     lastMoveRef.current = slid;
     const group = groupRef.current;
     if (group) {
+      // Settle on whatever is below at the target (rest elevation; ground when nothing) for EVERY
+      // drag — so a stacked object dragged off its support drops back to the floor instead of
+      // gliding at its old height. altLiftYMAt = restElevationMm(footprint, supports, 0).
       const liftM =
-        stacking && adapter.altLiftYMAt
-          ? adapter.altLiftYMAt(slid.dxMm, slid.dyMm)
-          : (adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ?? adapter.baseYM);
+        adapter.altLiftYMAt?.(slid.dxMm, slid.dyMm) ??
+        adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ??
+        adapter.baseYM;
       group.position.set(
         (adapter.originXMm + slid.dxMm) / MM,
         liftM,
