@@ -50,6 +50,10 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
 
   if (!run || !panel || !draft) return null;
 
+  // Only a single-panel run may be shaped — a triangle/oval/polygon pane next to rectangular
+  // siblings is not a real product (industry never does this). Multi-panel runs stay rectangular.
+  const canShape = run.panels.length === 1;
+
   const commit = (patch: Partial<typeof panel>) => {
     updatePanel(run.id, panel.id, patch);
     void persistPanel(run.id, { ...panel, ...patch });
@@ -200,191 +204,207 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
             />
           </Field>
 
-          <Field label={t('GlassEnclosure.Designer.Panel.Shape', { defaultValue: 'Panel şekli' })}>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(['rect', 'round', 'oval'] as const).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => selectShapeKind(k)}
-                  className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
-                    shapeKindValue === k
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
-                      : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {t(`GlassEnclosure.Designer.Panel.Kind.${k}` as never, {
-                    defaultValue: { rect: 'Dikdörtgen', round: 'Yuvarlak', oval: 'Oval' }[k],
-                  })}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field
-            label={t('GlassEnclosure.Designer.Panel.Polygon', { defaultValue: 'Çokgen (ön ayar)' })}
-          >
-            <div className="grid grid-cols-3 gap-1.5">
-              {([3, 5, 6] as const).map((sides) => (
-                <button
-                  key={sides}
-                  type="button"
-                  onClick={() => applyPolygonPreset(sides)}
-                  className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
-                    isPolygon
-                      ? 'border-primary-400 text-primary-600 hover:bg-primary-50 dark:text-primary-300'
-                      : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {t(`GlassEnclosure.Designer.Panel.Poly.${sides}` as never, {
-                    defaultValue: { 3: 'Üçgen', 5: 'Beşgen', 6: 'Altıgen' }[sides],
-                  })}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          {isPolygon && (
-            <PanelPolygonEditor
-              widthMm={draft.widthMm}
-              heightMm={draft.heightMm ?? run.heightMm}
-              pointsJson={draft.shapePointsJson}
-              onPreview={(json) =>
-                updatePanel(run.id, panel.id, { shapeKind: 'polygon', shapePointsJson: json })
-              }
-              onCommit={(json) => commit({ shapeKind: 'polygon', shapePointsJson: json })}
-            />
-          )}
-
-          {isRect && (
+          {canShape ? (
             <>
               <Field
-                label={t('GlassEnclosure.Designer.Panel.TopShape', { defaultValue: 'Üst kenar' })}
+                label={t('GlassEnclosure.Designer.Panel.Shape', { defaultValue: 'Panel şekli' })}
               >
                 <div className="grid grid-cols-3 gap-1.5">
-                  {(['flat', 'raked', 'arched'] as const).map((s) => (
+                  {(['rect', 'round', 'oval'] as const).map((k) => (
                     <button
-                      key={s}
+                      key={k}
                       type="button"
-                      onClick={() => commit({ topShape: s })}
+                      onClick={() => selectShapeKind(k)}
                       className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
-                        (draft.topShape ?? 'flat') === s
+                        shapeKindValue === k
                           ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
                           : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
                       }`}
                     >
-                      {t(`GlassEnclosure.Designer.Panel.Top.${s}` as never, {
-                        defaultValue: { flat: 'Düz', raked: 'Eğimli', arched: 'Kemerli' }[s],
+                      {t(`GlassEnclosure.Designer.Panel.Kind.${k}` as never, {
+                        defaultValue: { rect: 'Dikdörtgen', round: 'Yuvarlak', oval: 'Oval' }[k],
                       })}
                     </button>
                   ))}
                 </div>
               </Field>
 
-              {draft.topShape === 'raked' && (
-                <Field
-                  label={`${t('GlassEnclosure.Designer.Panel.TopRightHeight', { defaultValue: 'Sağ üst yükseklik' })} (mm)`}
-                >
-                  <input
-                    type="number"
-                    min={100}
-                    value={draft.topRightHeightMm ?? ''}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        topRightHeightMm: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    onBlur={() => commit({ topRightHeightMm: draft.topRightHeightMm ?? null })}
-                    className={inputClass}
-                  />
-                </Field>
-              )}
-
-              {draft.topShape === 'arched' && (
-                <Field
-                  label={`${t('GlassEnclosure.Designer.Panel.ArchRise', { defaultValue: 'Kemer yüksekliği' })} (mm)`}
-                >
-                  <input
-                    type="number"
-                    min={0}
-                    value={draft.archRiseMm ?? ''}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        archRiseMm: e.target.value === '' ? null : Number(e.target.value),
-                      })
-                    }
-                    onBlur={() => commit({ archRiseMm: draft.archRiseMm ?? null })}
-                    className={inputClass}
-                  />
-                </Field>
-              )}
-
               <Field
-                label={t('GlassEnclosure.Designer.Panel.CornerRadii', {
-                  defaultValue: 'Köşe ovalliği (mm)',
+                label={t('GlassEnclosure.Designer.Panel.Polygon', {
+                  defaultValue: 'Çokgen (ön ayar)',
                 })}
               >
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
-                    <input
-                      key={k}
-                      type="number"
-                      min={0}
-                      placeholder={k.toUpperCase()}
-                      value={draft.cornerRadiiMm?.[k] ?? ''}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          cornerRadiiMm: {
-                            ...draft.cornerRadiiMm,
-                            [k]:
-                              e.target.value === ''
-                                ? undefined
-                                : Math.max(0, Number(e.target.value)),
-                          },
-                        })
-                      }
-                      onBlur={() => commit({ cornerRadiiMm: draft.cornerRadiiMm })}
-                      className={inputClass}
-                    />
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([3, 5, 6] as const).map((sides) => (
+                    <button
+                      key={sides}
+                      type="button"
+                      onClick={() => applyPolygonPreset(sides)}
+                      className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                        isPolygon
+                          ? 'border-primary-400 text-primary-600 hover:bg-primary-50 dark:text-primary-300'
+                          : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {t(`GlassEnclosure.Designer.Panel.Poly.${sides}` as never, {
+                        defaultValue: { 3: 'Üçgen', 5: 'Beşgen', 6: 'Altıgen' }[sides],
+                      })}
+                    </button>
                   ))}
                 </div>
               </Field>
 
-              <Field
-                label={t('GlassEnclosure.Designer.Panel.CornerNotch', {
-                  defaultValue: 'Köşe girintisi (mm) — ovalliği geçersiz kılar',
-                })}
-              >
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
-                    <input
-                      key={k}
-                      type="number"
-                      min={0}
-                      placeholder={k.toUpperCase()}
-                      value={draft.cornerNotchMm?.[k] ?? ''}
-                      onChange={(e) =>
-                        setDraft({
-                          ...draft,
-                          cornerNotchMm: {
-                            ...draft.cornerNotchMm,
-                            [k]:
-                              e.target.value === ''
-                                ? undefined
-                                : Math.max(0, Number(e.target.value)),
-                          },
-                        })
-                      }
-                      onBlur={() => commit({ cornerNotchMm: draft.cornerNotchMm })}
-                      className={inputClass}
-                    />
-                  ))}
-                </div>
-              </Field>
+              {isPolygon && (
+                <PanelPolygonEditor
+                  widthMm={draft.widthMm}
+                  heightMm={draft.heightMm ?? run.heightMm}
+                  pointsJson={draft.shapePointsJson}
+                  onPreview={(json) =>
+                    updatePanel(run.id, panel.id, { shapeKind: 'polygon', shapePointsJson: json })
+                  }
+                  onCommit={(json) => commit({ shapeKind: 'polygon', shapePointsJson: json })}
+                />
+              )}
+
+              {isRect && (
+                <>
+                  <Field
+                    label={t('GlassEnclosure.Designer.Panel.TopShape', {
+                      defaultValue: 'Üst kenar',
+                    })}
+                  >
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['flat', 'raked', 'arched'] as const).map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => commit({ topShape: s })}
+                          className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                            (draft.topShape ?? 'flat') === s
+                              ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                              : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                          }`}
+                        >
+                          {t(`GlassEnclosure.Designer.Panel.Top.${s}` as never, {
+                            defaultValue: { flat: 'Düz', raked: 'Eğimli', arched: 'Kemerli' }[s],
+                          })}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+
+                  {draft.topShape === 'raked' && (
+                    <Field
+                      label={`${t('GlassEnclosure.Designer.Panel.TopRightHeight', { defaultValue: 'Sağ üst yükseklik' })} (mm)`}
+                    >
+                      <input
+                        type="number"
+                        min={100}
+                        value={draft.topRightHeightMm ?? ''}
+                        onChange={(e) =>
+                          setDraft({
+                            ...draft,
+                            topRightHeightMm: e.target.value === '' ? null : Number(e.target.value),
+                          })
+                        }
+                        onBlur={() => commit({ topRightHeightMm: draft.topRightHeightMm ?? null })}
+                        className={inputClass}
+                      />
+                    </Field>
+                  )}
+
+                  {draft.topShape === 'arched' && (
+                    <Field
+                      label={`${t('GlassEnclosure.Designer.Panel.ArchRise', { defaultValue: 'Kemer yüksekliği' })} (mm)`}
+                    >
+                      <input
+                        type="number"
+                        min={0}
+                        value={draft.archRiseMm ?? ''}
+                        onChange={(e) =>
+                          setDraft({
+                            ...draft,
+                            archRiseMm: e.target.value === '' ? null : Number(e.target.value),
+                          })
+                        }
+                        onBlur={() => commit({ archRiseMm: draft.archRiseMm ?? null })}
+                        className={inputClass}
+                      />
+                    </Field>
+                  )}
+
+                  <Field
+                    label={t('GlassEnclosure.Designer.Panel.CornerRadii', {
+                      defaultValue: 'Köşe ovalliği (mm)',
+                    })}
+                  >
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
+                        <input
+                          key={k}
+                          type="number"
+                          min={0}
+                          placeholder={k.toUpperCase()}
+                          value={draft.cornerRadiiMm?.[k] ?? ''}
+                          onChange={(e) =>
+                            setDraft({
+                              ...draft,
+                              cornerRadiiMm: {
+                                ...draft.cornerRadiiMm,
+                                [k]:
+                                  e.target.value === ''
+                                    ? undefined
+                                    : Math.max(0, Number(e.target.value)),
+                              },
+                            })
+                          }
+                          onBlur={() => commit({ cornerRadiiMm: draft.cornerRadiiMm })}
+                          className={inputClass}
+                        />
+                      ))}
+                    </div>
+                  </Field>
+
+                  <Field
+                    label={t('GlassEnclosure.Designer.Panel.CornerNotch', {
+                      defaultValue: 'Köşe girintisi (mm) — ovalliği geçersiz kılar',
+                    })}
+                  >
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(['tl', 'tr', 'bl', 'br'] as const).map((k) => (
+                        <input
+                          key={k}
+                          type="number"
+                          min={0}
+                          placeholder={k.toUpperCase()}
+                          value={draft.cornerNotchMm?.[k] ?? ''}
+                          onChange={(e) =>
+                            setDraft({
+                              ...draft,
+                              cornerNotchMm: {
+                                ...draft.cornerNotchMm,
+                                [k]:
+                                  e.target.value === ''
+                                    ? undefined
+                                    : Math.max(0, Number(e.target.value)),
+                              },
+                            })
+                          }
+                          onBlur={() => commit({ cornerNotchMm: draft.cornerNotchMm })}
+                          className={inputClass}
+                        />
+                      ))}
+                    </div>
+                  </Field>
+                </>
+              )}
             </>
+          ) : (
+            <p className="rounded border border-dashed border-slate-300 px-3 py-2 text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400">
+              {t('GlassEnclosure.Designer.Panel.ShapeSinglePanelOnly', {
+                defaultValue: 'Şekil yalnızca tek panelli hatlarda verilebilir.',
+              })}
+            </p>
           )}
         </>
       )}

@@ -359,6 +359,20 @@ const reindexRuns = (runs: SceneRunState[]): SceneRunState[] =>
 const reindexPanels = (panels: ScenePanelState[]): ScenePanelState[] =>
   panels.map((panel, index) => ({ ...panel, panelIndex: index }));
 
+// A run with more than one panel can't carry a shaped pane — shaping the middle of a 3-panel
+// run leaves its siblings rectangular, which is not a real product. Strip every shape field so
+// a multi-panel run is always rectangular (the inspector also hides shape controls there).
+const stripPanelShape = (panel: ScenePanelState): ScenePanelState => ({
+  ...panel,
+  topShape: null,
+  topRightHeightMm: null,
+  archRiseMm: null,
+  cornerRadiiMm: undefined,
+  cornerNotchMm: undefined,
+  shapeKind: null,
+  shapePointsJson: null,
+});
+
 export const distributePanelWidths = (
   panels: ScenePanelState[],
   lengthMm: number,
@@ -1040,9 +1054,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       runs: current.scene.runs.map((run) => {
         if (run.id !== runId) return run;
         const nextPanel: ScenePanelState = { ...panel, panelIndex: run.panels.length };
+        // Adding a panel makes the run multi-panel → it can no longer be shaped, so strip any
+        // shape from the existing panes and the new one alike.
+        const multi = run.panels.length >= 1;
+        const existing = multi ? run.panels.map(stripPanelShape) : run.panels;
         return {
           ...run,
-          panels: [...run.panels, nextPanel],
+          panels: [...existing, multi ? stripPanelShape(nextPanel) : nextPanel],
           lengthMm: run.lengthMm + nextPanel.widthMm,
         };
       }),

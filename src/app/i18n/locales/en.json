@@ -2481,7 +2481,8 @@
         "CornerNotch": "Corner notch (mm) — overrides radius",
         "Polygon": "Polygon (preset)",
         "Poly": { "3": "Triangle", "5": "Pentagon", "6": "Hexagon" },
-        "PolygonHint": "Click: add point · Drag: move · Double-click: delete"
+        "PolygonHint": "Click: add point · Drag: move · Double-click: delete",
+        "ShapeSinglePanelOnly": "Shapes are only available on single-panel runs."
       },
       "PanelCount": "{{count}} panels",
       "Rebalance": "Rebalance",

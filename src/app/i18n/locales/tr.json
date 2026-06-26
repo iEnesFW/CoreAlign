@@ -2481,7 +2481,8 @@
         "CornerNotch": "Köşe girintisi (mm) — ovalliği geçersiz kılar",
         "Polygon": "Çokgen (ön ayar)",
         "Poly": { "3": "Üçgen", "5": "Beşgen", "6": "Altıgen" },
-        "PolygonHint": "Tıkla: nokta ekle · Sürükle: taşı · Çift tık: sil"
+        "PolygonHint": "Tıkla: nokta ekle · Sürükle: taşı · Çift tık: sil",
+        "ShapeSinglePanelOnly": "Şekil yalnızca tek panelli hatlarda verilebilir."
       },
       "PanelCount": "{{count}} panel",
       "Rebalance": "Yeniden Dağıt",

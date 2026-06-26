@@ -45,6 +45,16 @@ const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelIn
   hasLock: panel.hasLock,
   hasBrushSeal: panel.hasBrushSeal,
   notes: null,
+  // Shape lives on structured columns (projectToScene hydrates these on reload); omitting
+  // them here silently dropped manual shaping on the next load. cornerNotchMm is blob-only
+  // (not on the DTO) and rides the scene-json rescue instead.
+  heightMm: panel.heightMm ?? null,
+  topShape: panel.topShape ?? null,
+  topRightHeightMm: panel.topRightHeightMm ?? null,
+  archRiseMm: panel.archRiseMm ?? null,
+  cornerRadiiMm: panel.cornerRadiiMm ?? null,
+  shapeKind: panel.shapeKind ?? null,
+  shapePointsJson: panel.shapePointsJson ?? null,
 });
 
 export const useRunEntityActions = () => {
