@@ -6,6 +6,7 @@ import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import { arcEndLocal, computeArcLayout, effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
+import { panelIsShaped } from '../../model/panelOutline';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { buildRunFootprint, restElevationMm } from '../interaction/planCollision';
@@ -91,6 +92,12 @@ export function ArcRunGroup({
   const profileHalf = PROFILE_CROSS_SECTION.height / 1000 / 2;
 
   const panels = run.panels;
+  // A single shaped pane on a curved run draws its own shape-matched (curved) frame band, so the
+  // rectangular rails/posts are suppressed — otherwise they box in the shaped glass (mirrors
+  // RunGroup.isSingleShapedPanel for straight runs).
+  const firstPanel = panels[0];
+  const isSingleShapedPanel =
+    panels.length === 1 && Boolean(firstPanel && panelIsShaped(firstPanel));
   const layout = useMemo(
     () =>
       computeArcLayout(
@@ -213,55 +220,57 @@ export function ArcRunGroup({
         document.body.style.cursor = 'auto';
       }}
     >
-      {layout.barSegments.map((seg, i) => (
-        <group
-          key={`arcbar-${i}`}
-          position={[seg.midX, 0, seg.midZ]}
-          rotation={[0, -seg.yawRad, 0]}
-        >
-          {showTopRail && (
-            <ProfileBar
-              lengthM={seg.chordM * 1.02}
-              crossSectionMm={PROFILE_CROSS_SECTION}
-              hexColor={profileColor}
-              finish={finish}
-              quality={quality}
-              position={[0, heightM, 0]}
-            />
-          )}
-          {showBottomRail && (
-            <ProfileBar
-              lengthM={seg.chordM * 1.02}
-              crossSectionMm={PROFILE_CROSS_SECTION}
-              hexColor={profileColor}
-              finish={finish}
-              quality={quality}
-              position={[0, 0, 0]}
-            />
-          )}
-        </group>
-      ))}
-
-      {layout.boundaries.map((b, i) => {
-        const isFirst = i === 0;
-        const isLast = i === layout.boundaries.length - 1;
-        const isOuter = isFirst || isLast;
-        const visible = isOuter ? (isFirst ? showLeftRail : showRightRail) : showMullions;
-        if (!visible) return null;
-        return (
-          <group key={`arcpost-${i}`} position={[b.x, 0, b.z]} rotation={[0, -b.tangentRad, 0]}>
-            <ProfileBar
-              lengthM={heightM}
-              crossSectionMm={isOuter ? PROFILE_CROSS_SECTION : MULLION_CROSS_SECTION}
-              hexColor={profileColor}
-              finish={finish}
-              quality={quality}
-              position={[0, heightM / 2, 0]}
-              rotation={[0, 0, Math.PI / 2]}
-            />
+      {!isSingleShapedPanel &&
+        layout.barSegments.map((seg, i) => (
+          <group
+            key={`arcbar-${i}`}
+            position={[seg.midX, 0, seg.midZ]}
+            rotation={[0, -seg.yawRad, 0]}
+          >
+            {showTopRail && (
+              <ProfileBar
+                lengthM={seg.chordM * 1.02}
+                crossSectionMm={PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[0, heightM, 0]}
+              />
+            )}
+            {showBottomRail && (
+              <ProfileBar
+                lengthM={seg.chordM * 1.02}
+                crossSectionMm={PROFILE_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[0, 0, 0]}
+              />
+            )}
           </group>
-        );
-      })}
+        ))}
+
+      {!isSingleShapedPanel &&
+        layout.boundaries.map((b, i) => {
+          const isFirst = i === 0;
+          const isLast = i === layout.boundaries.length - 1;
+          const isOuter = isFirst || isLast;
+          const visible = isOuter ? (isFirst ? showLeftRail : showRightRail) : showMullions;
+          if (!visible) return null;
+          return (
+            <group key={`arcpost-${i}`} position={[b.x, 0, b.z]} rotation={[0, -b.tangentRad, 0]}>
+              <ProfileBar
+                lengthM={heightM}
+                crossSectionMm={isOuter ? PROFILE_CROSS_SECTION : MULLION_CROSS_SECTION}
+                hexColor={profileColor}
+                finish={finish}
+                quality={quality}
+                position={[0, heightM / 2, 0]}
+                rotation={[0, 0, Math.PI / 2]}
+              />
+            </group>
+          );
+        })}
 
       {layout.panelSpans.map((span, i) => {
         const panel = panels[i];
