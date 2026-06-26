@@ -23,6 +23,7 @@ import {
   clampPlanStretch,
   firstPenetratingOwner,
   penetratesAny,
+  restElevationAtPointMm,
   restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
@@ -205,8 +206,13 @@ export function RunGroup({
     () => (supports ?? EMPTY_OBSTACLES).filter((o) => o.ownerId !== run.id),
     [supports, run.id],
   );
+  const baseElevMm = run.geomZ ?? 0;
   const restElevAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, 0);
+    restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, baseElevMm);
+  const centerXMm = run.originX + (run.lengthMm / 2) * dirX;
+  const centerYMm = run.originY + (run.lengthMm / 2) * dirY;
+  const centerRestAt = (dxMm: number, dyMm: number) =>
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, baseElevMm);
 
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
   const canStack = Boolean(onStackRun) && !isMultiMember;
@@ -216,11 +222,12 @@ export function RunGroup({
     originYMm: run.originY,
     rotationDeg: run.rotationDeg,
     baseYM: baseY,
-    centerXMm: run.originX + (run.lengthMm / 2) * dirX,
-    centerYMm: run.originY + (run.lengthMm / 2) * dirY,
+    centerXMm,
+    centerYMm,
     moveProbes,
     footprintAt: (dxMm, dyMm, rotationDeg) => buildRunFootprint(run, dxMm, dyMm, rotationDeg),
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
+    centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -238,12 +245,11 @@ export function RunGroup({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta) => {
-      // Every drop settles the run on whatever is below it (rest elevation; ground when nothing),
-      // so a stacked run dragged off its support falls back to the floor. The plan position is
-      // already lateral for a plain drag and overlap-allowed for an explicit stack (engine).
-      if (canStack && onStackRun) {
-        onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+    onMoveCommit: (delta, meta) => {
+      // A stack (explicit Alt/toggle, or precise centre-over auto-stack) rests at stackElevMm; a
+      // plain lateral drag (null) keeps the run's current elevation.
+      if (canStack && onStackRun && meta.stackElevMm !== null) {
+        onStackRun(run.id, delta, meta.stackElevMm);
         return;
       }
       onMoveRun?.(run.id, delta);

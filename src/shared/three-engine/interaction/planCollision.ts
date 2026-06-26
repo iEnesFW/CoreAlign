@@ -15,6 +15,13 @@ export interface PlanFootprint {
 const DEG2RAD = Math.PI / 180;
 const CONTACT_EPS_MM = 1;
 const CLAMP_ITERATIONS = 14;
+// How much plan overlap counts as a "joint" (corner butt / flush mount) rather than penetration.
+// min(halfWidth) lets thin walls meet at a corner, but for THICK bodies (a 1-2m box, halfWidth
+// 500-1000) it let them interpenetrate by half their size. Cap it: walls (halfWidth ≤ cap, i.e.
+// thickness ≤ 300mm) still corner-join; a thick box can only overlap by the cap before it blocks.
+const JOINT_TOLERANCE_MAX_MM = 150;
+const jointToleranceMm = (a: PlanFootprint, b: PlanFootprint): number =>
+  Math.min(a.halfWidthMm, b.halfWidthMm, JOINT_TOLERANCE_MAX_MM) + CONTACT_EPS_MM;
 
 export const normalizePlanAngleDeg = (deg: number) => ((deg % 360) + 360) % 360;
 
@@ -207,8 +214,7 @@ export const footprintsPenetrate = (a: PlanFootprint, b: PlanFootprint) => {
     return polygonsOverlap(footprintOutline(a), footprintOutline(b));
   }
   const extent = obbOverlapExtent(footprintCorners(a), footprintCorners(b));
-  const jointTolerance = Math.min(a.halfWidthMm, b.halfWidthMm) + CONTACT_EPS_MM;
-  return extent > jointTolerance;
+  return extent > jointToleranceMm(a, b);
 };
 
 const footprintsOverlapXY = (a: PlanFootprint, b: PlanFootprint): boolean => {
@@ -226,6 +232,26 @@ export const restElevationMm = (
   for (const s of supports) {
     if (s.ownerId === moved.ownerId) continue;
     if (s.zMaxMm > top && footprintsOverlapXY(moved, s)) top = s.zMaxMm;
+  }
+  return top;
+};
+
+const pointInFootprint = (x: number, y: number, fp: PlanFootprint): boolean =>
+  pointInPolygon(x, y, footprintOutline(fp));
+
+// Top of the tallest support whose footprint CONTAINS the given plan point (the dragged object's
+// centre), else the fallback. Used as the precise "the object is clearly ON TOP of this" test for
+// auto-stacking — dragging merely beside/against something does not contain the centre, so it
+// stays lateral (the eager "any overlap" trigger was the annoyance).
+export const restElevationAtPointMm = (
+  x: number,
+  y: number,
+  supports: PlanFootprint[],
+  fallbackMm: number,
+): number => {
+  let top = fallbackMm;
+  for (const s of supports) {
+    if (s.zMaxMm > top && pointInFootprint(x, y, s)) top = s.zMaxMm;
   }
   return top;
 };
@@ -367,7 +393,7 @@ const penetrationDepthMm = (a: PlanFootprint, b: PlanFootprint): number => {
     return Math.max(0, Math.min(ox, oy));
   }
   const depth = obbPenetrationDepth(footprintCorners(a), footprintCorners(b));
-  const jointTolerance = Math.min(a.halfWidthMm, b.halfWidthMm) + CONTACT_EPS_MM;
+  const jointTolerance = jointToleranceMm(a, b);
   return depth > jointTolerance ? depth - jointTolerance : 0;
 };
 

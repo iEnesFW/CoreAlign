@@ -28,6 +28,7 @@ import {
   buildSlabFootprint,
   clampPlanStretch,
   penetratesAny,
+  restElevationAtPointMm,
   restElevationMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
@@ -268,11 +269,19 @@ export function SlabObject({
   const isMultiMember = multiSelectionHas(multiSelection, 'slab', slab.id);
   const canStack = !isMultiMember;
   const supportFootprints = supports ?? EMPTY_OBSTACLES;
-  // Alt-drag rests the slab on whatever it overlaps; a plain drag keeps the slab's
-  // current elevation and moves laterally. Ground (0) fallback so an unsupported
-  // Alt-drop returns to the floor instead of ratcheting up from its own elevation.
+  // Explicit stack rests on whatever is overlapped; precise auto-stack on what's under the centre;
+  // a plain drag keeps the slab's current elevation (fallback = its own base, never forced down).
+  const baseElevMm = slab.elevationMm;
   const restElevationAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg), supportFootprints, 0);
+    restElevationMm(
+      buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
+      supportFootprints,
+      baseElevMm,
+    );
+  const centerXMm = slab.originX + (slab.lengthMm / 2) * dirX - (slab.depthMm / 2) * dirY;
+  const centerYMm = slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX;
+  const centerRestAt = (dxMm: number, dyMm: number) =>
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, supportFootprints, baseElevMm);
 
   // While co-moving a multi-selection, sibling members travel with this slab, so
   // their footprints must not register as collisions during the drag.
@@ -291,11 +300,12 @@ export function SlabObject({
     originYMm: slab.originY,
     rotationDeg: slab.rotationDeg,
     baseYM: elevationM,
-    centerXMm: slab.originX + (slab.lengthMm / 2) * dirX - (slab.depthMm / 2) * dirY,
-    centerYMm: slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX,
+    centerXMm,
+    centerYMm,
     moveProbes,
     footprintAt: (dxMm, dyMm, rotationDeg) => buildSlabFootprint(slab, dxMm, dyMm, rotationDeg),
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
+    centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -313,14 +323,14 @@ export function SlabObject({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta) => {
-      // Every drop settles the slab on whatever is below it (rest elevation; ground when
-      // nothing), so a stacked slab dragged off its support falls back to the floor.
-      if (canStack) {
+    onMoveCommit: (delta, meta) => {
+      // A stack (explicit or precise centre-over) rests at stackElevMm; a plain lateral drag
+      // (null) keeps the slab's current elevation.
+      if (canStack && meta.stackElevMm !== null) {
         updateSlab(slab.id, {
           originX: Math.round(slab.originX + delta.dxMm),
           originY: Math.round(slab.originY + delta.dyMm),
-          elevationMm: Math.round(restElevationAt(delta.dxMm, delta.dyMm)),
+          elevationMm: meta.stackElevMm,
         });
         return;
       }

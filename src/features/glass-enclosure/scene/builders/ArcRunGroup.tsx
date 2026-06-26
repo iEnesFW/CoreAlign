@@ -13,6 +13,7 @@ import {
   RUN_PLAN_THICKNESS_MM,
   buildRunFootprint,
   penetratesAny,
+  restElevationAtPointMm,
   restElevationMm,
 } from '../interaction/planCollision';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
@@ -166,10 +167,15 @@ export function ArcRunGroup({
     const attached = new Set(findAttachedWallIds(run, sceneState.walls ?? []));
     return all.filter((o) => o.ownerId !== run.id && !attached.has(o.ownerId));
   }, [supports, run, sceneState.walls]);
-  // Alt-drag stacking (plain drag stays lateral); ground (0) fallback so a stacked
-  // arc run dropped off support returns to the floor instead of ratcheting up.
+  // Explicit stack rests on any overlap; precise auto-stack on what's under the chord midpoint; a
+  // plain drag keeps the run's current elevation (fallback = its own base, never forced down).
+  const baseElevMm = run.geomZ ?? 0;
   const restElevAt = (dx: number, dy: number) =>
-    restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, 0);
+    restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, baseElevMm);
+  const centerXMm = (run.originX + endWorldX) / 2;
+  const centerYMm = (run.originY + endWorldY) / 2;
+  const centerRestAt = (dx: number, dy: number) =>
+    restElevationAtPointMm(centerXMm + dx, centerYMm + dy, stackSupports, baseElevMm);
   const canStack = Boolean(onStackRun) && !isMultiMember;
 
   const adapter: PlanGestureAdapter = {
@@ -177,14 +183,15 @@ export function ArcRunGroup({
     originYMm: run.originY,
     rotationDeg: run.rotationDeg,
     baseYM: (run.geomZ ?? 0) / 1000,
-    centerXMm: (run.originX + endWorldX) / 2,
-    centerYMm: (run.originY + endWorldY) / 2,
+    centerXMm,
+    centerYMm,
     moveProbes: [
       { x: run.originX, y: run.originY },
       { x: endWorldX, y: endWorldY },
     ],
     footprintAt: (dx, dy, rotationDeg) => buildRunFootprint(run, dx, dy, rotationDeg),
     altLiftYMAt: canStack ? (dx, dy) => restElevAt(dx, dy) / 1000 : undefined,
+    centerLiftYMAt: canStack ? (dx, dy) => centerRestAt(dx, dy) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -202,11 +209,11 @@ export function ArcRunGroup({
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
-    onMoveCommit: (delta) => {
-      // Every drop settles the arc run on whatever is below (rest elevation; ground when nothing),
-      // so a stacked arc run dragged off its support falls back to the floor.
-      if (canStack && onStackRun) {
-        onStackRun(run.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+    onMoveCommit: (delta, meta) => {
+      // A stack (explicit or precise centre-over) rests at stackElevMm; a plain lateral drag
+      // (null) keeps the arc run's current elevation.
+      if (canStack && onStackRun && meta.stackElevMm !== null) {
+        onStackRun(run.id, delta, meta.stackElevMm);
         return;
       }
       onMoveRun?.(run.id, delta);

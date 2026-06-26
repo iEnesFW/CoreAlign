@@ -45,6 +45,7 @@ import {
   buildWallFootprint,
   clampPlanStretch,
   penetratesAny,
+  restElevationAtPointMm,
   restElevationMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
@@ -470,7 +471,13 @@ export function WallObject({
   const canStack =
     Boolean(onStackWall) && coMove.groupWalls.length === 0 && coMove.runs.length === 0;
   const restElevAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg), stackSupports, 0);
+    restElevationMm(
+      buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg),
+      stackSupports,
+      baseWallElevMm,
+    );
+  const centerRestAt = (dxMm: number, dyMm: number) =>
+    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, baseWallElevMm);
 
   const adapter: PlanGestureAdapter = {
     originXMm: wall.originX,
@@ -490,6 +497,7 @@ export function WallObject({
       ];
     },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
+    centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
   };
 
   const gestures = useObjectGestures({
@@ -526,12 +534,12 @@ export function WallObject({
     onMovePreview: (delta) => previewSnapshotsMove(attachedRef.current, delta.dxMm, delta.dyMm),
     onRotatePreview: (sweepDeg) =>
       previewSnapshotsRotation(attachedRef.current, centerXMm, centerYMm, sweepDeg),
-    onMoveCommit: (delta) => {
-      // A standalone bare wall (canStack ⇒ no group / attached runs) settles on whatever is below
-      // at the drop point (rest elevation; ground when nothing), so a stacked wall dragged off its
-      // support drops to the floor. A wall carrying a group / runs moves laterally via onCommitMove.
-      if (canStack && onStackWall) {
-        onStackWall(wall.id, delta, Math.round(restElevAt(delta.dxMm, delta.dyMm)));
+    onMoveCommit: (delta, meta) => {
+      // A standalone bare wall (canStack ⇒ no group / attached runs) that is stacked (explicit or
+      // precise centre-over) rests at stackElevMm; a plain lateral drag keeps its elevation. A wall
+      // carrying a group / runs always moves laterally via onCommitMove.
+      if (canStack && onStackWall && meta.stackElevMm !== null) {
+        onStackWall(wall.id, delta, meta.stackElevMm);
         return;
       }
       onCommitMove?.(

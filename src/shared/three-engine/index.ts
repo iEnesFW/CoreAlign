@@ -44,6 +44,7 @@ export {
   buildPlanFootprint,
   buildPolygonFootprint,
   restElevationMm,
+  restElevationAtPointMm,
   isFloating,
   normalizePlanAngleDeg,
   penetratesAny,

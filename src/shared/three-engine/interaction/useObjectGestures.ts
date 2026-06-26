@@ -24,7 +24,12 @@ export interface PlanGestureAdapter {
   moveProbes: PlanPoint[];
   footprintAt: (dxMm: number, dyMm: number, rotationDeg: number) => PlanFootprintSet;
   liftYMAt?: (dxMm: number, dyMm: number) => number;
+  // Rest elevation (m) for an EXPLICIT stack (Alt/toggle): top of any overlapped support, else
+  // the object's current base (so it keeps its height when not over anything).
   altLiftYMAt?: (dxMm: number, dyMm: number) => number;
+  // Rest elevation (m) under the object's CENTRE — the precise auto-stack test (climb on only
+  // when the centre is clearly over a higher support), else the object's current base.
+  centerLiftYMAt?: (dxMm: number, dyMm: number) => number;
 }
 
 export interface PlanRotationCommit {
@@ -45,7 +50,9 @@ export interface UseObjectGesturesOptions {
   snapTargets: PlanSnapTargets;
   obstacles: PlanFootprint[];
   onPick: () => void;
-  onMoveCommit: (delta: PlanMoveDelta, meta: { alt: boolean }) => void;
+  // stackElevMm = the elevation (mm) to rest at when this drop is a stack; null = a plain lateral
+  // move that keeps the object's current elevation (so mid-height placement is never forced down).
+  onMoveCommit: (delta: PlanMoveDelta, meta: { stackElevMm: number | null }) => void;
   onRotateCommit: (commit: PlanRotationCommit) => void;
   onMovePreview?: (delta: PlanMoveDelta) => void;
   onRotatePreview?: (sweepDeg: number) => void;
@@ -62,6 +69,7 @@ const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 const ZERO_MOVE: PlanMoveDelta = { dxMm: 0, dyMm: 0 };
 const SNAP_CONTACT_KEEP_MM = 2;
+const AUTO_STACK_MIN_RISE_M = 0.02;
 
 export function useObjectGestures({
   adapter,
@@ -84,7 +92,7 @@ export function useObjectGestures({
   const lastMoveRef = useRef<PlanMoveDelta>(ZERO_MOVE);
   const lastAngleRef = useRef(0);
   const startedRef = useRef(false);
-  const altLatchRef = useRef(false);
+  const stackElevRef = useRef<number | null>(null);
 
   const resetTransform = () => {
     const group = groupRef.current;
@@ -103,13 +111,16 @@ export function useObjectGestures({
       return;
     }
     const snapped = applyPlanMoveSnap(adapter.moveProbes, delta.x, delta.z, snapTargets);
-    // Stacking is EXPLICIT only — Alt modifier or the sticky toolbar toggle (forceStack). A plain
-    // drag is always lateral (no-deepen slide), so objects never auto-climb and can be butted
-    // flush reliably; stack-on-top deliberately allows plan overlap (rests in Z) and skips the
-    // gate. (Auto-stack-on-push was removed: it interpenetrated on overshoot and triggered when
-    // the user only wanted to place beside.)
+    // Two ways to stack-on-top; everything else is a plain lateral drag that KEEPS the object's
+    // current height (so mid-wall placement is never yanked to the floor):
+    //  - explicit: Alt / the toolbar toggle → rest on whatever is overlapped (plan overlap ok).
+    //  - precise auto: the object's CENTRE is dragged clearly over a HIGHER support → it climbs
+    //    on. Merely butting/pushing beside does not put the centre over it, so it stays lateral.
     const explicitStack = isAltPressed() || Boolean(forceStack);
-    const slid = explicitStack
+    const centerLiftM = adapter.centerLiftYMAt?.(snapped.dxMm, snapped.dyMm) ?? adapter.baseYM;
+    const autoStack = !explicitStack && centerLiftM > adapter.baseYM + AUTO_STACK_MIN_RISE_M;
+    const stacking = explicitStack || autoStack;
+    const slid = stacking
       ? snapped
       : slidePlanMove(
           (dx, dy) => adapter.footprintAt(dx, dy, adapter.rotationDeg),
@@ -117,19 +128,17 @@ export function useObjectGestures({
           snapped.dxMm,
           snapped.dyMm,
         );
-    altLatchRef.current = explicitStack;
+    let liftM = adapter.baseYM;
+    if (autoStack) liftM = centerLiftM;
+    else if (explicitStack && adapter.altLiftYMAt)
+      liftM = adapter.altLiftYMAt(slid.dxMm, slid.dyMm);
+    else if (adapter.liftYMAt) liftM = adapter.liftYMAt(slid.dxMm, slid.dyMm) ?? adapter.baseYM;
+    stackElevRef.current = stacking ? Math.round(liftM * MM) : null;
     const divergenceMm = Math.hypot(slid.dxMm - snapped.dxMm, slid.dyMm - snapped.dyMm);
     setSnapGuides(divergenceMm <= SNAP_CONTACT_KEEP_MM ? snapped.guides : []);
     lastMoveRef.current = slid;
     const group = groupRef.current;
     if (group) {
-      // Settle on whatever is below at the target (rest elevation; ground when nothing) for EVERY
-      // drag — so a stacked object dragged off its support drops back to the floor instead of
-      // gliding at its old height. altLiftYMAt = restElevationMm(footprint, supports, 0).
-      const liftM =
-        adapter.altLiftYMAt?.(slid.dxMm, slid.dyMm) ??
-        adapter.liftYMAt?.(slid.dxMm, slid.dyMm) ??
-        adapter.baseYM;
       group.position.set(
         (adapter.originXMm + slid.dxMm) / MM,
         liftM,
@@ -189,7 +198,7 @@ export function useObjectGestures({
       resetTransform();
       return;
     }
-    onMoveCommit(delta, { alt: altLatchRef.current });
+    onMoveCommit(delta, { stackElevMm: stackElevRef.current });
   };
 
   const commitRotate = () => {
