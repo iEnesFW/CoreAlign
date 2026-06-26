@@ -2661,7 +2661,7 @@
         "OpeningSill": "Alt",
         "NoRoomForOpening": "Duvarda yeni boşluk için yer yok — mevcutları daraltın veya duvarı uzatın.",
         "AutofillSelectWall": "Camla doldurmak için bir duvar seçin (boşluk/delik doldurma) veya birden fazla duvarı çoklu seçin (aralarını doldurma).",
-        "AutofillNoGaps": "Seçili duvarlar arasında doldurulabilir boşluk bulunamadı — serbest duvar uçları arasında 30 cm - 12 m aralık olmalı."
+        "AutofillNoGaps": "Doldurulabilir boşluk bulunamadı — en az iki serbest duvar ucu olan duvarlar seçin."
       },
       "Slab": {
         "Floor": "Zemin",

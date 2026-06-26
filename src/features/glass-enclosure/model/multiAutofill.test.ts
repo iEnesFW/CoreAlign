@@ -194,10 +194,14 @@ describe('computeMultiWallGapRuns', () => {
     expect(edges[0].geomArcRadiusMm ?? null).toBeNull();
   });
 
-  it("'L' mode does not fall back to a straight run on a collinear gap (skips the pair)", () => {
+  it("'L' mode falls back to a straight connector when no corner is possible (collinear gap)", () => {
+    // L now fills permissively: a real corner becomes L legs, a collinear gap becomes a single
+    // straight connector, so the user never just gets the "no fillable gap" warning.
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 3000, 0, 2000, 0);
-    expect(computeMultiWallGapRuns([a, b], [a, b], [], 'L')).toHaveLength(0);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'L');
+    expect(edges).toHaveLength(1);
+    expect(edges[0].geomArcRadiusMm ?? 0).toBe(0);
   });
 
   it("'arc' mode emits one bent run whose far end lands on the second gap endpoint", () => {

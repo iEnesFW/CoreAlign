@@ -19,9 +19,9 @@ const DEG2RAD = Math.PI / 180;
 const RAD2DEG = 180 / Math.PI;
 const ENDPOINT_JOIN_TOLERANCE_MM = 150;
 const MIN_GAP_MM = 300;
-const MAX_GAP_MM = 12000;
+const MAX_GAP_MM = 60000;
 const MIN_RUN_MM = 300;
-const CORNER_ANGLE_TOLERANCE_DEG = 45;
+const CORNER_ANGLE_TOLERANCE_DEG = 60;
 const OUTWARD_TOLERANCE_MM = 100;
 const OUTWARD_DOT_MIN = -0.35;
 const TRIM_ITERATIONS = 16;
@@ -449,8 +449,10 @@ export const computeMultiWallGapRuns = (
         ),
       )
       .filter((candidate): candidate is EdgeCandidate => candidate !== null);
-    // 'L' forces legs only — no straight fallback (skip the pair if legs don't fit).
-    if (trimmed.length === 0 && mode !== 'L') {
+    // 'L' prefers corner legs but still falls back to a single straight connector when the legs
+    // don't fit (near-parallel walls, or legs trimmed away) — so L-fill produces something for
+    // almost any selected pair instead of silently warning.
+    if (trimmed.length === 0) {
       isCorner = false;
       // A flat connector run can only carry one elevation; bridge the pair at the
       // lower of the two wall bases so it still reaches both ends.
@@ -485,6 +487,45 @@ export const computeMultiWallGapRuns = (
         geomZ: Math.round(candidate.baseZMm),
         cornerGroup: group,
       });
+    }
+  }
+  // Last resort: if every pair was rejected but two distinct free ends exist, bridge the closest
+  // pair with a single straight run so the user never just gets the "no fillable gap" warning.
+  if (edges.length === 0 && mode !== 'arc') {
+    let best: { a: WallEndpoint; b: WallEndpoint; d: number } | null = null;
+    for (let i = 0; i < free.length; i += 1) {
+      for (let j = i + 1; j < free.length; j += 1) {
+        if (free[j].wall.id === free[i].wall.id) continue;
+        const a = refineEndpointToFace(free[i], free[j]);
+        const b = refineEndpointToFace(free[j], free[i]);
+        const d = Math.hypot(b.x - a.x, b.y - a.y);
+        if (d >= MIN_RUN_MM && (!best || d < best.d)) best = { a, b, d };
+      }
+    }
+    if (best) {
+      const straight = edgeBetween(
+        best.a,
+        best.b,
+        Math.round(Math.min(best.a.heightMm, best.b.heightMm)),
+        Math.min(best.a.baseZMm, best.b.baseZMm),
+      );
+      const blockers: PlanFootprint[] = [
+        ...wallBlockers.filter(
+          (w) => w.ownerId !== best!.a.wall.id && w.ownerId !== best!.b.wall.id,
+        ),
+        ...gapRunBlockers,
+      ];
+      const candidate = straight ? trimEdge(straight, blockers) : null;
+      if (candidate) {
+        edges.push({
+          originX: Math.round(candidate.originX),
+          originY: Math.round(candidate.originY),
+          rotationDeg: candidate.rotationDeg,
+          lengthMm: Math.round(candidate.lengthMm),
+          heightMm: candidate.heightMm,
+          geomZ: Math.round(candidate.baseZMm),
+        });
+      }
     }
   }
   return edges;

@@ -2661,7 +2661,7 @@
         "OpeningSill": "Bottom",
         "NoRoomForOpening": "No room for a new opening — shrink existing ones or extend the wall.",
         "AutofillSelectWall": "Select a wall to fill its openings, or multi-select several walls to fill the gaps between them.",
-        "AutofillNoGaps": "No fillable gap found between the selected walls — free wall ends must be 30 cm - 12 m apart."
+        "AutofillNoGaps": "No fillable gap found — select walls that have at least two free ends."
       },
       "Slab": {
         "Floor": "Floor",
