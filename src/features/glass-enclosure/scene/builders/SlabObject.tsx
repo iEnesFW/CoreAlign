@@ -191,6 +191,7 @@ export function SlabObject({
 }: SlabObjectProps) {
   const { t } = useTranslation();
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const drawShape = useDesignerStore((s) => s.drawShape);
   const presentation = useDesignerStore((s) => s.presentationMode);
   const penFace = useDesignerStore((s) => s.penFace);
@@ -209,7 +210,11 @@ export function SlabObject({
 
   const isBarrelRoof = slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0;
   // Length/depth stretch assumes a flat slab; a barrel roof is resized via its rise.
-  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
+  const stretchActive =
+    (activeTool === 'stretch' || (transformActive && isSelected)) &&
+    interactive &&
+    !slab.locked &&
+    !isBarrelRoof;
   const { body, featureItems } = useMemo(
     () => buildSlabGeometries(slab, !stretchActive),
     [slab, stretchActive],

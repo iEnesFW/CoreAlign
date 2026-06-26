@@ -544,8 +544,15 @@ export function GlassProjectDesignerPage() {
           e.preventDefault();
           handleNudge(0, step);
         }
+      } else if (!meta && !e.altKey && e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        useDesignerStore.getState().toggleTransformHandles();
       } else if (e.key === 'Escape') {
         const state = useDesignerStore.getState();
+        if (state.transformHandlesActive) {
+          state.setTransformHandles(false);
+          return;
+        }
         const hasMulti =
           state.multiSelection.runIds.length +
             state.multiSelection.wallIds.length +

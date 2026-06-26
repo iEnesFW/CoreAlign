@@ -102,6 +102,7 @@ export function PolygonSurfaceObject({
   onSelect,
 }: PolygonSurfaceObjectProps) {
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const presentation = useDesignerStore((s) => s.presentationMode);
@@ -229,7 +230,10 @@ export function PolygonSurfaceObject({
   };
 
   const stretchActive =
-    interactive && activeTool === 'stretch' && Boolean(geometry) && !surface.locked;
+    interactive &&
+    (activeTool === 'stretch' || (transformActive && isSelected)) &&
+    Boolean(geometry) &&
+    !surface.locked;
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [
         {

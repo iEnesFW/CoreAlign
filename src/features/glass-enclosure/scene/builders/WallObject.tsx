@@ -308,6 +308,7 @@ export function WallObject({
 }: WallObjectProps) {
   const { t } = useTranslation();
   const activeTool = useDesignerStore((s) => s.activeTool);
+  const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const quality = useDesignerStore((s) => s.quality);
   const penFace = useDesignerStore((s) => s.penFace);
   const setPenFaceCursor = useDesignerStore((s) => s.setPenFaceCursor);
@@ -325,7 +326,11 @@ export function WallObject({
   const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
   // Length/height stretch handles assume a straight body; an arc wall is resized via
   // its radius/sweep in the inspector instead (#6a).
-  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
+  const stretchActive =
+    (activeTool === 'stretch' || (transformActive && isSelected)) &&
+    interactive &&
+    !wall.locked &&
+    !isArcWall;
   const {
     body: geometry,
     featureItems,
