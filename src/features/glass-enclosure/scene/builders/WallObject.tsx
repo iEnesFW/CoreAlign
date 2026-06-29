@@ -17,17 +17,17 @@ import { buildCurvedBandGeometry } from './curvedExtrude';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
-  getProceduralTexture,
-  isProceduralMaterialKey,
   isShiftPressed,
   setDragReadout,
   stickyDimensionMm,
   useDrag3D,
+  useTiledProceduralTexture,
 } from '@/shared/three-engine';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
+import { CurveBowHandle } from '../interaction/CurveBowHandle';
 import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
@@ -59,7 +59,7 @@ import {
   type WallBoxDims,
   type WallFeatureSide,
 } from './wallFaces';
-import { effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { arcFromBow, effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -127,7 +127,7 @@ interface WallObjectProps {
 
 const WALL_COLOR = '#94a3b8';
 const WALL_SELECTED = '#1d4ed8';
-const WALL_EDGE = '#64748b';
+const WALL_EDGE = '#cbd5e1';
 const FEATURE_SELECTED = '#1d4ed8';
 const REGION_COLOR = '#2563eb';
 const MIN_LENGTH_MM = 100;
@@ -396,6 +396,8 @@ export function WallObject({
   const sceneRuns = useDesignerStore((s) => s.scene.runs);
   const sceneWalls = useDesignerStore((s) => s.scene.walls ?? []);
   const updateWall = useDesignerStore((s) => s.updateWall);
+  const paintColor = useDesignerStore((s) => s.paintColor);
+  const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const addWallFeature = useDesignerStore((s) => s.addWallFeature);
   const updateWallFeature = useDesignerStore((s) => s.updateWallFeature);
   const splitWall = useDesignerStore((s) => s.splitWall);
@@ -964,6 +966,11 @@ export function WallObject({
       }
       return;
     }
+    if (activeTool === 'paint' && interactive) {
+      if (paintMaterial) updateWall(wall.id, { materialKey: paintMaterial, colorHex: null });
+      else if (paintColor) updateWall(wall.id, { colorHex: paintColor.hex, materialKey: null });
+      return;
+    }
     onSelect(wall.id);
   };
 
@@ -1270,10 +1277,11 @@ export function WallObject({
       ]
     : [];
 
-  const materialTexture =
-    wall.materialKey && isProceduralMaterialKey(wall.materialKey)
-      ? getProceduralTexture(wall.materialKey)
-      : null;
+  const materialTexture = useTiledProceduralTexture(
+    wall.materialKey,
+    wall.lengthMm / 500,
+    wall.heightMm / 500,
+  );
 
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
@@ -1387,6 +1395,27 @@ export function WallObject({
               originY: next.originY,
               lengthMm: next.lengthMm,
               thicknessMm: next.crossMm,
+            });
+          }}
+        />
+      )}
+      {vertexEditActive && (
+        <CurveBowHandle
+          startX={wall.originX}
+          startY={wall.originY}
+          endX={wall.originX + wall.lengthMm * Math.cos(wall.rotationDeg * DEG2RAD)}
+          endY={wall.originY + wall.lengthMm * Math.sin(wall.rotationDeg * DEG2RAD)}
+          currentSagittaMm={0}
+          topYM={
+            ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
+          }
+          onCommit={(sagittaMm) => {
+            const arc = arcFromBow(wall.lengthMm, wall.rotationDeg, sagittaMm);
+            updateWall(wall.id, {
+              lengthMm: arc.lengthMm,
+              rotationDeg: arc.rotationDeg,
+              geomArcRadiusMm: arc.geomArcRadiusMm,
+              geomArcSweepDeg: arc.geomArcSweepDeg,
             });
           }}
         />

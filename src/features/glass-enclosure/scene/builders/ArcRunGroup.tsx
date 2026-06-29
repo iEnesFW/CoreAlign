@@ -4,7 +4,14 @@ import type { Group } from 'three';
 import { CurvedPanelMesh } from './CurvedPanelMesh';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { arcEndLocal, computeArcLayout, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import {
+  arcEndLocal,
+  arcFromBow,
+  bowFromArc,
+  computeArcLayout,
+  effectiveArcRadiusMm,
+} from '../../model/arcGeometry';
+import { CurveBowHandle } from '../interaction/CurveBowHandle';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { panelIsShaped } from '../../model/panelOutline';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -480,6 +487,34 @@ export function ArcRunGroup({
             );
             if (penetratesAny(resized, gestureObstacles)) return;
             onStretchRun?.(run.id, { lengthMm, originX, originY });
+          }}
+        />
+      )}
+      {vertexEditActive && onStretchRun && (
+        <CurveBowHandle
+          startX={run.originX}
+          startY={run.originY}
+          endX={endWorldX}
+          endY={endWorldY}
+          currentSagittaMm={bowFromArc(
+            Math.hypot(endWorldX - run.originX, endWorldY - run.originY),
+            run.geomArcRadiusMm ?? radiusMm,
+            run.geomArcSweepDeg ?? 1,
+          )}
+          topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
+          onCommit={(sagittaMm) => {
+            const chordMm = Math.hypot(endWorldX - run.originX, endWorldY - run.originY);
+            const chordDeg =
+              (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI;
+            const arc = arcFromBow(chordMm, chordDeg, sagittaMm);
+            onStretchRun(run.id, {
+              originX: run.originX,
+              originY: run.originY,
+              lengthMm: arc.lengthMm,
+              rotationDeg: arc.rotationDeg,
+              geomArcRadiusMm: arc.geomArcRadiusMm,
+              geomArcSweepDeg: arc.geomArcSweepDeg,
+            });
           }}
         />
       )}
