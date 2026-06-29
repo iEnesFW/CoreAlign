@@ -6,12 +6,11 @@ import { DoubleSide, ExtrudeGeometry, ShapeGeometry, Vector3 } from 'three';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Texture } from 'three';
 import {
-  getProceduralTexture,
-  isProceduralMaterialKey,
   isShiftPressed,
   setDragReadout,
   stickyDimensionMm,
   useDrag3D,
+  useTiledProceduralTexture,
 } from '@/shared/three-engine';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -310,6 +309,9 @@ export function SlabObject({
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
     restingAtStart,
+    // A roof/floor moves freely and rests on top of whatever it overlaps, so it can be dragged onto
+    // another object instead of locking against it (the collision-slide that walls/runs still use).
+    freeMove: canStack,
   };
 
   const gestures = useObjectGestures({
@@ -838,10 +840,11 @@ export function SlabObject({
     return labelMm(Math.abs(signed));
   };
 
-  const materialTexture =
-    slab.materialKey && isProceduralMaterialKey(slab.materialKey)
-      ? getProceduralTexture(slab.materialKey)
-      : null;
+  const materialTexture = useTiledProceduralTexture(
+    slab.materialKey,
+    slab.lengthMm / 500,
+    slab.depthMm / 500,
+  );
 
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [

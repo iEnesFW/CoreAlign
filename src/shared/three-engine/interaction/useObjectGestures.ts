@@ -35,6 +35,10 @@ export interface PlanGestureAdapter {
   // so it follows gravity (drops back down when slid off); a free, deliberately-elevated object
   // (e.g. mid-wall) instead KEEPS its height unless dragged onto something higher.
   restingAtStart?: boolean;
+  // True for objects that should NEVER collision-slide against obstacles while moving — they pass
+  // freely and rest ON TOP of whatever they overlap (slabs: a roof/floor goes on top, like Alt is
+  // always held). Walls/runs leave this off so they keep the no-deepen slide that joins corners.
+  freeMove?: boolean;
 }
 
 export interface PlanRotationCommit {
@@ -122,12 +126,15 @@ export function useObjectGestures({
     //  - precise auto: the object's CENTRE is dragged clearly over a HIGHER support → it climbs
     //    on. Merely butting/pushing beside does not put the centre over it, so it stays lateral.
     const explicitStack = isAltPressed() || Boolean(forceStack);
+    // A free-move object (slab) never collision-slides — it moves freely and rests on top of
+    // whatever it overlaps, so it can be dragged onto another object instead of locking against it.
+    const freeMove = Boolean(adapter.freeMove);
     // The support under the object's CENTRE at the desired spot (else ground). Rising above the
     // base = climbing onto something → allow overlap to land on it; otherwise lateral no-deepen.
     const centerRestSnapped =
       adapter.centerLiftYMAt?.(snapped.dxMm, snapped.dyMm) ?? adapter.baseYM;
     const climbing = centerRestSnapped > adapter.baseYM + AUTO_STACK_MIN_RISE_M;
-    const stacking = explicitStack || climbing;
+    const stacking = explicitStack || climbing || freeMove;
     const slid = stacking
       ? snapped
       : slidePlanMove(
@@ -141,7 +148,9 @@ export function useObjectGestures({
     // keep its height unless it climbed onto something higher.
     let liftM = adapter.baseYM;
     if (adapter.centerLiftYMAt) {
-      if (explicitStack && adapter.altLiftYMAt) {
+      if ((explicitStack || freeMove) && adapter.altLiftYMAt) {
+        // Rest on top of any overlapped support (else the object's base) — for an explicit stack
+        // or a free-move slab, so moving it over another object lands it on top, never inside.
         liftM = adapter.altLiftYMAt(slid.dxMm, slid.dyMm);
       } else {
         const centerRest = adapter.centerLiftYMAt(slid.dxMm, slid.dyMm);
