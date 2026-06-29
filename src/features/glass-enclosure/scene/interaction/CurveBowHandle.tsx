@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
 import type { Group } from 'three';
 import { stickyDimensionMm, useDrag3D } from '@/shared/three-engine';
+import { bowArcPlanPoints } from '../../model/arcGeometry';
 
 const MM = 1000;
 const HANDLE_RADIUS_M = 0.06;
@@ -41,9 +42,10 @@ export function CurveBowHandle({
   const acrossY = dx / chordMm;
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
-  // Allow well past a half-circle (sagitta > chord/2 → major arc) so the curve can be driven as
-  // deep as the user wants; the arc maths caps the rendered sweep before a degenerate full circle.
-  const maxSagittaMm = chordMm * 2;
+  // A fresh drag can bow up to ~chord (≈ a 250° arc) — deep, but short of the runaway near-full
+  // circle a tiny zoomed-out drag used to cause. Re-grabbing an already-deeper curve keeps its
+  // reach so the handle never silently shallows it.
+  const maxSagittaMm = Math.max(chordMm, Math.abs(currentSagittaMm));
   const restX = midX + acrossX * currentSagittaMm;
   const restY = midY + acrossY * currentSagittaMm;
 
@@ -61,18 +63,11 @@ export function CurveBowHandle({
 
   const previewPoints = useMemo<[number, number, number][] | null>(() => {
     if (dragSagitta === null) return null;
-    const pts: [number, number, number][] = [];
-    for (let i = 0; i <= 16; i += 1) {
-      const t = i / 16;
-      const bow = dragSagitta * (1 - (2 * t - 1) ** 2);
-      pts.push([
-        (startX + dx * t + acrossX * bow) / MM,
-        topYM,
-        (startY + dy * t + acrossY * bow) / MM,
-      ]);
-    }
-    return pts;
-  }, [dragSagitta, startX, startY, dx, dy, acrossX, acrossY, topYM]);
+    // Preview the REAL circular arc (matches the committed result), not an approximating parabola.
+    return bowArcPlanPoints(startX, startY, endX, endY, dragSagitta).map(
+      (p) => [p.x / MM, topYM, p.y / MM] as [number, number, number],
+    );
+  }, [dragSagitta, startX, startY, endX, endY, topYM]);
 
   const drag = useDrag3D({
     constraint: { mode: 'ground' },

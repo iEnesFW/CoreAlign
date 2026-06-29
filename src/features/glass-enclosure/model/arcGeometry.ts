@@ -220,6 +220,58 @@ export const arcFromBow = (
 // handle starts at the apex. Inverse of arcFromBow's sign rule (bulge opposite the sweep sign).
 export const bowFromArc = (chordMm: number, radiusMm: number, sweepSignDeg: number): number => {
   const r = Math.max(radiusMm, chordMm / 2);
-  const sag = r - Math.sqrt(Math.max(0, r * r - (chordMm / 2) ** 2));
+  const minorSag = r - Math.sqrt(Math.max(0, r * r - (chordMm / 2) ** 2));
+  // A major arc (> 180°) bulges to the FAR apex (2r − minorSag), not the near one — so a re-grab
+  // handle on an already-deep curve starts at its real apex instead of a shallow phantom point.
+  const sag = Math.abs(sweepSignDeg) > 180 ? 2 * r - minorSag : minorSag;
   return (sweepSignDeg < 0 ? 1 : -1) * sag;
+};
+
+// Samples the circular arc between two chord endpoints (plan mm) that bulges by `sagittaMm` toward
+// the chord's +90° across direction. This is the SAME arc the bow commit produces, so a drag
+// preview drawn from these points matches the committed result instead of approximating it with a
+// parabola (which diverged badly once the bow passed a half-circle). Returns the straight chord for
+// a negligible bow.
+export const bowArcPlanPoints = (
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  sagittaMm: number,
+  segments = 48,
+): { x: number; y: number }[] => {
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const chord = Math.hypot(dx, dy) || 1;
+  if (Math.abs(sagittaMm) < 1) {
+    return [
+      { x: startX, y: startY },
+      { x: endX, y: endY },
+    ];
+  }
+  const acrossX = -dy / chord;
+  const acrossY = dx / chord;
+  const midX = (startX + endX) / 2;
+  const midY = (startY + endY) / 2;
+  const half = chord / 2;
+  const center = (sagittaMm * sagittaMm - half * half) / (2 * sagittaMm);
+  const cx = midX + acrossX * center;
+  const cy = midY + acrossY * center;
+  const r = Math.hypot(startX - cx, startY - cy);
+  const a0 = Math.atan2(startY - cy, startX - cx);
+  const a1 = Math.atan2(endY - cy, endX - cx);
+  const apexX = midX + acrossX * sagittaMm;
+  const apexY = midY + acrossY * sagittaMm;
+  const aApex = Math.atan2(apexY - cy, apexX - cx);
+  const twoPi = Math.PI * 2;
+  const mod = (a: number) => ((a % twoPi) + twoPi) % twoPi;
+  const ccwSweep = mod(a1 - a0);
+  // Sweep in the direction that passes through the apex (minor or major arc).
+  const sweep = mod(aApex - a0) <= ccwSweep ? ccwSweep : ccwSweep - twoPi;
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const ang = a0 + sweep * (i / segments);
+    pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
+  }
+  return pts;
 };
