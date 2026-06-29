@@ -1,7 +1,10 @@
 import { type BufferGeometry, ExtrudeGeometry, Matrix4, Mesh, Shape, Vector3 } from 'three';
 import { CSG } from 'three-csg-ts';
 import { logger } from '@/shared/lib/logger';
+import { buildCurvedWallFeatureSolid } from './curvedExtrude';
+import { featureOutlineMm } from '../../model/wallFeatureGeometry';
 import type { FeatureOutlinePoint } from '../../model/wallFeatureGeometry';
+import type { SceneWallFeature } from '../../model/project.types';
 
 export type WallFeatureSide = 'front' | 'back' | 'top' | 'bottom' | 'left' | 'right';
 
@@ -202,6 +205,90 @@ export const applyWallFaceFeatures = (
       logger.error('wall face CSG failed', { side: f.side, mode: f.mode, error });
     }
     geo.dispose();
+  }
+  mesh.geometry.computeVertexNormals();
+  mesh.updateMatrix();
+  return mesh.geometry;
+};
+
+export interface CurvedWallParams {
+  lengthMm: number;
+  radiusM: number;
+  direction: 1 | -1;
+  sweep: number;
+  thicknessM: number;
+}
+
+// Carve front/back holes & recesses into a CURVED (arc-in-plan) wall body by CSG-subtracting a
+// curved cutter that follows the feature outline along the arc (buildCurvedWallFeatureSolid is in
+// the same pre-rotation frame as the band). Mirrors applyWallFaceFeatures' empty-result guard so a
+// degenerate cut can never collapse the whole wall. Flush recesses (depth <= 0) and protrusions are
+// NOT cut here (protrusions are additive meshes; a flush recess is just a non-cutting outline).
+export const applyCurvedWallFeatures = (
+  body: BufferGeometry,
+  features: SceneWallFeature[],
+  params: CurvedWallParams,
+): BufferGeometry => {
+  const { lengthMm, radiusM, direction, sweep, thicknessM } = params;
+  const outerR = radiusM + thicknessM / 2;
+  const innerR = Math.max(0.001, radiusM - thicknessM / 2);
+  const cuts = features.filter(
+    (f) =>
+      (f.side === 1 || f.side === -1) &&
+      (f.mode === 'hole' || (f.mode === 'recess' && f.depthMm > 0)),
+  );
+  if (cuts.length === 0) return body;
+  let mesh = new Mesh(body);
+  mesh.updateMatrix();
+  for (const f of cuts) {
+    const outline = featureOutlineMm(f).map((p) => ({ x: p.x, z: p.z }));
+    if (outline.length < 3) continue;
+    const depthM = Math.max(0.002, f.depthMm / 1000);
+    const isFront = f.side === 1; // front = OUTER (convex) face; back = INNER (concave)
+    let rNear: number;
+    let rFar: number;
+    if (f.mode === 'hole') {
+      rNear = innerR - 0.02;
+      rFar = outerR + 0.02;
+    } else if (isFront) {
+      rNear = Math.max(innerR + 0.001, outerR - depthM);
+      rFar = outerR + 0.02;
+    } else {
+      rNear = innerR - 0.02;
+      rFar = Math.min(outerR - 0.001, innerR + depthM);
+    }
+    const cutter = buildCurvedWallFeatureSolid(
+      outline,
+      lengthMm,
+      radiusM,
+      direction,
+      sweep,
+      rNear,
+      rFar,
+    );
+    if ((cutter.attributes.position?.count ?? 0) === 0) {
+      cutter.dispose();
+      continue;
+    }
+    try {
+      const tool = new Mesh(cutter);
+      tool.updateMatrix();
+      const next = CSG.subtract(mesh, tool);
+      const count = next.geometry.getAttribute('position')?.count ?? 0;
+      if (count === 0) {
+        logger.error('curved wall CSG produced an empty result; keeping prior body', {
+          side: f.side,
+          mode: f.mode,
+        });
+        next.geometry.dispose();
+      } else {
+        if (mesh.geometry !== body) mesh.geometry.dispose();
+        mesh = next;
+      }
+    } catch (error) {
+      logger.error('curved wall feature CSG failed', { side: f.side, mode: f.mode, error });
+    }
+    cutter.dispose();
   }
   mesh.geometry.computeVertexNormals();
   mesh.updateMatrix();

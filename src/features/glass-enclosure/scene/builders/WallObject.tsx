@@ -13,7 +13,7 @@ import {
 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
-import { buildCurvedBandGeometry } from './curvedExtrude';
+import { buildCurvedBandGeometry, curvedWallPickUv } from './curvedExtrude';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
@@ -51,6 +51,7 @@ import {
 import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
 import {
+  applyCurvedWallFeatures,
   applyWallFaceFeatures,
   buildFaceFeatureGeometry,
   normalizeWallSide,
@@ -210,13 +211,14 @@ const buildWallGeometries = (
   const thicknessMm = wall.thicknessMm;
   const thicknessM = thicknessMm / 1000;
 
-  // Curved (arc-in-plan) wall: a single annular band, constant height. Openings and
-  // surface features are not projected onto the curve in this version (#6a).
+  // Curved (arc-in-plan) wall: a single annular band. Front/back holes & recesses are now carved
+  // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
+  // features on a curved wall are a follow-up.
   if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
     const radiusM = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm) / 1000;
     const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
     const sweep = Math.min(wall.lengthMm / (radiusM * 1000), Math.PI * 2);
-    const body = buildCurvedBandGeometry(
+    const band = buildCurvedBandGeometry(
       radiusM,
       direction,
       0,
@@ -224,6 +226,16 @@ const buildWallGeometries = (
       thicknessM,
       wall.heightMm / 1000,
     );
+    const body = cutFeatures
+      ? applyCurvedWallFeatures(band, wall.features ?? [], {
+          lengthMm: wall.lengthMm,
+          radiusM,
+          direction,
+          sweep,
+          thicknessM,
+        })
+      : band;
+    if (body !== band) band.dispose();
     return { body, featureItems: [], openingFrames: [] };
   }
 
@@ -643,6 +655,22 @@ export function WallObject({
     if (!group) return null;
     TMP_VEC.copy(point);
     group.worldToLocal(TMP_VEC);
+    // A curved wall's front/back surface is cylindrical — invert it so the pick maps to (offset
+    // along the developed wall, height), instead of the flat-box projection which mislocates it.
+    if (isArcWall && (side === 'front' || side === 'back')) {
+      const radiusM = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm ?? 0) / 1000;
+      const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+      const sweep = Math.min(wall.lengthMm / (radiusM * 1000), Math.PI * 2);
+      return curvedWallPickUv(
+        TMP_VEC.x,
+        TMP_VEC.y,
+        TMP_VEC.z,
+        radiusM,
+        direction,
+        sweep,
+        wall.lengthMm,
+      );
+    }
     const frame = wallFaceFrame(side, drawDims());
     const rx = TMP_VEC.x - frame.origin.x;
     const ry = TMP_VEC.y - frame.origin.y;
@@ -689,16 +717,6 @@ export function WallObject({
   };
 
   const commitDraft = (spec: DraftFeature) => {
-    if (isArcWall) {
-      queueToast({
-        dedupeKey: 'glass-arc-no-feature',
-        variant: 'warning',
-        description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
-          defaultValue: 'Kavisli duvara henüz açıklık/şekil çizilemiyor.',
-        }),
-      });
-      return;
-    }
     if (spec.widthMm < MIN_FEATURE_SIZE_MM || spec.heightMm < MIN_FEATURE_SIZE_MM) {
       queueToast({
         dedupeKey: 'glass-wall-feature-fit',
@@ -735,9 +753,11 @@ export function WallObject({
     const feature: SceneWallFeature = {
       id: crypto.randomUUID(),
       shape: spec.shape,
-      // Default a drawn shape to a NON-CUTTING outline (a flush recess with no depth): it just
-      // shows as a line, and the user chooses hole / recess+depth / protrusion in the inspector.
-      mode: 'recess',
+      // Flat walls default a drawn shape to a NON-CUTTING outline (a flush recess) so the user
+      // picks hole/recess/protrusion in the inspector. A CURVED wall has no on-surface selection
+      // yet, so a drawn shape there defaults to a through HOLE — the cut is applied + visible at
+      // once (the common case: a window/opening in a curved wall).
+      mode: isArcWall ? 'hole' : 'recess',
       // Stored side uses 1/-1 for front/back, the string for the four side faces.
       side: spec.side === 'front' ? 1 : spec.side === 'back' ? -1 : spec.side,
       offsetMm: Math.round(offsetMm),

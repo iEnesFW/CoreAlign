@@ -145,3 +145,126 @@ export const buildCurvedShapedGeometry = (
   geometry.computeVertexNormals();
   return geometry;
 };
+
+// Invert the curved-wall surface: a pick point in the wall GROUP's local frame (after worldToLocal,
+// i.e. the band mesh's parent frame — the band is the pre-rotation cyl() solid rotated [-π/2,0,0],
+// which maps band (x,y,z) → group-local (x, z, -y)) back to (offset along the developed wall,
+// height). Lets the draw/pen tools place a feature where the cursor hits a curved wall, instead of
+// the flat-box projection (which lands it at the wrong offset). Mirror of buildCurvedBandGeometry.
+export const curvedWallPickUv = (
+  localX: number,
+  localY: number,
+  localZ: number,
+  radiusM: number,
+  direction: 1 | -1,
+  sweep: number,
+  lengthMm: number,
+): { u: number; v: number } => {
+  const centerY = -direction * radiusM;
+  const a = Math.atan2(-(localZ + centerY), localX);
+  const phi = direction === 1 ? Math.PI / 2 - a : a + Math.PI / 2;
+  const span = Math.max(1e-4, sweep);
+  return { u: (phi / span) * lengthMm, v: localY * 1000 };
+};
+
+export interface CurvedWallFeaturePoint {
+  x: number; // offset ALONG the wall, mm (0 → wall.lengthMm)
+  z: number; // height, mm
+}
+
+// A closed solid that follows the feature's outline along a curved wall, occupying the radial
+// band [rNearM, rFarM]. Built in the SAME pre-rotation frame as buildCurvedBandGeometry (arc in
+// XY, height along Z) so it can be CSG-subtracted from / unioned with the curved wall body, or
+// rendered as a thin on-surface proxy for selection. The outline x maps along the arc (0 → sweep);
+// z is the height. Used for holes (through), recesses (partial radial), protrusions (outward) and
+// the selectable surface decal on a curved wall.
+export const buildCurvedWallFeatureSolid = (
+  outlineMm: CurvedWallFeaturePoint[],
+  lengthMm: number,
+  radiusM: number,
+  direction: 1 | -1,
+  sweep: number,
+  rNearM: number,
+  rFarM: number,
+): BufferGeometry => {
+  const radius = Math.max(0.001, Number.isFinite(radiusM) ? radiusM : 0.001);
+  const span = Math.max(1e-4, sweep);
+  const centerY = -direction * radius;
+  const len = Math.max(1, lengthMm);
+  const rIn = Math.max(0.0005, Math.min(rNearM, rFarM));
+  const rOut = Math.max(rIn + 1e-4, Math.max(rNearM, rFarM));
+  const toAngle = (phi: number) => (direction === 1 ? Math.PI / 2 - phi : phi - Math.PI / 2);
+  const cyl = (xMm: number, zMm: number, r: number): [number, number, number] => {
+    const phi = Math.max(0, Math.min(span, (xMm / len) * span));
+    const a = toAngle(phi);
+    return [Math.cos(a) * r, centerY + Math.sin(a) * r, zMm / 1000];
+  };
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  for (const p of outlineMm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+  }
+  if (!Number.isFinite(minX) || maxX - minX < 0.5) return new BufferGeometry();
+  // Column density tracks the arc length the feature spans, so a wider feature stays smooth.
+  const featureSpanRad = ((maxX - minX) / len) * span;
+  const cols = Math.max(8, Math.ceil(featureSpanRad / SHAPED_COL_STEP_RAD));
+  const ySpanAt = (x: number) =>
+    spanAtX(
+      outlineMm.map((p) => ({ x: p.x, y: p.z })),
+      x,
+    );
+  const edgeEps = (maxX - minX) * 1e-4 + 1e-3;
+  const columns: { x: number; lo: number; hi: number }[] = [];
+  for (let i = 0; i <= cols; i += 1) {
+    let x = minX + ((maxX - minX) * i) / cols;
+    if (i === 0) x = minX + edgeEps;
+    else if (i === cols) x = maxX - edgeEps;
+    const s = ySpanAt(x);
+    if (s && s[1] - s[0] > 0.5) columns.push({ x, lo: s[0], hi: s[1] });
+  }
+  if (columns.length < 2) return new BufferGeometry();
+
+  const pos: number[] = [];
+  const tri = (a: number[], b: number[], c: number[]) => pos.push(...a, ...b, ...c);
+  const quad = (a: number[], b: number[], c: number[], d: number[]) => {
+    tri(a, b, c);
+    tri(a, c, d);
+  };
+  for (let i = 0; i < columns.length - 1; i += 1) {
+    const c0 = columns[i];
+    const c1 = columns[i + 1];
+    const fb0 = cyl(c0.x, c0.lo, rOut);
+    const ft0 = cyl(c0.x, c0.hi, rOut);
+    const fb1 = cyl(c1.x, c1.lo, rOut);
+    const ft1 = cyl(c1.x, c1.hi, rOut);
+    const bb0 = cyl(c0.x, c0.lo, rIn);
+    const bt0 = cyl(c0.x, c0.hi, rIn);
+    const bb1 = cyl(c1.x, c1.lo, rIn);
+    const bt1 = cyl(c1.x, c1.hi, rIn);
+    quad(fb0, fb1, ft1, ft0); // outer face
+    quad(bb1, bb0, bt0, bt1); // inner face
+    quad(ft0, ft1, bt1, bt0); // top rim
+    quad(bb0, bb1, fb1, fb0); // bottom rim
+  }
+  const first = columns[0];
+  quad(
+    cyl(first.x, first.lo, rOut),
+    cyl(first.x, first.hi, rOut),
+    cyl(first.x, first.hi, rIn),
+    cyl(first.x, first.lo, rIn),
+  );
+  const last = columns[columns.length - 1];
+  quad(
+    cyl(last.x, last.lo, rIn),
+    cyl(last.x, last.hi, rIn),
+    cyl(last.x, last.hi, rOut),
+    cyl(last.x, last.lo, rOut),
+  );
+
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  geometry.computeVertexNormals();
+  return geometry;
+};
