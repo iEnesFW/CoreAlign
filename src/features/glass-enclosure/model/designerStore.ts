@@ -1238,10 +1238,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const bentByRun = new Map<string, boolean>();
     const frameByRun = new Map<string, RunFrameEdges>();
     const mullionsByRun = new Map<string, boolean>();
+    const colorByRun = new Map<string, string>();
     for (const r of scene.runs) {
       if (r.arcGlassBent) bentByRun.set(r.id, true);
       if (r.frameEdges) frameByRun.set(r.id, r.frameEdges);
       if (r.hasMullions === false) mullionsByRun.set(r.id, false);
+      if (r.customColorHex) colorByRun.set(r.id, r.customColorHex);
       for (const p of r.panels) {
         if (p.hardware?.length) hwByPanel.set(p.id, p.hardware);
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
@@ -1256,6 +1258,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       bentByRun.size === 0 &&
       frameByRun.size === 0 &&
       mullionsByRun.size === 0 &&
+      colorByRun.size === 0 &&
       snapshotWalls.length === 0 &&
       snapshotSlabs.length === 0 &&
       snapshotSurfaces.length === 0
@@ -1271,6 +1274,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         arcGlassBent: bentByRun.get(run.id) ?? run.arcGlassBent ?? false,
         frameEdges: frameByRun.get(run.id) ?? run.frameEdges ?? null,
         hasMullions: mullionsByRun.has(run.id) ? false : (run.hasMullions ?? true),
+        customColorHex: colorByRun.get(run.id) ?? run.customColorHex ?? null,
         panels: run.panels.map((panel) => {
           const hw = hwByPanel.get(panel.id);
           const notch = notchByPanel.get(panel.id);

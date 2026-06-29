@@ -42,6 +42,10 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
     updateRun(run.id, patch);
     void persistRun({ ...run, ...patch });
   };
+  // customColorHex is scene-local (persistRun/toRunInput never sends it) — update the store only
+  // and let the debounced scene autosave persist it. Calling persistRun on every color-picker
+  // input event floods the run endpoint (HTTP 429); this keeps the live preview without the flood.
+  const commitLocal = (patch: Partial<typeof run>) => updateRun(run.id, patch);
   const defaultGlassTypeId = glassTypes.find((g) => g.isActive)?.id ?? glassTypes[0]?.id ?? '';
   const show = (section: InspectorSection) => (sections ?? []).includes(section);
   const minRadius = Math.max(100, minArcRadiusMm(draft.lengthMm));
@@ -126,7 +130,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                     colors.find((c) => c.id === draft.colorId)?.hexColor ??
                     '#cfd5d9'
                   }
-                  onChange={(e) => commit({ customColorHex: e.target.value })}
+                  onChange={(e) => commitLocal({ customColorHex: e.target.value })}
                   className="h-9 w-11 cursor-pointer border-0 bg-transparent p-0"
                 />
               </label>
