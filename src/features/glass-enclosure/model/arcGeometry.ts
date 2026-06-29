@@ -168,3 +168,47 @@ export const deriveArcFromChordSagitta = (chordMm: number, sagittaMm: number): A
 
 export const facetJointAngleDeg = (sweepDeg: number, panelCount: number) =>
   panelCount > 0 ? sweepDeg / panelCount : sweepDeg;
+
+export interface BowArc {
+  geomArcRadiusMm: number | null;
+  geomArcSweepDeg: number | null;
+  rotationDeg: number;
+  lengthMm: number;
+}
+
+// Turn a perpendicular "bow" (signed sagitta in the chord's +90° across direction) into the arc
+// params for a run/wall whose CHORD stays fixed (same start + end). rotationDeg is rolled back by
+// dir·sweep/2 so the arc's chord still points along chordDeg — i.e. the body bows WITHOUT rotating
+// (the previous bug). The dir/sign convention matches the autofill arc (arcCornerEdge): the bulge
+// sits on the OPPOSITE side of the sweep sign. Under the straighten threshold it returns straight.
+export const arcFromBow = (
+  chordMm: number,
+  chordDeg: number,
+  sagittaMm: number,
+  straightenMm = 25,
+): BowArc => {
+  if (Math.abs(sagittaMm) < straightenMm) {
+    return {
+      geomArcRadiusMm: null,
+      geomArcSweepDeg: null,
+      rotationDeg: Math.round(chordDeg * 10) / 10,
+      lengthMm: Math.round(chordMm),
+    };
+  }
+  const dir = sagittaMm >= 0 ? -1 : 1;
+  const d = deriveArcFromChordSagitta(chordMm, Math.abs(sagittaMm));
+  return {
+    geomArcRadiusMm: d.radiusMm,
+    geomArcSweepDeg: Math.round(dir * d.sweepDeg * 10) / 10,
+    rotationDeg: Math.round((chordDeg - dir * (d.sweepDeg / 2)) * 10) / 10,
+    lengthMm: d.arcLengthMm,
+  };
+};
+
+// The current signed bow (sagitta in the +90° across direction) of an existing arc, so a re-adjust
+// handle starts at the apex. Inverse of arcFromBow's sign rule (bulge opposite the sweep sign).
+export const bowFromArc = (chordMm: number, radiusMm: number, sweepSignDeg: number): number => {
+  const r = Math.max(radiusMm, chordMm / 2);
+  const sag = r - Math.sqrt(Math.max(0, r * r - (chordMm / 2) ** 2));
+  return (sweepSignDeg < 0 ? 1 : -1) * sag;
+};
