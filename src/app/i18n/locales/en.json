@@ -2621,10 +2621,24 @@
       "Appearance": {
         "Label": "Appearance",
         "Studio": "Studio",
+        "Daylight": "Daylight",
+        "Street": "Street",
         "Sunset": "Sunset",
         "City": "City",
         "Dawn": "Dawn",
-        "Plain": "Plain"
+        "Plain": "Plain",
+        "Section": "Appearance",
+        "NoTexture": "No texture"
+      },
+      "Material": {
+        "wood": "Wood",
+        "marble": "Marble",
+        "concrete": "Concrete",
+        "panel": "Panel",
+        "grass": "Grass",
+        "asphalt": "Asphalt",
+        "brick": "Brick",
+        "plaster": "Plaster"
       },
       "Polygon": {
         "SectionTitle": "Polygon vertices",
@@ -2674,7 +2688,7 @@
         "Rotation": "Rotation",
         "DeleteFloor": "Delete floor",
         "DeleteRoof": "Delete roof",
-        "BarrelTitle": "Barrel (curved) roof",
+        "BarrelTitle": "Barrel (curved) surface",
         "ArcRise": "Curve rise",
         "BarrelDropsFeatures": "Converting to a curve removed this roof's shapes."
       },

@@ -89,7 +89,7 @@ interface SlabObjectProps {
 const FLOOR_COLOR = '#b7bfc7';
 const ROOF_COLOR = '#8c98a4';
 const SELECTED_EDGE = '#1d4ed8';
-const SLAB_EDGE = '#64748b';
+const SLAB_EDGE = '#cbd5e1';
 const REGION_COLOR = '#2563eb';
 const DEG2RAD = Math.PI / 180;
 const HALF_PI = Math.PI / 2;
@@ -119,9 +119,9 @@ const buildSlabGeometries = (
   const thicknessMm = slab.thicknessMm;
   const thicknessM = thicknessMm / 1000;
 
-  // Barrel (single-curvature) roof: a curved sheet, already in the slab's oriented
-  // frame. Surface features are not projected onto the curve in this version (#6b).
-  if (slab.kind === 'roof' && slab.arcRiseMm && slab.arcRiseMm > 0) {
+  // Barrel (single-curvature) slab — a curved sheet (roof OR floor), already in the slab's
+  // oriented frame. Surface features are not projected onto the curve in this version (#6b).
+  if (slab.arcRiseMm && slab.arcRiseMm > 0) {
     return {
       body: buildBarrelRoofGeometry(slab.lengthMm, slab.depthMm, slab.arcRiseMm, slab.thicknessMm),
       featureItems: [],
@@ -204,6 +204,8 @@ export function SlabObject({
   const sceneRef = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const updateSlab = useDesignerStore((s) => s.updateSlab);
+  const paintColor = useDesignerStore((s) => s.paintColor);
+  const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const addSlabFeature = useDesignerStore((s) => s.addSlabFeature);
   const updateSlabFeature = useDesignerStore((s) => s.updateSlabFeature);
   const setSelection = useDesignerStore((s) => s.setSelection);
@@ -214,7 +216,7 @@ export function SlabObject({
   const elevationM = slab.elevationMm / 1000;
 
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
-  const isBarrelRoof = slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0;
+  const isBarrelRoof = (slab.arcRiseMm ?? 0) > 0;
   // Length/depth stretch assumes a flat slab; a barrel roof is resized via its rise.
   const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
   const vertexEditActive =
@@ -646,6 +648,11 @@ export function SlabObject({
     }
     if (gestures.consumeClick() || drawDrag.consumeClick()) return;
     if (activeTool === 'draw') return;
+    if (activeTool === 'paint' && interactive) {
+      if (paintMaterial) updateSlab(slab.id, { materialKey: paintMaterial, colorHex: null });
+      else if (paintColor) updateSlab(slab.id, { colorHex: paintColor.hex, materialKey: null });
+      return;
+    }
     onSelect(slab.id);
   };
 

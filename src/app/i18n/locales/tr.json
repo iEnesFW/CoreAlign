@@ -2621,10 +2621,24 @@
       "Appearance": {
         "Label": "Görünüm",
         "Studio": "Stüdyo",
+        "Daylight": "Gün Işığı",
+        "Street": "Sokak",
         "Sunset": "Gün Batımı",
         "City": "Şehir",
         "Dawn": "Şafak",
-        "Plain": "Düz"
+        "Plain": "Düz",
+        "Section": "Görünüm",
+        "NoTexture": "Dokusuz"
+      },
+      "Material": {
+        "wood": "Ahşap",
+        "marble": "Mermer",
+        "concrete": "Beton",
+        "panel": "Panel",
+        "grass": "Çim",
+        "asphalt": "Asfalt",
+        "brick": "Tuğla",
+        "plaster": "Sıva"
       },
       "Polygon": {
         "SectionTitle": "Çokgen köşeleri",
@@ -2674,7 +2688,7 @@
         "Rotation": "Dönüş",
         "DeleteFloor": "Zemini sil",
         "DeleteRoof": "Çatıyı sil",
-        "BarrelTitle": "Beşik (kavisli) çatı",
+        "BarrelTitle": "Beşik (kavisli) yüzey",
         "ArcRise": "Kavis yüksekliği",
         "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı."
       },

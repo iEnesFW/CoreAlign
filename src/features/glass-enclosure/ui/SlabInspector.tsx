@@ -11,6 +11,7 @@ import {
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
 import type { SceneSlabState } from '../model/project.types';
+import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
 export function SlabInspector() {
   const { t } = useTranslation();
@@ -44,8 +45,9 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
-  // A barrel roof defers surface features (they aren't projected onto the curve, #6b).
-  const isBarrelRoof = slab.kind === 'roof' && (draft.arcRiseMm ?? 0) > 0;
+  // A barrel (curved) slab defers surface features (they aren't projected onto the curve, #6b).
+  // Roofs AND floors can be curved.
+  const isBarrelRoof = (draft.arcRiseMm ?? 0) > 0;
 
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
@@ -126,6 +128,12 @@ export function SlabInspector() {
         </button>
       </header>
 
+      <ObjectAppearanceSection
+        colorHex={slab.colorHex}
+        materialKey={slab.materialKey}
+        onChange={(patch) => updateSlab(slab.id, patch)}
+      />
+
       <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
         <span className="text-[10px] uppercase tracking-wide">
           {t('GlassEnclosure.Designer.Slab.Kind', { defaultValue: 'Tip' })}
@@ -196,22 +204,20 @@ export function SlabInspector() {
         />
       </div>
 
-      {slab.kind === 'roof' && (
-        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            {t('GlassEnclosure.Designer.Slab.BarrelTitle', {
-              defaultValue: 'Beşik (kavisli) çatı',
-            })}
-          </p>
-          <NumberField
-            label={`${t('GlassEnclosure.Designer.Slab.ArcRise', { defaultValue: 'Kavis yüksekliği' })} (mm)`}
-            value={draft.arcRiseMm ?? 0}
-            min={0}
-            onCommit={(v) => commitArcRise(v)}
-            onDraft={(v) => setDraft({ ...draft, arcRiseMm: v })}
-          />
-        </div>
-      )}
+      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.Slab.BarrelTitle', {
+            defaultValue: 'Beşik (kavisli) yüzey',
+          })}
+        </p>
+        <NumberField
+          label={`${t('GlassEnclosure.Designer.Slab.ArcRise', { defaultValue: 'Kavis yüksekliği' })} (mm)`}
+          value={draft.arcRiseMm ?? 0}
+          min={0}
+          onCommit={(v) => commitArcRise(v)}
+          onDraft={(v) => setDraft({ ...draft, arcRiseMm: v })}
+        />
+      </div>
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
