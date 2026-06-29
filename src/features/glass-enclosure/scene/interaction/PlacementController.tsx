@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { DoubleSide, Raycaster } from 'three';
+import { Plane, Raycaster, Vector2, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import { clearSnapGuides, setSnapGuides } from '@/shared/three-engine';
 import { applyPlanMoveSnap } from './planSnap';
@@ -9,7 +9,6 @@ import {
   clampPlanMove,
   penetratesAny,
 } from './planCollision';
-import type { ThreeEvent } from '@react-three/fiber';
 import type { Group, Mesh, MeshBasicMaterial, Object3D } from 'three';
 import type { PlanFootprint } from './planCollision';
 import type { PlanPoint, PlanSnapTargets } from './planSnap';
@@ -70,7 +69,6 @@ const SLAB_THICKNESS_MM = 150;
 const FLOOR_ELEVATION_MM = -150;
 const ROOF_FALLBACK_ELEVATION_MM = 2450;
 const CLICK_SLOP_PX = 5;
-const PLANE_SIZE_M = 400;
 const DEG2RAD = Math.PI / 180;
 const STRUCTURE_MIN_Y_MM = 200;
 
@@ -163,9 +161,16 @@ export function PlacementController({
   onPlaceSlab,
 }: PlacementControllerProps) {
   const scene = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
+  const gl = useThree((s) => s.gl);
   const raycaster = useMemo(() => new Raycaster(), []);
+  // A mathematical ground plane (y=0). The cursor's XZ comes from intersecting the pointer ray
+  // with THIS, not a mesh — so the preview tracks the cursor even when it is over another object
+  // (object meshes call stopPropagation and would otherwise swallow the ground mesh's events).
+  const groundPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), 0), []);
+  const ndc = useMemo(() => new Vector2(), []);
+  const hitPoint = useMemo(() => new Vector3(), []);
   const ghostRef = useRef<Group>(null);
-  const planeMeshRef = useRef<Mesh>(null);
   const meshRef = useRef<Mesh>(null);
   const matRef = useRef<MeshBasicMaterial>(null);
   const freeRef = useRef<PlanPoint | null>(null);
@@ -316,11 +321,8 @@ export function PlacementController({
 
   // The XZ of the structure the cursor points at (run/wall/slab top), so a roof lands
   // where you POINT — not on the cursor's ground projection, which parallaxes away in a
-  // perspective view ("mouse treated as ground"). Ground disk / grid (y≈0) are ignored.
-  const pickStructureXZ = (
-    e: ThreeEvent<PointerEvent>,
-  ): { x: number; y: number; elevationMm: number } | null => {
-    raycaster.set(e.ray.origin, e.ray.direction);
+  // perspective view ("mouse treated as ground"). Uses the raycaster already set from the pointer.
+  const pickStructureXZ = (): { x: number; y: number; elevationMm: number } | null => {
     for (const hit of raycaster.intersectObjects(scene.children, true)) {
       if (hit.point.y * MM <= STRUCTURE_MIN_Y_MM) continue;
       // Skip floating dimension labels (troika <Text> carries a string `text` prop) so a
@@ -329,7 +331,7 @@ export function PlacementController({
       let o: Object3D | null = hit.object;
       let owned = false;
       while (o) {
-        if (o === ghostRef.current || o === planeMeshRef.current) {
+        if (o === ghostRef.current) {
           owned = true;
           break;
         }
@@ -343,14 +345,31 @@ export function PlacementController({
     return null;
   };
 
-  const followPointer = (e: ThreeEvent<PointerEvent>) => {
-    const gridX = snapToPlaceGrid(e.point.x * MM);
-    const gridY = snapToPlaceGrid(e.point.z * MM);
+  // Drive the preview from raw client coords against a MATH plane (not a mesh), so it tracks the
+  // cursor even over objects that stopPropagation. Returns the ground XZ in mm, or null off-plane.
+  const groundFromClient = (clientX: number, clientY: number): PlanPoint | null => {
+    const rect = gl.domElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+    ndc.set(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    raycaster.setFromCamera(ndc, camera);
+    if (!raycaster.ray.intersectPlane(groundPlane, hitPoint)) return null;
+    return { x: hitPoint.x * MM, y: hitPoint.z * MM };
+  };
+
+  const followPointer = (clientX: number, clientY: number) => {
+    const ground = groundFromClient(clientX, clientY);
+    if (!ground) return;
+    const gridX = snapToPlaceGrid(ground.x);
+    const gridY = snapToPlaceGrid(ground.y);
     // A slab (roof/floor) is large; snapping its footprint probes to every wall/run
     // corner yanks it far off the cursor. Slabs follow the cursor on the grid; a roof
     // additionally lands on the structure under the cursor so it's easy to position.
     if (!isLine) {
-      const hit = placement === 'roof' ? pickStructureXZ(e) : null;
+      // raycaster is already set from this pointer (above) → pickStructureXZ reuses it.
+      const hit = placement === 'roof' ? pickStructureXZ() : null;
       const x = hit ? snapToPlaceGrid(hit.x) : gridX;
       const y = hit ? snapToPlaceGrid(hit.y) : gridY;
       applyAt(x, y, [], hit?.elevationMm);
@@ -360,34 +379,7 @@ export function PlacementController({
     applyAt(stuck.dxMm, stuck.dyMm, stuck.guides);
   };
 
-  const applyAtRef = useRef(applyAt);
-  useEffect(() => {
-    applyAtRef.current = applyAt;
-  });
-
-  useEffect(() => {
-    if (!placement || !isLine) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const step = e.deltaY > 0 ? 90 : -90;
-      rotationRef.current = (((rotationRef.current + step) % 360) + 360) % 360;
-      const pos = posRef.current;
-      if (pos) applyAtRef.current(pos.x, pos.y, []);
-    };
-    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
-    return () => window.removeEventListener('wheel', onWheel, true);
-  }, [placement, isLine]);
-
-  const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
-    downRef.current = { x: e.nativeEvent.clientX, y: e.nativeEvent.clientY };
-  };
-
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    const dx = e.nativeEvent.clientX - downRef.current.x;
-    const dy = e.nativeEvent.clientY - downRef.current.y;
-    if (dx * dx + dy * dy > CLICK_SLOP_PX * CLICK_SLOP_PX) return;
+  const commitPlacement = () => {
     const pos = posRef.current;
     if (!pos || blockedRef.current) return;
     clearSnapGuides();
@@ -426,30 +418,66 @@ export function PlacementController({
     });
   };
 
+  // Keep the latest closures in refs so the DOM listeners (registered once per placement kind)
+  // never read stale obstacles / snapTargets / rotation.
+  const followPointerRef = useRef(followPointer);
+  const commitPlacementRef = useRef(commitPlacement);
+  const reapplyRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    followPointerRef.current = followPointer;
+    commitPlacementRef.current = commitPlacement;
+    reapplyRef.current = () => {
+      const pos = posRef.current;
+      if (pos) applyAt(pos.x, pos.y, []);
+    };
+  });
+
+  useEffect(() => {
+    if (!placement) return;
+    const el = gl.domElement;
+    const onMove = (e: PointerEvent) => followPointerRef.current(e.clientX, e.clientY);
+    const onDown = (e: PointerEvent) => {
+      downRef.current = { x: e.clientX, y: e.clientY };
+    };
+    const onUp = (e: PointerEvent) => {
+      const dx = e.clientX - downRef.current.x;
+      const dy = e.clientY - downRef.current.y;
+      // Distinguish a placement click from an orbit drag (which moves the pointer further).
+      if (dx * dx + dy * dy > CLICK_SLOP_PX * CLICK_SLOP_PX) return;
+      commitPlacementRef.current();
+    };
+    const onWheel = (e: WheelEvent) => {
+      if (!isLine) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const step = e.deltaY > 0 ? 90 : -90;
+      rotationRef.current = (((rotationRef.current + step) % 360) + 360) % 360;
+      reapplyRef.current();
+    };
+    el.addEventListener('pointermove', onMove);
+    el.addEventListener('pointerdown', onDown);
+    el.addEventListener('pointerup', onUp);
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => {
+      el.removeEventListener('pointermove', onMove);
+      el.removeEventListener('pointerdown', onDown);
+      el.removeEventListener('pointerup', onUp);
+      window.removeEventListener('wheel', onWheel, true);
+    };
+  }, [placement, isLine, gl]);
+
   return (
-    <>
-      <mesh
-        ref={planeMeshRef}
-        rotation={[-Math.PI / 2, 0, 0]}
-        onPointerDown={handlePointerDown}
-        onPointerMove={followPointer}
-        onClick={handleClick}
-      >
-        <planeGeometry args={[PLANE_SIZE_M, PLANE_SIZE_M]} />
-        <meshBasicMaterial transparent opacity={0} depthWrite={false} side={DoubleSide} />
+    <group ref={ghostRef} visible={false}>
+      <mesh ref={meshRef} raycast={() => null}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial
+          ref={matRef}
+          color={GHOST_COLOR}
+          transparent
+          opacity={GHOST_OPACITY}
+          depthWrite={false}
+        />
       </mesh>
-      <group ref={ghostRef} visible={false}>
-        <mesh ref={meshRef} raycast={() => null}>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshBasicMaterial
-            ref={matRef}
-            color={GHOST_COLOR}
-            transparent
-            opacity={GHOST_OPACITY}
-            depthWrite={false}
-          />
-        </mesh>
-      </group>
-    </>
+    </group>
   );
 }
