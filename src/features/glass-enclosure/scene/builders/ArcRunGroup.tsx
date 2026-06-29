@@ -9,7 +9,7 @@ import {
   arcFromBow,
   bowFromArc,
   computeArcLayout,
-  effectiveArcRadiusMm,
+  resolveArc,
 } from '../../model/arcGeometry';
 import { CurveBowHandle } from '../interaction/CurveBowHandle';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
@@ -45,7 +45,6 @@ import type { SceneRunState } from '../../model/project.types';
 
 interface ArcRunGroupProps {
   run: SceneRunState;
-  radiusMm: number;
   system?: ProfileSystemDto;
   color?: ColorOptionDto;
   glassTypes: Map<string, GlassTypeDto>;
@@ -87,7 +86,6 @@ const MIN_RUN_LENGTH_MM = 100;
 
 export function ArcRunGroup({
   run,
-  radiusMm,
   system,
   color,
   glassTypes,
@@ -109,10 +107,12 @@ export function ArcRunGroup({
   obstacles,
   supports,
 }: ArcRunGroupProps) {
-  const lengthM = run.lengthMm / 1000;
   const heightM = run.heightMm / 1000;
-  const effRadiusMm = effectiveArcRadiusMm(run.lengthMm, radiusMm);
-  const radiusM = effRadiusMm / 1000;
+  // CHORD-INVARIANT: run.lengthMm is the chord (the straight span); the radius and developed arc
+  // length are DERIVED from the (chord, signed sweep) overlay so the rendered chord always equals
+  // run.lengthMm and curving never changes the stored length.
+  const arc = resolveArc(run.lengthMm, run.geomArcSweepDeg ?? 1);
+  const radiusM = arc.radiusM;
   const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
   const profileHalf = PROFILE_CROSS_SECTION.height / 1000 / 2;
@@ -127,12 +127,12 @@ export function ArcRunGroup({
   const layout = useMemo(
     () =>
       computeArcLayout(
-        lengthM,
+        arc.arcLengthM,
         radiusM,
         run.geomArcSweepDeg ?? 1,
         panels.map((p) => p.widthMm / 1000),
       ),
-    [lengthM, radiusM, run.geomArcSweepDeg, panels],
+    [arc.arcLengthM, radiusM, run.geomArcSweepDeg, panels],
   );
 
   const isRunSelected = selectedRunId === run.id;
@@ -181,7 +181,7 @@ export function ArcRunGroup({
   const radR = (run.rotationDeg * Math.PI) / 180;
   const cosR = Math.cos(radR);
   const sinR = Math.sin(radR);
-  const end = arcEndLocal(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  const end = arcEndLocal(arc.arcLengthMm, arc.radiusMm, run.geomArcSweepDeg ?? 1);
   const endWorldX = run.originX + end.xMm * cosR - end.yMm * sinR;
   const endWorldY = run.originY + end.xMm * sinR + end.yMm * cosR;
 
@@ -434,7 +434,7 @@ export function ArcRunGroup({
               outlineWidth={0.004}
               outlineColor="#ffffff"
             >
-              {`${run.label} · R${Math.round(radiusMm)} · ${run.lengthMm} × ${run.heightMm} mm`}
+              {`${run.label} · R${Math.round(arc.radiusMm)} · ${run.lengthMm} × ${run.heightMm} mm · yay ${Math.round(arc.arcLengthMm)} mm`}
             </Text>
             {system && (
               <Text
@@ -468,15 +468,14 @@ export function ArcRunGroup({
           onCommit={(next) => {
             // Scale the arc's developed length by the chord ratio (radius/sweep fixed), and shift
             // the origin along the chord — projected so the curved run only changes length.
-            const oldChord = Math.hypot(endWorldX - run.originX, endWorldY - run.originY) || 1;
+            // The footprint box length IS the chord (lengthMm). Dragging an end sets the new chord;
+            // the arc overlay (sweep fixed) re-derives its radius from the new chord at render, and
+            // we sync the cached geomArcRadiusMm so re-grab/display stay consistent.
             const chordDeg = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
             const dirX = Math.cos(chordDeg);
             const dirY = Math.sin(chordDeg);
             const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
-            const lengthMm = Math.max(
-              MIN_RUN_LENGTH_MM,
-              Math.round((run.lengthMm * next.lengthMm) / oldChord),
-            );
+            const lengthMm = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
             const originX = Math.round(run.originX + along * dirX);
             const originY = Math.round(run.originY + along * dirY);
             const resized = buildRunFootprint(
@@ -486,7 +485,10 @@ export function ArcRunGroup({
               run.rotationDeg,
             );
             if (penetratesAny(resized, gestureObstacles)) return;
-            onStretchRun?.(run.id, { lengthMm, originX, originY });
+            const nextRadiusMm = Math.round(
+              resolveArc(lengthMm, run.geomArcSweepDeg ?? 1).radiusMm,
+            );
+            onStretchRun?.(run.id, { lengthMm, originX, originY, geomArcRadiusMm: nextRadiusMm });
           }}
         />
       )}
@@ -498,7 +500,7 @@ export function ArcRunGroup({
           endY={endWorldY}
           currentSagittaMm={bowFromArc(
             Math.hypot(endWorldX - run.originX, endWorldY - run.originY),
-            run.geomArcRadiusMm ?? radiusMm,
+            arc.radiusMm,
             run.geomArcSweepDeg ?? 1,
           )}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
@@ -506,14 +508,15 @@ export function ArcRunGroup({
             const chordMm = Math.hypot(endWorldX - run.originX, endWorldY - run.originY);
             const chordDeg =
               (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI;
-            const arc = arcFromBow(chordMm, chordDeg, sagittaMm);
+            const next = arcFromBow(chordMm, chordDeg, sagittaMm);
+            // lengthMm (chord) stays fixed — only the arc overlay changes. Omitting it from the
+            // patch keeps the run's length invariant and avoids a panel redistribution.
             onStretchRun(run.id, {
               originX: run.originX,
               originY: run.originY,
-              lengthMm: arc.lengthMm,
-              rotationDeg: arc.rotationDeg,
-              geomArcRadiusMm: arc.geomArcRadiusMm,
-              geomArcSweepDeg: arc.geomArcSweepDeg,
+              rotationDeg: next.rotationDeg,
+              geomArcRadiusMm: next.geomArcRadiusMm,
+              geomArcSweepDeg: next.geomArcSweepDeg,
             });
           }}
         />

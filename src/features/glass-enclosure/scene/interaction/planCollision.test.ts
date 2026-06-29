@@ -43,7 +43,7 @@ const run = (
   hasBottomThreshold: false,
   geomZ: 0,
   geomArcRadiusMm: arcRadiusMm || null,
-  geomArcSweepDeg: arcRadiusMm ? 30 : null,
+  geomArcSweepDeg: arcRadiusMm ? 120 : null,
   panels: [],
 });
 

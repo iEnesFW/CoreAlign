@@ -86,11 +86,13 @@ export function RunArcSection({
   const applyChordSagitta = () => {
     const chord = Number(chordDraft);
     const sagitta = Number(sagittaDraft);
-    if (!chord || !sagitta || chord <= 0 || sagitta <= 0 || sagitta * 2 > chord) return;
+    // A bow past half the chord is a MAJOR arc (> 180°) — allowed; only reject non-positive input.
+    if (!chord || !sagitta || chord <= 0 || sagitta <= 0) return;
     const next = deriveArcFromChordSagitta(chord, sagitta);
     onDraftRadius(next.radiusMm);
     commit({
-      lengthMm: next.arcLengthMm,
+      // lengthMm is the CHORD (the measured span), NOT the developed arc length.
+      lengthMm: next.chordMm,
       geomArcRadiusMm: next.radiusMm,
       geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
       ...bentOnArc(),
@@ -132,7 +134,7 @@ export function RunArcSection({
           <input
             type="number"
             min={1}
-            max={180}
+            max={350}
             step={1}
             value={sweepDraft}
             placeholder={derived ? derived.sweepDeg.toFixed(1) : '0'}

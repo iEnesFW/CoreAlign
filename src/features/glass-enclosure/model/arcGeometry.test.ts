@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { bowArcPlanPoints, bowFromArc, deriveArcFromChordSagitta } from './arcGeometry';
+import {
+  arcChordFromRadiusSweep,
+  arcFromBow,
+  bowArcPlanPoints,
+  bowFromArc,
+  deriveArcFromChordSagitta,
+  deriveArcFromRadius,
+  minArcRadiusMm,
+  resolveArc,
+} from './arcGeometry';
 
 describe('bowArcPlanPoints', () => {
   const startX = 0;
@@ -76,5 +85,61 @@ describe('bowFromArc', () => {
   it('carries the sweep sign (bulge direction)', () => {
     expect(bowFromArc(3000, 2000, 90)).toBeLessThan(0);
     expect(bowFromArc(3000, 2000, -90)).toBeGreaterThan(0);
+  });
+});
+
+describe('chord-invariant arc model', () => {
+  it('arcFromBow keeps lengthMm = the CHORD (never the developed arc length)', () => {
+    // The old bug ballooned a 3000mm chord to its ~7268mm developed length.
+    const bow = arcFromBow(3000, 0, 600);
+    expect(bow.lengthMm).toBe(3000);
+    expect(bow.geomArcRadiusMm).toBeGreaterThan(0);
+    // The developed length is reported separately and IS larger than the chord for a real bow.
+    expect(bow.arcLengthMm).toBeGreaterThan(3000);
+  });
+
+  it('arcFromBow returns a straight result (chord preserved) under the straighten threshold', () => {
+    const bow = arcFromBow(3000, 45, 5);
+    expect(bow.geomArcRadiusMm).toBeNull();
+    expect(bow.geomArcSweepDeg).toBeNull();
+    expect(bow.lengthMm).toBe(3000);
+  });
+
+  it('resolveArc derives a radius+arc-length whose chord equals the input chord', () => {
+    const chord = 3000;
+    for (const sweepDeg of [30, 90, 180, 300]) {
+      const r = resolveArc(chord, sweepDeg);
+      const renderedChord = 2 * r.radiusMm * Math.sin(r.sweepRad / 2);
+      expect(renderedChord).toBeCloseTo(chord, 3);
+      expect(r.arcLengthMm).toBeCloseTo(r.radiusMm * r.sweepRad, 3);
+    }
+  });
+
+  it('resolveArc reads the bulge direction from the sweep sign', () => {
+    expect(resolveArc(3000, 90).direction).toBe(1);
+    expect(resolveArc(3000, -90).direction).toBe(-1);
+  });
+
+  it('arcChordFromRadiusSweep recovers the chord from radius+sweep (legacy migration)', () => {
+    // A legacy arc stored radius 12047 + sweep 345.7° (a near-full circle of a 3000mm chord).
+    expect(arcChordFromRadiusSweep(72685, 12047, 345.7)).toBeCloseTo(3000, -1);
+    // Idempotent for chord-invariant data: feeding the already-correct chord round-trips.
+    const r = resolveArc(3000, 120);
+    expect(arcChordFromRadiusSweep(3000, r.radiusMm, 120)).toBe(3000);
+    // Passthrough when there is no arc.
+    expect(arcChordFromRadiusSweep(3000, null, null)).toBe(3000);
+  });
+
+  it('deriveArcFromRadius treats its first arg as the chord and floors radius at chord/2', () => {
+    const d = deriveArcFromRadius(3000, 1800);
+    expect(d.chordMm).toBe(3000);
+    expect(d.radiusMm).toBeGreaterThanOrEqual(1500);
+    expect(d.sweepDeg).toBeLessThanOrEqual(180);
+    // A radius below the half-circle floor is clamped up to chord/2.
+    expect(deriveArcFromRadius(3000, 100).radiusMm).toBe(1500);
+  });
+
+  it('minArcRadiusMm is the half-circle radius (chord/2)', () => {
+    expect(minArcRadiusMm(3000)).toBe(1500);
   });
 });

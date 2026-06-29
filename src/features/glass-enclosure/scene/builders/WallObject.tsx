@@ -62,7 +62,7 @@ import {
   type WallBoxDims,
   type WallFeatureSide,
 } from './wallFaces';
-import { arcEndLocal, arcFromBow, bowFromArc, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { arcEndLocal, arcFromBow, bowFromArc, resolveArc } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -230,23 +230,24 @@ const buildWallGeometries = (
   // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
   // features on a curved wall are a follow-up.
   if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
-    const radiusM = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm) / 1000;
-    const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-    const sweep = Math.min(wall.lengthMm / (radiusM * 1000), Math.PI * 2);
+    // CHORD-INVARIANT: wall.lengthMm is the chord; radius, sweep and the developed arc length are
+    // DERIVED from the (chord, signed sweep) overlay so the band's chord equals wall.lengthMm.
+    const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
     const band = buildCurvedBandGeometry(
-      radiusM,
-      direction,
+      resolved.radiusM,
+      resolved.direction,
       0,
-      sweep,
+      resolved.sweepRad,
       thicknessM,
       wall.heightMm / 1000,
     );
     const body = cutFeatures
       ? applyCurvedWallFeatures(band, wall.features ?? [], {
-          lengthMm: wall.lengthMm,
-          radiusM,
-          direction,
-          sweep,
+          // Features map along the DEVELOPED arc length, not the chord.
+          lengthMm: resolved.arcLengthMm,
+          radiusM: resolved.radiusM,
+          direction: resolved.direction,
+          sweep: resolved.sweepRad,
           thicknessM,
         })
       : band;
@@ -431,20 +432,19 @@ export function WallObject({
   const setSelection = useDesignerStore((s) => s.setSelection);
 
   const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
-  // An L-shaped (bent) wall is a non-straight solid like the arc wall: its footprint resize and
-  // curve handles don't apply and it can't carry surface features yet (#6c).
+  // An L-shaped (bent) wall is a single mitred solid; its footprint resize / curve handles don't
+  // apply and it can't carry surface features yet (#6c).
   const isBentWall = Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1);
-  const isShapedWall = isArcWall || isBentWall;
-  // Length/height stretch handles assume a straight body; an arc/bent wall is resized via
-  // its radius/sweep or bend in the inspector instead (#6a).
-  // The 's' tool shows bounding resize faces; Q (transform) shows draggable CORNER points to
-  // reshape the footprint — two distinct affordances, not the same handles.
-  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isShapedWall;
+  // The 's' tool's resize faces scale the body imperatively — that lies on a curved band — so the
+  // stretch tool stays off for arc/bent walls. But the Q CORNER points commit an absolute footprint,
+  // so an ARC wall now keeps them: dragging resizes the CHORD (lengthMm) and the arc overlay
+  // re-derives its radius. Only a bent wall hides the corner points.
+  const stretchActive =
+    activeTool === 'stretch' && interactive && !wall.locked && !isArcWall && !isBentWall;
   const vertexEditActive =
-    transformActive && isSelected && interactive && !wall.locked && !isShapedWall;
-  // The curve (bow) handle stays available on an ALREADY-curved wall too (unlike the footprint
-  // resize handles), so the bow can be re-adjusted — otherwise the Q dots vanish after curving.
-  // A bent wall has no bow (bend and arc are mutually exclusive profiles).
+    transformActive && isSelected && interactive && !wall.locked && !isBentWall;
+  // The curve (bow) handle stays available on an ALREADY-curved wall too, so the bow can be
+  // re-adjusted. A bent wall has no bow (bend and arc are mutually exclusive profiles).
   const curveEditActive =
     transformActive && isSelected && interactive && !wall.locked && !isBentWall;
   // The bend handle initiates/re-adjusts an L on a straight or already-bent wall (never an arc wall).
@@ -452,14 +452,15 @@ export function WallObject({
   const wallCurveChord = (() => {
     const r = wall.rotationDeg * DEG2RAD;
     if (isArcWall) {
-      const ae = arcEndLocal(wall.lengthMm, wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
+      const ae = arcEndLocal(resolved.arcLengthMm, resolved.radiusMm, wall.geomArcSweepDeg ?? 1);
       const ex = wall.originX + ae.xMm * Math.cos(r) - ae.yMm * Math.sin(r);
       const ey = wall.originY + ae.xMm * Math.sin(r) + ae.yMm * Math.cos(r);
       const chordMm = Math.hypot(ex - wall.originX, ey - wall.originY);
       return {
         endX: ex,
         endY: ey,
-        sagittaMm: bowFromArc(chordMm, wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1),
+        sagittaMm: bowFromArc(chordMm, resolved.radiusMm, wall.geomArcSweepDeg ?? 1),
       };
     }
     return {
@@ -681,17 +682,16 @@ export function WallObject({
     // A curved wall's front/back surface is cylindrical — invert it so the pick maps to (offset
     // along the developed wall, height), instead of the flat-box projection which mislocates it.
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const radiusM = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm ?? 0) / 1000;
-      const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-      const sweep = Math.min(wall.lengthMm / (radiusM * 1000), Math.PI * 2);
+      const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
       return curvedWallPickUv(
         TMP_VEC.x,
         TMP_VEC.y,
         TMP_VEC.z,
-        radiusM,
-        direction,
-        sweep,
-        wall.lengthMm,
+        resolved.radiusM,
+        resolved.direction,
+        resolved.sweepRad,
+        // Feature U maps along the DEVELOPED arc length, not the chord.
+        resolved.arcLengthMm,
       );
     }
     const frame = wallFaceFrame(side, drawDims());
@@ -1465,11 +1465,21 @@ export function WallObject({
               next.rotationDeg,
             );
             if (penetratesAny(resized, planObstacles)) return;
+            // For an arc wall the corner drag changes the CHORD (lengthMm); the arc overlay keeps
+            // its sweep and re-derives the radius from the new chord (synced in the cache too).
+            const arcSync = isArcWall
+              ? {
+                  geomArcRadiusMm: Math.round(
+                    resolveArc(next.lengthMm, wall.geomArcSweepDeg ?? 1).radiusMm,
+                  ),
+                }
+              : {};
             updateWall(wall.id, {
               originX: next.originX,
               originY: next.originY,
               lengthMm: next.lengthMm,
               thicknessMm: next.crossMm,
+              ...arcSync,
             });
           }}
         />
@@ -1494,8 +1504,8 @@ export function WallObject({
                 180) /
               Math.PI;
             const arc = arcFromBow(chordMm, chordDeg, sagittaMm);
+            // lengthMm (chord) stays fixed — only the arc overlay changes.
             updateWall(wall.id, {
-              lengthMm: arc.lengthMm,
               rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,
               geomArcSweepDeg: arc.geomArcSweepDeg,

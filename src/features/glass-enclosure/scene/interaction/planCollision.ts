@@ -1,5 +1,5 @@
 import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine';
-import { effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { resolveArc } from '../../model/arcGeometry';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
   SceneRunState,
@@ -41,9 +41,11 @@ const buildArcWallFootprint = (
 ): PlanFootprint => {
   const zMin = wall.geomZ ?? 0;
   const zMax = zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
-  const radius = effectiveArcRadiusMm(wall.lengthMm, wall.geomArcRadiusMm ?? 0);
-  const direction = (wall.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-  const sweep = Math.min(wall.lengthMm / radius, Math.PI * 2);
+  // CHORD-INVARIANT: lengthMm is the chord; derive radius + sweep from the (chord, sweep) overlay.
+  const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
+  const radius = resolved.radiusMm;
+  const direction = resolved.direction;
+  const sweep = resolved.sweepRad;
   const half = wall.thicknessMm / 2;
   const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
   const rad = rotationDeg * DEG2RAD;
@@ -97,9 +99,11 @@ const buildArcRunFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const zMin = run.geomZ ?? 0;
-  const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
-  const direction = (run.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-  const sweep = Math.min(run.lengthMm / radius, Math.PI * 2);
+  // CHORD-INVARIANT: lengthMm is the chord; derive radius + sweep from the (chord, sweep) overlay.
+  const resolved = resolveArc(run.lengthMm, run.geomArcSweepDeg ?? 1);
+  const radius = resolved.radiusMm;
+  const direction = resolved.direction;
+  const sweep = resolved.sweepRad;
   const half = RUN_PLAN_THICKNESS_MM / 2;
   const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
   const rad = rotationDeg * DEG2RAD;

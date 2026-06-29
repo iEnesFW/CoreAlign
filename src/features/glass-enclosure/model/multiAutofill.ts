@@ -340,7 +340,8 @@ const arcCornerEdge = (a: WallEndpoint, b: WallEndpoint): GapEdge | null => {
     originX: Math.round(a.x),
     originY: Math.round(a.y),
     rotationDeg: roundDeg(normalizeDeg(chordDeg - dir * (derived.sweepDeg / 2))),
-    lengthMm: derived.arcLengthMm,
+    // lengthMm is the CHORD (the gap span), NOT the developed arc length.
+    lengthMm: derived.chordMm,
     heightMm: Math.round(Math.min(a.heightMm, b.heightMm)),
     geomZ: Math.round(Math.min(a.baseZMm, b.baseZMm)),
     geomArcRadiusMm: derived.radiusMm,

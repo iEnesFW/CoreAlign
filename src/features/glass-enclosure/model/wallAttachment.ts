@@ -1,4 +1,4 @@
-import { arcEndLocal } from './arcGeometry';
+import { arcEndLocal, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
 const ATTACH_BAND_MM = 80;
@@ -8,7 +8,9 @@ const runEndPoint = (run: SceneRunState): { x: number; y: number } => {
   const cos = Math.cos(rad);
   const sin = Math.sin(rad);
   if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
-    const e = arcEndLocal(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
+    // CHORD-INVARIANT: lengthMm is the chord; feed arcEndLocal the derived arc length + radius.
+    const resolved = resolveArc(run.lengthMm, run.geomArcSweepDeg ?? 1);
+    const e = arcEndLocal(resolved.arcLengthMm, resolved.radiusMm, run.geomArcSweepDeg ?? 1);
     return {
       x: run.originX + e.xMm * cos - e.yMm * sin,
       y: run.originY + e.xMm * sin + e.yMm * cos,

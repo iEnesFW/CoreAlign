@@ -1492,7 +1492,6 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         return (
           <ArcRunGroup
             key={run.id}
-            radiusMm={run.geomArcRadiusMm}
             {...sharedProps}
             onMoveRun={interactionsEnabled ? onMoveRun : undefined}
             onRotateRun={interactionsEnabled ? onRotateRun : undefined}

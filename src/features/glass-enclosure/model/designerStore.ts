@@ -19,6 +19,7 @@ import type {
 import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
+import { arcChordFromRadiusSweep } from './arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -316,7 +317,13 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       id: run.id,
       orderIndex: run.orderIndex,
       label: run.label,
-      lengthMm: Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
+      // CHORD-INVARIANT migration: lengthMm is the chord. Legacy arc runs persisted the developed
+      // arc length here — recover the chord from the stored radius+sweep (idempotent for new data).
+      lengthMm: arcChordFromRadiusSweep(
+        Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
+        run.geomArcRadiusMm,
+        run.geomArcSweepDeg,
+      ),
       heightMm: run.heightMm,
       originX: run.originX,
       originY: run.originY,
@@ -1249,7 +1256,16 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
       }
     }
-    const snapshotWalls = scene.walls ?? [];
+    // CHORD-INVARIANT migration: a legacy arc wall persisted the developed arc length in lengthMm;
+    // recover the chord from its stored radius+sweep on load (idempotent for chord-invariant data).
+    const snapshotWalls = (scene.walls ?? []).map((w) =>
+      w.geomArcRadiusMm && w.geomArcRadiusMm > 0
+        ? {
+            ...w,
+            lengthMm: arcChordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
+          }
+        : w,
+    );
     const snapshotSlabs = scene.slabs ?? [];
     const snapshotSurfaces = scene.surfaces ?? [];
     if (

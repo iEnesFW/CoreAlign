@@ -638,11 +638,12 @@ export function RunGroup({
           currentSagittaMm={0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(sagittaMm) => {
+            // lengthMm is already the chord (a straight run's length) — keep it invariant; only the
+            // arc overlay is added. Omitting lengthMm avoids a needless panel redistribution.
             const arc = arcFromBow(run.lengthMm, run.rotationDeg, sagittaMm);
             onStretchRun(run.id, {
               originX: run.originX,
               originY: run.originY,
-              lengthMm: arc.lengthMm,
               rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,
               geomArcSweepDeg: arc.geomArcSweepDeg,

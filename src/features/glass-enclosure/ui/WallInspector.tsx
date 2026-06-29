@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DoorOpen, RectangleHorizontal, Trash2, Wand2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
+import { deriveArcFromRadius, minArcRadiusMm, resolveArc } from '../model/arcGeometry';
 import { queueToast } from '@/shared/api/toastQueue';
 import {
   buildRunFootprint,
@@ -105,7 +106,8 @@ export function WallInspector() {
   const commitArc = (sweep: number) => {
     const hasExtras = (wall.openings ?? []).length > 0 || (wall.features ?? []).length > 0;
     commit({
-      geomArcRadiusMm: (draft.geomArcRadiusMm ?? 0) > 0 ? draft.geomArcRadiusMm : draft.lengthMm,
+      // CHORD-INVARIANT: lengthMm stays the chord; the radius is DERIVED from (chord, sweep).
+      geomArcRadiusMm: Math.round(resolveArc(draft.lengthMm, sweep).radiusMm),
       geomArcSweepDeg: sweep,
       ...(hasExtras ? { openings: [], features: [] } : {}),
     });
@@ -429,15 +431,20 @@ export function WallInspector() {
           <NumberField
             label={`${t('GlassEnclosure.Designer.Wall.ArcRadius', { defaultValue: 'Kavis yarıçapı' })} (mm)`}
             value={draft.geomArcRadiusMm ?? draft.lengthMm}
-            min={Math.max(1, Math.ceil(draft.lengthMm / (Math.PI * 2)))}
-            onCommit={(v) =>
+            min={minArcRadiusMm(draft.lengthMm)}
+            onCommit={(v) => {
+              // Setting the radius keeps the chord (lengthMm) fixed and re-derives the sweep; the
+              // tightest radius is a half-circle (chord/2). Sign (bulge direction) is preserved.
+              const sign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+              const next = deriveArcFromRadius(
+                draft.lengthMm,
+                Math.max(minArcRadiusMm(draft.lengthMm), v),
+              );
               commit({
-                geomArcRadiusMm: Math.max(
-                  Math.max(1, Math.ceil(draft.lengthMm / (Math.PI * 2))),
-                  v,
-                ),
-              })
-            }
+                geomArcRadiusMm: next.radiusMm,
+                geomArcSweepDeg: sign * (Math.round(next.sweepDeg * 10) / 10),
+              });
+            }}
             onDraft={(v) => setDraft({ ...draft, geomArcRadiusMm: v })}
           />
         )}
