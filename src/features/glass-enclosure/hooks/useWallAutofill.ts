@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { safeRequest, safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { queueToast } from '@/shared/api/toastQueue';
+import { glassProjectsApi } from '../api/glassProjectsApi';
 import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
@@ -13,6 +14,7 @@ import {
 import { useColorOptionsQuery, useProfileSystemsQuery } from './useGlassEnclosureQueries';
 import type { GapEdge } from '../model/multiAutofill';
 import type { OpenEdge } from '../model/wallAutofill';
+import type { SceneState } from '../model/project.types';
 
 const DEFAULT_RUN_HEIGHT_MM = 2400;
 
@@ -131,6 +133,17 @@ export const useWallAutofill = () => {
     }
   };
 
+  // Autofill persists via the server run/connection CRUD endpoints, which the local undo history
+  // never sees. After the runs land, read the fresh project and record the whole fill as one
+  // [before, after] history step so Ctrl+Z removes it (via the scene→server reconciler) and Ctrl+Y
+  // re-adds it.
+  const recordAutofillHistory = async (projectId: string, before: SceneState) => {
+    const [resp] = await safeRequest(glassProjectsApi.getById(projectId));
+    if (resp?.data) {
+      useDesignerStore.getState().commitAutofillTransaction(before, resp.data);
+    }
+  };
+
   const autofill = async () => {
     const state = useDesignerStore.getState();
     const projectId = state.projectId;
@@ -139,6 +152,7 @@ export const useWallAutofill = () => {
     const profileSystemId = profileSystem?.id;
     const maxPanelWidthMm = profileSystem?.maxPanelWidthMm;
     if (!projectId || !profileSystemId || walls.length === 0) return 0;
+    const before = structuredClone(state.scene);
 
     const multiWallIds = state.multiSelection.wallIds;
     if (multiWallIds.length >= 2) {
@@ -165,6 +179,7 @@ export const useWallAutofill = () => {
         edge: GapEdge;
       }[];
       await connectCornerRuns(projectId, created);
+      if (created.length > 0) await recordAutofillHistory(projectId, before);
       return created.length;
     }
 
@@ -187,6 +202,7 @@ export const useWallAutofill = () => {
     }
     const edges = computeOpeningEdges([selectedWall], state.scene.runs);
     const created = await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges);
+    if (created.length > 0) await recordAutofillHistory(projectId, before);
     return created.length;
   };
 

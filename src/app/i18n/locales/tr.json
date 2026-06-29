@@ -2751,6 +2751,7 @@
         "FlipSide": "Yüz değiştir (iç/dış)",
         "Color": "Katman rengi",
         "ColorReset": "Yüzey rengi",
+        "ColorCustom": "Özel renk",
         "Hint": "Genişlet aracıyla katman yüzeyini sürükleyerek derinliği ayarlayabilirsiniz; tamamen içeri itilen katman boşluğa dönüşür.",
         "ListTitle": "Katmanlar",
         "None": "Katman yok — üstteki 'Yüzeye çiz' aracıyla yüzeye şekil çizin.",

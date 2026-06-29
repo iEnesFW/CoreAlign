@@ -138,6 +138,22 @@ export function SurfaceInspector() {
               style={{ backgroundColor: color.hexColor }}
             />
           ))}
+          <label
+            title={t('GlassEnclosure.Designer.WallFeature.ColorCustom', {
+              defaultValue: 'Özel renk',
+            })}
+            className="inline-flex h-6 w-6 cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 dark:border-slate-600"
+          >
+            <span className="sr-only">
+              {t('GlassEnclosure.Designer.WallFeature.ColorCustom', { defaultValue: 'Özel renk' })}
+            </span>
+            <input
+              type="color"
+              value={surface.colorHex ?? '#94a3b8'}
+              onChange={(e) => commit({ colorHex: e.target.value, materialKey: null })}
+              className="h-8 w-8 cursor-pointer border-0 bg-transparent p-0"
+            />
+          </label>
         </div>
       </div>
 

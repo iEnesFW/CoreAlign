@@ -211,6 +211,7 @@ interface DesignerState {
 
   beginTransaction: () => void;
   commitTransaction: () => void;
+  commitAutofillTransaction: (before: SceneState, freshProject: GlassProjectDto) => void;
 
   addRun: (
     run: Omit<SceneRunState, 'orderIndex' | 'panels'> & { panels?: ScenePanelState[] },
@@ -990,6 +991,29 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set({ history: [cloneScene(current.scene)], historyIndex: 0 });
   },
   commitTransaction: () => set({ isDirty: true }),
+
+  // WHY: autofill creates runs/connections via the server CRUD endpoints (not the local store), so
+  // nothing lands in the undo history and Ctrl+Z/Y do nothing. Record the operation as a single
+  // [before, after] history pair: undo reverts to `before` and the existing scene→server reconciler
+  // (syncSceneToServer) removes the created runs; redo replays `after` and re-creates them.
+  commitAutofillTransaction: (before, freshProject) => {
+    const current = get();
+    const after = projectToScene(freshProject, before);
+    const trimmed =
+      current.historyIndex >= 0 ? current.history.slice(0, current.historyIndex + 1) : [];
+    const withBaseline =
+      trimmed.length > 0 && typedSceneEqual(trimmed[trimmed.length - 1], before)
+        ? trimmed
+        : [...trimmed, cloneScene(before)];
+    const next = [...withBaseline, cloneScene(after)];
+    set({
+      project: freshProject,
+      scene: cloneScene(after),
+      history: next,
+      historyIndex: next.length - 1,
+      isDirty: false,
+    });
+  },
 
   addRun: (run) => {
     const current = get();

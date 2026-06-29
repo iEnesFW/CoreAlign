@@ -187,6 +187,22 @@ export function SurfaceFeatureEditor({
               style={{ backgroundColor: color.hexColor }}
             />
           ))}
+          <label
+            title={t('GlassEnclosure.Designer.WallFeature.ColorCustom', {
+              defaultValue: 'Özel renk',
+            })}
+            className="inline-flex h-6 w-6 cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 dark:border-slate-600"
+          >
+            <span className="sr-only">
+              {t('GlassEnclosure.Designer.WallFeature.ColorCustom', { defaultValue: 'Özel renk' })}
+            </span>
+            <input
+              type="color"
+              value={feature.colorHex ?? '#3b82f6'}
+              onChange={(e) => onUpdate({ colorHex: e.target.value })}
+              className="h-8 w-8 cursor-pointer border-0 bg-transparent p-0"
+            />
+          </label>
           <button
             type="button"
             onClick={() => onUpdate({ colorHex: null })}
