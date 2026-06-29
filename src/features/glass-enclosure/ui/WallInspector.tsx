@@ -429,9 +429,14 @@ export function WallInspector() {
           <NumberField
             label={`${t('GlassEnclosure.Designer.Wall.ArcRadius', { defaultValue: 'Kavis yarıçapı' })} (mm)`}
             value={draft.geomArcRadiusMm ?? draft.lengthMm}
-            min={Math.ceil(draft.lengthMm / Math.PI)}
+            min={Math.max(1, Math.ceil(draft.lengthMm / (Math.PI * 2)))}
             onCommit={(v) =>
-              commit({ geomArcRadiusMm: Math.max(Math.ceil(draft.lengthMm / Math.PI), v) })
+              commit({
+                geomArcRadiusMm: Math.max(
+                  Math.max(1, Math.ceil(draft.lengthMm / (Math.PI * 2))),
+                  v,
+                ),
+              })
             }
             onDraft={(v) => setDraft({ ...draft, geomArcRadiusMm: v })}
           />

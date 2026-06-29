@@ -619,12 +619,20 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     // Stored side uses 1/-1 for front/back, the string for the four side faces (slab → 1/-1).
     const featureSide: WallFeatureSideValue =
       session.side === 'front' ? 1 : session.side === 'back' ? -1 : session.side;
+    // A curved wall only renders cutting features (hole / recess+depth) through its CSG path, so a
+    // shape drawn there defaults to a through HOLE (the common opening). A flat wall/slab keeps the
+    // NON-CUTTING outline (flush recess): the user then picks hole / recess+depth / protrude.
+    const penHostWall =
+      session.hostKind === 'wall'
+        ? (scene.walls ?? []).find((w) => w.id === session.hostId)
+        : undefined;
+    const penHostIsCurved = Boolean(
+      penHostWall?.geomArcRadiusMm && penHostWall.geomArcRadiusMm > 0,
+    );
     const feature = {
       id: crypto.randomUUID(),
       shape: 'free' as const,
-      // A pen-drawn shape defaults to a NON-CUTTING outline (flush recess, no depth): it shows as
-      // a line and the user chooses hole / recess+depth / protrusion in the inspector.
-      mode: 'recess' as const,
+      mode: penHostIsCurved ? ('hole' as const) : ('recess' as const),
       side: featureSide,
       offsetMm,
       centerZMm,
@@ -638,12 +646,14 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     if (session.hostKind === 'wall') {
       const wall = (scene.walls ?? []).find((w) => w.id === session.hostId);
       if (!wall) return;
-      if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+      // Curved walls now carve features via CSG, but a BENT (L) wall reuses the straight face frame
+      // and renders no features yet — block drawing there so a pen shape isn't silently lost.
+      if (wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1) {
         queueToast({
-          dedupeKey: 'glass-arc-no-feature',
+          dedupeKey: 'glass-bent-no-feature',
           variant: 'warning',
           description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
-            defaultValue: 'Kavisli duvara henüz açıklık/şekil çizilemiyor.',
+            defaultValue: 'Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor.',
           }),
         });
         return;

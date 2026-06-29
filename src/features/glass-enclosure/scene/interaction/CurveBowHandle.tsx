@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
 import type { Group } from 'three';
-import { useDrag3D } from '@/shared/three-engine';
+import { stickyDimensionMm, useDrag3D } from '@/shared/three-engine';
 
 const MM = 1000;
 const HANDLE_RADIUS_M = 0.06;
@@ -52,8 +52,11 @@ export function CurveBowHandle({
   const [dragSagitta, setDragSagitta] = useState<number | null>(null);
 
   const sagittaAt = (delta: { x: number; z: number }) => {
-    const s = currentSagittaMm + (delta.x * MM * acrossX + delta.z * MM * acrossY);
-    return Math.max(-maxSagittaMm, Math.min(maxSagittaMm, s));
+    const raw = currentSagittaMm + (delta.x * MM * acrossX + delta.z * MM * acrossY);
+    // Snap the bow depth so dragging lands precisely on round numbers (sticky at 100s, else a fine
+    // grid step) instead of sliding continuously — the "hassas kaydırma" the user expects.
+    const snapped = stickyDimensionMm(raw);
+    return Math.max(-maxSagittaMm, Math.min(maxSagittaMm, snapped));
   };
 
   const previewPoints = useMemo<[number, number, number][] | null>(() => {
