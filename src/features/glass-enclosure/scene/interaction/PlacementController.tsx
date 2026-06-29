@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Plane, Raycaster, Vector2, Vector3 } from 'three';
+import { Box3, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import { clearSnapGuides, setSnapGuides } from '@/shared/three-engine';
 import { applyPlanMoveSnap } from './planSnap';
@@ -170,6 +170,7 @@ export function PlacementController({
   const groundPlane = useMemo(() => new Plane(new Vector3(0, 1, 0), 0), []);
   const ndc = useMemo(() => new Vector2(), []);
   const hitPoint = useMemo(() => new Vector3(), []);
+  const objectBox = useMemo(() => new Box3(), []);
   const ghostRef = useRef<Group>(null);
   const meshRef = useRef<Mesh>(null);
   const matRef = useRef<MeshBasicMaterial>(null);
@@ -338,9 +339,11 @@ export function PlacementController({
         o = o.parent;
       }
       if (owned) continue;
-      // The hit Y is the top surface under the cursor → a roof rests THERE (on top of the
-      // hovered object), instead of being pinned to the nearest-spine height.
-      return { x: hit.point.x * MM, y: hit.point.z * MM, elevationMm: hit.point.y * MM };
+      // Rest on the TOP of the hit object (its bounding-box max Y), not the hit face — otherwise
+      // hovering a side face would seat the roof at mid-height and bury it INSIDE the wall (#2).
+      objectBox.setFromObject(hit.object);
+      const topMm = (Number.isFinite(objectBox.max.y) ? objectBox.max.y : hit.point.y) * MM;
+      return { x: hit.point.x * MM, y: hit.point.z * MM, elevationMm: topMm };
     }
     return null;
   };
