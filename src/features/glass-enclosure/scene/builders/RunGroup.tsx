@@ -589,6 +589,7 @@ export function RunGroup({
       </group>
       {vertexEditActive && (
         <FootprintCornerHandles
+          mode="ends"
           box={{
             originX: run.originX,
             originY: run.originY,

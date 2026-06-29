@@ -447,6 +447,7 @@ export function ArcRunGroup({
       </group>
       {vertexEditActive && (
         <FootprintCornerHandles
+          mode="ends"
           box={{
             originX: run.originX,
             originY: run.originY,
