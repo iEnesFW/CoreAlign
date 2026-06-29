@@ -621,9 +621,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const feature = {
       id: crypto.randomUUID(),
       shape: 'free' as const,
-      // A pen-drawn shape on a face is a through aperture (a shaped window/hole) by
-      // default so it visibly applies; switch to recess/protrude in the inspector.
-      mode: 'hole' as const,
+      // A pen-drawn shape defaults to a NON-CUTTING outline (flush recess, no depth): it shows as
+      // a line and the user chooses hole / recess+depth / protrusion in the inspector.
+      mode: 'recess' as const,
       side: featureSide,
       offsetMm,
       centerZMm,

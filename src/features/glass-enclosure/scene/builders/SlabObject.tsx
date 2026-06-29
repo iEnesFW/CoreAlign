@@ -414,9 +414,9 @@ export function SlabObject({
     const feature: SceneWallFeature = {
       id: crypto.randomUUID(),
       shape: spec.shape,
-      // Default a drawn shape to a through cutout (skylight/opening) so it visibly
-      // applies; switch to recess/protrude (with depth) in the inspector.
-      mode: 'hole',
+      // Default a drawn shape to a NON-CUTTING outline (flush recess, no depth): it shows as a
+      // line and the user chooses hole / recess+depth / protrusion in the inspector.
+      mode: 'recess',
       side: spec.side,
       offsetMm: Math.round(offsetMm),
       centerZMm: Math.round(centerZMm),

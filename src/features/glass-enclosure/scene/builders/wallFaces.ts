@@ -161,7 +161,11 @@ export const applyWallFaceFeatures = (
   features: WallFaceFeature[],
   dims: WallBoxDims,
 ): BufferGeometry => {
-  const ops = features.filter((f) => f.outlineMm.length >= 3);
+  // A flush recess (depth ≤ 0) is a non-cutting outline — the same way the front/back path
+  // renders it as a line. Never carve it (it would leave a stray 2 mm pock on the side face).
+  const ops = features.filter(
+    (f) => f.outlineMm.length >= 3 && !(f.mode === 'recess' && f.depthMm <= 0),
+  );
   if (ops.length === 0) return body;
   let mesh = new Mesh(body);
   mesh.updateMatrix();
@@ -176,7 +180,22 @@ export const applyWallFaceFeatures = (
     try {
       const tool = new Mesh(geo);
       tool.updateMatrix();
-      mesh = outward ? CSG.union(mesh, tool) : CSG.subtract(mesh, tool);
+      const next = outward ? CSG.union(mesh, tool) : CSG.subtract(mesh, tool);
+      // WHY: when a side cut crosses an existing front/back hole, three-csg-ts can return an
+      // EMPTY mesh (coplanar/degenerate BSP) WITHOUT throwing — that empty mesh would then make
+      // the whole wall vanish and poison every later op. Keep the previous body if the result
+      // collapsed to nothing.
+      const count = next.geometry.getAttribute('position')?.count ?? 0;
+      if (count === 0) {
+        logger.error('wall face CSG produced an empty result; keeping prior body', {
+          side: f.side,
+          mode: f.mode,
+        });
+        next.geometry.dispose();
+      } else {
+        if (mesh.geometry !== body) mesh.geometry.dispose();
+        mesh = next;
+      }
     } catch (error) {
       // Skip a degenerate cutter rather than break the whole wall, but surface why so a real
       // CSG failure isn't invisible.

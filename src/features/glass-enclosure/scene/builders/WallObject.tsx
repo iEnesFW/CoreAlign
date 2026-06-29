@@ -676,9 +676,9 @@ export function WallObject({
     const feature: SceneWallFeature = {
       id: crypto.randomUUID(),
       shape: spec.shape,
-      // Default a drawn shape to a through aperture (shaped window/hole) so it visibly
-      // applies; switch to recess/protrude (with depth) in the inspector.
-      mode: 'hole',
+      // Default a drawn shape to a NON-CUTTING outline (a flush recess with no depth): it just
+      // shows as a line, and the user chooses hole / recess+depth / protrusion in the inspector.
+      mode: 'recess',
       // Stored side uses 1/-1 for front/back, the string for the four side faces.
       side: spec.side === 'front' ? 1 : spec.side === 'back' ? -1 : spec.side,
       offsetMm: Math.round(offsetMm),
