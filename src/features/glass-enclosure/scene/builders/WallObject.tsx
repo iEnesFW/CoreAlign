@@ -312,6 +312,20 @@ const buildWallGeometries = (
     }
     featureItems.push({ ...item, geometry });
   }
+  // Side-face features (top/bottom/left/right) are carved into the body via CSG below; surface them
+  // here too as selectable outline items so they can be picked and edited in the inspector (#5).
+  for (const f of sideFaceFeatures) {
+    const sideOutline = featureOutlineMm(f);
+    if (sideOutline.length < 3) continue;
+    featureItems.push({
+      feature: f,
+      outline: sideOutline,
+      bounds: outlineBoundsMm(sideOutline),
+      kind: 'outline',
+      cut: false,
+      geometry: null,
+    });
+  }
   const body = new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false });
   body.translate(0, 0, -thicknessM / 2);
   if (cutFeatures && sideFaceFeatures.length > 0) {
@@ -1207,29 +1221,31 @@ export function WallObject({
           onPreview: (d) => previewSide(stickyDelta(wall.thicknessMm, d), -1),
           onCommit: (d) => commitSide(d, -1),
         },
-        ...featureItems.map(({ feature, bounds }): StretchFaceDef => {
-          const signedDepthMm = featureSignedDepthMm(feature);
-          const s = featureSideSignZ(feature.side);
-          const faceZ =
-            s * (thicknessM / 2) +
-            (s * Math.max(signedDepthMm, 0)) / 1000 +
-            s * FEATURE_FACE_LIFT_M;
-          return {
-            id: `feature-${feature.id}`,
-            centerM: [
-              (bounds.minX + bounds.maxX) / 2000,
-              (bounds.minZ + bounds.maxZ) / 2000,
-              faceZ,
-            ],
-            rotation: s === 1 ? [0, 0, 0] : [0, Math.PI, 0],
-            widthM: (bounds.maxX - bounds.minX) / 1000,
-            heightM: (bounds.maxZ - bounds.minZ) / 1000,
-            axis: [0, 0, s],
-            label: featureDepthLabel(feature),
-            onPreview: () => {},
-            onCommit: (d) => commitFeatureDepth(feature, d),
-          };
-        }),
+        ...featureItems
+          .filter(({ feature }) => feature.side === 1 || feature.side === -1)
+          .map(({ feature, bounds }): StretchFaceDef => {
+            const signedDepthMm = featureSignedDepthMm(feature);
+            const s = featureSideSignZ(feature.side);
+            const faceZ =
+              s * (thicknessM / 2) +
+              (s * Math.max(signedDepthMm, 0)) / 1000 +
+              s * FEATURE_FACE_LIFT_M;
+            return {
+              id: `feature-${feature.id}`,
+              centerM: [
+                (bounds.minX + bounds.maxX) / 2000,
+                (bounds.minZ + bounds.maxZ) / 2000,
+                faceZ,
+              ],
+              rotation: s === 1 ? [0, 0, 0] : [0, Math.PI, 0],
+              widthM: (bounds.maxX - bounds.minX) / 1000,
+              heightM: (bounds.maxZ - bounds.minZ) / 1000,
+              axis: [0, 0, s],
+              label: featureDepthLabel(feature),
+              onPreview: () => {},
+              onCommit: (d) => commitFeatureDepth(feature, d),
+            };
+          }),
       ]
     : [];
 
@@ -1405,6 +1421,33 @@ function WallFeatureObject({
     return points;
   }, [outline]);
 
+  // Orient the outline line + click proxy onto whichever face the feature lives on. For front/back
+  // this resolves to identity rotation at ±t/2 (unchanged from before); the four side faces get
+  // their real plane via wallFaceFrame so top/bottom/left/right features are visible + selectable.
+  const isSideFace = feature.side !== 1 && feature.side !== -1;
+  const faceFrame = useMemo(() => {
+    const dims: WallBoxDims = {
+      lengthM: wall.lengthMm / 1000,
+      heightM: Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000,
+      thicknessM,
+    };
+    return wallFaceFrame(normalizeWallSide(feature.side), dims);
+  }, [wall.lengthMm, wall.heightMm, wall.heightEndMm, thicknessM, feature.side]);
+  const regionQuat = useMemo(() => {
+    const w = new Vector3().crossVectors(faceFrame.uAxis, faceFrame.vAxis);
+    return new Quaternion().setFromRotationMatrix(
+      new Matrix4().makeBasis(faceFrame.uAxis, faceFrame.vAxis, w),
+    );
+  }, [faceFrame]);
+  const regionPosition = useMemo<[number, number, number]>(
+    () => [
+      faceFrame.origin.x + faceFrame.normal.x * FACE_LIFT_M,
+      faceFrame.origin.y + faceFrame.normal.y * FACE_LIFT_M,
+      faceFrame.origin.z + faceFrame.normal.z * FACE_LIFT_M,
+    ],
+    [faceFrame],
+  );
+
   const clampMove = (dxMm: number, dzMm: number) => {
     const bounds = item.bounds;
     const minTop =
@@ -1422,7 +1465,9 @@ function WallFeatureObject({
     };
   };
 
-  const moveEnabled = interactive && activeTool === 'move';
+  // Dragging uses the front-plane constraint, which only matches front/back features; side-face
+  // features stay selectable + inspector-editable (offset/size/depth) without in-scene drag.
+  const moveEnabled = interactive && activeTool === 'move' && !isSideFace;
   const drag = useDrag3D({
     constraint: { mode: 'panelPlane', targetRef: anchorRef },
     enabled: moveEnabled,
@@ -1497,7 +1542,7 @@ function WallFeatureObject({
       );
     }
     return (
-      <group position={[0, 0, featureSideSignZ(feature.side) * (thicknessM / 2 + FACE_LIFT_M)]}>
+      <group position={regionPosition} quaternion={regionQuat}>
         <Line
           points={regionPoints}
           color={feature.colorHex ?? REGION_COLOR}
@@ -1541,7 +1586,7 @@ function WallFeatureObject({
             )}
           </mesh>
         ) : (
-          <group position={[0, 0, featureSideSignZ(feature.side) * (thicknessM / 2 + FACE_LIFT_M)]}>
+          <group position={regionPosition} quaternion={regionQuat}>
             {!presentation && (
               <Line
                 points={regionPoints}
