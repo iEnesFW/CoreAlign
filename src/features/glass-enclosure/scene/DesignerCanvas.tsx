@@ -91,6 +91,7 @@ interface DesignerCanvasProps {
 
 const SNAP_GRID_MM = 5;
 const STICKY_SNAP_MM = 25;
+const MIN_HARDWARE_MM = 8;
 const FLOATING_GAP_MM = 50;
 const MIN_RUN_LENGTH_MM = 100;
 const DEG2RAD = Math.PI / 180;
@@ -1389,6 +1390,36 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     });
   };
 
+  const onResizeHardware = (
+    runId: string,
+    panelId: string,
+    hardwareId: string,
+    widthMm: number,
+    heightMm: number,
+  ) => {
+    const run = scene.runs.find((r) => r.id === runId);
+    const panel = run?.panels.find((p) => p.id === panelId);
+    const item = panel?.hardware.find((h) => h.id === hardwareId);
+    if (!run || !panel || !item) return;
+    const nextW = Math.min(
+      Math.round(panel.widthMm),
+      Math.max(MIN_HARDWARE_MM, Math.round(widthMm)),
+    );
+    const nextH = Math.min(
+      Math.round(run.heightMm),
+      Math.max(MIN_HARDWARE_MM, Math.round(heightMm)),
+    );
+    // A larger item must still fit centred within the panel, so re-clamp the offset to the new edge.
+    const edgeX = Math.max(0, panel.widthMm / 2 - nextW / 2);
+    const edgeY = Math.max(0, run.heightMm / 2 - nextH / 2);
+    updateHardware(runId, panelId, hardwareId, {
+      widthMm: nextW,
+      heightMm: nextH,
+      offsetXmm: clampMm(item.offsetXmm, edgeX),
+      offsetYmm: clampMm(item.offsetYmm, edgeY),
+    });
+  };
+
   const geometryMode = project?.geometryMode ?? 'Planar';
 
   const renderGeometry = (): ReactNode => {
@@ -1435,6 +1466,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onSelectPanel,
         onSelectHardware,
         onDragHardware,
+        onResizeHardware,
       };
       if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
         return (

@@ -56,6 +56,13 @@ interface ArcRunGroupProps {
     hardwareId: string,
     delta: HardwareDragDelta,
   ) => void;
+  onResizeHardware?: (
+    runId: string,
+    panelId: string,
+    hardwareId: string,
+    widthMm: number,
+    heightMm: number,
+  ) => void;
   onMoveRun?: (runId: string, delta: PlanMoveDelta) => void;
   onRotateRun?: (runId: string, commit: PlanRotationCommit) => void;
   onStretchRun?: (runId: string, patch: RunStretchPatch) => void;
@@ -86,6 +93,7 @@ export function ArcRunGroup({
   onSelectPanel,
   onSelectHardware,
   onDragHardware,
+  onResizeHardware,
   onMoveRun,
   onRotateRun,
   onStretchRun,
@@ -350,6 +358,12 @@ export function ArcRunGroup({
                     ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
                     : undefined
                 }
+                onResizeHardware={
+                  onResizeHardware
+                    ? (hardwareId, widthMm, heightMm) =>
+                        onResizeHardware(run.id, panel.id, hardwareId, widthMm, heightMm)
+                    : undefined
+                }
                 quality={quality}
                 showAnnotations={showAnnotations}
                 panelIndex={panel.panelIndex}
@@ -385,6 +399,12 @@ export function ArcRunGroup({
                 onDragHardware={
                   onDragHardware
                     ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
+                    : undefined
+                }
+                onResizeHardware={
+                  onResizeHardware
+                    ? (hardwareId, widthMm, heightMm) =>
+                        onResizeHardware(run.id, panel.id, hardwareId, widthMm, heightMm)
                     : undefined
                 }
                 quality={quality}

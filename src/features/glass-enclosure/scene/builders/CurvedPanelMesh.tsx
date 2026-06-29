@@ -30,6 +30,7 @@ interface CurvedPanelMeshProps {
   selectedHardwareId: string | null;
   onSelectHardware: (hardwareId: string) => void;
   onDragHardware?: (hardwareId: string, delta: HardwareDragDelta) => void;
+  onResizeHardware?: (hardwareId: string, widthMm: number, heightMm: number) => void;
   quality: QualityPreset;
   showAnnotations: boolean;
   panelIndex: number;
@@ -64,6 +65,7 @@ export function CurvedPanelMesh({
   selectedHardwareId,
   onSelectHardware,
   onDragHardware,
+  onResizeHardware,
   quality,
   showAnnotations,
   panelIndex,
@@ -188,6 +190,11 @@ export function CurvedPanelMesh({
             isSelected={selectedHardwareId === hw.id}
             onSelect={() => onSelectHardware(hw.id)}
             onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
+            onResize={
+              onResizeHardware
+                ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
+                : undefined
+            }
           />
         ))}
       </group>

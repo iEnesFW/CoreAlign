@@ -66,6 +66,13 @@ interface RunGroupProps {
     hardwareId: string,
     delta: HardwareDragDelta,
   ) => void;
+  onResizeHardware?: (
+    runId: string,
+    panelId: string,
+    hardwareId: string,
+    widthMm: number,
+    heightMm: number,
+  ) => void;
   onResizePanel?: (runId: string, panelId: string, deltaMm: number) => void;
   onMoveRun?: (runId: string, delta: PlanMoveDelta) => void;
   onRotateRun?: (runId: string, commit: PlanRotationCommit) => void;
@@ -108,6 +115,7 @@ export function RunGroup({
   onSelectPanel,
   onSelectHardware,
   onDragHardware,
+  onResizeHardware,
   onResizePanel,
   onMoveRun,
   onRotateRun,
@@ -532,6 +540,12 @@ export function RunGroup({
                   onDragHardware={
                     onDragHardware
                       ? (hardwareId, delta) => onDragHardware(run.id, panel.id, hardwareId, delta)
+                      : undefined
+                  }
+                  onResizeHardware={
+                    onResizeHardware
+                      ? (hardwareId, widthMm, heightMm) =>
+                          onResizeHardware(run.id, panel.id, hardwareId, widthMm, heightMm)
                       : undefined
                   }
                   quality={quality}
