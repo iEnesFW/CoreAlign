@@ -32,6 +32,7 @@ import {
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
+import { buildPitchedRoofGeometry } from './pitchedRoofGeometry';
 import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanMoveDelta } from '../interaction/planSnap';
@@ -127,6 +128,20 @@ const buildSlabGeometries = (
       featureItems: [],
     };
   }
+  // Pitched/gable slab — two sloped planes meeting at a ridge (symmetric, triangular gable ends)
+  // or a single slope (monopitch). Mutually exclusive with the barrel; features deferred like #6b.
+  if (slab.pitchRiseMm && slab.pitchRiseMm > 0) {
+    return {
+      body: buildPitchedRoofGeometry(
+        slab.lengthMm,
+        slab.depthMm,
+        slab.pitchRiseMm,
+        slab.pitchType ?? 'symmetric',
+        slab.thicknessMm,
+      ),
+      featureItems: [],
+    };
+  }
 
   const radii = slab.cornerRadiiMm ?? {};
   const shape = filletedShapeMm(
@@ -216,8 +231,10 @@ export function SlabObject({
   const elevationM = slab.elevationMm / 1000;
 
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
-  const isBarrelRoof = (slab.arcRiseMm ?? 0) > 0;
-  // Length/depth stretch assumes a flat slab; a barrel roof is resized via its rise.
+  // A barrel (arcRise) OR pitched (pitchRise) slab is a non-flat sheet: its footprint stretch
+  // handles and flush surface features don't apply (resized via the inspector rise field).
+  const isBarrelRoof = (slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0;
+  // Length/depth stretch assumes a flat slab; a curved/pitched roof is resized via its rise.
   const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
   const vertexEditActive =
     transformActive && isSelected && interactive && !slab.locked && !isBarrelRoof;

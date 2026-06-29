@@ -2688,9 +2688,14 @@
         "Rotation": "Dönüş",
         "DeleteFloor": "Zemini sil",
         "DeleteRoof": "Çatıyı sil",
-        "BarrelTitle": "Beşik (kavisli) yüzey",
+        "BarrelTitle": "Tonoz (kavisli) yüzey",
         "ArcRise": "Kavis yüksekliği",
-        "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı."
+        "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı.",
+        "PitchTitle": "Beşik (eğimli) çatı",
+        "PitchRise": "Mahya yüksekliği",
+        "PitchSymmetric": "Beşik (çift eğim)",
+        "PitchMonopitch": "Tek eğim (sundurma)",
+        "PitchDropsFeatures": "Eğimli çatıya çevirince bu yüzeyin şekilleri kaldırıldı."
       },
       "Transform": {
         "Title": "Dönüşüm",
@@ -2781,7 +2786,7 @@
         "SelfIntersect": "Çizim kendisiyle kesişiyor; geçerli bir alan oluşturulamadı.",
         "TooSmall": "Çizilen şekil çok küçük veya geçersiz.",
         "DoesNotFit": "Şekil yüzeye sığmıyor — kenarlardan biraz içeride çizin.",
-        "ArcNoFeature": "Kavisli duvara henüz açıklık/şekil çizilemiyor."
+        "ArcNoFeature": "Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor."
       },
       "CollisionBlocked": "Bu değer başka bir nesneyle çakışıyor — uygulanmadı.",
       "PastePlaceHint": "Yapıştır: konuma tıkla · Esc iptal",

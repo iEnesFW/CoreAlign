@@ -691,12 +691,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     } else {
       const slab = (scene.slabs ?? []).find((s) => s.id === session.hostId);
       if (!slab) return;
-      if (slab.kind === 'roof' && (slab.arcRiseMm ?? 0) > 0) {
+      if ((slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0) {
         queueToast({
           dedupeKey: 'glass-arc-no-feature',
           variant: 'warning',
           description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
-            defaultValue: 'Kavisli yüzeye henüz açıklık/şekil çizilemiyor.',
+            defaultValue: 'Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor.',
           }),
         });
         return;

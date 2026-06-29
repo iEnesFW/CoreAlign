@@ -488,6 +488,11 @@ export interface SceneSlabState {
   thicknessMm: number;
   elevationMm: number;
   arcRiseMm?: number | null;
+  // Pitched/gable roof: ridge rise (mm) above the eaves. > 0 → pitched geometry (mutually
+  // exclusive with arcRiseMm). 'symmetric' = gable (ridge down the middle, triangular ends);
+  // 'monopitch' = single slope along the slab's local length (aim it with rotationDeg).
+  pitchRiseMm?: number | null;
+  pitchType?: 'symmetric' | 'monopitch';
   colorHex?: string | null;
   materialKey?: string | null;
   cornerRadiiMm?: CornerRadiiMm;

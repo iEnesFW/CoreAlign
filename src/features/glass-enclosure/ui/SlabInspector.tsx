@@ -45,9 +45,9 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
-  // A barrel (curved) slab defers surface features (they aren't projected onto the curve, #6b).
-  // Roofs AND floors can be curved.
-  const isBarrelRoof = (draft.arcRiseMm ?? 0) > 0;
+  // A curved (barrel) or pitched (gable) slab defers surface features — they aren't projected
+  // onto the non-flat surface yet (#6b). Roofs AND floors can take either profile.
+  const isShapedSurface = (draft.arcRiseMm ?? 0) > 0 || (draft.pitchRiseMm ?? 0) > 0;
 
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
@@ -73,18 +73,42 @@ export function SlabInspector() {
     updateSlab(slab.id, patch);
   };
 
-  // Barrel roofs can't carry surface features yet (#6b); converting to a curve drops
-  // them rather than leaving data that vanishes from the 3D view but lingers.
+  // Shaped (curved/pitched) slabs can't carry surface features yet (#6b); converting drops
+  // them rather than leaving data that vanishes from the 3D view but lingers. Curve and pitch
+  // are mutually exclusive profiles, so turning one on clears the other.
   const commitArcRise = (v: number) => {
     const rise = v > 0 ? Math.round(v) : null;
     const dropFeatures = rise !== null && (slab.features ?? []).length > 0;
-    commit({ arcRiseMm: rise, ...(dropFeatures ? { features: [] } : {}) });
+    commit({
+      arcRiseMm: rise,
+      ...(rise !== null ? { pitchRiseMm: null } : {}),
+      ...(dropFeatures ? { features: [] } : {}),
+    });
     if (dropFeatures) {
       queueToast({
         dedupeKey: 'glass-arc-drops-features',
         variant: 'warning',
         description: t('GlassEnclosure.Designer.Slab.BarrelDropsFeatures', {
           defaultValue: 'Kavise çevirince bu çatının şekilleri kaldırıldı.',
+        }),
+      });
+    }
+  };
+
+  const commitPitchRise = (v: number) => {
+    const rise = v > 0 ? Math.round(v) : null;
+    const dropFeatures = rise !== null && (slab.features ?? []).length > 0;
+    commit({
+      pitchRiseMm: rise,
+      ...(rise !== null ? { arcRiseMm: null } : {}),
+      ...(dropFeatures ? { features: [] } : {}),
+    });
+    if (dropFeatures) {
+      queueToast({
+        dedupeKey: 'glass-pitch-drops-features',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Slab.PitchDropsFeatures', {
+          defaultValue: 'Eğimli çatıya çevirince bu yüzeyin şekilleri kaldırıldı.',
         }),
       });
     }
@@ -207,7 +231,7 @@ export function SlabInspector() {
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.Slab.BarrelTitle', {
-            defaultValue: 'Beşik (kavisli) yüzey',
+            defaultValue: 'Tonoz (kavisli) yüzey',
           })}
         </p>
         <NumberField
@@ -217,6 +241,52 @@ export function SlabInspector() {
           onCommit={(v) => commitArcRise(v)}
           onDraft={(v) => setDraft({ ...draft, arcRiseMm: v })}
         />
+      </div>
+
+      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.Slab.PitchTitle', {
+            defaultValue: 'Beşik (eğimli) çatı',
+          })}
+        </p>
+        <NumberField
+          label={`${t('GlassEnclosure.Designer.Slab.PitchRise', { defaultValue: 'Mahya yüksekliği' })} (mm)`}
+          value={draft.pitchRiseMm ?? 0}
+          min={0}
+          onCommit={(v) => commitPitchRise(v)}
+          onDraft={(v) => setDraft({ ...draft, pitchRiseMm: v })}
+        />
+        {(draft.pitchRiseMm ?? 0) > 0 && (
+          <div className="flex gap-1.5">
+            {(
+              [
+                [
+                  'symmetric',
+                  t('GlassEnclosure.Designer.Slab.PitchSymmetric', {
+                    defaultValue: 'Beşik (çift eğim)',
+                  }),
+                ],
+                [
+                  'monopitch',
+                  t('GlassEnclosure.Designer.Slab.PitchMonopitch', { defaultValue: 'Tek eğim' }),
+                ],
+              ] as const
+            ).map(([type, typeLabel]) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => commit({ pitchType: type })}
+                className={
+                  (draft.pitchType ?? 'symmetric') === type
+                    ? 'flex-1 rounded border border-primary-500 bg-primary-50 px-2 py-1 text-xs font-medium text-primary-600 dark:bg-primary-950/30 dark:text-primary-400'
+                    : 'flex-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+                }
+              >
+                {typeLabel}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
@@ -251,7 +321,7 @@ export function SlabInspector() {
         </div>
       </div>
 
-      {!isBarrelRoof && (
+      {!isShapedSurface && (
         <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
