@@ -2602,6 +2602,7 @@
       },
       "Arc": {
         "Title": "Curve (arc)",
+        "Flip": "Flip direction (mirror)",
         "SweepInput": "Sweep angle (°)",
         "SurveyTitle": "From site survey (chord + rise)",
         "Chord": "Chord (mm)",

@@ -2602,6 +2602,7 @@
       },
       "Arc": {
         "Title": "Kavis (arc)",
+        "Flip": "Yönü çevir (ayna)",
         "SweepInput": "Yay açısı (°)",
         "SurveyTitle": "Saha ölçüsünden (kiriş + ok yüksekliği)",
         "Chord": "Kiriş (mm)",

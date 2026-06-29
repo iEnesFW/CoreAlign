@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FlipHorizontal } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import {
@@ -41,6 +42,9 @@ export function RunArcSection({
 
   const radius = draft.geomArcRadiusMm ?? 0;
   const isArc = radius > 0;
+  // The sign of geomArcSweepDeg is the bulge direction (computeArcLayout/arcEndLocal read it).
+  // Preserve it when recomputing the arc so a flipped curve stays flipped after a radius/sweep edit.
+  const sweepSign = (draft.geomArcSweepDeg ?? 0) < 0 ? -1 : 1;
   const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius) : null;
   const jointAngle = derived ? facetJointAngleDeg(derived.sweepDeg, panels.length) : 0;
   const hasSlidingPanels = panels.some(
@@ -58,7 +62,7 @@ export function RunArcSection({
       onDraftRadius(next.radiusMm);
       commit({
         geomArcRadiusMm: next.radiusMm,
-        geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+        geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
         ...bentOnArc(),
       });
     } else {
@@ -73,7 +77,7 @@ export function RunArcSection({
     onDraftRadius(next.radiusMm);
     commit({
       geomArcRadiusMm: next.radiusMm,
-      geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+      geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
       ...bentOnArc(),
     });
     setSweepDraft('');
@@ -88,11 +92,19 @@ export function RunArcSection({
     commit({
       lengthMm: next.arcLengthMm,
       geomArcRadiusMm: next.radiusMm,
-      geomArcSweepDeg: Math.round(next.sweepDeg * 10) / 10,
+      geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
       ...bentOnArc(),
     });
     setChordDraft('');
     setSagittaDraft('');
+  };
+
+  // Mirror the curve: negate the sweep sign so the arc bulges the other way (for an arc drawn
+  // in the wrong direction). No-op on a straight run.
+  const flipArc = () => {
+    const current = draft.geomArcSweepDeg ?? 0;
+    if (current === 0) return;
+    commit({ geomArcSweepDeg: -current });
   };
 
   return (
@@ -189,6 +201,17 @@ export function RunArcSection({
             min: minRadius,
           })}
         </p>
+      )}
+
+      {isArc && (
+        <button
+          type="button"
+          onClick={flipArc}
+          className="inline-flex items-center gap-1.5 rounded border border-slate-300 px-2 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          <FlipHorizontal size={13} />
+          {t('GlassEnclosure.Designer.Arc.Flip', { defaultValue: 'Yönü çevir (ayna)' })}
+        </button>
       )}
 
       {isArc && (
