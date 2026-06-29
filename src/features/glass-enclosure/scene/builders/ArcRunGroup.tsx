@@ -133,10 +133,18 @@ export function ArcRunGroup({
 
   const activeTool = useDesignerStore((s) => s.activeTool);
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
+  // WHY: a panel selection keeps its parent run's id in selection.runId; gate run handles on the
+  // run actually being the active selection so they don't render on top of a selected panel.
+  const selectionKind = useDesignerStore((s) => s.selection.kind);
   const sceneState = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
-  const vertexEditActive = transformActive && isRunSelected && Boolean(onStretchRun) && !run.locked;
+  const vertexEditActive =
+    transformActive &&
+    selectionKind === 'run' &&
+    isRunSelected &&
+    Boolean(onStretchRun) &&
+    !run.locked;
   const multiSiblingsRef = useRef<AttachedRunSnapshot[]>([]);
   const groupRef = useRef<Group>(null);
   const setGroupRef = (group: Group | null) => {

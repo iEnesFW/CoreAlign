@@ -279,8 +279,8 @@ const cornerCandidates = (a: WallEndpoint, b: WallEndpoint): CornerLeg[] | null 
   // Each corner leg extends its OWN wall outward, so it inherits that wall's top
   // height and base elevation — a leg must reach the top of the wall it belongs to,
   // not the shorter of the pair (which would leave a mixed-height corner misaligned).
-  // L legs run ALONG each wall's centreline axis to the corner, so they stay axis-aligned —
-  // the nearest-corner refinement (for straight/arc) is intentionally NOT applied here.
+  // Endpoints arrive nearest-corner refined (same as straight/arc) so a thick-wall L meets the
+  // walls' closest corners; only x/y are slid, so each leg still runs along its wall's outward ray.
   const legs: CornerLeg[] = [];
   const legA = edgeBetween(a, corner, a.heightMm, a.baseZMm);
   if (legA) legs.push({ edge: legA, ownWallId: a.wall.id });
@@ -464,15 +464,22 @@ export const computeMultiWallGapRuns = (
       ...wallBlockers.filter((w) => w.ownerId !== ownWallId && w.ownerId !== partnerWallId),
       ...gapRunBlockers,
     ];
-    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Corner detection +
-    // legs both use the centreline endpoints (the refinement is only for straight/arc).
+    // 'straight' skips corner legs entirely; 'auto'/'L' try the L legs first. Like arc + straight,
+    // the legs prefer the NEAREST-corner refined endpoints (a/b) so an L bridges the walls' actual
+    // closest corners, not their centrelines (thick walls used to misalign). Fall back to the
+    // centreline ends when refinement collapses the legs to nothing — for very thick walls the two
+    // near corners can coincide, which would otherwise make L mode silently emit no fill.
     // Perpendicular pairs go through cornerCandidates; an 'L' on PARALLEL walls falls back to the
     // right-angle parallel-L generator (kept out of 'auto' so it still bridges collinear straight).
     const corner =
       mode === 'straight'
         ? null
-        : (cornerCandidates(free[pair.i], free[pair.j]) ??
-          (mode === 'L' ? parallelCornerCandidates(free[pair.i], free[pair.j]) : null));
+        : (cornerCandidates(a, b) ??
+          cornerCandidates(free[pair.i], free[pair.j]) ??
+          (mode === 'L'
+            ? (parallelCornerCandidates(a, b) ??
+              parallelCornerCandidates(free[pair.i], free[pair.j]))
+            : null));
     let isCorner = corner !== null;
     let trimmed = (corner ?? [])
       .map((leg) =>

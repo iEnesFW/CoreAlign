@@ -101,6 +101,20 @@ describe('computeMultiWallGapRuns', () => {
     expect(rotations[0]).toBe(0); // at least one leg runs along the X wall axis
   });
 
+  it('an L on moderately thick perpendicular walls meets at the NEAR corner (refined endpoints)', () => {
+    // 600mm-thick walls with a roomy gap: refining each free end to its near corner pulls the L's
+    // shared vertex inward by half-thickness. Centreline intersection would be (3000, 0); the
+    // nearest-corner refinement lands it at ~(2700, 300). Asserting the corner moved (and the legs
+    // stay above MIN_RUN_MM) proves L now references the closest ends like the arc does (#1).
+    const a = wall('a', 0, 0, 2000, 0, 2600, 600);
+    const b = wall('b', 3000, 1000, 2000, 90, 2600, 600);
+    const edges = computeMultiWallGapRuns([a, b], [a, b], [], 'L');
+    expect(edges).toHaveLength(2);
+    const corner = endpointOf(edges[0]); // the X-axis leg's far end = the shared corner vertex
+    expect(corner.x).toBeLessThan(3000);
+    expect(corner.y).toBeGreaterThan(0);
+  });
+
   it('never returns an edge that would pass through an unselected wall in between', () => {
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 6000, 0, 2000, 0);

@@ -337,8 +337,17 @@ export function RunGroup({
     labelMm(Math.max(MIN_RUN_HEIGHT_MM, run.heightMm + stickyDelta(run.heightMm, d)));
 
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
+  // WHY: a panel selection keeps its parent run's id in selection.runId, so isRunSelected alone
+  // would render the run's footprint handles on top of a selected panel (the "two dots at one
+  // corner" report). Only show run handles when the RUN itself is the active selection.
+  const selectionKind = useDesignerStore((s) => s.selection.kind);
   const stretchActive = activeTool === 'stretch' && Boolean(onStretchRun) && !run.locked;
-  const vertexEditActive = transformActive && isRunSelected && Boolean(onStretchRun) && !run.locked;
+  const vertexEditActive =
+    transformActive &&
+    selectionKind === 'run' &&
+    isRunSelected &&
+    Boolean(onStretchRun) &&
+    !run.locked;
   const endFaceM = RUN_PLAN_THICKNESS_MM / 1000;
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [
