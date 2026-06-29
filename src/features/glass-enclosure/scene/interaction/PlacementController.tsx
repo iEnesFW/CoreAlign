@@ -170,6 +170,7 @@ export function PlacementController({
   const matRef = useRef<MeshBasicMaterial>(null);
   const freeRef = useRef<PlanPoint | null>(null);
   const posRef = useRef<PlanPoint | null>(null);
+  const elevationRef = useRef<number | null>(null);
   const blockedRef = useRef(false);
   const downRef = useRef({ x: 0, y: 0 });
   const rotationRef = useRef(0);
@@ -179,6 +180,7 @@ export function PlacementController({
   useEffect(() => {
     freeRef.current = null;
     posRef.current = null;
+    elevationRef.current = null;
     blockedRef.current = false;
     rotationRef.current = 0;
     const ghost = ghostRef.current;
@@ -213,7 +215,19 @@ export function PlacementController({
     };
   };
 
-  const ghostFootprintAt = (xMm: number, yMm: number, heightMm: number): PlanFootprint => {
+  const slabElevationAt = (xMm: number, yMm: number, restOnTopMm?: number): number => {
+    if (placement === 'floor') return FLOOR_ELEVATION_MM;
+    // A roof rests on the surface directly under the cursor (the hovered object's top) when one
+    // is hit; otherwise it falls back to the nearest run/wall top so it still lands sensibly.
+    return restOnTopMm ?? roofElevationAt(runs, walls, xMm, yMm);
+  };
+
+  const ghostFootprintAt = (
+    xMm: number,
+    yMm: number,
+    heightMm: number,
+    restOnTopMm?: number,
+  ): PlanFootprint => {
     if (isLine) {
       const halfWidthMm = placement === 'wall' ? WALL_THICKNESS_MM / 2 : RUN_PLAN_THICKNESS_MM / 2;
       const start = lineStart(xMm, yMm);
@@ -228,8 +242,7 @@ export function PlacementController({
         heightMm,
       );
     }
-    const elevationMm =
-      placement === 'floor' ? FLOOR_ELEVATION_MM : roofElevationAt(runs, walls, xMm, yMm);
+    const elevationMm = slabElevationAt(xMm, yMm, restOnTopMm);
     return buildPlanFootprint(
       GHOST_ID,
       xMm - SLAB_LENGTH_MM / 2,
@@ -242,7 +255,13 @@ export function PlacementController({
     );
   };
 
-  const applyGhost = (xMm: number, yMm: number, heightMm: number, blocked: boolean) => {
+  const applyGhost = (
+    xMm: number,
+    yMm: number,
+    heightMm: number,
+    blocked: boolean,
+    restOnTopMm?: number,
+  ) => {
     const ghost = ghostRef.current;
     const mesh = meshRef.current;
     const mat = matRef.current;
@@ -256,8 +275,7 @@ export function PlacementController({
       mesh.scale.set(LINE_LENGTH_MM / MM, heightM, thickM);
       mesh.position.set(0, heightM / 2, 0);
     } else {
-      const elevationM =
-        (placement === 'floor' ? FLOOR_ELEVATION_MM : roofElevationAt(runs, walls, xMm, yMm)) / MM;
+      const elevationM = slabElevationAt(xMm, yMm, restOnTopMm) / MM;
       mesh.scale.set(SLAB_LENGTH_MM / MM, SLAB_THICKNESS_MM / MM, SLAB_DEPTH_MM / MM);
       mesh.position.set(0, elevationM + SLAB_THICKNESS_MM / MM / 2, 0);
     }
@@ -268,15 +286,16 @@ export function PlacementController({
     targetX: number,
     targetY: number,
     guides: ReturnType<typeof applyPlanMoveSnap>['guides'],
+    restOnTopMm?: number,
   ) => {
     let x = targetX;
     let y = targetY;
     const heightMm = isLine ? lineHeightAt(x, y) : 0;
-    const blocked = penetratesAny(ghostFootprintAt(x, y, heightMm), obstacles);
+    const blocked = penetratesAny(ghostFootprintAt(x, y, heightMm, restOnTopMm), obstacles);
     if (blocked && freeRef.current) {
       const from = freeRef.current;
       const clamped = clampPlanMove(
-        (dx, dy) => ghostFootprintAt(from.x + dx, from.y + dy, heightMm),
+        (dx, dy) => ghostFootprintAt(from.x + dx, from.y + dy, heightMm, restOnTopMm),
         obstacles,
         x - from.x,
         y - from.y,
@@ -284,18 +303,23 @@ export function PlacementController({
       x = from.x + clamped.dxMm;
       y = from.y + clamped.dyMm;
     }
-    const stillBlocked = penetratesAny(ghostFootprintAt(x, y, heightMm), obstacles);
+    const stillBlocked = penetratesAny(ghostFootprintAt(x, y, heightMm, restOnTopMm), obstacles);
     if (!stillBlocked) freeRef.current = { x, y };
     posRef.current = { x, y };
+    // Remember the resolved roof elevation so the placed slab lands exactly where the ghost
+    // previewed (on the hovered object's top), not on the nearest-spine fallback.
+    elevationRef.current = isLine ? null : slabElevationAt(x, y, restOnTopMm);
     blockedRef.current = stillBlocked;
     setSnapGuides(stillBlocked ? [] : guides);
-    applyGhost(x, y, heightMm, stillBlocked);
+    applyGhost(x, y, heightMm, stillBlocked, restOnTopMm);
   };
 
   // The XZ of the structure the cursor points at (run/wall/slab top), so a roof lands
   // where you POINT — not on the cursor's ground projection, which parallaxes away in a
   // perspective view ("mouse treated as ground"). Ground disk / grid (y≈0) are ignored.
-  const pickStructureXZ = (e: ThreeEvent<PointerEvent>): PlanPoint | null => {
+  const pickStructureXZ = (
+    e: ThreeEvent<PointerEvent>,
+  ): { x: number; y: number; elevationMm: number } | null => {
     raycaster.set(e.ray.origin, e.ray.direction);
     for (const hit of raycaster.intersectObjects(scene.children, true)) {
       if (hit.point.y * MM <= STRUCTURE_MIN_Y_MM) continue;
@@ -312,7 +336,9 @@ export function PlacementController({
         o = o.parent;
       }
       if (owned) continue;
-      return { x: hit.point.x * MM, y: hit.point.z * MM };
+      // The hit Y is the top surface under the cursor → a roof rests THERE (on top of the
+      // hovered object), instead of being pinned to the nearest-spine height.
+      return { x: hit.point.x * MM, y: hit.point.z * MM, elevationMm: hit.point.y * MM };
     }
     return null;
   };
@@ -327,7 +353,7 @@ export function PlacementController({
       const hit = placement === 'roof' ? pickStructureXZ(e) : null;
       const x = hit ? snapToPlaceGrid(hit.x) : gridX;
       const y = hit ? snapToPlaceGrid(hit.y) : gridY;
-      applyAt(x, y, []);
+      applyAt(x, y, [], hit?.elevationMm);
       return;
     }
     const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
@@ -394,7 +420,9 @@ export function PlacementController({
       depthMm: SLAB_DEPTH_MM,
       thicknessMm: SLAB_THICKNESS_MM,
       elevationMm:
-        placement === 'floor' ? FLOOR_ELEVATION_MM : roofElevationAt(runs, walls, pos.x, pos.y),
+        placement === 'floor'
+          ? FLOOR_ELEVATION_MM
+          : (elevationRef.current ?? roofElevationAt(runs, walls, pos.x, pos.y)),
     });
   };
 
