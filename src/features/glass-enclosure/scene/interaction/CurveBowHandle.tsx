@@ -41,7 +41,9 @@ export function CurveBowHandle({
   const acrossY = dx / chordMm;
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
-  const maxSagittaMm = chordMm * 0.49;
+  // Allow well past a half-circle (sagitta > chord/2 → major arc) so the curve can be driven as
+  // deep as the user wants; the arc maths caps the rendered sweep before a degenerate full circle.
+  const maxSagittaMm = chordMm * 2;
   const restX = midX + acrossX * currentSagittaMm;
   const restY = midY + acrossY * currentSagittaMm;
 

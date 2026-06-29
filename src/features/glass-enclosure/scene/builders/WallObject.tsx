@@ -59,7 +59,7 @@ import {
   type WallBoxDims,
   type WallFeatureSide,
 } from './wallFaces';
-import { arcFromBow, effectiveArcRadiusMm } from '../../model/arcGeometry';
+import { arcEndLocal, arcFromBow, bowFromArc, effectiveArcRadiusMm } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -411,6 +411,28 @@ export function WallObject({
   const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
   const vertexEditActive =
     transformActive && isSelected && interactive && !wall.locked && !isArcWall;
+  // The curve (bow) handle stays available on an ALREADY-curved wall too (unlike the footprint
+  // resize handles), so the bow can be re-adjusted — otherwise the Q dots vanish after curving.
+  const curveEditActive = transformActive && isSelected && interactive && !wall.locked;
+  const wallCurveChord = (() => {
+    const r = wall.rotationDeg * DEG2RAD;
+    if (isArcWall) {
+      const ae = arcEndLocal(wall.lengthMm, wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const ex = wall.originX + ae.xMm * Math.cos(r) - ae.yMm * Math.sin(r);
+      const ey = wall.originY + ae.xMm * Math.sin(r) + ae.yMm * Math.cos(r);
+      const chordMm = Math.hypot(ex - wall.originX, ey - wall.originY);
+      return {
+        endX: ex,
+        endY: ey,
+        sagittaMm: bowFromArc(chordMm, wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1),
+      };
+    }
+    return {
+      endX: wall.originX + wall.lengthMm * Math.cos(r),
+      endY: wall.originY + wall.lengthMm * Math.sin(r),
+      sagittaMm: 0,
+    };
+  })();
   // WHY: always cut the features (don't suppress while stretching) — the depth handle that
   // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
   // hid the result on every face until the user happened to leave the tool. Depth commits on
@@ -1399,18 +1421,26 @@ export function WallObject({
           }}
         />
       )}
-      {vertexEditActive && (
+      {curveEditActive && (
         <CurveBowHandle
           startX={wall.originX}
           startY={wall.originY}
-          endX={wall.originX + wall.lengthMm * Math.cos(wall.rotationDeg * DEG2RAD)}
-          endY={wall.originY + wall.lengthMm * Math.sin(wall.rotationDeg * DEG2RAD)}
-          currentSagittaMm={0}
+          endX={wallCurveChord.endX}
+          endY={wallCurveChord.endY}
+          currentSagittaMm={wallCurveChord.sagittaMm}
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
           onCommit={(sagittaMm) => {
-            const arc = arcFromBow(wall.lengthMm, wall.rotationDeg, sagittaMm);
+            const chordMm = Math.hypot(
+              wallCurveChord.endX - wall.originX,
+              wallCurveChord.endY - wall.originY,
+            );
+            const chordDeg =
+              (Math.atan2(wallCurveChord.endY - wall.originY, wallCurveChord.endX - wall.originX) *
+                180) /
+              Math.PI;
+            const arc = arcFromBow(chordMm, chordDeg, sagittaMm);
             updateWall(wall.id, {
               lengthMm: arc.lengthMm,
               rotationDeg: arc.rotationDeg,

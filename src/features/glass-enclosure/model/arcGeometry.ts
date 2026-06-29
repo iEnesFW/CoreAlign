@@ -31,7 +31,11 @@ const MAX_SWEEP_RAD = Math.PI * 2;
 const BAR_SEGMENT_STEP_RAD = 0.1;
 const MIN_BAR_SEGMENTS = 12;
 
-export const minArcRadiusMm = (lengthMm: number) => Math.ceil(lengthMm / Math.PI);
+// The tightest radius an arc may take. Was lengthMm/π, which capped every arc at a half-circle
+// (180°); using the full MAX_SWEEP_RAD lets a curve go past a semicircle (deeper arcs) — the user
+// wants no half-circle floor. A genuinely degenerate full circle is avoided by the input caps.
+export const minArcRadiusMm = (lengthMm: number) =>
+  Math.max(1, Math.ceil(lengthMm / MAX_SWEEP_RAD));
 
 export const effectiveArcRadiusMm = (lengthMm: number, radiusMm: number) =>
   Math.max(radiusMm, minArcRadiusMm(lengthMm));
@@ -147,7 +151,8 @@ export const deriveArcFromRadius = (arcLengthMm: number, radiusMm: number): ArcD
 };
 
 export const deriveArcFromSweep = (arcLengthMm: number, sweepDeg: number): ArcDerived => {
-  const clampedDeg = Math.min(180, Math.max(1, Math.abs(sweepDeg)));
+  // Allow past a half-circle (up to ~350°) so a curve can be driven deeper than 180°.
+  const clampedDeg = Math.min(350, Math.max(1, Math.abs(sweepDeg)));
   const radius = arcLengthMm / ((clampedDeg * Math.PI) / 180);
   return deriveArcFromRadius(arcLengthMm, radius);
 };
@@ -155,7 +160,13 @@ export const deriveArcFromSweep = (arcLengthMm: number, sweepDeg: number): ArcDe
 export const deriveArcFromChordSagitta = (chordMm: number, sagittaMm: number): ArcDerived => {
   const sagitta = Math.max(0.001, Math.abs(sagittaMm));
   const radius = sagitta / 2 + (chordMm * chordMm) / (8 * sagitta);
-  const sweepRad = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));
+  const minorSweep = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));
+  // Once the bow exceeds the half-chord the arc is the MAJOR arc (> 180°): the chord then subtends
+  // 2π − minorSweep. Without this the sweep saturated at 180° and the curve could not go deeper.
+  const sweepRad = Math.min(
+    MAX_SWEEP_RAD,
+    sagitta > chordMm / 2 ? 2 * Math.PI - minorSweep : minorSweep,
+  );
   const arcLengthMm = radius * sweepRad;
   return {
     radiusMm: Math.round(radius),
