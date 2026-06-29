@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
 import type { Group } from 'three';
-import { stickyDimensionMm, useDrag3D } from '@/shared/three-engine';
+import { useDrag3D } from '@/shared/three-engine';
 import { bowArcPlanPoints } from '../../model/arcGeometry';
 
 const MM = 1000;
@@ -42,10 +42,10 @@ export function CurveBowHandle({
   const acrossY = dx / chordMm;
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
-  // A fresh drag can bow up to ~chord (≈ a 250° arc) — deep, but short of the runaway near-full
-  // circle a tiny zoomed-out drag used to cause. Re-grabbing an already-deeper curve keeps its
-  // reach so the handle never silently shallows it.
-  const maxSagittaMm = Math.max(chordMm, Math.abs(currentSagittaMm));
+  // The apex follows the cursor freely — bow as little or as much as the point is dragged, from
+  // flat up to a near-full circle. The bound is just a sanity cap (well past any real design);
+  // the live preview shows exactly the arc that will result, so there is no runaway surprise.
+  const maxSagittaMm = Math.max(chordMm * 8, Math.abs(currentSagittaMm));
   const restX = midX + acrossX * currentSagittaMm;
   const restY = midY + acrossY * currentSagittaMm;
 
@@ -54,11 +54,9 @@ export function CurveBowHandle({
   const [dragSagitta, setDragSagitta] = useState<number | null>(null);
 
   const sagittaAt = (delta: { x: number; z: number }) => {
+    // Continuous, 1:1 with the dragged ground point — the apex bows exactly as far as it is pulled.
     const raw = currentSagittaMm + (delta.x * MM * acrossX + delta.z * MM * acrossY);
-    // Snap the bow depth so dragging lands precisely on round numbers (sticky at 100s, else a fine
-    // grid step) instead of sliding continuously — the "hassas kaydırma" the user expects.
-    const snapped = stickyDimensionMm(raw);
-    return Math.max(-maxSagittaMm, Math.min(maxSagittaMm, snapped));
+    return Math.max(-maxSagittaMm, Math.min(maxSagittaMm, raw));
   };
 
   const previewPoints = useMemo<[number, number, number][] | null>(() => {
