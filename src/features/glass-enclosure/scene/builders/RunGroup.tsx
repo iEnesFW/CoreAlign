@@ -1,8 +1,9 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
-import { Billboard, Text } from '@react-three/drei';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Billboard, Line, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
+import { deriveArcFromChordSagitta } from '../../model/arcGeometry';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
@@ -44,7 +45,16 @@ import type { PlanFootprint } from '../interaction/planCollision';
 import type { PlanMoveDelta, PlanPoint, PlanSnapTargets } from '../interaction/planSnap';
 
 export type RunStretchPatch = Partial<
-  Pick<SceneRunState, 'lengthMm' | 'heightMm' | 'originX' | 'originY'>
+  Pick<
+    SceneRunState,
+    | 'lengthMm'
+    | 'heightMm'
+    | 'originX'
+    | 'originY'
+    | 'geomArcRadiusMm'
+    | 'geomArcSweepDeg'
+    | 'arcGlassBent'
+  >
 >;
 
 interface RunGroupProps {
@@ -617,6 +627,148 @@ export function RunGroup({
           }}
         />
       )}
+      {vertexEditActive && onStretchRun && (
+        <RunCurveHandle
+          startX={run.originX}
+          startY={run.originY}
+          lengthMm={run.lengthMm}
+          dirX={dirX}
+          dirY={dirY}
+          topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
+          onCurve={(patch) => onStretchRun(run.id, patch)}
+        />
+      )}
+    </>
+  );
+}
+
+const CURVE_HANDLE_RADIUS_M = 0.06;
+const CURVE_HANDLE_COLOR = '#16a34a';
+const CURVE_HANDLE_HOVER = '#f97316';
+const CURVE_STRAIGHTEN_MM = 25;
+
+// A handle at a straight run's chord midpoint. Dragging it PERPENDICULAR to the run bows it into an
+// arc (sagitta → radius/sweep), so a curve is given by dragging (#3). A live parabolic line previews
+// the bow; under the straighten threshold it clears the arc. The bulge follows the drag because a
+// run's local +bow maps to plan across (-dirY, dirX); if it ever reads reversed, the inspector Flip
+// button negates it.
+function RunCurveHandle({
+  startX,
+  startY,
+  lengthMm,
+  dirX,
+  dirY,
+  topYM,
+  onCurve,
+}: {
+  startX: number;
+  startY: number;
+  lengthMm: number;
+  dirX: number;
+  dirY: number;
+  topYM: number;
+  onCurve: (patch: RunStretchPatch) => void;
+}) {
+  const MMc = 1000;
+  const acrossX = -dirY;
+  const acrossY = dirX;
+  const midX = startX + (lengthMm / 2) * dirX;
+  const midY = startY + (lengthMm / 2) * dirY;
+  const endX = startX + lengthMm * dirX;
+  const endY = startY + lengthMm * dirY;
+  const maxSagittaMm = lengthMm * 0.49;
+  const anchorRef = useRef<Group>(null);
+  const [hovered, setHovered] = useState(false);
+  const [sagittaMm, setSagittaMm] = useState<number | null>(null);
+
+  const sagittaFrom = (delta: { x: number; z: number }) => {
+    const s = delta.x * MMc * acrossX + delta.z * MMc * acrossY;
+    return Math.max(-maxSagittaMm, Math.min(maxSagittaMm, s));
+  };
+
+  const previewPoints = useMemo<[number, number, number][] | null>(() => {
+    if (sagittaMm === null) return null;
+    const pts: [number, number, number][] = [];
+    for (let i = 0; i <= 16; i += 1) {
+      const t = i / 16;
+      // Parabolic bow approximation of the arc (apex = sagitta at t=0.5) — just for the preview.
+      const bow = sagittaMm * (1 - (2 * t - 1) ** 2);
+      const x = startX + (endX - startX) * t + acrossX * bow;
+      const y = startY + (endY - startY) * t + acrossY * bow;
+      pts.push([x / MMc, topYM, y / MMc]);
+    }
+    return pts;
+  }, [sagittaMm, startX, startY, endX, endY, acrossX, acrossY, topYM]);
+
+  const drag = useDrag3D({
+    constraint: { mode: 'ground' },
+    enabled: true,
+    onMove: (delta) => {
+      const s = sagittaFrom(delta);
+      setSagittaMm(s);
+      anchorRef.current?.position.set(
+        (midX + acrossX * s) / MMc,
+        topYM,
+        (midY + acrossY * s) / MMc,
+      );
+    },
+    onCommit: (delta) => {
+      setSagittaMm(null);
+      anchorRef.current?.position.set(midX / MMc, topYM, midY / MMc);
+      const s = sagittaFrom(delta);
+      if (Math.abs(s) < CURVE_STRAIGHTEN_MM) {
+        onCurve({ geomArcRadiusMm: null, geomArcSweepDeg: null });
+        return;
+      }
+      const derived = deriveArcFromChordSagitta(lengthMm, Math.abs(s));
+      onCurve({
+        geomArcRadiusMm: derived.radiusMm,
+        geomArcSweepDeg: Math.round((s >= 0 ? 1 : -1) * derived.sweepDeg * 10) / 10,
+        lengthMm: derived.arcLengthMm,
+        arcGlassBent: true,
+      });
+    },
+  });
+
+  return (
+    <>
+      {previewPoints && (
+        <Line
+          points={previewPoints}
+          color={CURVE_HANDLE_HOVER}
+          lineWidth={2}
+          dashed
+          dashSize={0.05}
+          gapSize={0.03}
+        />
+      )}
+      <group ref={anchorRef} position={[midX / MMc, topYM, midY / MMc]}>
+        <mesh
+          {...drag.handlers}
+          onClick={(e) => {
+            e.stopPropagation();
+            drag.consumeClick();
+          }}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            setHovered(true);
+            document.body.style.cursor = 'grab';
+          }}
+          onPointerOut={() => {
+            setHovered(false);
+            document.body.style.cursor = 'auto';
+          }}
+          renderOrder={999}
+        >
+          <sphereGeometry args={[CURVE_HANDLE_RADIUS_M, 16, 16]} />
+          <meshBasicMaterial
+            color={hovered ? CURVE_HANDLE_HOVER : CURVE_HANDLE_COLOR}
+            depthTest={false}
+            depthWrite={false}
+            transparent
+          />
+        </mesh>
+      </group>
     </>
   );
 }
