@@ -6,6 +6,8 @@ import { boxCornersMm, resizeBoxFromCorner, type BoxFootprint } from './footprin
 
 const MM = 1000;
 const GRID_MM = 10;
+const STICK_STEP_MM = 100;
+const STICK_TOL_MM = 18;
 const HANDLE_RADIUS_M = 0.06;
 const HANDLE_COLOR = '#1d4ed8';
 const HANDLE_HOVER_COLOR = '#f97316';
@@ -128,6 +130,9 @@ function CornerHandle({
         cornerIndex,
         snapGrid(handleX + delta.x),
         snapGrid(handleY + delta.z),
+        50,
+        STICK_STEP_MM,
+        STICK_TOL_MM,
       );
       onPreview(resized);
       const pos = handlePosForBox(resized);
@@ -142,6 +147,9 @@ function CornerHandle({
           cornerIndex,
           snapGrid(handleX + delta.x),
           snapGrid(handleY + delta.z),
+          50,
+          STICK_STEP_MM,
+          STICK_TOL_MM,
         ),
       );
     },
