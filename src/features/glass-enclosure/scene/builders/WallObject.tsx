@@ -52,6 +52,7 @@ import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
 import {
   applyWallFaceFeatures,
+  buildFaceFeatureGeometry,
   normalizeWallSide,
   sideFromLocalNormal,
   wallFaceFrame,
@@ -156,7 +157,9 @@ interface DraftFeature extends FeatureOutlineSpec {
 }
 
 interface WallFeatureItem extends ComposedFeature {
-  geometry: ExtrudeGeometry | null;
+  // Front/back plugs + protrusions are ExtrudeGeometry; side-face protrusions are the
+  // face-oriented BufferGeometry from buildFaceFeatureGeometry — both render as a plain mesh.
+  geometry: BufferGeometry | null;
 }
 
 export interface OpeningFrameRect {
@@ -312,32 +315,50 @@ const buildWallGeometries = (
     }
     featureItems.push({ ...item, geometry });
   }
-  // Side-face features (top/bottom/left/right) are carved into the body via CSG below; surface them
-  // here too as selectable outline items so they can be picked and edited in the inspector (#5).
+  // Side-face features (top/bottom/left/right): holes/recesses are carved into the body via CSG
+  // below; a PROTRUSION is rendered as an additive extruded solid here (NOT a CSG union — three-csg-ts
+  // degenerates a side-face union into a sliver and collapses the whole wall, #5), the same approach
+  // front/back protrusions use. All are surfaced as feature items so they stay selectable (#5).
+  const sideDims: WallBoxDims = {
+    lengthM,
+    heightM: Math.max(heightStartM, heightEndM),
+    thicknessM,
+  };
   for (const f of sideFaceFeatures) {
     const sideOutline = featureOutlineMm(f);
     if (sideOutline.length < 3) continue;
+    const sideGeometry =
+      f.mode === 'protrude'
+        ? buildFaceFeatureGeometry(
+            sideOutline,
+            wallFaceFrame(normalizeWallSide(f.side), sideDims),
+            Math.max(0.002, f.depthMm / 1000),
+            true,
+          )
+        : null;
     featureItems.push({
       feature: f,
       outline: sideOutline,
       bounds: outlineBoundsMm(sideOutline),
-      kind: 'outline',
+      kind: f.mode === 'protrude' ? 'protrude' : 'outline',
       cut: false,
-      geometry: null,
+      geometry: sideGeometry,
     });
   }
   const body = new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false });
   body.translate(0, 0, -thicknessM / 2);
-  if (cutFeatures && sideFaceFeatures.length > 0) {
+  // Only holes/recesses are CSG-carved; protrusions are additive meshes (above).
+  const carvedSideFeatures = sideFaceFeatures.filter((f) => f.mode !== 'protrude');
+  if (cutFeatures && carvedSideFeatures.length > 0) {
     const finalBody = applyWallFaceFeatures(
       body,
-      sideFaceFeatures.map((f) => ({
+      carvedSideFeatures.map((f) => ({
         outlineMm: featureOutlineMm(f),
         side: normalizeWallSide(f.side),
-        mode: f.mode === 'protrude' ? 'protrude' : f.mode === 'hole' ? 'hole' : 'recess',
+        mode: f.mode === 'hole' ? 'hole' : 'recess',
         depthMm: f.depthMm,
       })),
-      { lengthM, heightM: Math.max(heightStartM, heightEndM), thicknessM },
+      sideDims,
     );
     if (finalBody !== body) body.dispose();
     return { body: finalBody, featureItems, openingFrames };
