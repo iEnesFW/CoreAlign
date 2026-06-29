@@ -14,6 +14,7 @@ import {
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
 import { buildCurvedBandGeometry, curvedWallPickUv } from './curvedExtrude';
+import { buildBentWallGeometry } from './bentWallGeometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
@@ -28,6 +29,7 @@ import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { CurveBowHandle } from '../interaction/CurveBowHandle';
+import { BendHandle } from '../interaction/BendHandle';
 import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
@@ -210,6 +212,19 @@ const buildWallGeometries = (
 } => {
   const thicknessMm = wall.thicknessMm;
   const thicknessM = thicknessMm / 1000;
+
+  // L-shaped (bent) wall: a single mitred solid. Like the curved wall it is a non-flat body, so
+  // openings/features are deferred (#6c); it reuses the straight render path (no mesh rotation).
+  if (wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1) {
+    const body = buildBentWallGeometry({
+      lengthMm: wall.lengthMm,
+      bendAtMm: wall.bendAtMm ?? wall.lengthMm / 2,
+      bendAngleDeg: wall.bendAngleDeg,
+      thicknessMm,
+      heightMm: wall.heightMm,
+    });
+    return { body, featureItems: [], openingFrames: [] };
+  }
 
   // Curved (arc-in-plan) wall: a single annular band. Front/back holes & recesses are now carved
   // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
@@ -416,16 +431,24 @@ export function WallObject({
   const setSelection = useDesignerStore((s) => s.setSelection);
 
   const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
-  // Length/height stretch handles assume a straight body; an arc wall is resized via
-  // its radius/sweep in the inspector instead (#6a).
+  // An L-shaped (bent) wall is a non-straight solid like the arc wall: its footprint resize and
+  // curve handles don't apply and it can't carry surface features yet (#6c).
+  const isBentWall = Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1);
+  const isShapedWall = isArcWall || isBentWall;
+  // Length/height stretch handles assume a straight body; an arc/bent wall is resized via
+  // its radius/sweep or bend in the inspector instead (#6a).
   // The 's' tool shows bounding resize faces; Q (transform) shows draggable CORNER points to
   // reshape the footprint — two distinct affordances, not the same handles.
-  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isArcWall;
+  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isShapedWall;
   const vertexEditActive =
-    transformActive && isSelected && interactive && !wall.locked && !isArcWall;
+    transformActive && isSelected && interactive && !wall.locked && !isShapedWall;
   // The curve (bow) handle stays available on an ALREADY-curved wall too (unlike the footprint
   // resize handles), so the bow can be re-adjusted — otherwise the Q dots vanish after curving.
-  const curveEditActive = transformActive && isSelected && interactive && !wall.locked;
+  // A bent wall has no bow (bend and arc are mutually exclusive profiles).
+  const curveEditActive =
+    transformActive && isSelected && interactive && !wall.locked && !isBentWall;
+  // The bend handle initiates/re-adjusts an L on a straight or already-bent wall (never an arc wall).
+  const bendEditActive = transformActive && isSelected && interactive && !wall.locked && !isArcWall;
   const wallCurveChord = (() => {
     const r = wall.rotationDeg * DEG2RAD;
     if (isArcWall) {
@@ -717,6 +740,16 @@ export function WallObject({
   };
 
   const commitDraft = (spec: DraftFeature) => {
+    if (isBentWall) {
+      queueToast({
+        dedupeKey: 'glass-bent-no-feature',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
+          defaultValue: 'Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor.',
+        }),
+      });
+      return;
+    }
     if (spec.widthMm < MIN_FEATURE_SIZE_MM || spec.heightMm < MIN_FEATURE_SIZE_MM) {
       queueToast({
         dedupeKey: 'glass-wall-feature-fit',
@@ -1466,6 +1499,29 @@ export function WallObject({
               rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,
               geomArcSweepDeg: arc.geomArcSweepDeg,
+            });
+          }}
+        />
+      )}
+      {bendEditActive && (
+        <BendHandle
+          startX={wall.originX}
+          startY={wall.originY}
+          dirDeg={wall.rotationDeg}
+          lengthMm={wall.lengthMm}
+          bendAtMm={wall.bendAtMm ?? wall.lengthMm / 2}
+          currentBendDeg={wall.bendAngleDeg ?? 0}
+          topYM={
+            ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
+          }
+          onCommit={(bendDeg) => {
+            if (bendDeg === 0) {
+              updateWall(wall.id, { bendAngleDeg: null });
+              return;
+            }
+            updateWall(wall.id, {
+              bendAtMm: wall.bendAtMm ?? Math.round(wall.lengthMm / 2),
+              bendAngleDeg: bendDeg,
             });
           }}
         />

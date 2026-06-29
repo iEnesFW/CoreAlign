@@ -362,6 +362,10 @@ export interface SceneWallState {
   geomZ?: number | null; // base elevation (mm) so a wall can rest on top of others
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
+  // L-shaped (bent) wall: a single mitred solid that turns by bendAngleDeg at bendAtMm along its
+  // developed length. > 0 angle → bent geometry (mutually exclusive with the arc fields).
+  bendAtMm?: number | null;
+  bendAngleDeg?: number | null;
   colorHex?: string | null;
   materialKey?: string | null;
   groupId?: string | null;
