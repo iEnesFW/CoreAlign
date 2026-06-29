@@ -937,8 +937,18 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   };
 
   const onStretchRun = (runId: string, patch: RunStretchPatch) => {
+    const beforeWidths = new Map(
+      (scene.runs.find((r) => r.id === runId)?.panels ?? []).map((p) => [p.id, p.widthMm]),
+    );
     updateRun(runId, patch);
     persistFreshRun(runId);
+    // A length/arc change rescales the panel widths (withClampedRunLength). Persist the changed
+    // panels so the server stays consistent with the run; otherwise the next reload re-normalizes
+    // them and an arc panel's glass jumps (surfaced by toggling its hardware checkboxes).
+    const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+    fresh?.panels.forEach((p) => {
+      if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(runId, p);
+    });
   };
 
   const onPushStretchRun = (

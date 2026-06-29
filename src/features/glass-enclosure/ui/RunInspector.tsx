@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
-import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
+import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { minArcRadiusMm } from '../model/arcGeometry';
 import { RunArcSection } from './RunArcSection';
 import type {
@@ -25,6 +25,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   const updateRun = useDesignerStore((s) => s.updateRun);
   const setRunFrame = useDesignerStore((s) => s.setRunFrame);
   const { persistRun, deleteRun, rebalance } = useRunEntityActions();
+  const { persistPanel } = usePanelEntityActions();
 
   const run = useMemo(() => runs.find((r) => r.id === selection.runId), [runs, selection.runId]);
   const [draft, setDraft] = useState<typeof run>(run);
@@ -39,8 +40,18 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   if (!run || !draft) return null;
 
   const commit = (patch: Partial<typeof run>) => {
+    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
     updateRun(run.id, patch);
     void persistRun({ ...run, ...patch });
+    // A length/arc edit rescales the panel widths (withClampedRunLength). Persist the changed
+    // panels so the server stays consistent — otherwise a later reload re-normalizes them and an
+    // arc panel's glass jumps (e.g. when toggling its hardware checkboxes afterwards).
+    if (patch.lengthMm !== undefined || patch.geomArcRadiusMm !== undefined) {
+      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
+      fresh?.panels.forEach((p) => {
+        if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(run.id, p);
+      });
+    }
   };
   // customColorHex is scene-local (persistRun/toRunInput never sends it) — update the store only
   // and let the debounced scene autosave persist it. Calling persistRun on every color-picker
