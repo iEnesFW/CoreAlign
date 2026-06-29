@@ -2894,6 +2894,7 @@
       "Rotation": "Rotation",
       "ProfileSystem": "Profile system",
       "Color": "Color",
+      "ColorCustom": "Custom color",
       "TopDrip": "Top drip",
       "BottomThreshold": "Bottom threshold",
       "OpeningType": "Opening type",

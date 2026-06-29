@@ -96,16 +96,43 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                 <button
                   key={color.id}
                   type="button"
-                  onClick={() => commit({ colorId: color.id })}
+                  onClick={() => commit({ colorId: color.id, customColorHex: null })}
                   title={color.name}
                   className={`h-7 w-full rounded border ${
-                    draft.colorId === color.id
+                    draft.colorId === color.id && !draft.customColorHex
                       ? 'border-primary-500 ring-2 ring-primary-400/60'
                       : 'border-slate-300 dark:border-slate-600'
                   }`}
                   style={{ backgroundColor: color.hexColor }}
                 />
               ))}
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <label
+                title={t('GlassEnclosure.Field.ColorCustom', { defaultValue: 'Özel renk' })}
+                className={`inline-flex h-7 w-9 cursor-pointer items-center justify-center overflow-hidden rounded border ${
+                  draft.customColorHex
+                    ? 'border-primary-500 ring-2 ring-primary-400/60'
+                    : 'border-slate-300 dark:border-slate-600'
+                }`}
+              >
+                <span className="sr-only">
+                  {t('GlassEnclosure.Field.ColorCustom', { defaultValue: 'Özel renk' })}
+                </span>
+                <input
+                  type="color"
+                  value={
+                    draft.customColorHex ??
+                    colors.find((c) => c.id === draft.colorId)?.hexColor ??
+                    '#cfd5d9'
+                  }
+                  onChange={(e) => commit({ customColorHex: e.target.value })}
+                  className="h-9 w-11 cursor-pointer border-0 bg-transparent p-0"
+                />
+              </label>
+              <span className="text-[11px] text-slate-400">
+                {t('GlassEnclosure.Field.ColorCustom', { defaultValue: 'Özel renk' })}
+              </span>
             </div>
           </Field>
 

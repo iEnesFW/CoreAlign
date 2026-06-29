@@ -452,6 +452,9 @@ export interface SceneRunState {
   rotationDeg: number;
   profileSystemId: string;
   colorId: string | null;
+  // A free custom colour chosen in the inspector (overrides the preset colorId for rendering).
+  // Scene-local only — it round-trips via the scene JSON; the run CRUD payload sends just colorId.
+  customColorHex?: string | null;
   hasTopDrip: boolean;
   hasBottomThreshold: boolean;
   geomZ?: number | null;

@@ -287,9 +287,13 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
   const prevBent = new Map<string, boolean>();
   const prevFrame = new Map<string, RunFrameEdges>();
   const prevMullions = new Map<string, boolean>();
+  const prevCustomColor = new Map<string, string>();
   if (prev) {
     for (const r of prev.runs) {
       if (r.arcGlassBent) prevBent.set(r.id, true);
+      // customColorHex lives only in the blob (not the run DTO), so carry it across a structured
+      // re-fetch from the previous scene like arcGlassBent / frameEdges.
+      if (r.customColorHex) prevCustomColor.set(r.id, r.customColorHex);
       // frameEdges / hasMullions live only in the blob (not the run DTO), so they must
       // be carried across a structured re-fetch from the previous scene, like arcGlassBent.
       if (r.frameEdges) prevFrame.set(r.id, r.frameEdges);
@@ -319,6 +323,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       rotationDeg: run.rotationDeg,
       profileSystemId: run.profileSystemId,
       colorId: run.colorId,
+      customColorHex: prevCustomColor.get(run.id) ?? null,
       hasTopDrip: run.hasTopDrip,
       hasBottomThreshold: run.hasBottomThreshold,
       geomZ: run.geomZ ?? null,

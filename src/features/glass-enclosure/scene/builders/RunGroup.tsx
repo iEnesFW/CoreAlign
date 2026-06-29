@@ -132,7 +132,7 @@ export function RunGroup({
   const multiSiblingsRef = useRef<AttachedRunSnapshot[]>([]);
   const lengthM = run.lengthMm / 1000;
   const heightM = run.heightMm / 1000;
-  const profileColor = color?.hexColor ?? DEFAULT_HEX_COLOR;
+  const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
 
   const panels = run.panels;

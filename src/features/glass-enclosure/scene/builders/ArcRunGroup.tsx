@@ -106,7 +106,7 @@ export function ArcRunGroup({
   const heightM = run.heightMm / 1000;
   const effRadiusMm = effectiveArcRadiusMm(run.lengthMm, radiusMm);
   const radiusM = effRadiusMm / 1000;
-  const profileColor = color?.hexColor ?? DEFAULT_HEX_COLOR;
+  const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
   const profileHalf = PROFILE_CROSS_SECTION.height / 1000 / 2;
 
