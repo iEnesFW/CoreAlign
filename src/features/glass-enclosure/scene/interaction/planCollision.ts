@@ -41,8 +41,8 @@ const buildArcWallFootprint = (
 ): PlanFootprint => {
   const zMin = wall.geomZ ?? 0;
   const zMax = zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
-  // ARC-LENGTH-INVARIANT: lengthMm is the glass length; derive sweep + chord from (arcLength, radius).
-  const resolved = resolveArc(wall.lengthMm, wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+  // CHORD-INVARIANT: render straight from the stored (radius, sweep); the ends are fixed.
+  const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
   const radius = resolved.radiusMm;
   const direction = resolved.direction;
   const sweep = resolved.sweepRad;
@@ -99,8 +99,8 @@ const buildArcRunFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const zMin = run.geomZ ?? 0;
-  // ARC-LENGTH-INVARIANT: lengthMm is the glass length; derive sweep + chord from (arcLength, radius).
-  const resolved = resolveArc(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  // CHORD-INVARIANT: render straight from the stored (radius, sweep); the ends are fixed.
+  const resolved = resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
   const radius = resolved.radiusMm;
   const direction = resolved.direction;
   const sweep = resolved.sweepRad;

@@ -19,7 +19,7 @@ import type {
 import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
-import { arcLengthFromRadiusSweep } from './arcGeometry';
+import { chordFromRadiusSweep } from './arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -317,10 +317,11 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       id: run.id,
       orderIndex: run.orderIndex,
       label: run.label,
-      // ARC-LENGTH-INVARIANT migration: lengthMm is the developed glass length (= radius·sweep).
-      // Recovers it from the stored radius+sweep — idempotent for arc-length data, and converts the
-      // interim chord-invariant data (which stored the chord) back to the arc length.
-      lengthMm: arcLengthFromRadiusSweep(
+      // CHORD-INVARIANT migration: lengthMm is the chord (the fixed span = 2·radius·sin(sweep/2)).
+      // Recovers it from the stored radius+sweep — idempotent, and converts old arc-length data
+      // (which stored the developed length) back to the chord. The rendered arc is unchanged (it
+      // reads radius+sweep), only lengthMm's meaning shifts to the chord for the handles/inspector.
+      lengthMm: chordFromRadiusSweep(
         Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
         run.geomArcRadiusMm,
         run.geomArcSweepDeg,
@@ -1257,13 +1258,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
       }
     }
-    // ARC-LENGTH-INVARIANT migration: lengthMm is the developed glass length (= radius·sweep);
-    // recover it from the stored radius+sweep on load (idempotent; converts interim chord data back).
+    // CHORD-INVARIANT migration: lengthMm is the chord (= 2·radius·sin(sweep/2)); recover it from the
+    // stored radius+sweep on load (idempotent; converts old arc-length data back to the chord).
     const snapshotWalls = (scene.walls ?? []).map((w) =>
       w.geomArcRadiusMm && w.geomArcRadiusMm > 0
         ? {
             ...w,
-            lengthMm: arcLengthFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
+            lengthMm: chordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
           }
         : w,
     );

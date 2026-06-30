@@ -31,16 +31,13 @@ const MAX_SWEEP_RAD = Math.PI * 2;
 const BAR_SEGMENT_STEP_RAD = 0.1;
 const MIN_BAR_SEGMENTS = 12;
 
-// ARC-LENGTH-INVARIANT model: lengthMm is the DEVELOPED arc length — the actual length of the glass
-// being bent — and stays FIXED when curving. The curve is set by radius (or sweep), linked by
-// sweep = arcLength / radius; the chord (the straight span between the ends) is DERIVED and shrinks
-// as the curve tightens. The tightest radius is a full circle (radius = arcLength / 2π); below that
-// the glass would over-wrap (sweep > 360°).
-export const minArcRadiusMm = (arcLengthMm: number) =>
-  Math.max(1, Math.ceil(arcLengthMm / MAX_SWEEP_RAD));
-
-export const effectiveArcRadiusMm = (arcLengthMm: number, radiusMm: number) =>
-  Math.max(radiusMm, minArcRadiusMm(arcLengthMm));
+// CHORD-INVARIANT model: lengthMm is the CHORD — the straight span between the two FIXED endpoints —
+// and stays FIXED when curving. The arc is stored as (geomArcRadiusMm, geomArcSweepDeg) and bows
+// BETWEEN those fixed ends, so the ends never move. The radius is DERIVED from chord+sweep, and the
+// sweep is free across 1–360° (a minor ≤180° and a major >180° arc share the same two endpoints).
+// The developed glass length (= radius·sweep) is derived. The tightest radius is a half-circle
+// (chord/2, at 180°); a deeper curve comes from a larger sweep, not a smaller radius.
+export const minArcRadiusMm = (chordMm: number) => Math.max(1, Math.ceil(chordMm / 2));
 
 export interface ResolvedArc {
   radiusMm: number;
@@ -51,19 +48,17 @@ export interface ResolvedArc {
   arcLengthM: number;
 }
 
-// Resolve an arc's render parameters from the canonical (developed arc length, radius) pair. The
-// sweep is DERIVED (= arcLength / radius) so the rendered glass length always equals arcLengthMm;
-// the chord is whatever that arc spans. sweepSign carries only the bulge direction.
-export const resolveArc = (
-  arcLengthMm: number,
-  radiusMm: number,
-  sweepSign: number,
-): ResolvedArc => {
-  const radius = effectiveArcRadiusMm(arcLengthMm, radiusMm);
-  const sweepRad = Math.min(MAX_SWEEP_RAD, arcLengthMm / radius);
-  const direction: 1 | -1 = sweepSign < 0 ? -1 : 1;
+// Resolve an arc's render parameters from the stored (radius, sweep) — the arc's true geometry. The
+// sweep magnitude is used DIRECTLY (so the rendered arc is exactly what was committed) and its sign
+// carries the bulge direction; the developed arc length is derived (= radius·sweep). The chord
+// (lengthMm) is held by the handles, not needed here.
+export const resolveArc = (radiusMm: number, sweepDeg: number): ResolvedArc => {
+  const radius = Math.max(1, radiusMm);
+  const sweepRad = Math.min(MAX_SWEEP_RAD, Math.max(0, (Math.abs(sweepDeg) * Math.PI) / 180));
+  const direction: 1 | -1 = sweepDeg < 0 ? -1 : 1;
+  const arcLengthMm = radius * sweepRad;
   return {
-    radiusMm: radius,
+    radiusMm: Math.round(radius),
     radiusM: radius / 1000,
     sweepRad,
     direction,
@@ -72,18 +67,19 @@ export const resolveArc = (
   };
 };
 
-// Recover the developed arc length (the glass length) from the stored radius + sweep. Correct for
-// BOTH arc-length data and legacy chord-invariant data (where lengthMm held the chord), so it
-// doubles as an idempotent migration: arcLength = radius · sweep. Falls back when there is no arc.
-export const arcLengthFromRadiusSweep = (
+// Recover the CHORD (span between the fixed ends) from the stored radius+sweep: chord =
+// 2·radius·sin(sweep/2). Doubles as an idempotent migration of lengthMm to the chord (it held the
+// developed arc length under the old arc-length model). Falls back when there is no arc (a straight
+// run's lengthMm already IS its chord).
+export const chordFromRadiusSweep = (
   fallbackMm: number,
   radiusMm: number | null | undefined,
   sweepDeg: number | null | undefined,
 ): number => {
   if (!radiusMm || radiusMm <= 0 || !sweepDeg) return fallbackMm;
   const sweepRad = Math.min(MAX_SWEEP_RAD, (Math.abs(sweepDeg) * Math.PI) / 180);
-  const arcLength = Math.round(radiusMm * sweepRad);
-  return arcLength > 0 ? arcLength : fallbackMm;
+  const chord = Math.round(2 * radiusMm * Math.sin(sweepRad / 2));
+  return chord > 0 ? chord : fallbackMm;
 };
 
 export interface ArcEndLocal {
@@ -92,22 +88,23 @@ export interface ArcEndLocal {
   tangentDeg: number;
 }
 
-// Endpoint of the arc relative to its start, in the pre-rotation plan frame. Fed the DERIVED arc
-// length + radius (from resolveArc), so the returned endpoint sits exactly chordMm from the origin.
-export const arcEndLocal = (
-  arcLengthMm: number,
-  radiusMm: number,
-  sweepSign: number,
-): ArcEndLocal => {
-  const direction = sweepSign < 0 ? -1 : 1;
+// Endpoint of the arc relative to its start, in the pre-rotation plan frame, from the stored
+// (radius, sweep). The chord from the origin to this point is 2·radius·sin(sweep/2) = lengthMm.
+export const arcEndLocal = (radiusMm: number, sweepDeg: number): ArcEndLocal => {
+  const direction = sweepDeg < 0 ? -1 : 1;
   const radius = Math.max(0.001, radiusMm);
-  const sweepRad = Math.min(arcLengthMm / radius, MAX_SWEEP_RAD);
+  const sweepRad = Math.min((Math.abs(sweepDeg) * Math.PI) / 180, MAX_SWEEP_RAD);
   return {
     xMm: radius * Math.sin(sweepRad),
     yMm: direction * radius * (1 - Math.cos(sweepRad)),
     tangentDeg: direction * sweepRad * (180 / Math.PI),
   };
 };
+
+// Clamp a stored radius up to the chord-invariant floor (a half-circle, chord/2) — defensive for the
+// 2D/plan renderers that read geomArcRadiusMm directly.
+export const effectiveArcRadiusMm = (chordMm: number, radiusMm: number) =>
+  Math.max(minArcRadiusMm(chordMm), radiusMm);
 
 const arcPoint = (radiusM: number, direction: number, phi: number) => ({
   x: radiusM * Math.sin(phi),
@@ -190,27 +187,37 @@ export interface ArcDerived {
   arcLengthMm: number;
 }
 
-// Set the curve by RADIUS while keeping the glass length (arc length) fixed. sweep = arcLength /
-// radius, single-valued, so radius ∈ [arcLength/2π, ∞) maps to sweep ∈ (0°, 360°]. The chord (span)
-// is derived and shrinks as the radius tightens.
-export const deriveArcFromRadius = (arcLengthMm: number, radiusMm: number): ArcDerived => {
-  const radius = effectiveArcRadiusMm(arcLengthMm, radiusMm);
-  const sweepRad = Math.min(arcLengthMm / radius, MAX_SWEEP_RAD);
+// Set the curve by RADIUS while keeping the CHORD fixed. The minor sweep = 2·asin(chord/2r); the
+// radius can't be tighter than a half-circle (chord/2), so it's clamped up to that floor. Sweeps
+// past 180° aren't reachable by radius alone (the radius is ambiguous between the minor and major
+// arc) — use deriveArcFromSweep for those.
+export const deriveArcFromRadius = (chordMm: number, radiusMm: number): ArcDerived => {
+  const radius = Math.max(minArcRadiusMm(chordMm), radiusMm);
+  const sweepRad = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));
   return {
     radiusMm: Math.round(radius),
     sweepDeg: (sweepRad * 180) / Math.PI,
-    chordMm: Math.round(2 * radius * Math.sin(sweepRad / 2)),
-    sagittaMm: Math.round(radius * (1 - Math.cos(sweepRad / 2))),
-    arcLengthMm: Math.round(arcLengthMm),
+    chordMm: Math.round(chordMm),
+    sagittaMm: Math.round(radius - Math.sqrt(Math.max(0, radius * radius - (chordMm / 2) ** 2))),
+    arcLengthMm: Math.round(radius * sweepRad),
   };
 };
 
-// Set the curve by SWEEP angle while keeping the glass length (arc length) fixed (radius derived =
-// arcLength / sweep). Allows up to a near-full circle (~350°).
-export const deriveArcFromSweep = (arcLengthMm: number, sweepDeg: number): ArcDerived => {
-  const clampedDeg = Math.min(350, Math.max(1, Math.abs(sweepDeg)));
-  const radius = arcLengthMm / ((clampedDeg * Math.PI) / 180);
-  return deriveArcFromRadius(arcLengthMm, radius);
+// Set the curve by SWEEP angle (1–359°) while keeping the CHORD fixed. radius = chord/(2·sin(sweep/2))
+// — valid for BOTH a minor (≤180°) and a major (>180°) arc spanning the same two fixed endpoints, so
+// the curve can go as deep as the user wants without the ends moving.
+export const deriveArcFromSweep = (chordMm: number, sweepDeg: number): ArcDerived => {
+  const sign = sweepDeg < 0 ? -1 : 1;
+  const clampedDeg = Math.min(359, Math.max(1, Math.abs(sweepDeg)));
+  const sweepRad = (clampedDeg * Math.PI) / 180;
+  const radius = chordMm / (2 * Math.sin(sweepRad / 2));
+  return {
+    radiusMm: Math.round(radius),
+    sweepDeg: sign * clampedDeg,
+    chordMm: Math.round(chordMm),
+    sagittaMm: Math.round(bowFromArc(chordMm, radius, sign * clampedDeg)),
+    arcLengthMm: Math.round(radius * sweepRad),
+  };
 };
 
 export const deriveArcFromChordSagitta = (chordMm: number, sagittaMm: number): ArcDerived => {
@@ -275,54 +282,15 @@ export const arcFromBow = (
   };
 };
 
-// Bow-handle commit for the ARC-LENGTH model. The drag gives a chord+sagitta → a sweep, but the
-// glass length (arcLengthMm) is kept FIXED, so radius = arcLength/sweep and only the curve changes
-// (the chord/ends move). Returns a straight result under the straighten threshold.
-export const bowToArcKeepingLength = (
-  chordMm: number,
-  chordDeg: number,
-  sagittaMm: number,
-  arcLengthMm: number,
-  straightenMm = 25,
-): BowArc => {
-  const bow = arcFromBow(chordMm, chordDeg, sagittaMm, straightenMm);
-  const length = Math.round(arcLengthMm);
-  if (bow.geomArcSweepDeg === null) {
-    return { ...bow, lengthMm: length, arcLengthMm: length };
-  }
-  const sweepRad = (Math.abs(bow.geomArcSweepDeg) * Math.PI) / 180;
-  return {
-    geomArcRadiusMm: Math.round(arcLengthMm / sweepRad),
-    geomArcSweepDeg: bow.geomArcSweepDeg,
-    rotationDeg: bow.rotationDeg,
-    lengthMm: length,
-    arcLengthMm: length,
-  };
-};
-
-// Corner/end-handle commit for the ARC-LENGTH model. Dragging the ends changes the chord (span)
-// while KEEPING the sweep angle (curl shape); the glass length + radius scale with the new chord.
-export const arcFromChordKeepingSweep = (
+// Corner/end-handle commit (CHORD-INVARIANT). Dragging an end changes the CHORD (the span). Keep the
+// sweep angle (the curl shape) and re-derive the radius for the new chord; lengthMm = the new chord.
+export const arcFromCornerResize = (
   chordMm: number,
   sweepDeg: number,
 ): { lengthMm: number; geomArcRadiusMm: number } => {
   const sweepRad = Math.min(MAX_SWEEP_RAD, Math.max(0.0001, (Math.abs(sweepDeg) * Math.PI) / 180));
   const radius = chordMm / (2 * Math.sin(sweepRad / 2));
-  return { lengthMm: Math.round(radius * sweepRad), geomArcRadiusMm: Math.round(radius) };
-};
-
-// Sweep-handle commit for the ARC-LENGTH model: the drag gives a signed sweep angle and the glass
-// length is kept FIXED, so radius = arcLength/sweep. A negligible sweep returns to straight (null).
-export const arcFromSweepKeepingLength = (
-  arcLengthMm: number,
-  sweepDeg: number,
-): { geomArcRadiusMm: number | null; geomArcSweepDeg: number | null } => {
-  if (Math.abs(sweepDeg) < 1) return { geomArcRadiusMm: null, geomArcSweepDeg: null };
-  const sweepRad = Math.min(MAX_SWEEP_RAD, (Math.abs(sweepDeg) * Math.PI) / 180);
-  return {
-    geomArcRadiusMm: Math.round(arcLengthMm / sweepRad),
-    geomArcSweepDeg: Math.round(sweepDeg * 10) / 10,
-  };
+  return { lengthMm: Math.round(chordMm), geomArcRadiusMm: Math.round(radius) };
 };
 
 // The current signed bow (sagitta in the +90° across direction) of an existing arc, so a re-adjust
@@ -381,40 +349,6 @@ export const bowArcPlanPoints = (
   for (let i = 0; i <= segments; i += 1) {
     const ang = a0 + sweep * (i / segments);
     pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
-  }
-  return pts;
-};
-
-// Samples an ARC-LENGTH arc in the world plan: it starts at (originX, originY) with the start
-// tangent pointing along dirDeg, has a fixed developed length arcLengthMm, and sweeps signed
-// sweepDeg. Matches the renderer (same arcPoint convention rotated by dirDeg), so a preview drawn
-// from these points is exactly the curve that will result. A ~zero sweep returns the straight run.
-export const sampleArcPlan = (
-  originX: number,
-  originY: number,
-  dirDeg: number,
-  arcLengthMm: number,
-  sweepDeg: number,
-  segments = 48,
-): { x: number; y: number }[] => {
-  const dirRad = (dirDeg * Math.PI) / 180;
-  const cos = Math.cos(dirRad);
-  const sin = Math.sin(dirRad);
-  const sweepRad = (Math.abs(sweepDeg) * Math.PI) / 180;
-  if (sweepRad < 0.0005) {
-    return [
-      { x: originX, y: originY },
-      { x: originX + arcLengthMm * cos, y: originY + arcLengthMm * sin },
-    ];
-  }
-  const direction = sweepDeg < 0 ? -1 : 1;
-  const radius = arcLengthMm / Math.min(MAX_SWEEP_RAD, sweepRad);
-  const pts: { x: number; y: number }[] = [];
-  for (let i = 0; i <= segments; i += 1) {
-    const phi = Math.min(MAX_SWEEP_RAD, sweepRad) * (i / segments);
-    const lx = radius * Math.sin(phi);
-    const ly = direction * radius * (1 - Math.cos(phi));
-    pts.push({ x: originX + lx * cos - ly * sin, y: originY + lx * sin + ly * cos });
   }
   return pts;
 };

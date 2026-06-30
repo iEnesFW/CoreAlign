@@ -22,7 +22,7 @@ const runEndpoints = (run: SceneRunState): { x: number; y: number }[] => {
   let endX: number;
   let endY: number;
   if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
-    const e = arcEndLocal(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
+    const e = arcEndLocal(run.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
     endX = run.originX + e.xMm * cos - e.yMm * sin;
     endY = run.originY + e.xMm * sin + e.yMm * cos;
   } else {

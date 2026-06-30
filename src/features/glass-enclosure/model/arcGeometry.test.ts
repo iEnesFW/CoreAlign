@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
-  arcFromChordKeepingSweep,
-  arcFromSweepKeepingLength,
-  arcLengthFromRadiusSweep,
+  arcEndLocal,
+  arcFromBow,
+  arcFromCornerResize,
   bowArcPlanPoints,
   bowFromArc,
-  bowToArcKeepingLength,
+  chordFromRadiusSweep,
   deriveArcFromChordSagitta,
   deriveArcFromRadius,
+  deriveArcFromSweep,
   minArcRadiusMm,
   resolveArc,
-  sampleArcPlan,
 } from './arcGeometry';
 
 describe('bowArcPlanPoints', () => {
@@ -91,103 +91,116 @@ describe('bowFromArc', () => {
   });
 });
 
-describe('arc-length-invariant arc model', () => {
-  it('resolveArc keeps the glass length (arc length) and derives sweep = arcLength/radius', () => {
-    const arcLength = 3000;
-    for (const radiusMm of [477, 955, 1910, 5000]) {
-      const r = resolveArc(arcLength, radiusMm, 1);
-      // The developed length always equals lengthMm — curving never changes the glass length.
-      expect(r.arcLengthMm).toBe(arcLength);
-      expect(r.sweepRad).toBeCloseTo(arcLength / r.radiusMm, 6);
+describe('chord-invariant arc model', () => {
+  it('resolveArc renders straight from the stored (radius, sweep); the developed length is derived', () => {
+    for (const [radius, sweepDeg] of [
+      [955, 180],
+      [1910, 90],
+      [600, 300],
+    ]) {
+      const r = resolveArc(radius, sweepDeg);
+      expect(r.radiusMm).toBe(radius);
+      expect((r.sweepRad * 180) / Math.PI).toBeCloseTo(sweepDeg, 4);
+      // Developed glass length is derived (radius·sweep), never an input.
+      expect(r.arcLengthMm).toBeCloseTo((radius * sweepDeg * Math.PI) / 180, 3);
     }
-  });
-
-  it('resolveArc lets the radius go down to a full circle (arcLength/2π), not just a half-circle', () => {
-    // radius 477 ≈ 3000/2π → a 360° wrap of the 3000mm glass. The old chord model floored at 1500.
-    const r = resolveArc(3000, 477, 1);
-    expect((r.sweepRad * 180) / Math.PI).toBeGreaterThan(355);
-    // A radius below the full-circle floor is clamped up to it (no over-wrap past 360°).
-    expect(resolveArc(3000, 100, 1).radiusMm).toBe(minArcRadiusMm(3000));
   });
 
   it('resolveArc reads the bulge direction from the sweep sign', () => {
-    expect(resolveArc(3000, 1000, 90).direction).toBe(1);
-    expect(resolveArc(3000, 1000, -90).direction).toBe(-1);
+    expect(resolveArc(1000, 90).direction).toBe(1);
+    expect(resolveArc(1000, -90).direction).toBe(-1);
   });
 
-  it('minArcRadiusMm is the full-circle radius (arcLength/2π)', () => {
-    expect(minArcRadiusMm(3000)).toBe(Math.ceil(3000 / (2 * Math.PI))); // 478
+  it('minArcRadiusMm is the half-circle floor (chord/2)', () => {
+    expect(minArcRadiusMm(3000)).toBe(1500);
   });
 
-  it('deriveArcFromRadius keeps the glass length and derives sweep (radius → angle, freely)', () => {
-    const arcLength = 3000;
-    // A semicircle of 3000mm of glass has radius 3000/π ≈ 955 (NOT 1500 — that was the chord model).
-    const half = deriveArcFromRadius(arcLength, 955);
-    expect(half.arcLengthMm).toBe(arcLength);
+  it('deriveArcFromRadius keeps the chord and derives the minor sweep (clamped at the half-circle)', () => {
+    const chord = 3000;
+    // A half-circle of a 3000mm chord has radius 1500 and sweeps 180°.
+    const half = deriveArcFromRadius(chord, 1500);
+    expect(half.chordMm).toBe(chord);
     expect(half.sweepDeg).toBeCloseTo(180, 0);
-    // Tighter radius → larger angle, all the way to a full circle, freely settable.
-    const tight = deriveArcFromRadius(arcLength, 478);
-    expect(tight.sweepDeg).toBeGreaterThan(355);
-    // A radius below the full-circle floor clamps up.
-    expect(deriveArcFromRadius(arcLength, 100).radiusMm).toBe(minArcRadiusMm(arcLength));
+    // A larger radius → shallower (smaller) sweep, chord unchanged.
+    const shallow = deriveArcFromRadius(chord, 5000);
+    expect(shallow.sweepDeg).toBeLessThan(40);
+    expect(shallow.chordMm).toBe(chord);
+    // A radius below the floor clamps up to chord/2.
+    expect(deriveArcFromRadius(chord, 100).radiusMm).toBe(minArcRadiusMm(chord));
   });
 
-  it('arcLengthFromRadiusSweep recovers the glass length from radius+sweep (migration)', () => {
-    // radius·sweep = developed length, for any data (idempotent).
-    const r = resolveArc(3000, 955, 1);
-    expect(arcLengthFromRadiusSweep(3000, r.radiusMm, (r.sweepRad * 180) / Math.PI)).toBeCloseTo(
-      3000,
-      -1,
-    );
-    // Passthrough when there is no arc.
-    expect(arcLengthFromRadiusSweep(3000, null, null)).toBe(3000);
-  });
-
-  it('arcFromChordKeepingSweep scales the glass length with the chord while holding the curl angle', () => {
-    const a = arcFromChordKeepingSweep(2000, 90);
-    const b = arcFromChordKeepingSweep(4000, 90);
-    // Doubling the chord at the same sweep doubles the radius and the glass length.
-    expect(b.geomArcRadiusMm).toBeCloseTo(a.geomArcRadiusMm * 2, -1);
-    expect(b.lengthMm).toBeCloseTo(a.lengthMm * 2, -1);
-  });
-
-  it('bowToArcKeepingLength holds the glass length fixed and derives the radius from the bow sweep', () => {
-    const arcLength = 3000;
-    const bow = bowToArcKeepingLength(2000, 0, 600, arcLength);
-    expect(bow.lengthMm).toBe(arcLength); // glass length never changes when bowing
-    expect(bow.geomArcSweepDeg).not.toBeNull();
-    const sweepRad = (Math.abs(bow.geomArcSweepDeg as number) * Math.PI) / 180;
-    expect(bow.geomArcRadiusMm).toBeCloseTo(arcLength / sweepRad, -1); // radius = arcLength/sweep
-  });
-
-  it('arcFromSweepKeepingLength maps a dragged sweep to radius = arcLength/sweep (1–360°)', () => {
-    const arcLength = 3000;
-    for (const sweepDeg of [19, 90, 180, 270, 360]) {
-      const a = arcFromSweepKeepingLength(arcLength, sweepDeg);
+  it('deriveArcFromSweep keeps the chord; radius = chord/(2·sin(sweep/2)) for 1–359° (minor+major)', () => {
+    const chord = 3000;
+    for (const sweepDeg of [19, 90, 180, 270, 359]) {
+      const a = deriveArcFromSweep(chord, sweepDeg);
+      expect(a.chordMm).toBe(chord);
       const sweepRad = (sweepDeg * Math.PI) / 180;
-      expect(a.geomArcSweepDeg).toBe(sweepDeg);
-      expect(a.geomArcRadiusMm).toBeCloseTo(arcLength / sweepRad, -1);
+      expect(a.radiusMm).toBeCloseTo(chord / (2 * Math.sin(sweepRad / 2)), -1);
     }
-    // A negligible sweep returns to straight.
-    expect(arcFromSweepKeepingLength(arcLength, 0.5).geomArcRadiusMm).toBeNull();
-    // Sign is preserved (bulge direction).
-    expect(arcFromSweepKeepingLength(arcLength, -90).geomArcSweepDeg).toBe(-90);
+    // A major (>180°) arc has a LARGER radius than the half-circle minimum, ends still fixed.
+    expect(deriveArcFromSweep(chord, 270).radiusMm).toBeGreaterThan(minArcRadiusMm(chord));
+    // Sign (bulge direction) is preserved.
+    expect(deriveArcFromSweep(chord, -90).sweepDeg).toBeLessThan(0);
   });
 
-  it('sampleArcPlan returns the straight run for ~zero sweep and curls for a real sweep', () => {
-    const straight = sampleArcPlan(0, 0, 0, 3000, 0);
-    expect(straight).toHaveLength(2);
-    expect(straight[1].x).toBeCloseTo(3000, 3);
-    expect(straight[1].y).toBeCloseTo(0, 3);
+  it('arcFromCornerResize keeps the sweep angle and re-derives the radius for the new chord', () => {
+    const a = arcFromCornerResize(2000, 90);
+    const b = arcFromCornerResize(4000, 90);
+    expect(a.lengthMm).toBe(2000); // lengthMm IS the chord
+    expect(b.lengthMm).toBe(4000);
+    // Same sweep, double the chord → double the radius.
+    expect(b.geomArcRadiusMm).toBeCloseTo(a.geomArcRadiusMm * 2, -1);
+  });
 
-    const curved = sampleArcPlan(0, 0, 0, 3000, 180);
-    // Starts at the origin and the developed length (sum of segment chords) ≈ the glass length.
-    expect(curved[0].x).toBeCloseTo(0, 3);
-    expect(curved[0].y).toBeCloseTo(0, 3);
-    let dev = 0;
-    for (let i = 1; i < curved.length; i += 1) {
-      dev += Math.hypot(curved[i].x - curved[i - 1].x, curved[i].y - curved[i - 1].y);
-    }
-    expect(dev).toBeCloseTo(3000, -2); // polyline approximation of the 3000mm arc
+  it('chordFromRadiusSweep recovers the chord (2·radius·sin(sweep/2)) for migration', () => {
+    // Half-circle: chord = 2·1500·sin(90°) = 3000.
+    expect(chordFromRadiusSweep(0, 1500, 180)).toBeCloseTo(3000, -1);
+    // Passthrough when there is no arc.
+    expect(chordFromRadiusSweep(2580, null, null)).toBe(2580);
+  });
+
+  it('arcFromBow keeps the chord (lengthMm) FIXED and only bows; straightens below the threshold', () => {
+    const chord = 3000;
+    const bow = arcFromBow(chord, 0, 900);
+    expect(bow.lengthMm).toBe(chord); // chord never changes when bowing
+    expect(bow.geomArcRadiusMm).not.toBeNull();
+    const straight = arcFromBow(chord, 0, 5);
+    expect(straight.geomArcRadiusMm).toBeNull();
+    expect(straight.lengthMm).toBe(chord);
+  });
+
+  it('the committed arc renders the SAME ends + apex the bow preview draws (preview == result)', () => {
+    // The handle previews via bowArcPlanPoints(sagitta) and commits via arcFromBow; the renderer
+    // rebuilds the end from (radius, sweep) rotated by rotationDeg. All must agree or the curve
+    // would jump on release and the fixed ends would drift.
+    const chord = 3000;
+    const startX = 1000;
+    const startY = 500;
+    const chordDeg = 30;
+    const sagitta = 800;
+    const cd = (chordDeg * Math.PI) / 180;
+    const endX = startX + chord * Math.cos(cd);
+    const endY = startY + chord * Math.sin(cd);
+    const bow = arcFromBow(chord, chordDeg, sagitta);
+    const radius = bow.geomArcRadiusMm as number;
+    const sweep = bow.geomArcSweepDeg as number;
+    const rot = (bow.rotationDeg * Math.PI) / 180;
+    const place = (x: number, y: number) => ({
+      x: startX + x * Math.cos(rot) - y * Math.sin(rot),
+      y: startY + x * Math.sin(rot) + y * Math.cos(rot),
+    });
+    // The rendered end lands on the FIXED chord endpoint, within the ~1mm radius/angle rounding
+    // (NOT drifting by the sagitta, which is what a sign/side error would do).
+    const e = arcEndLocal(radius, sweep);
+    const renderedEnd = place(e.xMm, e.yMm);
+    expect(renderedEnd.x).toBeCloseTo(endX, -1);
+    expect(renderedEnd.y).toBeCloseTo(endY, -1);
+    // The rendered apex (at sweep/2) matches the preview apex (same side, same depth).
+    const eApex = arcEndLocal(radius, sweep / 2);
+    const renderedApex = place(eApex.xMm, eApex.yMm);
+    const preview = bowArcPlanPoints(startX, startY, endX, endY, sagitta);
+    const apexPreview = preview[Math.floor(preview.length / 2)];
+    expect(renderedApex.x).toBeCloseTo(apexPreview.x, -1);
+    expect(renderedApex.y).toBeCloseTo(apexPreview.y, -1);
   });
 });

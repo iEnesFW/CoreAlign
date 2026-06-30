@@ -45,7 +45,7 @@ export function RunArcSection({
   // The sign of geomArcSweepDeg is the bulge direction (computeArcLayout/arcEndLocal read it).
   // Preserve it when recomputing the arc so a flipped curve stays flipped after a radius/sweep edit.
   const sweepSign = (draft.geomArcSweepDeg ?? 0) < 0 ? -1 : 1;
-  // draft.lengthMm is the developed glass length; radius → sweep = arcLength/radius (single-valued).
+  // draft.lengthMm is the chord (the fixed span); radius → minor sweep = 2·asin(chord/2r).
   const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius) : null;
   const jointAngle = derived ? facetJointAngleDeg(derived.sweepDeg, panels.length) : 0;
   const hasSlidingPanels = panels.some(
@@ -92,8 +92,8 @@ export function RunArcSection({
     const next = deriveArcFromChordSagitta(chord, sagitta);
     onDraftRadius(next.radiusMm);
     commit({
-      // A field-measured chord+sagitta defines how much GLASS is needed — the developed arc length.
-      lengthMm: next.arcLengthMm,
+      // CHORD-INVARIANT: a field-measured chord+sagitta — lengthMm is the CHORD (the fixed span).
+      lengthMm: next.chordMm,
       geomArcRadiusMm: next.radiusMm,
       geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
       ...bentOnArc(),
@@ -135,7 +135,7 @@ export function RunArcSection({
           <input
             type="number"
             min={1}
-            max={350}
+            max={359}
             step={1}
             value={sweepDraft}
             placeholder={derived ? derived.sweepDeg.toFixed(1) : '0'}

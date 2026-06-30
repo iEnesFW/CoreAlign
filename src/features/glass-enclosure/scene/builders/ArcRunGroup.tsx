@@ -6,8 +6,9 @@ import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import {
   arcEndLocal,
-  arcFromChordKeepingSweep,
-  arcFromSweepKeepingLength,
+  arcFromBow,
+  arcFromCornerResize,
+  bowFromArc,
   computeArcLayout,
   resolveArc,
 } from '../../model/arcGeometry';
@@ -108,10 +109,9 @@ export function ArcRunGroup({
   supports,
 }: ArcRunGroupProps) {
   const heightM = run.heightMm / 1000;
-  // ARC-LENGTH-INVARIANT: run.lengthMm is the developed glass length (fixed); the sweep is derived
-  // (= arcLength/radius) and the chord/span is whatever that arc spans. Curving never changes the
-  // stored glass length.
-  const arc = resolveArc(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  // CHORD-INVARIANT: run.lengthMm is the chord (the fixed span); the arc is stored as radius+sweep
+  // and bows between the two FIXED ends. resolveArc renders straight from those stored values.
+  const arc = resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
   const radiusM = arc.radiusM;
   const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
@@ -181,7 +181,7 @@ export function ArcRunGroup({
   const radR = (run.rotationDeg * Math.PI) / 180;
   const cosR = Math.cos(radR);
   const sinR = Math.sin(radR);
-  const end = arcEndLocal(arc.arcLengthMm, arc.radiusMm, run.geomArcSweepDeg ?? 1);
+  const end = arcEndLocal(arc.radiusMm, run.geomArcSweepDeg ?? 1);
   const endWorldX = run.originX + end.xMm * cosR - end.yMm * sinR;
   const endWorldY = run.originY + end.xMm * sinR + end.yMm * cosR;
 
@@ -466,16 +466,16 @@ export function ArcRunGroup({
           }}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(next) => {
-            // The footprint box length is the CHORD (the span between the ends). Dragging an end
-            // changes that span while keeping the sweep angle (curl shape); the glass length and
-            // radius scale with the new chord (arcFromChordKeepingSweep), and the origin shifts
-            // along the chord direction.
+            // The footprint box length is the CHORD (the span between the fixed ends). Dragging an
+            // end changes that span while keeping the sweep angle (curl shape); lengthMm = the new
+            // chord and the radius re-derives for it (arcFromCornerResize); the origin shifts along
+            // the chord direction.
             const chordDeg = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
             const dirX = Math.cos(chordDeg);
             const dirY = Math.sin(chordDeg);
             const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
             const newChord = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
-            const scaled = arcFromChordKeepingSweep(newChord, run.geomArcSweepDeg ?? 1);
+            const scaled = arcFromCornerResize(newChord, run.geomArcSweepDeg ?? 1);
             const originX = Math.round(run.originX + along * dirX);
             const originY = Math.round(run.originY + along * dirY);
             const resized = buildRunFootprint(
@@ -504,17 +504,23 @@ export function ArcRunGroup({
         <ArcSweepHandle
           startX={run.originX}
           startY={run.originY}
-          dirDeg={run.rotationDeg}
-          arcLengthMm={run.lengthMm}
-          currentSweepDeg={run.geomArcSweepDeg ?? 0}
+          endX={endWorldX}
+          endY={endWorldY}
+          currentSagittaMm={bowFromArc(run.lengthMm, arc.radiusMm, run.geomArcSweepDeg ?? 0)}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
-          onCommit={(sweepDeg) => {
-            // The glass length (lengthMm) stays fixed; the drag sets the sweep continuously
-            // (1–360°) and radius is derived (= arcLength/sweep). Omitting lengthMm keeps it fixed.
-            const next = arcFromSweepKeepingLength(run.lengthMm, sweepDeg);
+          onCommit={(sagittaMm) => {
+            // CHORD-INVARIANT: the two ends stay FIXED. arcFromBow keeps the chord (lengthMm) and
+            // rolls rotationDeg so the body bows between them; the sweep is free 1–360°. Below the
+            // straighten threshold it returns to straight (null radius/sweep).
+            const chordDeg =
+              (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI;
+            const chord = Math.hypot(endWorldX - run.originX, endWorldY - run.originY);
+            const bow = arcFromBow(chord, chordDeg, sagittaMm);
             onStretchRun(run.id, {
-              geomArcRadiusMm: next.geomArcRadiusMm,
-              geomArcSweepDeg: next.geomArcSweepDeg,
+              lengthMm: bow.lengthMm,
+              rotationDeg: bow.rotationDeg,
+              geomArcRadiusMm: bow.geomArcRadiusMm,
+              geomArcSweepDeg: bow.geomArcSweepDeg,
             });
           }}
         />

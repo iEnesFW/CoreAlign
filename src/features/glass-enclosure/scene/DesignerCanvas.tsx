@@ -156,9 +156,10 @@ const buildPlanSnapTargets = (
       const cos = Math.cos(rad);
       const sin = Math.sin(rad);
       const dir = (run.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-      const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm);
-      const sweepRad = Math.min(run.lengthMm / radius, Math.PI * 2);
-      const e = arcEndLocal(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
+      // CHORD-INVARIANT: radius+sweep are stored; the ends are fixed at the chord.
+      const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
+      const sweepRad = Math.min((Math.abs(run.geomArcSweepDeg ?? 0) * Math.PI) / 180, Math.PI * 2);
+      const e = arcEndLocal(radius, run.geomArcSweepDeg ?? 1);
       const apex = arcPointAt(radius, dir, sweepRad / 2);
       const toWorld = (lx: number, ly: number) => ({
         x: run.originX + lx * cos - ly * sin,
@@ -262,6 +263,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setPenFace = useDesignerStore((s) => s.setPenFace);
   const activeTool = useDesignerStore((s) => s.activeTool);
   const placement = useDesignerStore((s) => s.placement);
+  const placementShape = useDesignerStore((s) => s.placementShape);
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
@@ -1178,6 +1180,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       thicknessMm: draft.thicknessMm,
       colorHex: null,
       openings: [],
+      geomArcRadiusMm: placementShape === 'curved' ? draft.lengthMm : null,
+      geomArcSweepDeg: placementShape === 'curved' ? 60 : null,
     };
     addWall(wall);
     setPlacement(null);
@@ -1203,6 +1207,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       thicknessMm: draft.thicknessMm,
       elevationMm: draft.elevationMm,
       colorHex: null,
+      arcRiseMm:
+        placementShape === 'curved' ? Math.max(150, Math.round(draft.depthMm * 0.15)) : null,
     };
     addSlab(slab);
     setPlacement(null);
@@ -1245,6 +1251,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       ),
       { successMessage: t('GlassEnclosure.Designer.RunAdded', { defaultValue: 'Hat eklendi' }) },
     );
+    if (placementShape === 'curved') {
+      const runs = useDesignerStore.getState().scene.runs;
+      const created = runs[runs.length - 1];
+      if (created) {
+        useDesignerStore.getState().updateRun(created.id, {
+          geomArcRadiusMm: created.lengthMm,
+          geomArcSweepDeg: 60,
+        });
+      }
+    }
   };
 
   const pasteSpec = useMemo<PasteGhostSpec | null>(() => {

@@ -64,7 +64,7 @@ const rotateVec = (xMm: number, yMm: number, rotationDeg: number): Vec => {
 
 const runEndLocal = (run: SceneRunState): Vec => {
   if (!isArcRun(run)) return { x: run.lengthMm, y: 0 };
-  const arc = arcEndLocal(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  const arc = arcEndLocal(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
   return { x: arc.xMm, y: arc.yMm };
 };
 
@@ -103,7 +103,8 @@ type ArcRenderParams = { radiusMm: number; largeArcFlag: 0 | 1; sweepFlag: 0 | 1
 const arcRenderParams = (run: SceneRunState): ArcRenderParams | null => {
   if (!isArcRun(run)) return null;
   const radiusMm = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
-  const sweepRad = run.lengthMm / radiusMm;
+  // CHORD-INVARIANT: the sweep is stored directly (a major arc >180° sets the SVG large-arc flag).
+  const sweepRad = Math.min((Math.abs(run.geomArcSweepDeg ?? 0) * Math.PI) / 180, Math.PI * 2);
   return {
     radiusMm,
     largeArcFlag: sweepRad > Math.PI ? 1 : 0,

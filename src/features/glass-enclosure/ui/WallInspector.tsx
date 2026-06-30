@@ -106,7 +106,8 @@ export function WallInspector() {
   const commitArc = (sweep: number) => {
     const hasExtras = (wall.openings ?? []).length > 0 || (wall.features ?? []).length > 0;
     commit({
-      // ARC-LENGTH-INVARIANT: lengthMm stays the glass length; radius = arcLength / sweep.
+      // CHORD-INVARIANT: lengthMm stays the chord (the fixed span); radius = chord/(2·sin(sweep/2)),
+      // so toggling to an arc bows between the two fixed ends without moving them.
       geomArcRadiusMm: deriveArcFromSweep(draft.lengthMm, sweep).radiusMm,
       geomArcSweepDeg: sweep,
       ...(hasExtras ? { openings: [], features: [] } : {}),

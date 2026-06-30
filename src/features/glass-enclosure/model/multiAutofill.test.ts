@@ -237,12 +237,8 @@ describe('computeMultiWallGapRuns', () => {
     expect(edge.geomArcRadiusMm ?? 0).toBeGreaterThan(0);
     expect(Math.abs(edge.geomArcSweepDeg ?? 0)).toBeGreaterThan(0);
     expect(edge.arcGlassBent).toBe(true);
-    const resolved = resolveArc(
-      edge.lengthMm,
-      edge.geomArcRadiusMm ?? 0,
-      edge.geomArcSweepDeg ?? 0,
-    );
-    const local = arcEndLocal(resolved.arcLengthMm, resolved.radiusMm, edge.geomArcSweepDeg ?? 0);
+    const resolved = resolveArc(edge.geomArcRadiusMm ?? 0, edge.geomArcSweepDeg ?? 0);
+    const local = arcEndLocal(resolved.radiusMm, edge.geomArcSweepDeg ?? 0);
     const rad = (edge.rotationDeg * Math.PI) / 180;
     const endX = edge.originX + local.xMm * Math.cos(rad) - local.yMm * Math.sin(rad);
     const endY = edge.originY + local.xMm * Math.sin(rad) + local.yMm * Math.cos(rad);
@@ -267,11 +263,7 @@ describe('computeMultiWallGapRuns', () => {
     const edge = edges[0];
     // Outside corner = intersection of the two walls' outward rays (a-end +X, b-start -Y).
     const cornerC = { x: 2500, y: 0 };
-    const apexLocal = arcEndLocal(
-      edge.lengthMm / 2,
-      edge.geomArcRadiusMm ?? 0,
-      edge.geomArcSweepDeg ?? 0,
-    );
+    const apexLocal = arcEndLocal(edge.geomArcRadiusMm ?? 0, (edge.geomArcSweepDeg ?? 0) / 2);
     const rad = (edge.rotationDeg * Math.PI) / 180;
     const apexX = edge.originX + apexLocal.xMm * Math.cos(rad) - apexLocal.yMm * Math.sin(rad);
     const apexY = edge.originY + apexLocal.xMm * Math.sin(rad) + apexLocal.yMm * Math.cos(rad);

@@ -3,7 +3,7 @@ import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { arcFromSweepKeepingLength } from '../../model/arcGeometry';
+import { arcFromBow } from '../../model/arcGeometry';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -633,19 +633,21 @@ export function RunGroup({
         <ArcSweepHandle
           startX={run.originX}
           startY={run.originY}
-          dirDeg={run.rotationDeg}
-          arcLengthMm={run.lengthMm}
-          currentSweepDeg={run.geomArcSweepDeg ?? 0}
+          endX={run.originX + run.lengthMm * dirX}
+          endY={run.originY + run.lengthMm * dirY}
+          currentSagittaMm={0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
-          onCommit={(sweepDeg) => {
-            // The straight run's length becomes the glass (developed) length and stays fixed; the
-            // drag sets the sweep continuously (1–360°), radius = glassLength/sweep, and the ends
-            // draw together as it curls. Omitting lengthMm keeps the glass length invariant.
-            const arc = arcFromSweepKeepingLength(run.lengthMm, sweepDeg);
+          onCommit={(sagittaMm) => {
+            // CHORD-INVARIANT: the run's two ends stay FIXED (chord = lengthMm, chordDeg =
+            // rotationDeg). arcFromBow rolls rotationDeg so the body bows between them; the sweep is
+            // free 1–360°. Below the straighten threshold it stays straight (null radius/sweep).
+            const bow = arcFromBow(run.lengthMm, run.rotationDeg, sagittaMm);
             onStretchRun(run.id, {
-              geomArcRadiusMm: arc.geomArcRadiusMm,
-              geomArcSweepDeg: arc.geomArcSweepDeg,
-              arcGlassBent: arc.geomArcRadiusMm ? true : run.arcGlassBent,
+              lengthMm: bow.lengthMm,
+              rotationDeg: bow.rotationDeg,
+              geomArcRadiusMm: bow.geomArcRadiusMm,
+              geomArcSweepDeg: bow.geomArcSweepDeg,
+              arcGlassBent: bow.geomArcRadiusMm ? true : run.arcGlassBent,
             });
           }}
         />

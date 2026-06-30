@@ -1,126 +1,87 @@
 import { useMemo, useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
-import { Vector3 } from 'three';
 import type { Group } from 'three';
 import { useDrag3D } from '@/shared/three-engine';
-import { sampleArcPlan } from '../../model/arcGeometry';
+import { bowArcPlanPoints } from '../../model/arcGeometry';
 
 const MM = 1000;
-const DEG = Math.PI / 180;
 const HANDLE_RADIUS_M = 0.06;
 const HANDLE_COLOR = '#16a34a';
 const HANDLE_HOVER = '#f97316';
-const MAX_SWEEP_DEG = 360;
-// Degrees of sweep per SCREEN pixel of perpendicular drag — zoom/perspective independent, so a full
-// circle takes a deliberate ~900px pull and a small drag makes a small curve (no runaway).
-const DEG_PER_PIXEL = 0.4;
-const PROBE_M = 0.1;
-const STRAIGHTEN_DEG = 2;
 
 interface ArcSweepHandleProps {
-  // The run/wall start (plan mm) + its start-tangent direction (deg) and FIXED developed glass
-  // length. The arc is an overlay on top: dragging this handle sets only the sweep angle.
+  // The two chord endpoints (plan mm) — they stay FIXED while bowing.
   startX: number;
   startY: number;
-  dirDeg: number;
-  arcLengthMm: number;
-  currentSweepDeg: number;
+  endX: number;
+  endY: number;
+  // Signed bow of the current arc (0 = straight); positions the rest apex.
+  currentSagittaMm: number;
   topYM: number;
-  // Reports the new signed sweep (deg); 0 means the run should return to straight.
-  onCommit: (sweepDeg: number) => void;
+  // Reports the new signed sagitta (perpendicular bow, mm); the parent maps it via arcFromBow.
+  onCommit: (sagittaMm: number) => void;
 }
 
-// A green handle at the arc's apex (the mid-point of the developed length). Dragging it
-// perpendicular to the start tangent sets the SWEEP ANGLE continuously from 0° up to a full circle
-// (360°), bulging to whichever side it is pulled. The glass length stays fixed (radius =
-// arcLength/sweep), so the ends draw together as the curve tightens. A dashed line previews the
-// exact arc that will result.
+// Green apex handle for a CHORD-INVARIANT curve. The two chord endpoints stay FIXED; the glass bows
+// between them. Dragging the apex perpendicular to the chord sets the signed sagitta 1:1 in world mm
+// (exactly like the resize handles, so the apex tracks the cursor) — the curve deepens smoothly from
+// straight, through a half-circle, into a major (>180°) arc, all without the ends moving. A dashed
+// line previews the exact arc (bowArcPlanPoints = the same arc the commit produces).
 export function ArcSweepHandle({
   startX,
   startY,
-  dirDeg,
-  arcLengthMm,
-  currentSweepDeg,
+  endX,
+  endY,
+  currentSagittaMm,
   topYM,
   onCommit,
 }: ArcSweepHandleProps) {
-  const dirRad = dirDeg * DEG;
-  const cos = Math.cos(dirRad);
-  const sin = Math.sin(dirRad);
-  // Perpendicular to the start tangent (+90°); +across is the +sweep bulge side.
-  const acrossX = -sin;
-  const acrossY = cos;
-  const camera = useThree((s) => s.camera);
-  const screenSize = useThree((s) => s.size);
-  const probeRef = useRef(new Vector3());
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const chord = Math.hypot(dx, dy) || 1;
+  // +across is the +sagitta bulge side (left of the start→end chord).
+  const acrossX = -dy / chord;
+  const acrossY = dx / chord;
+  const midX = (startX + endX) / 2;
+  const midY = (startY + endY) / 2;
 
-  const apexFor = (sweepDeg: number) => {
-    const sweepRad = Math.abs(sweepDeg) * DEG;
-    if (sweepRad < 0.0005) {
-      return { x: startX + (arcLengthMm / 2) * cos, y: startY + (arcLengthMm / 2) * sin };
-    }
-    const dir = sweepDeg < 0 ? -1 : 1;
-    const sweep = Math.min(Math.PI * 2, sweepRad);
-    const radius = arcLengthMm / sweep;
-    const phi = sweep / 2;
-    const lx = radius * Math.sin(phi);
-    const ly = dir * radius * (1 - Math.cos(phi));
-    return { x: startX + lx * cos - ly * sin, y: startY + lx * sin + ly * cos };
-  };
+  const apexFor = (sagittaMm: number) => ({
+    x: midX + acrossX * sagittaMm,
+    y: midY + acrossY * sagittaMm,
+  });
 
-  const rest = apexFor(currentSweepDeg);
+  const rest = apexFor(currentSagittaMm);
   const anchorRef = useRef<Group>(null);
   const [hovered, setHovered] = useState(false);
-  const [dragSweep, setDragSweep] = useState<number | null>(null);
+  const [dragSag, setDragSag] = useState<number | null>(null);
 
-  // Project a world point (metres) to screen pixels.
-  const toPixels = (x: number, y: number, z: number) => {
-    const v = probeRef.current.set(x, y, z).project(camera);
-    return { px: (v.x * 0.5 + 0.5) * screenSize.width, py: (-v.y * 0.5 + 0.5) * screenSize.height };
-  };
-
-  // How many world-mm equal one screen pixel along the across direction, at the apex's depth. Used
-  // to convert the (perspective-distorted) world drag into a stable screen-pixel pull.
-  const mmPerPixelAcross = () => {
-    const apex = apexFor(currentSweepDeg);
-    const a = toPixels(apex.x / MM, topYM, apex.y / MM);
-    const b = toPixels(apex.x / MM + acrossX * PROBE_M, topYM, apex.y / MM + acrossY * PROBE_M);
-    const dist = Math.hypot(b.px - a.px, b.py - a.py);
-    return dist > 0.001 ? (PROBE_M * MM) / dist : 1;
-  };
-
-  const sweepAt = (delta: { x: number; z: number }) => {
-    // useDrag3D already returns the delta in MILLIMETRES — do NOT multiply by MM again (the 1000×
-    // double-conversion was what pinned the sweep to 360° on any drag). Then normalize to screen
-    // pixels so the feel is zoom/perspective independent.
-    const perpMm = delta.x * acrossX + delta.z * acrossY;
-    const pixelPull = perpMm / mmPerPixelAcross();
-    const next = currentSweepDeg + pixelPull * DEG_PER_PIXEL;
-    return Math.max(-MAX_SWEEP_DEG, Math.min(MAX_SWEEP_DEG, next));
-  };
+  // useDrag3D returns the delta in MILLIMETRES already — do NOT multiply by MM (that 1000× double
+  // conversion pinned the curve to a full circle on any drag). The perpendicular component of the
+  // world drag IS the sagitta delta, so the apex follows the cursor 1:1.
+  const sagittaAt = (delta: { x: number; z: number }) =>
+    currentSagittaMm + delta.x * acrossX + delta.z * acrossY;
 
   const previewPoints = useMemo<[number, number, number][] | null>(() => {
-    if (dragSweep === null) return null;
-    return sampleArcPlan(startX, startY, dirDeg, arcLengthMm, dragSweep).map(
+    if (dragSag === null) return null;
+    return bowArcPlanPoints(startX, startY, endX, endY, dragSag).map(
       (p) => [p.x / MM, topYM, p.y / MM] as [number, number, number],
     );
-  }, [dragSweep, startX, startY, dirDeg, arcLengthMm, topYM]);
+  }, [dragSag, startX, startY, endX, endY, topYM]);
 
   const drag = useDrag3D({
     constraint: { mode: 'ground' },
     enabled: true,
     onMove: (delta) => {
-      const s = sweepAt(delta);
-      setDragSweep(s);
+      const s = sagittaAt(delta);
+      setDragSag(s);
       const apex = apexFor(s);
       anchorRef.current?.position.set(apex.x / MM, topYM, apex.y / MM);
     },
     onCommit: (delta) => {
-      const s = sweepAt(delta);
-      setDragSweep(null);
+      const s = sagittaAt(delta);
+      setDragSag(null);
       anchorRef.current?.position.set(rest.x / MM, topYM, rest.y / MM);
-      onCommit(Math.abs(s) < STRAIGHTEN_DEG ? 0 : Math.round(s * 10) / 10);
+      onCommit(s);
     },
   });
 

@@ -63,8 +63,10 @@ import {
   type WallFeatureSide,
 } from './wallFaces';
 import {
-  arcFromChordKeepingSweep,
-  arcFromSweepKeepingLength,
+  arcEndLocal,
+  arcFromBow,
+  arcFromCornerResize,
+  bowFromArc,
   resolveArc,
 } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
@@ -234,13 +236,9 @@ const buildWallGeometries = (
   // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
   // features on a curved wall are a follow-up.
   if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
-    // ARC-LENGTH-INVARIANT: wall.lengthMm is the developed glass length (fixed); the sweep is
-    // derived (= arcLength/radius) and the band spans whatever chord that arc gives.
-    const resolved = resolveArc(
-      wall.lengthMm,
-      wall.geomArcRadiusMm ?? 0,
-      wall.geomArcSweepDeg ?? 1,
-    );
+    // CHORD-INVARIANT: wall.lengthMm is the chord (fixed span); the band is rendered straight from
+    // the stored radius+sweep, bowing between the two fixed ends.
+    const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
     const band = buildCurvedBandGeometry(
       resolved.radiusM,
       resolved.direction,
@@ -455,6 +453,23 @@ export function WallObject({
   // re-adjusted. A bent wall has no bow (bend and arc are mutually exclusive profiles).
   const curveEditActive =
     transformActive && isSelected && interactive && !wall.locked && !isBentWall;
+  // The wall's two chord endpoints (world plan mm) — FIXED while bowing (CHORD-INVARIANT). For an
+  // arc wall the end comes from the stored radius+sweep; for a straight wall it's origin + length.
+  const wallRotRad = (wall.rotationDeg * Math.PI) / 180;
+  const wallCos = Math.cos(wallRotRad);
+  const wallSin = Math.sin(wallRotRad);
+  const wallEndLocal = isArcWall
+    ? arcEndLocal(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1)
+    : { xMm: wall.lengthMm, yMm: 0 };
+  const wallEndX = wall.originX + wallEndLocal.xMm * wallCos - wallEndLocal.yMm * wallSin;
+  const wallEndY = wall.originY + wallEndLocal.xMm * wallSin + wallEndLocal.yMm * wallCos;
+  const wallCurrentSagittaMm = isArcWall
+    ? bowFromArc(
+        wall.lengthMm,
+        resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1).radiusMm,
+        wall.geomArcSweepDeg ?? 0,
+      )
+    : 0;
   // The bend handle initiates/re-adjusts an L on a straight or already-bent wall (never an arc wall).
   const bendEditActive = transformActive && isSelected && interactive && !wall.locked && !isArcWall;
   // WHY: always cut the features (don't suppress while stretching) — the depth handle that
@@ -670,11 +685,10 @@ export function WallObject({
     // A curved wall's front/back surface is cylindrical — invert it so the pick maps to (offset
     // along the developed wall, height), instead of the flat-box projection which mislocates it.
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const resolved = resolveArc(
-        wall.lengthMm,
-        wall.geomArcRadiusMm ?? 0,
-        wall.geomArcSweepDeg ?? 1,
-      );
+      const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      // curvedWallPickUv takes GROUP-local coords (it internally un-rotates the band's [-π/2,0,0]),
+      // so TMP_VEC after worldToLocal is fed directly. Forward (pick) and back (render) both map U
+      // along the developed arc length (radius·sweep), so the drawn point stays under the cursor.
       return curvedWallPickUv(
         TMP_VEC.x,
         TMP_VEC.y,
@@ -682,7 +696,6 @@ export function WallObject({
         resolved.radiusM,
         resolved.direction,
         resolved.sweepRad,
-        // Feature U maps along the DEVELOPED arc length, not the chord.
         resolved.arcLengthMm,
       );
     }
@@ -1443,9 +1456,10 @@ export function WallObject({
           }
           onCommit={(next) => {
             // For an arc wall the corner-box length is the CHORD (span): dragging it keeps the sweep
-            // (curl shape) and scales the glass length + radius. For a straight wall it's the length.
+            // (curl shape) and re-derives the radius for the new chord (lengthMm = the new chord).
+            // For a straight wall it's the length.
             const shaped = isArcWall
-              ? arcFromChordKeepingSweep(next.lengthMm, wall.geomArcSweepDeg ?? 1)
+              ? arcFromCornerResize(next.lengthMm, wall.geomArcSweepDeg ?? 1)
               : { lengthMm: next.lengthMm, geomArcRadiusMm: wall.geomArcRadiusMm ?? null };
             // Reject a corner resize that would grow the wall into a neighbour (the Stretch
             // tool clamps; the corner handles must not be a collision-free back door).
@@ -1477,19 +1491,25 @@ export function WallObject({
         <ArcSweepHandle
           startX={wall.originX}
           startY={wall.originY}
-          dirDeg={wall.rotationDeg}
-          arcLengthMm={wall.lengthMm}
-          currentSweepDeg={wall.geomArcSweepDeg ?? 0}
+          endX={wallEndX}
+          endY={wallEndY}
+          currentSagittaMm={wallCurrentSagittaMm}
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
-          onCommit={(sweepDeg) => {
-            // The glass length (lengthMm) stays fixed; the drag sets the sweep continuously
-            // (1–360°) and radius is derived (= arcLength/sweep).
-            const arc = arcFromSweepKeepingLength(wall.lengthMm, sweepDeg);
+          onCommit={(sagittaMm) => {
+            // CHORD-INVARIANT: the wall's two ends stay FIXED. arcFromBow keeps the chord (lengthMm)
+            // and rolls rotationDeg so the body bows between them; the sweep is free 1–360°. Below
+            // the straighten threshold the wall returns to straight (null radius/sweep).
+            const chordDeg =
+              (Math.atan2(wallEndY - wall.originY, wallEndX - wall.originX) * 180) / Math.PI;
+            const chord = Math.hypot(wallEndX - wall.originX, wallEndY - wall.originY);
+            const bow = arcFromBow(chord, chordDeg, sagittaMm);
             updateWall(wall.id, {
-              geomArcRadiusMm: arc.geomArcRadiusMm,
-              geomArcSweepDeg: arc.geomArcSweepDeg,
+              lengthMm: bow.lengthMm,
+              rotationDeg: bow.rotationDeg,
+              geomArcRadiusMm: bow.geomArcRadiusMm,
+              geomArcSweepDeg: bow.geomArcSweepDeg,
             });
           }}
         />
