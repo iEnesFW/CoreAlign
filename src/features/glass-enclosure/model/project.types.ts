@@ -491,13 +491,6 @@ export interface SceneSlabState {
   depthMm: number;
   thicknessMm: number;
   elevationMm: number;
-  // PLAN arc (CHORD-INVARIANT, like a wall): the slab curves left/right in plan — the length follows
-  // an arc between the two FIXED ends and the depth is the radial width — so a curved roof can sit on
-  // a curved wall. radius+sweep stored, lengthMm = chord. Mutually exclusive with arcRise/pitch (an
-  // up-curve), which bow the slab vertically instead.
-  geomArcRadiusMm?: number | null;
-  geomArcSweepDeg?: number | null;
-  // Barrel (up-curve): the slab bows UP by arcRiseMm (sagitta). > 0 → cylindrical vault.
   arcRiseMm?: number | null;
   // Pitched/gable roof: ridge rise (mm) above the eaves. > 0 → pitched geometry (mutually
   // exclusive with arcRiseMm). 'symmetric' = gable (ridge down the middle, triangular ends);

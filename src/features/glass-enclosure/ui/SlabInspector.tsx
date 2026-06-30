@@ -10,7 +10,6 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
-import { isRealArc } from '../model/arcGeometry';
 import type { SceneSlabState } from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
@@ -46,13 +45,9 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
-  // A plan-arc (curves like a wall), barrel (up-curve) or pitched (gable) slab defers surface
-  // features — they aren't projected onto the non-flat surface yet (#6b). Roofs AND floors can take
-  // any of these profiles.
-  const isShapedSurface =
-    isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) ||
-    (draft.arcRiseMm ?? 0) > 0 ||
-    (draft.pitchRiseMm ?? 0) > 0;
+  // A curved (barrel) or pitched (gable) slab defers surface features — they aren't projected
+  // onto the non-flat surface yet (#6b). Roofs AND floors can take either profile.
+  const isShapedSurface = (draft.arcRiseMm ?? 0) > 0 || (draft.pitchRiseMm ?? 0) > 0;
 
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
