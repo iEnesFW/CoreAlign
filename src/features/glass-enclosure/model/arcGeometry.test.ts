@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   arcFromChordKeepingSweep,
+  arcFromSweepKeepingLength,
   arcLengthFromRadiusSweep,
   bowArcPlanPoints,
   bowFromArc,
@@ -9,6 +10,7 @@ import {
   deriveArcFromRadius,
   minArcRadiusMm,
   resolveArc,
+  sampleArcPlan,
 } from './arcGeometry';
 
 describe('bowArcPlanPoints', () => {
@@ -156,5 +158,36 @@ describe('arc-length-invariant arc model', () => {
     expect(bow.geomArcSweepDeg).not.toBeNull();
     const sweepRad = (Math.abs(bow.geomArcSweepDeg as number) * Math.PI) / 180;
     expect(bow.geomArcRadiusMm).toBeCloseTo(arcLength / sweepRad, -1); // radius = arcLength/sweep
+  });
+
+  it('arcFromSweepKeepingLength maps a dragged sweep to radius = arcLength/sweep (1–360°)', () => {
+    const arcLength = 3000;
+    for (const sweepDeg of [19, 90, 180, 270, 360]) {
+      const a = arcFromSweepKeepingLength(arcLength, sweepDeg);
+      const sweepRad = (sweepDeg * Math.PI) / 180;
+      expect(a.geomArcSweepDeg).toBe(sweepDeg);
+      expect(a.geomArcRadiusMm).toBeCloseTo(arcLength / sweepRad, -1);
+    }
+    // A negligible sweep returns to straight.
+    expect(arcFromSweepKeepingLength(arcLength, 0.5).geomArcRadiusMm).toBeNull();
+    // Sign is preserved (bulge direction).
+    expect(arcFromSweepKeepingLength(arcLength, -90).geomArcSweepDeg).toBe(-90);
+  });
+
+  it('sampleArcPlan returns the straight run for ~zero sweep and curls for a real sweep', () => {
+    const straight = sampleArcPlan(0, 0, 0, 3000, 0);
+    expect(straight).toHaveLength(2);
+    expect(straight[1].x).toBeCloseTo(3000, 3);
+    expect(straight[1].y).toBeCloseTo(0, 3);
+
+    const curved = sampleArcPlan(0, 0, 0, 3000, 180);
+    // Starts at the origin and the developed length (sum of segment chords) ≈ the glass length.
+    expect(curved[0].x).toBeCloseTo(0, 3);
+    expect(curved[0].y).toBeCloseTo(0, 3);
+    let dev = 0;
+    for (let i = 1; i < curved.length; i += 1) {
+      dev += Math.hypot(curved[i].x - curved[i - 1].x, curved[i].y - curved[i - 1].y);
+    }
+    expect(dev).toBeCloseTo(3000, -2); // polyline approximation of the 3000mm arc
   });
 });

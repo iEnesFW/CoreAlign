@@ -7,12 +7,11 @@ import { ProfileBar } from './ProfileBar';
 import {
   arcEndLocal,
   arcFromChordKeepingSweep,
-  bowFromArc,
-  bowToArcKeepingLength,
+  arcFromSweepKeepingLength,
   computeArcLayout,
   resolveArc,
 } from '../../model/arcGeometry';
-import { CurveBowHandle } from '../interaction/CurveBowHandle';
+import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { panelIsShaped } from '../../model/panelOutline';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -502,28 +501,18 @@ export function ArcRunGroup({
         />
       )}
       {vertexEditActive && onStretchRun && (
-        <CurveBowHandle
+        <ArcSweepHandle
           startX={run.originX}
           startY={run.originY}
-          endX={endWorldX}
-          endY={endWorldY}
-          currentSagittaMm={bowFromArc(
-            Math.hypot(endWorldX - run.originX, endWorldY - run.originY),
-            arc.radiusMm,
-            run.geomArcSweepDeg ?? 1,
-          )}
+          dirDeg={run.rotationDeg}
+          arcLengthMm={run.lengthMm}
+          currentSweepDeg={run.geomArcSweepDeg ?? 0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
-          onCommit={(sagittaMm) => {
-            const chordMm = Math.hypot(endWorldX - run.originX, endWorldY - run.originY);
-            const chordDeg =
-              (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI;
-            // The glass length (lengthMm) stays fixed; the drag sets the sweep and radius is
-            // derived (= arcLength/sweep). Omitting lengthMm keeps it invariant (no redistribution).
-            const next = bowToArcKeepingLength(chordMm, chordDeg, sagittaMm, run.lengthMm);
+          onCommit={(sweepDeg) => {
+            // The glass length (lengthMm) stays fixed; the drag sets the sweep continuously
+            // (1–360°) and radius is derived (= arcLength/sweep). Omitting lengthMm keeps it fixed.
+            const next = arcFromSweepKeepingLength(run.lengthMm, sweepDeg);
             onStretchRun(run.id, {
-              originX: run.originX,
-              originY: run.originY,
-              rotationDeg: next.rotationDeg,
               geomArcRadiusMm: next.geomArcRadiusMm,
               geomArcSweepDeg: next.geomArcSweepDeg,
             });

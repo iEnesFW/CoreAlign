@@ -28,7 +28,7 @@ import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
-import { CurveBowHandle } from '../interaction/CurveBowHandle';
+import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { BendHandle } from '../interaction/BendHandle';
 import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -63,10 +63,8 @@ import {
   type WallFeatureSide,
 } from './wallFaces';
 import {
-  arcEndLocal,
   arcFromChordKeepingSweep,
-  bowFromArc,
-  bowToArcKeepingLength,
+  arcFromSweepKeepingLength,
   resolveArc,
 } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
@@ -459,30 +457,6 @@ export function WallObject({
     transformActive && isSelected && interactive && !wall.locked && !isBentWall;
   // The bend handle initiates/re-adjusts an L on a straight or already-bent wall (never an arc wall).
   const bendEditActive = transformActive && isSelected && interactive && !wall.locked && !isArcWall;
-  const wallCurveChord = (() => {
-    const r = wall.rotationDeg * DEG2RAD;
-    if (isArcWall) {
-      const resolved = resolveArc(
-        wall.lengthMm,
-        wall.geomArcRadiusMm ?? 0,
-        wall.geomArcSweepDeg ?? 1,
-      );
-      const ae = arcEndLocal(resolved.arcLengthMm, resolved.radiusMm, wall.geomArcSweepDeg ?? 1);
-      const ex = wall.originX + ae.xMm * Math.cos(r) - ae.yMm * Math.sin(r);
-      const ey = wall.originY + ae.xMm * Math.sin(r) + ae.yMm * Math.cos(r);
-      const chordMm = Math.hypot(ex - wall.originX, ey - wall.originY);
-      return {
-        endX: ex,
-        endY: ey,
-        sagittaMm: bowFromArc(chordMm, resolved.radiusMm, wall.geomArcSweepDeg ?? 1),
-      };
-    }
-    return {
-      endX: wall.originX + wall.lengthMm * Math.cos(r),
-      endY: wall.originY + wall.lengthMm * Math.sin(r),
-      sagittaMm: 0,
-    };
-  })();
   // WHY: always cut the features (don't suppress while stretching) — the depth handle that
   // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
   // hid the result on every face until the user happened to leave the tool. Depth commits on
@@ -1500,28 +1474,20 @@ export function WallObject({
         />
       )}
       {curveEditActive && (
-        <CurveBowHandle
+        <ArcSweepHandle
           startX={wall.originX}
           startY={wall.originY}
-          endX={wallCurveChord.endX}
-          endY={wallCurveChord.endY}
-          currentSagittaMm={wallCurveChord.sagittaMm}
+          dirDeg={wall.rotationDeg}
+          arcLengthMm={wall.lengthMm}
+          currentSweepDeg={wall.geomArcSweepDeg ?? 0}
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
-          onCommit={(sagittaMm) => {
-            const chordMm = Math.hypot(
-              wallCurveChord.endX - wall.originX,
-              wallCurveChord.endY - wall.originY,
-            );
-            const chordDeg =
-              (Math.atan2(wallCurveChord.endY - wall.originY, wallCurveChord.endX - wall.originX) *
-                180) /
-              Math.PI;
-            // The glass length (lengthMm) stays fixed; the drag sets the sweep, radius derived.
-            const arc = bowToArcKeepingLength(chordMm, chordDeg, sagittaMm, wall.lengthMm);
+          onCommit={(sweepDeg) => {
+            // The glass length (lengthMm) stays fixed; the drag sets the sweep continuously
+            // (1–360°) and radius is derived (= arcLength/sweep).
+            const arc = arcFromSweepKeepingLength(wall.lengthMm, sweepDeg);
             updateWall(wall.id, {
-              rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,
               geomArcSweepDeg: arc.geomArcSweepDeg,
             });

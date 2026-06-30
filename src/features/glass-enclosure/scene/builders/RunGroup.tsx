@@ -3,8 +3,8 @@ import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { bowToArcKeepingLength } from '../../model/arcGeometry';
-import { CurveBowHandle } from '../interaction/CurveBowHandle';
+import { arcFromSweepKeepingLength } from '../../model/arcGeometry';
+import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { StretchFaces } from '../interaction/StretchFaces';
@@ -630,27 +630,19 @@ export function RunGroup({
         />
       )}
       {vertexEditActive && onStretchRun && (
-        <CurveBowHandle
+        <ArcSweepHandle
           startX={run.originX}
           startY={run.originY}
-          endX={run.originX + run.lengthMm * dirX}
-          endY={run.originY + run.lengthMm * dirY}
-          currentSagittaMm={0}
+          dirDeg={run.rotationDeg}
+          arcLengthMm={run.lengthMm}
+          currentSweepDeg={run.geomArcSweepDeg ?? 0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
-          onCommit={(sagittaMm) => {
+          onCommit={(sweepDeg) => {
             // The straight run's length becomes the glass (developed) length and stays fixed; the
-            // drag sets the sweep, radius = glassLength/sweep, and the ends draw together as it
-            // curls. Omitting lengthMm keeps the glass length invariant (no redistribution).
-            const arc = bowToArcKeepingLength(
-              run.lengthMm,
-              run.rotationDeg,
-              sagittaMm,
-              run.lengthMm,
-            );
+            // drag sets the sweep continuously (1–360°), radius = glassLength/sweep, and the ends
+            // draw together as it curls. Omitting lengthMm keeps the glass length invariant.
+            const arc = arcFromSweepKeepingLength(run.lengthMm, sweepDeg);
             onStretchRun(run.id, {
-              originX: run.originX,
-              originY: run.originY,
-              rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,
               geomArcSweepDeg: arc.geomArcSweepDeg,
               arcGlassBent: arc.geomArcRadiusMm ? true : run.arcGlassBent,

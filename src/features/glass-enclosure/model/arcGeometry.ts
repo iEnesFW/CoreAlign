@@ -311,6 +311,20 @@ export const arcFromChordKeepingSweep = (
   return { lengthMm: Math.round(radius * sweepRad), geomArcRadiusMm: Math.round(radius) };
 };
 
+// Sweep-handle commit for the ARC-LENGTH model: the drag gives a signed sweep angle and the glass
+// length is kept FIXED, so radius = arcLength/sweep. A negligible sweep returns to straight (null).
+export const arcFromSweepKeepingLength = (
+  arcLengthMm: number,
+  sweepDeg: number,
+): { geomArcRadiusMm: number | null; geomArcSweepDeg: number | null } => {
+  if (Math.abs(sweepDeg) < 1) return { geomArcRadiusMm: null, geomArcSweepDeg: null };
+  const sweepRad = Math.min(MAX_SWEEP_RAD, (Math.abs(sweepDeg) * Math.PI) / 180);
+  return {
+    geomArcRadiusMm: Math.round(arcLengthMm / sweepRad),
+    geomArcSweepDeg: Math.round(sweepDeg * 10) / 10,
+  };
+};
+
 // The current signed bow (sagitta in the +90° across direction) of an existing arc, so a re-adjust
 // handle starts at the apex. Inverse of arcFromBow's sign rule (bulge opposite the sweep sign).
 export const bowFromArc = (chordMm: number, radiusMm: number, sweepSignDeg: number): number => {
@@ -367,6 +381,40 @@ export const bowArcPlanPoints = (
   for (let i = 0; i <= segments; i += 1) {
     const ang = a0 + sweep * (i / segments);
     pts.push({ x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang) });
+  }
+  return pts;
+};
+
+// Samples an ARC-LENGTH arc in the world plan: it starts at (originX, originY) with the start
+// tangent pointing along dirDeg, has a fixed developed length arcLengthMm, and sweeps signed
+// sweepDeg. Matches the renderer (same arcPoint convention rotated by dirDeg), so a preview drawn
+// from these points is exactly the curve that will result. A ~zero sweep returns the straight run.
+export const sampleArcPlan = (
+  originX: number,
+  originY: number,
+  dirDeg: number,
+  arcLengthMm: number,
+  sweepDeg: number,
+  segments = 48,
+): { x: number; y: number }[] => {
+  const dirRad = (dirDeg * Math.PI) / 180;
+  const cos = Math.cos(dirRad);
+  const sin = Math.sin(dirRad);
+  const sweepRad = (Math.abs(sweepDeg) * Math.PI) / 180;
+  if (sweepRad < 0.0005) {
+    return [
+      { x: originX, y: originY },
+      { x: originX + arcLengthMm * cos, y: originY + arcLengthMm * sin },
+    ];
+  }
+  const direction = sweepDeg < 0 ? -1 : 1;
+  const radius = arcLengthMm / Math.min(MAX_SWEEP_RAD, sweepRad);
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i <= segments; i += 1) {
+    const phi = Math.min(MAX_SWEEP_RAD, sweepRad) * (i / segments);
+    const lx = radius * Math.sin(phi);
+    const ly = direction * radius * (1 - Math.cos(phi));
+    pts.push({ x: originX + lx * cos - ly * sin, y: originY + lx * sin + ly * cos });
   }
   return pts;
 };
