@@ -75,8 +75,10 @@ export function BendHandle({
   const [dragBend, setDragBend] = useState<number | null>(null);
 
   const bendAt2 = (delta: { x: number; z: number }) => {
-    const ex = rest.x + delta.x * MM;
-    const ey = rest.y + delta.z * MM;
+    // useDrag3D already returns the delta in MILLIMETRES (rest is plan-mm too) — do NOT multiply by
+    // MM again, that made the bend 1000× too sensitive.
+    const ex = rest.x + delta.x;
+    const ey = rest.y + delta.z;
     const alpha = normalizeDeg(Math.atan2(ey - py, ex - px) * DEG - dirDeg);
     return snapBend(-alpha);
   };

@@ -91,7 +91,10 @@ export function ArcSweepHandle({
   };
 
   const sweepAt = (delta: { x: number; z: number }) => {
-    const perpMm = (delta.x * acrossX + delta.z * acrossY) * MM;
+    // useDrag3D already returns the delta in MILLIMETRES — do NOT multiply by MM again (the 1000×
+    // double-conversion was what pinned the sweep to 360° on any drag). Then normalize to screen
+    // pixels so the feel is zoom/perspective independent.
+    const perpMm = delta.x * acrossX + delta.z * acrossY;
     const pixelPull = perpMm / mmPerPixelAcross();
     const next = currentSweepDeg + pixelPull * DEG_PER_PIXEL;
     return Math.max(-MAX_SWEEP_DEG, Math.min(MAX_SWEEP_DEG, next));
