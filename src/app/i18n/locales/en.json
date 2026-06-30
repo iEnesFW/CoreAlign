@@ -2387,6 +2387,15 @@
           "Pro": "Pro",
           "ProHelp": "Full control, dense info"
         },
+        "InspectorTab": {
+          "properties": "Properties",
+          "general": "General",
+          "dimensions": "Dimensions",
+          "hardware": "Hardware",
+          "glass": "Glass",
+          "surveys": "Surveys",
+          "commerce": "Commerce"
+        },
         "Tab": {
           "Runs": {
             "Simple": "Facades",
@@ -2688,6 +2697,10 @@
         "Rotation": "Rotation",
         "DeleteFloor": "Delete floor",
         "DeleteRoof": "Delete roof",
+        "PlanArcTitle": "Plan curve (like a wall)",
+        "PlanArcAxisLength": "Length axis",
+        "PlanArcAxisDepth": "Depth axis",
+        "PlanArcInfo": "Drag the green point or type a value; the selected axis' two ends stay fixed.",
         "BarrelTitle": "Barrel (curved) surface",
         "ArcRise": "Curve rise",
         "BarrelDropsFeatures": "Converting to a curve removed this roof's shapes.",
@@ -2731,6 +2744,8 @@
         "AddWall": "Add wall",
         "AddFloor": "Add floor",
         "AddRoof": "Add roof",
+        "ShapeFlat": "Flat",
+        "ShapeCurved": "Arc / curved",
         "NoColors": "Color catalog is empty",
         "Draw": "Draw on surface",
         "ShapeRect": "Rectangle",

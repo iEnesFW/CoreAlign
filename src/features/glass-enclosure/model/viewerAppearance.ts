@@ -1,7 +1,14 @@
 import { usePersistedState } from '@/shared/hooks/usePersistedState';
 import type { ViewportAppearance } from '@/shared/three-engine';
 
-export type ViewerAppearancePreset = 'studio' | 'sunset' | 'city' | 'dawn' | 'plain';
+export type ViewerAppearancePreset =
+  | 'studio'
+  | 'daylight'
+  | 'street'
+  | 'sunset'
+  | 'city'
+  | 'dawn'
+  | 'plain';
 
 export interface ViewerAppearanceDefinition extends ViewportAppearance {
   labelKey: string;
@@ -12,10 +19,32 @@ export const VIEWER_APPEARANCE_PRESETS: Record<ViewerAppearancePreset, ViewerApp
   {
     studio: {
       environment: 'apartment',
-      background: '#f1f5f9',
-      ground: '#e7ebef',
+      background: '#cfe6fb',
+      ground: '#dde4ea',
+      sky: true,
+      sunPosition: [10, 16, 8],
       labelKey: 'GlassEnclosure.Designer.Appearance.Studio',
       defaultLabel: 'Stüdyo',
+    },
+    daylight: {
+      environment: 'apartment',
+      background: '#bcd6f0',
+      ground: '#4b7a36',
+      groundTexture: 'grass',
+      sky: true,
+      sunPosition: [9, 12, 7],
+      labelKey: 'GlassEnclosure.Designer.Appearance.Daylight',
+      defaultLabel: 'Gün Işığı',
+    },
+    street: {
+      environment: 'city',
+      background: '#b4c4d6',
+      ground: '#3a3d42',
+      groundTexture: 'asphalt',
+      sky: true,
+      sunPosition: [11, 9, 5],
+      labelKey: 'GlassEnclosure.Designer.Appearance.Street',
+      defaultLabel: 'Sokak',
     },
     sunset: {
       environment: 'sunset',
@@ -49,6 +78,8 @@ export const VIEWER_APPEARANCE_PRESETS: Record<ViewerAppearancePreset, ViewerApp
 
 export const VIEWER_APPEARANCE_ORDER: ViewerAppearancePreset[] = [
   'studio',
+  'daylight',
+  'street',
   'sunset',
   'city',
   'dawn',
@@ -64,7 +95,15 @@ export function useViewerAppearance() {
     DEFAULT_PRESET,
   );
   const preset = VIEWER_APPEARANCE_PRESETS[stored] ? stored : DEFAULT_PRESET;
-  const { environment, background, ground } = VIEWER_APPEARANCE_PRESETS[preset];
-  const appearance: ViewportAppearance = { environment, background, ground };
+  const { environment, background, ground, groundTexture, sky, sunPosition } =
+    VIEWER_APPEARANCE_PRESETS[preset];
+  const appearance: ViewportAppearance = {
+    environment,
+    background,
+    ground,
+    groundTexture,
+    sky,
+    sunPosition,
+  };
   return { preset, setPreset, appearance };
 }

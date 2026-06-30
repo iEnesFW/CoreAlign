@@ -5,11 +5,10 @@ import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.j
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Texture } from 'three';
 import {
-  getProceduralTexture,
   isAltPressed,
-  isProceduralMaterialKey,
   stickyDimensionMm,
   useDrag3D,
+  useTiledProceduralTexture,
 } from '@/shared/three-engine';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
@@ -172,10 +171,7 @@ export function PolygonSurfaceObject({
     },
   });
 
-  const texture: Texture | null =
-    surface.materialKey && isProceduralMaterialKey(surface.materialKey)
-      ? getProceduralTexture(surface.materialKey)
-      : null;
+  const texture: Texture | null = useTiledProceduralTexture(surface.materialKey, 8, 8);
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();

@@ -10,6 +10,12 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
+import {
+  deriveArcFromRadius,
+  deriveArcFromSweep,
+  isRealArc,
+  minArcRadiusMm,
+} from '../model/arcGeometry';
 import type { SceneSlabState } from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
@@ -45,9 +51,15 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
-  // A curved (barrel) or pitched (gable) slab defers surface features — they aren't projected
-  // onto the non-flat surface yet (#6b). Roofs AND floors can take either profile.
-  const isShapedSurface = (draft.arcRiseMm ?? 0) > 0 || (draft.pitchRiseMm ?? 0) > 0;
+  // A plan-arc (curves like a wall), barrel or pitched slab defers surface features — they aren't
+  // projected onto the non-flat surface yet (#6b). Roofs AND floors can take any profile.
+  const isShapedSurface =
+    isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) ||
+    (draft.arcRiseMm ?? 0) > 0 ||
+    (draft.pitchRiseMm ?? 0) > 0;
+  const planArcAxis = draft.slabArcAxis ?? 'length';
+  const planArcChordMm = planArcAxis === 'length' ? draft.lengthMm : draft.depthMm;
+  const planArcSign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
 
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
@@ -111,6 +123,47 @@ export function SlabInspector() {
           defaultValue: 'Eğimli çatıya çevirince bu yüzeyin şekilleri kaldırıldı.',
         }),
       });
+    }
+  };
+
+  // Plan arc (curves like a wall) — mutually exclusive with barrel/pitch (the up-curve). Radius/sweep
+  // set the curve while the bent axis' two ends stay fixed (symmetric, no rotation).
+  const planArcPatch = (radiusMm: number, sweepDeg: number) => {
+    const dropFeatures = (slab.features ?? []).length > 0;
+    commit({
+      geomArcRadiusMm: radiusMm,
+      geomArcSweepDeg: planArcSign * Math.abs(Math.round(sweepDeg * 10) / 10),
+      slabArcAxis: planArcAxis,
+      arcRiseMm: null,
+      pitchRiseMm: null,
+      ...(dropFeatures ? { features: [] } : {}),
+    });
+  };
+  const commitPlanArcRadius = (v: number) => {
+    if (v > 0) {
+      const next = deriveArcFromRadius(planArcChordMm, Math.max(minArcRadiusMm(planArcChordMm), v));
+      planArcPatch(next.radiusMm, next.sweepDeg);
+    } else {
+      commit({ geomArcRadiusMm: null, geomArcSweepDeg: null });
+    }
+  };
+  const commitPlanArcSweep = (v: number) => {
+    if (v <= 0) return;
+    const next = deriveArcFromSweep(planArcChordMm, v);
+    planArcPatch(next.radiusMm, next.sweepDeg);
+  };
+  const setPlanArcAxis = (axis: 'length' | 'depth') => {
+    if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg)) {
+      // Keep the curl angle; re-derive the radius for the new axis' chord so the ends stay on it.
+      const chord = axis === 'length' ? draft.lengthMm : draft.depthMm;
+      const next = deriveArcFromSweep(chord, Math.abs(draft.geomArcSweepDeg ?? 90));
+      commit({
+        slabArcAxis: axis,
+        geomArcRadiusMm: next.radiusMm,
+        geomArcSweepDeg: planArcSign * Math.abs(next.sweepDeg),
+      });
+    } else {
+      commit({ slabArcAxis: axis });
     }
   };
 
@@ -226,6 +279,69 @@ export function SlabInspector() {
           onCommit={(v) => commit({ rotationDeg: v })}
           onDraft={(v) => setDraft({ ...draft, rotationDeg: v })}
         />
+      </div>
+
+      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.Slab.PlanArcTitle', {
+            defaultValue: 'Planda kavis (duvar gibi)',
+          })}
+        </p>
+        <div className="flex gap-1.5">
+          {(
+            [
+              [
+                'length',
+                t('GlassEnclosure.Designer.Slab.PlanArcAxisLength', {
+                  defaultValue: 'Uzunluk ekseni',
+                }),
+              ],
+              [
+                'depth',
+                t('GlassEnclosure.Designer.Slab.PlanArcAxisDepth', {
+                  defaultValue: 'Derinlik ekseni',
+                }),
+              ],
+            ] as const
+          ).map(([axis, axisLabel]) => (
+            <button
+              key={axis}
+              type="button"
+              onClick={() => setPlanArcAxis(axis)}
+              className={
+                planArcAxis === axis
+                  ? 'flex-1 rounded border border-primary-500 bg-primary-50 px-2 py-1 text-xs font-medium text-primary-600 dark:bg-primary-950/30 dark:text-primary-400'
+                  : 'flex-1 rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800'
+              }
+            >
+              {axisLabel}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <NumberField
+            label={`${t('GlassEnclosure.Field.ArcRadius', { defaultValue: 'Yarıçap' })} (mm)`}
+            value={draft.geomArcRadiusMm ?? 0}
+            min={0}
+            onCommit={(v) => commitPlanArcRadius(v)}
+            onDraft={(v) => setDraft({ ...draft, geomArcRadiusMm: v })}
+          />
+          <NumberField
+            label={t('GlassEnclosure.Designer.Arc.SweepInput', { defaultValue: 'Yay açısı (°)' })}
+            value={Math.abs(draft.geomArcSweepDeg ?? 0)}
+            min={0}
+            onCommit={(v) => commitPlanArcSweep(v)}
+            onDraft={(v) =>
+              setDraft({ ...draft, geomArcSweepDeg: (draft.geomArcSweepDeg ?? 1) < 0 ? -v : v })
+            }
+          />
+        </div>
+        <p className="text-[11px] text-slate-400">
+          {t('GlassEnclosure.Designer.Slab.PlanArcInfo', {
+            defaultValue:
+              'Yeşil noktayı sürükle veya değer gir; seçili eksenin iki ucu sabit kalır.',
+          })}
+        </p>
       </div>
 
       <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">

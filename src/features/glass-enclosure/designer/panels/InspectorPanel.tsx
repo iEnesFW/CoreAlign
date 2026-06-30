@@ -25,12 +25,15 @@ import type {
 } from '@/features/glass-enclosure/model/glassEnclosure.types';
 
 export type InspectorTabKey =
+  | 'properties'
   | 'general'
   | 'dimensions'
   | 'hardware'
   | 'glass'
   | 'surveys'
   | 'commerce';
+
+const ALL_SECTIONS: InspectorSection[] = ['general', 'dimensions', 'hardware', 'glass'];
 
 interface InspectorPanelProps {
   projectId: string | null;
@@ -44,15 +47,18 @@ interface InspectorPanelProps {
   className?: string;
 }
 
-const PRO_TABS: InspectorTabKey[] = [
-  'general',
-  'dimensions',
-  'hardware',
-  'glass',
-  'surveys',
-  'commerce',
-];
-const SIMPLE_TABS: InspectorTabKey[] = ['general', 'dimensions'];
+// Only run/panel inspectors actually split their content by section; every other inspector
+// (wall, slab, hardware, surface, features, connection) renders one cohesive editor, so it gets
+// a single "Properties" tab instead of four identical ones (the old disorganised/duplicated UX).
+const selectionTabKeys = (
+  kind: string | null | undefined,
+  isSimple: boolean,
+): InspectorTabKey[] => {
+  if (isSimple) return ['properties'];
+  if (kind === 'run') return ['general', 'dimensions', 'hardware', 'glass'];
+  if (kind === 'panel') return ['general', 'dimensions', 'glass'];
+  return ['properties'];
+};
 
 export const InspectorPanel = ({
   projectId,
@@ -68,15 +74,19 @@ export const InspectorPanel = ({
   const { t } = useTranslation();
   const mode = useDesignerUxMode();
   const isSimple = mode === 'Simple';
-  const tabs = isSimple ? SIMPLE_TABS : PRO_TABS;
 
   const selection = useDesignerStore((s) => s.selection);
   const project = useDesignerStore((s) => s.project);
 
+  const selectionTabs = selectionTabKeys(selection.kind, isSimple);
+  const projectTabs: InspectorTabKey[] = isSimple ? [] : ['surveys', 'commerce'];
+  const tabs: InspectorTabKey[] = [...selectionTabs, ...projectTabs];
+  const tabsKey = tabs.join('|');
+
   const [activeTab, setActiveTab] = useState<InspectorTabKey>(tabs[0]);
-  const [lastTabsKey, setLastTabsKey] = useState(tabs);
-  if (lastTabsKey !== tabs) {
-    setLastTabsKey(tabs);
+  const [lastTabsKey, setLastTabsKey] = useState(tabsKey);
+  if (lastTabsKey !== tabsKey) {
+    setLastTabsKey(tabsKey);
     if (!tabs.includes(activeTab)) {
       setActiveTab(tabs[0]);
     }
@@ -126,7 +136,7 @@ export const InspectorPanel = ({
       <div
         role="tablist"
         aria-label={t('GlassEnclosure.Designer.Inspector')}
-        className="flex shrink-0 overflow-x-auto border-b border-slate-200 dark:border-slate-700"
+        className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 px-2 py-1.5 dark:border-slate-800"
       >
         {tabs.map((tab) => {
           const active = tab === activeTab;
@@ -138,11 +148,11 @@ export const InspectorPanel = ({
               aria-selected={active}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                'whitespace-nowrap border-b-2 px-3 transition-colors',
-                isSimple ? 'h-11 text-sm font-semibold' : 'h-9 text-xs font-medium',
+                'whitespace-nowrap rounded-md px-3 font-medium transition-colors',
+                isSimple ? 'h-9 text-sm' : 'h-7 text-xs',
                 active
-                  ? 'border-primary-600 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+                  ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/30'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-200',
               )}
             >
               {tabLabel(tab)}
@@ -199,6 +209,8 @@ const TabBody = ({
   commerceSlot,
   polygonSlot,
 }: TabBodyProps) => {
+  const padding = isSimple ? 'space-y-4 p-4 text-base' : 'space-y-3 p-3 text-sm';
+
   if (tab === 'surveys' && projectId) {
     return (
       <div className={cn(isSimple ? 'p-4 text-base' : 'p-3 text-sm')}>
@@ -213,22 +225,40 @@ const TabBody = ({
 
   if (tab === 'commerce') {
     return (
-      <div className={cn(isSimple ? 'space-y-4 p-4 text-base' : 'space-y-3 p-3 text-sm')}>
+      <div className={cn(padding)}>
         {costSlot}
         {commerceSlot}
       </div>
     );
   }
 
-  const sections = tabSections(tab, isSimple);
-  const padding = isSimple ? 'space-y-4 p-4 text-base' : 'space-y-3 p-3 text-sm';
+  // Single cohesive "Properties" view (wall/slab/hardware/surface/features/connection/none, or
+  // any selection in Simple mode): the full editor plus the design-wide helper panels.
+  if (tab === 'properties') {
+    return (
+      <div className={cn(padding)}>
+        {polygonSlot}
+        <PitchedRoofInspector />
+        <div>{renderSelection(ALL_SECTIONS)}</div>
+        <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+          <TechnicalSummary glassTypes={glassTypes} profileSystems={profileSystems} />
+        </div>
+        {!isSimple && (
+          <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
+            <ValidationPanel />
+          </div>
+        )}
+      </div>
+    );
+  }
 
+  // Section tabs for run/panel (their inspectors filter content by section).
   if (tab === 'dimensions') {
     return (
       <div className={cn(padding)}>
         {polygonSlot}
         <PitchedRoofInspector />
-        <div>{renderSelection(sections)}</div>
+        <div>{renderSelection(['dimensions'])}</div>
         <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
           <TechnicalSummary glassTypes={glassTypes} profileSystems={profileSystems} />
         </div>
@@ -240,7 +270,7 @@ const TabBody = ({
     return (
       <div className={cn(padding)}>
         <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
-          {renderSelection(sections)}
+          {renderSelection([tab])}
         </div>
       </div>
     );
@@ -248,7 +278,7 @@ const TabBody = ({
 
   return (
     <div className={cn(padding)}>
-      <div>{renderSelection(sections)}</div>
+      <div>{renderSelection(['general'])}</div>
       {!isSimple && (
         <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
           <ValidationPanel />
@@ -258,34 +288,22 @@ const TabBody = ({
   );
 };
 
-const tabSections = (tab: InspectorTabKey, isSimple: boolean): InspectorSection[] => {
-  if (isSimple && tab === 'general') return ['general', 'hardware', 'glass'];
-  switch (tab) {
-    case 'dimensions':
-      return ['dimensions'];
-    case 'hardware':
-      return ['hardware'];
-    case 'glass':
-      return ['glass'];
-    default:
-      return ['general'];
-  }
-};
-
 const defaultInspectorLabel = (key: InspectorTabKey): string => {
   switch (key) {
+    case 'properties':
+      return 'Özellikler';
     case 'general':
-      return 'General';
+      return 'Genel';
     case 'dimensions':
-      return 'Dimensions';
+      return 'Ölçüler';
     case 'hardware':
-      return 'Hardware';
+      return 'Donanım';
     case 'glass':
-      return 'Glass';
+      return 'Cam';
     case 'surveys':
-      return 'Surveys';
+      return 'Keşif';
     case 'commerce':
-      return 'Commerce';
+      return 'Ticaret';
     default:
       return key;
   }

@@ -49,9 +49,11 @@ const RUBBER_KINDS = new Set<SceneHardwareKind>(['Stopper', 'GasketStrip']);
 const toMeters = (mm: number) => Math.max(MIN_M, mm / MM);
 
 const surfaceFor = (kind: SceneHardwareKind) => {
-  if (RUBBER_KINDS.has(kind)) return { metalness: 0.1, roughness: 0.85 };
-  if (METAL_KINDS.has(kind)) return { metalness: 0.85, roughness: 0.35 };
-  return { metalness: 0.6, roughness: 0.35 };
+  if (RUBBER_KINDS.has(kind))
+    return { metalness: 0, roughness: 0.9, envMapIntensity: 0.4, clearcoat: 0 };
+  if (METAL_KINDS.has(kind))
+    return { metalness: 0.92, roughness: 0.22, envMapIntensity: 1.25, clearcoat: 0.35 };
+  return { metalness: 0.75, roughness: 0.3, envMapIntensity: 1, clearcoat: 0.15 };
 };
 
 interface KindGeometryProps {
@@ -142,11 +144,13 @@ export function HardwareObject({
         rotation={KIND_ROTATIONS[item.kind] ?? [0, 0, 0]}
       >
         <KindGeometry kind={item.kind} w={w} h={h} d={d} />
-        <meshStandardMaterial
+        <meshPhysicalMaterial
           color={item.colorHex}
           metalness={surface.metalness}
           roughness={surface.roughness}
-          envMapIntensity={0.6}
+          envMapIntensity={surface.envMapIntensity}
+          clearcoat={surface.clearcoat}
+          clearcoatRoughness={0.15}
         />
         {isSelected && <Edges color={SELECTED_EDGE} threshold={15} />}
       </mesh>
@@ -154,11 +158,13 @@ export function HardwareObject({
       {isCornerJoint && (
         <mesh castShadow onClick={handleClick} position={[0, (-h * (1 - CORNER_LEG_RATIO)) / 2, 0]}>
           <boxGeometry args={[w, h * CORNER_LEG_RATIO, d]} />
-          <meshStandardMaterial
+          <meshPhysicalMaterial
             color={item.colorHex}
             metalness={surface.metalness}
             roughness={surface.roughness}
-            envMapIntensity={0.6}
+            envMapIntensity={surface.envMapIntensity}
+            clearcoat={surface.clearcoat}
+            clearcoatRoughness={0.15}
           />
           {isSelected && <Edges color={SELECTED_EDGE} threshold={15} />}
         </mesh>
@@ -281,7 +287,14 @@ function HardwareSlats({ width, height, depth, colorHex, angled }: HardwareSlats
             castShadow
           >
             <boxGeometry args={[width * 0.86, slatHeight, depth * 0.5]} />
-            <meshStandardMaterial color={colorHex} metalness={0.55} roughness={0.4} />
+            <meshPhysicalMaterial
+              color={colorHex}
+              metalness={0.85}
+              roughness={0.3}
+              envMapIntensity={1}
+              clearcoat={0.2}
+              clearcoatRoughness={0.15}
+            />
           </mesh>
         );
       })}

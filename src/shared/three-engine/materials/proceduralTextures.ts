@@ -1,13 +1,25 @@
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace } from 'three';
 import type { Texture } from 'three';
 
-export type ProceduralMaterialKey = 'wood' | 'marble' | 'concrete' | 'panel';
+export type ProceduralMaterialKey =
+  | 'wood'
+  | 'marble'
+  | 'concrete'
+  | 'panel'
+  | 'grass'
+  | 'asphalt'
+  | 'brick'
+  | 'plaster';
 
 export const PROCEDURAL_MATERIAL_KEYS: ProceduralMaterialKey[] = [
   'wood',
   'marble',
   'concrete',
   'panel',
+  'grass',
+  'asphalt',
+  'brick',
+  'plaster',
 ];
 
 const SIZE = 256;
@@ -119,11 +131,87 @@ const drawPanel = (ctx: CanvasRenderingContext2D) => {
   }
 };
 
+const drawGrass = (ctx: CanvasRenderingContext2D) => {
+  const rand = mulberry32(41);
+  const base = ctx.createLinearGradient(0, 0, SIZE, SIZE);
+  base.addColorStop(0, '#4b7a36');
+  base.addColorStop(1, '#3f6b2e');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  for (let i = 0; i < 4200; i += 1) {
+    const x = rand() * SIZE;
+    const y = rand() * SIZE;
+    const len = 2 + rand() * 4;
+    const g = 90 + Math.floor(rand() * 70);
+    ctx.strokeStyle = `rgba(${40 + Math.floor(rand() * 40)}, ${g}, ${30 + Math.floor(rand() * 30)}, ${0.35 + rand() * 0.4})`;
+    ctx.lineWidth = 0.8 + rand() * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + (rand() * 2 - 1), y - len);
+    ctx.stroke();
+  }
+};
+
+const drawAsphalt = (ctx: CanvasRenderingContext2D) => {
+  const rand = mulberry32(53);
+  ctx.fillStyle = '#3a3d42';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  for (let i = 0; i < 6000; i += 1) {
+    const v = 40 + Math.floor(rand() * 55);
+    ctx.fillStyle = `rgba(${v}, ${v + 2}, ${v + 5}, ${0.25 + rand() * 0.4})`;
+    const s = 0.6 + rand() * 1.8;
+    ctx.fillRect(rand() * SIZE, rand() * SIZE, s, s);
+  }
+  for (let i = 0; i < 22; i += 1) {
+    ctx.fillStyle = `rgba(${180 + Math.floor(rand() * 40)}, ${180 + Math.floor(rand() * 40)}, ${185 + Math.floor(rand() * 40)}, ${0.25 + rand() * 0.3})`;
+    ctx.fillRect(rand() * SIZE, rand() * SIZE, 1, 1);
+  }
+};
+
+const drawBrick = (ctx: CanvasRenderingContext2D) => {
+  const rand = mulberry32(67);
+  ctx.fillStyle = '#8a8480';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  const rows = 8;
+  const cols = 4;
+  const bh = SIZE / rows;
+  const bw = SIZE / cols;
+  for (let r = 0; r < rows; r += 1) {
+    const offset = r % 2 === 0 ? 0 : bw / 2;
+    for (let c = -1; c <= cols; c += 1) {
+      const x = c * bw + offset + 1.5;
+      const y = r * bh + 1.5;
+      const shade = 0.82 + rand() * 0.18;
+      const red = Math.floor(150 * shade) + 25;
+      const grn = Math.floor(70 * shade) + 20;
+      const blu = Math.floor(55 * shade) + 18;
+      ctx.fillStyle = `rgb(${red}, ${grn}, ${blu})`;
+      ctx.fillRect(x, y, bw - 3, bh - 3);
+    }
+  }
+};
+
+const drawPlaster = (ctx: CanvasRenderingContext2D) => {
+  const rand = mulberry32(83);
+  ctx.fillStyle = '#ece7df';
+  ctx.fillRect(0, 0, SIZE, SIZE);
+  for (let i = 0; i < 5200; i += 1) {
+    const v = 215 + Math.floor(rand() * 35);
+    ctx.fillStyle = `rgba(${v}, ${v - 4}, ${v - 10}, ${0.12 + rand() * 0.16})`;
+    const s = 0.6 + rand() * 1.4;
+    ctx.fillRect(rand() * SIZE, rand() * SIZE, s, s);
+  }
+};
+
 const PAINTERS: Record<ProceduralMaterialKey, (ctx: CanvasRenderingContext2D) => void> = {
   wood: drawWood,
   marble: drawMarble,
   concrete: drawConcrete,
   panel: drawPanel,
+  grass: drawGrass,
+  asphalt: drawAsphalt,
+  brick: drawBrick,
+  plaster: drawPlaster,
 };
 
 export const isProceduralMaterialKey = (value: string): value is ProceduralMaterialKey =>

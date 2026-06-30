@@ -16,6 +16,7 @@ export {
   PROCEDURAL_MATERIAL_KEYS,
   type ProceduralMaterialKey,
 } from './materials/proceduralTextures';
+export { useTiledProceduralTexture } from './materials/useTiledProceduralTexture';
 export {
   useDrag3D,
   type DragConstraint,

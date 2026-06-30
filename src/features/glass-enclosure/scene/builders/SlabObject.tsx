@@ -4,7 +4,7 @@ import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
 import { DoubleSide, ExtrudeGeometry, ShapeGeometry, Vector3 } from 'three';
 import type { ThreeEvent } from '@react-three/fiber';
-import type { Group, Texture } from 'three';
+import type { Group, Texture, BufferGeometry } from 'three';
 import {
   isShiftPressed,
   setDragReadout,
@@ -32,7 +32,10 @@ import {
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
+import { buildCurvedSlabGeometry } from './curvedSlabGeometry';
 import { buildPitchedRoofGeometry } from './pitchedRoofGeometry';
+import { bowFromArc, deriveArcFromChordSagitta, isRealArc } from '../../model/arcGeometry';
+import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanMoveDelta } from '../interaction/planSnap';
@@ -116,9 +119,27 @@ interface SlabFeatureItem extends ComposedFeature {
 const buildSlabGeometries = (
   slab: SceneSlabState,
   cutFeatures = true,
-): { body: ExtrudeGeometry; featureItems: SlabFeatureItem[] } => {
+): { body: BufferGeometry; featureItems: SlabFeatureItem[] } => {
   const thicknessMm = slab.thicknessMm;
   const thicknessM = thicknessMm / 1000;
+
+  // PLAN arc (curves left/right like a wall): bend the slab SYMMETRICALLY along the chosen axis
+  // (length or depth) in its local frame — no rotation, bent-axis ends fixed, one-sided depth.
+  // Features deferred (#6b), like the barrel/pitch shapes.
+  if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+    return {
+      body: buildCurvedSlabGeometry(
+        slab.lengthMm,
+        slab.depthMm,
+        slab.thicknessMm,
+        slab.geomArcRadiusMm ?? 0,
+        slab.geomArcSweepDeg ?? 1,
+        slab.slabArcAxis ?? 'length',
+        (slab.geomArcSweepDeg ?? 1) < 0 ? -1 : 1,
+      ),
+      featureItems: [],
+    };
+  }
 
   // Barrel (single-curvature) slab — a curved sheet (roof OR floor), already in the slab's
   // oriented frame. Surface features are not projected onto the curve in this version (#6b).
@@ -231,13 +252,32 @@ export function SlabObject({
   const elevationM = slab.elevationMm / 1000;
 
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
-  // A barrel (arcRise) OR pitched (pitchRise) slab is a non-flat sheet: its footprint stretch
-  // handles and flush surface features don't apply (resized via the inspector rise field).
+  // A plan-arc (geomArc*, curves like a wall), barrel (arcRise) or pitched (pitchRise) slab is a
+  // non-flat sheet: its footprint stretch + corner handles don't apply (resized via the curve
+  // handle / inspector). The plan curve bows along slabArcAxis (length or depth).
+  const isArcSlab = isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg);
   const isBarrelRoof = (slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0;
-  // Length/depth stretch assumes a flat slab; a curved/pitched roof is resized via its rise.
-  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isBarrelRoof;
+  const isShapedSlab = isArcSlab || isBarrelRoof;
+  // Length/depth stretch assumes a flat slab; a curved/pitched roof is resized via its rise/curve.
+  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isShapedSlab;
   const vertexEditActive =
+    transformActive && isSelected && interactive && !slab.locked && !isShapedSlab;
+  // The plan-arc (bow) handle: on a flat slab (to START a plan curve) or an already plan-curved one
+  // (to re-adjust), but NOT a barrel/pitched (up-curve) slab — mutually exclusive.
+  const curveEditActive =
     transformActive && isSelected && interactive && !slab.locked && !isBarrelRoof;
+  // The bent axis' chord (world plan mm): for 'length' it runs along the slab's local X
+  // (rotationDeg); for 'depth' along local Z (rotationDeg + 90°). Both ends stay FIXED while bowing.
+  const slabArcAxis = slab.slabArcAxis ?? 'length';
+  const slabRotRad = slab.rotationDeg * DEG2RAD;
+  const chordLenMm = slabArcAxis === 'length' ? slab.lengthMm : slab.depthMm;
+  const chordDirX = slabArcAxis === 'length' ? Math.cos(slabRotRad) : -Math.sin(slabRotRad);
+  const chordDirY = slabArcAxis === 'length' ? Math.sin(slabRotRad) : Math.cos(slabRotRad);
+  const slabChordEndX = slab.originX + chordLenMm * chordDirX;
+  const slabChordEndY = slab.originY + chordLenMm * chordDirY;
+  const slabCurrentSagittaMm = isArcSlab
+    ? bowFromArc(chordLenMm, slab.geomArcRadiusMm ?? 0, slab.geomArcSweepDeg ?? 0)
+    : 0;
   // WHY: always cut features even while stretching — suppressing the cut during the Stretch
   // tool (where depth is given) hid the recess/hole on the slab face until the tool was left.
   const { body, featureItems } = useMemo(() => buildSlabGeometries(slab, true), [slab]);
@@ -999,6 +1039,7 @@ export function SlabObject({
               map={materialTexture ?? undefined}
               roughness={0.85}
               metalness={0.05}
+              side={isArcSlab ? DoubleSide : undefined}
             />
             {!presentation && (
               <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />
@@ -1063,6 +1104,33 @@ export function SlabObject({
               originY,
               lengthMm: next.lengthMm,
               depthMm: next.crossMm,
+            });
+          }}
+        />
+      )}
+      {curveEditActive && (
+        <ArcSweepHandle
+          startX={slab.originX}
+          startY={slab.originY}
+          endX={slabChordEndX}
+          endY={slabChordEndY}
+          currentSagittaMm={slabCurrentSagittaMm}
+          topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
+          onCommit={(sagittaMm) => {
+            // SYMMETRIC plan bow (no rotation): the bent axis' two ends stay FIXED; the sagitta sets
+            // the curve. radius+sweep derived from chord(=axis length)+sagitta; rotationDeg untouched.
+            // Below the straighten threshold it returns to a flat slab (null radius/sweep).
+            if (Math.abs(sagittaMm) < 25) {
+              updateSlab(slab.id, { geomArcRadiusMm: null, geomArcSweepDeg: null });
+              return;
+            }
+            const d = deriveArcFromChordSagitta(chordLenMm, Math.abs(sagittaMm));
+            updateSlab(slab.id, {
+              geomArcRadiusMm: d.radiusMm,
+              geomArcSweepDeg: (sagittaMm >= 0 ? 1 : -1) * d.sweepDeg,
+              slabArcAxis,
+              arcRiseMm: null,
+              pitchRiseMm: null,
             });
           }}
         />

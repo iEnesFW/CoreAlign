@@ -170,7 +170,7 @@ export function PanelMesh({
             onPointerOver={onPointerOver}
             onPointerOut={onPointerOut}
           >
-            <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
+            <Edges color={isSelected ? '#2563eb' : '#cbd5e1'} threshold={15} />
           </mesh>
           {frameGeometry && (
             <mesh geometry={frameGeometry} position={[0, -heightM / 2, 0]} castShadow receiveShadow>
@@ -192,7 +192,7 @@ export function PanelMesh({
           onPointerOut={onPointerOut}
         >
           <boxGeometry args={[widthM, heightM, thicknessM]} />
-          <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
+          <Edges color={isSelected ? '#2563eb' : '#cbd5e1'} threshold={15} />
         </mesh>
       )}
 

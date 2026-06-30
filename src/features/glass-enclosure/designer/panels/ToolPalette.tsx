@@ -8,6 +8,7 @@ import {
   Home,
   LassoSelect,
   Layers,
+  Minus,
   MousePointer2,
   Move,
   MoveHorizontal,
@@ -17,6 +18,7 @@ import {
   RotateCw,
   Ruler,
   Shapes,
+  Spline,
   Square,
   SquareSplitHorizontal,
   Triangle,
@@ -90,6 +92,10 @@ const MATERIAL_FALLBACKS: Record<string, string> = {
   marble: 'Mermer',
   concrete: 'Beton',
   panel: 'Panel',
+  grass: 'Çim',
+  asphalt: 'Asfalt',
+  brick: 'Tuğla',
+  plaster: 'Sıva',
 };
 
 const DRAW_SHAPES: {
@@ -126,6 +132,8 @@ export function ToolPalette() {
   const setPaintColor = useDesignerStore((s) => s.setPaintColor);
   const setPaintMaterial = useDesignerStore((s) => s.setPaintMaterial);
   const setDrawShape = useDesignerStore((s) => s.setDrawShape);
+  const placementShape = useDesignerStore((s) => s.placementShape);
+  const setPlacementShape = useDesignerStore((s) => s.setPlacementShape);
   const { autofill } = useWallAutofill();
   const colorsQuery = useColorOptionsQuery();
   const colors = colorsQuery.data?.data ?? [];
@@ -184,6 +192,24 @@ export function ToolPalette() {
             'Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal',
           )}
         </span>
+      )}
+      {placement && placement !== 'pen' && (
+        <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+          <PaletteButton
+            title={label('ShapeFlat', 'Düz')}
+            active={placementShape === 'flat'}
+            onClick={() => setPlacementShape('flat')}
+          >
+            <Minus size={15} />
+          </PaletteButton>
+          <PaletteButton
+            title={label('ShapeCurved', 'Yay / kavisli')}
+            active={placementShape === 'curved'}
+            onClick={() => setPlacementShape('curved')}
+          >
+            <Spline size={15} />
+          </PaletteButton>
+        </div>
       )}
       {activeTool === 'draw' && !placement && (
         <div className="pointer-events-auto flex flex-col items-center gap-1">

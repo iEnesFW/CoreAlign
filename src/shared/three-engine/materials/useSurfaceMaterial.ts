@@ -7,6 +7,7 @@ export interface SurfaceMaterialParams {
   roughness: number;
   emissiveHex?: string;
   emissiveIntensity?: number;
+  envMapIntensityScale?: number;
 }
 
 export function useSurfaceMaterial(
@@ -20,7 +21,7 @@ export function useSurfaceMaterial(
       color: new Color(hexColor || '#cccccc'),
       metalness: params.metalness,
       roughness: params.roughness,
-      envMapIntensity: settings.envMapIntensity,
+      envMapIntensity: settings.envMapIntensity * (params.envMapIntensityScale ?? 1),
     });
     if (params.emissiveHex) {
       next.emissive = new Color(params.emissiveHex);
@@ -34,6 +35,7 @@ export function useSurfaceMaterial(
     params.roughness,
     params.emissiveHex,
     params.emissiveIntensity,
+    params.envMapIntensityScale,
   ]);
   useEffect(() => () => material.dispose(), [material]);
   return material;

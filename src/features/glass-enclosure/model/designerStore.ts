@@ -98,6 +98,7 @@ const EMPTY_SELECTION: DesignerSelection = {
 };
 
 export type PlacementKind = 'run' | 'wall' | 'floor' | 'roof' | 'pen';
+export type PlacementShape = 'flat' | 'curved';
 
 export interface PenFacePoint {
   x: number;
@@ -145,6 +146,7 @@ interface DesignerState {
   pasteArmed: boolean;
   activeTool: DesignerTool;
   placement: PlacementKind | null;
+  placementShape: PlacementShape;
   paintColor: PaintColor | null;
   paintMaterial: string | null;
   drawShape: WallDrawShape;
@@ -160,6 +162,7 @@ interface DesignerState {
   toggleStackOnDrop: () => void;
   setStackOnDrop: (active: boolean) => void;
   setPlacement: (placement: PlacementKind | null) => void;
+  setPlacementShape: (shape: PlacementShape) => void;
   setPaintColor: (color: PaintColor | null) => void;
   setPaintMaterial: (materialKey: string | null) => void;
   setDrawShape: (shape: WallDrawShape) => void;
@@ -538,6 +541,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   pasteArmed: false,
   activeTool: 'select',
   placement: null,
+  placementShape: 'flat',
   paintColor: null,
   paintMaterial: null,
   drawShape: 'rect',
@@ -565,6 +569,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   setStackOnDrop: (stackOnDrop) => set({ stackOnDrop }),
   setPlacement: (placement) =>
     set(placement === null ? { placement } : { placement, activeTool: 'select' }),
+  setPlacementShape: (placementShape) => set({ placementShape }),
   setPaintColor: (paintColor) => set({ paintColor, paintMaterial: null }),
   setPaintMaterial: (paintMaterial) => set({ paintMaterial, paintColor: null }),
   setDrawShape: (drawShape) => set({ drawShape }),

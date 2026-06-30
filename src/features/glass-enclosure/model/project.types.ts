@@ -491,6 +491,14 @@ export interface SceneSlabState {
   depthMm: number;
   thicknessMm: number;
   elevationMm: number;
+  // PLAN arc (curves left/right like a wall, CHORD-INVARIANT): the slab bends along one plan axis —
+  // slabArcAxis picks which (the LENGTH or the DEPTH) — keeping that axis' two ends fixed and the
+  // other axis as the one-sided radial width, symmetrically (no rotation). radius+sweep stored;
+  // the bent axis' length stays its chord. Mutually exclusive with arcRise/pitch (the up-curve).
+  geomArcRadiusMm?: number | null;
+  geomArcSweepDeg?: number | null;
+  slabArcAxis?: 'length' | 'depth';
+  // Barrel (up-curve): the slab bows UP by arcRiseMm (sagitta). > 0 → cylindrical vault.
   arcRiseMm?: number | null;
   // Pitched/gable roof: ridge rise (mm) above the eaves. > 0 → pitched geometry (mutually
   // exclusive with arcRiseMm). 'symmetric' = gable (ridge down the middle, triangular ends);

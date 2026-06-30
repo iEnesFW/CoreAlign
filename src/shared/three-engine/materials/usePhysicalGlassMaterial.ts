@@ -13,18 +13,26 @@ export interface PhysicalGlassParams {
 export function usePhysicalGlassMaterial(quality: QualityPreset, params: PhysicalGlassParams) {
   const material = useMemo(() => {
     const settings = QUALITY_SETTINGS[quality];
+    const transmission = settings.glassTransmission;
+    const usesTransmission = transmission > 0;
+    const tint = new Color(params.tintHex);
     const next = new MeshPhysicalMaterial({
-      color: new Color(params.tintHex),
-      transmission: 0,
+      color: tint,
+      transmission,
       roughness: settings.glassRoughness,
       metalness: 0,
-      ior: 1.5,
-      reflectivity: 0.06,
-      thickness: Math.max(0.1, params.thicknessMm / 10),
+      ior: 1.52,
+      reflectivity: 0.5,
+      thickness: Math.max(0.002, params.thicknessMm / 1000),
+      attenuationColor: tint,
+      attenuationDistance: usesTransmission ? 0.55 : Number.POSITIVE_INFINITY,
+      clearcoat: 0.12,
+      clearcoatRoughness: 0.1,
+      specularIntensity: 1,
       transparent: true,
-      opacity: params.opacity,
+      opacity: usesTransmission ? 1 : params.opacity,
       depthWrite: false,
-      envMapIntensity: settings.envMapIntensity * 0.2,
+      envMapIntensity: settings.envMapIntensity * (usesTransmission ? 1.4 : 0.6),
       side: DoubleSide,
     });
     if (params.emissiveHex) {

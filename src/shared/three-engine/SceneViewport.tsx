@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import {
   ContactShadows,
@@ -6,8 +6,15 @@ import {
   Grid,
   OrbitControls,
   PerspectiveCamera,
+  Sky,
 } from '@react-three/drei';
+import { RepeatWrapping, type Texture } from 'three';
 import { QUALITY_SETTINGS, type QualityPreset } from './quality/qualityPreset';
+import {
+  getProceduralTexture,
+  isProceduralMaterialKey,
+  type ProceduralMaterialKey,
+} from './materials/proceduralTextures';
 
 export interface ViewportCamera {
   position: [number, number, number];
@@ -70,6 +77,44 @@ export interface ViewportAppearance {
   environment: 'apartment' | 'sunset' | 'city' | 'dawn' | 'none';
   background: string;
   ground?: string | null;
+  groundTexture?: ProceduralMaterialKey | null;
+  sky?: boolean;
+  sunPosition?: [number, number, number];
+}
+
+function GroundPlane({
+  appearance,
+  receiveShadow,
+}: {
+  appearance: ViewportAppearance;
+  receiveShadow: boolean;
+}) {
+  const texture = useMemo<Texture | null>(() => {
+    const key = appearance.groundTexture;
+    if (!key || !isProceduralMaterialKey(key)) return null;
+    const clone = getProceduralTexture(key).clone();
+    clone.wrapS = RepeatWrapping;
+    clone.wrapT = RepeatWrapping;
+    clone.repeat.set(56, 56);
+    clone.needsUpdate = true;
+    return clone;
+  }, [appearance.groundTexture]);
+
+  useEffect(() => () => texture?.dispose(), [texture]);
+
+  if (!appearance.ground && !texture) return null;
+
+  return (
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow={receiveShadow}>
+      <circleGeometry args={[texture ? 70 : 40, 96]} />
+      <meshStandardMaterial
+        map={texture ?? undefined}
+        color={texture ? '#ffffff' : (appearance.ground ?? '#e5e7eb')}
+        roughness={appearance.groundTexture === 'asphalt' ? 0.9 : 0.97}
+        metalness={0}
+      />
+    </mesh>
+  );
 }
 
 interface SceneViewportProps {
@@ -100,6 +145,7 @@ export function SceneViewport({
     environment: presentation ? 'sunset' : 'apartment',
     background: presentation ? '#0f172a' : '#f1f5f9',
   };
+  const sunPosition: [number, number, number] = resolvedAppearance.sunPosition ?? [6, 7, 5];
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [measured, setMeasured] = useState(false);
 
@@ -141,6 +187,16 @@ export function SceneViewport({
           onPointerMissed={onPointerMissed}
         >
           <color attach="background" args={[resolvedAppearance.background]} />
+          {resolvedAppearance.sky && (
+            <Sky
+              distance={450000}
+              sunPosition={sunPosition}
+              turbidity={2.4}
+              rayleigh={0.9}
+              mieCoefficient={0.004}
+              mieDirectionalG={0.85}
+            />
+          )}
           <PerspectiveCamera makeDefault position={cameraPosition} fov={45} near={0.1} far={120} />
           <OrbitControls
             makeDefault
@@ -154,10 +210,13 @@ export function SceneViewport({
           />
           <CameraSync initialCamera={initialCamera} onChange={onCameraChange} />
 
-          <ambientLight intensity={presentation ? 0.35 : 0.55} />
+          <hemisphereLight
+            args={['#dce6f2', resolvedAppearance.ground ?? '#8a9099', presentation ? 0.35 : 0.55]}
+          />
+          <ambientLight intensity={presentation ? 0.25 : 0.4} />
           <directionalLight
-            position={[5, 8, 3]}
-            intensity={presentation ? 1.4 : 1.1}
+            position={sunPosition}
+            intensity={presentation ? 1.5 : 1.2}
             castShadow={settings.shadows}
             shadow-mapSize-width={settings.shadowMapSize}
             shadow-mapSize-height={settings.shadowMapSize}
@@ -166,8 +225,9 @@ export function SceneViewport({
             shadow-camera-right={10}
             shadow-camera-top={10}
             shadow-camera-bottom={-10}
+            shadow-bias={-0.0002}
           />
-          <directionalLight position={[-4, 3, -4]} intensity={0.4} />
+          <directionalLight position={[-4, 3, -4]} intensity={0.35} />
 
           {resolvedAppearance.environment !== 'none' && (
             <Suspense fallback={null}>
@@ -175,16 +235,7 @@ export function SceneViewport({
             </Suspense>
           )}
 
-          {resolvedAppearance.ground && (
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.002, 0]} receiveShadow>
-              <circleGeometry args={[40, 64]} />
-              <meshStandardMaterial
-                color={resolvedAppearance.ground}
-                roughness={0.95}
-                metalness={0}
-              />
-            </mesh>
-          )}
+          <GroundPlane appearance={resolvedAppearance} receiveShadow={settings.shadows} />
 
           {!presentation && (
             <Grid

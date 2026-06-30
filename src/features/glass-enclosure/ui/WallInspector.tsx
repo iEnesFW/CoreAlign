@@ -19,6 +19,7 @@ import {
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
 import { newOperationId } from '@/shared/lib/operationId';
 import type { SceneWallOpening, SceneWallState, WallEdge } from '../model/project.types';
+import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
 export function WallInspector() {
   const { t } = useTranslation();
@@ -188,6 +189,12 @@ export function WallInspector() {
           {t('GlassEnclosure.Designer.Wall.Delete', { defaultValue: 'Duvarı sil' })}
         </button>
       </header>
+
+      <ObjectAppearanceSection
+        colorHex={wall.colorHex}
+        materialKey={wall.materialKey}
+        onChange={(patch) => updateWall(wall.id, patch)}
+      />
 
       <div className="grid grid-cols-2 gap-2">
         <NumberField

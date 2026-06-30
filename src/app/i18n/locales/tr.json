@@ -2387,6 +2387,15 @@
           "Pro": "Pro",
           "ProHelp": "Tam kontrol, yoğun bilgi"
         },
+        "InspectorTab": {
+          "properties": "Özellikler",
+          "general": "Genel",
+          "dimensions": "Ölçüler",
+          "hardware": "Donanım",
+          "glass": "Cam",
+          "surveys": "Keşif",
+          "commerce": "Ticaret"
+        },
         "Tab": {
           "Runs": {
             "Simple": "Cepheler",
@@ -2688,6 +2697,10 @@
         "Rotation": "Dönüş",
         "DeleteFloor": "Zemini sil",
         "DeleteRoof": "Çatıyı sil",
+        "PlanArcTitle": "Planda kavis (duvar gibi)",
+        "PlanArcAxisLength": "Uzunluk ekseni",
+        "PlanArcAxisDepth": "Derinlik ekseni",
+        "PlanArcInfo": "Yeşil noktayı sürükle veya değer gir; seçili eksenin iki ucu sabit kalır.",
         "BarrelTitle": "Tonoz (kavisli) yüzey",
         "ArcRise": "Kavis yüksekliği",
         "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı.",
@@ -2731,6 +2744,8 @@
         "AddWall": "Duvar ekle",
         "AddFloor": "Zemin ekle",
         "AddRoof": "Çatı ekle",
+        "ShapeFlat": "Düz",
+        "ShapeCurved": "Yay / kavisli",
         "NoColors": "Renk kataloğu boş",
         "Draw": "Yüzeye çiz",
         "ShapeRect": "Dikdörtgen",
