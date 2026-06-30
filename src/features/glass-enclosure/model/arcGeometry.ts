@@ -39,6 +39,12 @@ const MIN_BAR_SEGMENTS = 12;
 // (chord/2, at 180°); a deeper curve comes from a larger sweep, not a smaller radius.
 export const minArcRadiusMm = (chordMm: number) => Math.max(1, Math.ceil(chordMm / 2));
 
+// A run/wall/slab is a REAL arc only when it has BOTH a radius and a non-negligible sweep. Anything
+// else (a "half-arc" — radius set but sweep null/0, e.g. from old persisted data) must be treated as
+// STRAIGHT, never rendered as a degenerate band (which the wall's [-π/2,0,0] mesh pitch lays flat).
+export const isRealArc = (radiusMm?: number | null, sweepDeg?: number | null): boolean =>
+  Boolean(radiusMm && radiusMm > 0 && Math.abs(sweepDeg ?? 0) >= 0.1);
+
 export interface ResolvedArc {
   radiusMm: number;
   radiusM: number;

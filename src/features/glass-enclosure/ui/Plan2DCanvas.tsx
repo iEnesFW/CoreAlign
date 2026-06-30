@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrickWall, Minus, MoveDiagonal2, Pencil, Plus, Square } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
-import { arcEndLocal, effectiveArcRadiusMm } from '../model/arcGeometry';
+import { arcEndLocal, effectiveArcRadiusMm, isRealArc } from '../model/arcGeometry';
 import { snapAngleDeg } from '../model/angleSnap';
 import type { SceneRunState, SceneSlabState, SceneWallState } from '../model/project.types';
 
@@ -54,7 +54,7 @@ const lenMm = (a: Vec, b: Vec) => Math.round(Math.hypot(b.x - a.x, b.y - a.y));
 
 const snapToGrid = (value: number) => Math.round(value / SNAP_MM) * SNAP_MM;
 
-const isArcRun = (run: SceneRunState) => (run.geomArcRadiusMm ?? 0) > 0;
+const isArcRun = (run: SceneRunState) => isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg);
 
 const rotateVec = (xMm: number, yMm: number, rotationDeg: number): Vec => {
   const cos = Math.cos((rotationDeg * Math.PI) / 180);

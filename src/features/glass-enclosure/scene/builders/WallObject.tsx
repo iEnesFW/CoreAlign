@@ -67,6 +67,7 @@ import {
   arcFromBow,
   arcFromCornerResize,
   bowFromArc,
+  isRealArc,
   resolveArc,
 } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
@@ -234,8 +235,9 @@ const buildWallGeometries = (
 
   // Curved (arc-in-plan) wall: a single annular band. Front/back holes & recesses are now carved
   // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
-  // features on a curved wall are a follow-up.
-  if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+  // features on a curved wall are a follow-up. A REAL arc needs both radius AND sweep — a half-arc
+  // (radius without sweep) falls through to the straight build so it can't render as a flat band.
+  if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
     // CHORD-INVARIANT: wall.lengthMm is the chord (fixed span); the band is rendered straight from
     // the stored radius+sweep, bowing between the two fixed ends.
     const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
@@ -437,7 +439,10 @@ export function WallObject({
   const splitWall = useDesignerStore((s) => s.splitWall);
   const setSelection = useDesignerStore((s) => s.setSelection);
 
-  const isArcWall = Boolean(wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0);
+  // A REAL arc needs BOTH a radius and a non-negligible sweep. A "half-arc" (radius set but sweep
+  // null/0 — e.g. from an old persisted state) must render STRAIGHT, never get pitched flat by the
+  // [-π/2,0,0] mesh rotation as a degenerate band (the CTRL+Z "wall lies flat" bug).
+  const isArcWall = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg);
   // An L-shaped (bent) wall is a single mitred solid; its footprint resize / curve handles don't
   // apply and it can't carry surface features yet (#6c).
   const isBentWall = Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1);

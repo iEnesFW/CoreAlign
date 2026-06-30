@@ -8,6 +8,7 @@ import {
   deriveArcFromRadius,
   deriveArcFromSweep,
   facetJointAngleDeg,
+  isRealArc,
 } from '../model/arcGeometry';
 import type { ScenePanelState, SceneRunState } from '../model/project.types';
 
@@ -41,7 +42,7 @@ export function RunArcSection({
   const [sagittaDraft, setSagittaDraft] = useState('');
 
   const radius = draft.geomArcRadiusMm ?? 0;
-  const isArc = radius > 0;
+  const isArc = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg);
   // The sign of geomArcSweepDeg is the bulge direction (computeArcLayout/arcEndLocal read it).
   // Preserve it when recomputing the arc so a flipped curve stays flipped after a radius/sweep edit.
   const sweepSign = (draft.geomArcSweepDeg ?? 0) < 0 ? -1 : 1;

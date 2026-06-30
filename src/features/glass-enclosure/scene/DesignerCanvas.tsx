@@ -25,7 +25,7 @@ import { MeasureController } from './interaction/MeasureController';
 import { pointInPolygonMm } from './interaction/pointInPolygon';
 import { multiSelectionHas } from './interaction/multiMove';
 import { parsePolygonVertices } from '../model/polygonGeometry';
-import { arcEndLocal, arcPointAt, effectiveArcRadiusMm } from '../model/arcGeometry';
+import { arcEndLocal, arcPointAt, effectiveArcRadiusMm, isRealArc } from '../model/arcGeometry';
 import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
@@ -151,7 +151,7 @@ const buildPlanSnapTargets = (
     );
   }
   for (const run of runs) {
-    if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
+    if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
       const rad = run.rotationDeg * DEG2RAD;
       const cos = Math.cos(rad);
       const sin = Math.sin(rad);
@@ -629,7 +629,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         ? (scene.walls ?? []).find((w) => w.id === session.hostId)
         : undefined;
     const penHostIsCurved = Boolean(
-      penHostWall?.geomArcRadiusMm && penHostWall.geomArcRadiusMm > 0,
+      isRealArc(penHostWall?.geomArcRadiusMm, penHostWall?.geomArcSweepDeg),
     );
     const feature = {
       id: crypto.randomUUID(),
@@ -1504,7 +1504,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onDragHardware,
         onResizeHardware,
       };
-      if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
+      if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
         return (
           <ArcRunGroup
             key={run.id}

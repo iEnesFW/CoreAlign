@@ -9,9 +9,23 @@ import {
   deriveArcFromChordSagitta,
   deriveArcFromRadius,
   deriveArcFromSweep,
+  isRealArc,
   minArcRadiusMm,
   resolveArc,
 } from './arcGeometry';
+
+describe('isRealArc', () => {
+  it('requires BOTH a radius and a non-negligible sweep', () => {
+    expect(isRealArc(1500, 180)).toBe(true);
+    // Half-arc states must NOT count as an arc (else they render as a degenerate flat band).
+    expect(isRealArc(1500, null)).toBe(false);
+    expect(isRealArc(1500, 0)).toBe(false);
+    expect(isRealArc(null, 180)).toBe(false);
+    expect(isRealArc(0, 180)).toBe(false);
+    // Straight (both absent).
+    expect(isRealArc(null, null)).toBe(false);
+  });
+});
 
 describe('bowArcPlanPoints', () => {
   const startX = 0;

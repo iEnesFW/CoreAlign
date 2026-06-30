@@ -19,7 +19,7 @@ import type {
 import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
-import { chordFromRadiusSweep } from './arcGeometry';
+import { chordFromRadiusSweep, isRealArc } from './arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -1259,15 +1259,21 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       }
     }
     // CHORD-INVARIANT migration: lengthMm is the chord (= 2·radius·sin(sweep/2)); recover it from the
-    // stored radius+sweep on load (idempotent; converts old arc-length data back to the chord).
-    const snapshotWalls = (scene.walls ?? []).map((w) =>
-      w.geomArcRadiusMm && w.geomArcRadiusMm > 0
-        ? {
-            ...w,
-            lengthMm: chordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
-          }
-        : w,
-    );
+    // stored radius+sweep on load (idempotent; converts old arc-length data back to the chord). A
+    // half-arc (radius without a real sweep) is normalized to STRAIGHT so it can never resurface as a
+    // degenerate band that the wall's [-π/2,0,0] pitch lays flat.
+    const snapshotWalls = (scene.walls ?? []).map((w) => {
+      if (isRealArc(w.geomArcRadiusMm, w.geomArcSweepDeg)) {
+        return {
+          ...w,
+          lengthMm: chordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
+        };
+      }
+      if ((w.geomArcRadiusMm ?? 0) > 0 || w.geomArcSweepDeg) {
+        return { ...w, geomArcRadiusMm: null, geomArcSweepDeg: null };
+      }
+      return w;
+    });
     const snapshotSlabs = scene.slabs ?? [];
     const snapshotSurfaces = scene.surfaces ?? [];
     if (

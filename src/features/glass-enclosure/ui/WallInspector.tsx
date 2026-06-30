@@ -3,7 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { DoorOpen, RectangleHorizontal, Trash2, Wand2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
-import { deriveArcFromRadius, deriveArcFromSweep, minArcRadiusMm } from '../model/arcGeometry';
+import {
+  deriveArcFromRadius,
+  deriveArcFromSweep,
+  isRealArc,
+  minArcRadiusMm,
+} from '../model/arcGeometry';
 import { queueToast } from '@/shared/api/toastQueue';
 import {
   buildRunFootprint,
@@ -53,7 +58,7 @@ export function WallInspector() {
 
   // Curved walls defer openings / surface features / autofill (#6a): those still assume
   // a straight chord, so their editors are hidden until an arc-aware version lands.
-  const isArc = (draft.geomArcRadiusMm ?? 0) > 0;
+  const isArc = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg);
 
   const commit = (patch: Partial<typeof wall>) => {
     const candidate: SceneWallState = { ...wall, ...patch };
