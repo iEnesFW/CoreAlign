@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
+import { useThree } from '@react-three/fiber';
+import { Vector3 } from 'three';
 import type { Group } from 'three';
 import { useDrag3D } from '@/shared/three-engine';
 import { sampleArcPlan } from '../../model/arcGeometry';
@@ -10,6 +12,10 @@ const HANDLE_RADIUS_M = 0.06;
 const HANDLE_COLOR = '#16a34a';
 const HANDLE_HOVER = '#f97316';
 const MAX_SWEEP_DEG = 360;
+// Degrees of sweep per SCREEN pixel of perpendicular drag — zoom/perspective independent, so a full
+// circle takes a deliberate ~900px pull and a small drag makes a small curve (no runaway).
+const DEG_PER_PIXEL = 0.4;
+const PROBE_M = 0.1;
 const STRAIGHTEN_DEG = 2;
 
 interface ArcSweepHandleProps {
@@ -45,9 +51,9 @@ export function ArcSweepHandle({
   // Perpendicular to the start tangent (+90°); +across is the +sweep bulge side.
   const acrossX = -sin;
   const acrossY = cos;
-  // Sensitivity: dragging across by the semicircle apex distance (≈ arcLength/π) reaches ~180°, so
-  // the handle roughly tracks the cursor for the common case; deeper angles need a little more pull.
-  const degPerMm = (180 * Math.PI) / Math.max(1, arcLengthMm);
+  const camera = useThree((s) => s.camera);
+  const screenSize = useThree((s) => s.size);
+  const probeRef = useRef(new Vector3());
 
   const apexFor = (sweepDeg: number) => {
     const sweepRad = Math.abs(sweepDeg) * DEG;
@@ -68,9 +74,26 @@ export function ArcSweepHandle({
   const [hovered, setHovered] = useState(false);
   const [dragSweep, setDragSweep] = useState<number | null>(null);
 
+  // Project a world point (metres) to screen pixels.
+  const toPixels = (x: number, y: number, z: number) => {
+    const v = probeRef.current.set(x, y, z).project(camera);
+    return { px: (v.x * 0.5 + 0.5) * screenSize.width, py: (-v.y * 0.5 + 0.5) * screenSize.height };
+  };
+
+  // How many world-mm equal one screen pixel along the across direction, at the apex's depth. Used
+  // to convert the (perspective-distorted) world drag into a stable screen-pixel pull.
+  const mmPerPixelAcross = () => {
+    const apex = apexFor(currentSweepDeg);
+    const a = toPixels(apex.x / MM, topYM, apex.y / MM);
+    const b = toPixels(apex.x / MM + acrossX * PROBE_M, topYM, apex.y / MM + acrossY * PROBE_M);
+    const dist = Math.hypot(b.px - a.px, b.py - a.py);
+    return dist > 0.001 ? (PROBE_M * MM) / dist : 1;
+  };
+
   const sweepAt = (delta: { x: number; z: number }) => {
     const perpMm = (delta.x * acrossX + delta.z * acrossY) * MM;
-    const next = currentSweepDeg + perpMm * degPerMm;
+    const pixelPull = perpMm / mmPerPixelAcross();
+    const next = currentSweepDeg + pixelPull * DEG_PER_PIXEL;
     return Math.max(-MAX_SWEEP_DEG, Math.min(MAX_SWEEP_DEG, next));
   };
 
