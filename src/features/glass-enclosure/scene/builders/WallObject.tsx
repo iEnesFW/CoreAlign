@@ -1444,32 +1444,66 @@ export function WallObject({
       </group>
       {vertexEditActive && (
         <FootprintCornerHandles
+          // An arc wall is curved; its handle box must span the CHORD (origin→fixed end) so the end
+          // handles sit on the wall's REAL endpoints — not the rolled start-tangent (rotationDeg),
+          // which is why they used to fly off the curve. Two end handles ('ends'), like the run.
+          mode={isArcWall ? 'ends' : 'corners'}
           box={{
             originX: wall.originX,
             originY: wall.originY,
-            lengthMm: wall.lengthMm,
+            lengthMm: isArcWall
+              ? Math.hypot(wallEndX - wall.originX, wallEndY - wall.originY)
+              : wall.lengthMm,
             crossMm: wall.thicknessMm,
-            rotationDeg: wall.rotationDeg,
+            rotationDeg: isArcWall
+              ? (Math.atan2(wallEndY - wall.originY, wallEndX - wall.originX) * 180) / Math.PI
+              : wall.rotationDeg,
           }}
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
           onCommit={(next) => {
-            // For an arc wall the corner-box length is the CHORD (span): dragging it keeps the sweep
-            // (curl shape) and re-derives the radius for the new chord (lengthMm = the new chord).
-            // For a straight wall it's the length.
-            const shaped = isArcWall
-              ? arcFromCornerResize(next.lengthMm, wall.geomArcSweepDeg ?? 1)
-              : { lengthMm: next.lengthMm, geomArcRadiusMm: wall.geomArcRadiusMm ?? null };
-            // Reject a corner resize that would grow the wall into a neighbour (the Stretch
-            // tool clamps; the corner handles must not be a collision-free back door).
+            if (isArcWall) {
+              // Dragging an end changes the CHORD (span) along the chord direction; keep the sweep
+              // (curl shape), re-derive the radius (arcFromCornerResize), and shift the origin along
+              // the chord. The ends stay on the curve.
+              const chordDeg = Math.atan2(wallEndY - wall.originY, wallEndX - wall.originX);
+              const dirX = Math.cos(chordDeg);
+              const dirY = Math.sin(chordDeg);
+              const along =
+                (next.originX - wall.originX) * dirX + (next.originY - wall.originY) * dirY;
+              const newChord = Math.max(100, Math.round(next.lengthMm));
+              const scaled = arcFromCornerResize(newChord, wall.geomArcSweepDeg ?? 1);
+              const originX = Math.round(wall.originX + along * dirX);
+              const originY = Math.round(wall.originY + along * dirY);
+              const resized = buildWallFootprint(
+                {
+                  ...wall,
+                  originX,
+                  originY,
+                  lengthMm: scaled.lengthMm,
+                  geomArcRadiusMm: scaled.geomArcRadiusMm,
+                },
+                0,
+                0,
+                wall.rotationDeg,
+              );
+              if (penetratesAny(resized, planObstacles)) return;
+              updateWall(wall.id, {
+                originX,
+                originY,
+                lengthMm: scaled.lengthMm,
+                geomArcRadiusMm: scaled.geomArcRadiusMm,
+              });
+              return;
+            }
+            // Straight wall: a plain box resize (reject growth into a neighbour).
             const resized = buildWallFootprint(
               {
                 ...wall,
                 originX: next.originX,
                 originY: next.originY,
-                lengthMm: shaped.lengthMm,
-                geomArcRadiusMm: shaped.geomArcRadiusMm,
+                lengthMm: next.lengthMm,
                 thicknessMm: next.crossMm,
               },
               0,
@@ -1480,9 +1514,8 @@ export function WallObject({
             updateWall(wall.id, {
               originX: next.originX,
               originY: next.originY,
-              lengthMm: shaped.lengthMm,
+              lengthMm: next.lengthMm,
               thicknessMm: next.crossMm,
-              ...(isArcWall ? { geomArcRadiusMm: shaped.geomArcRadiusMm } : {}),
             });
           }}
         />
