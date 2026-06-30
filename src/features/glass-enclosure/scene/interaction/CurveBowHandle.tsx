@@ -42,10 +42,12 @@ export function CurveBowHandle({
   const acrossY = dx / chordMm;
   const midX = (startX + endX) / 2;
   const midY = (startY + endY) / 2;
-  // The apex follows the cursor freely — bow as little or as much as the point is dragged, from
-  // flat up to a near-full circle. The bound is just a sanity cap (well past any real design);
-  // the live preview shows exactly the arc that will result, so there is no runaway surprise.
-  const maxSagittaMm = Math.max(chordMm * 8, Math.abs(currentSagittaMm));
+  // Dragging bows up to a HALF-CIRCLE (sagitta = chord/2). Past the semicircle the sagitta→sweep
+  // mapping explodes toward a full circle, so a tiny zoomed-out drag used to rocket the curve to
+  // ~300°+. Capping at the semicircle keeps the drag in its well-behaved, monotonic range; deeper
+  // (major) curves are set precisely with the sweep-angle field. An already-deeper arc keeps its
+  // reach so re-grabbing never silently shallows it.
+  const maxSagittaMm = Math.max(chordMm / 2, Math.abs(currentSagittaMm));
   const restX = midX + acrossX * currentSagittaMm;
   const restY = midY + acrossY * currentSagittaMm;
 

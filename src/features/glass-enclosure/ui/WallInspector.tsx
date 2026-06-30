@@ -434,11 +434,13 @@ export function WallInspector() {
             min={minArcRadiusMm(draft.lengthMm)}
             onCommit={(v) => {
               // Setting the radius keeps the chord (lengthMm) fixed and re-derives the sweep; the
-              // tightest radius is a half-circle (chord/2). Sign (bulge direction) is preserved.
+              // tightest radius is a half-circle (chord/2). Sign + depth class (minor/major) preserved.
               const sign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+              const major = Math.abs(draft.geomArcSweepDeg ?? 0) > 180;
               const next = deriveArcFromRadius(
                 draft.lengthMm,
                 Math.max(minArcRadiusMm(draft.lengthMm), v),
+                major,
               );
               commit({
                 geomArcRadiusMm: next.radiusMm,

@@ -139,6 +139,16 @@ describe('chord-invariant arc model', () => {
     expect(deriveArcFromRadius(3000, 100).radiusMm).toBe(1500);
   });
 
+  it('deriveArcFromRadius keeps a deep (major) arc deep when major=true', () => {
+    const minor = deriveArcFromRadius(3000, 2121); // ~90° minor arc
+    const major = deriveArcFromRadius(3000, 2121, true); // same radius, the major arc
+    expect(minor.sweepDeg).toBeLessThan(180);
+    expect(major.sweepDeg).toBeGreaterThan(180);
+    expect(major.radiusMm).toBe(minor.radiusMm); // same radius — only the depth class differs
+    // The major arc bulges to the FAR apex (sagitta > radius), not the shallow near point.
+    expect(major.sagittaMm).toBeGreaterThan(major.radiusMm);
+  });
+
   it('minArcRadiusMm is the half-circle radius (chord/2)', () => {
     expect(minArcRadiusMm(3000)).toBe(1500);
   });

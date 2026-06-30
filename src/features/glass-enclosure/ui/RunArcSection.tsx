@@ -45,7 +45,10 @@ export function RunArcSection({
   // The sign of geomArcSweepDeg is the bulge direction (computeArcLayout/arcEndLocal read it).
   // Preserve it when recomputing the arc so a flipped curve stays flipped after a radius/sweep edit.
   const sweepSign = (draft.geomArcSweepDeg ?? 0) < 0 ? -1 : 1;
-  const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius) : null;
+  // A radius edit keeps the curve's depth class: a deep (> 180°) arc stays the major arc instead of
+  // flattening to the minor one at the same radius.
+  const isMajorArc = Math.abs(draft.geomArcSweepDeg ?? 0) > 180;
+  const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius, isMajorArc) : null;
   const jointAngle = derived ? facetJointAngleDeg(derived.sweepDeg, panels.length) : 0;
   const hasSlidingPanels = panels.some(
     (p) => p.openingType === 'SlidingLeft' || p.openingType === 'SlidingRight',
@@ -58,7 +61,7 @@ export function RunArcSection({
 
   const commitRadius = (raw: number) => {
     if (raw > 0) {
-      const next = deriveArcFromRadius(draft.lengthMm, Math.max(minRadius, raw));
+      const next = deriveArcFromRadius(draft.lengthMm, Math.max(minRadius, raw), isMajorArc);
       onDraftRadius(next.radiusMm);
       commit({
         geomArcRadiusMm: next.radiusMm,

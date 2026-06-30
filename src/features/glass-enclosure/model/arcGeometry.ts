@@ -194,11 +194,18 @@ export interface ArcDerived {
   arcLengthMm: number;
 }
 
-// Set the curve by RADIUS while keeping the chord fixed. radius ≥ chord/2; the resulting sweep is
-// the MINOR arc (≤ 180°). A deeper curve (> 180°) is set via the bow drag or the sweep input.
-export const deriveArcFromRadius = (chordMm: number, radiusMm: number): ArcDerived => {
+// Set the curve by RADIUS while keeping the chord fixed (radius ≥ chord/2). For a given chord+radius
+// there are TWO arcs through the endpoints — the minor (≤ 180°) and the major (≥ 180°), same radius.
+// `major` picks which, so editing the radius of an already-deep (> 180°) curve keeps it deep instead
+// of silently flattening it to the minor arc.
+export const deriveArcFromRadius = (
+  chordMm: number,
+  radiusMm: number,
+  major = false,
+): ArcDerived => {
   const radius = effectiveArcRadiusMm(chordMm, radiusMm);
-  const sweepRad = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));
+  const minorSweep = 2 * Math.asin(Math.min(1, chordMm / (2 * radius)));
+  const sweepRad = major ? Math.min(MAX_SWEEP_RAD, 2 * Math.PI - minorSweep) : minorSweep;
   return {
     radiusMm: Math.round(radius),
     sweepDeg: (sweepRad * 180) / Math.PI,
