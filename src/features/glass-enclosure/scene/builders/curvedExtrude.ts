@@ -167,6 +167,30 @@ export const curvedWallPickUv = (
   return { u: (phi / span) * lengthMm, v: localY * 1000 };
 };
 
+// FORWARD map (inverse of curvedWallPickUv): a face point (u = offset along the developed arc, v =
+// height, both mm) → the GROUP-LOCAL 3D point on the curved band at point-radius `surfaceRM`. Mirrors
+// buildCurvedWallFeatureSolid's cyl() (geometry frame: arc in XY centred at (0,centerY), height Z)
+// then the band mesh's [-π/2,0,0] pitch, which maps geometry (x,y,z) → group-local (x, z, -y). Used
+// to draw the pen preview ON the curved surface instead of the flat chord plane.
+export const curvedWallSurfacePoint = (
+  uMm: number,
+  vMm: number,
+  bandRadiusM: number,
+  surfaceRM: number,
+  direction: 1 | -1,
+  sweep: number,
+  lengthMm: number,
+): [number, number, number] => {
+  const span = Math.max(1e-4, sweep);
+  const len = Math.max(1, lengthMm);
+  const centerY = -direction * Math.max(0.001, bandRadiusM);
+  const phi = Math.max(0, Math.min(span, (uMm / len) * span));
+  const a = direction === 1 ? Math.PI / 2 - phi : phi - Math.PI / 2;
+  const gx = Math.cos(a) * surfaceRM;
+  const gy = centerY + Math.sin(a) * surfaceRM;
+  return [gx, vMm / 1000, -gy];
+};
+
 export interface CurvedWallFeaturePoint {
   x: number; // offset ALONG the wall, mm (0 → wall.lengthMm)
   z: number; // height, mm

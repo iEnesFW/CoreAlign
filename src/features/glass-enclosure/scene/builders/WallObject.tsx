@@ -13,7 +13,7 @@ import {
 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
-import { buildCurvedBandGeometry, curvedWallPickUv } from './curvedExtrude';
+import { buildCurvedBandGeometry, curvedWallPickUv, curvedWallSurfacePoint } from './curvedExtrude';
 import { buildBentWallGeometry } from './bentWallGeometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
@@ -1083,9 +1083,32 @@ export function WallObject({
     const pts = penArcPreview ? [...penArcPreview] : [...penFace.points];
     if (!penArcPreview && penFace.cursor) pts.push(penFace.cursor);
     if (pts.length < 1) return null;
-    // Map the face (u,v) points onto whichever face is being penned (front/back fall back to the
-    // flat XY plane unchanged), lifted slightly off the surface along its normal.
-    const frame = wallFaceFrame(normalizeWallSide(penFace.side), {
+    const side = normalizeWallSide(penFace.side);
+    // On a CURVED wall the front/back surface is cylindrical — map the face (u,v) onto the actual
+    // curved band (same forward map as the committed feature) so the preview line follows the cursor
+    // on the curve, instead of the flat XY plane (which lands it at the chord, far to the side).
+    if (isArcWall && (side === 'front' || side === 'back')) {
+      const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const halfT = wall.thicknessMm / 1000 / 2;
+      const surfaceR =
+        side === 'front'
+          ? arc.radiusM + halfT + FEATURE_FACE_LIFT_M
+          : arc.radiusM - halfT - FEATURE_FACE_LIFT_M;
+      return pts.map((p) =>
+        curvedWallSurfacePoint(
+          p.x,
+          p.z,
+          arc.radiusM,
+          surfaceR,
+          arc.direction,
+          arc.sweepRad,
+          arc.arcLengthMm,
+        ),
+      );
+    }
+    // Flat wall (or top/bottom/side faces): map the face (u,v) onto the flat plane, lifted slightly
+    // off the surface along its normal.
+    const frame = wallFaceFrame(side, {
       lengthM: wall.lengthMm / 1000,
       heightM: Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000,
       thicknessM: wall.thicknessMm / 1000,
@@ -1112,11 +1135,14 @@ export function WallObject({
     penActive,
     penFace,
     penArcPreview,
+    isArcWall,
     wall.id,
     wall.lengthMm,
     wall.heightMm,
     wall.heightEndMm,
     wall.thicknessMm,
+    wall.geomArcRadiusMm,
+    wall.geomArcSweepDeg,
   ]);
 
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
