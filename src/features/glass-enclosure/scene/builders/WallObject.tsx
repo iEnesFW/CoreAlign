@@ -713,11 +713,35 @@ export function WallObject({
     return { u, v };
   };
 
+  // Which face of a CURVED wall a world hit lands on. The band's surface normal is radial (not the
+  // flat ±Z sideFromLocalNormal expects), so decide front (outer surface) vs back (inner) by the
+  // hit's distance from the band centre axis vs the band radius.
+  const arcWallSide = (point: Vector3): WallFeatureSide => {
+    const group = groupRef.current;
+    if (!group) return 'front';
+    TMP_VEC.copy(point);
+    group.worldToLocal(TMP_VEC);
+    const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+    const centerY = -arc.direction * arc.radiusM;
+    const rHit = Math.hypot(TMP_VEC.x, TMP_VEC.z + centerY);
+    return rHit >= arc.radiusM ? 'front' : 'back';
+  };
+
   const clampToFace = (uMm: number, vMm: number, side: WallFeatureSide): SceneWallFeaturePoint => {
+    const m = FEATURE_EDGE_MARGIN_MM;
+    // On a curved wall the front/back u runs along the DEVELOPED arc length (what the pick + the
+    // committed feature use), NOT the flat chord — clamp to that, or points stored in chord units get
+    // mis-scaled into developed units (drawn point drifts, and an oversized cut can erase the band).
+    if (isArcWall && (side === 'front' || side === 'back')) {
+      const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      return {
+        x: clampValue(uMm, m, Math.max(m, arc.arcLengthMm - m)),
+        z: clampValue(vMm, m / 2, Math.max(m / 2, wall.heightMm - m / 2)),
+      };
+    }
     const frame = wallFaceFrame(side, drawDims());
     const uMax = frame.uMaxM * 1000;
     const vMax = frame.vMaxM * 1000;
-    const m = FEATURE_EDGE_MARGIN_MM;
     return {
       x: clampValue(uMm, m, Math.max(m, uMax - m)),
       z: clampValue(vMm, m / 2, Math.max(m / 2, vMax - m / 2)),
@@ -898,7 +922,11 @@ export function WallObject({
       // The clicked face decides which of the six faces the feature lands on; the drag plane +
       // (u,v) axes are oriented to it. Arc walls keep front/back (their body is rotated).
       const normal = e.face?.normal;
-      const side: WallFeatureSide = normal && !isArcWall ? sideFromLocalNormal(normal) : 'front';
+      const side: WallFeatureSide = isArcWall
+        ? arcWallSide(e.point)
+        : normal
+          ? sideFromLocalNormal(normal)
+          : 'front';
       drawFaceRef.current = side;
       orientDrawAnchor(side);
       const uv = faceUvMm(e.point, side);
@@ -937,7 +965,8 @@ export function WallObject({
     const established =
       session && session.hostId === wall.id ? normalizeWallSide(session.side) : null;
     const side: WallFeatureSide =
-      established ?? (faceNormal && !isArcWall ? sideFromLocalNormal(faceNormal) : 'front');
+      established ??
+      (isArcWall ? arcWallSide(point) : faceNormal ? sideFromLocalNormal(faceNormal) : 'front');
     const uv = faceUvMm(point, side);
     if (!uv) return null;
     const clamped = clampToFace(uv.u, uv.v, side);
