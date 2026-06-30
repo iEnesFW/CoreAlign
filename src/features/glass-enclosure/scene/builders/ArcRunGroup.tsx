@@ -6,8 +6,9 @@ import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import {
   arcEndLocal,
-  arcFromBow,
+  arcFromChordKeepingSweep,
   bowFromArc,
+  bowToArcKeepingLength,
   computeArcLayout,
   resolveArc,
 } from '../../model/arcGeometry';
@@ -108,10 +109,10 @@ export function ArcRunGroup({
   supports,
 }: ArcRunGroupProps) {
   const heightM = run.heightMm / 1000;
-  // CHORD-INVARIANT: run.lengthMm is the chord (the straight span); the radius and developed arc
-  // length are DERIVED from the (chord, signed sweep) overlay so the rendered chord always equals
-  // run.lengthMm and curving never changes the stored length.
-  const arc = resolveArc(run.lengthMm, run.geomArcSweepDeg ?? 1);
+  // ARC-LENGTH-INVARIANT: run.lengthMm is the developed glass length (fixed); the sweep is derived
+  // (= arcLength/radius) and the chord/span is whatever that arc spans. Curving never changes the
+  // stored glass length.
+  const arc = resolveArc(run.lengthMm, run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
   const radiusM = arc.radiusM;
   const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
@@ -466,29 +467,37 @@ export function ArcRunGroup({
           }}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(next) => {
-            // Scale the arc's developed length by the chord ratio (radius/sweep fixed), and shift
-            // the origin along the chord — projected so the curved run only changes length.
-            // The footprint box length IS the chord (lengthMm). Dragging an end sets the new chord;
-            // the arc overlay (sweep fixed) re-derives its radius from the new chord at render, and
-            // we sync the cached geomArcRadiusMm so re-grab/display stay consistent.
+            // The footprint box length is the CHORD (the span between the ends). Dragging an end
+            // changes that span while keeping the sweep angle (curl shape); the glass length and
+            // radius scale with the new chord (arcFromChordKeepingSweep), and the origin shifts
+            // along the chord direction.
             const chordDeg = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
             const dirX = Math.cos(chordDeg);
             const dirY = Math.sin(chordDeg);
             const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
-            const lengthMm = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
+            const newChord = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
+            const scaled = arcFromChordKeepingSweep(newChord, run.geomArcSweepDeg ?? 1);
             const originX = Math.round(run.originX + along * dirX);
             const originY = Math.round(run.originY + along * dirY);
             const resized = buildRunFootprint(
-              { ...run, originX, originY, lengthMm },
+              {
+                ...run,
+                originX,
+                originY,
+                lengthMm: scaled.lengthMm,
+                geomArcRadiusMm: scaled.geomArcRadiusMm,
+              },
               0,
               0,
               run.rotationDeg,
             );
             if (penetratesAny(resized, gestureObstacles)) return;
-            const nextRadiusMm = Math.round(
-              resolveArc(lengthMm, run.geomArcSweepDeg ?? 1).radiusMm,
-            );
-            onStretchRun?.(run.id, { lengthMm, originX, originY, geomArcRadiusMm: nextRadiusMm });
+            onStretchRun?.(run.id, {
+              lengthMm: scaled.lengthMm,
+              originX,
+              originY,
+              geomArcRadiusMm: scaled.geomArcRadiusMm,
+            });
           }}
         />
       )}
@@ -508,9 +517,9 @@ export function ArcRunGroup({
             const chordMm = Math.hypot(endWorldX - run.originX, endWorldY - run.originY);
             const chordDeg =
               (Math.atan2(endWorldY - run.originY, endWorldX - run.originX) * 180) / Math.PI;
-            const next = arcFromBow(chordMm, chordDeg, sagittaMm);
-            // lengthMm (chord) stays fixed — only the arc overlay changes. Omitting it from the
-            // patch keeps the run's length invariant and avoids a panel redistribution.
+            // The glass length (lengthMm) stays fixed; the drag sets the sweep and radius is
+            // derived (= arcLength/sweep). Omitting lengthMm keeps it invariant (no redistribution).
+            const next = bowToArcKeepingLength(chordMm, chordDeg, sagittaMm, run.lengthMm);
             onStretchRun(run.id, {
               originX: run.originX,
               originY: run.originY,

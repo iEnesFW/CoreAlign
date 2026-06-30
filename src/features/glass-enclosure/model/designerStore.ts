@@ -19,7 +19,7 @@ import type {
 import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
-import { arcChordFromRadiusSweep } from './arcGeometry';
+import { arcLengthFromRadiusSweep } from './arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -317,9 +317,10 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
       id: run.id,
       orderIndex: run.orderIndex,
       label: run.label,
-      // CHORD-INVARIANT migration: lengthMm is the chord. Legacy arc runs persisted the developed
-      // arc length here — recover the chord from the stored radius+sweep (idempotent for new data).
-      lengthMm: arcChordFromRadiusSweep(
+      // ARC-LENGTH-INVARIANT migration: lengthMm is the developed glass length (= radius·sweep).
+      // Recovers it from the stored radius+sweep — idempotent for arc-length data, and converts the
+      // interim chord-invariant data (which stored the chord) back to the arc length.
+      lengthMm: arcLengthFromRadiusSweep(
         Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
         run.geomArcRadiusMm,
         run.geomArcSweepDeg,
@@ -1256,13 +1257,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
       }
     }
-    // CHORD-INVARIANT migration: a legacy arc wall persisted the developed arc length in lengthMm;
-    // recover the chord from its stored radius+sweep on load (idempotent for chord-invariant data).
+    // ARC-LENGTH-INVARIANT migration: lengthMm is the developed glass length (= radius·sweep);
+    // recover it from the stored radius+sweep on load (idempotent; converts interim chord data back).
     const snapshotWalls = (scene.walls ?? []).map((w) =>
       w.geomArcRadiusMm && w.geomArcRadiusMm > 0
         ? {
             ...w,
-            lengthMm: arcChordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
+            lengthMm: arcLengthFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
           }
         : w,
     );

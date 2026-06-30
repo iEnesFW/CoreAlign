@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DoorOpen, RectangleHorizontal, Trash2, Wand2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
-import { deriveArcFromRadius, minArcRadiusMm, resolveArc } from '../model/arcGeometry';
+import { deriveArcFromRadius, deriveArcFromSweep, minArcRadiusMm } from '../model/arcGeometry';
 import { queueToast } from '@/shared/api/toastQueue';
 import {
   buildRunFootprint,
@@ -106,8 +106,8 @@ export function WallInspector() {
   const commitArc = (sweep: number) => {
     const hasExtras = (wall.openings ?? []).length > 0 || (wall.features ?? []).length > 0;
     commit({
-      // CHORD-INVARIANT: lengthMm stays the chord; the radius is DERIVED from (chord, sweep).
-      geomArcRadiusMm: Math.round(resolveArc(draft.lengthMm, sweep).radiusMm),
+      // ARC-LENGTH-INVARIANT: lengthMm stays the glass length; radius = arcLength / sweep.
+      geomArcRadiusMm: deriveArcFromSweep(draft.lengthMm, sweep).radiusMm,
       geomArcSweepDeg: sweep,
       ...(hasExtras ? { openings: [], features: [] } : {}),
     });
@@ -433,14 +433,12 @@ export function WallInspector() {
             value={draft.geomArcRadiusMm ?? draft.lengthMm}
             min={minArcRadiusMm(draft.lengthMm)}
             onCommit={(v) => {
-              // Setting the radius keeps the chord (lengthMm) fixed and re-derives the sweep; the
-              // tightest radius is a half-circle (chord/2). Sign + depth class (minor/major) preserved.
+              // Setting the radius keeps the glass length (lengthMm) fixed and re-derives the sweep
+              // (= arcLength/radius); the tightest radius is a full circle (arcLength/2π). Sign kept.
               const sign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-              const major = Math.abs(draft.geomArcSweepDeg ?? 0) > 180;
               const next = deriveArcFromRadius(
                 draft.lengthMm,
                 Math.max(minArcRadiusMm(draft.lengthMm), v),
-                major,
               );
               commit({
                 geomArcRadiusMm: next.radiusMm,

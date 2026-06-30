@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  arcChordFromRadiusSweep,
-  arcFromBow,
+  arcFromChordKeepingSweep,
+  arcLengthFromRadiusSweep,
   bowArcPlanPoints,
   bowFromArc,
+  bowToArcKeepingLength,
   deriveArcFromChordSagitta,
   deriveArcFromRadius,
   minArcRadiusMm,
@@ -88,68 +89,72 @@ describe('bowFromArc', () => {
   });
 });
 
-describe('chord-invariant arc model', () => {
-  it('arcFromBow keeps lengthMm = the CHORD (never the developed arc length)', () => {
-    // The old bug ballooned a 3000mm chord to its ~7268mm developed length.
-    const bow = arcFromBow(3000, 0, 600);
-    expect(bow.lengthMm).toBe(3000);
-    expect(bow.geomArcRadiusMm).toBeGreaterThan(0);
-    // The developed length is reported separately and IS larger than the chord for a real bow.
-    expect(bow.arcLengthMm).toBeGreaterThan(3000);
-  });
-
-  it('arcFromBow returns a straight result (chord preserved) under the straighten threshold', () => {
-    const bow = arcFromBow(3000, 45, 5);
-    expect(bow.geomArcRadiusMm).toBeNull();
-    expect(bow.geomArcSweepDeg).toBeNull();
-    expect(bow.lengthMm).toBe(3000);
-  });
-
-  it('resolveArc derives a radius+arc-length whose chord equals the input chord', () => {
-    const chord = 3000;
-    for (const sweepDeg of [30, 90, 180, 300]) {
-      const r = resolveArc(chord, sweepDeg);
-      const renderedChord = 2 * r.radiusMm * Math.sin(r.sweepRad / 2);
-      expect(renderedChord).toBeCloseTo(chord, 3);
-      expect(r.arcLengthMm).toBeCloseTo(r.radiusMm * r.sweepRad, 3);
+describe('arc-length-invariant arc model', () => {
+  it('resolveArc keeps the glass length (arc length) and derives sweep = arcLength/radius', () => {
+    const arcLength = 3000;
+    for (const radiusMm of [477, 955, 1910, 5000]) {
+      const r = resolveArc(arcLength, radiusMm, 1);
+      // The developed length always equals lengthMm — curving never changes the glass length.
+      expect(r.arcLengthMm).toBe(arcLength);
+      expect(r.sweepRad).toBeCloseTo(arcLength / r.radiusMm, 6);
     }
   });
 
+  it('resolveArc lets the radius go down to a full circle (arcLength/2π), not just a half-circle', () => {
+    // radius 477 ≈ 3000/2π → a 360° wrap of the 3000mm glass. The old chord model floored at 1500.
+    const r = resolveArc(3000, 477, 1);
+    expect((r.sweepRad * 180) / Math.PI).toBeGreaterThan(355);
+    // A radius below the full-circle floor is clamped up to it (no over-wrap past 360°).
+    expect(resolveArc(3000, 100, 1).radiusMm).toBe(minArcRadiusMm(3000));
+  });
+
   it('resolveArc reads the bulge direction from the sweep sign', () => {
-    expect(resolveArc(3000, 90).direction).toBe(1);
-    expect(resolveArc(3000, -90).direction).toBe(-1);
+    expect(resolveArc(3000, 1000, 90).direction).toBe(1);
+    expect(resolveArc(3000, 1000, -90).direction).toBe(-1);
   });
 
-  it('arcChordFromRadiusSweep recovers the chord from radius+sweep (legacy migration)', () => {
-    // A legacy arc stored radius 12047 + sweep 345.7° (a near-full circle of a 3000mm chord).
-    expect(arcChordFromRadiusSweep(72685, 12047, 345.7)).toBeCloseTo(3000, -1);
-    // Idempotent for chord-invariant data: feeding the already-correct chord round-trips.
-    const r = resolveArc(3000, 120);
-    expect(arcChordFromRadiusSweep(3000, r.radiusMm, 120)).toBe(3000);
+  it('minArcRadiusMm is the full-circle radius (arcLength/2π)', () => {
+    expect(minArcRadiusMm(3000)).toBe(Math.ceil(3000 / (2 * Math.PI))); // 478
+  });
+
+  it('deriveArcFromRadius keeps the glass length and derives sweep (radius → angle, freely)', () => {
+    const arcLength = 3000;
+    // A semicircle of 3000mm of glass has radius 3000/π ≈ 955 (NOT 1500 — that was the chord model).
+    const half = deriveArcFromRadius(arcLength, 955);
+    expect(half.arcLengthMm).toBe(arcLength);
+    expect(half.sweepDeg).toBeCloseTo(180, 0);
+    // Tighter radius → larger angle, all the way to a full circle, freely settable.
+    const tight = deriveArcFromRadius(arcLength, 478);
+    expect(tight.sweepDeg).toBeGreaterThan(355);
+    // A radius below the full-circle floor clamps up.
+    expect(deriveArcFromRadius(arcLength, 100).radiusMm).toBe(minArcRadiusMm(arcLength));
+  });
+
+  it('arcLengthFromRadiusSweep recovers the glass length from radius+sweep (migration)', () => {
+    // radius·sweep = developed length, for any data (idempotent).
+    const r = resolveArc(3000, 955, 1);
+    expect(arcLengthFromRadiusSweep(3000, r.radiusMm, (r.sweepRad * 180) / Math.PI)).toBeCloseTo(
+      3000,
+      -1,
+    );
     // Passthrough when there is no arc.
-    expect(arcChordFromRadiusSweep(3000, null, null)).toBe(3000);
+    expect(arcLengthFromRadiusSweep(3000, null, null)).toBe(3000);
   });
 
-  it('deriveArcFromRadius treats its first arg as the chord and floors radius at chord/2', () => {
-    const d = deriveArcFromRadius(3000, 1800);
-    expect(d.chordMm).toBe(3000);
-    expect(d.radiusMm).toBeGreaterThanOrEqual(1500);
-    expect(d.sweepDeg).toBeLessThanOrEqual(180);
-    // A radius below the half-circle floor is clamped up to chord/2.
-    expect(deriveArcFromRadius(3000, 100).radiusMm).toBe(1500);
+  it('arcFromChordKeepingSweep scales the glass length with the chord while holding the curl angle', () => {
+    const a = arcFromChordKeepingSweep(2000, 90);
+    const b = arcFromChordKeepingSweep(4000, 90);
+    // Doubling the chord at the same sweep doubles the radius and the glass length.
+    expect(b.geomArcRadiusMm).toBeCloseTo(a.geomArcRadiusMm * 2, -1);
+    expect(b.lengthMm).toBeCloseTo(a.lengthMm * 2, -1);
   });
 
-  it('deriveArcFromRadius keeps a deep (major) arc deep when major=true', () => {
-    const minor = deriveArcFromRadius(3000, 2121); // ~90° minor arc
-    const major = deriveArcFromRadius(3000, 2121, true); // same radius, the major arc
-    expect(minor.sweepDeg).toBeLessThan(180);
-    expect(major.sweepDeg).toBeGreaterThan(180);
-    expect(major.radiusMm).toBe(minor.radiusMm); // same radius — only the depth class differs
-    // The major arc bulges to the FAR apex (sagitta > radius), not the shallow near point.
-    expect(major.sagittaMm).toBeGreaterThan(major.radiusMm);
-  });
-
-  it('minArcRadiusMm is the half-circle radius (chord/2)', () => {
-    expect(minArcRadiusMm(3000)).toBe(1500);
+  it('bowToArcKeepingLength holds the glass length fixed and derives the radius from the bow sweep', () => {
+    const arcLength = 3000;
+    const bow = bowToArcKeepingLength(2000, 0, 600, arcLength);
+    expect(bow.lengthMm).toBe(arcLength); // glass length never changes when bowing
+    expect(bow.geomArcSweepDeg).not.toBeNull();
+    const sweepRad = (Math.abs(bow.geomArcSweepDeg as number) * Math.PI) / 180;
+    expect(bow.geomArcRadiusMm).toBeCloseTo(arcLength / sweepRad, -1); // radius = arcLength/sweep
   });
 });

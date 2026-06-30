@@ -62,7 +62,13 @@ import {
   type WallBoxDims,
   type WallFeatureSide,
 } from './wallFaces';
-import { arcEndLocal, arcFromBow, bowFromArc, resolveArc } from '../../model/arcGeometry';
+import {
+  arcEndLocal,
+  arcFromChordKeepingSweep,
+  bowFromArc,
+  bowToArcKeepingLength,
+  resolveArc,
+} from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
@@ -230,9 +236,13 @@ const buildWallGeometries = (
   // into the band via a curved CSG cutter (applyCurvedWallFeatures); protrusions and side-face
   // features on a curved wall are a follow-up.
   if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
-    // CHORD-INVARIANT: wall.lengthMm is the chord; radius, sweep and the developed arc length are
-    // DERIVED from the (chord, signed sweep) overlay so the band's chord equals wall.lengthMm.
-    const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
+    // ARC-LENGTH-INVARIANT: wall.lengthMm is the developed glass length (fixed); the sweep is
+    // derived (= arcLength/radius) and the band spans whatever chord that arc gives.
+    const resolved = resolveArc(
+      wall.lengthMm,
+      wall.geomArcRadiusMm ?? 0,
+      wall.geomArcSweepDeg ?? 1,
+    );
     const band = buildCurvedBandGeometry(
       resolved.radiusM,
       resolved.direction,
@@ -452,7 +462,11 @@ export function WallObject({
   const wallCurveChord = (() => {
     const r = wall.rotationDeg * DEG2RAD;
     if (isArcWall) {
-      const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
+      const resolved = resolveArc(
+        wall.lengthMm,
+        wall.geomArcRadiusMm ?? 0,
+        wall.geomArcSweepDeg ?? 1,
+      );
       const ae = arcEndLocal(resolved.arcLengthMm, resolved.radiusMm, wall.geomArcSweepDeg ?? 1);
       const ex = wall.originX + ae.xMm * Math.cos(r) - ae.yMm * Math.sin(r);
       const ey = wall.originY + ae.xMm * Math.sin(r) + ae.yMm * Math.cos(r);
@@ -682,7 +696,11 @@ export function WallObject({
     // A curved wall's front/back surface is cylindrical — invert it so the pick maps to (offset
     // along the developed wall, height), instead of the flat-box projection which mislocates it.
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const resolved = resolveArc(wall.lengthMm, wall.geomArcSweepDeg ?? 1);
+      const resolved = resolveArc(
+        wall.lengthMm,
+        wall.geomArcRadiusMm ?? 0,
+        wall.geomArcSweepDeg ?? 1,
+      );
       return curvedWallPickUv(
         TMP_VEC.x,
         TMP_VEC.y,
@@ -1450,6 +1468,11 @@ export function WallObject({
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
           onCommit={(next) => {
+            // For an arc wall the corner-box length is the CHORD (span): dragging it keeps the sweep
+            // (curl shape) and scales the glass length + radius. For a straight wall it's the length.
+            const shaped = isArcWall
+              ? arcFromChordKeepingSweep(next.lengthMm, wall.geomArcSweepDeg ?? 1)
+              : { lengthMm: next.lengthMm, geomArcRadiusMm: wall.geomArcRadiusMm ?? null };
             // Reject a corner resize that would grow the wall into a neighbour (the Stretch
             // tool clamps; the corner handles must not be a collision-free back door).
             const resized = buildWallFootprint(
@@ -1457,7 +1480,8 @@ export function WallObject({
                 ...wall,
                 originX: next.originX,
                 originY: next.originY,
-                lengthMm: next.lengthMm,
+                lengthMm: shaped.lengthMm,
+                geomArcRadiusMm: shaped.geomArcRadiusMm,
                 thicknessMm: next.crossMm,
               },
               0,
@@ -1465,21 +1489,12 @@ export function WallObject({
               next.rotationDeg,
             );
             if (penetratesAny(resized, planObstacles)) return;
-            // For an arc wall the corner drag changes the CHORD (lengthMm); the arc overlay keeps
-            // its sweep and re-derives the radius from the new chord (synced in the cache too).
-            const arcSync = isArcWall
-              ? {
-                  geomArcRadiusMm: Math.round(
-                    resolveArc(next.lengthMm, wall.geomArcSweepDeg ?? 1).radiusMm,
-                  ),
-                }
-              : {};
             updateWall(wall.id, {
               originX: next.originX,
               originY: next.originY,
-              lengthMm: next.lengthMm,
+              lengthMm: shaped.lengthMm,
               thicknessMm: next.crossMm,
-              ...arcSync,
+              ...(isArcWall ? { geomArcRadiusMm: shaped.geomArcRadiusMm } : {}),
             });
           }}
         />
@@ -1503,8 +1518,8 @@ export function WallObject({
               (Math.atan2(wallCurveChord.endY - wall.originY, wallCurveChord.endX - wall.originX) *
                 180) /
               Math.PI;
-            const arc = arcFromBow(chordMm, chordDeg, sagittaMm);
-            // lengthMm (chord) stays fixed — only the arc overlay changes.
+            // The glass length (lengthMm) stays fixed; the drag sets the sweep, radius derived.
+            const arc = bowToArcKeepingLength(chordMm, chordDeg, sagittaMm, wall.lengthMm);
             updateWall(wall.id, {
               rotationDeg: arc.rotationDeg,
               geomArcRadiusMm: arc.geomArcRadiusMm,

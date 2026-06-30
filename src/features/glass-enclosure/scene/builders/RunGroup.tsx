@@ -3,7 +3,7 @@ import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { arcFromBow } from '../../model/arcGeometry';
+import { bowToArcKeepingLength } from '../../model/arcGeometry';
 import { CurveBowHandle } from '../interaction/CurveBowHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -638,9 +638,15 @@ export function RunGroup({
           currentSagittaMm={0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(sagittaMm) => {
-            // lengthMm is already the chord (a straight run's length) — keep it invariant; only the
-            // arc overlay is added. Omitting lengthMm avoids a needless panel redistribution.
-            const arc = arcFromBow(run.lengthMm, run.rotationDeg, sagittaMm);
+            // The straight run's length becomes the glass (developed) length and stays fixed; the
+            // drag sets the sweep, radius = glassLength/sweep, and the ends draw together as it
+            // curls. Omitting lengthMm keeps the glass length invariant (no redistribution).
+            const arc = bowToArcKeepingLength(
+              run.lengthMm,
+              run.rotationDeg,
+              sagittaMm,
+              run.lengthMm,
+            );
             onStretchRun(run.id, {
               originX: run.originX,
               originY: run.originY,
