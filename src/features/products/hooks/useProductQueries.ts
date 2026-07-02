@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '../api/productsApi';
 import { productKeys } from './productKeys';
+import { patchProductInPaged, type PagedProductsResponse } from '../model/productCachePatch';
 import type {
   AddProductComponentInput,
   CreateProductInput,
@@ -9,11 +10,12 @@ import type {
   UpdateProductInput,
 } from '../model/product.types';
 
-export const useProductsQuery = (params: ProductListParams) =>
+export const useProductsQuery = (params: ProductListParams, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: productKeys.list(params),
     queryFn: () => productsApi.list(params),
     placeholderData: (previous) => previous,
+    enabled: options?.enabled ?? true,
   });
 
 export const useProductQuery = (id: string | null) =>
@@ -44,9 +46,22 @@ export const useUpdateProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateProductInput) => productsApi.update(input),
-    onSuccess: (_, vars) => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: productKeys.lists() });
+      const snapshots = queryClient.getQueriesData<PagedProductsResponse>({
+        queryKey: productKeys.lists(),
+      });
+      queryClient.setQueriesData<PagedProductsResponse>({ queryKey: productKeys.lists() }, (old) =>
+        patchProductInPaged(old, input),
+      );
+      return { snapshots };
+    },
+    onError: (_error, _input, context) => {
+      context?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data));
+    },
+    onSettled: (_data, _error, input) => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: productKeys.detail(vars.id) });
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(input.id) });
     },
   });
 };

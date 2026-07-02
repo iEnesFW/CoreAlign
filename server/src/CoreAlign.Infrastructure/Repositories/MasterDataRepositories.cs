@@ -197,6 +197,32 @@ public class WarehouseRepository : IWarehouseRepository
     public void Remove(Warehouse warehouse) => _context.Warehouses.Remove(warehouse);
 }
 
+public class BankAccountRepository : IBankAccountRepository
+{
+    private readonly CoreAlignDbContext _context;
+    public BankAccountRepository(CoreAlignDbContext context) => _context = context;
+
+    public Task<BankAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _context.BankAccounts.FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<BankAccount>> ListAsync(bool? isActive = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.BankAccounts.AsNoTracking();
+        if (isActive.HasValue) query = query.Where(b => b.IsActive == isActive.Value);
+        return await query.OrderByDescending(b => b.IsPrimary).ThenBy(b => b.BankName).ToListAsync(cancellationToken);
+    }
+
+    public async Task AddAsync(BankAccount account, CancellationToken cancellationToken = default) =>
+        await _context.BankAccounts.AddAsync(account, cancellationToken);
+    public void Update(BankAccount account) => _context.BankAccounts.Update(account);
+    public void Remove(BankAccount account) => _context.BankAccounts.Remove(account);
+
+    public Task ClearPrimaryFlagAsync(Guid? exceptId, CancellationToken cancellationToken = default) =>
+        _context.BankAccounts
+            .Where(b => b.IsPrimary && (exceptId == null || b.Id != exceptId))
+            .ExecuteUpdateAsync(s => s.SetProperty(b => b.IsPrimary, false), cancellationToken);
+}
+
 public class DocumentSequenceRepository : IDocumentSequenceRepository
 {
     private readonly CoreAlignDbContext _context;

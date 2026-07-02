@@ -60,6 +60,7 @@ export interface VendorPayment {
   method: string | null;
   vendorBillId: string | null;
   notes: string | null;
+  isAdvance: boolean;
   createdAtUtc: string;
 }
 
@@ -100,6 +101,13 @@ export interface UpdateVendorPaymentInput {
 }
 
 export interface ApplyVendorPaymentInput {
+  vendorPaymentId: string;
+  vendorBillId: string;
+  amount: number;
+  notes?: string | null;
+}
+
+export interface OffsetVendorAdvanceInput {
   vendorPaymentId: string;
   vendorBillId: string;
   amount: number;
@@ -158,6 +166,7 @@ export interface CreateVendorPaymentInput {
   vendorBillId?: string | null;
   exchangeRate?: number;
   notes?: string | null;
+  isAdvance?: boolean;
 }
 
 export interface VendorBillListParams {

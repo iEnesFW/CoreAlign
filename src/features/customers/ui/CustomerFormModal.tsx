@@ -9,6 +9,7 @@ import { Input } from '@/shared/ui/Input/Input';
 import { PhoneField } from '@/shared/ui/PhoneField/PhoneField';
 import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
 import { getErroredTabs, firstErroredTab } from '@/shared/lib/formTabs';
 import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import { MasterDataQuickModal } from '@/shared/master-data/ui/MasterDataQuickModal';
@@ -121,6 +122,7 @@ export const CustomerFormModal = ({ open, customer, onClose, onCreated }: Props)
   const [quickAdd, setQuickAdd] = useState<CustomerQuickAdd | null>(null);
   const [tab, setTab] = useState<CustomerTab>('general');
   const requestClose = useModalClose(isDirty, onClose, open);
+  const backdrop = useBackdropClick(requestClose);
   const erroredTabs = getErroredTabs(errors, CUSTOMER_FIELD_TAB);
 
   useEffect(() => {
@@ -244,7 +246,7 @@ export const CustomerFormModal = ({ open, customer, onClose, onCreated }: Props)
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={requestClose}
+      {...backdrop}
       role="presentation"
     >
       <div

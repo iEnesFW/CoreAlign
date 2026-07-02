@@ -170,6 +170,7 @@ public static class TurkishChartOfAccountsSeed
         new("646",    "Kambiyo Kârları",                               AccountType.Revenue, 3, true),
 
         new("65",     "Diğer Faaliyetlerden Olağan Giderler (-)",      AccountType.Expense, 2, false),
+        new("654",    "Karşılık Giderleri (-)",                        AccountType.Expense, 3, true),
         new("656",    "Kambiyo Zararları (-)",                         AccountType.Expense, 3, true),
         new("659",    "Diğer Olağan Gider ve Zararlar (-)",            AccountType.Expense, 3, true),
 

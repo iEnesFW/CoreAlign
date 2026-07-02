@@ -140,6 +140,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(p => p.FxLockedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.Amount).HasColumnType("numeric(18,4)");
         builder.Property(p => p.AppliedAmount).HasColumnType("numeric(18,4)");
+        builder.Property(p => p.IsAdvance).HasDefaultValue(false);
         builder.Property(p => p.BankAccountInfo).HasMaxLength(200);
         builder.Property(p => p.ReferenceNumber).HasMaxLength(100);
         builder.Property(p => p.CheckNumber).HasMaxLength(40);

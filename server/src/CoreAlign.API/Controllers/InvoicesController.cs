@@ -108,6 +108,17 @@ public class InvoicesController : ControllerBase
         return result.ToOk();
     }
 
+    [HttpPost("{id:guid}/write-off")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> WriteOffAsync(
+        Guid id,
+        [FromBody] WriteOffInvoiceRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new WriteOffInvoiceCommand(id, request?.Reason), cancellationToken);
+        return result.ToOk();
+    }
+
     [HttpGet("{id:guid}/credit-notes")]
     public async Task<IActionResult> GetCreditNotesAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -130,6 +141,8 @@ public record IssueCreditNoteRequest(
     string? Reason = null,
     Guid? ReturnRequestId = null,
     Guid? OperationId = null);
+
+public record WriteOffInvoiceRequest(string? Reason = null);
 
 public record RecordInvoicePaymentRequest(
     decimal Amount,

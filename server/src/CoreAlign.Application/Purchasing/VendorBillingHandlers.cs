@@ -194,7 +194,7 @@ internal static class VendorBillingMapper
     public static VendorPaymentDto ToDto(VendorPayment p) => new(
         p.Id, p.VendorId, p.VendorName, p.PaymentNumber, p.PaymentDate, p.Amount,
         p.AppliedAmount, p.UnappliedAmount, p.IsVoided, p.VoidedAtUtc, p.VoidReason,
-        p.Currency, p.Method, p.VendorBillId, p.Notes, p.CreatedAtUtc);
+        p.Currency, p.Method, p.VendorBillId, p.Notes, p.IsAdvance, p.CreatedAtUtc);
 
     public static VendorPaymentApplicationDto ToDto(VendorPaymentApplication a, string paymentNumber, string billNumber) => new(
         a.Id, a.VendorPaymentId, paymentNumber, a.VendorBillId, billNumber,
@@ -540,7 +540,8 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
 
         VendorBill? autoBill = null;
         decimal autoApplyAmount = 0m;
-        if (c.VendorBillId is { } billId)
+        // An advance is a prepayment with no bill yet → never auto-applies; offset later.
+        if (!c.IsAdvance && c.VendorBillId is { } billId)
         {
             autoBill = await _bills.GetByIdAsync(billId, ct) ?? throw new VendorBillNotFoundException();
             if (autoBill.VendorId != vendor.Id
@@ -565,7 +566,7 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
         var number = await _sequences.ConsumeAsync(DocumentSequenceType.VendorPaymentNumber, now, ct);
 
         var payment = new VendorPayment(vendor.Id, vendor.Name, number, c.PaymentDate, c.Amount,
-            paymentCurrency, c.ExchangeRate, c.Method, c.VendorBillId, c.Notes);
+            paymentCurrency, c.ExchangeRate, c.Method, c.IsAdvance ? null : c.VendorBillId, c.Notes, c.IsAdvance);
         await _payments.AddAsync(payment, ct);
 
         if (autoBill is not null && autoApplyAmount > 0m)
@@ -580,15 +581,21 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
 
         await VendorLedgerPoster.PostAsync(_ledger, _vendors, vendor.Id, now,
             LedgerEntryType.Debit, c.Amount, c.Currency.ToUpperInvariant(), c.ExchangeRate,
-            LedgerSourceType.Payment, payment.Id, number, $"Tedarikçi ödemesi {number}", ct);
+            c.IsAdvance ? LedgerSourceType.AdvanceReceived : LedgerSourceType.Payment,
+            payment.Id, number,
+            c.IsAdvance ? $"Tedarikçi avansı {number}" : $"Tedarikçi ödemesi {number}", ct);
 
         var cashKey = string.Equals(c.Method, "Cash", StringComparison.OrdinalIgnoreCase)
             ? GLPostingKey.Cash
             : GLPostingKey.Bank;
+        // Advance paid: DR 159 (Verilen Sipariş Avansları) / CR cash — no bill yet, must NOT hit AP(320).
+        var controlKey = c.IsAdvance ? GLPostingKey.VendorAdvancePaid : GLPostingKey.AccountsPayable;
         await _outbox.EnqueueAsync(new GLPostingRequest(
-            JournalSourceType.VendorPayment, payment.Id, number, now.Date,
-            JournalEntryType.Tediye, $"Tedarikçi ödemesi {number}",
-            PaymentGLLines.CashMovement(cashKey, GLPostingKey.AccountsPayable, c.Amount, cashIsDebit: false),
+            c.IsAdvance ? JournalSourceType.VendorAdvancePaid : JournalSourceType.VendorPayment,
+            payment.Id, number, now.Date,
+            JournalEntryType.Tediye,
+            c.IsAdvance ? $"Tedarikçi avansı {number}" : $"Tedarikçi ödemesi {number}",
+            PaymentGLLines.CashMovement(cashKey, controlKey, c.Amount, cashIsDebit: false),
             c.Currency.ToUpperInvariant(), c.ExchangeRate), ct);
 
         payment.Post();
@@ -883,6 +890,93 @@ public class ApplyVendorPaymentHandler : IRequestHandler<ApplyVendorPaymentComma
 
         bill.RecordPayment(amount);
         _bills.Update(bill);
+
+        await _uow.SaveChangesAsync(ct);
+        return VendorBillingMapper.ToDto(application, payment.PaymentNumber, bill.BillNumber);
+    }
+}
+
+public class OffsetVendorAdvanceHandler : IRequestHandler<OffsetVendorAdvanceCommand, VendorPaymentApplicationDto>
+{
+    private readonly IVendorPaymentRepository _payments;
+    private readonly IVendorBillRepository _bills;
+    private readonly IVendorPaymentApplicationRepository _applications;
+    private readonly ICurrentUserAccessor _currentUser;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public OffsetVendorAdvanceHandler(
+        IVendorPaymentRepository payments,
+        IVendorBillRepository bills,
+        IVendorPaymentApplicationRepository applications,
+        ICurrentUserAccessor currentUser,
+        IGLPostingOutbox outbox,
+        IUnitOfWork uow)
+    {
+        _payments = payments;
+        _bills = bills;
+        _applications = applications;
+        _currentUser = currentUser;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<VendorPaymentApplicationDto> Handle(OffsetVendorAdvanceCommand c, CancellationToken ct)
+    {
+        if (c.Amount <= 0m)
+        {
+            throw new VendorPaymentOverApplicationException();
+        }
+        var payment = await _payments.GetByIdAsync(c.VendorPaymentId, ct)
+            ?? throw new VendorPaymentApplicationNotFoundException();
+        if (!payment.IsAdvance)
+        {
+            throw new VendorPaymentBillMismatchException();
+        }
+        var bill = await _bills.GetByIdAsync(c.VendorBillId, ct) ?? throw new VendorBillNotFoundException();
+
+        var existing = await _applications.GetByPaymentAndBillAsync(payment.Id, bill.Id, ct);
+        if (existing is not null)
+        {
+            return VendorBillingMapper.ToDto(existing, payment.PaymentNumber, bill.BillNumber);
+        }
+
+        if (payment.IsVoided)
+        {
+            throw new VendorPaymentAlreadyVoidedException();
+        }
+        if (payment.VendorId != bill.VendorId
+            || !string.Equals(payment.Currency, bill.Currency, StringComparison.OrdinalIgnoreCase)
+            || bill.Status is VendorBillStatus.Draft or VendorBillStatus.Cancelled or VendorBillStatus.Paid)
+        {
+            throw new VendorPaymentBillMismatchException();
+        }
+
+        var amount = Math.Round(c.Amount, 4);
+        // Over-offset cap: cannot exceed the unapplied advance balance nor the bill due.
+        if (amount > payment.UnappliedAmount + 0.0001m || amount > bill.AmountDue + 0.0001m)
+        {
+            throw new VendorPaymentOverApplicationException();
+        }
+
+        var application = new VendorPaymentApplication(payment.Id, bill.Id, amount, _currentUser.UserId, c.Notes);
+        await _applications.AddAsync(application, ct);
+        payment.RecordApplication(amount);
+        _payments.Update(payment);
+        bill.RecordPayment(amount);
+        _bills.Update(bill);
+
+        // Offset (mahsup): consume the prepayment in 159 against AP(320). Keyed on the
+        // application id (dedup), posted at the advance's ExchangeRate.
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.VendorAdvanceApplied, application.Id, payment.PaymentNumber, DateTime.UtcNow.Date,
+            JournalEntryType.Mahsup, $"Tedarikçi avans mahsubu {payment.PaymentNumber}",
+            new[]
+            {
+                new GLPostingLine(GLPostingKey.AccountsPayable, amount, 0m),
+                new GLPostingLine(GLPostingKey.VendorAdvancePaid, 0m, amount),
+            },
+            payment.Currency, payment.ExchangeRate), ct);
 
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(application, payment.PaymentNumber, bill.BillNumber);

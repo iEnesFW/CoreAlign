@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useFxRateQuery } from '../hooks/useFxRates';
+import { useFxRateQuery } from '@/shared/fx/hooks/useFxRates';
 
 interface FxRateBadgeProps {
   currencyCode: string;

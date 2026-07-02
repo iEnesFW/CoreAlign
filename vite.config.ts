@@ -17,7 +17,7 @@ export default defineConfig({
         short_name: 'CoreAlign',
         description: 'Multi-tenant Turkish SaaS ERP — offline-capable field operations',
         theme_color: '#6366f1',
-        background_color: '#FFFFFF',
+        background_color: '#0d1116',
         display: 'standalone',
         start_url: '/',
         scope: '/',

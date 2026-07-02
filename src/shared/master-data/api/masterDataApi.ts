@@ -2,10 +2,12 @@ import { apiClient } from '@/shared/api/apiClient';
 import { cachedGet, invalidateHttpCache } from '@/shared/http/httpCache';
 import type { ApiResponse } from '@/shared/types/api';
 import type {
+  BankAccount,
   Brand,
   CustomerGroup,
   PaymentTerm,
   PriceList,
+  PriceListItem,
   ProductCategory,
   TaxRate,
   UnitOfMeasure,
@@ -152,8 +154,34 @@ export interface WarehouseUpdateInput {
   isActive: boolean;
 }
 
+export interface BankAccountInput {
+  accountName: string;
+  bankName: string;
+  iban: string;
+  currency: string;
+  openingBalance?: number;
+  branchName?: string | null;
+  swift?: string | null;
+  isPrimary?: boolean;
+  notes?: string | null;
+}
+export interface BankAccountUpdateInput {
+  id: string;
+  accountName: string;
+  bankName: string;
+  iban: string;
+  currency: string;
+  openingBalance: number;
+  branchName?: string | null;
+  swift?: string | null;
+  isPrimary: boolean;
+  isActive: boolean;
+  notes?: string | null;
+}
+
 export const masterDataApi = {
   brands: buildCrud<Brand, BrandInput, BrandUpdateInput>('brands'),
+  bankAccounts: buildCrud<BankAccount, BankAccountInput, BankAccountUpdateInput>('bank-accounts'),
   categories: buildCrud<ProductCategory, ProductCategoryInput, ProductCategoryUpdateInput>(
     'categories',
   ),
@@ -171,5 +199,7 @@ export const masterDataApi = {
   taxRates: buildCrud<TaxRate, TaxRateInput, TaxRateUpdateInput>('tax-rates'),
   paymentTerms: buildCrud<PaymentTerm, PaymentTermInput, PaymentTermUpdateInput>('payment-terms'),
   priceLists: buildCrud<PriceList, PriceListInput, PriceListUpdateInput>('price-lists'),
+  priceListItems: (listId: string) =>
+    cachedGet<ApiResponse<PriceListItem[]>>(apiClient, `/price-lists/${listId}/items`),
   warehouses: buildCrud<Warehouse, WarehouseInput, WarehouseUpdateInput>('warehouses'),
 };

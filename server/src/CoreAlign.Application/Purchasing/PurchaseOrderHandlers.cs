@@ -55,6 +55,10 @@ internal static class GoodsReceiptMapper
         g.ReversedAtUtc,
         g.ReversedByUserId,
         g.ReversalReason,
+        g.QcStatus,
+        g.QcDecisionAtUtc,
+        g.QcDecidedByUserId,
+        g.QcRejectionReason,
         g.Lines.OrderBy(l => l.LineNumber).Select(ToDto).ToList(),
         g.CreatedAtUtc);
 
@@ -310,6 +314,7 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
     private readonly IWarehouseRepository _warehouses;
     private readonly IDocumentSequenceRepository _sequences;
     private readonly IGLPostingOutbox _outbox;
+    private readonly IProductRepository _products;
     private readonly IUnitOfWork _uow;
 
     public ReceivePurchaseOrderHandler(
@@ -319,6 +324,7 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
         IWarehouseRepository warehouses,
         IDocumentSequenceRepository sequences,
         IGLPostingOutbox outbox,
+        IProductRepository products,
         IUnitOfWork uow)
     {
         _orders = orders;
@@ -327,6 +333,7 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
         _warehouses = warehouses;
         _sequences = sequences;
         _outbox = outbox;
+        _products = products;
         _uow = uow;
     }
 
@@ -353,41 +360,79 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
             await _uow.SaveChangesAsync(ct);
         }
         var grnNumber = await _sequences.ConsumeAsync(DocumentSequenceType.GoodsReceiptNumber, DateTime.UtcNow, ct);
+
+        var requiresQc = await ResolveRequiresQcAsync(po, c, ct);
         var grn = new GoodsReceipt(grnNumber, po, warehouseId, DateTime.UtcNow, c.IdempotencyKey,
-            receivedByUserId: c.ReceivedByUserId, notes: c.Notes);
+            receivedByUserId: c.ReceivedByUserId, notes: c.Notes, requiresInspection: requiresQc);
 
         foreach (var receipt in c.Lines.Where(l => l.Quantity > 0m))
         {
+            // The PO line receipt is ALWAYS recorded (PO progresses, qty can't be re-received).
+            // Only the stock + GL recognition is deferred to QC-approve for inspection holds.
             var line = po.RecordLineReceipt(receipt.OrderLineId, receipt.Quantity);
-            var movement = await _allocation.ApplyReceiptAsync(new StockReceiptRequest(
-                ProductId: line.ProductId,
-                WarehouseId: warehouseId,
-                Quantity: receipt.Quantity,
-                UnitCost: line.UnitCost,
+            var grnLine = new GoodsReceiptLine(line.Id, line.ProductId, line.ProductSku, line.ProductName,
+                receipt.Quantity, line.UnitCost);
+            grn.AddLine(grnLine);
+        }
+
+        if (!requiresQc)
+        {
+            await GoodsReceiptPosting.ApplyStockAndGlAsync(grn, po, _allocation, _outbox, ct);
+        }
+
+        await _grns.AddAsync(grn, ct);
+        _orders.Update(po);
+        await _uow.SaveChangesAsync(ct);
+        return PurchaseOrderMapper.ToDto(po);
+    }
+
+    private async Task<bool> ResolveRequiresQcAsync(PurchaseOrder po, ReceivePurchaseOrderCommand c, CancellationToken ct)
+    {
+        var receivedLineIds = c.Lines.Where(l => l.Quantity > 0m).Select(l => l.OrderLineId).ToHashSet();
+        var productIds = po.Lines.Where(l => receivedLineIds.Contains(l.Id)).Select(l => l.ProductId).Distinct().ToList();
+        var products = await _products.GetByIdsAsync(productIds, ct);
+        var anyProductRequiresInspection = products.Values.Any(p => p.RequiresInspection);
+        // Compliance floor: a product flagged RequiresInspection cannot be bypassed by an explicit false override.
+        return anyProductRequiresInspection || (c.RequiresQcInspection ?? false);
+    }
+}
+
+internal static class GoodsReceiptPosting
+{
+    public static async Task ApplyStockAndGlAsync(
+        GoodsReceipt grn,
+        PurchaseOrder po,
+        IAllocationService allocation,
+        IGLPostingOutbox outbox,
+        CancellationToken ct)
+    {
+        foreach (var grnLine in grn.Lines)
+        {
+            var movement = await allocation.ApplyReceiptAsync(new StockReceiptRequest(
+                ProductId: grnLine.ProductId,
+                WarehouseId: grn.WarehouseId,
+                Quantity: grnLine.QuantityReceived,
+                UnitCost: grnLine.UnitCost,
                 SourceDocumentType: StockSourceDocumentType.Purchase,
                 SourceDocumentId: po.Id,
-                SourceLineId: line.Id,
+                SourceLineId: grnLine.PurchaseOrderLineId,
                 SourceReference: grn.GrnNumber,
                 LotId: null,
                 SerialNumber: null,
                 ReasonCodeId: null,
-                Notes: c.Notes ?? $"Mal kabul ({grn.GrnNumber}, PO {po.PoNumber})"), ct);
-
-            var grnLine = new GoodsReceiptLine(line.Id, line.ProductId, line.ProductSku, line.ProductName,
-                receipt.Quantity, line.UnitCost);
+                Notes: grn.Notes ?? $"Mal kabul ({grn.GrnNumber}, PO {po.PoNumber})"), ct);
             grnLine.SetMovementId(movement.Id);
-            grn.AddLine(grnLine);
         }
 
-        // Inventory recognition: goods enter stock against the GR/IR clearing
-        // account, which the vendor bill later settles. ONE entry per GRN keyed by
-        // grn.Id — the stable idempotency key that closes P2P-4 (movement ids change
-        // on retry and defeat GLPostingService dedup). FX preserved: the document
-        // rate is still passed so foreign receipts translate to base currency.
+        // Inventory recognition: goods enter stock against the GR/IR clearing account,
+        // which the vendor bill later settles. ONE entry per GRN keyed by grn.Id (stable
+        // idempotency key, P2P-4; movement ids change on retry and defeat GL dedup). FX
+        // preserved via the snapshotted document rate. For QC holds this runs at approve
+        // time, coinciding with the goods becoming available stock.
         var total = Math.Round(grn.Lines.Sum(l => l.LineCost), 4);
         if (total > 0m)
         {
-            await _outbox.EnqueueAsync(new GLPostingRequest(
+            await outbox.EnqueueAsync(new GLPostingRequest(
                 JournalSourceType.GoodsReceipt, grn.Id, grn.GrnNumber, DateTime.UtcNow.Date,
                 JournalEntryType.Mahsup, $"Mal kabul ({grn.GrnNumber}, PO {po.PoNumber})",
                 new[]
@@ -395,13 +440,85 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
                     new GLPostingLine(GLPostingKey.Inventory, total, 0m),
                     new GLPostingLine(GLPostingKey.GoodsReceiptClearing, 0m, total),
                 },
-                po.Currency, po.ExchangeRate), ct);
+                grn.Currency, grn.ExchangeRate), ct);
         }
+    }
+}
 
-        await _grns.AddAsync(grn, ct);
+public class ApproveGoodsReceiptQcHandler : IRequestHandler<ApproveGoodsReceiptQcCommand, GoodsReceiptDto>
+{
+    private readonly IGoodsReceiptRepository _grns;
+    private readonly IPurchaseOrderRepository _orders;
+    private readonly IAllocationService _allocation;
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IUnitOfWork _uow;
+
+    public ApproveGoodsReceiptQcHandler(
+        IGoodsReceiptRepository grns,
+        IPurchaseOrderRepository orders,
+        IAllocationService allocation,
+        IGLPostingOutbox outbox,
+        IUnitOfWork uow)
+    {
+        _grns = grns;
+        _orders = orders;
+        _allocation = allocation;
+        _outbox = outbox;
+        _uow = uow;
+    }
+
+    public async Task<GoodsReceiptDto> Handle(ApproveGoodsReceiptQcCommand c, CancellationToken ct)
+    {
+        var grn = await _grns.GetByIdAsync(c.GrnId, ct) ?? throw new GoodsReceiptNotFoundException();
+        // FSM-natural idempotency: a second approve throws before any stock/GL mutation.
+        grn.ApproveQc(c.DecidedByUserId, DateTime.UtcNow);
+
+        var po = await _orders.GetByIdAsync(grn.PurchaseOrderId, ct) ?? throw new PurchaseOrderNotFoundException();
+        await GoodsReceiptPosting.ApplyStockAndGlAsync(grn, po, _allocation, _outbox, ct);
+
+        _grns.Update(grn);
         _orders.Update(po);
         await _uow.SaveChangesAsync(ct);
-        return PurchaseOrderMapper.ToDto(po);
+        return GoodsReceiptMapper.ToDto(grn);
+    }
+}
+
+public class RejectGoodsReceiptQcHandler : IRequestHandler<RejectGoodsReceiptQcCommand, GoodsReceiptDto>
+{
+    private readonly IGoodsReceiptRepository _grns;
+    private readonly IPurchaseOrderRepository _orders;
+    private readonly IUnitOfWork _uow;
+
+    public RejectGoodsReceiptQcHandler(
+        IGoodsReceiptRepository grns,
+        IPurchaseOrderRepository orders,
+        IUnitOfWork uow)
+    {
+        _grns = grns;
+        _orders = orders;
+        _uow = uow;
+    }
+
+    public async Task<GoodsReceiptDto> Handle(RejectGoodsReceiptQcCommand c, CancellationToken ct)
+    {
+        var grn = await _grns.GetByIdAsync(c.GrnId, ct) ?? throw new GoodsReceiptNotFoundException();
+        // A QC-pending GRN never applied a receipt: no stock, no movement, no GL to back out.
+        // Reject is a status flip + un-recording the PO line receipt so the qty is not counted as received.
+        grn.RejectQc(c.Reason, c.DecidedByUserId, DateTime.UtcNow);
+
+        var po = await _orders.GetByIdAsync(grn.PurchaseOrderId, ct);
+        if (po is not null)
+        {
+            foreach (var grnLine in grn.Lines)
+            {
+                po.ReverseLineReceipt(grnLine.PurchaseOrderLineId, grnLine.QuantityReceived);
+            }
+            _orders.Update(po);
+        }
+
+        _grns.Update(grn);
+        await _uow.SaveChangesAsync(ct);
+        return GoodsReceiptMapper.ToDto(grn);
     }
 }
 

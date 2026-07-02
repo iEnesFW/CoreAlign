@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
+import { useTheme } from '@/app/providers/themeContext';
 
 interface Props {
   counts: Record<string, number>;
@@ -17,6 +18,8 @@ const COLORS: Record<(typeof STATUS_ORDER)[number], string> = {
 
 export const OrderStatusChart = ({ counts }: Props) => {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const data = useMemo(
     () =>
@@ -54,16 +57,19 @@ export const OrderStatusChart = ({ counts }: Props) => {
         <Tooltip
           contentStyle={{
             fontSize: 12,
-            border: '1px solid rgb(226 232 240)',
             borderRadius: 6,
-            background: 'rgb(255 255 255 / 0.95)',
+            border: `1px solid ${isDark ? 'rgb(51 65 85)' : 'rgb(226 232 240)'}`,
+            background: isDark ? 'rgb(15 23 42 / 0.97)' : 'rgb(255 255 255 / 0.97)',
+            color: isDark ? 'rgb(226 232 240)' : 'rgb(15 23 42)',
           }}
+          itemStyle={{ color: isDark ? 'rgb(226 232 240)' : 'rgb(15 23 42)' }}
+          labelStyle={{ color: isDark ? 'rgb(148 163 184)' : 'rgb(100 116 139)' }}
         />
         <Legend
           verticalAlign="bottom"
           height={28}
           iconType="circle"
-          wrapperStyle={{ fontSize: 11 }}
+          wrapperStyle={{ fontSize: 11, color: isDark ? 'rgb(203 213 225)' : 'rgb(71 85 105)' }}
         />
       </PieChart>
     </ResponsiveContainer>

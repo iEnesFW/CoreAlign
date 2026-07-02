@@ -8,6 +8,7 @@ import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
 import { getErroredTabs, firstErroredTab } from '@/shared/lib/formTabs';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
@@ -174,6 +175,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
   const [quickAdd, setQuickAdd] = useState<ProductQuickAdd | null>(null);
   const [tab, setTab] = useState<ProductTab>('general');
   const requestClose = useModalClose(isDirty, onClose, open);
+  const backdrop = useBackdropClick(requestClose);
   const erroredTabs = getErroredTabs(errors, PRODUCT_FIELD_TAB);
 
   useEffect(() => {
@@ -348,7 +350,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={requestClose}
+      {...backdrop}
       role="presentation"
     >
       <div

@@ -79,11 +79,6 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
         var (_, _, _, outstanding, currency) = invoiceTotalsTask.Result;
 
         var currentBalance = balanceTask.Result;
-        if (currentBalance == 0m && customer.CurrentBalance != 0m)
-        {
-            currentBalance = customer.CurrentBalance;
-        }
-
         var creditLimit = customer.CreditLimit;
         var creditAvailable = creditLimit > 0 ? Math.Max(0m, creditLimit - currentBalance) : 0m;
         var creditUsedPercent = creditLimit > 0 ? Math.Round((currentBalance / creditLimit) * 100m, 2) : 0m;

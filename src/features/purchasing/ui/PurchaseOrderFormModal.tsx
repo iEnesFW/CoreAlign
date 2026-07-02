@@ -163,7 +163,18 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
             label={t('po.form.vendor', { defaultValue: 'Tedarikçi' })}
             required
             value={vendorId}
-            onChange={(e) => setVendorId(e.target.value)}
+            onChange={(e) => {
+              const nextVendorId = e.target.value;
+              setVendorId(nextVendorId);
+              // New POs inherit the supplier's default currency (mirrors the customer
+              // commercial-terms auto-flow); the user can still override.
+              if (!isEdit) {
+                const vendor = vendors.find((v) => v.id === nextVendorId);
+                if (vendor?.defaultCurrency) {
+                  setCurrency(vendor.defaultCurrency.toUpperCase());
+                }
+              }
+            }}
           >
             <option value="">{t('po.form.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
             {vendors.map((v) => (

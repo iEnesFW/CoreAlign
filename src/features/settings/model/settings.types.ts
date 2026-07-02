@@ -86,39 +86,8 @@ export interface UpdateEmailTemplateRequest {
   isActive: boolean;
 }
 
-export type DocumentSequenceType =
-  | 'CustomerCode'
-  | 'ProductSku'
-  | 'OrderNumber'
-  | 'InvoiceNumber'
-  | 'CreditNoteNumber'
-  | 'DebitNoteNumber'
-  | 'PaymentNumber'
-  | 'ShipmentNumber'
-  | 'JournalNumber'
-  | 'SubscriptionOrderNumber'
-  | 'QuoteNumber'
-  | 'ReturnRequestNumber'
-  | 'PurchaseOrderNumber'
-  | 'VendorPaymentNumber'
-  | 'GlassProjectCode'
-  | 'StockCountNumber';
-
-export interface DocumentSequenceConfig {
-  type: DocumentSequenceType;
-  prefix: string;
-  padLength: number;
-  format: string | null;
-  currentYear: number;
-  nextNumber: number;
-  preview: string;
-  isConfigured: boolean;
-}
-
-export interface ConfigureDocumentSequenceRequest {
-  type: DocumentSequenceType;
-  prefix: string;
-  padLength: number;
-  format: string | null;
-  nextNumber: number;
-}
+export type {
+  ConfigureDocumentSequenceRequest,
+  DocumentSequenceConfig,
+  DocumentSequenceType,
+} from '@/shared/document-sequences';

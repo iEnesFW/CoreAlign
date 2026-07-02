@@ -1,7 +1,9 @@
 using System.Security.Claims;
 using Asp.Versioning;
+using CoreAlign.Application.Notifications.Messages;
 using CoreAlign.Application.Notifications.Repositories;
 using CoreAlign.Domain.Interfaces;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +17,16 @@ public class MyNotificationMessagesController : ControllerBase
 {
     private readonly INotificationMessageRepository _messages;
     private readonly ITenantContext _tenantContext;
+    private readonly IMediator _mediator;
 
-    public MyNotificationMessagesController(INotificationMessageRepository messages, ITenantContext tenantContext)
+    public MyNotificationMessagesController(
+        INotificationMessageRepository messages,
+        ITenantContext tenantContext,
+        IMediator mediator)
     {
         _messages = messages;
         _tenantContext = tenantContext;
+        _mediator = mediator;
     }
 
     private Guid CurrentUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -45,7 +52,10 @@ public class MyNotificationMessagesController : ControllerBase
             m.Subject,
             m.BodyMarkdown,
             m.CreatedAtUtc,
-            m.ReadAtUtc
+            m.ReadAtUtc,
+            m.IsAcknowledged,
+            m.AcknowledgedAtUtc,
+            m.AcknowledgmentNote
         }));
     }
 
@@ -61,11 +71,20 @@ public class MyNotificationMessagesController : ControllerBase
     [HttpPost("{id:guid}/mark-read")]
     public async Task<IActionResult> MarkReadAsync(Guid id, CancellationToken ct)
     {
-        var tenantId = _tenantContext.RequireTenantId();
-        var entity = await _messages.GetByIdAsync(tenantId, id, ct);
-        if (entity is null) return NotFound();
-        if (entity.UserId != CurrentUserId()) return Forbid();
-        entity.MarkRead(DateTime.UtcNow);
+        await _mediator.Send(new MarkNotificationMessageReadCommand(id, CurrentUserId()), ct);
         return NoContent();
     }
+
+    [HttpPost("{id:guid}/acknowledge")]
+    public async Task<IActionResult> AcknowledgeAsync(
+        Guid id,
+        [FromBody] AcknowledgeNotificationRequest? request,
+        CancellationToken ct = default)
+    {
+        await _mediator.Send(
+            new AcknowledgeNotificationMessageCommand(id, request?.Note, CurrentUserId()), ct);
+        return NoContent();
+    }
+
+    public sealed record AcknowledgeNotificationRequest(string? Note);
 }

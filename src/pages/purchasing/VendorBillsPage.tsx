@@ -5,11 +5,13 @@ import {
   BadgeDollarSign,
   BookOpen,
   CheckCircle2,
+  HandCoins,
   Link2,
   Pencil,
   Plus,
   Receipt,
   ShieldCheck,
+  Wallet,
   XCircle,
 } from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
@@ -31,6 +33,10 @@ import {
 } from '@/features/purchasing/hooks/useVendorBilling';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import { VendorBillFormModal, VendorPaymentModal } from '@/features/purchasing/ui/VendorBillModals';
+import {
+  OffsetVendorAdvanceModal,
+  VendorAdvancePaymentModal,
+} from '@/features/purchasing/ui/VendorAdvanceModals';
 import { ApplyVendorPaymentModal } from '@/pages/purchasing/components/ApplyVendorPaymentModal';
 import { SourceJournalEntriesModal } from '@/features/accounting/ui/SourceJournalEntriesModal';
 import { usePurchasingApprove } from '@/features/purchasing/hooks/usePurchasingApprove';
@@ -96,6 +102,8 @@ export const VendorBillsPage = () => {
   const [editBill, setEditBill] = useState<VendorBill | null>(null);
   const [payBill, setPayBill] = useState<VendorBill | null>(null);
   const [applyBill, setApplyBill] = useState<VendorBill | null>(null);
+  const [offsetBill, setOffsetBill] = useState<VendorBill | null>(null);
+  const [advanceOpen, setAdvanceOpen] = useState(false);
   const [appsBillId, setAppsBillId] = useState<string | null>(null);
   const [glSource, setGlSource] = useState<{ id: string; label: string } | null>(null);
 
@@ -187,7 +195,12 @@ export const VendorBillsPage = () => {
                 <Plus size={14} />
                 {t('ap.page.new', { defaultValue: 'Yeni Fatura' })}
               </Button>
-            ) : undefined
+            ) : (
+              <Button size="sm" variant="secondary" onClick={() => setAdvanceOpen(true)}>
+                <Wallet size={14} />
+                {t('Vendors.advance.newButton', { defaultValue: 'Yeni Avans' })}
+              </Button>
+            )
           }
         />
       }
@@ -405,6 +418,16 @@ export const VendorBillsPage = () => {
                             <Link2 size={13} />
                           </button>
                         )}
+                        {(b.status === 'Posted' || b.status === 'PartiallyPaid') && (
+                          <button
+                            type="button"
+                            onClick={() => setOffsetBill(b)}
+                            className="rounded p-1 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                            title={t('Vendors.offset.action', { defaultValue: 'Avans Mahsup Et' })}
+                          >
+                            <HandCoins size={13} />
+                          </button>
+                        )}
                         {hasLedger(b.status) && (
                           <button
                             type="button"
@@ -465,7 +488,14 @@ export const VendorBillsPage = () => {
               {payments.map((p) => (
                 <tr key={p.id} className="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
                   <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
-                    {p.paymentNumber}
+                    <span className="inline-flex items-center gap-1.5">
+                      {p.paymentNumber}
+                      {p.isAdvance && (
+                        <span className="rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                          {t('Vendors.advance.badge', { defaultValue: 'Avans' })}
+                        </span>
+                      )}
+                    </span>
                   </td>
                   <td className="px-3 py-2 text-slate-800 dark:text-slate-100">{p.vendorName}</td>
                   <td className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
@@ -498,6 +528,10 @@ export const VendorBillsPage = () => {
       {editBill && <VendorBillFormModal bill={editBill} onClose={() => setEditBill(null)} />}
       {payBill && <VendorPaymentModal bill={payBill} onClose={() => setPayBill(null)} />}
       {applyBill && <ApplyVendorPaymentModal bill={applyBill} onClose={() => setApplyBill(null)} />}
+      {offsetBill && (
+        <OffsetVendorAdvanceModal bill={offsetBill} onClose={() => setOffsetBill(null)} />
+      )}
+      {advanceOpen && <VendorAdvancePaymentModal onClose={() => setAdvanceOpen(false)} />}
       {appsBillId && (
         <VendorBillApplicationsModal billId={appsBillId} onClose={() => setAppsBillId(null)} />
       )}

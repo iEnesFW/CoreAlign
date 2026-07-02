@@ -38,8 +38,8 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     public CreateOrderCommandValidator()
     {
         RuleFor(x => x.OrderNumber)
-            .NotEmpty().WithMessage("Validation.Required")
-            .MaximumLength(64).WithMessage("Validation.TooLong");
+            .MaximumLength(64).WithMessage("Validation.TooLong")
+            .When(x => !string.IsNullOrEmpty(x.OrderNumber));
         RuleFor(x => x.CustomerId).NotEmpty();
         RuleFor(x => x.OrderDate).NotEmpty();
         RuleFor(x => x.Currency)

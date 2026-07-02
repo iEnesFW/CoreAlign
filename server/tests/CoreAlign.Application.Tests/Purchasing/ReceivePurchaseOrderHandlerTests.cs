@@ -14,6 +14,7 @@ public class ReceivePurchaseOrderHandlerTests
     private readonly IWarehouseRepository _warehouses = Substitute.For<IWarehouseRepository>();
     private readonly IDocumentSequenceRepository _sequences = Substitute.For<IDocumentSequenceRepository>();
     private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IProductRepository _products = Substitute.For<IProductRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly ReceivePurchaseOrderHandler _sut;
 
@@ -40,7 +41,9 @@ public class ReceivePurchaseOrderHandlerTests
             .Returns(_ => new DocumentSequence(DocumentSequenceType.GoodsReceiptNumber, "GRN", 2026, 1, 5));
         _sequences.ConsumeAsync(DocumentSequenceType.GoodsReceiptNumber, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns("GRN-2026-00001");
-        _sut = new ReceivePurchaseOrderHandler(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _uow);
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product>());
+        _sut = new ReceivePurchaseOrderHandler(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _products, _uow);
     }
 
     private static PurchaseOrder ApprovedPo()

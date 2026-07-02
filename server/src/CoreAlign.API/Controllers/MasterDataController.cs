@@ -192,4 +192,28 @@ public class MasterDataController : ControllerBase
     [HttpDelete("warehouses/{id:guid}")]
     public async Task<IActionResult> DeleteWarehouse(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteWarehouseCommand(id), ct)).ToOk();
+
+    // ---------- Bank Accounts ----------
+    [HttpGet("bank-accounts")]
+    public async Task<IActionResult> ListBankAccounts([FromQuery] bool? isActive, CancellationToken ct)
+        => (await _mediator.Send(new ListBankAccountsQuery(isActive), ct)).ToOk();
+
+    [HttpGet("bank-accounts/{id:guid}")]
+    public async Task<IActionResult> GetBankAccount(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new GetBankAccountByIdQuery(id), ct)).ToOk();
+
+    [HttpPost("bank-accounts")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> CreateBankAccount([FromBody] CreateBankAccountCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToCreated();
+
+    [HttpPut("bank-accounts/{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> UpdateBankAccount(Guid id, [FromBody] UpdateBankAccountCommand cmd, CancellationToken ct)
+        => id != cmd.Id ? RouteIdMismatch() : (await _mediator.Send(cmd, ct)).ToOk();
+
+    [HttpDelete("bank-accounts/{id:guid}")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> DeleteBankAccount(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new DeleteBankAccountCommand(id), ct)).ToOk();
 }

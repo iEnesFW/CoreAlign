@@ -86,6 +86,16 @@ public interface IWarehouseRepository
     void Remove(Warehouse warehouse);
 }
 
+public interface IBankAccountRepository
+{
+    Task<BankAccount?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<BankAccount>> ListAsync(bool? isActive = null, CancellationToken cancellationToken = default);
+    Task AddAsync(BankAccount account, CancellationToken cancellationToken = default);
+    void Update(BankAccount account);
+    void Remove(BankAccount account);
+    Task ClearPrimaryFlagAsync(Guid? exceptId, CancellationToken cancellationToken = default);
+}
+
 public interface ICustomerGroupRepository
 {
     Task<CustomerGroup?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

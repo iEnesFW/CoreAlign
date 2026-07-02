@@ -20,6 +20,7 @@ public class SsoLoginService : ISsoLoginService
     private readonly IUserSessionRepository _userSessionRepository;
     private readonly ILoginAuditLogRepository _loginAuditLogRepository;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IUserMembershipService _userMembershipService;
     private readonly IDateTimeProvider _clock;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOidcDiscoveryClient _discoveryClient;
@@ -35,6 +36,7 @@ public class SsoLoginService : ISsoLoginService
         IUserSessionRepository userSessionRepository,
         ILoginAuditLogRepository loginAuditLogRepository,
         IJwtTokenService jwtTokenService,
+        IUserMembershipService userMembershipService,
         IDateTimeProvider clock,
         IUnitOfWork unitOfWork,
         IOidcDiscoveryClient discoveryClient,
@@ -49,6 +51,7 @@ public class SsoLoginService : ISsoLoginService
         _userSessionRepository = userSessionRepository;
         _loginAuditLogRepository = loginAuditLogRepository;
         _jwtTokenService = jwtTokenService;
+        _userMembershipService = userMembershipService;
         _clock = clock;
         _unitOfWork = unitOfWork;
         _discoveryClient = discoveryClient;
@@ -146,7 +149,13 @@ public class SsoLoginService : ISsoLoginService
             _userRepository.Update(user);
 
             var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
-            var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.TenantId, user.Email, roles);
+            var persona = await _userMembershipService.ResolvePersonaAsync(user.Id, user.TenantId, cancellationToken);
+            var accessToken = _jwtTokenService.GenerateAccessToken(
+                user.Id,
+                user.TenantId,
+                user.Email,
+                roles,
+                persona.ToString().ToLowerInvariant());
             var rawRefreshToken = _jwtTokenService.GenerateRefreshToken();
             var refreshTokenHash = _jwtTokenService.HashToken(rawRefreshToken);
 

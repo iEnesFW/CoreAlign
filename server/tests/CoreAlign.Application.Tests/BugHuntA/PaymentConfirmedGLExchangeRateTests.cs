@@ -54,4 +54,33 @@ public class PaymentConfirmedGLExchangeRateTests
             "the payment AR side must translate at the same rate the invoice booked, else a foreign-currency residual never clears");
         enqueued.Currency.Should().Be("USD");
     }
+
+    [Fact]
+    public async Task PaymentConfirmedGL_for_advance_credits_340_not_AR_120()
+    {
+        const decimal amount = 5000m;
+        var payment = new Payment(
+            "PAY-ADV", Guid.NewGuid(), "Customer",
+            PaymentDirection.CustomerReceipt, DateTime.UtcNow,
+            PaymentMethod.BankTransfer, amount, "TRY", isAdvance: true);
+        _payments.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns(payment);
+
+        GLPostingRequest? enqueued = null;
+        await _outbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => enqueued = r), Arg.Any<CancellationToken>());
+
+        var sut = new PaymentConfirmedGLHandler(_outbox, _payments);
+        var evt = new PaymentConfirmedEvent(
+            payment.TenantId, payment.Id, payment.CustomerId, payment.PaymentNumber,
+            PaymentDirection.CustomerReceipt, amount, "TRY", DateTime.UtcNow, 1m);
+
+        await sut.Handle(evt, CancellationToken.None);
+
+        enqueued.Should().NotBeNull();
+        enqueued!.SourceType.Should().Be(JournalSourceType.CustomerAdvanceReceived);
+        enqueued.Lines.Should().Contain(l => l.Key == GLPostingKey.CustomerAdvanceReceived && l.Credit == amount,
+            "an advance receipt is a prepayment booked to 340, not the AR control account");
+        enqueued.Lines.Should().Contain(l => (l.Key == GLPostingKey.Cash || l.Key == GLPostingKey.Bank) && l.Debit == amount);
+        enqueued.Lines.Should().NotContain(l => l.Key == GLPostingKey.AccountsReceivable,
+            "an advance must never hit AR(120) — there is no invoice yet");
+    }
 }

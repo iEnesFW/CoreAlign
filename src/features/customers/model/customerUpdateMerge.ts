@@ -1,0 +1,33 @@
+import type { Customer, UpdateCustomerInput } from './customer.types';
+
+export const buildCustomerUpdateInput = (
+  customer: Customer,
+  overrides: Partial<Pick<UpdateCustomerInput, 'name' | 'email' | 'phone'>> = {},
+): UpdateCustomerInput => ({
+  id: customer.id,
+  name: customer.name,
+  type: customer.type,
+  legalName: customer.legalName,
+  tradeName: customer.tradeName,
+  nationalId: customer.nationalId,
+  taxNumber: customer.taxNumber,
+  taxOffice: customer.taxOffice,
+  email: customer.email,
+  phone: customer.phone,
+  website: customer.website,
+  defaultCurrency: customer.defaultCurrency,
+  paymentTermsId: customer.paymentTermsId,
+  priceListId: customer.priceListId,
+  customerGroupId: customer.customerGroupId,
+  salesRepUserId: customer.salesRepUserId,
+  creditLimit: customer.creditLimit,
+  defaultDiscountPercent: customer.defaultDiscountPercent,
+  classification: customer.classification,
+  channel: customer.channel,
+  territory: customer.territory,
+  languageCode: customer.languageCode,
+  parentCustomerId: customer.parentCustomerId,
+  notes: customer.notes,
+  status: customer.status,
+  ...overrides,
+});

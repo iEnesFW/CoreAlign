@@ -79,6 +79,7 @@ public class VendorPaymentConfiguration : IEntityTypeConfiguration<VendorPayment
         builder.Property(p => p.ExchangeRate).HasColumnType("numeric(18,6)");
         builder.Property(p => p.Amount).HasColumnType("numeric(18,4)");
         builder.Property(p => p.AppliedAmount).HasColumnType("numeric(18,4)");
+        builder.Property(p => p.IsAdvance).HasDefaultValue(false);
         builder.Property(p => p.Method).HasMaxLength(40);
         builder.Property(p => p.Notes).HasMaxLength(2000);
         builder.Property(p => p.VoidReason).HasMaxLength(500);

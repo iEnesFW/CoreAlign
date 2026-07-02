@@ -85,7 +85,14 @@ public record ReceivePurchaseOrderCommand(
     string IdempotencyKey,
     Guid? WarehouseId = null,
     string? Notes = null,
-    Guid? ReceivedByUserId = null) : IRequest<PurchaseOrderDto>, ITransactionalRequest;
+    Guid? ReceivedByUserId = null,
+    bool? RequiresQcInspection = null) : IRequest<PurchaseOrderDto>, ITransactionalRequest;
+
+public record ApproveGoodsReceiptQcCommand(Guid GrnId, Guid DecidedByUserId = default)
+    : IRequest<GoodsReceiptDto>, ITransactionalRequest;
+
+public record RejectGoodsReceiptQcCommand(Guid GrnId, string? Reason = null, Guid DecidedByUserId = default)
+    : IRequest<GoodsReceiptDto>, ITransactionalRequest;
 
 public record GetPurchaseOrderByIdQuery(Guid Id) : IRequest<PurchaseOrderDto?>;
 public record SearchPurchaseOrdersQuery(
@@ -124,6 +131,10 @@ public record GoodsReceiptDto(
     DateTime? ReversedAtUtc,
     Guid? ReversedByUserId,
     string? ReversalReason,
+    GoodsReceiptQcStatus QcStatus,
+    DateTime? QcDecisionAtUtc,
+    Guid? QcDecidedByUserId,
+    string? QcRejectionReason,
     IReadOnlyList<GoodsReceiptLineDto> Lines,
     DateTime CreatedAtUtc);
 

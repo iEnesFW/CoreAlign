@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
 import { ConfirmContext, type ConfirmFn, type ConfirmOptions } from './useConfirm';
 
 interface State {
@@ -37,6 +38,7 @@ export const ConfirmDialogProvider = ({ children }: { children: React.ReactNode 
     return () => document.removeEventListener('keydown', handler);
   }, [state.open, close]);
 
+  const backdrop = useBackdropClick(() => close(false));
   const tone = state.options?.tone ?? 'default';
   const isDanger = tone === 'danger';
 
@@ -49,7 +51,7 @@ export const ConfirmDialogProvider = ({ children }: { children: React.ReactNode 
           aria-modal="true"
           aria-labelledby="confirm-title"
           className="animate-fade-in fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm"
-          onClick={() => close(false)}
+          {...backdrop}
         >
           <div
             className="animate-zoom-in relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl ring-1 ring-black/5 dark:border-white/10 dark:bg-slate-950 dark:ring-white/5"

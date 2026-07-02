@@ -62,6 +62,10 @@ export const InvoicesPage = lazyNamed(
   () => import('@/pages/invoices/InvoicesPage'),
   'InvoicesPage',
 );
+export const RecurringInvoicesPage = lazyNamed(
+  () => import('@/pages/invoices/RecurringInvoicesPage'),
+  'RecurringInvoicesPage',
+);
 export const InvoicePrintView = lazyNamed(
   () => import('@/pages/invoices/InvoicePrintView'),
   'InvoicePrintView',
@@ -102,6 +106,14 @@ export const ReconciliationPage = lazyNamed(
 export const YearEndClosePage = lazyNamed(
   () => import('@/pages/accounting/YearEndClosePage'),
   'YearEndClosePage',
+);
+export const BankAccountsPage = lazyNamed(
+  () => import('@/pages/accounting/BankAccountsPage'),
+  'BankAccountsPage',
+);
+export const CashPositionPage = lazyNamed(
+  () => import('@/pages/accounting/CashPositionPage'),
+  'CashPositionPage',
 );
 export const VendorsPage = lazyNamed(() => import('@/pages/vendors/VendorsPage'), 'VendorsPage');
 export const VendorDetailPage = lazyNamed(
@@ -153,7 +165,19 @@ export const SettingsPage = lazyNamed(
   () => import('@/pages/settings/SettingsPage'),
   'SettingsPage',
 );
+export const DunningSettingsPage = lazyNamed(
+  () => import('@/pages/settings/dunning/DunningSettingsPage'),
+  'DunningSettingsPage',
+);
 export const ReportsPage = lazyNamed(() => import('@/pages/reports/ReportsPage'), 'ReportsPage');
+export const DuplicateDetectionPage = lazyNamed(
+  () => import('@/pages/reports/DuplicateDetectionPage'),
+  'DuplicateDetectionPage',
+);
+export const DocumentNumberGapPage = lazyNamed(
+  () => import('@/pages/reports/DocumentNumberGapPage'),
+  'DocumentNumberGapPage',
+);
 export const ReportLibraryPage = lazyNamed(
   () => import('@/pages/reports/ReportLibraryPage'),
   'ReportLibraryPage',

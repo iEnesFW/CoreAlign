@@ -53,6 +53,16 @@ public record InvoiceCancelledEvent(
     bool WasIssued,
     DateTime OccurredAtUtc) : IDomainEvent;
 
+public record InvoiceWrittenOffEvent(
+    Guid TenantId,
+    Guid InvoiceId,
+    Guid CustomerId,
+    string InvoiceNumber,
+    decimal Amount,
+    string Currency,
+    string? Reason,
+    DateTime OccurredAtUtc) : IDomainEvent;
+
 public record PaymentConfirmedEvent(
     Guid TenantId,
     Guid PaymentId,

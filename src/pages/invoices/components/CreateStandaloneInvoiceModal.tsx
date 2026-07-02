@@ -40,7 +40,7 @@ const toIsoUtcMidnight = (date: string): string =>
   date ? new Date(`${date}T00:00:00Z`).toISOString() : new Date().toISOString();
 
 export const CreateStandaloneInvoiceModal = ({ open, onClose, onCreated }: Props) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const customersQuery = useCustomersQuery({ page: 1, pageSize: 100 });
   const createMutation = useCreateStandaloneInvoice();
 
@@ -66,6 +66,21 @@ export const CreateStandaloneInvoiceModal = ({ open, onClose, onCreated }: Props
     });
     return { subtotal, tax, total: subtotal + tax };
   }, [lines]);
+
+  const dueDatePreview = useMemo(() => {
+    if (!issueDate) return '';
+    const base = new Date(`${issueDate}T00:00:00Z`);
+    if (Number.isNaN(base.getTime())) return '';
+    base.setUTCDate(base.getUTCDate() + (Number.isFinite(dueDays) ? dueDays : 0));
+    try {
+      return new Intl.DateTimeFormat(i18n.language, {
+        dateStyle: 'medium',
+        timeZone: 'UTC',
+      }).format(base);
+    } catch {
+      return base.toISOString().slice(0, 10);
+    }
+  }, [issueDate, dueDays, i18n.language]);
 
   const reset = () => {
     setCustomerId('');
@@ -194,6 +209,15 @@ export const CreateStandaloneInvoiceModal = ({ open, onClose, onCreated }: Props
               onChange={(e) => setDueDays(Number.parseInt(e.target.value, 10) || 0)}
               className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             />
+            {dueDatePreview && (
+              <span className="font-normal text-[11px] text-primary-600 dark:text-primary-300">
+                {t('invoices.standalone.duePreview', {
+                  defaultValue: 'Vade: {{date}}',
+                  days: dueDays,
+                  date: dueDatePreview,
+                })}
+              </span>
+            )}
           </Field>
         </div>
 

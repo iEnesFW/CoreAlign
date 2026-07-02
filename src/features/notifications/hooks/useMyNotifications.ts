@@ -23,3 +23,12 @@ export const useMarkNotificationRead = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
   });
 };
+
+export const useAcknowledgeNotification = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) =>
+      notificationsApi.acknowledge(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+};

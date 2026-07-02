@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useTheme } from '@/app/providers/themeContext';
 import type { SalesTrendPoint } from '@/features/dashboard/model/dashboard.types';
 
 interface Props {
@@ -17,6 +18,8 @@ interface Props {
 
 export const SalesTrendChart = ({ points }: Props) => {
   const { i18n } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   const data = useMemo(
     () =>
@@ -58,27 +61,31 @@ export const SalesTrendChart = ({ points }: Props) => {
         />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 10 }}
+          tick={{ fontSize: 10, fill: 'currentColor' }}
           stroke="currentColor"
-          className="text-slate-500"
+          className="text-slate-500 dark:text-slate-400"
           interval="preserveStartEnd"
           minTickGap={24}
         />
         <YAxis
-          tick={{ fontSize: 10 }}
+          tick={{ fontSize: 10, fill: 'currentColor' }}
           stroke="currentColor"
-          className="text-slate-500"
+          className="text-slate-500 dark:text-slate-400"
           tickFormatter={formatCurrency}
           width={64}
         />
         <Tooltip
           formatter={(value) => formatCurrency(Number(value))}
+          cursor={{ stroke: isDark ? 'rgb(71 85 105)' : 'rgb(203 213 225)' }}
           contentStyle={{
             fontSize: 12,
-            border: '1px solid rgb(226 232 240)',
             borderRadius: 6,
-            background: 'rgb(255 255 255 / 0.95)',
+            border: `1px solid ${isDark ? 'rgb(51 65 85)' : 'rgb(226 232 240)'}`,
+            background: isDark ? 'rgb(15 23 42 / 0.97)' : 'rgb(255 255 255 / 0.97)',
+            color: isDark ? 'rgb(226 232 240)' : 'rgb(15 23 42)',
           }}
+          itemStyle={{ color: isDark ? 'rgb(226 232 240)' : 'rgb(15 23 42)' }}
+          labelStyle={{ color: isDark ? 'rgb(148 163 184)' : 'rgb(100 116 139)' }}
         />
         <Area
           type="monotone"

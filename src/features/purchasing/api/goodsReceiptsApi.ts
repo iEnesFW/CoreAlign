@@ -3,7 +3,7 @@ import { cachedGet, invalidateHttpCache } from '@/shared/http/httpCache';
 import type { ApiResponse, PagedResult } from '@/shared/types/api';
 import type { GoodsReceipt, GoodsReceiptListParams } from '../model/goodsReceipt.types';
 
-const BASE = '/goods-receipts';
+const BASE = '/purchase-orders/goods-receipts';
 const INVALIDATION = [
   /\/goods-receipts/i,
   /\/purchase-orders/i,
@@ -27,6 +27,16 @@ export const goodsReceiptsApi = {
     mutate(
       apiClient.post<ApiResponse<GoodsReceipt>>(`${BASE}/${id}/reverse`, {
         id,
+        reason: reason ?? null,
+      }),
+    ),
+
+  approveQc: (id: string) =>
+    mutate(apiClient.post<ApiResponse<GoodsReceipt>>(`${BASE}/${id}/qc/approve`, {})),
+
+  rejectQc: (id: string, reason?: string | null) =>
+    mutate(
+      apiClient.post<ApiResponse<GoodsReceipt>>(`${BASE}/${id}/qc/reject`, {
         reason: reason ?? null,
       }),
     ),

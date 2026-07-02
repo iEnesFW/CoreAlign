@@ -44,6 +44,7 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
     classification: vendor?.classification ?? undefined,
     territory: vendor?.territory ?? undefined,
     notes: vendor?.notes ?? undefined,
+    defaultLeadTimeDays: vendor?.defaultLeadTimeDays ?? 0,
   });
 
   const [dirty, setDirty] = useState(false);
@@ -81,6 +82,7 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
             languageCode: vendor.languageCode ?? null,
             parentVendorId: vendor.parentVendorId ?? null,
             notes: form.notes?.trim() || null,
+            defaultLeadTimeDays: form.defaultLeadTimeDays ?? 0,
           },
         });
         toast.success(t('Vendors.UpdateSuccess', { defaultValue: 'Tedarikçi güncellendi.' }));
@@ -167,6 +169,16 @@ export const VendorFormModal = ({ vendor, onClose, onCreated }: VendorFormModalP
             onChange={(v) => set('defaultCurrency', v)}
           />
         </div>
+        <Input
+          label={t('Vendors.DefaultLeadTimeLabel', { defaultValue: 'Tedarik Süresi (gün)' })}
+          type="number"
+          min={0}
+          value={String(form.defaultLeadTimeDays ?? 0)}
+          onChange={(e) => set('defaultLeadTimeDays', Number(e.target.value) || 0)}
+          placeholder={t('Vendors.DefaultLeadTimePlaceholder', {
+            defaultValue: '0 = ürün varsayılanı (MRP)',
+          })}
+        />
         <Input
           label={t('Vendors.CodeLabel', { defaultValue: 'Kod' })}
           type="text"

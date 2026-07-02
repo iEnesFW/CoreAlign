@@ -17,6 +17,49 @@
     "UnresolvedCta": "Didn't solve it? Open a support ticket",
     "TicketContext": "(The AI assistant could not fully answer this question.)"
   },
+  "Dunning": {
+    "title": "Dunning reminders",
+    "subtitle": "Configure automatic reminders per type, choose channels, and pick who gets notified.",
+    "loading": "Loading…",
+    "loadError": "Could not load dunning settings.",
+    "actions": {
+      "save": "Save"
+    },
+    "fields": {
+      "enabled": "Enabled",
+      "channels": "Channels"
+    },
+    "channels": {
+      "inApp": "In-app",
+      "email": "Email"
+    },
+    "validation": {
+      "atLeastOneChannel": "Select at least one channel when enabled."
+    },
+    "recipients": {
+      "label": "Recipients",
+      "searchPlaceholder": "Search users…",
+      "selectedCount": "{{count}} selected",
+      "empty": "No matching users."
+    },
+    "toast": {
+      "saved": "Reminder settings saved."
+    },
+    "types": {
+      "InvoiceDueReminder": {
+        "title": "Invoice due reminder",
+        "description": "Notify when invoices are approaching or past their due date."
+      },
+      "QuoteExpiringReminder": {
+        "title": "Quote expiring reminder",
+        "description": "Notify when quotes are about to expire."
+      },
+      "StockCriticalReminder": {
+        "title": "Critical stock reminder",
+        "description": "Notify when stock falls below its critical level."
+      }
+    }
+  },
   "Sidebar": {
     "sections": {
       "overview": "Overview",
@@ -39,6 +82,7 @@
       "quotes": "Quotes",
       "orders": "Orders",
       "invoices": "Invoices",
+      "recurringInvoices": "Recurring Invoices",
       "returns": "Returns",
       "projects": "Projects",
       "vendors": "Vendors",
@@ -50,12 +94,15 @@
       "installation": "Installation",
       "accounting": "Accounting",
       "reports": "Reports",
+      "duplicateDetection": "Duplicate Records",
+      "documentNumberGap": "Number Gaps",
       "activityLog": "Activity Log",
       "settings": "Settings",
       "providers": "Providers",
       "ssoSettings": "SSO Settings",
       "smtpSettings": "SMTP Settings",
       "errorLogs": "Error Logs",
+      "dunningSettings": "Dunning Reminders",
       "chartOfAccounts": "Chart of Accounts",
       "journalEntries": "Journal Entries",
       "trialBalance": "Trial Balance",
@@ -63,7 +110,9 @@
       "incomeStatement": "Income Statement",
       "reconciliation": "Reconciliation",
       "periods": "Accounting Periods",
-      "yearEndClose": "Year-End Close"
+      "yearEndClose": "Year-End Close",
+      "bankAccounts": "Bank Accounts",
+      "cashPosition": "Cash Position"
     }
   },
   "inventory": {
@@ -262,6 +311,7 @@
     }
   },
   "Validation": {
+    "NoteTooLong": "Note must be at most 2000 characters.",
     "Required": "This field is required.",
     "InvalidEmail": "Please enter a valid email address.",
     "EmailTooLong": "Email is too long.",
@@ -327,6 +377,37 @@
     }
   },
   "orders": {
+    "draft": {
+      "found": "A saved draft was found.",
+      "restore": "Restore",
+      "discard": "Discard",
+      "savedAt": "Draft saved {{time}}"
+    },
+    "reorder": {
+      "button": "Reorder",
+      "created": "New draft created: {{number}}"
+    },
+    "bulk": {
+      "selected": "{{count}} selected",
+      "submit": "Submit for approval",
+      "approve": "Approve",
+      "allocate": "Allocate",
+      "cancel": "Cancel",
+      "confirmCancel": "Cancel {{count}} orders?",
+      "allSucceeded": "{{count}} orders updated.",
+      "partial": "{{ok}} succeeded, {{failed}} failed."
+    },
+    "chain": {
+      "order": "Order",
+      "shipment": "Shipment",
+      "invoice": "Invoice",
+      "payment": "Payment",
+      "noShipment": "No shipment",
+      "noInvoice": "Not invoiced",
+      "paid": "Paid",
+      "partial": "Partially paid",
+      "pending": "Awaiting payment"
+    },
     "title": "Orders",
     "subtitle": "Manage sales orders.",
     "searchPlaceholder": "Search by number or customer...",
@@ -456,14 +537,21 @@
     "summary": {
       "subtotal": "Subtotal",
       "lineDiscount": "Line Discounts",
+      "lineDiscountWithRate": "Line Discounts ({{pct}}%)",
       "headerDiscount": "Order Discount",
+      "headerDiscountWithRate": "Order Discount ({{pct}}%)",
       "taxableTotal": "Taxable",
       "tax": "Tax",
+      "taxWithRate": "Tax ({{pct}}%)",
       "withholding": "Withholding",
+      "withholdingWithRate": "Withholding ({{pct}}%)",
       "shipping": "Shipping",
       "grandTotal": "Grand Total",
       "estimate": "Estimated — final amounts are calculated on save",
       "rounding": "Rounding"
+    },
+    "fx": {
+      "autoRate": "Auto rate: {{source}} · {{date}}"
     },
     "dueToday": "Due today",
     "dueIn": "Due in {{count}}d",
@@ -499,6 +587,7 @@
     "detail": {
       "tabs": {
         "overview": "Overview",
+        "chain": "Document Chain",
         "lines": "Lines",
         "margin": "Margin",
         "allocations": "Allocations",
@@ -669,6 +758,7 @@
       "Overdue": "Overdue",
       "Void": "Void",
       "Cancelled": "Cancelled",
+      "WrittenOff": "Written Off",
       "changeHint": "Change status"
     },
     "paymentStatus": {
@@ -725,6 +815,7 @@
       "title": "Invoice",
       "tabs": {
         "overview": "Overview",
+        "chain": "Document Chain",
         "lines": "Lines",
         "payments": "Payments",
         "ledger": "Ledger & dunning",
@@ -765,7 +856,12 @@
       "cancel": "Cancel invoice",
       "print": "Print invoice",
       "recordPayment": "Record payment",
-      "issueCreditNote": "Issue credit note"
+      "issueCreditNote": "Issue credit note",
+      "writeOff": "Write off"
+    },
+    "writeOff": {
+      "confirm": "Write off the outstanding amount of invoice {{number}} as a bad debt? This cannot be undone.",
+      "success": "Invoice written off as a bad debt."
     },
     "ledger": {
       "glTitle": "GL posting preview",
@@ -867,6 +963,7 @@
       "currency": "Currency",
       "customer": "Customer",
       "dueDays": "Due Days",
+      "duePreview": "Net {{days}} → Due: {{date}}",
       "internalNotes": "Internal Notes",
       "issueDate": "Issue Date",
       "lineName": "Item name",
@@ -981,6 +1078,10 @@
       "created": "Product created.",
       "updated": "Product updated.",
       "deleted": "Product deleted."
+    },
+    "inlineEdit": {
+      "editName": "Edit name",
+      "nameInput": "Product name"
     },
     "detail": {
       "tabs": {
@@ -1101,6 +1202,8 @@
     "deleted": "Deleted.",
     "export": "Export",
     "exportCsv": "Export CSV",
+    "exportExcel": "Export to Excel",
+    "clear": "Clear",
     "new": "New",
     "saving": "Submitting…",
     "unknown": "Unknown",
@@ -1349,6 +1452,10 @@
       "updated": "Customer updated.",
       "deleted": "Customer deleted."
     },
+    "inlineEdit": {
+      "editName": "Edit name",
+      "nameInput": "Customer name"
+    },
     "pagination": {
       "summary": "{{from}}-{{to}} of {{total}}",
       "previous": "Previous",
@@ -1377,6 +1484,7 @@
       "noTags": "No tags.",
       "title": "Tags"
     },
+    "bulkConfirmDelete": "Delete {{count}} customers?",
     "bulkPartial": "{{deleted}} deleted, {{failed}} failed.",
     "bulkSelected": "{{count}} selected"
   },
@@ -1559,7 +1667,10 @@
         "ssoConfigurationError": "An error occurred during SSO redirection. Please contact your system administrator."
       },
       "orDivider": "or",
-      "ssoContinue": "Continue with SSO"
+      "ssoContinue": "Continue with SSO",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "legalNotice": "By signing in you agree to our Terms of Service and Privacy Policy."
     },
     "register": {
       "title": "Register",
@@ -1638,6 +1749,52 @@
         "invalidToken": "Invalid or expired verification token.",
         "verificationFailed": "Verification failed. Please try again."
       }
+    },
+    "password": {
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong",
+      "rules": {
+        "length": "8+ characters",
+        "upper": "Uppercase",
+        "lower": "Lowercase",
+        "digit": "Number",
+        "special": "Special character"
+      }
+    },
+    "showcase": {
+      "eyebrow": "Glass & Joinery ERP",
+      "rotator": [
+        {
+          "title": "From design to accounting, one platform.",
+          "subtitle": "3D CAD glass design, quoting, production planning and finance — one uninterrupted flow."
+        },
+        {
+          "title": "Your glass project flows from idea to invoice.",
+          "subtitle": "From field measurement to a manufacturable model; nesting, tempering and work orders planned automatically."
+        },
+        {
+          "title": "Live data from dealer to general ledger.",
+          "subtitle": "B2B orders, virtual POS and accounting under one roof — no manual handoffs."
+        }
+      ],
+      "pipeline": ["Design", "Quote", "Production", "Accounting"],
+      "stats": [
+        {
+          "value": "98.8%",
+          "label": "nesting yield"
+        },
+        {
+          "value": "1,240+",
+          "label": "active accounts"
+        },
+        {
+          "value": "24/7",
+          "label": "cloud access"
+        }
+      ],
+      "trust": ["ISO 27001", "KVKK & GDPR", "99.9% uptime"]
     }
   },
   "LandingPage": {
@@ -1646,7 +1803,9 @@
       "about": "About",
       "solutions": "Solutions",
       "articles": "Articles",
-      "contact": "Contact"
+      "contact": "Contact",
+      "login": "Sign in",
+      "demo": "Book a demo"
     },
     "hero": {
       "badge": "System Version v2.3.25 Active",
@@ -1670,6 +1829,66 @@
         "produce": "Production",
         "ship": "Shipment",
         "account": "Accounting"
+      },
+      "trust": "Turkish & English · Cloud or enterprise deployment · Data migration and onboarding included",
+      "flowTitle": "One data flow: from design to accounting",
+      "showcase": {
+        "viewportTitle": "CoreAlign · 3D Design Engine",
+        "live": "Live",
+        "constraints": "Constraint-based validation",
+        "quoteTitle": "Instant Quote",
+        "quoteArea": "Total area",
+        "quotePrice": "Dealer price",
+        "mrpTitle": "MRP · Nesting",
+        "mrpYield": "Sheet yield",
+        "ledgerTitle": "Auto Accounting",
+        "ledgerBalanced": "Debit = Credit"
+      },
+      "film": {
+        "design": {
+          "title": "3D Design",
+          "url": "design",
+          "caption": "The dealer enters dimensions in the browser; the engine validates angles, spans and load limits live — invalid drawings never reach production."
+        },
+        "quote": {
+          "title": "Instant Quote",
+          "url": "quote",
+          "caption": "Pricing, discounts and approval are produced from the CAD measurements in seconds — quotes arrive production-ready."
+        },
+        "production": {
+          "title": "Production & MRP",
+          "url": "production",
+          "caption": "Sheet nesting is planned with minimal waste and tempering furnace batches are optimized automatically."
+        },
+        "accounting": {
+          "title": "Accounting",
+          "url": "accounting",
+          "caption": "Shipments and invoices turn into journal entries automatically; the ledger always balances to the cent."
+        },
+        "readyToBuild": "Ready to build",
+        "quoteTitleFull": "Glass Enclosure Quote",
+        "quoteRowGlass": "Tempered glass (12mm)",
+        "quoteRowProfile": "Aluminium profile",
+        "quoteRowHardware": "Hinges & hardware",
+        "nestingLabel": "Sheet nesting",
+        "furnaceLoad": "Furnace load",
+        "postedLabel": "Journal entry · Posted",
+        "account": "Account",
+        "debit": "Debit",
+        "credit": "Credit",
+        "reducedHint": "Animations simplified per your system preference",
+        "shipping": {
+          "title": "Shipping",
+          "url": "shipping",
+          "caption": "Shipments are planned; the vehicle route and delivery status are tracked live and the customer sees every step."
+        },
+        "widthLabel": "Width",
+        "shipWarehouse": "Warehouse",
+        "shipTransit": "In transit",
+        "shipDelivered": "Delivered",
+        "eta": "ETA",
+        "days": "days",
+        "tour": "Product tour"
       }
     },
     "about": {
@@ -2314,7 +2533,8 @@
       ],
       "contactUs": "Schedule a Demo",
       "recommended": "MOST POPULAR",
-      "contactCta": "Get a Custom Quote"
+      "contactCta": "Get a Custom Quote",
+      "eyebrow": "Pricing"
     },
     "workflow": {
       "title": "Live Flow from B2B Order to General Ledger",
@@ -2371,6 +2591,21 @@
       "title": "Secure your place among the early adopters",
       "subtitle": "CoreAlign is next-generation ERP. We grow with our founder customers—join early and shape the product to fit your processes.",
       "cta": "Schedule a demo for early access"
+    },
+    "footer": {
+      "colProduct": "Product",
+      "colCompany": "Company",
+      "colAccount": "Account",
+      "modules": "Modules",
+      "pricing": "Pricing",
+      "demo": "Book a demo",
+      "login": "Sign in",
+      "register": "Create account",
+      "tagline": "End-to-end cloud ERP for glass and manufacturing. Design, quote, production, inventory and accounting on one platform.",
+      "kvkk": "GDPR/KVKK ready",
+      "languages": "5 languages",
+      "rights": "All rights reserved.",
+      "status": "All systems operational"
     }
   },
   "GlassEnclosure": {
@@ -2481,15 +2716,27 @@
         "Height": "Panel height",
         "FullHeight": "Full height (run)",
         "Shape": "Panel shape",
-        "Kind": { "rect": "Rectangle", "round": "Round", "oval": "Oval" },
+        "Kind": {
+          "rect": "Rectangle",
+          "round": "Round",
+          "oval": "Oval"
+        },
         "TopShape": "Top edge",
-        "Top": { "flat": "Flat", "raked": "Raked", "arched": "Arched" },
+        "Top": {
+          "flat": "Flat",
+          "raked": "Raked",
+          "arched": "Arched"
+        },
         "TopRightHeight": "Top-right height",
         "ArchRise": "Arch rise",
         "CornerRadii": "Corner radii (mm)",
         "CornerNotch": "Corner notch (mm) — overrides radius",
         "Polygon": "Polygon (preset)",
-        "Poly": { "3": "Triangle", "5": "Pentagon", "6": "Hexagon" },
+        "Poly": {
+          "3": "Triangle",
+          "5": "Pentagon",
+          "6": "Hexagon"
+        },
         "PolygonHint": "Click: add point · Drag: move · Double-click: delete",
         "ShapeSinglePanelOnly": "Shapes are only available on single-panel runs."
       },
@@ -2672,7 +2919,11 @@
         "ArcTitle": "Curve (arc)",
         "ArcRadius": "Curve radius",
         "ArcDropsFeatures": "Converting to a curve removed this wall's openings/shapes.",
-        "Arc": { "straight": "Straight", "left": "Curve left", "right": "Curve right" },
+        "Arc": {
+          "straight": "Straight",
+          "left": "Curve left",
+          "right": "Curve right"
+        },
         "Openings": "Openings",
         "OpeningPresets": "Add standard size",
         "AddWindow": "Window",
@@ -2786,6 +3037,7 @@
         "FlipSide": "Flip face (inner/outer)",
         "Color": "Layer color",
         "ColorReset": "Surface color",
+        "ColorCustom": "Custom color",
         "Hint": "Use the Stretch tool to drag the layer face and adjust its depth; pushing it all the way through turns it into an opening.",
         "ListTitle": "Layers",
         "None": "No layers — draw a shape on the surface with the 'Draw on surface' tool.",
@@ -3819,11 +4071,30 @@
     "formatHelpIntro": "Set the prefix, digit count and format of document numbers. If a format is used,",
     "formatHelpPrefix": "is the prefix,",
     "formatHelpYear": "is the year,",
-    "formatHelpSequence": "is the sequence number."
+    "formatHelpSequence": "is the sequence number.",
+    "autoLabel": "Automatic",
+    "autoHint": "The next number is assigned automatically on save.",
+    "enterManually": "Enter number manually",
+    "useAutomatic": "Use automatic number"
   },
   "masterData": {
     "deleteConfirm": "Delete this record?",
-    "empty": "No records yet."
+    "empty": "No records yet.",
+    "bankAccounts": {
+      "title": "Bank Accounts",
+      "subtitle": "Manage your organization's bank accounts (IBAN, currency, opening balance).",
+      "fields": {
+        "accountName": "Account Holder",
+        "bankName": "Bank",
+        "branchName": "Branch",
+        "iban": "IBAN",
+        "swift": "SWIFT/BIC",
+        "currency": "Currency",
+        "openingBalance": "Opening Balance",
+        "isPrimary": "Primary",
+        "isActive": "Active"
+      }
+    }
   },
   "error": {
     "NetworkError": "Network error.",
@@ -4476,6 +4747,7 @@
       "exportCsv": "Export CSV",
       "recordPayment": "Record payment",
       "entries": "Ledger entries",
+      "entryCount": "{{count}} entries",
       "empty": "No ledger entries yet.",
       "description": "Description",
       "debit": "Debit",
@@ -4489,7 +4761,9 @@
     },
     "list": {
       "title": "Recent payments",
-      "unapplied": "Unapplied"
+      "unapplied": "Unapplied",
+      "autoApplyOldest": "Auto-apply oldest",
+      "fifoApplied": "Payment applied to the oldest open invoices."
     },
     "create": {
       "amountRequired": "Amount must be positive.",
@@ -4596,6 +4870,10 @@
     "UnreadOnly": "Unread only",
     "AllStatuses": "All statuses",
     "MarkRead": "Mark as read",
+    "Acknowledge": "Acknowledge",
+    "Acknowledged": "Acknowledged",
+    "NoteLabel": "Acknowledgement note (optional)",
+    "EditNote": "Edit note",
     "TableSubject": "Subject",
     "TableCategory": "Category",
     "TableChannel": "Channel",
@@ -4627,7 +4905,8 @@
       "Installation": "Installation",
       "Payment": "Payment",
       "Mrp": "MRP",
-      "ServiceTicket": "Service ticket"
+      "ServiceTicket": "Service ticket",
+      "Dunning": "Reminder"
     },
     "Preferences": {
       "Title": "Notification preferences",
@@ -6035,6 +6314,7 @@
         "warehouse": "Warehouse"
       },
       "planned": "Count created.",
+      "plannedNumber": "Count {{number}} created.",
       "post": {
         "button": "Post Count",
         "title": "Post Count"
@@ -6220,7 +6500,296 @@
     "applySuccess": "Payment applied to bill.",
     "viewApplications": "Applied payments"
   },
+  "CashPosition": {
+    "title": "Cash Position",
+    "subtitle": "Live cash position from cash + bank GL balances (TDHP 100/102).",
+    "asOf": "As of",
+    "cashOnHand": "Cash on hand (100)",
+    "bankBalance": "Banks (102)",
+    "totalCash": "Total cash",
+    "customerAdvances": "Customer advances (340)",
+    "accountsTitle": "Bank accounts",
+    "noAccounts": "No bank accounts defined.",
+    "primary": "Primary",
+    "cols": {
+      "account": "Account",
+      "bank": "Bank",
+      "iban": "IBAN",
+      "opening": "Opening balance"
+    }
+  },
+  "CommandPalette": {
+    "placeholder": "Search customers, orders, invoices, products, quotes…",
+    "quickNav": "Quick navigation",
+    "searching": "Searching…",
+    "noResults": "No results for \"{{query}}\"",
+    "order": "Order {{number}}",
+    "invoice": "Invoice {{number}}",
+    "quote": "Quote {{number}}",
+    "group": {
+      "customers": "Customers",
+      "orders": "Orders",
+      "invoices": "Invoices",
+      "quotes": "Quotes",
+      "products": "Products"
+    },
+    "nav": {
+      "dashboard": "Go to Dashboard",
+      "customers": "Go to Customers",
+      "orders": "Go to Orders",
+      "invoices": "Go to Invoices",
+      "quotes": "Go to Quotes",
+      "products": "Go to Products"
+    }
+  },
+  "DataTable": {
+    "columns": {
+      "button": "Columns",
+      "title": "Customize columns",
+      "reset": "Reset",
+      "moveUp": "Move up",
+      "moveDown": "Move down"
+    }
+  },
+  "DocumentChain": {
+    "title": "Document Chain",
+    "empty": "No linked documents",
+    "nodes": {
+      "quote": "Quote",
+      "order": "Order",
+      "shipment": "Shipment",
+      "invoice": "Invoice",
+      "creditNote": "Credit Note",
+      "payment": "Payment"
+    },
+    "state": {
+      "done": "Done",
+      "partial": "Partial",
+      "pending": "Pending"
+    }
+  },
+  "RecurringInvoices": {
+    "title": "Recurring Invoices",
+    "pageSubtitle": "Auto-generate subscription / retainer invoices.",
+    "subtitle": "Generates invoices automatically on a schedule.",
+    "newTitle": "New Recurring Invoice",
+    "editTitle": "Edit Recurring Invoice",
+    "new": "New",
+    "searchPlaceholder": "Search templates…",
+    "allStatuses": "All statuses",
+    "count": "{{count}} templates",
+    "empty": "No recurring invoice templates found.",
+    "nextRunPreview": "First invoice: {{first}} · next: {{second}}",
+    "frequency": {
+      "Weekly": "Weekly",
+      "Monthly": "Monthly",
+      "Quarterly": "Quarterly",
+      "Yearly": "Yearly"
+    },
+    "status": {
+      "Active": "Active",
+      "Paused": "Paused",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled"
+    },
+    "fields": {
+      "name": "Template name",
+      "customer": "Customer",
+      "selectCustomer": "Select…",
+      "frequency": "Frequency",
+      "intervalCount": "Interval (every N)",
+      "anchorDayOfMonth": "Day of month (1-31, opt.)",
+      "currency": "Currency",
+      "startDate": "Start",
+      "endDate": "End (opt.)",
+      "maxOccurrences": "Max occurrences (opt.)",
+      "dueDays": "Due (days)",
+      "publicNotes": "Customer note",
+      "internalNotes": "Internal note"
+    },
+    "lines": {
+      "header": "Lines",
+      "add": "Add line",
+      "name": "Description / item",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "taxRate": "VAT %",
+      "remove": "Remove line",
+      "subtotal": "Subtotal",
+      "tax": "VAT",
+      "total": "Total"
+    },
+    "cols": {
+      "name": "Template",
+      "customer": "Customer",
+      "frequency": "Frequency",
+      "nextRun": "Next",
+      "generated": "Generated",
+      "status": "Status"
+    },
+    "actions": {
+      "runNow": "Generate now",
+      "pause": "Pause",
+      "resume": "Resume",
+      "edit": "Edit",
+      "cancel": "Cancel"
+    },
+    "cancel": {
+      "title": "Cancel Recurring Invoice",
+      "message": "Cancel {{n}}? This cannot be undone."
+    },
+    "validation": {
+      "nameRequired": "Enter a template name.",
+      "customerRequired": "Select a customer.",
+      "lineRequired": "Add at least one valid line."
+    },
+    "toast": {
+      "created": "Recurring invoice created.",
+      "updated": "Recurring invoice updated.",
+      "generated": "Invoice generated.",
+      "paused": "Paused.",
+      "resumed": "Resumed.",
+      "cancelled": "Cancelled."
+    }
+  },
+  "DocumentNumberGap": {
+    "title": "Document Number Gaps",
+    "subtitle": "Detect skipped / missing numbers in sequentially numbered documents.",
+    "year": "Year",
+    "totalGap": "Total gap: {{count}}",
+    "empty": "No sequentially numbered documents found for this year.",
+    "sequential": "Sequential",
+    "moreMissing": "+{{count}} more",
+    "cols": {
+      "type": "Document",
+      "prefix": "Prefix",
+      "expected": "Expected",
+      "used": "Used",
+      "max": "Highest",
+      "gap": "Gap",
+      "missing": "Missing numbers"
+    },
+    "types": {
+      "OrderNumber": "Order",
+      "InvoiceNumber": "Invoice",
+      "QuoteNumber": "Quote",
+      "PurchaseOrderNumber": "Purchase Order",
+      "PaymentNumber": "Payment",
+      "ShipmentNumber": "Shipment",
+      "GoodsReceiptNumber": "Goods Receipt"
+    }
+  },
+  "DuplicateDetection": {
+    "title": "Duplicate Record Detection",
+    "subtitle": "Multiple customers or vendors sharing the same email / tax no / national id.",
+    "count": "{{count}} groups",
+    "records": "{{count}} records",
+    "empty": "No duplicate records found.",
+    "entity": {
+      "customer": "Customers",
+      "vendor": "Vendors"
+    },
+    "key": {
+      "Email": "Email",
+      "TaxNumber": "Tax No",
+      "NationalId": "National ID"
+    }
+  },
+  "NextBestAction": {
+    "title": "Next best action",
+    "order": {
+      "submit": "Submit order",
+      "approve": "Approve",
+      "allocate": "Allocate stock",
+      "createShipment": "Create shipment",
+      "generateInvoice": "Generate invoice"
+    },
+    "quote": {
+      "send": "Send quote",
+      "accept": "Accept",
+      "convertToOrder": "Convert to order"
+    },
+    "invoice": {
+      "collectPayment": "Collect payment"
+    }
+  },
+  "Payments": {
+    "advance": {
+      "isAdvance": "This is an advance payment (offset to an invoice later)"
+    },
+    "offset": {
+      "action": "Offset advance",
+      "title": "Offset advance payment",
+      "advanceBadge": "Advance",
+      "selectAdvance": "Advance payment",
+      "pickAdvance": "Select advance…",
+      "balance": "advance balance",
+      "noAdvances": "No advance payments to offset.",
+      "applyToInvoices": "Apply to open invoices",
+      "autoApply": "Auto allocate",
+      "noOpenInvoices": "No open invoices.",
+      "amountDue": "Due",
+      "advanceBalance": "Advance balance",
+      "allocated": "Offset",
+      "remaining": "Remaining advance",
+      "overAllocated": "Offset exceeds the advance balance.",
+      "confirm": "Record offset",
+      "success": "Advance offset recorded.",
+      "selectAdvanceRequired": "Select an advance first.",
+      "noAllocation": "Select at least one invoice and amount."
+    }
+  },
+  "SavedViews": {
+    "label": "Saved views",
+    "save": "Save view",
+    "namePlaceholder": "View name",
+    "confirmSave": "Save",
+    "cancel": "Cancel",
+    "rename": "Rename",
+    "delete": "Delete"
+  },
+  "Shortcuts": {
+    "title": "Keyboard shortcuts",
+    "openPalette": "Open command palette",
+    "openHelp": "Show this help",
+    "closeOverlay": "Close overlay",
+    "navigate": "Move selection",
+    "select": "Open selected result"
+  },
   "Vendors": {
+    "advance": {
+      "title": "Vendor advance",
+      "subtitle": "Prepayment without a bill; offset to a bill later.",
+      "newButton": "New advance",
+      "badge": "Advance",
+      "vendor": "Vendor",
+      "selectVendor": "Select…",
+      "amount": "Amount",
+      "currency": "Currency",
+      "date": "Date",
+      "method": "Payment method",
+      "notes": "Notes",
+      "submit": "Record advance",
+      "invalid": "Enter a vendor and a valid amount.",
+      "created": "Vendor advance recorded."
+    },
+    "offset": {
+      "action": "Offset advance",
+      "title": "Offset vendor advance",
+      "subtitle": "Select the advance to offset against {{n}}.",
+      "billTotal": "Bill total",
+      "amountDue": "Due",
+      "advance": "Advance",
+      "pickAdvance": "Select advance…",
+      "unapplied": "unapplied",
+      "noAdvances": "No advance payments to offset for this vendor.",
+      "amount": "Amount",
+      "maxHint": "Maximum {{m}}",
+      "notes": "Notes",
+      "submit": "Offset",
+      "success": "Advance offset to the bill.",
+      "invalidAmount": "Enter a valid amount."
+    },
     "title": "Vendors",
     "subtitle": "Vendor master, current account, and bank details.",
     "newVendor": "New Vendor",
@@ -6433,6 +7002,26 @@
       "reasonLabel": "Reversal reason",
       "submit": "Reverse",
       "done": "Goods receipt reversed."
+    },
+    "qc": {
+      "status": {
+        "PendingInspection": "Awaiting QC",
+        "Approved": "QC Approved",
+        "Rejected": "QC Rejected"
+      },
+      "approve": {
+        "action": "Approve QC",
+        "done": "Goods receipt approved and added to stock."
+      },
+      "reject": {
+        "action": "Reject QC",
+        "title": "Reject QC inspection",
+        "hint": "Rejected goods do not enter stock; the order received quantity is restored.",
+        "reasonLabel": "Rejection reason",
+        "submit": "Reject",
+        "done": "Goods receipt rejected. No stock was added."
+      },
+      "rejectedReason": "QC rejection reason"
     }
   },
   "BalanceSheet": {
@@ -7184,14 +7773,14 @@
   "AuthLayout": {
     "ToggleTheme": "Toggle theme",
     "AllSystemsOperational": "All Systems Operational",
-    "StrategicPlanning": "Strategic Planning",
-    "Strategy": "Strategy",
-    "TeamAlignment": "Team Alignment",
-    "Teams": "Teams",
-    "PerformanceAnalytics": "Performance Analytics",
-    "Analytics": "Analytics",
+    "StrategicPlanning": "3D Design & CPQ",
+    "Strategy": "3D Design",
+    "TeamAlignment": "Production Planning (MRP)",
+    "Teams": "Production",
+    "PerformanceAnalytics": "AR & Accounting",
+    "Analytics": "Accounting",
     "EnterpriseSecurity": "Enterprise Security",
-    "Secure": "Secure",
+    "Secure": "Security",
     "Copyright": "© {{year}} CoreAlign Inc. All rights reserved."
   },
   "Warehouse": {

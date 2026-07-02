@@ -59,4 +59,11 @@ public static class MasterDataMapper
         City = w.City, State = w.State, PostalCode = w.PostalCode,
         Country = w.Country, Phone = w.Phone, IsDefault = w.IsDefault, IsActive = w.IsActive
     };
+
+    public static BankAccountDto ToDto(BankAccount b) => new()
+    {
+        Id = b.Id, AccountName = b.AccountName, BankName = b.BankName, BranchName = b.BranchName,
+        Iban = b.Iban, Swift = b.Swift, Currency = b.Currency, OpeningBalance = b.OpeningBalance,
+        IsPrimary = b.IsPrimary, IsActive = b.IsActive, Notes = b.Notes
+    };
 }

@@ -168,13 +168,19 @@ export const VendorsPage = () => {
           <tbody>
             {vendors.isPending ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm text-slate-500">
+                <td
+                  colSpan={8}
+                  className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                >
                   {t('Vendors.loading')}
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-sm text-slate-500">
+                <td
+                  colSpan={8}
+                  className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
+                >
                   {t('Vendors.empty')}
                 </td>
               </tr>
@@ -184,7 +190,9 @@ export const VendorsPage = () => {
                   key={v.id}
                   className="border-t border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/30"
                 >
-                  <td className="px-3 py-2 font-mono text-xs">{v.code ?? '—'}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    {v.code ?? '—'}
+                  </td>
                   <td className="px-3 py-2 text-xs">
                     <Link
                       to={`/dashboard/vendors/${v.id}`}
@@ -192,13 +200,21 @@ export const VendorsPage = () => {
                     >
                       {v.name}
                     </Link>
-                    {v.legalName && <div className="text-[10px] text-slate-500">{v.legalName}</div>}
+                    {v.legalName && (
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {v.legalName}
+                      </div>
+                    )}
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs">{v.taxNumber ?? '—'}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-slate-700 dark:text-slate-300">
+                    {v.taxNumber ?? '—'}
+                  </td>
                   <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
                     {v.email && <div>{v.email}</div>}
-                    {v.phone && <div className="text-slate-500">{v.phone}</div>}
-                    {!v.email && !v.phone && <span className="text-slate-400">—</span>}
+                    {v.phone && <div className="text-slate-500 dark:text-slate-400">{v.phone}</div>}
+                    {!v.email && !v.phone && (
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <span
@@ -207,7 +223,7 @@ export const VendorsPage = () => {
                       {statusLabel(v.status)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-xs">
+                  <td className="px-3 py-2 text-right font-mono text-xs text-slate-900 dark:text-slate-100">
                     {formatCurrency(v.currentBalance, locale, v.defaultCurrency)}
                   </td>
                   <td className="px-3 py-2 text-right font-mono text-xs">
@@ -216,7 +232,7 @@ export const VendorsPage = () => {
                         {formatCurrency(v.overdueAmount, locale, v.defaultCurrency)}
                       </span>
                     ) : (
-                      <span className="text-slate-400">—</span>
+                      <span className="text-slate-400 dark:text-slate-500">—</span>
                     )}
                   </td>
                   <td className="px-3 py-2">

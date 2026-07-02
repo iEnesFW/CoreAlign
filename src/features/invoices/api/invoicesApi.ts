@@ -33,6 +33,11 @@ export const invoicesApi = {
   cancel: (id: string) =>
     apiClient.post<ApiResponse<boolean>>(`${BASE}/${id}/cancel`).then((r) => r.data),
 
+  writeOff: (id: string, reason?: string | null) =>
+    apiClient
+      .post<ApiResponse<Invoice>>(`${BASE}/${id}/write-off`, { reason: reason ?? null })
+      .then((r) => r.data),
+
   getCreditNotes: (id: string) =>
     cachedGet<ApiResponse<InvoiceSummary[]>>(apiClient, `${BASE}/${id}/credit-notes`),
 

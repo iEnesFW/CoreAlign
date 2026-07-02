@@ -30,4 +30,13 @@ public enum JournalSourceType
     PayrollTaxPayment = 19,
     PayrollSgkPayment = 20,
     PayrollAccrualReversal = 21,
+    InvoiceWriteOff = 22,
+    CustomerAdvanceReceived = 23,
+    CustomerAdvanceReceivedReversal = 24,
+    CustomerAdvanceApplied = 25,
+    CustomerAdvanceAppliedReversal = 26,
+    VendorAdvancePaid = 27,
+    VendorAdvancePaidReversal = 28,
+    VendorAdvanceApplied = 29,
+    VendorAdvanceAppliedReversal = 30,
 }

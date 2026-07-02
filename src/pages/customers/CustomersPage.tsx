@@ -6,6 +6,7 @@ import {
   Building2,
   CircleDollarSign,
   Download,
+  FileSpreadsheet,
   Landmark,
   Plus,
   ShieldCheck,
@@ -20,6 +21,8 @@ import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import { downloadCsv } from '@/shared/lib/exportCsv';
+import { downloadBlob } from '@/shared/lib/downloadBlob';
+import { customersApi } from '@/features/customers/api/customersApi';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { StatStrip, type StatStripItem } from '@/shared/ui/StatStrip/StatStrip';
 import { DataToolbar } from '@/shared/ui/DataToolbar/DataToolbar';
@@ -29,10 +32,20 @@ import { CollapsibleSection } from '@/shared/ui/CollapsibleSection/CollapsibleSe
 import { QueryError } from '@/shared/ui/QueryError/QueryError';
 import { Pagination } from '@/shared/ui/Pagination/Pagination';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { ColumnSettingsMenu } from '@/shared/ui/DataTable/ColumnSettingsMenu';
+import { useColumnPreferences } from '@/shared/ui/DataTable/useColumnPreferences';
+import type { SortState } from '@/shared/ui/DataTable/DataTable';
+import { SavedViewBar } from '@/features/saved-views/ui/SavedViewBar';
+import { useSavedViews } from '@/features/saved-views/hooks/useSavedViews';
+import type { SavedView } from '@/features/saved-views/model/savedView.types';
 import { CustomerDetailPanel } from '@/features/customers/ui/CustomerDetailPanel';
 import { CustomerInlineCard } from '@/features/customers/ui/CustomerInlineCard';
 import { CustomerFormModal } from '@/features/customers/ui/CustomerFormModal';
 import { CustomerList } from '@/features/customers/ui/CustomerList';
+import {
+  CUSTOMER_COLUMN_KEYS,
+  getCustomerColumnMeta,
+} from '@/features/customers/ui/customerColumnMeta';
 import {
   useCustomersQuery,
   useDeleteCustomer,
@@ -47,6 +60,15 @@ const PAGE_SIZE = 10;
 
 type StatusFilter = 'all' | CustomerStatus;
 type TypeFilter = 'all' | CustomerType;
+
+const STATUS_FILTER_VALUES: StatusFilter[] = ['all', 'Active', 'Blocked', 'Archived'];
+const TYPE_FILTER_VALUES: TypeFilter[] = ['all', 'Individual', 'Business', 'Government'];
+
+const asStatusFilter = (value: unknown): StatusFilter =>
+  STATUS_FILTER_VALUES.includes(value as StatusFilter) ? (value as StatusFilter) : 'all';
+
+const asTypeFilter = (value: unknown): TypeFilter =>
+  TYPE_FILTER_VALUES.includes(value as TypeFilter) ? (value as TypeFilter) : 'all';
 
 const exportCustomersCsv = (rows: Customer[]) =>
   downloadCsv({
@@ -83,11 +105,20 @@ export const CustomersPage = () => {
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [creditAtRiskOnly, setCreditAtRiskOnly] = useState(false);
 
+  const columnMeta = getCustomerColumnMeta(t);
+  const { columnState, toggleHidden, move, replace, reset } = useColumnPreferences(
+    'customers',
+    CUSTOMER_COLUMN_KEYS,
+  );
+  const [sort, setSort] = useState<SortState | null>(null);
+  const savedViews = useSavedViews('customers');
+
   const [editing, setEditing] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [bulkIds, setBulkIds] = useState<string[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [excelExporting, setExcelExporting] = useState(false);
 
   const queryParams = useMemo(
     () => ({
@@ -178,6 +209,27 @@ export const CustomersPage = () => {
     setPage(1);
   };
 
+  const handleSaveView = (name: string) => {
+    savedViews.saveView(name, {
+      filters: { search, statusFilter, typeFilter, overdueOnly, creditAtRiskOnly },
+      sort,
+      columnState,
+    });
+  };
+
+  const handleApplyView = (view: SavedView) => {
+    const f = view.filters;
+    setSearch(typeof f.search === 'string' ? f.search : '');
+    setStatusFilter(asStatusFilter(f.statusFilter));
+    setTypeFilter(asTypeFilter(f.typeFilter));
+    setOverdueOnly(f.overdueOnly === true);
+    setCreditAtRiskOnly(f.creditAtRiskOnly === true);
+    setSort(view.sort);
+    if (view.columnState) replace(view.columnState);
+    setPage(1);
+    savedViews.setActive(view.id);
+  };
+
   const handleCreate = () => {
     setEditing(null);
     setModalOpen(true);
@@ -212,6 +264,22 @@ export const CustomersPage = () => {
 
   const handleBulkExport = () => {
     exportCustomersCsv(bulkSelected.length > 0 ? bulkSelected : filteredCustomers);
+  };
+
+  const handleExportExcel = async () => {
+    setExcelExporting(true);
+    try {
+      const blob = await customersApi.exportList({
+        format: 'Xlsx',
+        search: debouncedSearch.trim() || undefined,
+        isActive: queryParams.isActive,
+      });
+      downloadBlob(blob, `customers-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    } catch (err) {
+      toastApiError(err);
+    } finally {
+      setExcelExporting(false);
+    }
   };
 
   const handleBulkDelete = async () => {
@@ -335,6 +403,15 @@ export const CustomersPage = () => {
             </button>
             <button
               type="button"
+              onClick={handleExportExcel}
+              disabled={excelExporting}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <FileSpreadsheet size={13} />
+              {t('common.exportExcel', { defaultValue: "Excel'e Aktar" })}
+            </button>
+            <button
+              type="button"
               onClick={handleCreate}
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-primary-500/20 transition hover:shadow-lg hover:shadow-primary-500/30 hover:-translate-y-px"
             >
@@ -351,6 +428,15 @@ export const CustomersPage = () => {
       >
         <StatStrip items={statItems} />
       </CollapsibleSection>
+
+      <SavedViewBar
+        views={savedViews.views}
+        activeViewId={savedViews.activeViewId}
+        onApply={handleApplyView}
+        onSave={handleSaveView}
+        onRename={savedViews.renameView}
+        onDelete={savedViews.deleteView}
+      />
 
       <DataToolbar
         search={{
@@ -456,6 +542,15 @@ export const CustomersPage = () => {
         }}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
+        trailing={
+          <ColumnSettingsMenu
+            columns={columnMeta}
+            columnState={columnState}
+            onToggle={toggleHidden}
+            onMove={move}
+            onReset={reset}
+          />
+        }
       />
 
       {bulkSelected.length > 0 && (
@@ -516,6 +611,9 @@ export const CustomersPage = () => {
           selectable
           selectedIds={bulkIds}
           onSelectionChange={setBulkIds}
+          columnState={columnState}
+          externalSort={sort ?? undefined}
+          onSortChange={setSort}
         />
       )}
 

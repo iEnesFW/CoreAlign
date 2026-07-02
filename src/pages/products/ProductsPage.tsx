@@ -29,12 +29,27 @@ import { ProductDetailPanel } from '@/features/products/ui/ProductDetailPanel';
 import { ProductInlineCard } from '@/features/products/ui/ProductInlineCard';
 import { ProductFormModal } from '@/features/products/ui/ProductFormModal';
 import { ProductList } from '@/features/products/ui/ProductList';
+import {
+  PRODUCT_COLUMN_KEYS,
+  getProductColumnMeta,
+} from '@/features/products/ui/productColumnMeta';
+import { ColumnSettingsMenu } from '@/shared/ui/DataTable/ColumnSettingsMenu';
+import { useColumnPreferences } from '@/shared/ui/DataTable/useColumnPreferences';
+import type { SortState } from '@/shared/ui/DataTable/DataTable';
+import { SavedViewBar } from '@/features/saved-views/ui/SavedViewBar';
+import { useSavedViews } from '@/features/saved-views/hooks/useSavedViews';
+import type { SavedView } from '@/features/saved-views/model/savedView.types';
 import { useDeleteProduct, useProductsQuery } from '@/features/products/hooks/useProductQueries';
 import type { Product, ProductStatus } from '@/shared/model/product.types';
 
 const PAGE_SIZE = 10;
 
 type StatusFilter = 'all' | ProductStatus;
+
+const STATUS_FILTER_VALUES: StatusFilter[] = ['all', 'Active', 'New', 'Discontinued', 'EndOfLife'];
+
+const asStatusFilter = (value: unknown): StatusFilter =>
+  STATUS_FILTER_VALUES.includes(value as StatusFilter) ? (value as StatusFilter) : 'all';
 
 const exportProductsCsv = (rows: Product[]) =>
   downloadCsv({
@@ -67,6 +82,14 @@ export const ProductsPage = () => {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [outOfStockOnly, setOutOfStockOnly] = useState(false);
   const [trackedOnly, setTrackedOnly] = useState(false);
+
+  const columnMeta = getProductColumnMeta(t);
+  const { columnState, toggleHidden, move, replace, reset } = useColumnPreferences(
+    'products',
+    PRODUCT_COLUMN_KEYS,
+  );
+  const [sort, setSort] = useState<SortState | null>(null);
+  const savedViews = useSavedViews('products');
 
   const [editing, setEditing] = useState<Product | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -140,6 +163,27 @@ export const ProductsPage = () => {
     setOutOfStockOnly(false);
     setTrackedOnly(false);
     setPage(1);
+  };
+
+  const handleSaveView = (name: string) => {
+    savedViews.saveView(name, {
+      filters: { search, statusFilter, lowStockOnly, outOfStockOnly, trackedOnly },
+      sort,
+      columnState,
+    });
+  };
+
+  const handleApplyView = (view: SavedView) => {
+    const f = view.filters;
+    setSearch(typeof f.search === 'string' ? f.search : '');
+    setStatusFilter(asStatusFilter(f.statusFilter));
+    setLowStockOnly(f.lowStockOnly === true);
+    setOutOfStockOnly(f.outOfStockOnly === true);
+    setTrackedOnly(f.trackedOnly === true);
+    setSort(view.sort);
+    if (view.columnState) replace(view.columnState);
+    setPage(1);
+    savedViews.setActive(view.id);
   };
 
   const handleCreate = () => {
@@ -314,6 +358,15 @@ export const ProductsPage = () => {
         <StatStrip items={statItems} />
       </CollapsibleSection>
 
+      <SavedViewBar
+        views={savedViews.views}
+        activeViewId={savedViews.activeViewId}
+        onApply={handleApplyView}
+        onSave={handleSaveView}
+        onRename={savedViews.renameView}
+        onDelete={savedViews.deleteView}
+      />
+
       <DataToolbar
         search={{
           value: search,
@@ -402,6 +455,15 @@ export const ProductsPage = () => {
         }}
         hasActiveFilters={hasActiveFilters}
         onClearFilters={clearFilters}
+        trailing={
+          <ColumnSettingsMenu
+            columns={columnMeta}
+            columnState={columnState}
+            onToggle={toggleHidden}
+            onMove={move}
+            onReset={reset}
+          />
+        }
       />
 
       {bulkSelected.length > 0 && (
@@ -459,6 +521,9 @@ export const ProductsPage = () => {
           selectable
           selectedIds={bulkIds}
           onSelectionChange={setBulkIds}
+          columnState={columnState}
+          externalSort={sort ?? undefined}
+          onSortChange={setSort}
         />
       )}
 

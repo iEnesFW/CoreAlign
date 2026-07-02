@@ -34,6 +34,7 @@ public class ProductDto
     public bool IsStockTracked { get; set; }
     public bool IsLotTracked { get; set; }
     public bool IsSerialTracked { get; set; }
+    public bool RequiresInspection { get; set; }
     public decimal MinStock { get; set; }
     public decimal MaxStock { get; set; }
     public decimal ReorderPoint { get; set; }

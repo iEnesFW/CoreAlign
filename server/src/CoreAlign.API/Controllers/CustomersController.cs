@@ -2,12 +2,14 @@ using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Customers.Commands;
+using CoreAlign.Application.Customers.Export;
 using CoreAlign.Application.Customers.Maintenance;
 using CoreAlign.Application.Customers.Merge;
 using CoreAlign.Application.Customers.Queries;
 using CoreAlign.Application.Customers.Statements;
 using CoreAlign.Application.Customers.Tags;
 using CoreAlign.Application.Reports.Common;
+using CoreAlign.Domain.Entities.Reporting;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -48,6 +50,17 @@ public class CustomersController : ControllerBase
     {
         var result = await _mediator.Send(new GetCustomersQuery(page, pageSize, search, isActive), cancellationToken);
         return result.ToOk();
+    }
+
+    [HttpGet("export")]
+    public async Task<IActionResult> ExportCustomersAsync(
+        [FromQuery] BIExportFormat format = BIExportFormat.Xlsx,
+        [FromQuery] string? search = null,
+        [FromQuery] bool? isActive = null,
+        CancellationToken cancellationToken = default)
+    {
+        var file = await _mediator.Send(new ExportCustomersQuery(format, search, isActive), cancellationToken);
+        return File(file.Content, file.ContentType, file.FileName);
     }
 
     [HttpGet("{id:guid}")]

@@ -61,7 +61,7 @@ export const StatusBreakdownCard = ({
               key={item.status}
               className={statusToneByKind[item.status] ?? 'bg-slate-400'}
               style={{ width: `${pct}%` }}
-              title={`${item.status}: ${item.count}`}
+              title={`${t(`${statusPrefix}.${item.status}` as never, { defaultValue: item.status })}: ${item.count}`}
             />
           );
         })}

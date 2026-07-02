@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ExternalLink, MapPin, Receipt, ShoppingCart } from 'lucide-react';
+import { toast } from 'sonner';
+import { toastApiError } from '@/shared/lib/mutationToast';
+import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import type { Invoice, InvoiceStatus } from '@/features/invoices/model/invoice.types';
+import { useWriteOffInvoice } from '@/features/invoices/hooks/useInvoiceQueries';
 import { daysFromNow } from './invoiceOverview/format';
 import { KpiRow, MetaChips, PaymentProgressBar } from './invoiceOverview/InvoiceKpis';
 import {
@@ -30,6 +34,7 @@ const statusStyles: Record<InvoiceStatus, string> = {
   Overdue: 'bg-danger-100 text-danger-800 dark:bg-danger-500/20 dark:text-danger-300',
   Void: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  WrittenOff: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
 };
 
 export const InvoiceOverviewTab = ({
@@ -49,6 +54,42 @@ export const InvoiceOverviewTab = ({
       invoice.status === 'Sent' ||
       invoice.status === 'PartiallyPaid' ||
       invoice.status === 'Overdue');
+
+  const confirm = useConfirm();
+  const writeOff = useWriteOffInvoice();
+  const showWriteOff =
+    invoice.amountDue > 0 &&
+    (invoice.status === 'Issued' ||
+      invoice.status === 'Sent' ||
+      invoice.status === 'PartiallyPaid' ||
+      invoice.status === 'Overdue');
+
+  const handleWriteOff = async () => {
+    const ok = await confirm({
+      title: t('invoices.actions.writeOff', { defaultValue: 'Şüpheli alacak kaydı' }),
+      message: t('invoices.writeOff.confirm', {
+        number: invoice.invoiceNumber,
+        defaultValue: `${invoice.invoiceNumber} faturasının kalan tutarı şüpheli alacak olarak silinsin mi? Bu işlem geri alınamaz.`,
+      }),
+      confirmLabel: t('common.confirm'),
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      const res = await writeOff.mutateAsync({ id: invoice.id });
+      if (res.isSuccess) {
+        toast.success(
+          t('invoices.writeOff.success', {
+            defaultValue: 'Fatura şüpheli alacak olarak kaydedildi.',
+          }),
+        );
+      } else {
+        toast.error(res.errors[0] ?? t('auth.common.unexpectedError'));
+      }
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -120,6 +161,7 @@ export const InvoiceOverviewTab = ({
         onMarkPaid={onMarkPaid}
         onCancel={onCancel}
         onIssueCreditNote={onIssueCreditNote}
+        onWriteOff={showWriteOff ? handleWriteOff : undefined}
       />
     </div>
   );

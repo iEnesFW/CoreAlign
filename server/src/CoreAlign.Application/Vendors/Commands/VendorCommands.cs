@@ -23,7 +23,8 @@ public record CreateVendorCommand(
     string? Territory = null,
     string? LanguageCode = null,
     Guid? ParentVendorId = null,
-    string? Notes = null) : IRequest<VendorDto>, ITransactionalRequest;
+    string? Notes = null,
+    int DefaultLeadTimeDays = 0) : IRequest<VendorDto>, ITransactionalRequest;
 
 public record UpdateVendorCommand(
     Guid Id,
@@ -44,7 +45,8 @@ public record UpdateVendorCommand(
     string? Territory,
     string? LanguageCode,
     Guid? ParentVendorId,
-    string? Notes) : IRequest<VendorDto>, ITransactionalRequest;
+    string? Notes,
+    int DefaultLeadTimeDays = 0) : IRequest<VendorDto>, ITransactionalRequest;
 
 public record ApproveVendorCommand(Guid Id, Guid? ApprovedByUserId = null) : IRequest<VendorDto>, ITransactionalRequest;
 public record BlockVendorCommand(Guid Id, string Reason) : IRequest<VendorDto>, ITransactionalRequest;

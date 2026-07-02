@@ -22,6 +22,7 @@ public static class PaymentMapper
         Amount = p.Amount,
         AppliedAmount = p.AppliedAmount,
         UnappliedAmount = p.UnappliedAmount,
+        IsAdvance = p.IsAdvance,
         BankAccountInfo = p.BankAccountInfo,
         ReferenceNumber = p.ReferenceNumber,
         CheckNumber = p.CheckNumber,

@@ -24,6 +24,11 @@ public class GoodsReceipt : TenantEntity
     public Guid? ReversedByUserId { get; private set; }
     public string? ReversalReason { get; private set; }
 
+    public GoodsReceiptQcStatus QcStatus { get; private set; } = GoodsReceiptQcStatus.NotRequired;
+    public DateTime? QcDecisionAtUtc { get; private set; }
+    public Guid? QcDecidedByUserId { get; private set; }
+    public string? QcRejectionReason { get; private set; }
+
     public PurchaseOrder PurchaseOrder { get; set; } = null!;
     public Vendor Vendor { get; set; } = null!;
     public Warehouse Warehouse { get; set; } = null!;
@@ -40,7 +45,8 @@ public class GoodsReceipt : TenantEntity
         DateTime receiptDateUtc,
         string idempotencyKey,
         Guid? receivedByUserId = null,
-        string? notes = null)
+        string? notes = null,
+        bool requiresInspection = false)
     {
         GrnNumber = grnNumber;
         VendorId = po.VendorId;
@@ -55,6 +61,34 @@ public class GoodsReceipt : TenantEntity
         ReceivedByUserId = receivedByUserId;
         Notes = notes;
         Status = GoodsReceiptStatus.Posted;
+        QcStatus = requiresInspection ? GoodsReceiptQcStatus.PendingInspection : GoodsReceiptQcStatus.NotRequired;
+    }
+
+    public bool IsAwaitingQc => QcStatus == GoodsReceiptQcStatus.PendingInspection;
+
+    public void ApproveQc(Guid userId, DateTime nowUtc)
+    {
+        if (QcStatus != GoodsReceiptQcStatus.PendingInspection)
+        {
+            throw new InvalidGoodsReceiptQcTransitionException(QcStatus.ToString(), GoodsReceiptQcStatus.Approved.ToString());
+        }
+        QcStatus = GoodsReceiptQcStatus.Approved;
+        QcDecisionAtUtc = nowUtc;
+        QcDecidedByUserId = userId;
+        UpdatedAtUtc = nowUtc;
+    }
+
+    public void RejectQc(string? reason, Guid userId, DateTime nowUtc)
+    {
+        if (QcStatus != GoodsReceiptQcStatus.PendingInspection)
+        {
+            throw new InvalidGoodsReceiptQcTransitionException(QcStatus.ToString(), GoodsReceiptQcStatus.Rejected.ToString());
+        }
+        QcStatus = GoodsReceiptQcStatus.Rejected;
+        QcRejectionReason = reason;
+        QcDecisionAtUtc = nowUtc;
+        QcDecidedByUserId = userId;
+        UpdatedAtUtc = nowUtc;
     }
 
     public void AddLine(GoodsReceiptLine line)
@@ -65,6 +99,10 @@ public class GoodsReceipt : TenantEntity
 
     public void MarkReversed(string? reason, Guid userId, DateTime nowUtc)
     {
+        if (QcStatus is GoodsReceiptQcStatus.PendingInspection or GoodsReceiptQcStatus.Rejected)
+        {
+            throw new InvalidGoodsReceiptQcTransitionException(QcStatus.ToString(), GoodsReceiptStatus.Reversed.ToString());
+        }
         if (Status != GoodsReceiptStatus.Posted)
         {
             throw new InvalidOrderStatusTransitionException(Status.ToString(), GoodsReceiptStatus.Reversed.ToString());

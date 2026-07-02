@@ -31,6 +31,7 @@ public class PaymentDto
     public decimal Amount { get; set; }
     public decimal AppliedAmount { get; set; }
     public decimal UnappliedAmount { get; set; }
+    public bool IsAdvance { get; set; }
     public string? BankAccountInfo { get; set; }
     public string? ReferenceNumber { get; set; }
     public string? CheckNumber { get; set; }

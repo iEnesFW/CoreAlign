@@ -19,10 +19,16 @@ public record CreatePaymentCommand(
     DateTime? CheckDueDate = null,
     string? Notes = null,
     bool AutoConfirm = true,
-    List<PaymentApplyLine>? Applications = null
+    List<PaymentApplyLine>? Applications = null,
+    bool IsAdvance = false
 ) : IRequest<PaymentDto>, ITransactionalRequest;
 
 public record PaymentApplyLine(Guid InvoiceId, decimal AppliedAmount);
+
+public record OffsetCustomerAdvanceCommand(
+    Guid PaymentId,
+    List<PaymentApplyLine> Applications
+) : IRequest<PaymentDto>, ITransactionalRequest;
 
 public record UpdatePaymentCommand(
     Guid Id,
@@ -45,6 +51,9 @@ public record ApplyPaymentCommand(
     Guid Id,
     List<PaymentApplyLine> Applications
 ) : IRequest<PaymentDto>, ITransactionalRequest;
+
+public record ApplyPaymentFifoCommand(Guid Id)
+    : IRequest<PaymentDto>, ITransactionalRequest;
 
 public record UnapplyPaymentCommand(Guid Id, Guid ApplicationId)
     : IRequest<PaymentDto>, ITransactionalRequest;

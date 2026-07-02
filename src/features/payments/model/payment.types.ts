@@ -69,6 +69,7 @@ export interface Payment {
   voidedAtUtc: string | null;
   voidReason: string | null;
   notes: string | null;
+  isAdvance: boolean;
   applications: PaymentApplicationItem[];
   createdAtUtc: string;
   updatedAtUtc: string;
@@ -86,6 +87,7 @@ export interface PaymentSummary {
   amount: number;
   unappliedAmount: number;
   currency: string;
+  isAdvance: boolean;
 }
 
 export interface CustomerLedgerEntry {
@@ -141,6 +143,7 @@ export interface CreatePaymentInput {
   checkDueDate?: string | null;
   notes?: string | null;
   autoConfirm?: boolean;
+  isAdvance?: boolean;
   applications?: ApplyPaymentLine[];
 }
 

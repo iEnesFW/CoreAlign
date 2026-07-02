@@ -20,6 +20,8 @@ public record RecordInvoicePaymentCommand(
 
 public record CancelInvoiceCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
 
+public record WriteOffInvoiceCommand(Guid Id, string? Reason = null) : IRequest<InvoiceDto>, ITransactionalRequest;
+
 public record StandaloneInvoiceLineInput(
     Guid? ProductId,
     string ProductSku,

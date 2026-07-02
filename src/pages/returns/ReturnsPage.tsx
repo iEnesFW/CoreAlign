@@ -86,7 +86,7 @@ export const ReturnsPage = () => {
           <select
             value={status ?? ''}
             onChange={(e) => updateParam('status', e.target.value || null)}
-            className="rounded border border-slate-300 px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900"
+            className="rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             aria-label={t('Returns.filters.status')}
           >
             <option value="">{t('Returns.filters.allStatuses')}</option>
@@ -132,7 +132,10 @@ export const ReturnsPage = () => {
             ))}
             {!query.isLoading && items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
+                <td
+                  colSpan={7}
+                  className="px-3 py-8 text-center text-slate-500 dark:text-slate-400"
+                >
                   {t('Returns.empty')}
                 </td>
               </tr>
@@ -164,11 +167,11 @@ const Row = ({ row, locale }: RowProps) => {
         </Link>
       </td>
       <td className="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">{row.orderNumber}</td>
-      <td className="px-3 py-2">{row.customerName}</td>
+      <td className="px-3 py-2 text-slate-700 dark:text-slate-300">{row.customerName}</td>
       <td className="px-3 py-2">
         <Badge variant={statusVariant[row.status]}>{t(`Returns.status.${row.status}`)}</Badge>
       </td>
-      <td className="px-3 py-2 text-right tabular-nums">
+      <td className="px-3 py-2 text-right tabular-nums text-slate-700 dark:text-slate-300">
         {formatCurrency(row.total, locale, row.currency)}
       </td>
       <td className="px-3 py-2 text-slate-600 dark:text-slate-400">

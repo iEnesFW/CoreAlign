@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ordersApi } from '../api/ordersApi';
+import { ordersApi, type BulkOrderActionKind } from '../api/ordersApi';
 import { orderKeys } from './orderKeys';
 import type {
   CreateOrderInput,
@@ -38,8 +38,12 @@ const invalidateOrder = (queryClient: ReturnType<typeof useQueryClient>, id?: st
   if (id) {
     queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
     queryClient.invalidateQueries({ queryKey: ['shipments', 'by-order', id] });
+  } else {
+    queryClient.invalidateQueries({ queryKey: orderKeys.details() });
+    queryClient.invalidateQueries({ queryKey: ['shipments'] });
   }
   queryClient.invalidateQueries({ queryKey: ['inventory'] });
+  queryClient.invalidateQueries({ queryKey: ['customers'] });
 };
 
 export const useCreateOrder = () => {
@@ -74,6 +78,26 @@ export const useSubmitOrder = () => {
   return useMutation({
     mutationFn: (id: string) => ordersApi.submit(id),
     onSuccess: (_, id) => invalidateOrder(queryClient, id),
+  });
+};
+
+export const useReorderOrder = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersApi.reorder(id),
+    onSuccess: () => invalidateOrder(queryClient),
+  });
+};
+
+export const useBulkOrderAction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: {
+      orderIds: string[];
+      action: BulkOrderActionKind;
+      reason?: string | null;
+    }) => ordersApi.bulkAction(params.orderIds, params.action, params.reason),
+    onSuccess: () => invalidateOrder(queryClient),
   });
 };
 

@@ -50,6 +50,8 @@ public class GoodsReceiptReversalAndIdempotencyTests
             TenantId = TenantId,
         };
         _products.GetByIdAsync(ProductId, Arg.Any<CancellationToken>()).Returns(_product);
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [ProductId] = _product });
 
         _movements.AddAsync(Arg.Any<StockMovement>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask)
@@ -73,10 +75,16 @@ public class GoodsReceiptReversalAndIdempotencyTests
     }
 
     private ReceivePurchaseOrderHandler ReceiveHandler() =>
-        new(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _uow);
+        new(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _products, _uow);
 
     private ReverseGoodsReceiptHandler ReverseHandler() =>
         new(_grns, _orders, _allocation, _outbox, _uow);
+
+    private ApproveGoodsReceiptQcHandler ApproveQcHandler() =>
+        new(_grns, _orders, _allocation, _outbox, _uow);
+
+    private RejectGoodsReceiptQcHandler RejectQcHandler() =>
+        new(_grns, _orders, _uow);
 
     private PurchaseOrder ApprovedPo(Guid lineId, decimal qty, decimal unitCost)
     {
@@ -92,6 +100,80 @@ public class GoodsReceiptReversalAndIdempotencyTests
         po.Approve(Guid.NewGuid());
         _orders.GetByIdAsync(po.Id, Arg.Any<CancellationToken>()).Returns(po);
         return po;
+    }
+
+    [Fact]
+    public async Task Qc_required_receive_holds_stock_and_gl_until_approved()
+    {
+        _gl.SeedChart("153", "322");
+        _product.SetRequiresInspection(true);
+        var lineId = Guid.NewGuid();
+        var po = ApprovedPo(lineId, qty: 10m, unitCost: 4m);
+
+        await ReceiveHandler().Handle(
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) },
+                Guid.NewGuid().ToString("N"), WarehouseId),
+            default);
+
+        var grn = _writtenGrns.Single();
+        grn.QcStatus.Should().Be(GoodsReceiptQcStatus.PendingInspection);
+        _writtenMovements.Should().NotContain(m => m.Type == StockMovementType.Receipt, "QC hold defers the stock receipt");
+        _gl.PostedEntries.Should().BeEmpty("no inventory GL is recognized while awaiting QC");
+        _stockItem.OnHand.Should().Be(0m, "held goods are not available stock");
+        po.Lines.Single().QuantityReceived.Should().Be(10m, "the PO still progresses on receive");
+    }
+
+    [Fact]
+    public async Task Approving_qc_applies_stock_and_gl_exactly_once()
+    {
+        _gl.SeedChart("153", "322");
+        _product.SetRequiresInspection(true);
+        var lineId = Guid.NewGuid();
+        var po = ApprovedPo(lineId, qty: 10m, unitCost: 4m);
+
+        await ReceiveHandler().Handle(
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) },
+                Guid.NewGuid().ToString("N"), WarehouseId),
+            default);
+        var grn = _writtenGrns.Single();
+        _grns.GetByIdAsync(grn.Id, Arg.Any<CancellationToken>()).Returns(grn);
+
+        await ApproveQcHandler().Handle(new ApproveGoodsReceiptQcCommand(grn.Id, Guid.NewGuid()), default);
+
+        grn.QcStatus.Should().Be(GoodsReceiptQcStatus.Approved);
+        _stockItem.OnHand.Should().Be(10m, "approval applies the deferred receipt");
+        _gl.PostedEntries.Count(e => e.SourceType == JournalSourceType.GoodsReceipt).Should().Be(1);
+        _writtenMovements.Count(m => m.Type == StockMovementType.Receipt).Should().Be(1);
+
+        var second = () => ApproveQcHandler().Handle(new ApproveGoodsReceiptQcCommand(grn.Id, Guid.NewGuid()), default);
+        await second.Should().ThrowAsync<InvalidGoodsReceiptQcTransitionException>();
+        _stockItem.OnHand.Should().Be(10m, "a second approve must not double-apply stock");
+        _writtenMovements.Count(m => m.Type == StockMovementType.Receipt).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Rejecting_qc_adds_no_stock_and_unrecords_the_po_line()
+    {
+        _gl.SeedChart("153", "322");
+        _product.SetRequiresInspection(true);
+        var lineId = Guid.NewGuid();
+        var po = ApprovedPo(lineId, qty: 10m, unitCost: 4m);
+
+        await ReceiveHandler().Handle(
+            new ReceivePurchaseOrderCommand(po.Id, new List<ReceiptLineInput> { new(lineId, 10m) },
+                Guid.NewGuid().ToString("N"), WarehouseId),
+            default);
+        var grn = _writtenGrns.Single();
+        _grns.GetByIdAsync(grn.Id, Arg.Any<CancellationToken>()).Returns(grn);
+
+        await RejectQcHandler().Handle(new RejectGoodsReceiptQcCommand(grn.Id, "Kırık geldi", Guid.NewGuid()), default);
+
+        grn.QcStatus.Should().Be(GoodsReceiptQcStatus.Rejected);
+        grn.QcRejectionReason.Should().Be("Kırık geldi");
+        _stockItem.OnHand.Should().Be(0m, "rejected goods never enter stock");
+        _writtenMovements.Should().NotContain(m => m.Type == StockMovementType.Receipt);
+        _gl.PostedEntries.Should().BeEmpty("no GL on a rejected QC hold");
+        po.Lines.Single().QuantityReceived.Should().Be(0m, "the rejected qty is un-recorded on the PO");
     }
 
     [Fact]

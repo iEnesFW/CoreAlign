@@ -18,6 +18,9 @@ interface Props {
   onCreate?: () => void;
   onStatusTransition?: (order: OrderSummary, action: string) => void;
   statusBusyId?: string | null;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (ids: string[]) => void;
 }
 
 const statusTone: Record<OrderStatus, string> = {
@@ -80,6 +83,9 @@ export const OrderList = ({
   onCreate,
   onStatusTransition,
   statusBusyId,
+  selectable,
+  selectedIds,
+  onSelectionChange,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
@@ -91,6 +97,9 @@ export const OrderList = ({
       isLoading={isLoading}
       selectedId={selectedId ?? null}
       onRowClick={onSelect}
+      selectable={selectable}
+      selectedIds={selectedIds}
+      onSelectionChange={onSelectionChange}
       emptyIcon={<ShoppingCart size={20} />}
       emptyTitle={t('orders.empty')}
       emptyDescription={t('orders.emptyHint', {

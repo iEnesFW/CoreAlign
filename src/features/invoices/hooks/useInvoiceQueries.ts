@@ -85,6 +85,19 @@ export const useCancelInvoice = () => {
   });
 };
 
+export const useWriteOffInvoice = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string | null }) =>
+      invoicesApi.writeOff(id, reason),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: invoiceKeys.detail(vars.id) });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
+};
+
 export const useCreateStandaloneInvoice = () => {
   const queryClient = useQueryClient();
   return useMutation({

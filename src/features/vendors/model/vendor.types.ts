@@ -27,6 +27,7 @@ export interface Vendor {
   blockReason?: string | null;
   notes?: string | null;
   rating?: number | null;
+  defaultLeadTimeDays: number;
   currentBalance: number;
   overdueAmount: number;
   totalPayable: number;
@@ -125,6 +126,7 @@ export interface CreateVendorRequest {
   languageCode?: string | null;
   parentVendorId?: string | null;
   notes?: string | null;
+  defaultLeadTimeDays?: number;
 }
 
 export interface VendorListParams {

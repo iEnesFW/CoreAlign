@@ -32,6 +32,7 @@ const statusTone: Record<InvoiceStatus, string> = {
   Overdue: 'bg-danger-100 text-danger-800 dark:bg-danger-500/20 dark:text-danger-300',
   Void: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  WrittenOff: 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300',
 };
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {

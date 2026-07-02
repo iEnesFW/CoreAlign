@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Settings;
 using CoreAlign.Application.Settings.Commands;
 using CoreAlign.Application.Settings.Queries;
 using MediatR;
@@ -72,4 +73,15 @@ public class SettingsController : ControllerBase
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> DeleteEmailTemplate(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteEmailTemplateCommand(id), ct)).ToOk();
+
+    // ---------- Document number sequences ----------
+
+    [HttpGet("document-sequences")]
+    public async Task<IActionResult> GetDocumentSequences(CancellationToken ct)
+        => (await _mediator.Send(new ListDocumentSequencesQuery(), ct)).ToOk();
+
+    [HttpPost("document-sequences")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> ConfigureDocumentSequence([FromBody] ConfigureDocumentSequenceCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToOk();
 }

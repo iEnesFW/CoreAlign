@@ -75,6 +75,16 @@ export interface PriceList {
   isActive: boolean;
 }
 
+export interface PriceListItem {
+  id: string;
+  priceListId: string;
+  productId: string;
+  price: number;
+  minQuantity?: number | null;
+  maxQuantity?: number | null;
+  discountPercent?: number | null;
+}
+
 export interface Warehouse {
   id: string;
   code: string;
@@ -89,4 +99,18 @@ export interface Warehouse {
   phone: string | null;
   isDefault: boolean;
   isActive: boolean;
+}
+
+export interface BankAccount {
+  id: string;
+  accountName: string;
+  bankName: string;
+  branchName: string | null;
+  iban: string;
+  swift: string | null;
+  currency: string;
+  openingBalance: number;
+  isPrimary: boolean;
+  isActive: boolean;
+  notes: string | null;
 }

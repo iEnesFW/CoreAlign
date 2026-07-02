@@ -40,6 +40,7 @@ public class Product : TenantEntity
     public bool IsStockTracked { get; private set; } = true;
     public bool IsLotTracked { get; private set; }
     public bool IsSerialTracked { get; private set; }
+    public bool RequiresInspection { get; private set; }
     public decimal MinStock { get; private set; }
     public decimal MaxStock { get; private set; }
     public decimal ReorderPoint { get; private set; }
@@ -207,6 +208,12 @@ public class Product : TenantEntity
     public void ChangeStatus(ProductStatus status)
     {
         Status = status;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetRequiresInspection(bool value)
+    {
+        RequiresInspection = value;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   masterDataApi,
+  type BankAccountInput,
+  type BankAccountUpdateInput,
   type BrandInput,
   type CustomerGroupInput,
   type PaymentTermInput,
@@ -60,6 +62,14 @@ export const usePriceListsQuery = (isActive?: boolean) =>
   useQuery({
     queryKey: ['master-data', 'price-lists', { isActive }] as const,
     queryFn: () => masterDataApi.priceLists.list(isActive),
+    staleTime: FIVE_MINUTES,
+  });
+
+export const usePriceListItemsQuery = (priceListId: string | null) =>
+  useQuery({
+    queryKey: ['master-data', 'price-list-items', priceListId] as const,
+    queryFn: () => masterDataApi.priceListItems(priceListId as string),
+    enabled: !!priceListId,
     staleTime: FIVE_MINUTES,
   });
 
@@ -160,5 +170,36 @@ export const useCreateTaxRate = () => {
   return useMutation({
     mutationFn: (input: TaxRateInput) => masterDataApi.taxRates.create(input),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['master-data', 'tax-rates'] }),
+  });
+};
+
+export const useBankAccountsQuery = (isActive?: boolean) =>
+  useQuery({
+    queryKey: ['master-data', 'bank-accounts', { isActive }] as const,
+    queryFn: () => masterDataApi.bankAccounts.list(isActive),
+    staleTime: FIVE_MINUTES,
+  });
+
+export const useCreateBankAccount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BankAccountInput) => masterDataApi.bankAccounts.create(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['master-data', 'bank-accounts'] }),
+  });
+};
+
+export const useUpdateBankAccount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: BankAccountUpdateInput) => masterDataApi.bankAccounts.update(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['master-data', 'bank-accounts'] }),
+  });
+};
+
+export const useDeleteBankAccount = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => masterDataApi.bankAccounts.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['master-data', 'bank-accounts'] }),
   });
 };

@@ -36,8 +36,10 @@ export const RecentActivityFeed = ({
 }) => {
   const { t } = useTranslation();
   const handleOpen = (item: CustomerActivityItem) => {
-    if (item.kind === 'Order') onOpenOrder?.(item.sourceId);
-    else if (item.kind === 'Invoice') onOpenInvoice?.(item.sourceId);
+    // Order/Invoice → open the relevant list page searching by the document NUMBER.
+    const q = item.sourceNumber ?? '';
+    if (item.kind === 'Order') onOpenOrder?.(q);
+    else if (item.kind === 'Invoice') onOpenInvoice?.(q);
     else if (item.kind === 'Payment') onOpenPayment?.(item.sourceId);
   };
 
@@ -66,6 +68,18 @@ export const RecentActivityFeed = ({
               (item.kind === 'Order' && !!onOpenOrder) ||
               (item.kind === 'Invoice' && !!onOpenInvoice) ||
               (item.kind === 'Payment' && !!onOpenPayment);
+            const statusLabel = item.status
+              ? t(
+                  item.kind === 'Order'
+                    ? `orders.status.${item.status}`
+                    : item.kind === 'Invoice'
+                      ? `invoices.status.${item.status}`
+                      : item.kind === 'Payment'
+                        ? `invoices.paymentStatus.${item.status}`
+                        : `customers.detail.activity.${item.kind}`,
+                  { defaultValue: item.status },
+                )
+              : null;
             return (
               <li
                 key={`${item.kind}-${item.sourceId}`}
@@ -83,7 +97,7 @@ export const RecentActivityFeed = ({
                       <span className="font-mono">{item.sourceNumber ?? '—'}</span>
                       {item.status && (
                         <span className="rounded bg-slate-100 px-1 py-px text-[9px] font-semibold uppercase tracking-wider text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {item.status}
+                          {statusLabel}
                         </span>
                       )}
                     </div>

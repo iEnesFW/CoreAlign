@@ -65,3 +65,62 @@ export interface AgingSummaryReport {
   customersWithBalance: number;
   byCustomer: CustomerAgingRow[];
 }
+
+export interface BankAccountSummary {
+  id: string;
+  accountName: string;
+  bankName: string;
+  iban: string;
+  currency: string;
+  openingBalance: number;
+  isPrimary: boolean;
+}
+
+export interface CashPositionReport {
+  asOfUtc: string;
+  currency: string;
+  cashOnHand: number;
+  bankBalance: number;
+  totalCash: number;
+  customerAdvances: number;
+  accounts: BankAccountSummary[];
+}
+
+export type DuplicateEntity = 'customer' | 'vendor';
+export type DuplicateKeyKind = 'Email' | 'TaxNumber' | 'NationalId';
+
+export interface DuplicateMember {
+  id: string;
+  name: string;
+}
+
+export interface DuplicateGroup {
+  keyValue: string;
+  count: number;
+  members: DuplicateMember[];
+}
+
+export interface DuplicateReport {
+  entity: string;
+  key: string;
+  groupCount: number;
+  groups: DuplicateGroup[];
+}
+
+export interface DocumentNumberGapRow {
+  documentType: string;
+  prefix: string;
+  year: number;
+  expected: number;
+  usedCount: number;
+  maxUsed: number;
+  gapCount: number;
+  missingNumbers: number[];
+}
+
+export interface DocumentNumberGapReport {
+  year: number | null;
+  typeCount: number;
+  totalGap: number;
+  rows: DocumentNumberGapRow[];
+}

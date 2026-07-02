@@ -79,6 +79,7 @@ export const PaymentCreateModal = ({
   const [checkNumber, setCheckNumber] = useState('');
   const [checkDueDate, setCheckDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [isAdvance, setIsAdvance] = useState(false);
 
   const invoices = useMemo(
     () => openInvoicesQuery.data?.data ?? [],
@@ -141,7 +142,7 @@ export const PaymentCreateModal = ({
       );
       return;
     }
-    if (overAllocated) {
+    if (!isAdvance && overAllocated) {
       toast.error(
         t('payments.create.overAllocated', { defaultValue: 'Allocated exceeds payment amount.' }),
       );
@@ -160,9 +161,12 @@ export const PaymentCreateModal = ({
         checkDueDate: method === 'Check' && checkDueDate ? checkDueDate : null,
         notes: notes || null,
         autoConfirm: true,
-        applications: allocations
-          .filter((a) => a.selected && a.amount > 0)
-          .map((a) => ({ invoiceId: a.invoiceId, appliedAmount: a.amount })),
+        isAdvance,
+        applications: isAdvance
+          ? []
+          : allocations
+              .filter((a) => a.selected && a.amount > 0)
+              .map((a) => ({ invoiceId: a.invoiceId, appliedAmount: a.amount })),
       });
       toast.success(t('payments.create.success', { defaultValue: 'Payment recorded' }));
       onClose();
@@ -279,68 +283,82 @@ export const PaymentCreateModal = ({
           </div>
         )}
 
-        <div className="rounded-lg border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-              {t('payments.create.applyToInvoices', { defaultValue: 'Apply to open invoices' })}
+        <label className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-xs font-medium text-slate-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={isAdvance}
+            onChange={(e) => setIsAdvance(e.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
+          />
+          {t('Payments.advance.isAdvance', {
+            defaultValue: 'Bu bir avans ödemesidir (faturaya sonra mahsup edilir)',
+          })}
+        </label>
+
+        {!isAdvance && (
+          <div className="rounded-lg border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                {t('payments.create.applyToInvoices', { defaultValue: 'Apply to open invoices' })}
+              </div>
+              <button
+                type="button"
+                onClick={applyOptimal}
+                disabled={numericAmount <= 0 || invoices.length === 0}
+                className="inline-flex items-center gap-1 rounded border border-primary-200 bg-white px-2 py-1 text-[11px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:border-primary-500/30 dark:bg-slate-900 dark:text-primary-300"
+              >
+                {t('payments.create.autoApply', { defaultValue: 'Auto apply (FIFO)' })}
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={applyOptimal}
-              disabled={numericAmount <= 0 || invoices.length === 0}
-              className="inline-flex items-center gap-1 rounded border border-primary-200 bg-white px-2 py-1 text-[11px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:border-primary-500/30 dark:bg-slate-900 dark:text-primary-300"
-            >
-              {t('payments.create.autoApply', { defaultValue: 'Auto apply (FIFO)' })}
-            </button>
+            {invoices.length === 0 ? (
+              <div className="px-3 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                {t('payments.create.noOpenInvoices', {
+                  defaultValue: 'No open invoices to apply.',
+                })}
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-200 dark:divide-slate-800">
+                {allocations.map((a, idx) => (
+                  <li key={a.invoiceId} className="flex items-center gap-3 px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={a.selected}
+                      onChange={(e) => updateAllocation(idx, { selected: e.target.checked })}
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {a.invoiceNumber}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t('payments.create.amountDue', { defaultValue: 'Due' })}:{' '}
+                        {fmtCurrency(a.amountDue, currency, locale)}
+                        {invoices[idx]?.isOverdue && (
+                          <span className="ml-2 inline-flex items-center gap-1 rounded bg-danger-100 px-1.5 text-[10px] font-medium text-danger-700 dark:bg-danger-500/20 dark:text-danger-300">
+                            {t('invoices.status.Overdue')}
+                          </span>
+                        )}
+                        {invoices[idx] && ' · '}
+                        {invoices[idx] && t('invoices.fields.dueDate')}:{' '}
+                        {invoices[idx] && fmtDate(invoices[idx].dueDate, locale)}
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min="0"
+                      max={a.amountDue}
+                      step="0.01"
+                      disabled={!a.selected}
+                      value={a.amount}
+                      onChange={(e) => updateAllocation(idx, { amount: Number(e.target.value) })}
+                      className="w-28 rounded border border-slate-200 bg-white px-2 py-1 text-right text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          {invoices.length === 0 ? (
-            <div className="px-3 py-4 text-center text-xs text-slate-500">
-              {t('payments.create.noOpenInvoices', {
-                defaultValue: 'No open invoices to apply.',
-              })}
-            </div>
-          ) : (
-            <ul className="divide-y divide-slate-200 dark:divide-slate-800">
-              {allocations.map((a, idx) => (
-                <li key={a.invoiceId} className="flex items-center gap-3 px-3 py-2">
-                  <input
-                    type="checkbox"
-                    checked={a.selected}
-                    onChange={(e) => updateAllocation(idx, { selected: e.target.checked })}
-                    className="h-4 w-4 rounded border-slate-300 text-primary-600"
-                  />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {a.invoiceNumber}
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {t('payments.create.amountDue', { defaultValue: 'Due' })}:{' '}
-                      {fmtCurrency(a.amountDue, currency, locale)}
-                      {invoices[idx]?.isOverdue && (
-                        <span className="ml-2 inline-flex items-center gap-1 rounded bg-danger-100 px-1.5 text-[10px] font-medium text-danger-700 dark:bg-danger-500/20 dark:text-danger-300">
-                          {t('invoices.status.Overdue')}
-                        </span>
-                      )}
-                      {invoices[idx] && ' · '}
-                      {invoices[idx] && t('invoices.fields.dueDate')}:{' '}
-                      {invoices[idx] && fmtDate(invoices[idx].dueDate, locale)}
-                    </div>
-                  </div>
-                  <input
-                    type="number"
-                    min="0"
-                    max={a.amountDue}
-                    step="0.01"
-                    disabled={!a.selected}
-                    value={a.amount}
-                    onChange={(e) => updateAllocation(idx, { amount: Number(e.target.value) })}
-                    className="w-28 rounded border border-slate-200 px-2 py-1 text-right text-sm dark:border-slate-700 dark:bg-slate-900"
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        )}
 
         <Field label={t('payments.create.notes', { defaultValue: 'Notes' })}>
           <textarea
@@ -352,7 +370,7 @@ export const PaymentCreateModal = ({
         </Field>
 
         <div
-          className={`rounded border p-3 text-xs ${
+          className={`rounded border p-3 text-xs text-slate-700 dark:text-slate-200 ${
             overAllocated
               ? 'border-danger-200 bg-danger-50/60 dark:border-danger-500/30 dark:bg-danger-500/10'
               : 'border-success-200 bg-success-50/60 dark:border-success-500/30 dark:bg-success-500/10'

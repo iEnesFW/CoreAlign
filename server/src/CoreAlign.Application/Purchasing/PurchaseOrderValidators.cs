@@ -29,6 +29,23 @@ public class ReceivePurchaseOrderCommandValidator : AbstractValidator<ReceivePur
     }
 }
 
+public class ApproveGoodsReceiptQcCommandValidator : AbstractValidator<ApproveGoodsReceiptQcCommand>
+{
+    public ApproveGoodsReceiptQcCommandValidator()
+    {
+        RuleFor(x => x.GrnId).NotEmpty();
+    }
+}
+
+public class RejectGoodsReceiptQcCommandValidator : AbstractValidator<RejectGoodsReceiptQcCommand>
+{
+    public RejectGoodsReceiptQcCommandValidator()
+    {
+        RuleFor(x => x.GrnId).NotEmpty();
+        RuleFor(x => x.Reason).MaximumLength(500);
+    }
+}
+
 public class UpdatePurchaseOrderCommandValidator : AbstractValidator<UpdatePurchaseOrderCommand>
 {
     public UpdatePurchaseOrderCommandValidator()

@@ -4,17 +4,16 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Mail, KeyRound } from 'lucide-react';
+import { Lock, Mail, KeyRound, ArrowRight } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
-import { Logo } from '@/shared/ui/Logo/Logo';
+import { PasswordInput } from '@/shared/ui/Input/PasswordInput';
 import { generateDeviceFingerprint } from '@/shared/lib/deviceFingerprint';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useLogin } from '../../hooks/useAuth';
 import { loginSchema, type LoginFormValues } from '../../model/loginSchema';
 import { SsoLoginFormView } from './SsoLoginFormView';
-import styles from './LoginForm.module.css';
 
 export const LoginForm = () => {
   const { t } = useTranslation();
@@ -84,77 +83,102 @@ export const LoginForm = () => {
   const isBusy = isSubmitting || loginMutation.isPending;
 
   return (
-    <div className={styles.formWrapper}>
-      <div className={styles.header}>
-        <div className={styles.logoWrapper}>
-          <Logo size={42} />
-        </div>
-        <p className={styles.subtitle}>{t('auth.login.subtitle')}</p>
+    <div className="flex w-full flex-col">
+      {/* heading */}
+      <div className="mb-8 text-center">
+        <h1 className="m-0 text-[30px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.login.title')}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[320px] text-[15px] text-slate-500 dark:text-slate-400">
+          {t('auth.login.subtitle')}
+        </p>
       </div>
 
       <div className="relative overflow-hidden">
         {view === 'email' ? (
           <div className="animate-in fade-in slide-in-from-left-4 duration-300">
-            <form className={styles.form} onSubmit={onSubmit} noValidate>
-              <div className={styles.fields}>
-                <Input
-                  label={t('auth.login.emailLabel')}
-                  placeholder={t('auth.login.emailPlaceholder')}
-                  type="email"
-                  autoComplete="email"
-                  leftIcon={<Mail size={18} />}
-                  error={translateError(errors.email?.message)}
-                  {...register('email')}
-                />
+            <form className="flex flex-col gap-[18px]" onSubmit={onSubmit} noValidate>
+              <Input
+                label={t('auth.login.emailLabel')}
+                placeholder={t('auth.login.emailPlaceholder')}
+                type="email"
+                autoComplete="email"
+                leftIcon={<Mail size={18} />}
+                error={translateError(errors.email?.message)}
+                {...register('email')}
+              />
 
-                <Input
-                  label={t('auth.login.passwordLabel')}
-                  placeholder={t('auth.login.passwordPlaceholder')}
-                  type="password"
-                  autoComplete="current-password"
-                  leftIcon={<Lock size={18} />}
-                  error={translateError(errors.password?.message)}
-                  {...register('password')}
-                />
-              </div>
+              <PasswordInput
+                label={t('auth.login.passwordLabel')}
+                placeholder={t('auth.login.passwordPlaceholder')}
+                autoComplete="current-password"
+                leftIcon={<Lock size={18} />}
+                error={translateError(errors.password?.message)}
+                {...register('password')}
+              />
 
-              <div className={styles.actions}>
-                <Link to="/forgot-password" className={styles.forgotPassword}>
+              <div className="flex items-center justify-between">
+                <label className="flex cursor-pointer select-none items-center gap-2 text-[13.5px] text-slate-600 dark:text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-slate-300 accent-primary-600 dark:border-slate-600"
+                    {...register('rememberMe')}
+                  />
+                  {t('auth.login.rememberMe')}
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-[13.5px] font-semibold text-primary-600 hover:underline dark:text-primary-300"
+                >
                   {t('auth.login.forgotPassword')}
                 </Link>
-                <Button type="submit" isLoading={isBusy} className={styles.submitButton}>
-                  {t('auth.login.submitButton')}
-                </Button>
               </div>
+
+              <Button type="submit" isLoading={isBusy} size="lg" className="mt-1 w-full">
+                {t('auth.login.submitButton')}
+                <ArrowRight size={18} />
+              </Button>
             </form>
 
-            <div className={styles.divider}>
-              <span className={styles.dividerText}>{t('auth.login.orDivider')}</span>
+            <div className="my-6 flex items-center gap-3.5">
+              <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+              <span className="text-[11.5px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                {t('auth.login.orDivider')}
+              </span>
+              <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
             </div>
 
             <Button
               type="button"
               variant="secondary"
+              size="lg"
               className="w-full"
               onClick={() => setView('sso')}
             >
-              <KeyRound size={16} className="mr-2 opacity-70" />
+              <KeyRound size={16} className="opacity-70" />
               {t('auth.login.ssoContinue')}
             </Button>
+
+            <p className="mt-7 text-center text-[14px] text-slate-500 dark:text-slate-400">
+              {t('auth.login.noAccount')}{' '}
+              <Link
+                to="/register"
+                className="font-bold text-slate-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-300"
+              >
+                {t('auth.login.registerLink')}
+              </Link>
+            </p>
+            <p className="mx-auto mt-4 max-w-[330px] text-center text-[11.5px] leading-relaxed text-slate-400 dark:text-slate-500">
+              {t('auth.login.legalNotice', {
+                defaultValue:
+                  "Giriş yaparak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursunuz.",
+              })}
+            </p>
           </div>
         ) : (
           <SsoLoginFormView onBack={() => setView('email')} />
         )}
       </div>
-
-      {view === 'email' && (
-        <div className={styles.footer}>
-          {t('auth.login.noAccount')}{' '}
-          <Link to="/register" className={styles.link}>
-            {t('auth.login.registerLink')}
-          </Link>
-        </div>
-      )}
     </div>
   );
 };

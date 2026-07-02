@@ -301,20 +301,24 @@ public class DemoDataSeeder : BackgroundService
         IMediator mediator, List<Guid> vendors, List<(Guid Id, decimal Cost, decimal Price)> products,
         Guid adminId, DateTime now, CancellationToken ct)
     {
-        // payment coverage per vendor: full, partial, none.
+        // ~9 purchase flows across the last few weeks; payment coverage cycles full/partial/none
+        // so the payables balance and aging buckets are populated.
+        const int poCount = 9;
         var coverage = new[] { 1.0m, 0.4m, 0m };
-        for (var i = 0; i < vendors.Count; i++)
+        for (var i = 0; i < poCount; i++)
         {
             try
             {
+                var vendorId = vendors[i % vendors.Count];
                 var product = products[i % products.Count];
-                const decimal qty = 60m;
+                var qty = 40m + (i % 5) * 10m;
+                var orderDate = now.AddDays(-24 + i * 2);
                 var subtotal = qty * product.Cost;
                 var taxAmount = Math.Round(subtotal * 0.20m, 2);
                 var total = subtotal + taxAmount;
 
                 var po = await mediator.Send(new CreatePurchaseOrderCommand(
-                    VendorId: vendors[i], OrderDate: now.AddDays(-20 + i), Currency: "TRY",
+                    VendorId: vendorId, OrderDate: orderDate, Currency: "TRY",
                     Lines: new List<PurchaseOrderLineInput> { new(product.Id, qty, product.Cost, 20m) }), ct);
                 await mediator.Send(new SubmitPurchaseOrderCommand(po.Id), ct);
                 await mediator.Send(new ApprovePurchaseOrderCommand(po.Id, adminId), ct);
@@ -323,16 +327,18 @@ public class DemoDataSeeder : BackgroundService
                     IdempotencyKey: Guid.NewGuid().ToString("N")), ct);
 
                 var bill = await mediator.Send(new CreateVendorBillCommand(
-                    VendorId: vendors[i], BillNumber: $"VB-{now.Year}-{i + 1:D4}", BillDate: now.AddDays(-18 + i),
+                    VendorId: vendorId, BillNumber: $"VB-{now.Year}-{i + 1:D4}", BillDate: orderDate.AddDays(2),
                     Currency: "TRY", Subtotal: subtotal, TaxAmount: taxAmount,
-                    DueDate: now.AddDays(12 + i), PurchaseOrderId: po.Id), ct);
+                    DueDate: orderDate.AddDays(32), PurchaseOrderId: po.Id), ct);
                 await mediator.Send(new PostVendorBillCommand(bill.Id), ct);
 
                 var pay = Math.Round(total * coverage[i % coverage.Length], 2);
                 if (pay > 0m)
                 {
+                    var paymentDate = orderDate.AddDays(7);
+                    if (paymentDate > now) { paymentDate = now; }
                     await mediator.Send(new CreateVendorPaymentCommand(
-                        VendorId: vendors[i], Amount: pay, PaymentDate: now.AddDays(-5 + i),
+                        VendorId: vendorId, Amount: pay, PaymentDate: paymentDate,
                         Currency: "TRY", Method: "BankTransfer", VendorBillId: bill.Id), ct);
                 }
             }
@@ -347,18 +353,23 @@ public class DemoDataSeeder : BackgroundService
         IMediator mediator, List<Guid> customers, List<(Guid Id, decimal Cost, decimal Price)> products,
         Guid warehouseId, Guid taxRateId, Guid adminId, DateTime now, CancellationToken ct)
     {
-        // 0 = full chain + fully paid, 1 = full chain + partial, 2 = full chain unpaid,
-        // 3 = approved order only (no shipment/invoice).
-        for (var i = 0; i < customers.Count; i++)
+        // ~30 orders spread across the last 30 days, cycling the demo customers/products.
+        // Status mix (by i % 10) so "orders by status" has variety:
+        //   0 -> Draft, 1 -> Submitted, 2 -> Approved, 3 -> Shipped (no invoice),
+        //   4..9 -> fully invoiced. Payment mix (by i % 3): full / half / unpaid.
+        const int orderCount = 30;
+        for (var i = 0; i < orderCount; i++)
         {
             try
             {
+                var customerId = customers[i % customers.Count];
                 var product = products[i % products.Count];
-                var qty = 5m + i;
+                var qty = 3m + (i % 9);
+                var orderDate = now.AddDays(-(orderCount - 1 - i)); // oldest first, newest = today
                 var order = await mediator.Send(new CreateOrderCommand(
                     OrderNumber: $"ORD-{now.Year}-{i + 1:D4}",
-                    CustomerId: customers[i],
-                    OrderDate: now.AddDays(-15 + i),
+                    CustomerId: customerId,
+                    OrderDate: orderDate,
                     Currency: "TRY",
                     Notes: null,
                     Lines: new List<OrderLineInput>
@@ -366,12 +377,22 @@ public class DemoDataSeeder : BackgroundService
                         new(product.Id, qty, product.Price, TaxRatePercent: 20m, TaxRateId: taxRateId),
                     }), ct);
 
-                await mediator.Send(new SubmitOrderCommand(order.Id), ct);
-                await mediator.Send(new ApproveOrderCommand(order.Id, adminId), ct);
-
-                if (i == 3)
+                var bucket = i % 10;
+                if (bucket == 0)
                 {
-                    continue; // leave this one as an approved order for variety
+                    continue; // leave as Draft
+                }
+
+                await mediator.Send(new SubmitOrderCommand(order.Id), ct);
+                if (bucket == 1)
+                {
+                    continue; // leave as Submitted
+                }
+
+                await mediator.Send(new ApproveOrderCommand(order.Id, adminId), ct);
+                if (bucket == 2)
+                {
+                    continue; // leave as Approved
                 }
 
                 await mediator.Send(new AllocateOrderCommand(order.Id, warehouseId), ct);
@@ -384,15 +405,22 @@ public class DemoDataSeeder : BackgroundService
                 await mediator.Send(new DispatchShipmentCommand(
                     shipment.Id, "Aras Kargo", $"TRK{now.Year}{i + 1:D4}", null, 0m), ct);
 
+                if (bucket == 3)
+                {
+                    continue; // shipped but not invoiced
+                }
+
                 var invoice = await mediator.Send(new GenerateInvoiceFromOrderCommand(order.Id, 30), ct);
 
-                var fraction = i == 0 ? 1.0m : i == 1 ? 0.5m : 0m;
+                var fraction = (i % 3) switch { 0 => 1.0m, 1 => 0.5m, _ => 0m };
                 var amount = Math.Round(invoice.Total * fraction, 2);
                 if (amount > 0m)
                 {
+                    var paymentDate = orderDate.AddDays(5);
+                    if (paymentDate > now) { paymentDate = now; }
                     await mediator.Send(new CreatePaymentCommand(
-                        CustomerId: customers[i],
-                        PaymentDate: now.AddDays(-2 + i),
+                        CustomerId: customerId,
+                        PaymentDate: paymentDate,
                         Method: PaymentMethod.BankTransfer,
                         Amount: amount,
                         Currency: "TRY",

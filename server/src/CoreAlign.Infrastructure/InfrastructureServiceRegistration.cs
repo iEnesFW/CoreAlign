@@ -156,6 +156,12 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IPaymentTermRepository, PaymentTermRepository>();
         services.AddScoped<IPriceListRepository, PriceListRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+        services.AddScoped<IBankAccountRepository, BankAccountRepository>();
+        services.AddScoped<IDunningSettingRepository, DunningSettingRepository>();
+        services.AddScoped<CoreAlign.Application.Dunning.IDunningReminderDataSource, CoreAlign.Infrastructure.Dunning.DunningReminderDataSource>();
+        services.AddScoped<CoreAlign.Application.Dunning.DunningRemindersJob>();
+        services.AddScoped<CoreAlign.Application.Customers.Maintenance.ICustomerBalanceRecomputeDataSource, CoreAlign.Infrastructure.Customers.CustomerBalanceRecomputeDataSource>();
+        services.AddScoped<CoreAlign.Application.Customers.Maintenance.CustomerBalanceRecomputeJob>();
         services.AddScoped<IDocumentSequenceRepository, DocumentSequenceRepository>();
 
         services.AddScoped<IStockItemRepository, StockItemRepository>();
@@ -258,6 +264,9 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IOrderRevisionRepository, OrderRevisionRepository>();
         services.AddScoped<IOrderTemplateRepository, OrderTemplateRepository>();
+        services.AddScoped<IRecurringInvoiceTemplateRepository, RecurringInvoiceTemplateRepository>();
+        services.AddScoped<CoreAlign.Application.Invoices.Recurring.IRecurringInvoiceDataSource, CoreAlign.Infrastructure.Invoices.RecurringInvoiceDataSource>();
+        services.AddScoped<CoreAlign.Application.Invoices.Recurring.Jobs.RecurringInvoiceGenerationJob>();
         services.AddScoped<IPasswordHistoryRepository, PasswordHistoryRepository>();
         services.AddScoped<IPaymentAttemptRepository, PaymentAttemptRepository>();
         services.AddScoped<IPaymentSessionRepository, PaymentSessionRepository>();
@@ -484,6 +493,9 @@ public static class InfrastructureServiceRegistration
         // Purchasing: Three-way match reader (PO + GR + Invoice eslestir)
         services.AddScoped<CoreAlign.Domain.Interfaces.IThreeWayMatchReader,
             CoreAlign.Infrastructure.Repositories.ThreeWayMatchReader>();
+
+        services.AddScoped<CoreAlign.Domain.Interfaces.IDocumentNumberGapReader,
+            CoreAlign.Infrastructure.Repositories.DocumentNumberGapReader>();
 
         // Installation Acceptance servisi (MediatR command handler'lar ctor'da inject ediyor)
         services.AddScoped<CoreAlign.Application.Installation.IInstallationAcceptanceService,

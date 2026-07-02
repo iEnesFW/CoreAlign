@@ -126,4 +126,9 @@ public class VendorPaymentsController : ControllerBase
     [Authorize(Roles = "TenantAdmin")]
     public async Task<IActionResult> Apply([FromBody] ApplyVendorPaymentCommand cmd, CancellationToken ct)
         => (await _mediator.Send(cmd, ct)).ToCreated();
+
+    [HttpPost("offset-advance")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> OffsetAdvance([FromBody] OffsetVendorAdvanceCommand cmd, CancellationToken ct)
+        => (await _mediator.Send(cmd, ct)).ToCreated();
 }

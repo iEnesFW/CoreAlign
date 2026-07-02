@@ -82,10 +82,10 @@ export const OrderInlineCard = ({
                         {l.productSku}
                       </div>
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono">
+                    <td className="px-2 py-1.5 text-right font-mono text-slate-700 dark:text-slate-300">
                       {formatNumber(l.quantity, locale)} {l.uomCode ?? ''}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono">
+                    <td className="px-2 py-1.5 text-right font-mono text-slate-700 dark:text-slate-300">
                       {formatCurrency(l.unitPrice, locale, currency)}
                     </td>
                     <td className="px-2 py-1.5 text-right font-mono text-slate-500 dark:text-slate-400">
@@ -94,7 +94,7 @@ export const OrderInlineCard = ({
                     <td className="px-2 py-1.5 text-right font-mono text-slate-500 dark:text-slate-400">
                       {l.taxRatePercent}
                     </td>
-                    <td className="px-2 py-1.5 text-right font-mono font-semibold">
+                    <td className="px-2 py-1.5 text-right font-mono font-semibold text-slate-900 dark:text-slate-100">
                       {formatCurrency(l.lineTotal, locale, currency)}
                     </td>
                   </tr>

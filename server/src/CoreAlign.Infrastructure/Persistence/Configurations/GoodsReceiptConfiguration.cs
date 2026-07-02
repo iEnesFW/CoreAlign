@@ -18,8 +18,11 @@ public class GoodsReceiptConfiguration : IEntityTypeConfiguration<GoodsReceipt>
         builder.Property(g => g.ExchangeRate).HasColumnType("numeric(18,6)");
         builder.Property(g => g.Notes).HasMaxLength(2000);
         builder.Property(g => g.ReversalReason).HasMaxLength(500);
+        builder.Property(g => g.QcStatus).HasConversion<int>();
+        builder.Property(g => g.QcRejectionReason).HasMaxLength(500);
         builder.Property(g => g.ReceiptDateUtc).HasColumnType("timestamp with time zone");
         builder.Property(g => g.ReversedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(g => g.QcDecisionAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(g => g.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(g => g.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
@@ -32,6 +35,7 @@ public class GoodsReceiptConfiguration : IEntityTypeConfiguration<GoodsReceipt>
         builder.HasIndex(g => new { g.TenantId, g.IdempotencyKey }).IsUnique();
         builder.HasIndex(g => new { g.TenantId, g.PurchaseOrderId });
         builder.HasIndex(g => new { g.TenantId, g.Status });
+        builder.HasIndex(g => new { g.TenantId, g.QcStatus });
 
         builder.Ignore(g => g.TotalCost);
     }

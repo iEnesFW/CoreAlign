@@ -30,6 +30,7 @@ import { OrderList } from '@/features/orders/ui/OrderList';
 import {
   useAllocateOrder,
   useApproveOrder,
+  useBulkOrderAction,
   useCancelOrder,
   useCloseOrder,
   useDeleteOrder,
@@ -89,7 +90,9 @@ export const OrdersPage = () => {
   const locale = i18n.language;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(
+    () => new URLSearchParams(window.location.search).get('q') ?? '',
+  );
   const debouncedSearch = useDebouncedValue(search, 300);
   const [statusBucket, setStatusBucket] = useState<StatusBucket>('all');
   const [highValueOnly, setHighValueOnly] = useState(false);
@@ -132,7 +135,53 @@ export const OrdersPage = () => {
   const deliverOrder = useDeliverOrder();
   const closeOrder = useCloseOrder();
   const cancelOrder = useCancelOrder();
+  const bulkAction = useBulkOrderAction();
   const [statusBusyId, setStatusBusyId] = useState<string | null>(null);
+  const [bulkIds, setBulkIds] = useState<string[]>([]);
+
+  const handleBulkAction = async (action: 'Submit' | 'Approve' | 'Allocate' | 'Cancel') => {
+    if (bulkIds.length === 0) return;
+    if (action === 'Cancel') {
+      const confirmed = await confirm({
+        title: t('orders.bulk.cancel', { defaultValue: 'Seçilenleri iptal et' }),
+        message: t('orders.bulk.confirmCancel', {
+          count: bulkIds.length,
+          defaultValue: `${bulkIds.length} sipariş iptal edilsin mi?`,
+        }),
+        confirmLabel: t('common.confirm'),
+        tone: 'danger',
+      });
+      if (!confirmed) return;
+    }
+    try {
+      const res = await bulkAction.mutateAsync({ orderIds: bulkIds, action });
+      if (res.isSuccess && res.data) {
+        const { succeededCount, failedCount } = res.data;
+        if (failedCount === 0) {
+          toast.success(
+            t('orders.bulk.allSucceeded', {
+              count: succeededCount,
+              defaultValue: `${succeededCount} sipariş güncellendi.`,
+            }),
+          );
+        } else {
+          const firstError = res.data.items.find((i) => !i.success)?.error;
+          toast.warning(
+            t('orders.bulk.partial', {
+              ok: succeededCount,
+              failed: failedCount,
+              defaultValue: `${succeededCount} başarılı, ${failedCount} başarısız.`,
+            }) + (firstError ? ` — ${firstError}` : ''),
+          );
+        }
+        setBulkIds([]);
+      } else {
+        toast.error(res.errors[0] ?? t('auth.common.unexpectedError'));
+      }
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
 
   const handleStatusTransition = async (order: OrderSummary, action: string) => {
     setStatusBusyId(order.id);
@@ -432,6 +481,58 @@ export const OrdersPage = () => {
         onClearFilters={clearFilters}
       />
 
+      {bulkIds.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-200 bg-primary-50/70 px-3 py-2 text-sm dark:border-primary-500/30 dark:bg-primary-500/10">
+          <span className="font-medium text-primary-700 dark:text-primary-300">
+            {t('orders.bulk.selected', {
+              count: bulkIds.length,
+              defaultValue: `${bulkIds.length} seçili`,
+            })}
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleBulkAction('Submit')}
+              disabled={bulkAction.isPending}
+              className="rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              {t('orders.bulk.submit', { defaultValue: 'Onaya gönder' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkAction('Approve')}
+              disabled={bulkAction.isPending}
+              className="rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              {t('orders.bulk.approve', { defaultValue: 'Onayla' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkAction('Allocate')}
+              disabled={bulkAction.isPending}
+              className="rounded border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              {t('orders.bulk.allocate', { defaultValue: 'Rezerve et' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkAction('Cancel')}
+              disabled={bulkAction.isPending}
+              className="rounded bg-danger-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-danger-700 disabled:opacity-50"
+            >
+              {t('orders.bulk.cancel', { defaultValue: 'İptal et' })}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBulkIds([])}
+              className="rounded px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              {t('common.clear', { defaultValue: 'Temizle' })}
+            </button>
+          </div>
+        </div>
+      )}
+
       {ordersQuery.isError ? (
         <QueryError onRetry={() => ordersQuery.refetch()} isRetrying={ordersQuery.isFetching} />
       ) : (
@@ -453,6 +554,9 @@ export const OrdersPage = () => {
           onCreate={handleCreate}
           onStatusTransition={handleStatusTransition}
           statusBusyId={statusBusyId}
+          selectable
+          selectedIds={bulkIds}
+          onSelectionChange={setBulkIds}
         />
       )}
 

@@ -60,6 +60,20 @@ public class OrdersController : ControllerBase
         return result.ToCreated();
     }
 
+    [HttpPost("{id:guid}/reorder")]
+    public async Task<IActionResult> ReorderAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(new CreateOrderFromPreviousCommand(id), cancellationToken);
+        return result.ToCreated();
+    }
+
+    [HttpPost("bulk-action")]
+    public async Task<IActionResult> BulkActionAsync([FromBody] BulkOrderActionCommand command, CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(command, cancellationToken);
+        return result.ToOk();
+    }
+
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateOrderAsync(Guid id, [FromBody] UpdateOrderCommand command, CancellationToken cancellationToken)
     {

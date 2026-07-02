@@ -153,7 +153,13 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponseDto
         user.RecordSuccessfulLogin();
         _userRepository.Update(user);
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(user.Id, user.TenantId, user.Email, roles);
+        var persona = await _userMembershipService.ResolvePersonaAsync(user.Id, user.TenantId, cancellationToken);
+        var accessToken = _jwtTokenService.GenerateAccessToken(
+            user.Id,
+            user.TenantId,
+            user.Email,
+            roles,
+            persona.ToString().ToLowerInvariant());
         var rawRefreshToken = _jwtTokenService.GenerateRefreshToken();
         var refreshTokenHash = _jwtTokenService.HashToken(rawRefreshToken);
 

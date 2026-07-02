@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import type { FxSourceCode } from '../api/fxRatesApi';
-import { useFxPreferencesQuery, useUpdateFxPreferencesMutation } from '../hooks/useFxRates';
+import type { FxSourceCode } from '@/shared/fx/api/fxRatesApi';
+import {
+  useFxPreferencesQuery,
+  useUpdateFxPreferencesMutation,
+} from '@/shared/fx/hooks/useFxRates';
 
 const FX_SOURCES: FxSourceCode[] = ['TCMB', 'ECB', 'MANUAL'];
 const DEFAULT_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF'];

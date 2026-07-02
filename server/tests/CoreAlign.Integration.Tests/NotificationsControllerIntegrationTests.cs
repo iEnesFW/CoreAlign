@@ -1,10 +1,12 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using CoreAlign.Domain.Entities.Notifications;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Infrastructure.Persistence;
 using CoreAlign.Infrastructure.Services;
 using CoreAlign.Integration.Tests.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CoreAlign.Integration.Tests;
@@ -62,7 +64,7 @@ public class NotificationsControllerIntegrationTests
     }
 
     [Fact]
-    public async Task Post_mark_read_returns_no_content_for_recipient()
+    public async Task Post_mark_read_persists_read_state_for_recipient()
     {
         var id = await SeedNotificationMessageAsync(_factory.TenantA, _factory.TenantA.CustomerUserId, "Subject-MarkRead");
 
@@ -71,6 +73,15 @@ public class NotificationsControllerIntegrationTests
         var response = await client.PostAsync($"/api/v1/notification-messages/{id}/mark-read", content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+        using (TenantContextAccessor.PushTenant(_factory.TenantA.TenantId))
+        {
+            var msg = await db.NotificationMessages.IgnoreQueryFilters().FirstAsync(m => m.Id == id);
+            msg.Status.Should().Be(NotificationStatus.Read);
+            msg.ReadAtUtc.Should().NotBeNull();
+        }
     }
 
     [Fact]
@@ -84,6 +95,38 @@ public class NotificationsControllerIntegrationTests
         var response = await client.PostAsync($"/api/v1/notification-messages/{id}/mark-read", content: null);
 
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Post_mark_read_returns_not_found_for_unknown_id()
+    {
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+
+        var response = await client.PostAsync(
+            $"/api/v1/notification-messages/{Guid.NewGuid()}/mark-read", content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Post_mark_read_cannot_touch_another_tenants_notification()
+    {
+        var id = await SeedNotificationMessageAsync(_factory.TenantB, _factory.TenantB.CustomerUserId, "Tenant-B-MarkRead");
+
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+
+        var response = await client.PostAsync($"/api/v1/notification-messages/{id}/mark-read", content: null);
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.Forbidden);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+        using (TenantContextAccessor.PushTenant(_factory.TenantB.TenantId))
+        {
+            var msg = await db.NotificationMessages.IgnoreQueryFilters().FirstAsync(m => m.Id == id);
+            msg.Status.Should().NotBe(NotificationStatus.Read);
+            msg.ReadAtUtc.Should().BeNull();
+        }
     }
 
     [Fact]
@@ -109,6 +152,61 @@ public class NotificationsControllerIntegrationTests
         var response = await client.GetAsync("/api/v1/notification-messages");
 
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Post_acknowledge_persists_note_and_actor_for_recipient()
+    {
+        var id = await SeedNotificationMessageAsync(_factory.TenantA, _factory.TenantA.CustomerUserId, "Subject-Ack");
+
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/notification-messages/{id}/acknowledge",
+            new { note = "Reviewed and approved" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+        using (TenantContextAccessor.PushTenant(_factory.TenantA.TenantId))
+        {
+            var msg = await db.NotificationMessages.IgnoreQueryFilters().FirstAsync(m => m.Id == id);
+            msg.AcknowledgedAtUtc.Should().NotBeNull();
+            msg.AcknowledgmentNote.Should().Be("Reviewed and approved");
+            msg.AcknowledgedByUserId.Should().Be(_factory.TenantA.CustomerUserId);
+        }
+
+        var listJson = await (await client.GetAsync("/api/v1/notification-messages/me")).Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(listJson);
+        var row = doc.RootElement.EnumerateArray().Single(el => el.GetProperty("id").GetGuid() == id);
+        row.GetProperty("isAcknowledged").GetBoolean().Should().BeTrue();
+        row.GetProperty("acknowledgmentNote").GetString().Should().Be("Reviewed and approved");
+    }
+
+    [Fact]
+    public async Task Post_acknowledge_is_forbidden_when_caller_is_not_recipient()
+    {
+        var id = await SeedNotificationMessageAsync(_factory.TenantA, _factory.TenantA.DealerUserId, "Subject-NotMine-Ack");
+
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/notification-messages/{id}/acknowledge",
+            new { note = (string?)null });
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Post_acknowledge_cannot_touch_another_tenants_notification()
+    {
+        var id = await SeedNotificationMessageAsync(_factory.TenantB, _factory.TenantB.CustomerUserId, "Tenant-B-Ack");
+
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/notification-messages/{id}/acknowledge",
+            new { note = "x" });
+
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.Forbidden);
     }
 
     private async Task<Guid> SeedNotificationMessageAsync(TenantFixture tenant, Guid userId, string subject)

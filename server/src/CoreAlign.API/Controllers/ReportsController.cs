@@ -7,6 +7,7 @@ using CoreAlign.Application.Reports.Inventory;
 using CoreAlign.Application.Reports.Purchase;
 using CoreAlign.Application.Reports.Queries;
 using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,6 +68,34 @@ public class ReportsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(new GetAgingSummaryQuery(asOfUtc), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpGet("cash-position")]
+    public async Task<IActionResult> GetCashPositionAsync(
+        [FromQuery] DateTime? asOfUtc = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetCashPositionQuery(asOfUtc), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpGet("document-number-gaps")]
+    public async Task<IActionResult> GetDocumentNumberGapsAsync(
+        [FromQuery] int? year = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetDocumentNumberGapsQuery(year), cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpGet("duplicates")]
+    public async Task<IActionResult> GetDuplicatesAsync(
+        [FromQuery] string entity = "customer",
+        [FromQuery] DuplicateKeyKind key = DuplicateKeyKind.Email,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetDuplicatesQuery(entity, key), cancellationToken);
         return result.ToOk();
     }
 

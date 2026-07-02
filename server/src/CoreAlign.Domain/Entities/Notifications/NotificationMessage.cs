@@ -19,6 +19,10 @@ public class NotificationMessage : TenantEntity, IHasConcurrencyToken, ISoftDele
     public DateTime? SentAtUtc { get; private set; }
     public DateTime? DeliveredAtUtc { get; private set; }
     public DateTime? ReadAtUtc { get; private set; }
+    public DateTime? AcknowledgedAtUtc { get; private set; }
+    public Guid? AcknowledgedByUserId { get; private set; }
+    public string? AcknowledgmentNote { get; private set; }
+    public bool IsAcknowledged => AcknowledgedAtUtc.HasValue;
     public string? FailureReason { get; private set; }
     public int RetryCount { get; private set; }
     public string? ProviderUsed { get; private set; }
@@ -127,5 +131,21 @@ public class NotificationMessage : TenantEntity, IHasConcurrencyToken, ISoftDele
         Status = NotificationStatus.Read;
         ReadAtUtc = utcNow;
         UpdatedAtUtc = utcNow;
+    }
+
+    public void Acknowledge(string? note, Guid acknowledgedByUserId, DateTime utcNow)
+    {
+        if (acknowledgedByUserId == Guid.Empty)
+            throw new ArgumentException("AcknowledgedByUserId is required.", nameof(acknowledgedByUserId));
+
+        var trimmed = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        if (trimmed is { Length: > 2000 })
+            throw new ArgumentException("Acknowledgment note exceeds 2000 characters.", nameof(note));
+
+        AcknowledgedAtUtc = DateTime.SpecifyKind(utcNow, DateTimeKind.Utc);
+        AcknowledgedByUserId = acknowledgedByUserId;
+        AcknowledgmentNote = trimmed;
+        UpdatedAtUtc = AcknowledgedAtUtc.Value;
+        ((IHasConcurrencyToken)this).BumpConcurrencyToken();
     }
 }

@@ -150,6 +150,21 @@ public class InvoiceVoidedLedgerHandler : INotificationHandler<InvoiceVoidedEven
             cancellationToken);
 }
 
+public class InvoiceWrittenOffLedgerHandler : INotificationHandler<InvoiceWrittenOffEvent>
+{
+    private readonly ICustomerLedgerRepository _ledger;
+    public InvoiceWrittenOffLedgerHandler(ICustomerLedgerRepository ledger) => _ledger = ledger;
+
+    public Task Handle(InvoiceWrittenOffEvent notification, CancellationToken cancellationToken) =>
+        LedgerPostingHelpers.PostAsync(
+            _ledger, notification.TenantId, notification.CustomerId,
+            notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
+            LedgerEntryType.Credit, notification.Amount, notification.Currency,
+            LedgerSourceType.WriteOff, notification.InvoiceId, notification.InvoiceNumber,
+            $"Invoice written off{(string.IsNullOrEmpty(notification.Reason) ? string.Empty : $": {notification.Reason}")}",
+            cancellationToken);
+}
+
 public class InvoiceCancelledLedgerHandler : INotificationHandler<InvoiceCancelledEvent>
 {
     private readonly ICustomerLedgerRepository _ledger;

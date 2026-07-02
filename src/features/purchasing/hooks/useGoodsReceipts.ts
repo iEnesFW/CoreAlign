@@ -31,3 +31,20 @@ export const useReverseGoodsReceipt = () => {
     onSuccess: () => invalidate(qc),
   });
 };
+
+export const useApproveGoodsReceiptQc = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => goodsReceiptsApi.approveQc(id),
+    onSuccess: () => invalidate(qc),
+  });
+};
+
+export const useRejectGoodsReceiptQc = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      goodsReceiptsApi.rejectQc(id, reason),
+    onSuccess: () => invalidate(qc),
+  });
+};

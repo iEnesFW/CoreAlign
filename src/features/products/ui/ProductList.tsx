@@ -1,7 +1,14 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, Edit2, Package, PanelRightOpen, Trash2 } from 'lucide-react';
-import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
+import { AlertTriangle, Edit2, Package, PanelRightOpen, Pencil, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { toastApiError } from '@/shared/lib/mutationToast';
+import { DataTable, RowActionButton, type SortState } from '@/shared/ui/DataTable/DataTable';
+import { InlineTextEditor } from '@/shared/ui/DataTable/InlineTextEditor';
+import type { ColumnState } from '@/shared/ui/DataTable/columnState';
 import { cn } from '@/shared/lib/cn';
+import { useUpdateProduct } from '../hooks/useProductQueries';
+import { buildProductUpdateInput } from '../model/productUpdateMerge';
 import type { Product, ProductStatus } from '../model/product.types';
 
 interface Props {
@@ -16,6 +23,9 @@ interface Props {
   selectable?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  columnState?: ColumnState;
+  externalSort?: SortState;
+  onSortChange?: (sort: SortState | null) => void;
 }
 
 const statusTone: Record<ProductStatus, string> = {
@@ -45,9 +55,31 @@ export const ProductList = ({
   selectable,
   selectedIds,
   onSelectionChange,
+  columnState,
+  externalSort,
+  onSortChange,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const updateMutation = useUpdateProduct();
+
+  const commitName = (product: Product, rawValue: string) => {
+    setEditingId(null);
+    const trimmed = rawValue.trim();
+    if (!trimmed || trimmed === product.name) return;
+    updateMutation.mutate(buildProductUpdateInput(product, { name: trimmed }), {
+      onSuccess: (response) => {
+        if (response.isSuccess) {
+          toast.success(t('products.toast.updated'));
+          return;
+        }
+        toast.error(response.errors[0] ?? t('auth.common.unexpectedError'));
+      },
+      onError: (error) => toastApiError(error, t('auth.common.unexpectedError')),
+    });
+  };
 
   return (
     <DataTable
@@ -59,6 +91,10 @@ export const ProductList = ({
       selectable={selectable}
       selectedIds={selectedIds}
       onSelectionChange={onSelectionChange}
+      columnState={columnState}
+      externalSort={externalSort}
+      onSortChange={onSortChange}
+      editingCell={editingId ? { rowId: editingId, key: 'product' } : null}
       emptyIcon={<Package size={20} />}
       emptyTitle={t('products.empty')}
       emptyDescription={t('products.emptyHint', {
@@ -96,8 +132,31 @@ export const ProductList = ({
                   {p.barcode && <span className="font-mono text-slate-400">· {p.barcode}</span>}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(p.id);
+                }}
+                aria-label={t('products.inlineEdit.editName', { defaultValue: 'Adı düzenle' })}
+                title={t('products.inlineEdit.editName', { defaultValue: 'Adı düzenle' })}
+                className="ml-auto shrink-0 rounded p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-primary-50 hover:text-primary-600 focus-visible:opacity-100 dark:hover:bg-primary-500/10 dark:hover:text-primary-300"
+              >
+                <Pencil size={12} />
+              </button>
             </div>
           ),
+          editable: {
+            editor: (p) => (
+              <InlineTextEditor
+                initial={p.name}
+                ariaLabel={t('products.inlineEdit.nameInput', { defaultValue: 'Ürün adı' })}
+                disabled={updateMutation.isPending}
+                onCommit={(value) => commitName(p, value)}
+                onCancel={() => setEditingId(null)}
+              />
+            ),
+          },
         },
         {
           key: 'price',

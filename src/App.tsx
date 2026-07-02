@@ -22,6 +22,8 @@ import {
   AccountingPeriodsPage,
   ActivityPage,
   BalanceSheetPage,
+  BankAccountsPage,
+  CashPositionPage,
   ChartOfAccountsPage,
   CustomerDetailPage,
   CustomersPage,
@@ -36,6 +38,7 @@ import {
   StockCountDetailPage,
   InvoicePrintView,
   InvoicesPage,
+  RecurringInvoicesPage,
   JournalEntriesPage,
   LoginPage,
   NewProjectWizardPage,
@@ -51,12 +54,15 @@ import {
   ErrorLogsPage,
   RegisterPage,
   CustomReportBuilderPage,
+  DuplicateDetectionPage,
+  DocumentNumberGapPage,
   ReportLibraryPage,
   ReportSchedulesPage,
   ReportsPage,
   ResetPasswordPage,
   ServiceTicketsPage,
   SettingsPage,
+  DunningSettingsPage,
   TrialBalancePage,
   YearEndClosePage,
   VendorDetailPage,
@@ -162,6 +168,7 @@ function App() {
                             <Route path="quotes" element={<QuotesPage />} />
                             <Route path="orders" element={<OrdersPage />} />
                             <Route path="invoices" element={<InvoicesPage />} />
+                            <Route path="recurring-invoices" element={<RecurringInvoicesPage />} />
                             <Route path="returns" element={<ReturnsPage />} />
                             <Route path="returns/:id" element={<ReturnDetailPage />} />
                             <Route path="vendors" element={<VendorsPage />} />
@@ -216,7 +223,14 @@ function App() {
                               path="accounting/year-end-close"
                               element={<YearEndClosePage />}
                             />
+                            <Route path="accounting/bank-accounts" element={<BankAccountsPage />} />
+                            <Route path="accounting/cash-position" element={<CashPositionPage />} />
                             <Route path="reports" element={<ReportsPage />} />
+                            <Route path="reports/duplicates" element={<DuplicateDetectionPage />} />
+                            <Route
+                              path="reports/document-number-gaps"
+                              element={<DocumentNumberGapPage />}
+                            />
                             <Route path="reports/library" element={<ReportLibraryPage />} />
                             <Route path="reports/custom" element={<CustomReportBuilderPage />} />
                             <Route path="reports/schedules" element={<ReportSchedulesPage />} />
@@ -237,6 +251,10 @@ function App() {
                             <Route path="admin/providers/sso" element={<TenantIdpAdminPage />} />
                             <Route path="admin/smtp" element={<SmtpSettingsPage />} />
                             <Route path="admin/error-logs" element={<ErrorLogsPage />} />
+                            <Route
+                              path="admin/dunning-settings"
+                              element={<DunningSettingsPage />}
+                            />
                             <Route path="warranty/contracts" element={<WarrantyContractsPage />} />
                             <Route
                               path="warranty/contracts/:id"

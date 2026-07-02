@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { customersApi } from '../api/customersApi';
 import { customerKeys } from './customerKeys';
+import { patchCustomerInPaged, type PagedCustomersResponse } from '../model/customerCachePatch';
 import type {
   CreateCustomerInput,
   CustomerAddressInput,
@@ -11,11 +12,12 @@ import type {
   UpdateCustomerInput,
 } from '../model/customer.types';
 
-export const useCustomersQuery = (params: CustomerListParams) =>
+export const useCustomersQuery = (params: CustomerListParams, options?: { enabled?: boolean }) =>
   useQuery({
     queryKey: customerKeys.list(params),
     queryFn: () => customersApi.list(params),
     placeholderData: (previous) => previous,
+    enabled: options?.enabled ?? true,
   });
 
 export const useCustomerQuery = (id: string | null) =>
@@ -67,11 +69,25 @@ export const useUpdateCustomer = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: UpdateCustomerInput) => customersApi.update(input),
-    onSuccess: (_, vars) => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: customerKeys.lists() });
+      const snapshots = queryClient.getQueriesData<PagedCustomersResponse>({
+        queryKey: customerKeys.lists(),
+      });
+      queryClient.setQueriesData<PagedCustomersResponse>(
+        { queryKey: customerKeys.lists() },
+        (old) => patchCustomerInPaged(old, input),
+      );
+      return { snapshots };
+    },
+    onError: (_error, _input, context) => {
+      context?.snapshots.forEach(([key, data]) => queryClient.setQueryData(key, data));
+    },
+    onSettled: (_data, _error, input) => {
       queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: customerKeys.detail(vars.id) });
-      queryClient.invalidateQueries({ queryKey: customerKeys.summary(vars.id) });
-      queryClient.invalidateQueries({ queryKey: customerKeys.overview(vars.id) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.detail(input.id) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.summary(input.id) });
+      queryClient.invalidateQueries({ queryKey: customerKeys.overview(input.id) });
     },
   });
 };

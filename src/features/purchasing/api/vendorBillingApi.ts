@@ -5,6 +5,7 @@ import type {
   ApplyVendorPaymentInput,
   CreateVendorBillInput,
   CreateVendorPaymentInput,
+  OffsetVendorAdvanceInput,
   ThreeWayMatchRow,
   UpdateVendorBillInput,
   UpdateVendorPaymentInput,
@@ -75,4 +76,7 @@ export const vendorBillingApi = {
 
   applyPayment: (input: ApplyVendorPaymentInput) =>
     mutate(apiClient.post<ApiResponse<VendorPaymentApplication>>(`${PAYMENTS}/apply`, input)),
+
+  offsetAdvance: (input: OffsetVendorAdvanceInput) =>
+    mutate(apiClient.post<ApiResponse<VendorPaymentApplication>>(`${BILLS}/offset-advance`, input)),
 };

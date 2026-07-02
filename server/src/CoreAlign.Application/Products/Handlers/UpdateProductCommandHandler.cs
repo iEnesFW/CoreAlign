@@ -71,6 +71,10 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             endOfLifeDate: request.EndOfLifeDate);
 
         product.SetProcurementType(request.ProcurementType);
+        if (request.RequiresInspection.HasValue)
+        {
+            product.SetRequiresInspection(request.RequiresInspection.Value);
+        }
 
         _productRepository.Update(product);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

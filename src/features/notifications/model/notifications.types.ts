@@ -19,6 +19,9 @@ export interface NotificationMessageView {
   bodyMarkdown: string;
   createdAtUtc: string;
   readAtUtc: string | null;
+  isAcknowledged: boolean;
+  acknowledgedAtUtc: string | null;
+  acknowledgmentNote: string | null;
 }
 
 export interface NotificationPreferenceView {

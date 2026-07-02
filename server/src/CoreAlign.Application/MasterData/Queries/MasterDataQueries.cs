@@ -26,3 +26,6 @@ public record GetPriceListByIdQuery(Guid Id) : IRequest<PriceListDto?>;
 
 public record ListWarehousesQuery(bool? IsActive = null) : IRequest<IReadOnlyList<WarehouseDto>>;
 public record GetWarehouseByIdQuery(Guid Id) : IRequest<WarehouseDto?>;
+
+public record ListBankAccountsQuery(bool? IsActive = null) : IRequest<IReadOnlyList<BankAccountDto>>;
+public record GetBankAccountByIdQuery(Guid Id) : IRequest<BankAccountDto>;

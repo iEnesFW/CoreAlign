@@ -26,6 +26,7 @@ public class Payment : TenantEntity, IXminConcurrency
     public decimal Amount { get; private set; }
     public decimal AppliedAmount { get; private set; }
     public decimal UnappliedAmount => Math.Max(0m, Amount - AppliedAmount);
+    public bool IsAdvance { get; private set; }
 
     public string? BankAccountInfo { get; private set; }
     public string? ReferenceNumber { get; private set; }
@@ -57,7 +58,8 @@ public class Payment : TenantEntity, IXminConcurrency
         DateTime paymentDate,
         PaymentMethod method,
         decimal amount,
-        string currency)
+        string currency,
+        bool isAdvance = false)
     {
         if (amount <= 0m)
         {
@@ -67,11 +69,12 @@ public class Payment : TenantEntity, IXminConcurrency
         CustomerId = customerId;
         CustomerNameSnapshot = customerNameSnapshot;
         Direction = direction;
-        PaymentDate = paymentDate;
-        PostingDate = paymentDate.Date;
+        PaymentDate = DateTime.SpecifyKind(paymentDate, DateTimeKind.Utc);
+        PostingDate = PaymentDate.Date;
         Method = method;
         Amount = amount;
         Currency = currency;
+        IsAdvance = isAdvance;
     }
 
     public void UpdateDetails(
@@ -94,15 +97,17 @@ public class Payment : TenantEntity, IXminConcurrency
         {
             throw new PaymentApplicationException("Payment amount must be positive.");
         }
-        PaymentDate = paymentDate;
-        PostingDate = postingDate;
+        PaymentDate = DateTime.SpecifyKind(paymentDate, DateTimeKind.Utc);
+        PostingDate = DateTime.SpecifyKind(postingDate, DateTimeKind.Utc);
         Method = method;
         Amount = amount;
         ExchangeRate = exchangeRate > 0 ? exchangeRate : 1m;
         BankAccountInfo = bankAccountInfo;
         ReferenceNumber = referenceNumber;
         CheckNumber = checkNumber;
-        CheckDueDate = checkDueDate;
+        CheckDueDate = checkDueDate.HasValue
+            ? DateTime.SpecifyKind(checkDueDate.Value, DateTimeKind.Utc)
+            : null;
         Notes = notes;
         UpdatedAtUtc = DateTime.UtcNow;
     }

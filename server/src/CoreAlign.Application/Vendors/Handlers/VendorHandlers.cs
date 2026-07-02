@@ -76,6 +76,7 @@ public class CreateVendorHandler : IRequestHandler<CreateVendorCommand, VendorDt
             c.LanguageCode,
             c.ParentVendorId,
             c.Notes);
+        vendor.SetDefaultLeadTime(c.DefaultLeadTimeDays);
 
         await _vendors.AddAsync(vendor, ct);
         await _uow.SaveChangesAsync(ct);
@@ -121,6 +122,7 @@ public class UpdateVendorHandler : IRequestHandler<UpdateVendorCommand, VendorDt
             c.LanguageCode,
             c.ParentVendorId,
             c.Notes);
+        vendor.SetDefaultLeadTime(c.DefaultLeadTimeDays);
         _vendors.Update(vendor);
         await _uow.SaveChangesAsync(ct);
         return VendorMapper.ToDto(vendor);

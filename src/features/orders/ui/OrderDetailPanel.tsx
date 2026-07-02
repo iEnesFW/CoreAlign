@@ -5,6 +5,7 @@ import {
   Activity,
   Boxes,
   Clock,
+  Copy,
   ExternalLink,
   FileText,
   History,
@@ -14,11 +15,16 @@ import {
   ShoppingCart,
   Truck,
   User,
+  Workflow,
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { toastApiError } from '@/shared/lib/mutationToast';
 import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
-import { useOrderQuery } from '@/features/orders/hooks/useOrderQueries';
+import { useOrderQuery, useReorderOrder } from '@/features/orders/hooks/useOrderQueries';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { DocumentChain } from '@/widgets/DocumentChain';
+import { NextBestAction } from '@/widgets/NextBestAction';
 import { AuditTimeline } from '@/features/audit';
 import type { Customer } from '@/features/customers/model/customer.types';
 import type { Order, OrderLine, OrderStatus } from '@/features/orders/model/order.types';
@@ -39,6 +45,7 @@ interface Props {
 
 type Tab =
   | 'overview'
+  | 'chain'
   | 'lines'
   | 'margin'
   | 'allocations'
@@ -82,6 +89,26 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
 
   const orderQuery = useOrderQuery(orderId);
   const order = orderQuery.data?.data ?? null;
+  const reorder = useReorderOrder();
+
+  const handleReorder = async () => {
+    if (!order) return;
+    try {
+      const res = await reorder.mutateAsync(order.id);
+      if (res.isSuccess && res.data) {
+        toast.success(
+          t('orders.reorder.created', {
+            defaultValue: 'Yeni taslak oluşturuldu: {{number}}',
+            number: res.data.orderNumber,
+          }),
+        );
+      } else {
+        toast.error(res.errors[0] ?? t('auth.common.unexpectedError'));
+      }
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
 
   const customerQuery = useCustomerQuery(tab === 'customer' && order ? order.customerId : null);
   const invoicesQuery = useInvoicesByOrderQuery(tab === 'invoices' && order ? order.id : null);
@@ -91,6 +118,11 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: t('orders.detail.tabs.overview'), icon: <ShoppingCart size={12} /> },
+    {
+      id: 'chain',
+      label: t('orders.detail.tabs.chain', { defaultValue: 'Belge Zinciri' }),
+      icon: <Workflow size={12} />,
+    },
     { id: 'lines', label: t('orders.detail.tabs.lines'), icon: <ListOrdered size={12} /> },
     {
       id: 'margin',
@@ -133,6 +165,21 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
 
       <div className="space-y-4 p-4">
         {order && (
+          <NextBestAction
+            entity="order"
+            order={order}
+            onCreateShipment={() => {
+              setTab('shipments');
+              setShipmentCreateOpen(true);
+            }}
+            onGenerateInvoice={
+              onGenerateInvoice && INVOICEABLE.includes(order.status)
+                ? () => onGenerateInvoice(order.id)
+                : undefined
+            }
+          />
+        )}
+        {order && (
           <OrderActionsBar
             order={order}
             onShipmentRequested={() => {
@@ -140,6 +187,19 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
               setShipmentCreateOpen(true);
             }}
           />
+        )}
+        {order && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleReorder}
+              disabled={reorder.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <Copy size={13} />
+              {t('orders.reorder.button', { defaultValue: 'Tekrarla' })}
+            </button>
+          </div>
         )}
         {tab === 'overview' && order && (
           <>
@@ -156,6 +216,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
             />
           </>
         )}
+        {tab === 'chain' && order && <DocumentChain entity="order" id={order.id} />}
         {tab === 'lines' && order && <LinesTab order={order} locale={i18n.language} />}
         {tab === 'margin' && order && <OrderMarginTab order={order} locale={i18n.language} />}
         {tab === 'allocations' && order && (
@@ -188,7 +249,9 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
         {tab === 'notes' && (
           <div className="rounded border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
             {order?.notes || (
-              <span className="italic text-slate-500">{t('orders.detail.noNotes')}</span>
+              <span className="italic text-slate-500 dark:text-slate-400">
+                {t('orders.detail.noNotes')}
+              </span>
             )}
           </div>
         )}
@@ -201,7 +264,7 @@ const LinesTab = ({ order, locale }: { order: Order; locale: string }) => {
   const { t } = useTranslation();
   if (order.lines.length === 0) {
     return (
-      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800">
+      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
         {t('orders.detail.noLines')}
       </div>
     );
@@ -232,7 +295,9 @@ const LinesTab = ({ order, locale }: { order: Order; locale: string }) => {
                 <div className="font-medium text-slate-900 dark:text-slate-100">
                   {line.productName}
                 </div>
-                <div className="font-mono text-[10px] text-slate-500">{line.productSku}</div>
+                <div className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                  {line.productSku}
+                </div>
               </td>
               <td className="px-2 py-1.5 text-right tabular-nums text-slate-700 dark:text-slate-300">
                 {fmtNumber(line.quantity, locale)}
@@ -267,11 +332,11 @@ const LinesTab = ({ order, locale }: { order: Order; locale: string }) => {
 const CustomerTab = ({ customer, loading }: { customer: Customer | null; loading: boolean }) => {
   const { t } = useTranslation();
   if (loading && !customer) {
-    return <div className="text-sm text-slate-500">{t('common.loading')}</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">{t('common.loading')}</div>;
   }
   if (!customer) {
     return (
-      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800">
+      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
         {t('orders.detail.noCustomer')}
       </div>
     );
@@ -303,11 +368,11 @@ const InvoicesTab = ({
 }) => {
   const { t } = useTranslation();
   if (loading && invoices.length === 0) {
-    return <div className="text-sm text-slate-500">{t('common.loading')}</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">{t('common.loading')}</div>;
   }
   if (invoices.length === 0) {
     return (
-      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800">
+      <div className="rounded border border-slate-200 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
         {t('orders.detail.noInvoices')}
       </div>
     );
@@ -318,7 +383,7 @@ const InvoicesTab = ({
         <li key={inv.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
           <div className="min-w-0">
             <div className="font-mono text-xs text-slate-900 dark:text-slate-100">{inv.number}</div>
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+            <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
               <Activity size={10} />
               {inv.status} · {inv.date}
             </div>

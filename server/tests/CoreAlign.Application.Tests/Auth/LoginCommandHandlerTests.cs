@@ -1,6 +1,7 @@
 using CoreAlign.Application.Auth.Commands;
 using CoreAlign.Application.Auth.Handlers;
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,6 +17,8 @@ public class LoginCommandHandlerTests
     private readonly IUserSessionRepository _userSessionRepository = Substitute.For<IUserSessionRepository>();
     private readonly IPasswordHasher _passwordHasher = Substitute.For<IPasswordHasher>();
     private readonly IJwtTokenService _jwtTokenService = Substitute.For<IJwtTokenService>();
+    private readonly IUserMembershipService _userMembershipService = Substitute.For<IUserMembershipService>();
+    private readonly ITwoFactorChallengeRepository _twoFactorChallengeRepository = Substitute.For<ITwoFactorChallengeRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly LoginCommandHandler _sut;
 
@@ -23,6 +26,8 @@ public class LoginCommandHandlerTests
 
     public LoginCommandHandlerTests()
     {
+        _userMembershipService.ResolvePersonaAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(UserPersona.Tenant);
         _sut = new LoginCommandHandler(
             _userRepository,
             _tenantRepository,
@@ -31,6 +36,8 @@ public class LoginCommandHandlerTests
             _userSessionRepository,
             _passwordHasher,
             _jwtTokenService,
+            _userMembershipService,
+            _twoFactorChallengeRepository,
             _unitOfWork,
             NullLogger<LoginCommandHandler>.Instance);
     }

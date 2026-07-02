@@ -164,6 +164,57 @@ public static class NotificationTemplateSeeder
                 ["de"] = "{{forwardedByName}} hat die Bestellung {{documentNumber}} mit Ihnen geteilt. Das Dokument ist angehängt.",
                 ["ru"] = "{{forwardedByName}} отправил вам заказ {{documentNumber}}. Документ во вложении."
             }),
+        new TemplateSpec("Dunning.InvoiceDueReminder", "Dunning",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Fatura {{invoiceNumber}} vadesi yaklaşıyor",
+                ["en"] = "Invoice {{invoiceNumber}} is due soon",
+                ["ar"] = "اقترب موعد استحقاق الفاتورة {{invoiceNumber}}",
+                ["de"] = "Rechnung {{invoiceNumber}} wird bald fällig",
+                ["ru"] = "Срок оплаты счёта {{invoiceNumber}} скоро истекает"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{invoiceNumber}} numaralı faturanın vadesi {{dueDate}}. Ödenmemiş tutar: {{amount}} {{currency}}.",
+                ["en"] = "Invoice {{invoiceNumber}} is due on {{dueDate}}. Outstanding amount: {{amount}} {{currency}}.",
+                ["ar"] = "تستحق الفاتورة {{invoiceNumber}} في {{dueDate}}. المبلغ المستحق: {{amount}} {{currency}}.",
+                ["de"] = "Rechnung {{invoiceNumber}} ist am {{dueDate}} fällig. Offener Betrag: {{amount}} {{currency}}.",
+                ["ru"] = "Срок оплаты счёта {{invoiceNumber}} — {{dueDate}}. Остаток: {{amount}} {{currency}}."
+            }),
+        new TemplateSpec("Dunning.QuoteExpiringReminder", "Dunning",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Teklif {{quoteNumber}} süresi doluyor",
+                ["en"] = "Quote {{quoteNumber}} is expiring",
+                ["ar"] = "عرض الأسعار {{quoteNumber}} على وشك الانتهاء",
+                ["de"] = "Angebot {{quoteNumber}} läuft ab",
+                ["ru"] = "Срок действия предложения {{quoteNumber}} истекает"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{quoteNumber}} numaralı teklifin geçerlilik süresi {{validUntil}} tarihinde doluyor.",
+                ["en"] = "Quote {{quoteNumber}} expires on {{validUntil}}.",
+                ["ar"] = "ينتهي عرض الأسعار {{quoteNumber}} في {{validUntil}}.",
+                ["de"] = "Angebot {{quoteNumber}} läuft am {{validUntil}} ab.",
+                ["ru"] = "Срок действия предложения {{quoteNumber}} истекает {{validUntil}}."
+            }),
+        new TemplateSpec("Dunning.StockCriticalReminder", "Dunning",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Kritik stok: {{productName}}",
+                ["en"] = "Critical stock: {{productName}}",
+                ["ar"] = "مخزون حرج: {{productName}}",
+                ["de"] = "Kritischer Bestand: {{productName}}",
+                ["ru"] = "Критический остаток: {{productName}}"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{productName}} ({{sku}}) stoğu kritik seviyede. Mevcut: {{onHand}}, sipariş noktası: {{reorderPoint}}.",
+                ["en"] = "{{productName}} ({{sku}}) stock is critical. On hand: {{onHand}}, reorder point: {{reorderPoint}}.",
+                ["ar"] = "مخزون {{productName}} ({{sku}}) حرج. المتوفر: {{onHand}}، نقطة إعادة الطلب: {{reorderPoint}}.",
+                ["de"] = "Bestand von {{productName}} ({{sku}}) ist kritisch. Verfügbar: {{onHand}}, Meldebestand: {{reorderPoint}}.",
+                ["ru"] = "Остаток {{productName}} ({{sku}}) критический. В наличии: {{onHand}}, точка заказа: {{reorderPoint}}."
+            }),
     };
 
     private static readonly NotificationChannel[] SeedChannels = new[]

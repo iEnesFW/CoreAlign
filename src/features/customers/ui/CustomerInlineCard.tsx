@@ -23,6 +23,18 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
   const overviewQuery = useCustomerOverviewQuery(customer.id);
   const ov = overviewQuery.data?.data;
 
+  const activityStatusLabel = (kind: string, status: string) =>
+    t(
+      kind === 'Order'
+        ? `orders.status.${status}`
+        : kind === 'Invoice'
+          ? `invoices.status.${status}`
+          : kind === 'Payment'
+            ? `invoices.paymentStatus.${status}`
+            : `customers.detail.activity.${kind}`,
+      { defaultValue: status },
+    );
+
   const currency = customer.defaultCurrency;
   const balance = ov?.currentBalance ?? customer.currentBalance;
   const outstanding = ov?.outstanding ?? customer.overdueAmount;
@@ -81,13 +93,15 @@ export const CustomerInlineCard = ({ customer, onClose, onOpenPanel }: CustomerI
                       className="flex items-center gap-2 py-1.5 text-xs"
                     >
                       <Icon size={13} className={meta.cls} />
-                      <span className="w-16 shrink-0 text-slate-500">{a.kind}</span>
+                      <span className="w-16 shrink-0 text-slate-500">
+                        {t(`customers.detail.activity.${a.kind}`, { defaultValue: a.kind })}
+                      </span>
                       <span className="w-24 shrink-0 font-mono text-slate-600 dark:text-slate-300">
                         {a.sourceNumber ?? '—'}
                       </span>
                       <span className="flex-1 truncate text-slate-500">
                         {formatDate(a.occurredAtUtc, locale)}
-                        {a.status ? ` · ${a.status}` : ''}
+                        {a.status ? ` · ${activityStatusLabel(a.kind, a.status)}` : ''}
                       </span>
                       <span
                         className={`inline-flex items-center gap-0.5 font-mono font-semibold ${

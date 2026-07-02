@@ -31,6 +31,7 @@ public class CreateVendorCommandValidator : AbstractValidator<CreateVendorComman
             .NotEmpty().WithMessage("Validation.Required")
             .Length(3).WithMessage("Validation.CurrencyMustBeIso");
         RuleFor(x => x.Notes).MaximumLength(2000).When(x => !string.IsNullOrEmpty(x.Notes));
+        RuleFor(x => x.DefaultLeadTimeDays).InclusiveBetween(0, 3650).WithMessage("Validation.NonNegative");
     }
 }
 
@@ -45,6 +46,7 @@ public class UpdateVendorCommandValidator : AbstractValidator<UpdateVendorComman
             .WithMessage("Validation.InvalidVendorType");
         RuleFor(x => x.DefaultCurrency).NotEmpty().Length(3);
         RuleFor(x => x.Email).EmailAddress().MaximumLength(256).When(x => !string.IsNullOrEmpty(x.Email));
+        RuleFor(x => x.DefaultLeadTimeDays).InclusiveBetween(0, 3650).WithMessage("Validation.NonNegative");
     }
 }
 

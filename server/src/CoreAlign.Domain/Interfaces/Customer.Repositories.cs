@@ -17,6 +17,7 @@ public interface ICustomerRepository
     void Remove(Customer customer);
     Task<(int OrderCount, decimal OrderTotal)> GetOrderTotalsAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<(int InvoiceCount, decimal Invoiced, decimal Paid, decimal Outstanding, string Currency)> GetInvoiceTotalsAsync(Guid customerId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DuplicateGroupRow>> FindDuplicatesAsync(DuplicateKeyKind key, CancellationToken cancellationToken = default);
 }
 
 public interface ICustomerAddressRepository

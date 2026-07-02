@@ -49,6 +49,18 @@ public sealed class MrpPlanningDataLoader : IMrpPlanningDataLoader
         }
 
         var stockMap = await _stockItems.SumOnHandAndReservedByProductsAsync(productIds, warehouseId: null, cancellationToken);
+
+        var supplierIds = products
+            .Where(p => p.PreferredSupplierId.HasValue)
+            .Select(p => p.PreferredSupplierId!.Value)
+            .Distinct()
+            .ToList();
+        var vendorLeadDays = supplierIds.Count == 0
+            ? new Dictionary<Guid, int>()
+            : await _db.Vendors.AsNoTracking()
+                .Where(v => supplierIds.Contains(v.Id) && v.DefaultLeadTimeDays > 0)
+                .Select(v => new { v.Id, v.DefaultLeadTimeDays })
+                .ToDictionaryAsync(v => v.Id, v => v.DefaultLeadTimeDays, cancellationToken);
         var bomTree = await _components.GetTreeForProductsAsync(productIds, cancellationToken);
 
         var bomEdges = bomTree
@@ -62,6 +74,12 @@ public sealed class MrpPlanningDataLoader : IMrpPlanningDataLoader
                 var stock = stockMap.TryGetValue(p.Id, out var s) ? s : (OnHand: 0m, Reserved: 0m);
                 var unitCost = p.LastPurchaseCost > 0m ? p.LastPurchaseCost : p.StandardCost;
                 var forecastModel = AbcClassPolicyDefaults.For(p.AbcClass).ForecastModel;
+                var effectiveLeadTimeDays =
+                    p.PreferredSupplierId.HasValue
+                    && vendorLeadDays.TryGetValue(p.PreferredSupplierId.Value, out var supplierLead)
+                    && supplierLead > 0
+                        ? supplierLead
+                        : p.LeadTimeDays;
                 return new MrpProductSnapshot(
                     p.Id,
                     p.Sku,
@@ -72,7 +90,7 @@ public sealed class MrpPlanningDataLoader : IMrpPlanningDataLoader
                     p.ReorderPoint,
                     p.MinStock,
                     p.MaxStock,
-                    p.LeadTimeDays,
+                    effectiveLeadTimeDays,
                     p.MinOrderQuantity,
                     p.LotSizingPolicy,
                     p.FixedOrderQuantity,

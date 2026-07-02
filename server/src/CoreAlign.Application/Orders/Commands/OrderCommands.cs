@@ -77,6 +77,8 @@ public record UpdateOrderCommand(
     Guid? OriginOrderId = null
 ) : IRequest<OrderDto>, ITransactionalRequest;
 
+public record CreateOrderFromPreviousCommand(Guid PreviousOrderId) : IRequest<OrderDto>;
+
 public record DeleteOrderCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
 
 public record SubmitOrderCommand(Guid Id) : IRequest<OrderDto>, ITransactionalRequest;

@@ -4,6 +4,7 @@ import type {
   ApplyVendorPaymentInput,
   CreateVendorBillInput,
   CreateVendorPaymentInput,
+  OffsetVendorAdvanceInput,
   UpdateVendorBillInput,
   UpdateVendorPaymentInput,
   VendorBillListParams,
@@ -105,6 +106,14 @@ export const useApplyVendorPayment = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: ApplyVendorPaymentInput) => vendorBillingApi.applyPayment(input),
+    onSuccess: () => invalidate(qc),
+  });
+};
+
+export const useOffsetVendorAdvance = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: OffsetVendorAdvanceInput) => vendorBillingApi.offsetAdvance(input),
     onSuccess: () => invalidate(qc),
   });
 };

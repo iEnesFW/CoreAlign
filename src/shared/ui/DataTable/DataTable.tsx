@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
 import { TableSkeleton } from '@/shared/ui/Skeleton/Skeleton';
+import { applyColumnState, type ColumnState } from './columnState';
 
 export type SortDir = 'asc' | 'desc';
 
@@ -20,10 +21,16 @@ export interface DataTableColumn<T, K extends string = string> {
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   cell: (row: T, ctx: { rowIndex: number }) => React.ReactNode;
+  editable?: { editor: (row: T, ctx: { rowIndex: number }) => React.ReactNode };
   cellClassName?: string;
   headerClassName?: string;
   hideOnMobile?: boolean;
   sticky?: 'left' | 'right';
+}
+
+export interface EditingCell {
+  rowId: string;
+  key: string;
 }
 
 export type Density = 'compact' | 'comfortable';
@@ -46,6 +53,8 @@ interface Props<T, K extends string = string> {
   emptyAction?: React.ReactNode;
   externalSort?: SortState<K>;
   onSortChange?: (sort: SortState<K> | null) => void;
+  columnState?: ColumnState;
+  editingCell?: EditingCell | null;
   className?: string;
   stickyHeader?: boolean;
   zebra?: boolean;
@@ -72,6 +81,8 @@ export function DataTable<T, K extends string = string>({
   emptyAction,
   externalSort,
   onSortChange,
+  columnState,
+  editingCell,
   className,
   stickyHeader = true,
   zebra = false,
@@ -82,6 +93,11 @@ export function DataTable<T, K extends string = string>({
   const { t } = useTranslation();
   const [internalSort, setInternalSort] = useState<SortState<K> | null>(null);
   const sort = externalSort ?? internalSort;
+
+  const visibleColumns = useMemo(
+    () => applyColumnState(columns, columnState),
+    [columns, columnState],
+  );
 
   const selectedSet = useMemo(() => new Set(selectedIds ?? []), [selectedIds]);
   const toggleOne = (id: string) => {
@@ -131,7 +147,7 @@ export function DataTable<T, K extends string = string>({
     return (
       <TableSkeleton
         rows={8}
-        columns={columns.length + (rowActions ? 1 : 0)}
+        columns={visibleColumns.length + (rowActions ? 1 : 0)}
         className={className}
       />
     );
@@ -186,7 +202,7 @@ export function DataTable<T, K extends string = string>({
                   <input
                     type="checkbox"
                     aria-label={t('Common.SelectAll', { defaultValue: 'Select all' })}
-                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600"
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
                     checked={allSelected}
                     ref={(el) => {
                       if (el) el.indeterminate = someSelected;
@@ -195,7 +211,7 @@ export function DataTable<T, K extends string = string>({
                   />
                 </th>
               )}
-              {columns.map((col) => {
+              {visibleColumns.map((col) => {
                 const isSorted = sort?.key === col.key;
                 const align = col.align ?? 'left';
                 const stickyClass =
@@ -322,13 +338,13 @@ export function DataTable<T, K extends string = string>({
                       <input
                         type="checkbox"
                         aria-label={t('Common.SelectRow', { defaultValue: 'Select row' })}
-                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600"
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
                         checked={selectedSet.has(id)}
                         onChange={() => toggleOne(id)}
                       />
                     </td>
                   )}
-                  {columns.map((col) => {
+                  {visibleColumns.map((col) => {
                     const align = col.align ?? 'left';
                     const stickyClass =
                       col.sticky === 'left'
@@ -336,9 +352,15 @@ export function DataTable<T, K extends string = string>({
                         : col.sticky === 'right'
                           ? 'sticky right-0 z-[1] bg-inherit'
                           : '';
+                    const isEditing =
+                      !!col.editable &&
+                      !!editingCell &&
+                      editingCell.rowId === id &&
+                      editingCell.key === col.key;
                     return (
                       <td
                         key={col.key}
+                        onClick={isEditing ? (e) => e.stopPropagation() : undefined}
                         className={cn(
                           'align-middle text-slate-700 dark:text-slate-200',
                           padX,
@@ -350,7 +372,9 @@ export function DataTable<T, K extends string = string>({
                           col.cellClassName,
                         )}
                       >
-                        {col.cell(row, { rowIndex })}
+                        {isEditing
+                          ? col.editable!.editor(row, { rowIndex })
+                          : col.cell(row, { rowIndex })}
                       </td>
                     );
                   })}

@@ -5,6 +5,7 @@ using CoreAlign.Domain.Entities.AiHelper;
 using CoreAlign.Domain.Entities.Compliance;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Entities.Installation;
+using CoreAlign.Domain.Entities.Invoices;
 using CoreAlign.Domain.Entities.Payments;
 using CoreAlign.Domain.Entities.Payroll;
 using CoreAlign.Domain.Entities.Pricing;
@@ -37,6 +38,25 @@ public class CoreAlignDbContext : DbContext
         _tenantContext = tenantContext;
         _publisher = publisher;
         _fieldProtector = dataProtectionProvider?.CreateProtector("CoreAlign.Persistence.FieldEncryption.v1");
+
+        // WHY: stamp TenantId the moment an entity is tracked (Add), not at SaveChanges —
+        // a domain event captures TenantId by value when raised (e.g. payment.Confirm()
+        // runs right after AddAsync, before SaveChanges), so late stamping leaves the
+        // event's TenantId empty and tenant-bound subscribers (notifications) throw.
+        ChangeTracker.Tracked += StampTenantOnTracked;
+    }
+
+    private void StampTenantOnTracked(object? sender, Microsoft.EntityFrameworkCore.ChangeTracking.EntityTrackedEventArgs e)
+    {
+        if (e.FromQuery || e.Entry.Entity is not TenantEntity entity || entity.TenantId != Guid.Empty)
+        {
+            return;
+        }
+        var tenantId = _tenantContext.CurrentTenantId;
+        if (tenantId.HasValue)
+        {
+            entity.TenantId = tenantId.Value;
+        }
     }
 
     internal bool FieldEncryptionActive => _fieldProtector is not null;
@@ -80,6 +100,8 @@ public class CoreAlignDbContext : DbContext
     public DbSet<PriceList> PriceLists => Set<PriceList>();
     public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<DunningSetting> DunningSettings => Set<DunningSetting>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
 
     public DbSet<StockItem> StockItems => Set<StockItem>();
@@ -138,6 +160,11 @@ public class CoreAlignDbContext : DbContext
     public DbSet<ReturnRequest> ReturnRequests => Set<ReturnRequest>();
     public DbSet<ReturnRequestLine> ReturnRequestLines => Set<ReturnRequestLine>();
     public DbSet<DealerCommissionLedgerEntry> DealerCommissionLedgerEntries => Set<DealerCommissionLedgerEntry>();
+
+    // Invoices: recurring templates
+    public DbSet<RecurringInvoiceTemplate> RecurringInvoiceTemplates => Set<RecurringInvoiceTemplate>();
+    public DbSet<RecurringInvoiceTemplateLine> RecurringInvoiceTemplateLines => Set<RecurringInvoiceTemplateLine>();
+    public DbSet<RecurringInvoiceOccurrence> RecurringInvoiceOccurrences => Set<RecurringInvoiceOccurrence>();
 
     // Inventory: counts, substitutes
     public DbSet<StockCount> StockCounts => Set<StockCount>();
@@ -366,18 +393,21 @@ public class CoreAlignDbContext : DbContext
 
     private static void ApplyXminConcurrencyTokens(ModelBuilder modelBuilder)
     {
-        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-        {
-            if (typeof(IXminConcurrency).IsAssignableFrom(entityType.ClrType))
-            {
-                modelBuilder.Entity(entityType.ClrType)
-                    .Property<uint>("xmin")
-                    .HasColumnName("xmin")
-                    .HasColumnType("xid")
-                    .ValueGeneratedOnAddOrUpdate()
-                    .IsConcurrencyToken();
-            }
-        }
+        // DISABLED for PostgreSQL 18 compatibility.
+        //
+        // Previously every IXminConcurrency entity got the `xmin` system column mapped as a
+        // store-generated concurrency token. That made EF emit `RETURNING xmin` on INSERT and
+        // `WHERE xmin = @p ... RETURNING xmin` on UPDATE. PostgreSQL 18 no longer allows
+        // retrieving system columns that way and fails with:
+        //   0A000: cannot retrieve a system column in this context (tts_virtual_getsysattr)
+        // which broke EVERY save on the financial entities (Order, Invoice, Payment, VendorBill,
+        // VendorLedgerEntry, CustomerLedgerEntry, JournalEntry, VendorPayment, Employee,
+        // PayrollRun, Payslip) -- e.g. the demo seeder's sales & purchasing flows.
+        //
+        // DB-generated optimistic concurrency on those entities is therefore disabled for now.
+        // To restore it on PG18, give them a real app-managed token (IHasConcurrencyToken / a
+        // `long` column) instead of the xmin system column. App-managed concurrency is unaffected.
+        _ = modelBuilder;
     }
 
     private static void ApplyTenantForeignKeys(ModelBuilder modelBuilder)

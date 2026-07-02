@@ -20,10 +20,7 @@ export const orderLineSchema = z.object({
 });
 
 export const orderSchema = z.object({
-  orderNumber: z
-    .string()
-    .min(1, { message: 'Validation.Required' })
-    .max(64, { message: 'Validation.TooLong' }),
+  orderNumber: z.string().max(64, { message: 'Validation.TooLong' }).optional().or(z.literal('')),
   customerId: z.string().min(1, { message: 'Validation.Required' }),
   orderDate: z.string().min(1, { message: 'Validation.Required' }),
   status: z.enum([

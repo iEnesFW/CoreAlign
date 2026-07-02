@@ -99,4 +99,22 @@ public class PurchaseOrdersController : ControllerBase
         var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
         return (await _mediator.Send(new ReverseGoodsReceiptCommand(id, cmd?.Reason, userId), ct)).ToOk();
     }
+
+    [HttpPost("goods-receipts/{id:guid}/qc/approve")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> ApproveGoodsReceiptQc(Guid id, CancellationToken ct)
+    {
+        var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+        return (await _mediator.Send(new ApproveGoodsReceiptQcCommand(id, userId), ct)).ToOk();
+    }
+
+    [HttpPost("goods-receipts/{id:guid}/qc/reject")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> RejectGoodsReceiptQc(Guid id, [FromBody] RejectGoodsReceiptQcRequest? body, CancellationToken ct)
+    {
+        var userId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : Guid.Empty;
+        return (await _mediator.Send(new RejectGoodsReceiptQcCommand(id, body?.Reason, userId), ct)).ToOk();
+    }
+
+    public sealed record RejectGoodsReceiptQcRequest(string? Reason);
 }

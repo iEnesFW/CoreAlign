@@ -77,6 +77,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
             endOfLifeDate: request.EndOfLifeDate);
 
         product.SetProcurementType(request.ProcurementType);
+        product.SetRequiresInspection(request.RequiresInspection);
 
         await _productRepository.AddAsync(product, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

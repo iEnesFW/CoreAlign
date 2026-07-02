@@ -92,3 +92,9 @@ public sealed class FeedbackNotFoundException : NotFoundException
 {
     public FeedbackNotFoundException() : base("Feedback ticket not found.") { }
 }
+
+public sealed class UnsupportedExportFormatException : DomainException
+{
+    public UnsupportedExportFormatException(string format)
+        : base($"Export format '{format}' is not supported.") { }
+}

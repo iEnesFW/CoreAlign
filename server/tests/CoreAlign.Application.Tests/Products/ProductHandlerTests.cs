@@ -103,6 +103,7 @@ public class ProductHandlerTests
             IsStockTracked: true,
             IsLotTracked: false,
             IsSerialTracked: false,
+            RequiresInspection: null,
             MinStock: 0m,
             MaxStock: 0m,
             ReorderPoint: 0m,

@@ -66,6 +66,18 @@ public class PaymentsController : ControllerBase
         return (await _mediator.Send(cmd, ct)).ToOk();
     }
 
+    [HttpPost("{id:guid}/apply-fifo")]
+    public async Task<IActionResult> ApplyFifo(Guid id, CancellationToken ct)
+        => (await _mediator.Send(new ApplyPaymentFifoCommand(id), ct)).ToOk();
+
+    [HttpPost("{id:guid}/offset-advance")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> OffsetAdvance(Guid id, [FromBody] OffsetAdvanceRequest? body, CancellationToken ct)
+        => (await _mediator.Send(
+            new OffsetCustomerAdvanceCommand(id, body?.Applications ?? new List<PaymentApplyLine>()), ct)).ToOk();
+
+    public sealed record OffsetAdvanceRequest(List<PaymentApplyLine> Applications);
+
     [HttpPost("{id:guid}/unapply/{applicationId:guid}")]
     public async Task<IActionResult> Unapply(Guid id, Guid applicationId, CancellationToken ct)
         => (await _mediator.Send(new UnapplyPaymentCommand(id, applicationId), ct)).ToOk();

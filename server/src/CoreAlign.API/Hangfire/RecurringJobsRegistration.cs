@@ -1,5 +1,8 @@
 using CoreAlign.Application.AiHelper.Ingestion;
 using CoreAlign.Application.Compliance.Audit;
+using CoreAlign.Application.Customers.Maintenance;
+using CoreAlign.Application.Dunning;
+using CoreAlign.Application.Invoices.Recurring.Jobs;
 using CoreAlign.Application.Jobs;
 using CoreAlign.Application.Sales.OrderTemplates.Jobs;
 using CoreAlign.Application.Treasury.Fx;
@@ -72,5 +75,20 @@ public static class RecurringJobsRegistration
             "ai-kb-reindex",
             job => job.RunAsync(CancellationToken.None),
             Cron.Daily(6));
+
+        manager.AddOrUpdate<DunningRemindersJob>(
+            "dunning-reminders",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(1));
+
+        manager.AddOrUpdate<RecurringInvoiceGenerationJob>(
+            "recurring-invoice-generation",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(7));
+
+        manager.AddOrUpdate<CustomerBalanceRecomputeJob>(
+            "customer-balance-recompute",
+            job => job.RunAsync(CancellationToken.None),
+            "30 2 * * *");
     }
 }

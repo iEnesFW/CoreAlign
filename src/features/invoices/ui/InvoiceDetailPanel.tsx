@@ -8,8 +8,11 @@ import {
   FileText,
   ListOrdered,
   StickyNote,
+  Workflow,
 } from 'lucide-react';
 import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
+import { DocumentChain } from '@/widgets/DocumentChain';
+import { NextBestAction } from '@/widgets/NextBestAction';
 import { useInvoiceQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { InvoiceLedgerTab } from '@/features/invoices/ui/InvoiceLedgerTab';
 import { InvoiceOverviewTab } from '@/features/invoices/ui/InvoiceOverviewTab';
@@ -26,7 +29,7 @@ interface Props {
   onRecordPayment?: (invoiceId: string) => void;
 }
 
-type Tab = 'overview' | 'lines' | 'payments' | 'ledger' | 'activity' | 'audit' | 'notes';
+type Tab = 'overview' | 'chain' | 'lines' | 'payments' | 'ledger' | 'activity' | 'audit' | 'notes';
 
 const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
@@ -72,6 +75,11 @@ export const InvoiceDetailPanel = ({
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: t('invoices.detail.tabs.overview'), icon: <FileText size={12} /> },
+    {
+      id: 'chain',
+      label: t('invoices.detail.tabs.chain', { defaultValue: 'Belge Zinciri' }),
+      icon: <Workflow size={12} />,
+    },
     { id: 'lines', label: t('invoices.detail.tabs.lines'), icon: <ListOrdered size={12} /> },
     {
       id: 'payments',
@@ -107,6 +115,13 @@ export const InvoiceDetailPanel = ({
 
       <div className="space-y-4 p-4">
         {tab === 'overview' && invoice && (
+          <NextBestAction
+            entity="invoice"
+            invoice={invoice}
+            onCollectPayment={onRecordPayment ? () => onRecordPayment(invoice.id) : undefined}
+          />
+        )}
+        {tab === 'overview' && invoice && (
           <InvoiceOverviewTab
             invoice={invoice}
             locale={i18n.language}
@@ -126,6 +141,7 @@ export const InvoiceDetailPanel = ({
             }
           />
         )}
+        {tab === 'chain' && invoice && <DocumentChain entity="invoice" id={invoice.id} />}
         {tab === 'lines' && invoice && <LinesTab invoice={invoice} locale={i18n.language} />}
         {tab === 'payments' && invoice && (
           <PaymentsAppliedTab

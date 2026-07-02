@@ -1,14 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
+import { Link } from 'react-router-dom';
+import { Mail, MailCheck, ArrowLeft, AlertCircle } from 'lucide-react';
+import type { AxiosError } from 'axios';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
-import { Logo } from '@/shared/ui/Logo/Logo';
-import styles from './ForgotPasswordForm.module.css';
-import { Mail, CheckCircle } from 'lucide-react';
 import { useForgotPassword } from '../../hooks/useAuth';
-import { Link } from 'react-router-dom';
-import type { AxiosError } from 'axios';
 import type { ApiResponse } from '../../model/auth.types';
 
 export const ForgotPasswordForm = () => {
@@ -33,9 +31,7 @@ export const ForgotPasswordForm = () => {
       forgotPasswordMutation.mutate(
         { email, captchaToken: captchaToken ?? undefined },
         {
-          onSuccess: () => {
-            setIsSent(true);
-          },
+          onSuccess: () => setIsSent(true),
           onError: (error: Error) => {
             const axiosError = error as AxiosError<ApiResponse<unknown>>;
             const message =
@@ -50,61 +46,75 @@ export const ForgotPasswordForm = () => {
 
   if (isSent) {
     return (
-      <div className={styles.form}>
-        <div className={styles.header}>
-          <div className={styles.logoWrapper}>
-            <Logo size={42} />
-          </div>
-          <div className={styles.successMessage}>
-            <CheckCircle size={48} strokeWidth={1.5} />
-            <h2>{t('auth.forgotPassword.success.title')}</h2>
-            <p>{t('auth.forgotPassword.success.message')}</p>
-            <Link to="/login" className={styles.link}>
-              {t('auth.forgotPassword.success.backToLogin')}
-            </Link>
-          </div>
+      <div className="flex flex-col items-center text-center">
+        <div className="grid h-16 w-16 place-items-center rounded-full bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400">
+          <MailCheck size={32} strokeWidth={1.6} />
         </div>
+        <h1 className="mt-6 text-[26px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.forgotPassword.success.title')}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
+          {t('auth.forgotPassword.success.message')}
+        </p>
+        <Link
+          to="/login"
+          className="mt-7 inline-flex items-center gap-2 text-[14px] font-semibold text-primary-600 hover:underline dark:text-primary-300"
+        >
+          <ArrowLeft size={16} />
+          {t('auth.forgotPassword.success.backToLogin')}
+        </Link>
       </div>
     );
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.header}>
-        <div className={styles.logoWrapper}>
-          <Logo size={42} />
-        </div>
-        <p className={styles.subtitle}>{t('auth.forgotPassword.subtitle')}</p>
+    <div className="flex w-full flex-col">
+      <div className="mb-8 text-center">
+        <h1 className="m-0 text-[30px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.forgotPassword.title', { defaultValue: 'Şifrenizi mi unuttunuz?' })}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] text-slate-500 dark:text-slate-400">
+          {t('auth.forgotPassword.subtitle')}
+        </p>
       </div>
 
-      {serverError && <div className={styles.errorBanner}>{serverError}</div>}
+      {serverError && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-danger-200 bg-danger-50 px-3.5 py-3 text-[13px] text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{serverError}</span>
+        </div>
+      )}
 
-      <div className={styles.fields}>
+      <form className="flex flex-col gap-[18px]" onSubmit={handleSubmit} noValidate>
         <Input
           label={t('auth.forgotPassword.emailLabel')}
           placeholder={t('auth.forgotPassword.emailPlaceholder')}
           type="email"
+          autoComplete="email"
           leftIcon={<Mail size={18} />}
           value={email}
           onChange={handleEmailChange}
         />
-      </div>
 
-      <div className={styles.actions}>
         <Button
           type="submit"
           isLoading={forgotPasswordMutation.isPending}
-          className={styles.submitButton}
+          size="lg"
+          className="mt-1 w-full"
         >
           {t('auth.forgotPassword.submitButton')}
         </Button>
-      </div>
+      </form>
 
-      <div className={styles.footer}>
-        <Link to="/login" className={styles.link}>
+      <div className="mt-7 text-center">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+        >
+          <ArrowLeft size={16} />
           {t('auth.forgotPassword.backToLogin')}
         </Link>
       </div>
-    </form>
+    </div>
   );
 };

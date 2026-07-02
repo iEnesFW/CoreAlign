@@ -57,6 +57,8 @@ public class ReceiveInventoryGLChainIntegrationTests
             TenantId = TenantId,
         };
         _products.GetByIdAsync(ProductId, Arg.Any<CancellationToken>()).Returns(_product);
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [ProductId] = _product });
 
         _movements.AddAsync(Arg.Any<StockMovement>(), Arg.Any<CancellationToken>())
             .Returns(Task.CompletedTask)
@@ -80,7 +82,7 @@ public class ReceiveInventoryGLChainIntegrationTests
     }
 
     private ReceivePurchaseOrderHandler ReceiveHandler() =>
-        new(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _uow);
+        new(_orders, _grns, _allocation, _warehouses, _sequences, _outbox, _products, _uow);
 
     private static string NewKey() => Guid.NewGuid().ToString("N");
 

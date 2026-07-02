@@ -89,6 +89,10 @@
   --color-shell: #0b0f19;
   --color-surface-deep: #0f1524;
   --color-canvas: #060913;
+
+  --font-display:
+    'Sora Variable', 'Sora', 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
 }
 
 :root {
@@ -366,6 +370,235 @@ body {
   background: rgba(15, 23, 42, 0.55);
 }
 
+.ca-marketing :is(h1, h2, h3, h4, .ca-display) {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  font-feature-settings: normal;
+}
+.ca-display {
+  font-family: var(--font-display);
+}
+
+.ca-text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-primary-600),
+    var(--color-primary-500) 45%,
+    var(--color-accent-500)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dark .ca-text-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-primary-300),
+    var(--color-primary-200) 40%,
+    var(--color-accent-300)
+  );
+}
+
+.ca-page-bg {
+  background-color: #f7f8fc;
+  background-image:
+    radial-gradient(60rem 38rem at 8% -8%, rgba(99, 102, 241, 0.1), transparent 60%),
+    radial-gradient(52rem 34rem at 102% 4%, rgba(34, 211, 238, 0.08), transparent 58%),
+    radial-gradient(48rem 40rem at 50% 118%, rgba(99, 102, 241, 0.06), transparent 60%);
+}
+.dark .ca-page-bg {
+  background-color: #070b15;
+  background-image:
+    radial-gradient(62rem 40rem at 6% -10%, rgba(99, 102, 241, 0.2), transparent 60%),
+    radial-gradient(54rem 36rem at 104% 2%, rgba(34, 211, 238, 0.14), transparent 58%),
+    radial-gradient(52rem 44rem at 50% 120%, rgba(79, 70, 229, 0.16), transparent 62%);
+}
+
+.ca-blueprint {
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.16) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.dark .ca-blueprint {
+  background-image:
+    linear-gradient(rgba(125, 211, 252, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 211, 252, 0.12) 1px, transparent 1px);
+}
+
+.ca-aurora {
+  background:
+    radial-gradient(40% 60% at 20% 20%, rgba(99, 102, 241, 0.5), transparent 60%),
+    radial-gradient(40% 50% at 80% 30%, rgba(34, 211, 238, 0.4), transparent 60%),
+    radial-gradient(50% 60% at 50% 90%, rgba(79, 70, 229, 0.45), transparent 60%);
+  filter: blur(36px);
+  background-size: 200% 200%;
+  animation: ca-aurora 18s ease-in-out infinite;
+}
+
+.ca-panel {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.65));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    0 18px 40px -28px rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.dark .ca-panel {
+  border-color: rgba(148, 163, 184, 0.14);
+  background: linear-gradient(180deg, rgba(20, 28, 46, 0.82), rgba(12, 18, 32, 0.7));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 60px -32px rgba(0, 0, 0, 0.8);
+}
+
+.ca-card-hover {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+.ca-card-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 28px 60px -30px rgba(79, 70, 229, 0.5);
+}
+
+@keyframes ca-aurora {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes ca-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes ca-float-sm {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes ca-scan-y {
+  0% {
+    transform: translateY(-8%);
+    opacity: 0;
+  }
+  15%,
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(108%);
+    opacity: 0;
+  }
+}
+@keyframes ca-marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+@keyframes ca-spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ca-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-float {
+  animation: ca-float 6s ease-in-out infinite;
+}
+.animate-float-sm {
+  animation: ca-float-sm 5s ease-in-out infinite;
+}
+.animate-scan-y {
+  animation: ca-scan-y 4.2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.animate-spin-slow {
+  animation: ca-spin-slow 22s linear infinite;
+}
+.ca-marquee-track {
+  animation: ca-marquee 38s linear infinite;
+}
+.ca-draw-line {
+  stroke-dasharray: var(--ca-len, 600);
+  stroke-dashoffset: var(--ca-len, 600);
+  animation: ca-draw 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes ca-film-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ca-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes ca-cam {
+  0%,
+  100% {
+    transform: perspective(1400px) rotateY(-6deg) rotateX(2.5deg);
+  }
+  50% {
+    transform: perspective(1400px) rotateY(6deg) rotateX(1deg);
+  }
+}
+@keyframes ca-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-film-in {
+  animation: ca-film-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-cam {
+  transform-style: preserve-3d;
+  animation: ca-cam 10s ease-in-out infinite;
+}
+.ca-progress-bar {
+  transform-origin: left;
+  animation: ca-progress var(--ca-dur, 5200ms) linear forwards;
+}
+.ca-rise {
+  animation: ca-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in,
   .animate-fade-up,
@@ -374,8 +607,26 @@ body {
   .animate-zoom-in,
   .animate-pulse-soft,
   .animate-flow,
+  .animate-float,
+  .animate-float-sm,
+  .animate-scan-y,
+  .animate-spin-slow,
+  .animate-film-in,
+  .animate-cam,
+  .animate-rise,
+  .ca-rise,
+  .ca-progress-bar,
+  .ca-aurora,
+  .ca-marquee-track,
+  .ca-draw-line,
   .ca-stagger > *,
   .ca-skeleton {
     animation: none !important;
+  }
+  .animate-cam {
+    transform: perspective(1400px) rotateY(0deg) rotateX(0deg);
+  }
+  .ca-draw-line {
+    stroke-dashoffset: 0;
   }
 }

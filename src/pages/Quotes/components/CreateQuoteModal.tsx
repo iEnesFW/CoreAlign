@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import { Modal } from '@/shared/ui/Modal/Modal';
 import { Button } from '@/shared/ui/Button/Button';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { useCustomersQuery } from '@/features/customers/hooks/useCustomerQueries';
+import { useCustomersQuery, useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
 import { useCreateQuote } from '@/features/quotes/hooks/useQuoteQueries';
+import { usePriceListItemsQuery } from '@/shared/master-data/hooks/useMasterData';
 
 interface Props {
   open: boolean;
@@ -58,6 +59,23 @@ export const CreateQuoteModal = ({ open, onClose, onCreated }: Props) => {
 
   const customers = customersQuery.data?.data?.items ?? [];
   const products = productsQuery.data?.data?.items ?? [];
+
+  const customerQuery = useCustomerQuery(customerId || null);
+  const customer = customerQuery.data?.data;
+  const priceListItemsQuery = usePriceListItemsQuery(customer?.priceListId ?? null);
+  const priceListPriceByProduct = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const it of priceListItemsQuery.data?.data ?? []) m.set(it.productId, it.price);
+    return m;
+  }, [priceListItemsQuery.data]);
+
+  const [appliedCustomerId, setAppliedCustomerId] = useState<string | null>(null);
+  if (!customerId) {
+    if (appliedCustomerId !== null) setAppliedCustomerId(null);
+  } else if (customer && customer.id === customerId && appliedCustomerId !== customer.id) {
+    setAppliedCustomerId(customer.id);
+    if (customer.defaultCurrency) setCurrency(customer.defaultCurrency.toUpperCase());
+  }
 
   const lineTotals = useMemo(() => {
     let subtotal = 0;
@@ -225,7 +243,11 @@ export const CreateQuoteModal = ({ open, onClose, onCreated }: Props) => {
                           ? {
                               ...l,
                               productId,
-                              unitPrice: product?.listPrice ?? product?.price ?? l.unitPrice,
+                              unitPrice:
+                                priceListPriceByProduct.get(productId) ??
+                                product?.listPrice ??
+                                product?.price ??
+                                l.unitPrice,
                             }
                           : l,
                       ),

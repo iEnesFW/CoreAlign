@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronRight, PackageCheck, Undo2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  PackageCheck,
+  Undo2,
+  XCircle,
+} from 'lucide-react';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { formatCurrency, formatDateTime, formatNumber } from '@/shared/lib/format';
@@ -16,17 +23,27 @@ import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
 import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import {
+  useApproveGoodsReceiptQc,
   useGoodsReceiptsQuery,
+  useRejectGoodsReceiptQc,
   useReverseGoodsReceipt,
 } from '@/features/purchasing/hooks/useGoodsReceipts';
 import type {
   GoodsReceipt,
+  GoodsReceiptQcStatus,
   GoodsReceiptStatus,
 } from '@/features/purchasing/model/goodsReceipt.types';
 
 const STATUS_VARIANT: Record<GoodsReceiptStatus, BadgeVariant> = {
   Posted: 'success',
   Reversed: 'danger',
+};
+
+const QC_VARIANT: Record<GoodsReceiptQcStatus, BadgeVariant> = {
+  NotRequired: 'neutral',
+  PendingInspection: 'warning',
+  Approved: 'success',
+  Rejected: 'danger',
 };
 
 const STATUSES: GoodsReceiptStatus[] = ['Posted', 'Reversed'];
@@ -45,6 +62,19 @@ export const GoodsReceiptsPage = ({ purchaseOrderId }: Props) => {
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [reverseTarget, setReverseTarget] = useState<GoodsReceipt | null>(null);
+  const [qcRejectTarget, setQcRejectTarget] = useState<GoodsReceipt | null>(null);
+  const approveQc = useApproveGoodsReceiptQc();
+
+  const handleApproveQc = async (g: GoodsReceipt) => {
+    try {
+      await approveQc.mutateAsync(g.id);
+      toast.success(
+        t('grn.qc.approve.done', { defaultValue: 'Mal kabul onaylandı ve stoğa eklendi.' }),
+      );
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
 
   const vendorsQuery = useVendorsQuery({ page: 1, pageSize: 200 });
   const vendors = vendorsQuery.data?.data?.items ?? [];
@@ -195,9 +225,12 @@ export const GoodsReceiptsPage = ({ purchaseOrderId }: Props) => {
                     locale={locale}
                     expanded={expanded}
                     statusLabel={statusLabel}
-                    canReverse={isTenantAdmin}
+                    isAdmin={isTenantAdmin}
+                    qcBusy={approveQc.isPending}
                     onToggle={() => setExpandedId(expanded ? null : g.id)}
                     onReverse={() => setReverseTarget(g)}
+                    onApproveQc={() => handleApproveQc(g)}
+                    onRejectQc={() => setQcRejectTarget(g)}
                   />
                 );
               })}
@@ -209,6 +242,12 @@ export const GoodsReceiptsPage = ({ purchaseOrderId }: Props) => {
       {reverseTarget && (
         <ReverseGoodsReceiptModal receipt={reverseTarget} onClose={() => setReverseTarget(null)} />
       )}
+      {qcRejectTarget && (
+        <QcRejectGoodsReceiptModal
+          receipt={qcRejectTarget}
+          onClose={() => setQcRejectTarget(null)}
+        />
+      )}
     </ListPageTemplate>
   );
 };
@@ -217,22 +256,34 @@ interface RowProps {
   receipt: GoodsReceipt;
   locale: string;
   expanded: boolean;
-  canReverse: boolean;
+  isAdmin: boolean;
+  qcBusy: boolean;
   statusLabel: (s: GoodsReceiptStatus) => string;
   onToggle: () => void;
   onReverse: () => void;
+  onApproveQc: () => void;
+  onRejectQc: () => void;
 }
 
 const GoodsReceiptRow = ({
   receipt,
   locale,
   expanded,
-  canReverse,
+  isAdmin,
+  qcBusy,
   statusLabel,
   onToggle,
   onReverse,
+  onApproveQc,
+  onRejectQc,
 }: RowProps) => {
   const { t } = useTranslation();
+  const awaitingQc = receipt.qcStatus === 'PendingInspection';
+  const canReverse =
+    isAdmin &&
+    receipt.status === 'Posted' &&
+    receipt.qcStatus !== 'PendingInspection' &&
+    receipt.qcStatus !== 'Rejected';
   return (
     <>
       <tr className="hover:bg-slate-50/40 dark:hover:bg-slate-800/30">
@@ -263,19 +314,49 @@ const GoodsReceiptRow = ({
           {formatCurrency(receipt.totalCost, locale, receipt.currency)}
         </td>
         <td className="px-3 py-2 text-center">
-          <Badge variant={STATUS_VARIANT[receipt.status]}>{statusLabel(receipt.status)}</Badge>
+          <div className="flex flex-col items-center gap-1">
+            <Badge variant={STATUS_VARIANT[receipt.status]}>{statusLabel(receipt.status)}</Badge>
+            {receipt.qcStatus !== 'NotRequired' && (
+              <Badge variant={QC_VARIANT[receipt.qcStatus]}>
+                {t(`grn.qc.status.${receipt.qcStatus}`, { defaultValue: receipt.qcStatus })}
+              </Badge>
+            )}
+          </div>
         </td>
         <td className="px-3 py-2 text-right">
-          {canReverse && receipt.status === 'Posted' && (
-            <button
-              type="button"
-              onClick={onReverse}
-              className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
-              title={t('grn.reverse.action', { defaultValue: 'İade Et' })}
-            >
-              <Undo2 size={13} />
-            </button>
-          )}
+          <div className="flex items-center justify-end gap-1">
+            {awaitingQc && isAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={onApproveQc}
+                  disabled={qcBusy}
+                  className="rounded p-1 text-slate-400 hover:bg-success-50 hover:text-success-700 disabled:opacity-50 dark:hover:bg-success-500/10"
+                  title={t('grn.qc.approve.action', { defaultValue: 'Kaliteyi Onayla' })}
+                >
+                  <CheckCircle2 size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={onRejectQc}
+                  className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
+                  title={t('grn.qc.reject.action', { defaultValue: 'Kaliteyi Reddet' })}
+                >
+                  <XCircle size={13} />
+                </button>
+              </>
+            )}
+            {canReverse && (
+              <button
+                type="button"
+                onClick={onReverse}
+                className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 dark:hover:bg-danger-500/10"
+                title={t('grn.reverse.action', { defaultValue: 'İade Et' })}
+              >
+                <Undo2 size={13} />
+              </button>
+            )}
+          </div>
         </td>
       </tr>
       {expanded && (
@@ -285,6 +366,12 @@ const GoodsReceiptRow = ({
               <p className="mb-2 text-[11px] text-danger-600 dark:text-danger-400">
                 {t('grn.reverse.reasonLabel', { defaultValue: 'İade nedeni' })}:{' '}
                 {receipt.reversalReason}
+              </p>
+            )}
+            {receipt.qcStatus === 'Rejected' && receipt.qcRejectionReason && (
+              <p className="mb-2 text-[11px] text-danger-600 dark:text-danger-400">
+                {t('grn.qc.rejectedReason', { defaultValue: 'Kalite ret nedeni' })}:{' '}
+                {receipt.qcRejectionReason}
               </p>
             )}
             <table className="w-full text-xs">
@@ -386,6 +473,58 @@ const ReverseGoodsReceiptModal = ({ receipt, onClose }: ReverseModalProps) => {
             {reverse.isPending
               ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
               : t('grn.reverse.submit', { defaultValue: 'İade Et' })}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+const QcRejectGoodsReceiptModal = ({ receipt, onClose }: ReverseModalProps) => {
+  const { t } = useTranslation();
+  const reject = useRejectGoodsReceiptQc();
+  const [reason, setReason] = useState('');
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await reject.mutateAsync({ id: receipt.id, reason: reason.trim() });
+      toast.success(
+        t('grn.qc.reject.done', { defaultValue: 'Mal kabul reddedildi. Stoğa ekleme yapılmadı.' }),
+      );
+      onClose();
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      icon={<XCircle size={16} />}
+      title={`${t('grn.qc.reject.title', { defaultValue: 'Kalite Muayenesini Reddet' })} — ${receipt.grnNumber}`}
+      size="md"
+    >
+      <form onSubmit={onSubmit} className="space-y-3">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          {t('grn.qc.reject.hint', {
+            defaultValue: 'Reddedilen mal stoğa girmez; sipariş teslim miktarı geri alınır.',
+          })}
+        </p>
+        <Textarea
+          label={t('grn.qc.reject.reasonLabel', { defaultValue: 'Ret nedeni' })}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          rows={3}
+          maxLength={500}
+        />
+        <div className="flex justify-end gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+          <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+            {t('common.cancel', { defaultValue: 'Vazgeç' })}
+          </Button>
+          <Button type="submit" variant="danger" size="sm" isLoading={reject.isPending}>
+            {t('grn.qc.reject.submit', { defaultValue: 'Reddet' })}
           </Button>
         </div>
       </form>

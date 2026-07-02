@@ -3,15 +3,20 @@ import {
   AccountingPeriodsPage,
   ReconciliationPage,
   YearEndClosePage,
+  BankAccountsPage,
+  CashPositionPage,
   CustomersPage,
   DashboardPage,
   InvoicesPage,
+  RecurringInvoicesPage,
   OrdersPage,
   QuotesPage,
   ReturnsPage,
   ProductsPage,
   ProfilePage,
   ReportsPage,
+  DuplicateDetectionPage,
+  DocumentNumberGapPage,
   StockCountsPage,
   PurchaseOrdersPage,
   VendorBillsPage,
@@ -21,6 +26,7 @@ import {
   EmployeesPage,
   PayrollRunsPage,
   PayrollParametersPage,
+  DunningSettingsPage,
 } from './routes';
 
 export const routePreloaders: Record<string, () => Promise<unknown>> = {
@@ -31,6 +37,7 @@ export const routePreloaders: Record<string, () => Promise<unknown>> = {
   '/dashboard/quotes': QuotesPage.preload,
   '/dashboard/orders': OrdersPage.preload,
   '/dashboard/invoices': InvoicesPage.preload,
+  '/dashboard/recurring-invoices': RecurringInvoicesPage.preload,
   '/dashboard/returns': ReturnsPage.preload,
   '/dashboard/purchasing/purchase-orders': PurchaseOrdersPage.preload,
   '/dashboard/purchasing/vendor-bills': VendorBillsPage.preload,
@@ -45,7 +52,12 @@ export const routePreloaders: Record<string, () => Promise<unknown>> = {
   '/dashboard/accounting/periods': AccountingPeriodsPage.preload,
   '/dashboard/accounting/reconciliation': ReconciliationPage.preload,
   '/dashboard/accounting/year-end-close': YearEndClosePage.preload,
+  '/dashboard/accounting/bank-accounts': BankAccountsPage.preload,
+  '/dashboard/accounting/cash-position': CashPositionPage.preload,
   '/dashboard/reports': ReportsPage.preload,
+  '/dashboard/reports/duplicates': DuplicateDetectionPage.preload,
+  '/dashboard/reports/document-number-gaps': DocumentNumberGapPage.preload,
+  '/dashboard/admin/dunning-settings': DunningSettingsPage.preload,
 };
 
 export const prefetchCommonDashboardPages = (): void => {

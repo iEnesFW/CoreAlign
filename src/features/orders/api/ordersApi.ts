@@ -16,7 +16,21 @@ import type {
 
 const BASE = '/orders';
 const SHIPMENT_BASE = '/shipments';
-const INVALIDATION = [/\/orders/i, /\/shipments/i, /\/stock\//i] as const;
+const INVALIDATION = [/\/orders/i, /\/shipments/i, /\/stock\//i, /\/customers\//i] as const;
+
+export type BulkOrderActionKind = 'Submit' | 'Approve' | 'Allocate' | 'Cancel';
+
+export interface BulkOrderActionItemResult {
+  orderId: string;
+  success: boolean;
+  error: string | null;
+}
+
+export interface BulkOrderActionResult {
+  succeededCount: number;
+  failedCount: number;
+  items: BulkOrderActionItemResult[];
+}
 
 export const ordersApi = {
   list: (params: OrderListParams) =>
@@ -47,6 +61,24 @@ export const ordersApi = {
       invalidateHttpCache(INVALIDATION);
       return r.data;
     }),
+
+  reorder: (id: string) =>
+    apiClient.post<ApiResponse<Order>>(`${BASE}/${id}/reorder`).then((r) => {
+      invalidateHttpCache(INVALIDATION);
+      return r.data;
+    }),
+
+  bulkAction: (orderIds: string[], action: BulkOrderActionKind, reason?: string | null) =>
+    apiClient
+      .post<ApiResponse<BulkOrderActionResult>>(`${BASE}/bulk-action`, {
+        orderIds,
+        action,
+        reason: reason ?? null,
+      })
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      }),
 
   approve: (id: string, approvedByUserId?: string | null) =>
     apiClient

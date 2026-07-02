@@ -95,6 +95,73 @@ public class VendorRepository : IVendorRepository
 
     public void Update(Vendor vendor) => _context.Vendors.Update(vendor);
     public void Remove(Vendor vendor) => _context.Vendors.Remove(vendor);
+
+    public async Task<IReadOnlyList<DuplicateGroupRow>> FindDuplicatesAsync(
+        DuplicateKeyKind key,
+        CancellationToken cancellationToken = default)
+    {
+        var q = _context.Vendors.AsNoTracking();
+
+        if (key == DuplicateKeyKind.Email)
+        {
+            var groups = (await q
+                .Where(v => v.Email != null && v.Email != "")
+                .GroupBy(v => v.Email!.ToLower())
+                .Where(g => g.Count() > 1)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Count))
+                .ToList();
+            if (groups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+            var keys = groups.Select(g => g.Key).ToList();
+            var members = (await q
+                .Where(v => v.Email != null && keys.Contains(v.Email!.ToLower()))
+                .Select(v => new { Key = v.Email!.ToLower(), v.Id, v.Name })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Id, x.Name))
+                .ToList();
+            return DuplicateGroupAssembler.Build(groups, members);
+        }
+
+        if (key == DuplicateKeyKind.TaxNumber)
+        {
+            var groups = (await q
+                .Where(v => v.TaxNumber != null && v.TaxNumber != "")
+                .GroupBy(v => v.TaxNumber!)
+                .Where(g => g.Count() > 1)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Count))
+                .ToList();
+            if (groups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+            var keys = groups.Select(g => g.Key).ToList();
+            var members = (await q
+                .Where(v => v.TaxNumber != null && keys.Contains(v.TaxNumber!))
+                .Select(v => new { Key = v.TaxNumber!, v.Id, v.Name })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Id, x.Name))
+                .ToList();
+            return DuplicateGroupAssembler.Build(groups, members);
+        }
+
+        var nidGroups = (await q
+            .Where(v => v.NationalId != null && v.NationalId != "")
+            .GroupBy(v => v.NationalId!)
+            .Where(g => g.Count() > 1)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .Select(x => (x.Key, x.Count))
+            .ToList();
+        if (nidGroups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+        var nidKeys = nidGroups.Select(g => g.Key).ToList();
+        var nidMembers = (await q
+            .Where(v => v.NationalId != null && nidKeys.Contains(v.NationalId!))
+            .Select(v => new { Key = v.NationalId!, v.Id, v.Name })
+            .ToListAsync(cancellationToken))
+            .Select(x => (x.Key, x.Id, x.Name))
+            .ToList();
+        return DuplicateGroupAssembler.Build(nidGroups, nidMembers);
+    }
 }
 
 public class VendorAddressRepository : IVendorAddressRepository

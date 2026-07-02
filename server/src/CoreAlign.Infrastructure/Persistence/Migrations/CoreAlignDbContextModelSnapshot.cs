@@ -472,6 +472,90 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.BankAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("account_name");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("bank_name");
+
+                    b.Property<string>("BranchName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("branch_name");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<string>("Iban")
+                        .IsRequired()
+                        .HasMaxLength(34)
+                        .HasColumnType("character varying(34)")
+                        .HasColumnName("iban");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal>("OpeningBalance")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("opening_balance");
+
+                    b.Property<string>("Swift")
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)")
+                        .HasColumnName("swift");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_bank_accounts");
+
+                    b.HasIndex("TenantId", "Iban")
+                        .IsUnique()
+                        .HasDatabaseName("ix_bank_accounts_tenant_id_iban");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("ix_bank_accounts_tenant_id_is_active");
+
+                    b.ToTable("bank_accounts");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Brand", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1477,12 +1561,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_customer_ledger_entries");
 
@@ -2406,6 +2484,58 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_document_sequences_tenant_id_type");
 
                     b.ToTable("document_sequences");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.DunningSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_enabled");
+
+                    b.Property<string>("RecipientUserIdsJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("recipient_user_ids_json");
+
+                    b.Property<bool>("SendEmail")
+                        .HasColumnType("boolean")
+                        .HasColumnName("send_email");
+
+                    b.Property<bool>("SendInApp")
+                        .HasColumnType("boolean")
+                        .HasColumnName("send_in_app");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_dunning_settings");
+
+                    b.HasIndex("TenantId", "Type")
+                        .IsUnique()
+                        .HasDatabaseName("ix_dunning_settings_tenant_id_type");
+
+                    b.ToTable("dunning_settings");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.EmailTemplate", b =>
@@ -5938,6 +6068,23 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("purchase_order_id");
 
+                    b.Property<Guid?>("QcDecidedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("qc_decided_by_user_id");
+
+                    b.Property<DateTime?>("QcDecisionAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("qc_decision_at_utc");
+
+                    b.Property<string>("QcRejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("qc_rejection_reason");
+
+                    b.Property<int>("QcStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("qc_status");
+
                     b.Property<DateTime>("ReceiptDateUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("receipt_date_utc");
@@ -6009,6 +6156,9 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId", "PurchaseOrderId")
                         .HasDatabaseName("ix_goods_receipts_tenant_id_purchase_order_id");
+
+                    b.HasIndex("TenantId", "QcStatus")
+                        .HasDatabaseName("ix_goods_receipts_tenant_id_qc_status");
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("ix_goods_receipts_tenant_id_status");
@@ -6540,12 +6690,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("withholding_total");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_invoices");
 
@@ -6725,6 +6869,289 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("invoice_lines");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceOccurrence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTime>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("generated_at_utc");
+
+                    b.Property<Guid>("GeneratedInvoiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("generated_invoice_id");
+
+                    b.Property<DateOnly>("PeriodKey")
+                        .HasColumnType("date")
+                        .HasColumnName("period_key");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_recurring_invoice_occurrences");
+
+                    b.HasIndex("GeneratedInvoiceId")
+                        .HasDatabaseName("ix_recurring_invoice_occurrences_generated_invoice_id");
+
+                    b.HasIndex("TemplateId")
+                        .HasDatabaseName("ix_recurring_invoice_occurrences_template_id");
+
+                    b.HasIndex("TenantId", "TemplateId", "PeriodKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_recurring_invoice_occurrences_tenant_id_template_id_period_~");
+
+                    b.ToTable("recurring_invoice_occurrences");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("AnchorDayOfMonth")
+                        .HasColumnType("integer")
+                        .HasColumnName("anchor_day_of_month");
+
+                    b.Property<int?>("AnchorDayOfWeek")
+                        .HasColumnType("integer")
+                        .HasColumnName("anchor_day_of_week");
+
+                    b.Property<bool>("AutoConfirm")
+                        .HasColumnType("boolean")
+                        .HasColumnName("auto_confirm");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<int>("DueDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("due_days");
+
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("integer")
+                        .HasColumnName("frequency");
+
+                    b.Property<decimal?>("HeaderDiscountAmount")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("header_discount_amount");
+
+                    b.Property<decimal?>("HeaderDiscountPercent")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("header_discount_percent");
+
+                    b.Property<string>("InternalNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("internal_notes");
+
+                    b.Property<int>("IntervalCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("interval_count");
+
+                    b.Property<DateOnly?>("LastRunDate")
+                        .HasColumnType("date")
+                        .HasColumnName("last_run_date");
+
+                    b.Property<int?>("MaxOccurrences")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_occurrences");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<DateOnly>("NextRunDate")
+                        .HasColumnType("date")
+                        .HasColumnName("next_run_date");
+
+                    b.Property<int>("OccurrencesGenerated")
+                        .HasColumnType("integer")
+                        .HasColumnName("occurrences_generated");
+
+                    b.Property<Guid?>("PaymentTermsId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_terms_id");
+
+                    b.Property<string>("PublicNotes")
+                        .HasColumnType("text")
+                        .HasColumnName("public_notes");
+
+                    b.Property<decimal?>("RoundingAdjustment")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("rounding_adjustment");
+
+                    b.Property<decimal?>("ShippingCost")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("shipping_cost");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_recurring_invoice_templates");
+
+                    b.HasIndex("NextRunDate")
+                        .HasDatabaseName("ix_recurring_invoice_templates_next_run_date")
+                        .HasFilter("status = 0");
+
+                    b.HasIndex("TenantId", "CustomerId")
+                        .HasDatabaseName("ix_recurring_invoice_templates_tenant_id_customer_id");
+
+                    b.ToTable("recurring_invoice_templates");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplateLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<bool>("IsTaxInclusive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_tax_inclusive");
+
+                    b.Property<decimal?>("LineDiscountAmount")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("line_discount_amount");
+
+                    b.Property<decimal?>("LineDiscountPercent")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("line_discount_percent");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("line_number");
+
+                    b.Property<Guid?>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("product_name");
+
+                    b.Property<string>("ProductSku")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("product_sku");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("quantity");
+
+                    b.Property<Guid?>("TaxRateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tax_rate_id");
+
+                    b.Property<decimal>("TaxRatePercent")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("tax_rate_percent");
+
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("template_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("unit_price");
+
+                    b.Property<string>("UomCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("uom_code");
+
+                    b.Property<Guid?>("UomId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uom_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<decimal?>("WithholdingRatePercent")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("withholding_rate_percent");
+
+                    b.HasKey("Id")
+                        .HasName("pk_recurring_invoice_template_lines");
+
+                    b.HasIndex("TemplateId")
+                        .HasDatabaseName("ix_recurring_invoice_template_lines_template_id");
+
+                    b.HasIndex("TenantId", "TemplateId")
+                        .HasDatabaseName("ix_recurring_invoice_template_lines_tenant_id_template_id");
+
+                    b.ToTable("recurring_invoice_template_lines");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.JournalEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6823,12 +7250,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("Id")
                         .HasName("pk_journal_entries");
@@ -7787,6 +8208,19 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime?>("AcknowledgedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("acknowledged_at_utc");
+
+                    b.Property<Guid?>("AcknowledgedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("acknowledged_by_user_id");
+
+                    b.Property<string>("AcknowledgmentNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("acknowledgment_note");
+
                     b.Property<string>("BodyMarkdown")
                         .IsRequired()
                         .HasMaxLength(32000)
@@ -8604,12 +9038,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("withholding_total");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_orders");
 
@@ -9084,6 +9512,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("fx_source");
 
+                    b.Property<bool>("IsAdvance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_advance");
+
                     b.Property<string>("Method")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -9140,12 +9574,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("VoidedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("voided_at_utc");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("Id")
                         .HasName("pk_payments");
@@ -9773,12 +10201,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("user_id");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_employees");
 
@@ -10149,12 +10571,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_payroll_runs");
 
@@ -10364,12 +10780,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at_utc");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("Id")
                         .HasName("pk_payslips");
@@ -11183,6 +11593,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("ReorderPoint")
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("reorder_point");
+
+                    b.Property<bool>("RequiresInspection")
+                        .HasColumnType("boolean")
+                        .HasColumnName("requires_inspection");
 
                     b.Property<decimal>("RunTimeMinutesPerUnit")
                         .HasColumnType("numeric(18,4)")
@@ -16246,6 +16660,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(3)")
                         .HasColumnName("default_currency");
 
+                    b.Property<int>("DefaultLeadTimeDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("default_lead_time_days");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
@@ -16639,12 +17059,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(300)")
                         .HasColumnName("vendor_name");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_vendor_bills");
 
@@ -16912,12 +17326,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("vendor_id");
 
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
                     b.HasKey("Id")
                         .HasName("pk_vendor_ledger_entries");
 
@@ -16961,6 +17369,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("numeric(18,6)")
                         .HasColumnName("exchange_rate");
+
+                    b.Property<bool>("IsAdvance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_advance");
 
                     b.Property<bool>("IsVoided")
                         .HasColumnType("boolean")
@@ -17016,12 +17430,6 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<DateTime?>("VoidedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("voided_at_utc");
-
-                    b.Property<uint>("xmin")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
 
                     b.HasKey("Id")
                         .HasName("pk_vendor_payments");
@@ -17730,6 +18138,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_ai_kb_documents_tenants_tenant_id");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.BankAccount", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_bank_accounts_tenants_tenant_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Brand", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -18158,6 +18576,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_document_sequences_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.DunningSetting", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_dunning_settings_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.EmailTemplate", b =>
@@ -18707,6 +19135,61 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("Invoice");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceOccurrence", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Invoice", null)
+                        .WithMany()
+                        .HasForeignKey("GeneratedInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_occurrences_invoices_generated_invoice_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplate", "Template")
+                        .WithMany("Occurrences")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_occurrences_recurring_invoice_templates_tem~");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_occurrences_tenants_tenant_id");
+
+                    b.Navigation("Template");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplate", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_templates_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplateLine", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplate", "Template")
+                        .WithMany("Lines")
+                        .HasForeignKey("TemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_template_lines_recurring_invoice_template~");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_recurring_invoice_template_lines_tenants_tenant_id");
+
+                    b.Navigation("Template");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.JournalEntry", b =>
@@ -20600,6 +21083,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoreAlign.Domain.Entities.Invoice", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Invoices.RecurringInvoiceTemplate", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("Occurrences");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.JournalEntry", b =>

@@ -40,6 +40,9 @@ public class Vendor : TenantEntity
     public string? BlockReason { get; private set; }
     public string? Notes { get; private set; }
 
+    /// <summary>Supplier-specific procurement lead time in days; overrides the product default in MRP when this vendor is a product's preferred supplier. 0 = no override (use product lead time).</summary>
+    public int DefaultLeadTimeDays { get; private set; }
+
     /// <summary>Vendor performance rating 1-5 (set externally from GRN/quality data).</summary>
     public int? Rating { get; private set; }
     public DateTime? ApprovedAtUtc { get; private set; }
@@ -163,6 +166,13 @@ public class Vendor : TenantEntity
     {
         if (rating < 1 || rating > 5) throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be 1-5.");
         Rating = rating;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetDefaultLeadTime(int days)
+    {
+        if (days < 0) throw new ArgumentOutOfRangeException(nameof(days), "Lead time cannot be negative.");
+        DefaultLeadTimeDays = days;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

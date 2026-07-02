@@ -27,6 +27,22 @@ export const customersApi = {
   list: (params: CustomerListParams) =>
     cachedGet<ApiResponse<PagedResult<Customer>>>(apiClient, BASE, { params }),
 
+  exportList: (params: {
+    format: 'Xlsx' | 'Csv';
+    search?: string | null;
+    isActive?: boolean | null;
+  }) =>
+    apiClient
+      .get<Blob>(`${BASE}/export`, {
+        params: {
+          format: params.format,
+          search: params.search ?? undefined,
+          isActive: params.isActive ?? undefined,
+        },
+        responseType: 'blob',
+      })
+      .then((r) => r.data),
+
   getById: (id: string) => cachedGet<ApiResponse<Customer>>(apiClient, `${BASE}/${id}`),
 
   getSummary: (id: string) =>

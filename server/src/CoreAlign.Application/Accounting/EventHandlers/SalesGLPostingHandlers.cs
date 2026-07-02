@@ -145,6 +145,40 @@ public class InvoiceCancelledGLHandler : INotificationHandler<InvoiceCancelledEv
     }
 }
 
+public class InvoiceWrittenOffGLHandler : INotificationHandler<InvoiceWrittenOffEvent>
+{
+    private readonly IGLPostingOutbox _outbox;
+    private readonly IInvoiceRepository _invoices;
+
+    public InvoiceWrittenOffGLHandler(IGLPostingOutbox outbox, IInvoiceRepository invoices)
+    {
+        _outbox = outbox;
+        _invoices = invoices;
+    }
+
+    public async Task Handle(InvoiceWrittenOffEvent n, CancellationToken cancellationToken)
+    {
+        // Bad-debt write-off recognizes a loss: DR doubtful-debt expense (654) /
+        // CR AR (120) for the amount still outstanding. Revenue stays recognized
+        // (it was earned) — only the uncollectible receivable is expensed.
+        var invoice = await _invoices.GetByIdAsync(n.InvoiceId, cancellationToken);
+        var exchangeRate = invoice?.ExchangeRate ?? 1m;
+        await _outbox.EnqueueAsync(new GLPostingRequest(
+            JournalSourceType.InvoiceWriteOff,
+            n.InvoiceId,
+            n.InvoiceNumber,
+            n.OccurredAtUtc.Date,
+            JournalEntryType.Mahsup,
+            $"Değersiz alacak kaydı {n.InvoiceNumber}",
+            new[]
+            {
+                new GLPostingLine(GLPostingKey.DoubtfulDebtExpense, n.Amount, 0m),
+                new GLPostingLine(GLPostingKey.AccountsReceivable, 0m, n.Amount),
+            },
+            invoice?.Currency ?? n.Currency, exchangeRate), cancellationToken);
+    }
+}
+
 public class PaymentConfirmedGLHandler : INotificationHandler<PaymentConfirmedEvent>
 {
     private readonly IGLPostingOutbox _outbox;
@@ -161,18 +195,23 @@ public class PaymentConfirmedGLHandler : INotificationHandler<PaymentConfirmedEv
         var payment = await _payments.GetByIdAsync(n.PaymentId, cancellationToken);
         var cashKey = payment?.Method == PaymentMethod.Cash ? GLPostingKey.Cash : GLPostingKey.Bank;
         var isReceipt = n.Direction == PaymentDirection.CustomerReceipt;
+        var isAdvance = payment?.IsAdvance == true;
 
-        // Receipt: money in → DR cash / CR AR. Refund: the reverse.
+        // Advance receipt: DR cash / CR 340 (Alınan Sipariş Avansları) — no invoice yet,
+        // so it must NOT hit AR(120). Normal payment: DR cash / CR AR. Refund: the reverse.
+        var controlKey = isAdvance ? GLPostingKey.CustomerAdvanceReceived : GLPostingKey.AccountsReceivable;
         var lines = PaymentGLLines.CashMovement(
-            cashKey, GLPostingKey.AccountsReceivable, n.Amount, cashIsDebit: isReceipt);
+            cashKey, controlKey, n.Amount, cashIsDebit: isReceipt);
 
         await _outbox.EnqueueAsync(new GLPostingRequest(
-            JournalSourceType.CustomerPayment,
+            isAdvance ? JournalSourceType.CustomerAdvanceReceived : JournalSourceType.CustomerPayment,
             n.PaymentId,
             n.PaymentNumber,
             n.OccurredAtUtc.Date,
             isReceipt ? JournalEntryType.Tahsil : JournalEntryType.Tediye,
-            isReceipt ? $"Tahsilat {n.PaymentNumber}" : $"İade ödemesi {n.PaymentNumber}",
+            isAdvance
+                ? $"Avans tahsilatı {n.PaymentNumber}"
+                : (isReceipt ? $"Tahsilat {n.PaymentNumber}" : $"İade ödemesi {n.PaymentNumber}"),
             lines,
             n.Currency, n.ExchangeRate), cancellationToken);
     }

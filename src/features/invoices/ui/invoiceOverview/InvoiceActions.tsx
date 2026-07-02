@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, CreditCard, FileMinus, Printer, XCircle } from 'lucide-react';
+import { Ban, CheckCircle2, CreditCard, FileMinus, Printer, XCircle } from 'lucide-react';
 import type { Invoice } from '@/features/invoices/model/invoice.types';
 
 export const ActionsBar = ({
@@ -10,6 +10,7 @@ export const ActionsBar = ({
   onMarkPaid,
   onCancel,
   onIssueCreditNote,
+  onWriteOff,
 }: {
   invoice: Invoice;
   showRecordPayment: boolean;
@@ -17,6 +18,7 @@ export const ActionsBar = ({
   onMarkPaid?: () => void;
   onCancel?: () => void;
   onIssueCreditNote?: () => void;
+  onWriteOff?: () => void;
 }) => {
   const { t } = useTranslation();
   return (
@@ -58,6 +60,16 @@ export const ActionsBar = ({
         >
           <FileMinus size={14} />
           {t('invoices.actions.issueCreditNote')}
+        </button>
+      )}
+      {onWriteOff && (
+        <button
+          type="button"
+          onClick={onWriteOff}
+          className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-300 dark:hover:bg-rose-500/20"
+        >
+          <Ban size={14} />
+          {t('invoices.actions.writeOff', { defaultValue: 'Şüpheli alacak kaydı' })}
         </button>
       )}
       {onCancel && (

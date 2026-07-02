@@ -15,6 +15,7 @@ const statusStyles: Record<InvoiceStatus, string> = {
   Overdue: 'bg-danger-100 text-danger-800',
   Void: 'bg-danger-100 text-danger-700',
   Cancelled: 'bg-danger-100 text-danger-700',
+  WrittenOff: 'bg-rose-100 text-rose-700',
 };
 
 const formatCurrency = (value: number, currency: string, locale: string) => {

@@ -16,20 +16,23 @@ export const Section = ({
 }: SectionProps) => {
   const { ref, inView } = useInView<HTMLDivElement>();
   return (
-    <section className={cn('relative px-6 py-16 sm:px-10 sm:py-20 lg:px-16', className)} {...props}>
+    <section
+      className={cn('relative scroll-mt-24 px-6 py-20 sm:px-10 sm:py-24 lg:px-16', className)}
+      {...props}
+    >
       {divider && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px w-full max-w-5xl bg-gradient-to-r from-transparent via-slate-300/60 to-transparent dark:via-slate-700/60"
+          className="pointer-events-none absolute inset-x-0 top-0 mx-auto h-px w-full max-w-7xl bg-gradient-to-r from-transparent via-slate-300/60 to-transparent dark:via-slate-700/60"
         />
       )}
       <div
         ref={ref}
         className={cn(
-          'mx-auto w-full max-w-5xl transition-all duration-700 ease-out motion-reduce:transition-none',
+          'mx-auto w-full max-w-7xl transition-all duration-700 ease-out motion-reduce:transition-none',
           inView
             ? 'translate-y-0 opacity-100'
-            : 'translate-y-5 opacity-0 motion-reduce:translate-y-0 motion-reduce:opacity-100',
+            : 'translate-y-6 opacity-0 motion-reduce:translate-y-0 motion-reduce:opacity-100',
           containerClassName,
         )}
       >
@@ -43,21 +46,43 @@ interface SectionHeaderProps {
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  align?: 'left' | 'center';
   className?: string;
 }
 
-export const SectionHeader = ({ eyebrow, title, subtitle, className }: SectionHeaderProps) => (
-  <div className={cn('mb-10 max-w-2xl sm:mb-14', className)}>
+export const SectionHeader = ({
+  eyebrow,
+  title,
+  subtitle,
+  align = 'left',
+  className,
+}: SectionHeaderProps) => (
+  <div
+    className={cn(
+      'mb-12 sm:mb-16',
+      align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-2xl',
+      className,
+    )}
+  >
     {eyebrow && (
-      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-500/10 px-3 py-1 text-xs font-semibold tracking-wide text-primary-600 dark:text-primary-300">
+      <div
+        className={cn(
+          'mb-5 inline-flex items-center gap-2 rounded-full border border-primary-500/25 bg-primary-500/[0.07] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-600 dark:border-primary-400/20 dark:bg-primary-400/10 dark:text-primary-300',
+        )}
+      >
         {eyebrow}
       </div>
     )}
-    <h2 className="text-balance text-3xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem] dark:text-white">
+    <h2 className="text-balance text-3xl font-bold leading-[1.08] tracking-tight text-slate-900 sm:text-4xl lg:text-[2.85rem] dark:text-white">
       {title}
     </h2>
     {subtitle && (
-      <p className="mt-4 text-base leading-relaxed text-slate-600 md:text-lg dark:text-slate-400">
+      <p
+        className={cn(
+          'mt-5 text-base leading-relaxed text-slate-600 md:text-lg dark:text-slate-400',
+          align === 'center' && 'mx-auto max-w-2xl',
+        )}
+      >
         {subtitle}
       </p>
     )}

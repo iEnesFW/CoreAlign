@@ -7,11 +7,17 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   leftIcon?: React.ReactNode;
+  /**
+   * Optional interactive node pinned to the right of the field (e.g. a
+   * password show/hide toggle). Additive + backward compatible: when omitted
+   * the field renders exactly as before.
+   */
+  rightSlot?: React.ReactNode;
   required?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, leftIcon, required, id, name, ...props }, ref) => {
+  ({ className, label, error, leftIcon, rightSlot, required, id, name, ...props }, ref) => {
     const reactId = useId();
     const inputId = id ?? name ?? reactId;
     return (
@@ -32,9 +38,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             name={name}
             aria-invalid={error ? true : undefined}
-            className={cn(fieldBaseClasses(Boolean(error)), leftIcon && 'pl-9')}
+            className={cn(
+              fieldBaseClasses(Boolean(error)),
+              leftIcon && 'pl-9',
+              rightSlot && 'pr-11',
+            )}
             {...props}
           />
+          {rightSlot && <span className="absolute right-1.5 flex items-center">{rightSlot}</span>}
         </div>
         {error && <span className="text-xs text-danger-600 dark:text-danger-400">{error}</span>}
       </div>

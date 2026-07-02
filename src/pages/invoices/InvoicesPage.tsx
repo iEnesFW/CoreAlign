@@ -83,7 +83,9 @@ export const InvoicesPage = () => {
   const locale = i18n.language;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(
+    () => new URLSearchParams(window.location.search).get('q') ?? '',
+  );
   const debouncedSearch = useDebouncedValue(search, 300);
   const [statusBucket, setStatusBucket] = useState<StatusBucket>('all');
   const [hasDueSoonOnly, setHasDueSoonOnly] = useState(false);

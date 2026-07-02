@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -7,14 +8,21 @@ import {
   Landmark,
   Mail,
   PanelRightOpen,
+  Pencil,
   Phone,
   ShieldOff,
   Trash2,
   User as UserIcon,
   Users as UsersIcon,
 } from 'lucide-react';
-import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
+import { toast } from 'sonner';
+import { toastApiError } from '@/shared/lib/mutationToast';
+import { DataTable, RowActionButton, type SortState } from '@/shared/ui/DataTable/DataTable';
+import { InlineTextEditor } from '@/shared/ui/DataTable/InlineTextEditor';
+import type { ColumnState } from '@/shared/ui/DataTable/columnState';
 import { cn } from '@/shared/lib/cn';
+import { useUpdateCustomer } from '../hooks/useCustomerQueries';
+import { buildCustomerUpdateInput } from '../model/customerUpdateMerge';
 import type { Customer, CustomerStatus, CustomerType } from '../model/customer.types';
 
 interface Props {
@@ -29,6 +37,9 @@ interface Props {
   selectable?: boolean;
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
+  columnState?: ColumnState;
+  externalSort?: SortState;
+  onSortChange?: (sort: SortState | null) => void;
 }
 
 const typeIcon: Record<CustomerType, React.ReactNode> = {
@@ -77,9 +88,31 @@ export const CustomerList = ({
   selectable,
   selectedIds,
   onSelectionChange,
+  columnState,
+  externalSort,
+  onSortChange,
 }: Props) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const updateMutation = useUpdateCustomer();
+
+  const commitName = (customer: Customer, rawValue: string) => {
+    setEditingId(null);
+    const trimmed = rawValue.trim();
+    if (!trimmed || trimmed === customer.name) return;
+    updateMutation.mutate(buildCustomerUpdateInput(customer, { name: trimmed }), {
+      onSuccess: (response) => {
+        if (response.isSuccess) {
+          toast.success(t('customers.toast.updated'));
+          return;
+        }
+        toast.error(response.errors[0] ?? t('auth.common.unexpectedError'));
+      },
+      onError: (error) => toastApiError(error, t('auth.common.unexpectedError')),
+    });
+  };
 
   return (
     <DataTable
@@ -91,6 +124,10 @@ export const CustomerList = ({
       selectable={selectable}
       selectedIds={selectedIds}
       onSelectionChange={onSelectionChange}
+      columnState={columnState}
+      externalSort={externalSort}
+      onSortChange={onSortChange}
+      editingCell={editingId ? { rowId: editingId, key: 'name' } : null}
       emptyIcon={<UsersIcon size={20} />}
       emptyTitle={t('customers.empty')}
       emptyDescription={t('customers.emptyHint', {
@@ -151,8 +188,31 @@ export const CustomerList = ({
                   {c.code && <span className="font-mono text-slate-400">· {c.code}</span>}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingId(c.id);
+                }}
+                aria-label={t('customers.inlineEdit.editName', { defaultValue: 'Adı düzenle' })}
+                title={t('customers.inlineEdit.editName', { defaultValue: 'Adı düzenle' })}
+                className="ml-auto shrink-0 rounded p-1 text-slate-400 opacity-0 transition group-hover:opacity-100 hover:bg-primary-50 hover:text-primary-600 focus-visible:opacity-100 dark:hover:bg-primary-500/10 dark:hover:text-primary-300"
+              >
+                <Pencil size={12} />
+              </button>
             </div>
           ),
+          editable: {
+            editor: (c) => (
+              <InlineTextEditor
+                initial={c.name}
+                ariaLabel={t('customers.inlineEdit.nameInput', { defaultValue: 'Müşteri adı' })}
+                disabled={updateMutation.isPending}
+                onCommit={(value) => commitName(c, value)}
+                onCancel={() => setEditingId(null)}
+              />
+            ),
+          },
         },
         {
           key: 'contact',

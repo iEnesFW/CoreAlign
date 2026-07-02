@@ -186,6 +186,37 @@ public class UpdateWarehouseCommandValidator : AbstractValidator<UpdateWarehouse
     }
 }
 
+public class CreateBankAccountCommandValidator : AbstractValidator<CreateBankAccountCommand>
+{
+    public CreateBankAccountCommandValidator()
+    {
+        RuleFor(x => x.AccountName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.BankName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.BranchName).MaximumLength(100);
+        RuleFor(x => x.Iban).NotEmpty().MaximumLength(42)
+            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid");
+        RuleFor(x => x.Swift).MaximumLength(11);
+        RuleFor(x => x.Currency).NotEmpty().Length(3);
+        RuleFor(x => x.Notes).MaximumLength(1000);
+    }
+}
+
+public class UpdateBankAccountCommandValidator : AbstractValidator<UpdateBankAccountCommand>
+{
+    public UpdateBankAccountCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.AccountName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.BankName).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.BranchName).MaximumLength(100);
+        RuleFor(x => x.Iban).NotEmpty().MaximumLength(42)
+            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid");
+        RuleFor(x => x.Swift).MaximumLength(11);
+        RuleFor(x => x.Currency).NotEmpty().Length(3);
+        RuleFor(x => x.Notes).MaximumLength(1000);
+    }
+}
+
 public class CreateCustomerGroupCommandValidator : AbstractValidator<CreateCustomerGroupCommand>
 {
     public CreateCustomerGroupCommandValidator()

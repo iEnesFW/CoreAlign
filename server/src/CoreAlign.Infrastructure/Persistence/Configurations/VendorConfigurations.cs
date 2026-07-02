@@ -30,6 +30,7 @@ public class VendorConfiguration : IEntityTypeConfiguration<Vendor>
         builder.Property(v => v.Status).HasConversion<string>().HasMaxLength(16);
         builder.Property(v => v.BlockReason).HasMaxLength(500);
         builder.Property(v => v.Notes).HasMaxLength(2000);
+        builder.Property(v => v.DefaultLeadTimeDays).HasDefaultValue(0);
         builder.Property(v => v.ApprovedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(v => v.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(v => v.UpdatedAtUtc).HasColumnType("timestamp with time zone");

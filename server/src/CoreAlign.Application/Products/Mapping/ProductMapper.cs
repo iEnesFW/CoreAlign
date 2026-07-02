@@ -37,6 +37,7 @@ public static class ProductMapper
         IsStockTracked = product.IsStockTracked,
         IsLotTracked = product.IsLotTracked,
         IsSerialTracked = product.IsSerialTracked,
+        RequiresInspection = product.RequiresInspection,
         MinStock = product.MinStock,
         MaxStock = product.MaxStock,
         ReorderPoint = product.ReorderPoint,

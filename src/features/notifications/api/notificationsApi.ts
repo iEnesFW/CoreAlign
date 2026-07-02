@@ -27,6 +27,11 @@ export const notificationsApi = {
       invalidateHttpCache(INVALIDATION);
     }),
 
+  acknowledge: (id: string, note?: string) =>
+    apiClient.post(`/notification-messages/${id}/acknowledge`, { note: note ?? null }).then(() => {
+      invalidateHttpCache(INVALIDATION);
+    }),
+
   listPreferences: () => cachedGet<NotificationPreferenceView[]>(apiClient, PREF_BASE),
 
   upsertPreference: (input: UpsertNotificationPreferenceInput) =>

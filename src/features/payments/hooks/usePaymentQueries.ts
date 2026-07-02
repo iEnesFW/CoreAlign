@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { paymentsApi, type PaymentsSearchParams } from '../api/paymentsApi';
-import type { ApplyPaymentInput, CreatePaymentInput } from '../model/payment.types';
+import type {
+  ApplyPaymentInput,
+  ApplyPaymentLine,
+  CreatePaymentInput,
+} from '../model/payment.types';
 
 const FOURTY_FIVE_SECONDS = 45 * 1000;
 
@@ -91,6 +95,23 @@ export const useApplyPayment = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (input: ApplyPaymentInput) => paymentsApi.apply(input),
+    onSuccess: () => invalidate(qc),
+  });
+};
+
+export const useOffsetCustomerAdvance = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, applications }: { id: string; applications: ApplyPaymentLine[] }) =>
+      paymentsApi.offsetAdvance(id, applications),
+    onSuccess: () => invalidate(qc),
+  });
+};
+
+export const useApplyPaymentFifo = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => paymentsApi.applyFifo(id),
     onSuccess: () => invalidate(qc),
   });
 };

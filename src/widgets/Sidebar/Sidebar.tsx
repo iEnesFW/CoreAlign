@@ -19,9 +19,12 @@ import {
   CreditCard,
   FileSignature,
   FileText,
+  Repeat,
   RotateCcw,
   Activity,
   BarChart3,
+  CopyCheck,
+  Hash,
   Settings,
   Plug,
   Factory,
@@ -38,6 +41,7 @@ import {
   Mail,
   PackageCheck,
   Bug,
+  BellRing,
   UserCog,
   Wallet,
   SlidersHorizontal,
@@ -97,6 +101,12 @@ const baseNavigation: NavItem[] = [
     labelKey: 'Sidebar.nav.invoices',
     href: '/dashboard/invoices',
     icon: FileText,
+  },
+  {
+    name: 'Recurring Invoices',
+    labelKey: 'Sidebar.nav.recurringInvoices',
+    href: '/dashboard/recurring-invoices',
+    icon: Repeat,
   },
   {
     name: 'Returns',
@@ -261,11 +271,33 @@ const baseNavigation: NavItem[] = [
         labelKey: 'Sidebar.nav.yearEndClose',
         href: '/dashboard/accounting/year-end-close',
       },
+      {
+        name: 'Bank Accounts',
+        labelKey: 'Sidebar.nav.bankAccounts',
+        href: '/dashboard/accounting/bank-accounts',
+      },
+      {
+        name: 'Cash Position',
+        labelKey: 'Sidebar.nav.cashPosition',
+        href: '/dashboard/accounting/cash-position',
+      },
     ],
   },
 
   { section: 'ANALYTICS' },
   { name: 'Reports', labelKey: 'Sidebar.nav.reports', href: '/dashboard/reports', icon: BarChart3 },
+  {
+    name: 'Duplicate Detection',
+    labelKey: 'Sidebar.nav.duplicateDetection',
+    href: '/dashboard/reports/duplicates',
+    icon: CopyCheck,
+  },
+  {
+    name: 'Number Gaps',
+    labelKey: 'Sidebar.nav.documentNumberGap',
+    href: '/dashboard/reports/document-number-gaps',
+    icon: Hash,
+  },
 
   { section: 'SYSTEM' },
   {
@@ -307,6 +339,12 @@ const adminNavigation: NavItem[] = [
     labelKey: 'Sidebar.nav.errorLogs',
     href: '/dashboard/admin/error-logs',
     icon: Bug,
+  },
+  {
+    name: 'Dunning Reminders',
+    labelKey: 'Sidebar.nav.dunningSettings',
+    href: '/dashboard/admin/dunning-settings',
+    icon: BellRing,
   },
 ];
 

@@ -6,21 +6,27 @@ import { toast } from 'sonner';
 import { Plus, X } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
+import { NextNumberBadge } from '@/shared/ui/NextNumberBadge/NextNumberBadge';
 import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
+import { useDraftAutosave } from '@/shared/hooks/useDraftAutosave';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { formatCurrency } from '@/shared/lib/format';
 import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
+import { useResolveFxRateQuery } from '@/shared/fx/hooks/useFxRates';
 import { MasterDataQuickModal } from '@/shared/master-data/ui/MasterDataQuickModal';
 import {
   useCustomersQuery,
   useCustomerAddressesQuery,
+  useCustomerQuery,
 } from '@/features/customers/hooks/useCustomerQueries';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
 import {
   usePaymentTermsQuery,
   usePriceListsQuery,
+  usePriceListItemsQuery,
   useTaxRatesQuery,
   useUomsQuery,
   useWarehousesQuery,
@@ -54,6 +60,8 @@ const ORDER_SOURCES: OrderSource[] = [
 ];
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const ORDER_DRAFT_KEY = 'corealign:draft:order-create';
 
 const fieldCls =
   'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
@@ -130,13 +138,27 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
   });
 
   const requestClose = useModalClose(isDirty, onClose, open);
+  const backdrop = useBackdropClick(requestClose);
   const linesHaveError = !!errors.lines;
   const infoHasError = Object.keys(errors).some((k) => k !== 'lines');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
 
+  const allValues = useWatch({ control }) as OrderFormValues;
+
   const [quickAdd, setQuickAdd] = useState<'paymentTerm' | 'priceList' | null>(null);
   const [tab, setTab] = useState<'info' | 'lines'>('info');
+  const [manualNumber, setManualNumber] = useState(false);
+  const [draftToRestore, setDraftToRestore] = useState<OrderFormValues | null>(null);
+  const draft = useDraftAutosave<OrderFormValues>(ORDER_DRAFT_KEY, allValues, {
+    enabled: open && !isEdit && isDirty,
+  });
+  const [seenOpen, setSeenOpen] = useState(open);
+  if (open !== seenOpen) {
+    setSeenOpen(open);
+    setManualNumber(false);
+    setDraftToRestore(open && !isEdit ? draft.peekDraft() : null);
+  }
 
   const productRefs = useRef(new Map<string, HTMLInputElement | null>());
   const focusNewLine = useRef(false);
@@ -202,9 +224,68 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
   const watchedCustomerId = useWatch({ control, name: 'customerId' });
   const watchedHeaderDiscount = useWatch({ control, name: 'headerDiscountPercent' });
   const watchedShipping = useWatch({ control, name: 'shippingCost' });
+  const watchedOrderDate = useWatch({ control, name: 'orderDate' });
 
   const addressesQuery = useCustomerAddressesQuery(watchedCustomerId || null);
   const addresses = addressesQuery.data?.data ?? [];
+
+  const watchedPriceListId = useWatch({ control, name: 'priceListId' });
+  const customerQuery = useCustomerQuery(watchedCustomerId || null);
+  const priceListItemsQuery = usePriceListItemsQuery(watchedPriceListId || null);
+  const priceListPriceByProduct = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const it of priceListItemsQuery.data?.data ?? []) m.set(it.productId, it.price);
+    return m;
+  }, [priceListItemsQuery.data]);
+
+  // New order: prefill commercial terms from the chosen customer (currency, payment terms,
+  // price list, default discount). The user can still override. Skipped when editing an order.
+  const appliedCustomerRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (order) return;
+    if (!watchedCustomerId) {
+      appliedCustomerRef.current = null;
+      return;
+    }
+    const customer = customerQuery.data?.data;
+    if (!customer || customer.id !== watchedCustomerId) return;
+    if (appliedCustomerRef.current === customer.id) return;
+    appliedCustomerRef.current = customer.id;
+    if (customer.defaultCurrency) setValue('currency', customer.defaultCurrency.toUpperCase());
+    setValue('paymentTermsId', customer.paymentTermsId ?? '');
+    setValue('priceListId', customer.priceListId ?? '');
+    setValue(
+      'headerDiscountPercent',
+      customer.defaultDiscountPercent ? String(customer.defaultDiscountPercent) : '',
+    );
+  }, [customerQuery.data, watchedCustomerId, order, setValue]);
+
+  const fxCurrency = (watchedCurrency || '').toUpperCase();
+  const fxRateQuery = useResolveFxRateQuery(
+    !isEdit && fxCurrency && fxCurrency !== 'TRY' ? fxCurrency : undefined,
+    watchedOrderDate || undefined,
+  );
+  const fxSnapshot =
+    !isEdit && fxRateQuery.data?.currencyCode === fxCurrency ? fxRateQuery.data : null;
+  const appliedFxRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (open) appliedFxRef.current = null;
+  }, [open]);
+  useEffect(() => {
+    if (isEdit) return;
+    if (fxCurrency === 'TRY') {
+      if (appliedFxRef.current !== 'TRY') {
+        appliedFxRef.current = 'TRY';
+        setValue('exchangeRate', '1');
+      }
+      return;
+    }
+    if (!fxSnapshot) return;
+    const key = `${fxSnapshot.currencyCode}:${fxSnapshot.effectiveDate}`;
+    if (appliedFxRef.current === key) return;
+    appliedFxRef.current = key;
+    setValue('exchangeRate', String(fxSnapshot.sellingRate), { shouldDirty: true });
+  }, [isEdit, fxCurrency, fxSnapshot, setValue]);
 
   const currency = (watchedCurrency || 'USD').toUpperCase();
   const locale = i18n.language;
@@ -229,6 +310,14 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
     const taxableTotal = afterLineDiscount - headerDiscount;
     const shipping = Number(watchedShipping) || 0;
     const grandTotal = taxableTotal + tax - withholding + shipping;
+    const activeLines = lines.filter((l) => l.productId);
+    const uniformPct = (pick: (l: (typeof lines)[number]) => unknown): number | null => {
+      if (activeLines.length === 0) return null;
+      const rates = activeLines.map((l) => Number(pick(l)) || 0);
+      const first = rates[0];
+      if (!rates.every((r) => r === first)) return null;
+      return first > 0 ? first : null;
+    };
     return {
       subtotal,
       lineDiscount,
@@ -238,6 +327,10 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
       withholding,
       shipping,
       grandTotal,
+      taxPct: uniformPct((l) => l.taxRatePercent),
+      withholdingPct: uniformPct((l) => l.withholdingRatePercent),
+      lineDiscountPct: uniformPct((l) => l.lineDiscountPercent),
+      headerDiscountPct: Number(watchedHeaderDiscount) || 0,
     };
   }, [watchedLines, watchedHeaderDiscount, watchedShipping]);
 
@@ -245,7 +338,8 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
     setValue(`lines.${index}.productId`, productId, { shouldValidate: true });
     const product = products.find((p) => p.id === productId);
     if (!product) return;
-    setValue(`lines.${index}.unitPrice`, product.price);
+    const listPrice = priceListPriceByProduct.get(productId);
+    setValue(`lines.${index}.unitPrice`, listPrice ?? product.price);
     const uom = uoms.find((u) => u.id === product.salesUomId);
     setValue(`lines.${index}.uomId`, product.salesUomId ?? '');
     setValue(`lines.${index}.uomCode`, uom?.code ?? product.unit ?? '');
@@ -277,7 +371,7 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
       }));
 
       const payload = {
-        orderNumber: values.orderNumber,
+        orderNumber: values.orderNumber ?? '',
         customerId: values.customerId,
         orderDate: new Date(values.orderDate).toISOString(),
         currency: values.currency.toUpperCase(),
@@ -327,6 +421,7 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
         onSuccess: (response) => {
           if (response.isSuccess) {
             toast.success(t('orders.toast.created'));
+            draft.clearDraft();
             onClose();
             return;
           }
@@ -353,7 +448,7 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={requestClose}
+      {...backdrop}
       role="presentation"
     >
       <div
@@ -400,16 +495,75 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
           noValidate
           className="space-y-4 px-5 py-4"
         >
+          {!isEdit && draftToRestore && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-xs dark:border-primary-500/30 dark:bg-primary-500/10">
+              <span className="text-primary-800 dark:text-primary-200">
+                {t('orders.draft.found', { defaultValue: 'Kaydedilmiş bir taslak bulundu.' })}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    reset(draftToRestore);
+                    setDraftToRestore(null);
+                  }}
+                  className="rounded bg-primary-600 px-2 py-1 font-medium text-white hover:bg-primary-700"
+                >
+                  {t('orders.draft.restore', { defaultValue: 'Geri yükle' })}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    draft.clearDraft();
+                    setDraftToRestore(null);
+                  }}
+                  className="rounded px-2 py-1 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  {t('orders.draft.discard', { defaultValue: 'Yoksay' })}
+                </button>
+              </div>
+            </div>
+          )}
           <div className={tab === 'info' ? 'space-y-4' : 'hidden'}>
             <section className="space-y-3">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <Input
-                  label={t('orders.fields.orderNumber')}
-                  placeholder="ORD-2026-0001"
-                  disabled={!isDraft}
-                  error={translateError(errors.orderNumber?.message)}
-                  {...register('orderNumber')}
-                />
+                {!isEdit && !manualNumber ? (
+                  <div>
+                    <label className={labelCls}>{t('orders.fields.orderNumber')}</label>
+                    <div className="flex items-center gap-2">
+                      <NextNumberBadge type="OrderNumber" />
+                      <button
+                        type="button"
+                        onClick={() => setManualNumber(true)}
+                        className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
+                      >
+                        {t('numbering.enterManually', { defaultValue: 'Numarayı elle gir' })}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <Input
+                      label={t('orders.fields.orderNumber')}
+                      placeholder="ORD-2026-0001"
+                      disabled={isEdit && !isDraft}
+                      error={translateError(errors.orderNumber?.message)}
+                      {...register('orderNumber')}
+                    />
+                    {!isEdit && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setManualNumber(false);
+                          setValue('orderNumber', '');
+                        }}
+                        className="mt-1 text-[11px] font-medium text-slate-500 hover:underline dark:text-slate-400"
+                      >
+                        {t('numbering.useAutomatic', { defaultValue: 'Otomatik numara kullan' })}
+                      </button>
+                    )}
+                  </div>
+                )}
                 <Input
                   label={t('orders.fields.orderDate')}
                   type="date"
@@ -483,13 +637,23 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
                     )}
                   />
                 </div>
-                <Input
-                  label={t('orders.fields.exchangeRate')}
-                  type="number"
-                  step="0.0001"
-                  min="0"
-                  {...register('exchangeRate')}
-                />
+                <div>
+                  <Input
+                    label={t('orders.fields.exchangeRate')}
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    {...register('exchangeRate')}
+                  />
+                  {fxSnapshot && (
+                    <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                      {t('orders.fx.autoRate', {
+                        source: fxSnapshot.source,
+                        date: new Date(fxSnapshot.effectiveDate).toLocaleDateString(locale),
+                      })}
+                    </p>
+                  )}
+                </div>
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
@@ -686,19 +850,37 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
                     value={formatCurrency(summary.subtotal, locale, currency, decimals)}
                   />
                   <SummaryRow
-                    label={t('orders.summary.lineDiscount')}
+                    label={
+                      summary.lineDiscountPct !== null
+                        ? t('orders.summary.lineDiscountWithRate', { pct: summary.lineDiscountPct })
+                        : t('orders.summary.lineDiscount')
+                    }
                     value={`- ${formatCurrency(summary.lineDiscount, locale, currency, decimals)}`}
                   />
                   <SummaryRow
-                    label={t('orders.summary.headerDiscount')}
+                    label={
+                      summary.headerDiscountPct > 0
+                        ? t('orders.summary.headerDiscountWithRate', {
+                            pct: summary.headerDiscountPct,
+                          })
+                        : t('orders.summary.headerDiscount')
+                    }
                     value={`- ${formatCurrency(summary.headerDiscount, locale, currency, decimals)}`}
                   />
                   <SummaryRow
-                    label={t('orders.summary.tax')}
+                    label={
+                      summary.taxPct !== null
+                        ? t('orders.summary.taxWithRate', { pct: summary.taxPct })
+                        : t('orders.summary.tax')
+                    }
                     value={formatCurrency(summary.tax, locale, currency, decimals)}
                   />
                   <SummaryRow
-                    label={t('orders.summary.withholding')}
+                    label={
+                      summary.withholdingPct !== null
+                        ? t('orders.summary.withholdingWithRate', { pct: summary.withholdingPct })
+                        : t('orders.summary.withholding')
+                    }
                     value={`- ${formatCurrency(summary.withholding, locale, currency, decimals)}`}
                   />
                   <SummaryRow
@@ -723,6 +905,14 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
               <span className="font-semibold text-slate-900 dark:text-slate-100">
                 {formatCurrency(summary.grandTotal, locale, currency, decimals)}
               </span>
+              {!isEdit && draft.lastSavedAt && (
+                <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                  {t('orders.draft.savedAt', {
+                    defaultValue: 'Taslak kaydedildi {{time}}',
+                    time: new Date(draft.lastSavedAt).toLocaleTimeString(locale),
+                  })}
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <button

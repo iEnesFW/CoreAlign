@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from 'react-router-dom';
-import { Building2, Lock, Mail, User, UserCheck } from 'lucide-react';
+import { Building2, Lock, Mail, User, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
-import { Logo } from '@/shared/ui/Logo/Logo';
+import { PasswordInput } from '@/shared/ui/Input/PasswordInput';
+import { PasswordStrength } from '@/shared/ui/Input/PasswordStrength';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useRegister } from '../../hooks/useAuth';
 import { registerSchema, type RegisterFormValues } from '../../model/registerSchema';
-import styles from './RegisterForm.module.css';
 
 export const RegisterForm = () => {
   const { t } = useTranslation();
@@ -23,6 +23,7 @@ export const RegisterForm = () => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -36,6 +37,8 @@ export const RegisterForm = () => {
       confirmPassword: '',
     },
   });
+
+  const passwordValue = useWatch({ control, name: 'password' });
 
   const onSubmit = handleSubmit(async (values) => {
     const captchaToken = await executeRecaptcha?.('register');
@@ -68,20 +71,23 @@ export const RegisterForm = () => {
 
   if (isRegistered) {
     return (
-      <div className={styles.form}>
-        <div className={styles.header}>
-          <div className={styles.logoWrapper}>
-            <Logo size={42} />
-          </div>
-          <div className={styles.successMessage}>
-            <UserCheck size={48} strokeWidth={1.5} />
-            <h2>{t('auth.register.success.title')}</h2>
-            <p>{t('auth.register.success.message')}</p>
-            <Link to="/login" className={styles.link}>
-              {t('auth.register.success.backToLogin')}
-            </Link>
-          </div>
+      <div className="flex flex-col items-center text-center">
+        <div className="grid h-16 w-16 place-items-center rounded-full bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400">
+          <CheckCircle2 size={34} strokeWidth={1.6} />
         </div>
+        <h1 className="mt-6 text-[26px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.register.success.title')}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
+          {t('auth.register.success.message')}
+        </p>
+        <Link
+          to="/login"
+          className="mt-7 inline-flex items-center gap-2 text-[14px] font-semibold text-primary-600 hover:underline dark:text-primary-300"
+        >
+          <ArrowLeft size={16} />
+          {t('auth.register.success.backToLogin')}
+        </Link>
       </div>
     );
   }
@@ -89,15 +95,17 @@ export const RegisterForm = () => {
   const isBusy = isSubmitting || registerMutation.isPending;
 
   return (
-    <form className={styles.form} onSubmit={onSubmit} noValidate>
-      <div className={styles.header}>
-        <div className={styles.logoWrapper}>
-          <Logo size={42} />
-        </div>
-        <p className={styles.subtitle}>{t('auth.register.subtitle')}</p>
+    <div className="flex w-full flex-col">
+      <div className="mb-8 text-center">
+        <h1 className="m-0 text-[30px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.register.title', { defaultValue: 'Hesabınızı oluşturun' })}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] text-slate-500 dark:text-slate-400">
+          {t('auth.register.subtitle')}
+        </p>
       </div>
 
-      <div className={styles.fields}>
+      <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         <Input
           label={t('auth.register.organizationNameLabel')}
           placeholder={t('auth.register.organizationNamePlaceholder')}
@@ -108,7 +116,7 @@ export const RegisterForm = () => {
           {...register('organizationName')}
         />
 
-        <div className={styles.row}>
+        <div className="grid grid-cols-2 gap-3">
           <Input
             label={t('auth.register.firstNameLabel')}
             placeholder={t('auth.register.firstNamePlaceholder')}
@@ -147,39 +155,42 @@ export const RegisterForm = () => {
           {...register('email')}
         />
 
-        <Input
-          label={t('auth.register.passwordLabel')}
-          placeholder={t('auth.register.passwordPlaceholder')}
-          type="password"
-          autoComplete="new-password"
-          leftIcon={<Lock size={18} />}
-          error={translateError(errors.password?.message)}
-          {...register('password')}
-        />
+        <div>
+          <PasswordInput
+            label={t('auth.register.passwordLabel')}
+            placeholder={t('auth.register.passwordPlaceholder')}
+            autoComplete="new-password"
+            leftIcon={<Lock size={18} />}
+            error={translateError(errors.password?.message)}
+            {...register('password')}
+          />
+          <PasswordStrength value={passwordValue} />
+        </div>
 
-        <Input
+        <PasswordInput
           label={t('auth.register.confirmPasswordLabel')}
           placeholder={t('auth.register.confirmPasswordPlaceholder')}
-          type="password"
           autoComplete="new-password"
           leftIcon={<Lock size={18} />}
           error={translateError(errors.confirmPassword?.message)}
           {...register('confirmPassword')}
         />
-      </div>
 
-      <div className={styles.actions}>
-        <Button type="submit" isLoading={isBusy} className={styles.submitButton}>
+        <Button type="submit" isLoading={isBusy} size="lg" className="mt-1 w-full">
           {t('auth.register.submitButton')}
+          <ArrowRight size={18} />
         </Button>
-      </div>
+      </form>
 
-      <div className={styles.footer}>
+      <p className="mt-7 text-center text-[14px] text-slate-500 dark:text-slate-400">
         {t('auth.register.haveAccountText')}{' '}
-        <Link to="/login" className={styles.link}>
+        <Link
+          to="/login"
+          className="font-bold text-slate-900 hover:text-primary-600 dark:text-white dark:hover:text-primary-300"
+        >
           {t('auth.register.loginLinkText')}
         </Link>
-      </div>
-    </form>
+      </p>
+    </div>
   );
 };

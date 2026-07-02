@@ -17,6 +17,49 @@
     "UnresolvedCta": "Çözülmedi mi? Destek talebi oluştur",
     "TicketContext": "(AI asistanı bu soruya tam cevap veremedi.)"
   },
+  "Dunning": {
+    "title": "Tahsilat hatırlatmaları",
+    "subtitle": "Her tür için otomatik hatırlatmaları yapılandırın, kanalları seçin ve kimin bilgilendirileceğini belirleyin.",
+    "loading": "Yükleniyor…",
+    "loadError": "Tahsilat ayarları yüklenemedi.",
+    "actions": {
+      "save": "Kaydet"
+    },
+    "fields": {
+      "enabled": "Etkin",
+      "channels": "Kanallar"
+    },
+    "channels": {
+      "inApp": "Uygulama içi",
+      "email": "E-posta"
+    },
+    "validation": {
+      "atLeastOneChannel": "Etkinleştirildiğinde en az bir kanal seçin."
+    },
+    "recipients": {
+      "label": "Alıcılar",
+      "searchPlaceholder": "Kullanıcı ara…",
+      "selectedCount": "{{count}} seçili",
+      "empty": "Eşleşen kullanıcı yok."
+    },
+    "toast": {
+      "saved": "Hatırlatma ayarları kaydedildi."
+    },
+    "types": {
+      "InvoiceDueReminder": {
+        "title": "Fatura vade hatırlatması",
+        "description": "Faturalar vadesine yaklaştığında veya geçtiğinde bildirim gönder."
+      },
+      "QuoteExpiringReminder": {
+        "title": "Teklif son geçerlilik hatırlatması",
+        "description": "Teklifler son geçerlilik tarihine yaklaştığında bildirim gönder."
+      },
+      "StockCriticalReminder": {
+        "title": "Kritik stok hatırlatması",
+        "description": "Stok kritik seviyenin altına düştüğünde bildirim gönder."
+      }
+    }
+  },
   "Sidebar": {
     "sections": {
       "overview": "Genel Bakış",
@@ -39,6 +82,7 @@
       "quotes": "Teklifler",
       "orders": "Siparişler",
       "invoices": "Faturalar",
+      "recurringInvoices": "Tekrarlayan Faturalar",
       "returns": "İadeler",
       "projects": "Projeler",
       "vendors": "Tedarikçiler",
@@ -50,12 +94,15 @@
       "installation": "Montaj",
       "accounting": "Muhasebe",
       "reports": "Raporlar",
+      "duplicateDetection": "Yinelenen Kayıtlar",
+      "documentNumberGap": "Numara Boşlukları",
       "activityLog": "Etkinlik Günlüğü",
       "settings": "Ayarlar",
       "providers": "Sağlayıcılar",
       "ssoSettings": "SSO Ayarları",
       "smtpSettings": "SMTP Ayarları",
       "errorLogs": "Hata Kayıtları",
+      "dunningSettings": "Tahsilat hatırlatmaları",
       "chartOfAccounts": "Hesap Planı",
       "journalEntries": "Yevmiye Fişleri",
       "trialBalance": "Mizan",
@@ -63,7 +110,9 @@
       "incomeStatement": "Gelir Tablosu",
       "reconciliation": "Mutabakat",
       "periods": "Muhasebe Dönemleri",
-      "yearEndClose": "Yıl Sonu Kapanışı"
+      "yearEndClose": "Yıl Sonu Kapanışı",
+      "bankAccounts": "Banka Hesapları",
+      "cashPosition": "Nakit Pozisyon"
     }
   },
   "inventory": {
@@ -262,6 +311,7 @@
     }
   },
   "Validation": {
+    "NoteTooLong": "Not en fazla 2000 karakter olabilir.",
     "Required": "Bu alan zorunludur.",
     "InvalidEmail": "Geçerli bir e-posta adresi girin.",
     "EmailTooLong": "E-posta adresi çok uzun.",
@@ -327,6 +377,37 @@
     }
   },
   "orders": {
+    "draft": {
+      "found": "Kaydedilmiş bir taslak bulundu.",
+      "restore": "Geri yükle",
+      "discard": "Yoksay",
+      "savedAt": "Taslak kaydedildi {{time}}"
+    },
+    "reorder": {
+      "button": "Tekrarla",
+      "created": "Yeni taslak oluşturuldu: {{number}}"
+    },
+    "bulk": {
+      "selected": "{{count}} seçili",
+      "submit": "Onaya gönder",
+      "approve": "Onayla",
+      "allocate": "Rezerve et",
+      "cancel": "İptal et",
+      "confirmCancel": "{{count}} sipariş iptal edilsin mi?",
+      "allSucceeded": "{{count}} sipariş güncellendi.",
+      "partial": "{{ok}} başarılı, {{failed}} başarısız."
+    },
+    "chain": {
+      "order": "Sipariş",
+      "shipment": "Sevkiyat",
+      "invoice": "Fatura",
+      "payment": "Tahsilat",
+      "noShipment": "Sevkiyat yok",
+      "noInvoice": "Faturalanmadı",
+      "paid": "Ödendi",
+      "partial": "Kısmi tahsilat",
+      "pending": "Tahsilat bekliyor"
+    },
     "title": "Siparişler",
     "subtitle": "Satış siparişlerini yönet.",
     "searchPlaceholder": "Numara veya müşteri ara...",
@@ -456,14 +537,21 @@
     "summary": {
       "subtotal": "Ara Toplam",
       "lineDiscount": "Satır İskontoları",
+      "lineDiscountWithRate": "Satır İskontoları (%{{pct}})",
       "headerDiscount": "Genel İskonto",
+      "headerDiscountWithRate": "Genel İskonto (%{{pct}})",
       "taxableTotal": "Vergilendirilebilir",
       "tax": "KDV",
+      "taxWithRate": "KDV (%{{pct}})",
       "withholding": "Tevkifat",
+      "withholdingWithRate": "Tevkifat (%{{pct}})",
       "shipping": "Kargo",
       "grandTotal": "Genel Toplam",
       "estimate": "Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır",
       "rounding": "Yuvarlama"
+    },
+    "fx": {
+      "autoRate": "Otomatik kur: {{source}} · {{date}}"
     },
     "dueToday": "Bugün vadeli",
     "dueIn": "{{count}}g içinde vadeli",
@@ -499,6 +587,7 @@
     "detail": {
       "tabs": {
         "overview": "Genel",
+        "chain": "Belge Zinciri",
         "lines": "Satırlar",
         "margin": "Marj",
         "allocations": "Tahsisler",
@@ -669,6 +758,7 @@
       "Overdue": "Vadesi Geçti",
       "Void": "İptal (Geçersiz)",
       "Cancelled": "İptal",
+      "WrittenOff": "Şüpheli Alacak",
       "changeHint": "Durumu değiştir"
     },
     "paymentStatus": {
@@ -725,6 +815,7 @@
       "title": "Fatura",
       "tabs": {
         "overview": "Genel",
+        "chain": "Belge Zinciri",
         "lines": "Satırlar",
         "payments": "Ödemeler",
         "ledger": "Muhasebe & takip",
@@ -765,7 +856,12 @@
       "cancel": "Faturayı iptal et",
       "print": "Faturayı yazdır",
       "recordPayment": "Ödeme al",
-      "issueCreditNote": "Alacak dekontu kes"
+      "issueCreditNote": "Alacak dekontu kes",
+      "writeOff": "Şüpheli alacak kaydı"
+    },
+    "writeOff": {
+      "confirm": "{{number}} faturasının kalan tutarı şüpheli alacak olarak silinsin mi? Bu işlem geri alınamaz.",
+      "success": "Fatura şüpheli alacak olarak kaydedildi."
     },
     "ledger": {
       "glTitle": "Muhasebe fiş önizleme",
@@ -867,6 +963,7 @@
       "currency": "Para Birimi",
       "customer": "Müşteri",
       "dueDays": "Vade (Gün)",
+      "duePreview": "Net {{days}} → Vade: {{date}}",
       "internalNotes": "Dahili Notlar",
       "issueDate": "Fatura Tarihi",
       "lineName": "Kalem adı",
@@ -981,6 +1078,10 @@
       "created": "Ürün oluşturuldu.",
       "updated": "Ürün güncellendi.",
       "deleted": "Ürün silindi."
+    },
+    "inlineEdit": {
+      "editName": "Adı düzenle",
+      "nameInput": "Ürün adı"
     },
     "detail": {
       "tabs": {
@@ -1275,6 +1376,10 @@
       "updated": "Müşteri güncellendi.",
       "deleted": "Müşteri silindi."
     },
+    "inlineEdit": {
+      "editName": "Adı düzenle",
+      "nameInput": "Müşteri adı"
+    },
     "pagination": {
       "summary": "{{from}}-{{to}} / {{total}}",
       "previous": "Önceki",
@@ -1303,6 +1408,7 @@
       "noTags": "Etiket yok.",
       "title": "Etiketler"
     },
+    "bulkConfirmDelete": "{{count}} müşteri silinsin mi?",
     "bulkPartial": "{{deleted}} silindi, {{failed}} başarısız.",
     "bulkSelected": "{{count}} seçili"
   },
@@ -1352,6 +1458,8 @@
     "deleted": "Silindi.",
     "export": "Dışa Aktar",
     "exportCsv": "CSV'ye Aktar",
+    "exportExcel": "Excel'e Aktar",
+    "clear": "Temizle",
     "new": "Yeni",
     "saving": "Gönderiliyor…",
     "unknown": "Bilinmiyor",
@@ -1559,7 +1667,10 @@
         "ssoConfigurationError": "SSO yönlendirmesi sırasında bir hata oluştu. Lütfen sistem yöneticinizle iletişime geçin."
       },
       "orDivider": "veya",
-      "ssoContinue": "SSO ile Devam Et"
+      "ssoContinue": "SSO ile Devam Et",
+      "showPassword": "Şifreyi göster",
+      "hidePassword": "Şifreyi gizle",
+      "legalNotice": "Giriş yaparak Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursunuz."
     },
     "register": {
       "organizationNameLabel": "Organizasyon Adı",
@@ -1638,6 +1749,52 @@
         "invalidToken": "Geçersiz doğrulama bağlantısı.",
         "verificationFailed": "Doğrulama başarısız. Lütfen tekrar deneyin."
       }
+    },
+    "password": {
+      "weak": "Zayıf",
+      "fair": "Orta",
+      "good": "İyi",
+      "strong": "Güçlü",
+      "rules": {
+        "length": "En az 8 karakter",
+        "upper": "Büyük harf",
+        "lower": "Küçük harf",
+        "digit": "Rakam",
+        "special": "Özel karakter"
+      }
+    },
+    "showcase": {
+      "eyebrow": "Cam & Doğrama ERP",
+      "rotator": [
+        {
+          "title": "Tasarımdan muhasebeye, tek platform.",
+          "subtitle": "3D CAD cam tasarımı, teklif, üretim planlama ve finans — hepsi tek akışta, kesintisiz."
+        },
+        {
+          "title": "Cam projeniz fikirden faturaya akar.",
+          "subtitle": "Saha ölçüsünden üretilebilir modele; nesting, temper ve iş emri otomatik planlanır."
+        },
+        {
+          "title": "Bayiden defter-i kebire canlı veri.",
+          "subtitle": "B2B sipariş, sanal POS ve muhasebe aynı çatı altında — manuel aktarım yok."
+        }
+      ],
+      "pipeline": ["Tasarım", "Teklif", "Üretim", "Muhasebe"],
+      "stats": [
+        {
+          "value": "%98,8",
+          "label": "nesting verimi"
+        },
+        {
+          "value": "1.240+",
+          "label": "aktif cari"
+        },
+        {
+          "value": "7/24",
+          "label": "bulut erişimi"
+        }
+      ],
+      "trust": ["ISO 27001", "KVKK & GDPR", "%99,9 uptime"]
     }
   },
   "LandingPage": {
@@ -1646,7 +1803,9 @@
       "about": "Hakkımızda",
       "solutions": "Çözümler",
       "articles": "Makaleler",
-      "contact": "İletişim"
+      "contact": "İletişim",
+      "login": "Giriş",
+      "demo": "Demo planla"
     },
     "hero": {
       "badge": "Sistem Sürümü v2.3.25 Devrede",
@@ -1670,6 +1829,66 @@
         "produce": "Üretim",
         "ship": "Sevkiyat",
         "account": "Muhasebe"
+      },
+      "trust": "Türkçe & İngilizce · Bulut veya kurumsal kurulum · Veri taşıma ve onboarding desteği dahil",
+      "flowTitle": "Tek veri akışı: tasarımdan muhasebeye",
+      "showcase": {
+        "viewportTitle": "CoreAlign · 3D Tasarım Motoru",
+        "live": "Canlı",
+        "constraints": "Kısıt tabanlı doğrulama",
+        "quoteTitle": "Anlık Teklif",
+        "quoteArea": "Toplam alan",
+        "quotePrice": "Bayi fiyatı",
+        "mrpTitle": "MRP · Yerleşim",
+        "mrpYield": "Levha verimi",
+        "ledgerTitle": "Otomatik Muhasebe",
+        "ledgerBalanced": "Borç = Alacak"
+      },
+      "film": {
+        "design": {
+          "title": "3D Tasarım",
+          "url": "tasarim",
+          "caption": "Bayi tarayıcıda ölçü girer; motor açıyı, açıklığı ve yük kısıtlarını canlı doğrular — hatalı çizim üretime düşmez."
+        },
+        "quote": {
+          "title": "Anlık Teklif",
+          "url": "teklif",
+          "caption": "CAD ölçüsünden fiyat, indirim ve onay saniyeler içinde çıkar; teklif imalata hazır gelir."
+        },
+        "production": {
+          "title": "Üretim & MRP",
+          "url": "uretim",
+          "caption": "Levha yerleşimi en az fireyle planlanır, temper fırını partileri otomatik optimize edilir."
+        },
+        "accounting": {
+          "title": "Muhasebe",
+          "url": "muhasebe",
+          "caption": "Sevkiyat ve fatura otomatik yevmiye fişine döner; defter her zaman kuruşu kuruşuna dengede."
+        },
+        "readyToBuild": "İmalata hazır",
+        "quoteTitleFull": "Cam Kabin Teklifi",
+        "quoteRowGlass": "Temperli cam (12mm)",
+        "quoteRowProfile": "Alüminyum profil",
+        "quoteRowHardware": "Menteşe & aksesuar",
+        "nestingLabel": "Levha yerleşimi",
+        "furnaceLoad": "Fırın doluluğu",
+        "postedLabel": "Yevmiye fişi · Post edildi",
+        "account": "Hesap",
+        "debit": "Borç",
+        "credit": "Alacak",
+        "reducedHint": "Animasyonlar sistem tercihinize göre sadeleştirildi",
+        "shipping": {
+          "title": "Sevkiyat",
+          "url": "sevkiyat",
+          "caption": "Sevkiyat planlanır; araç rotası ve teslim durumu canlı izlenir, müşteri her adımı görür."
+        },
+        "widthLabel": "Genişlik",
+        "shipWarehouse": "Depo",
+        "shipTransit": "Yolda",
+        "shipDelivered": "Teslim",
+        "eta": "Tahmini teslim",
+        "days": "gün",
+        "tour": "Ürün turu"
       }
     },
     "about": {
@@ -2314,7 +2533,8 @@
       ],
       "contactUs": "Demo Planlayın",
       "recommended": "EN POPÜLER",
-      "contactCta": "Fiyat Teklifi Alın"
+      "contactCta": "Fiyat Teklifi Alın",
+      "eyebrow": "Fiyatlandırma"
     },
     "workflow": {
       "title": "B2B Siparişten Defter-i Kebire Canlı Akış",
@@ -2371,6 +2591,21 @@
       "title": "İlk kullananlar arasında yerinizi alın",
       "subtitle": "CoreAlign yeni nesil bir ERP. Kurucu müşterilerimizle birlikte büyüyoruz — erken katılın, ürünü kendi süreçlerinize göre şekillendirin.",
       "cta": "Erken erişim için demo planlayın"
+    },
+    "footer": {
+      "colProduct": "Ürün",
+      "colCompany": "Şirket",
+      "colAccount": "Hesap",
+      "modules": "Modüller",
+      "pricing": "Fiyatlandırma",
+      "demo": "Demo planla",
+      "login": "Giriş yap",
+      "register": "Hesap oluştur",
+      "tagline": "Cam ve imalat için uçtan uca bulut ERP. Tasarım, teklif, üretim, stok ve muhasebe tek platformda.",
+      "kvkk": "KVKK uyumlu",
+      "languages": "5 dil desteği",
+      "rights": "Tüm hakları saklıdır.",
+      "status": "Tüm sistemler çalışıyor"
     }
   },
   "GlassEnclosure": {
@@ -2481,9 +2716,17 @@
         "Height": "Panel yüksekliği",
         "FullHeight": "Tam yükseklik (hat)",
         "Shape": "Panel şekli",
-        "Kind": { "rect": "Dikdörtgen", "round": "Yuvarlak", "oval": "Oval" },
+        "Kind": {
+          "rect": "Dikdörtgen",
+          "round": "Yuvarlak",
+          "oval": "Oval"
+        },
         "TopShape": "Üst kenar",
-        "Top": { "flat": "Düz", "raked": "Eğimli", "arched": "Kemerli" },
+        "Top": {
+          "flat": "Düz",
+          "raked": "Eğimli",
+          "arched": "Kemerli"
+        },
         "TopRightHeight": "Sağ üst yükseklik",
         "ArchRise": "Kemer yüksekliği",
         "CornerRadii": "Köşe ovalliği (mm)",
@@ -2672,7 +2915,11 @@
         "ArcTitle": "Kavis (yay)",
         "ArcRadius": "Kavis yarıçapı",
         "ArcDropsFeatures": "Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.",
-        "Arc": { "straight": "Düz", "left": "Sol kavis", "right": "Sağ kavis" },
+        "Arc": {
+          "straight": "Düz",
+          "left": "Sol kavis",
+          "right": "Sağ kavis"
+        },
         "Openings": "Boşluklar",
         "OpeningPresets": "Hazır ölçü ekle",
         "AddWindow": "Pencere",
@@ -3820,11 +4067,30 @@
     "formatHelpIntro": "Belge numaralarının önekini, basamak sayısını ve formatını belirleyin. Format kullanılırsa",
     "formatHelpPrefix": "önek,",
     "formatHelpYear": "yıl,",
-    "formatHelpSequence": "sıra numarasıdır."
+    "formatHelpSequence": "sıra numarasıdır.",
+    "autoLabel": "Otomatik",
+    "autoHint": "Sıradaki numara kaydederken otomatik atanır.",
+    "enterManually": "Numarayı elle gir",
+    "useAutomatic": "Otomatik numara kullan"
   },
   "masterData": {
     "deleteConfirm": "Bu kayıt silinsin mi?",
-    "empty": "Henüz kayıt yok."
+    "empty": "Henüz kayıt yok.",
+    "bankAccounts": {
+      "title": "Banka Hesapları",
+      "subtitle": "Banka hesaplarını yönetin: IBAN, para birimi, açılış bakiyesi.",
+      "fields": {
+        "accountName": "Hesap Sahibi",
+        "bankName": "Banka",
+        "branchName": "Şube",
+        "iban": "IBAN",
+        "swift": "SWIFT/BIC",
+        "currency": "Para Birimi",
+        "openingBalance": "Açılış Bakiyesi",
+        "isPrimary": "Birincil",
+        "isActive": "Aktif"
+      }
+    }
   },
   "error": {
     "NetworkError": "Ağ hatası.",
@@ -4477,6 +4743,7 @@
       "exportCsv": "CSV dışa aktar",
       "recordPayment": "Tahsilat gir",
       "entries": "Cari hareketler",
+      "entryCount": "{{count}} hareket",
       "empty": "Henüz cari hareket yok.",
       "description": "Açıklama",
       "debit": "Borç",
@@ -4490,7 +4757,9 @@
     },
     "list": {
       "title": "Son tahsilatlar",
-      "unapplied": "Uygulanmamış"
+      "unapplied": "Uygulanmamış",
+      "autoApplyOldest": "Otomatik kapat",
+      "fifoApplied": "Ödeme en eski açık faturalardan kapatıldı."
     },
     "create": {
       "amountRequired": "Tutar pozitif olmalıdır.",
@@ -4597,6 +4866,10 @@
     "UnreadOnly": "Yalnızca okunmamış",
     "AllStatuses": "Tüm durumlar",
     "MarkRead": "Okundu olarak işaretle",
+    "Acknowledge": "Onayla",
+    "Acknowledged": "Onaylandı",
+    "NoteLabel": "Onay notu (isteğe bağlı)",
+    "EditNote": "Notu düzenle",
     "TableSubject": "Konu",
     "TableCategory": "Kategori",
     "TableChannel": "Kanal",
@@ -4628,7 +4901,8 @@
       "Installation": "Montaj",
       "Payment": "Ödeme",
       "Mrp": "MRP",
-      "ServiceTicket": "Servis kaydı"
+      "ServiceTicket": "Servis kaydı",
+      "Dunning": "Hatırlatma"
     },
     "Preferences": {
       "Title": "Bildirim tercihleri",
@@ -6036,6 +6310,7 @@
         "warehouse": "Depo"
       },
       "planned": "Sayım oluşturuldu.",
+      "plannedNumber": "Sayım {{number}} oluşturuldu.",
       "post": {
         "button": "Sayımı İşle",
         "title": "Sayımı İşle"
@@ -6221,7 +6496,296 @@
     "applySuccess": "Ödeme faturaya uygulandı.",
     "viewApplications": "Uygulanan ödemeler"
   },
+  "CashPosition": {
+    "title": "Nakit Pozisyon",
+    "subtitle": "Kasa + banka GL bakiyeleri (TDHP 100/102) ile anlık nakit durumu.",
+    "asOf": "Tarih",
+    "cashOnHand": "Kasa (100)",
+    "bankBalance": "Bankalar (102)",
+    "totalCash": "Toplam Nakit",
+    "customerAdvances": "Müşteri Avansları (340)",
+    "accountsTitle": "Banka Hesapları",
+    "noAccounts": "Tanımlı banka hesabı yok.",
+    "primary": "Birincil",
+    "cols": {
+      "account": "Hesap",
+      "bank": "Banka",
+      "iban": "IBAN",
+      "opening": "Açılış Bakiyesi"
+    }
+  },
+  "CommandPalette": {
+    "placeholder": "Müşteri, sipariş, fatura, ürün, teklif ara…",
+    "quickNav": "Hızlı gezinme",
+    "searching": "Aranıyor…",
+    "noResults": "\"{{query}}\" için sonuç yok",
+    "order": "Sipariş {{number}}",
+    "invoice": "Fatura {{number}}",
+    "quote": "Teklif {{number}}",
+    "group": {
+      "customers": "Müşteriler",
+      "orders": "Siparişler",
+      "invoices": "Faturalar",
+      "quotes": "Teklifler",
+      "products": "Ürünler"
+    },
+    "nav": {
+      "dashboard": "Panoya git",
+      "customers": "Müşterilere git",
+      "orders": "Siparişlere git",
+      "invoices": "Faturalara git",
+      "quotes": "Tekliflere git",
+      "products": "Ürünlere git"
+    }
+  },
+  "DataTable": {
+    "columns": {
+      "button": "Kolonlar",
+      "title": "Kolonları özelleştir",
+      "reset": "Sıfırla",
+      "moveUp": "Yukarı taşı",
+      "moveDown": "Aşağı taşı"
+    }
+  },
+  "DocumentChain": {
+    "title": "Belge Zinciri",
+    "empty": "Bağlı belge yok",
+    "nodes": {
+      "quote": "Teklif",
+      "order": "Sipariş",
+      "shipment": "Sevkiyat",
+      "invoice": "Fatura",
+      "creditNote": "Alacak Dekontu",
+      "payment": "Tahsilat"
+    },
+    "state": {
+      "done": "Tamamlandı",
+      "partial": "Kısmi",
+      "pending": "Bekliyor"
+    }
+  },
+  "RecurringInvoices": {
+    "title": "Tekrarlayan Faturalar",
+    "pageSubtitle": "Abonelik/retainer faturalarını otomatik üretin.",
+    "subtitle": "Belirli aralıklarla otomatik fatura üretir.",
+    "newTitle": "Yeni Tekrarlayan Fatura",
+    "editTitle": "Tekrarlayan Faturayı Düzenle",
+    "new": "Yeni",
+    "searchPlaceholder": "Şablon ara…",
+    "allStatuses": "Tüm durumlar",
+    "count": "{{count}} şablon",
+    "empty": "Tekrarlayan fatura şablonu bulunamadı.",
+    "nextRunPreview": "İlk fatura: {{first}} · sonraki: {{second}}",
+    "frequency": {
+      "Weekly": "Haftalık",
+      "Monthly": "Aylık",
+      "Quarterly": "Üç Aylık",
+      "Yearly": "Yıllık"
+    },
+    "status": {
+      "Active": "Aktif",
+      "Paused": "Duraklatıldı",
+      "Completed": "Tamamlandı",
+      "Cancelled": "İptal"
+    },
+    "fields": {
+      "name": "Şablon adı",
+      "customer": "Müşteri",
+      "selectCustomer": "Seçiniz…",
+      "frequency": "Sıklık",
+      "intervalCount": "Aralık (her N)",
+      "anchorDayOfMonth": "Ayın günü (1-31, ops.)",
+      "currency": "Para birimi",
+      "startDate": "Başlangıç",
+      "endDate": "Bitiş (ops.)",
+      "maxOccurrences": "Maks. tekrar (ops.)",
+      "dueDays": "Vade (gün)",
+      "publicNotes": "Müşteri notu",
+      "internalNotes": "İç not"
+    },
+    "lines": {
+      "header": "Satırlar",
+      "add": "Satır ekle",
+      "name": "Açıklama / kalem",
+      "quantity": "Miktar",
+      "unitPrice": "Birim fiyat",
+      "taxRate": "KDV %",
+      "remove": "Satırı sil",
+      "subtotal": "Ara toplam",
+      "tax": "KDV",
+      "total": "Genel toplam"
+    },
+    "cols": {
+      "name": "Şablon",
+      "customer": "Müşteri",
+      "frequency": "Sıklık",
+      "nextRun": "Sonraki",
+      "generated": "Üretilen",
+      "status": "Durum"
+    },
+    "actions": {
+      "runNow": "Şimdi üret",
+      "pause": "Duraklat",
+      "resume": "Devam et",
+      "edit": "Düzenle",
+      "cancel": "İptal"
+    },
+    "cancel": {
+      "title": "Tekrarlayan Faturayı İptal Et",
+      "message": "{{n}} iptal edilsin mi? Bu işlem geri alınamaz."
+    },
+    "validation": {
+      "nameRequired": "Şablon adı girin.",
+      "customerRequired": "Müşteri seçin.",
+      "lineRequired": "En az bir geçerli satır ekleyin."
+    },
+    "toast": {
+      "created": "Tekrarlayan fatura oluşturuldu.",
+      "updated": "Tekrarlayan fatura güncellendi.",
+      "generated": "Fatura üretildi.",
+      "paused": "Duraklatıldı.",
+      "resumed": "Yeniden başlatıldı.",
+      "cancelled": "İptal edildi."
+    }
+  },
+  "DocumentNumberGap": {
+    "title": "Belge Numarası Boşlukları",
+    "subtitle": "Sıra numaralı belgelerde atlanan/eksik numaraları tespit et.",
+    "year": "Yıl",
+    "totalGap": "Toplam boşluk: {{count}}",
+    "empty": "Bu yıl için sıra numaralı belge bulunamadı.",
+    "sequential": "Kesintisiz",
+    "moreMissing": "+{{count}} daha",
+    "cols": {
+      "type": "Belge",
+      "prefix": "Önek",
+      "expected": "Beklenen",
+      "used": "Kullanılan",
+      "max": "En Yüksek",
+      "gap": "Boşluk",
+      "missing": "Eksik Numaralar"
+    },
+    "types": {
+      "OrderNumber": "Sipariş",
+      "InvoiceNumber": "Fatura",
+      "QuoteNumber": "Teklif",
+      "PurchaseOrderNumber": "Satın Alma Siparişi",
+      "PaymentNumber": "Tahsilat",
+      "ShipmentNumber": "Sevkiyat",
+      "GoodsReceiptNumber": "Mal Kabul"
+    }
+  },
+  "DuplicateDetection": {
+    "title": "Yinelenen Kayıt Tespiti",
+    "subtitle": "Aynı e-posta / VKN / TCKN ile birden çok müşteri veya tedarikçi.",
+    "count": "{{count}} grup",
+    "records": "{{count}} kayıt",
+    "empty": "Yinelenen kayıt bulunamadı.",
+    "entity": {
+      "customer": "Müşteriler",
+      "vendor": "Tedarikçiler"
+    },
+    "key": {
+      "Email": "E-posta",
+      "TaxNumber": "VKN",
+      "NationalId": "TCKN"
+    }
+  },
+  "NextBestAction": {
+    "title": "Önerilen sonraki adım",
+    "order": {
+      "submit": "Siparişi gönder",
+      "approve": "Onayla",
+      "allocate": "Stok ayır",
+      "createShipment": "Sevkiyat oluştur",
+      "generateInvoice": "Fatura oluştur"
+    },
+    "quote": {
+      "send": "Teklifi gönder",
+      "accept": "Kabul et",
+      "convertToOrder": "Siparişe dönüştür"
+    },
+    "invoice": {
+      "collectPayment": "Tahsilat al"
+    }
+  },
+  "Payments": {
+    "advance": {
+      "isAdvance": "Bu bir avans ödemesidir (faturaya sonra mahsup edilir)"
+    },
+    "offset": {
+      "action": "Avans Mahsup Et",
+      "title": "Avans Mahsup Et",
+      "advanceBadge": "Avans",
+      "selectAdvance": "Avans ödemesi",
+      "pickAdvance": "Avans seç…",
+      "balance": "avans bakiyesi",
+      "noAdvances": "Mahsup edilecek avans ödemesi yok.",
+      "applyToInvoices": "Açık faturalara uygula",
+      "autoApply": "Otomatik dağıt",
+      "noOpenInvoices": "Açık fatura yok.",
+      "amountDue": "Kalan",
+      "advanceBalance": "Avans bakiyesi",
+      "allocated": "Mahsup edilen",
+      "remaining": "Kalan avans",
+      "overAllocated": "Mahsup tutarı avans bakiyesini aşıyor.",
+      "confirm": "Mahsubu kaydet",
+      "success": "Avans mahsup edildi.",
+      "selectAdvanceRequired": "Önce bir avans seçin.",
+      "noAllocation": "En az bir fatura ve tutar girin."
+    }
+  },
+  "SavedViews": {
+    "label": "Kayıtlı görünümler",
+    "save": "Görünümü kaydet",
+    "namePlaceholder": "Görünüm adı",
+    "confirmSave": "Kaydet",
+    "cancel": "Vazgeç",
+    "rename": "Yeniden adlandır",
+    "delete": "Sil"
+  },
+  "Shortcuts": {
+    "title": "Klavye kısayolları",
+    "openPalette": "Komut paletini aç",
+    "openHelp": "Bu yardımı göster",
+    "closeOverlay": "Katmanı kapat",
+    "navigate": "Seçimi taşı",
+    "select": "Seçili sonucu aç"
+  },
   "Vendors": {
+    "advance": {
+      "title": "Tedarikçi Avansı",
+      "subtitle": "Faturasız ön ödeme; sonra bir faturaya mahsup edilir.",
+      "newButton": "Yeni Avans",
+      "badge": "Avans",
+      "vendor": "Tedarikçi",
+      "selectVendor": "Seçiniz…",
+      "amount": "Tutar",
+      "currency": "Para Birimi",
+      "date": "Tarih",
+      "method": "Ödeme Yöntemi",
+      "notes": "Açıklama",
+      "submit": "Avansı Kaydet",
+      "invalid": "Tedarikçi ve geçerli bir tutar giriniz.",
+      "created": "Tedarikçi avansı kaydedildi."
+    },
+    "offset": {
+      "action": "Avans Mahsup Et",
+      "title": "Tedarikçi Avansını Mahsup Et",
+      "subtitle": "{{n}} faturasına mahsup edilecek avansı seç.",
+      "billTotal": "Fatura Toplam",
+      "amountDue": "Kalan",
+      "advance": "Avans",
+      "pickAdvance": "Avans seç…",
+      "unapplied": "kullanılmamış",
+      "noAdvances": "Bu tedarikçi için mahsup edilecek avans bulunamadı.",
+      "amount": "Tutar",
+      "maxHint": "Maksimum {{m}}",
+      "notes": "Açıklama",
+      "submit": "Mahsup Et",
+      "success": "Avans faturaya mahsup edildi.",
+      "invalidAmount": "Geçerli bir tutar giriniz."
+    },
     "title": "Tedarikçiler",
     "subtitle": "Tedarikçi master, cari hesap ve banka bilgileri.",
     "newVendor": "Yeni Tedarikçi",
@@ -6434,6 +6998,26 @@
       "reasonLabel": "İade nedeni",
       "submit": "İade Et",
       "done": "Mal kabul iade edildi."
+    },
+    "qc": {
+      "status": {
+        "PendingInspection": "Muayenede Bekliyor",
+        "Approved": "Kalite Onaylı",
+        "Rejected": "Kalite Reddedildi"
+      },
+      "approve": {
+        "action": "Kaliteyi Onayla",
+        "done": "Mal kabul onaylandı ve stoğa eklendi."
+      },
+      "reject": {
+        "action": "Kaliteyi Reddet",
+        "title": "Kalite Muayenesini Reddet",
+        "hint": "Reddedilen mal stoğa girmez; sipariş teslim miktarı geri alınır.",
+        "reasonLabel": "Ret nedeni",
+        "submit": "Reddet",
+        "done": "Mal kabul reddedildi. Stoğa ekleme yapılmadı."
+      },
+      "rejectedReason": "Kalite ret nedeni"
     }
   },
   "BalanceSheet": {
@@ -7185,14 +7769,14 @@
   "AuthLayout": {
     "ToggleTheme": "Temayı değiştir",
     "AllSystemsOperational": "Tüm Sistemler Çalışıyor",
-    "StrategicPlanning": "Stratejik Planlama",
-    "Strategy": "Strateji",
-    "TeamAlignment": "Ekip Uyumu",
-    "Teams": "Ekipler",
-    "PerformanceAnalytics": "Performans Analitiği",
-    "Analytics": "Analitik",
+    "StrategicPlanning": "3D Tasarım & CPQ",
+    "Strategy": "3D Tasarım",
+    "TeamAlignment": "Üretim Planlama (MRP)",
+    "Teams": "Üretim",
+    "PerformanceAnalytics": "Cari & Muhasebe",
+    "Analytics": "Muhasebe",
     "EnterpriseSecurity": "Kurumsal Güvenlik",
-    "Secure": "Güvenli",
+    "Secure": "Güvenlik",
     "Copyright": "© {{year}} CoreAlign Inc. Tüm hakları saklıdır."
   },
   "Warehouse": {

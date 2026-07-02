@@ -352,6 +352,26 @@ public class Invoice : TenantEntity, IXminConcurrency
         }
     }
 
+    public void WriteOff(DateTime now, string? reason)
+    {
+        // Terminal + idempotent: a second write-off is a no-op (no phantom second
+        // AR reversal / GL expense), mirroring Void's terminal-state guard.
+        if (Status == InvoiceStatus.WrittenOff) return;
+        if (!IsIssued)
+        {
+            throw new InvoiceStatusTransitionException(Status.ToString(), "write off");
+        }
+        var amount = AmountDue;
+        if (amount <= 0m)
+        {
+            // Nothing outstanding to write off (e.g. already paid).
+            throw new InvoiceStatusTransitionException(Status.ToString(), "write off");
+        }
+        Status = InvoiceStatus.WrittenOff;
+        UpdatedAtUtc = now;
+        AddDomainEvent(new InvoiceWrittenOffEvent(TenantId, Id, CustomerId, InvoiceNumber, amount, Currency, reason, now));
+    }
+
     public void Cancel(DateTime now)
     {
         if (Status == InvoiceStatus.Cancelled) return;

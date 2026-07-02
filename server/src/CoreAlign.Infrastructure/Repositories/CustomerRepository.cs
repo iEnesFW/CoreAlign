@@ -140,4 +140,71 @@ public class CustomerRepository : ICustomerRepository
 
         return (agg.Count, agg.Invoiced, agg.Paid, agg.Outstanding, currency);
     }
+
+    public async Task<IReadOnlyList<DuplicateGroupRow>> FindDuplicatesAsync(
+        DuplicateKeyKind key,
+        CancellationToken cancellationToken = default)
+    {
+        var q = _context.Customers.AsNoTracking();
+
+        if (key == DuplicateKeyKind.Email)
+        {
+            var groups = (await q
+                .Where(c => c.Email != null && c.Email != "")
+                .GroupBy(c => c.Email!.ToLower())
+                .Where(g => g.Count() > 1)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Count))
+                .ToList();
+            if (groups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+            var keys = groups.Select(g => g.Key).ToList();
+            var members = (await q
+                .Where(c => c.Email != null && keys.Contains(c.Email!.ToLower()))
+                .Select(c => new { Key = c.Email!.ToLower(), c.Id, c.Name })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Id, x.Name))
+                .ToList();
+            return DuplicateGroupAssembler.Build(groups, members);
+        }
+
+        if (key == DuplicateKeyKind.TaxNumber)
+        {
+            var groups = (await q
+                .Where(c => c.TaxNumber != null && c.TaxNumber != "")
+                .GroupBy(c => c.TaxNumber!)
+                .Where(g => g.Count() > 1)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Count))
+                .ToList();
+            if (groups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+            var keys = groups.Select(g => g.Key).ToList();
+            var members = (await q
+                .Where(c => c.TaxNumber != null && keys.Contains(c.TaxNumber!))
+                .Select(c => new { Key = c.TaxNumber!, c.Id, c.Name })
+                .ToListAsync(cancellationToken))
+                .Select(x => (x.Key, x.Id, x.Name))
+                .ToList();
+            return DuplicateGroupAssembler.Build(groups, members);
+        }
+
+        var nidGroups = (await q
+            .Where(c => c.NationalId != null && c.NationalId != "")
+            .GroupBy(c => c.NationalId!)
+            .Where(g => g.Count() > 1)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .Select(x => (x.Key, x.Count))
+            .ToList();
+        if (nidGroups.Count == 0) return Array.Empty<DuplicateGroupRow>();
+        var nidKeys = nidGroups.Select(g => g.Key).ToList();
+        var nidMembers = (await q
+            .Where(c => c.NationalId != null && nidKeys.Contains(c.NationalId!))
+            .Select(c => new { Key = c.NationalId!, c.Id, c.Name })
+            .ToListAsync(cancellationToken))
+            .Select(x => (x.Key, x.Id, x.Name))
+            .ToList();
+        return DuplicateGroupAssembler.Build(nidGroups, nidMembers);
+    }
 }

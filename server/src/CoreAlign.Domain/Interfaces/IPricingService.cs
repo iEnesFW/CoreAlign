@@ -164,6 +164,7 @@ public interface IVendorRepository
     Task AddAsync(Vendor vendor, CancellationToken cancellationToken = default);
     void Update(Vendor vendor);
     void Remove(Vendor vendor);
+    Task<IReadOnlyList<DuplicateGroupRow>> FindDuplicatesAsync(DuplicateKeyKind key, CancellationToken cancellationToken = default);
 }
 
 public record VendorSearchRow(

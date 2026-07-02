@@ -31,6 +31,9 @@ public class NotificationMessageConfiguration : IEntityTypeConfiguration<Notific
         builder.Property(m => m.DeliveredAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(m => m.ReadAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(m => m.DeletedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(m => m.AcknowledgedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(m => m.AcknowledgmentNote).HasMaxLength(2000);
+        builder.Ignore(m => m.IsAcknowledged);
 
         builder.Property(m => m.ConcurrencyToken).IsConcurrencyToken();
 

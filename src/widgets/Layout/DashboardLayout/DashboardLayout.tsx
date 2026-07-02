@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/widgets/Sidebar/Sidebar';
 import { Navbar } from '@/widgets/Navbar/Navbar';
 import { Footer } from '@/widgets/Footer/Footer';
+import { CommandPaletteWidget } from '@/widgets/CommandPalette';
 import { RouteFallback } from '@/shared/ui/RouteFallback/RouteFallback';
 import { prefetchCommonDashboardPages } from '@/app/router/routePrefetch';
 
@@ -30,6 +31,7 @@ export const DashboardLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100/70 transition-colors duration-300 dark:from-canvas dark:to-shell">
+      <CommandPaletteWidget />
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}

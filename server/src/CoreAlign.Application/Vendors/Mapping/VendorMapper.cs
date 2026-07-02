@@ -32,6 +32,7 @@ public static class VendorMapper
         BlockReason = v.BlockReason,
         Notes = v.Notes,
         Rating = v.Rating,
+        DefaultLeadTimeDays = v.DefaultLeadTimeDays,
         CurrentBalance = v.CurrentBalance,
         OverdueAmount = v.OverdueAmount,
         TotalPayable = v.TotalPayable,

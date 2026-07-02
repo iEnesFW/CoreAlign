@@ -53,3 +53,9 @@ public record CreateWarehouseCommand(string Code, string Name, WarehouseType Typ
 public record UpdateWarehouseCommand(Guid Id, string Code, string Name, WarehouseType Type, string? AddressLine1, string? AddressLine2, string? City, string? State, string? PostalCode, string? Country, string? Phone, Guid? ManagerUserId, bool IsDefault, bool IsActive)
     : IRequest<WarehouseDto>, ITransactionalRequest;
 public record DeleteWarehouseCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
+
+public record CreateBankAccountCommand(string AccountName, string BankName, string Iban, string Currency = "TRY", decimal OpeningBalance = 0m, string? BranchName = null, string? Swift = null, bool IsPrimary = false, string? Notes = null)
+    : IRequest<BankAccountDto>, ITransactionalRequest;
+public record UpdateBankAccountCommand(Guid Id, string AccountName, string BankName, string Iban, string Currency, decimal OpeningBalance, string? BranchName, string? Swift, bool IsPrimary, bool IsActive, string? Notes)
+    : IRequest<BankAccountDto>, ITransactionalRequest;
+public record DeleteBankAccountCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;

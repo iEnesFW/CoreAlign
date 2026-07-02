@@ -714,7 +714,7 @@ export const ModulesShowcase = () => {
   const currentMod = mods.find((m) => m.id === activeMod) || mods[0];
 
   return (
-    <Section>
+    <Section id="modules">
       <SectionHeader
         eyebrow={
           <>

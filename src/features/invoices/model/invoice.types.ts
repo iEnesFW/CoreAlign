@@ -8,7 +8,8 @@ export type InvoiceStatus =
   | 'Paid'
   | 'Overdue'
   | 'Void'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'WrittenOff';
 
 export const INVOICE_STATUSES: InvoiceStatus[] = [
   'Draft',
@@ -19,6 +20,7 @@ export const INVOICE_STATUSES: InvoiceStatus[] = [
   'Overdue',
   'Void',
   'Cancelled',
+  'WrittenOff',
 ];
 
 export type InvoiceType = 'SalesInvoice' | 'ProForma' | 'CreditNote' | 'DebitNote' | 'Advance';

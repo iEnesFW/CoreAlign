@@ -2,9 +2,7 @@ import { apiClient } from '@/shared/api/apiClient';
 import type { ApiResponse } from '@/shared/types/api';
 import type {
   CompanyProfile,
-  ConfigureDocumentSequenceRequest,
   CreateEmailTemplateRequest,
-  DocumentSequenceConfig,
   EmailTemplate,
   SettingUpsertItem,
   TenantSetting,
@@ -54,14 +52,4 @@ export const settingsApi = {
 
   deleteEmailTemplate: (id: string) =>
     apiClient.delete<ApiResponse<boolean>>(`${BASE}/email-templates/${id}`).then((r) => r.data),
-
-  getDocumentSequences: () =>
-    apiClient
-      .get<ApiResponse<DocumentSequenceConfig[]>>(`${BASE}/document-sequences`)
-      .then((r) => r.data),
-
-  configureDocumentSequence: (request: ConfigureDocumentSequenceRequest) =>
-    apiClient
-      .post<ApiResponse<DocumentSequenceConfig>>(`${BASE}/document-sequences`, request)
-      .then((r) => r.data),
 };

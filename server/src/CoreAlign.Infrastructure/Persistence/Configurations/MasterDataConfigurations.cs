@@ -182,6 +182,41 @@ public class WarehouseConfiguration : IEntityTypeConfiguration<Warehouse>
     }
 }
 
+public class BankAccountConfiguration : IEntityTypeConfiguration<BankAccount>
+{
+    public void Configure(EntityTypeBuilder<BankAccount> builder)
+    {
+        builder.HasKey(b => b.Id);
+        builder.Property(b => b.AccountName).HasMaxLength(200).IsRequired();
+        builder.Property(b => b.BankName).HasMaxLength(200).IsRequired();
+        builder.Property(b => b.BranchName).HasMaxLength(100);
+        builder.Property(b => b.Iban).HasMaxLength(34).IsRequired();
+        builder.Property(b => b.Swift).HasMaxLength(11);
+        builder.Property(b => b.Currency).HasMaxLength(3).IsRequired();
+        builder.Property(b => b.OpeningBalance).HasPrecision(18, 4);
+        builder.Property(b => b.Notes).HasMaxLength(1000);
+        builder.Property(b => b.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(b => b.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasIndex(b => new { b.TenantId, b.Iban }).IsUnique();
+        builder.HasIndex(b => new { b.TenantId, b.IsActive });
+    }
+}
+
+public class DunningSettingConfiguration : IEntityTypeConfiguration<DunningSetting>
+{
+    public void Configure(EntityTypeBuilder<DunningSetting> builder)
+    {
+        builder.HasKey(d => d.Id);
+        builder.Property(d => d.Type).HasConversion<string>().HasMaxLength(32).IsRequired();
+        builder.Property(d => d.RecipientUserIdsJson).IsRequired();
+        builder.Property(d => d.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(d => d.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.HasIndex(d => new { d.TenantId, d.Type }).IsUnique();
+    }
+}
+
 public class DocumentSequenceConfiguration : IEntityTypeConfiguration<DocumentSequence>
 {
     public void Configure(EntityTypeBuilder<DocumentSequence> builder)

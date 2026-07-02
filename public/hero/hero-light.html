@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- self-hosted React (no unpkg). Loaded BEFORE support.js so its loadReactUmd() guard skips the CDN. -->
+    <script src="./react.production.min.js"></script>
+    <script src="./react-dom.production.min.js"></script>
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        <style>
+          html,
+          body {
+            margin: 0;
+            height: 100%;
+            background: #eef2fa;
+            overflow: hidden;
+          }
+          [data-omelette-chrome] {
+            display: none !important;
+          }
+        </style>
+      </helmet>
+      <!-- pre-compiled .js (Babel done ahead of time) → support.js loads as plain JS, no runtime Babel. -->
+      <x-import
+        component-from-global-scope="CoreAlignHeroLight"
+        from="./animations.js ./corealign-hero-light.js"
+        hint-size="100%,100%"
+        style="position: fixed; inset: 0"
+      ></x-import>
+    </x-dc>
+    <script>
+      (function () {
+        function go(href) {
+          try {
+            (window.top || window).location.href = href;
+          } catch (e) {
+            window.location.href = href;
+          }
+        }
+        function wire() {
+          var ds = document.getElementsByTagName('div');
+          for (var i = 0; i < ds.length; i++) {
+            var el = ds[i];
+            if (el.getAttribute('data-cta')) continue;
+            var t = (el.textContent || '').trim();
+            if (t === 'Ücretsiz deneyin') {
+              el.setAttribute('data-cta', '1');
+              el.style.cursor = 'pointer';
+              el.style.pointerEvents = 'auto';
+              el.addEventListener('click', function () {
+                go('/register');
+              });
+            } else if (t === 'Demo planlayın') {
+              el.setAttribute('data-cta', '1');
+              el.style.cursor = 'pointer';
+              el.style.pointerEvents = 'auto';
+              el.addEventListener('click', function () {
+                go('/#demo');
+              });
+            }
+          }
+        }
+        setInterval(wire, 500);
+      })();
+    </script>
+  </body>
+</html>

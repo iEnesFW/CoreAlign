@@ -1,156 +1,112 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Logo } from '@/shared/ui/Logo/Logo';
-import { Target, Users, BarChart2, CheckCircle2, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/app/providers/themeContext';
-import styles from './AuthLayout.module.css';
+import { Logo } from '@/shared/ui/Logo/Logo';
+import { AuthShowcase } from './AuthShowcase';
+import { AuthBackdrop } from '@/shared/ui/Background/AuthBackdrop';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-const CoreAlign3DLogin = lazy(() =>
-  import('@/shared/ui/Background/CoreAlign3DLogin').then((m) => ({ default: m.CoreAlign3DLogin })),
-);
-
-const StaticBackground = ({ theme }: { theme: 'light' | 'dark' }) => (
-  <div
-    aria-hidden
-    className={styles.staticBg}
-    data-theme={theme}
-    style={{
-      position: 'absolute',
-      inset: 0,
-      zIndex: 0,
-      background:
-        theme === 'dark'
-          ? 'radial-gradient(1000px 500px at 20% 20%, rgba(99,102,241,0.25), transparent 60%), radial-gradient(900px 600px at 80% 80%, rgba(168,85,247,0.18), transparent 60%), #0b0f19'
-          : 'radial-gradient(1000px 500px at 20% 20%, rgba(99,102,241,0.18), transparent 60%), radial-gradient(900px 600px at 80% 80%, rgba(168,85,247,0.12), transparent 60%), #f8fafc',
-    }}
-  />
-);
-
-const useAllowExpensiveScene = (): boolean => {
-  const [allow, setAllow] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return false;
-    return true;
-  });
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const handler = () => setAllow((curr) => (mq.matches ? false : curr));
-    mq.addEventListener?.('change', handler);
-    return () => mq.removeEventListener?.('change', handler);
-  }, []);
-
-  return allow;
-};
-
-import { LightModeBackground } from '@/shared/ui/Background/LightModeBackground';
-
+/**
+ * AuthLayout — premium split-screen shell for every auth page (login / register
+ * / forgot / reset / verify). Left = brand showcase (AuthShowcase, hidden below
+ * `lg`). Right = the form slot (`children`) with language + theme toggles and a
+ * live status badge. The `children` API is unchanged, so all existing auth
+ * forms drop in as-is.
+ *
+ * The `.ca-marketing` class on the root enables the Sora display font for
+ * headings, consistent with the public surface.
+ */
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
-  const allow3d = useAllowExpensiveScene();
+  const isEn = (i18n.language || '').toLowerCase().startsWith('en');
 
-  const isDark = theme === 'dark';
+  const setLang = (lng: 'tr' | 'en') => {
+    if ((lng === 'en') !== isEn) void i18n.changeLanguage(lng);
+  };
 
   return (
-    <div className={styles.container}>
-      {isDark ? (
-        allow3d ? (
-          <Suspense fallback={<StaticBackground theme="dark" />}>
-            <CoreAlign3DLogin theme="dark" />
-          </Suspense>
-        ) : (
-          <StaticBackground theme="dark" />
-        )
-      ) : (
-        <LightModeBackground />
-      )}
+    <div className="ca-marketing relative flex min-h-screen w-full bg-white text-slate-900 dark:bg-[#0a0e17] dark:text-slate-100">
+      <AuthShowcase theme={theme} />
 
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <Logo size={28} showText={true} />
+      {/* right — form panel */}
+      <div className="relative flex flex-1 flex-col">
+        {/* subtle backdrop for mobile (no showcase below lg) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-50 lg:hidden">
+          <AuthBackdrop theme={theme} />
         </div>
-        <div className={styles.headerRight}>
+
+        {/* top controls */}
+        <div className="absolute inset-x-5 top-5 z-20 flex items-center justify-end gap-3">
+          <div
+            className="flex items-center gap-0.5 rounded-full border p-0.5 dark:border-white/10"
+            style={{ borderColor: 'rgba(20,30,60,0.10)' }}
+          >
+            <button
+              type="button"
+              onClick={() => setLang('tr')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                !isEn
+                  ? 'bg-primary-600 text-white'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
+              }`}
+            >
+              TR
+            </button>
+            <button
+              type="button"
+              onClick={() => setLang('en')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                isEn
+                  ? 'bg-primary-600 text-white'
+                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100'
+              }`}
+            >
+              EN
+            </button>
+          </div>
+
           <button
+            type="button"
             onClick={toggleTheme}
-            className={styles.themeToggle}
-            aria-label={t('AuthLayout.ToggleTheme', { defaultValue: 'Toggle theme' })}
+            aria-label={t('AuthLayout.ToggleTheme', { defaultValue: 'Tema değiştir' })}
+            className="grid h-9 w-9 place-items-center rounded-full border text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 dark:border-white/10 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"
+            style={{ borderColor: 'rgba(20,30,60,0.10)' }}
           >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            {theme === 'dark' ? <Sun size={17} /> : <Moon size={16} />}
           </button>
-          <div className={styles.statusBadge}>
-            <div className={styles.statusDot} />
-            <span>
-              {t('AuthLayout.AllSystemsOperational', { defaultValue: 'All Systems Operational' })}
+
+          <div
+            className="hidden items-center gap-2 rounded-full border px-3 py-1.5 sm:flex dark:border-white/10"
+            style={{ borderColor: 'rgba(20,30,60,0.10)' }}
+          >
+            <span className="h-[7px] w-[7px] animate-pulse rounded-full bg-success-500" />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              {t('AuthLayout.AllSystemsOperational', { defaultValue: 'Tüm Sistemler Çalışıyor' })}
             </span>
           </div>
         </div>
-      </header>
 
-      <div className={styles.content}>
-        <div className={styles.card}>{children}</div>
-      </div>
-
-      <footer className={styles.footer}>
-        <div className={styles.features}>
-          <div
-            className={styles.featureItem}
-            title={t('AuthLayout.StrategicPlanning', { defaultValue: 'Strategic Planning' })}
-          >
-            <div className={styles.featureIcon}>
-              <Target size={20} />
-            </div>
-            <span className={styles.featureText}>
-              {t('AuthLayout.Strategy', { defaultValue: 'Strategy' })}
-            </span>
+        {/* form */}
+        <div className="relative z-10 m-auto w-full max-w-[420px] px-6 py-24">
+          <div className="mb-9 flex justify-center lg:hidden">
+            <Logo size={34} />
           </div>
-          <div
-            className={styles.featureItem}
-            title={t('AuthLayout.TeamAlignment', { defaultValue: 'Team Alignment' })}
-          >
-            <div className={styles.featureIcon}>
-              <Users size={20} />
-            </div>
-            <span className={styles.featureText}>
-              {t('AuthLayout.Teams', { defaultValue: 'Teams' })}
-            </span>
-          </div>
-          <div
-            className={styles.featureItem}
-            title={t('AuthLayout.PerformanceAnalytics', { defaultValue: 'Performance Analytics' })}
-          >
-            <div className={styles.featureIcon}>
-              <BarChart2 size={20} />
-            </div>
-            <span className={styles.featureText}>
-              {t('AuthLayout.Analytics', { defaultValue: 'Analytics' })}
-            </span>
-          </div>
-          <div
-            className={styles.featureItem}
-            title={t('AuthLayout.EnterpriseSecurity', { defaultValue: 'Enterprise Security' })}
-          >
-            <div className={styles.featureIcon}>
-              <CheckCircle2 size={20} />
-            </div>
-            <span className={styles.featureText}>
-              {t('AuthLayout.Secure', { defaultValue: 'Secure' })}
-            </span>
-          </div>
+          {children}
         </div>
-        <div className={styles.copyright}>
+
+        {/* footer */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 text-center text-[11.5px] text-slate-400 dark:text-slate-500">
           {t('AuthLayout.Copyright', {
-            defaultValue: '© {{year}} CoreAlign Inc. All rights reserved.',
+            defaultValue: '© {{year}} CoreAlign Inc. Tüm hakları saklıdır.',
             year: new Date().getFullYear(),
           })}
         </div>
-      </footer>
+      </div>
     </div>
   );
 };

@@ -16,6 +16,7 @@ public class VendorPayment : TenantEntity, IXminConcurrency
     public Guid? VendorBillId { get; private set; }
     public string? Notes { get; private set; }
     public decimal AppliedAmount { get; private set; }
+    public bool IsAdvance { get; private set; }
     public bool IsVoided { get; private set; }
     public DateTime? VoidedAtUtc { get; private set; }
     public string? VoidReason { get; private set; }
@@ -41,7 +42,8 @@ public class VendorPayment : TenantEntity, IXminConcurrency
         decimal exchangeRate = 1m,
         string? method = null,
         Guid? vendorBillId = null,
-        string? notes = null)
+        string? notes = null,
+        bool isAdvance = false)
     {
         VendorId = vendorId;
         VendorName = vendorName;
@@ -53,6 +55,7 @@ public class VendorPayment : TenantEntity, IXminConcurrency
         Method = method;
         VendorBillId = vendorBillId;
         Notes = notes;
+        IsAdvance = isAdvance;
         _isPosted = false;
     }
 

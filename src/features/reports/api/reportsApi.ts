@@ -3,6 +3,11 @@ import { cachedGet } from '@/shared/http/httpCache';
 import type { ApiResponse } from '@/shared/types/api';
 import type {
   AgingSummaryReport,
+  CashPositionReport,
+  DocumentNumberGapReport,
+  DuplicateEntity,
+  DuplicateKeyKind,
+  DuplicateReport,
   SalesBucket,
   SalesByPeriodReport,
   TopCustomerReportRow,
@@ -29,6 +34,21 @@ export const reportsApi = {
 
   agingSummary: (params: { asOfUtc?: string } = {}) =>
     cachedGet<ApiResponse<AgingSummaryReport>>(apiClient, `${BASE}/aging-summary`, {
+      params,
+    }),
+
+  cashPosition: (params: { asOfUtc?: string } = {}) =>
+    cachedGet<ApiResponse<CashPositionReport>>(apiClient, `${BASE}/cash-position`, {
+      params,
+    }),
+
+  duplicates: (params: { entity: DuplicateEntity; key: DuplicateKeyKind }) =>
+    cachedGet<ApiResponse<DuplicateReport>>(apiClient, `${BASE}/duplicates`, {
+      params,
+    }),
+
+  documentNumberGaps: (params: { year?: number } = {}) =>
+    cachedGet<ApiResponse<DocumentNumberGapReport>>(apiClient, `${BASE}/document-number-gaps`, {
       params,
     }),
 };

@@ -15,5 +15,8 @@ public enum LedgerSourceType
     Payment = 4,
     PaymentReversal = 5,
     Adjustment = 6,
-    Refund = 7
+    Refund = 7,
+    WriteOff = 8,
+    AdvanceReceived = 9,
+    AdvanceApplied = 10
 }

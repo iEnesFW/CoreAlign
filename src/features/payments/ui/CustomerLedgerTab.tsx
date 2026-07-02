@@ -1,14 +1,26 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, ArrowDownRight, ArrowUpRight, Download, Plus, Receipt } from 'lucide-react';
-import { downloadCsv } from '@/shared/lib/exportCsv';
 import {
+  AlertCircle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Download,
+  Plus,
+  Receipt,
+  Wallet,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { downloadCsv } from '@/shared/lib/exportCsv';
+import { toastApiError } from '@/shared/lib/mutationToast';
+import {
+  useApplyPaymentFifo,
   useCustomerAging,
   useCustomerLedger,
   usePaymentsByCustomer,
 } from '../hooks/usePaymentQueries';
 import type { CustomerLedgerEntry, LedgerEntryType } from '../model/payment.types';
 import { PaymentCreateModal } from './PaymentCreateModal';
+import { AdvanceOffsetModal } from './AdvanceOffsetModal';
 
 interface Props {
   customerId: string;
@@ -43,6 +55,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [offsetModalOpen, setOffsetModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [fromUtc, setFromUtc] = useState<string | undefined>(undefined);
   const [toUtc, setToUtc] = useState<string | undefined>(undefined);
@@ -50,6 +63,20 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
   const ledgerQuery = useCustomerLedger(customerId, fromUtc, toUtc, page, 25);
   const agingQuery = useCustomerAging(customerId);
   const paymentsQuery = usePaymentsByCustomer(customerId);
+  const applyFifo = useApplyPaymentFifo();
+
+  const handleApplyFifo = async (id: string) => {
+    try {
+      await applyFifo.mutateAsync(id);
+      toast.success(
+        t('payments.list.fifoApplied', {
+          defaultValue: 'Ödeme en eski açık faturalardan kapatıldı.',
+        }),
+      );
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
 
   const ledger = useMemo(
     () => ledgerQuery.data?.data?.items ?? [],
@@ -59,6 +86,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
   const totalPages = ledgerQuery.data?.data?.totalPages ?? 0;
   const aging = agingQuery.data?.data;
   const payments = paymentsQuery.data?.data ?? [];
+  const hasAdvances = payments.some((p) => p.isAdvance && p.unappliedAmount > 0);
 
   const exportCsv = useMemo(() => buildCsvDownloader(ledger, customerName), [ledger, customerName]);
 
@@ -95,6 +123,16 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
             <Download size={11} />
             CSV
           </button>
+          {hasAdvances && (
+            <button
+              type="button"
+              onClick={() => setOffsetModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300 dark:hover:bg-amber-500/20"
+            >
+              <Wallet size={12} />
+              {t('Payments.offset.action', { defaultValue: 'Avans Mahsup Et' })}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setPaymentModalOpen(true)}
@@ -197,7 +235,12 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
           <span className="text-xs font-semibold text-slate-700 dark:text-slate-200">
             {t('payments.ledger.entries', { defaultValue: 'Ledger entries' })}
           </span>
-          <span className="text-[11px] text-slate-500">{ledgerTotal} entries</span>
+          <span className="text-[11px] text-slate-500 dark:text-slate-400">
+            {t('payments.ledger.entryCount', {
+              count: ledgerTotal,
+              defaultValue: '{{count}} entries',
+            })}
+          </span>
         </div>
         {ledger.length === 0 ? (
           <div className="px-3 py-6 text-center text-sm text-slate-500">
@@ -288,8 +331,13 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
             {payments.slice(0, 5).map((p) => (
               <li key={p.id} className="flex items-center justify-between px-3 py-2 text-sm">
                 <div>
-                  <div className="font-mono text-slate-800 dark:text-slate-100">
+                  <div className="flex items-center gap-1.5 font-mono text-slate-800 dark:text-slate-100">
                     {p.paymentNumber}
+                    {p.isAdvance && (
+                      <span className="inline-flex rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                        {t('Payments.offset.advanceBadge', { defaultValue: 'Avans' })}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[11px] text-slate-500">
                     {fmtDateTime(p.paymentDate, locale)} ·{' '}
@@ -299,6 +347,16 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
                         {fmtCurrency(p.unappliedAmount, p.currency, locale)}{' '}
                         {t('payments.list.unapplied', { defaultValue: 'unapplied' })}
                       </span>
+                    )}
+                    {p.unappliedAmount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyFifo(p.id)}
+                        disabled={applyFifo.isPending}
+                        className="ml-2 rounded border border-primary-200 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 hover:bg-primary-50 disabled:opacity-50 dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-500/10"
+                      >
+                        {t('payments.list.autoApplyOldest', { defaultValue: 'Otomatik kapat' })}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -322,6 +380,15 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
           customerName={customerName}
           currency={currency}
           onClose={() => setPaymentModalOpen(false)}
+        />
+      )}
+
+      {offsetModalOpen && (
+        <AdvanceOffsetModal
+          customerId={customerId}
+          customerName={customerName}
+          currency={currency}
+          onClose={() => setOffsetModalOpen(false)}
         />
       )}
     </div>

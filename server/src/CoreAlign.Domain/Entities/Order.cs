@@ -412,8 +412,11 @@ public class Order : TenantEntity, IXminConcurrency
             OrderStatus.Draft => to is OrderStatus.Submitted or OrderStatus.Cancelled or OrderStatus.Confirmed,
             OrderStatus.Submitted => to is OrderStatus.Approved or OrderStatus.Draft or OrderStatus.Cancelled,
             OrderStatus.Approved => to is OrderStatus.Allocated or OrderStatus.Cancelled,
-            OrderStatus.Allocated => to is OrderStatus.Picking or OrderStatus.Cancelled or OrderStatus.Approved,
-            OrderStatus.Picking => to is OrderStatus.Packed or OrderStatus.Cancelled,
+            // WHY: a dispatched shipment ships its order directly from any fulfilment-active
+            // state — the Shipment aggregate carries the pick/pack lifecycle, so the order's
+            // coarse status is not separately walked through Picking/Packed by the WMS flow.
+            OrderStatus.Allocated => to is OrderStatus.Picking or OrderStatus.Packed or OrderStatus.Shipped or OrderStatus.PartiallyShipped or OrderStatus.Cancelled or OrderStatus.Approved,
+            OrderStatus.Picking => to is OrderStatus.Packed or OrderStatus.Shipped or OrderStatus.PartiallyShipped or OrderStatus.Cancelled,
             OrderStatus.Packed => to is OrderStatus.Shipped or OrderStatus.PartiallyShipped or OrderStatus.Cancelled,
             OrderStatus.PartiallyShipped => to is OrderStatus.Shipped or OrderStatus.Picking or OrderStatus.Delivered or OrderStatus.Closed,
             OrderStatus.Shipped => to is OrderStatus.Delivered or OrderStatus.Closed or OrderStatus.Returned or OrderStatus.Cancelled,

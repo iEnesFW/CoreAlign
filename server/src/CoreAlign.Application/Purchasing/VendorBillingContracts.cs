@@ -38,6 +38,7 @@ public record VendorPaymentDto(
     string? Method,
     Guid? VendorBillId,
     string? Notes,
+    bool IsAdvance,
     DateTime CreatedAtUtc);
 
 public record VendorPaymentApplicationDto(
@@ -83,7 +84,8 @@ public record CreateVendorPaymentCommand(
     string? Method = null,
     Guid? VendorBillId = null,
     decimal ExchangeRate = 1m,
-    string? Notes = null) : IRequest<VendorPaymentDto>, ITransactionalRequest;
+    string? Notes = null,
+    bool IsAdvance = false) : IRequest<VendorPaymentDto>, ITransactionalRequest;
 
 public record UpdateVendorBillCommand(
     Guid Id,
@@ -110,6 +112,12 @@ public record UpdateVendorPaymentCommand(
 public record VoidVendorPaymentCommand(Guid Id, string? Reason = null) : IRequest<VendorPaymentDto>, ITransactionalRequest;
 
 public record ApplyVendorPaymentCommand(
+    Guid VendorPaymentId,
+    Guid VendorBillId,
+    decimal Amount,
+    string? Notes = null) : IRequest<VendorPaymentApplicationDto>, ITransactionalRequest;
+
+public record OffsetVendorAdvanceCommand(
     Guid VendorPaymentId,
     Guid VendorBillId,
     decimal Amount,

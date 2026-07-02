@@ -1,13 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { Button } from '@/shared/ui/Button/Button';
-import { Input } from '@/shared/ui/Input/Input';
-import { Logo } from '@/shared/ui/Logo/Logo';
-import styles from './ResetPasswordForm.module.css';
-import { Lock, CheckCircle } from 'lucide-react';
-import { useResetPassword } from '../../hooks/useAuth';
+import { Lock, ShieldCheck, ArrowLeft, AlertCircle } from 'lucide-react';
 import type { AxiosError } from 'axios';
+import { Button } from '@/shared/ui/Button/Button';
+import { PasswordInput } from '@/shared/ui/Input/PasswordInput';
+import { PasswordStrength } from '@/shared/ui/Input/PasswordStrength';
+import { useResetPassword } from '../../hooks/useAuth';
 import type { ApiResponse } from '../../model/auth.types';
 
 export const ResetPasswordForm = () => {
@@ -49,12 +48,10 @@ export const ResetPasswordForm = () => {
         setServerError(t('auth.resetPassword.errors.invalidToken'));
         return;
       }
-
       if (password !== confirmPassword) {
         setServerError(t('auth.resetPassword.errors.passwordMismatch'));
         return;
       }
-
       if (password.length < 8) {
         setServerError(t('auth.resetPassword.errors.passwordLength'));
         return;
@@ -63,9 +60,7 @@ export const ResetPasswordForm = () => {
       resetPasswordMutation.mutate(
         { token, newPassword: password },
         {
-          onSuccess: () => {
-            setIsSent(true);
-          },
+          onSuccess: () => setIsSent(true),
           onError: (error: Error) => {
             const axiosError = error as AxiosError<ApiResponse<unknown>>;
             const message =
@@ -80,73 +75,85 @@ export const ResetPasswordForm = () => {
 
   if (isSent) {
     return (
-      <div className={styles.form}>
-        <div className={styles.header}>
-          <div className={styles.logoWrapper}>
-            <Logo size={42} />
-          </div>
-          <div className={styles.successMessage}>
-            <CheckCircle size={48} strokeWidth={1.5} />
-            <h2>{t('auth.resetPassword.success.title')}</h2>
-            <p>{t('auth.resetPassword.success.message')}</p>
-            <Button onClick={() => navigate('/login')} className={styles.submitButton}>
-              {t('auth.resetPassword.success.backToLogin')}
-            </Button>
-          </div>
+      <div className="flex flex-col items-center text-center">
+        <div className="grid h-16 w-16 place-items-center rounded-full bg-success-50 text-success-600 dark:bg-success-500/15 dark:text-success-400">
+          <ShieldCheck size={32} strokeWidth={1.6} />
         </div>
+        <h1 className="mt-6 text-[26px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.resetPassword.success.title')}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] leading-relaxed text-slate-500 dark:text-slate-400">
+          {t('auth.resetPassword.success.message')}
+        </p>
+        <Button onClick={() => navigate('/login')} size="lg" className="mt-7 w-full max-w-[280px]">
+          {t('auth.resetPassword.success.backToLogin')}
+        </Button>
       </div>
     );
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <div className={styles.header}>
-        <div className={styles.logoWrapper}>
-          <Logo size={42} />
-        </div>
-        <p className={styles.subtitle}>{t('auth.resetPassword.subtitle')}</p>
+    <div className="flex w-full flex-col">
+      <div className="mb-8 text-center">
+        <h1 className="m-0 text-[30px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+          {t('auth.resetPassword.title', { defaultValue: 'Yeni şifre belirleyin' })}
+        </h1>
+        <p className="mx-auto mt-2.5 max-w-[340px] text-[15px] text-slate-500 dark:text-slate-400">
+          {t('auth.resetPassword.subtitle')}
+        </p>
       </div>
 
-      {serverError && <div className={styles.errorBanner}>{serverError}</div>}
+      {serverError && (
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-danger-200 bg-danger-50 px-3.5 py-3 text-[13px] text-danger-700 dark:border-danger-500/30 dark:bg-danger-500/10 dark:text-danger-300">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <span>{serverError}</span>
+        </div>
+      )}
 
-      <div className={styles.fields}>
-        <Input
-          label={t('auth.resetPassword.passwordLabel')}
-          placeholder={t('auth.resetPassword.passwordPlaceholder')}
-          type="password"
-          leftIcon={<Lock size={18} />}
-          value={password}
-          onChange={handlePasswordChange}
-          disabled={!token}
-        />
+      <form className="flex flex-col gap-[18px]" onSubmit={handleSubmit} noValidate>
+        <div>
+          <PasswordInput
+            label={t('auth.resetPassword.passwordLabel')}
+            placeholder={t('auth.resetPassword.passwordPlaceholder')}
+            autoComplete="new-password"
+            leftIcon={<Lock size={18} />}
+            value={password}
+            onChange={handlePasswordChange}
+            disabled={!token}
+          />
+          <PasswordStrength value={password} />
+        </div>
 
-        <Input
+        <PasswordInput
           label={t('auth.resetPassword.confirmPasswordLabel')}
           placeholder={t('auth.resetPassword.confirmPasswordPlaceholder')}
-          type="password"
+          autoComplete="new-password"
           leftIcon={<Lock size={18} />}
           value={confirmPassword}
           onChange={handleConfirmPasswordChange}
           disabled={!token}
         />
-      </div>
 
-      <div className={styles.actions}>
         <Button
           type="submit"
           isLoading={resetPasswordMutation.isPending}
-          className={styles.submitButton}
+          size="lg"
+          className="mt-1 w-full"
           disabled={!token}
         >
           {t('auth.resetPassword.submitButton')}
         </Button>
-      </div>
+      </form>
 
-      <div className={styles.footer}>
-        <Link to="/login" className={styles.link}>
+      <div className="mt-7 text-center">
+        <Link
+          to="/login"
+          className="inline-flex items-center gap-2 text-[14px] font-semibold text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+        >
+          <ArrowLeft size={16} />
           {t('auth.resetPassword.backToLogin')}
         </Link>
       </div>
-    </form>
+    </div>
   );
 };

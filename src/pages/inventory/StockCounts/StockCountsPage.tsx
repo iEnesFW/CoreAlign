@@ -14,6 +14,7 @@ import { Textarea } from '@/shared/ui/Textarea/Textarea';
 import { Modal } from '@/shared/ui/Modal/Modal';
 import { Badge } from '@/shared/ui/Badge/Badge';
 import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
+import { NextNumberBadge } from '@/shared/ui/NextNumberBadge/NextNumberBadge';
 import {
   usePlanStockCount,
   useStockCountsQuery,
@@ -220,8 +221,16 @@ const PlanStockCountModal = ({ warehouses, onClose }: PlanModalProps) => {
     e.preventDefault();
     if (!warehouseId) return;
     try {
-      await plan.mutateAsync({ warehouseId, notes: notes || null });
-      toast.success(t('Inventory.StockCounts.planned', { defaultValue: 'Sayım oluşturuldu.' }));
+      const result = await plan.mutateAsync({ warehouseId, notes: notes || null });
+      const number = result?.data?.countNumber;
+      toast.success(
+        number
+          ? t('Inventory.StockCounts.plannedNumber', {
+              defaultValue: 'Sayım {{number}} oluşturuldu.',
+              number,
+            })
+          : t('Inventory.StockCounts.planned', { defaultValue: 'Sayım oluşturuldu.' }),
+      );
       onClose();
     } catch (err) {
       toastApiError(err);
@@ -236,6 +245,12 @@ const PlanStockCountModal = ({ warehouses, onClose }: PlanModalProps) => {
       size="md"
     >
       <form onSubmit={onSubmit} className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+            {t('Inventory.StockCounts.cols.number', { defaultValue: 'Sayım No' })}
+          </label>
+          <NextNumberBadge type="StockCountNumber" />
+        </div>
         <Select
           label={t('Inventory.StockCounts.plan.warehouse', { defaultValue: 'Depo' })}
           value={warehouseId}

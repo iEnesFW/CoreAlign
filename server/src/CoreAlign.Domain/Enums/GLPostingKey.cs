@@ -34,4 +34,7 @@ public enum GLPostingKey
     ShippingIncome = 21,
     RoundingGain = 22,
     RoundingLoss = 23,
+    DoubtfulDebtExpense = 24,
+    CustomerAdvanceReceived = 25,
+    VendorAdvancePaid = 26,
 }

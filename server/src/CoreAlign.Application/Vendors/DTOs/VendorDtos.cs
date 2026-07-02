@@ -28,6 +28,7 @@ public class VendorDto
     public string? BlockReason { get; set; }
     public string? Notes { get; set; }
     public int? Rating { get; set; }
+    public int DefaultLeadTimeDays { get; set; }
     public decimal CurrentBalance { get; set; }
     public decimal OverdueAmount { get; set; }
     public decimal TotalPayable { get; set; }

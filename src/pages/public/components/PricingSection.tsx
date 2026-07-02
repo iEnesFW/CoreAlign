@@ -35,12 +35,12 @@ export const PricingSection = () => {
   ];
 
   return (
-    <Section>
+    <Section id="pricing">
       <SectionHeader
         eyebrow={
           <>
             <CircleDollarSign size={12} />
-            FİYATLANDIRMA
+            {t('LandingPage.pricing.eyebrow')}
           </>
         }
         title={t('LandingPage.pricing.title')}

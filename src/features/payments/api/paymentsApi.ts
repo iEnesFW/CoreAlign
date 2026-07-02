@@ -4,6 +4,7 @@ import type { ApiResponse, PagedResult } from '@/shared/types/api';
 import type { InvoiceSummary } from '@/features/invoices/model/invoice.types';
 import type {
   ApplyPaymentInput,
+  ApplyPaymentLine,
   CreatePaymentInput,
   CustomerAging,
   CustomerLedgerEntry,
@@ -52,11 +53,25 @@ export const paymentsApi = {
       return r.data;
     }),
 
+  applyFifo: (id: string) =>
+    apiClient.post<ApiResponse<Payment>>(`${BASE}/${id}/apply-fifo`).then((r) => {
+      invalidateHttpCache(INVALIDATION);
+      return r.data;
+    }),
+
   unapply: (id: string, applicationId: string) =>
     apiClient.post<ApiResponse<Payment>>(`${BASE}/${id}/unapply/${applicationId}`).then((r) => {
       invalidateHttpCache(INVALIDATION);
       return r.data;
     }),
+
+  offsetAdvance: (id: string, applications: ApplyPaymentLine[]) =>
+    apiClient
+      .post<ApiResponse<Payment>>(`${BASE}/${id}/offset-advance`, { applications })
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      }),
 
   voidPayment: (id: string, reason?: string | null) =>
     apiClient

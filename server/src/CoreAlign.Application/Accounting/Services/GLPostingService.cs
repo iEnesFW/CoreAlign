@@ -57,6 +57,9 @@ public static class GLPostingDefaults
         GLPostingKey.ShippingIncome => "602",
         GLPostingKey.RoundingGain => "679",
         GLPostingKey.RoundingLoss => "689",
+        GLPostingKey.DoubtfulDebtExpense => "654",
+        GLPostingKey.CustomerAdvanceReceived => "340",
+        GLPostingKey.VendorAdvancePaid => "159",
         _ => null,
     };
 }
