@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
@@ -5,6 +6,7 @@ using CoreAlign.Application.Customers.Commands;
 using CoreAlign.Application.Customers.Export;
 using CoreAlign.Application.Customers.Maintenance;
 using CoreAlign.Application.Customers.Merge;
+using CoreAlign.Application.Customers.Notes;
 using CoreAlign.Application.Customers.Queries;
 using CoreAlign.Application.Customers.Statements;
 using CoreAlign.Application.Customers.Tags;
@@ -39,6 +41,21 @@ public class CustomersController : ControllerBase
         _tenants = tenants;
         _tenantContext = tenantContext;
     }
+
+    private Guid CurrentUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+    [HttpGet("{id:guid}/notes")]
+    public async Task<IActionResult> GetCustomerNotesAsync(Guid id, CancellationToken cancellationToken)
+        => (await _mediator.Send(new GetCustomerNotesQuery(id), cancellationToken)).ToOk();
+
+    [HttpPost("{id:guid}/notes")]
+    public async Task<IActionResult> AddCustomerNoteAsync(
+        Guid id,
+        [FromBody] AddCustomerNoteRequest request,
+        CancellationToken cancellationToken)
+        => (await _mediator.Send(new AddCustomerNoteCommand(id, request.Body, CurrentUserId()), cancellationToken)).ToOk();
+
+    public sealed record AddCustomerNoteRequest(string Body);
 
     [HttpGet]
     public async Task<IActionResult> GetCustomersAsync(

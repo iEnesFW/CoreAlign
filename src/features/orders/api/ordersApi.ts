@@ -62,6 +62,12 @@ export const ordersApi = {
       return r.data;
     }),
 
+  revertToDraft: (id: string) =>
+    apiClient.post<ApiResponse<Order>>(`${BASE}/${id}/revert-to-draft`).then((r) => {
+      invalidateHttpCache(INVALIDATION);
+      return r.data;
+    }),
+
   reorder: (id: string) =>
     apiClient.post<ApiResponse<Order>>(`${BASE}/${id}/reorder`).then((r) => {
       invalidateHttpCache(INVALIDATION);

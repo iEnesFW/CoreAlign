@@ -443,6 +443,7 @@
       "submit": "Onaya Gönder",
       "approve": "Onayla",
       "allocate": "Stok Rezerve Et",
+      "revertToDraft": "Taslağa Çek",
       "cancel": "İptal Et",
       "deliver": "Teslim Edildi",
       "close": "Siparişi Kapat",
@@ -926,7 +927,8 @@
       "dueSoon": "Vade ≤7 gün",
       "open": "Açık",
       "overdue": "Vadesi Geçen",
-      "paid": "Ödenen"
+      "paid": "Ödenen",
+      "partiallyPaid": "Kısmi Ödenen"
     },
     "resultCountLabel": "fatura",
     "stats": {
@@ -1278,6 +1280,12 @@
       "noInvoices": "Bu müşteri için henüz fatura yok.",
       "noTransactions": "Henüz hareket yok.",
       "noNotes": "Bu müşteri için not yok.",
+      "notesTab": {
+        "addLabel": "Not ekle",
+        "addButton": "Not Ekle",
+        "placeholder": "Müşteriyle ilgili bir not yazın...",
+        "added": "Not eklendi."
+      },
       "mailNotice": "Mail gönderimi henüz bir SMTP sağlayıcıya bağlı değil — önizleme amaçlıdır.",
       "mailTo": "Alıcı",
       "mailSubject": "Konu",
@@ -4742,6 +4750,7 @@
       "to": "Bitiş",
       "exportCsv": "CSV dışa aktar",
       "recordPayment": "Tahsilat gir",
+      "recordOutgoing": "Tediye gir",
       "entries": "Cari hareketler",
       "entryCount": "{{count}} hareket",
       "empty": "Henüz cari hareket yok.",
@@ -4765,7 +4774,9 @@
       "amountRequired": "Tutar pozitif olmalıdır.",
       "overAllocated": "Dağıtılan tutar ödeme tutarını aşıyor.",
       "success": "Tahsilat kaydedildi.",
+      "successOutgoing": "Tediye kaydedildi.",
       "title": "Tahsilat gir",
+      "titleOutgoing": "Tediye gir",
       "paymentDate": "Ödeme tarihi",
       "amount": "Tutar",
       "method": "Yöntem",

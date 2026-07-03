@@ -8,7 +8,7 @@ import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useModalClose } from '@/shared/hooks/useModalClose';
 import { useOpenInvoicesForCustomer, useCreatePayment } from '../hooks/usePaymentQueries';
-import type { PaymentMethod } from '../model/payment.types';
+import type { PaymentDirection, PaymentMethod } from '../model/payment.types';
 
 interface Props {
   customerId: string;
@@ -16,6 +16,7 @@ interface Props {
   currency: string;
   onClose: () => void;
   defaultDate?: string;
+  direction?: Extract<PaymentDirection, 'CustomerReceipt' | 'CustomerRefund'>;
 }
 
 interface AllocationDraft {
@@ -63,10 +64,12 @@ export const PaymentCreateModal = ({
   currency,
   onClose,
   defaultDate,
+  direction = 'CustomerReceipt',
 }: Props) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
-  const openInvoicesQuery = useOpenInvoicesForCustomer(customerId);
+  const isOutgoing = direction === 'CustomerRefund';
+  const openInvoicesQuery = useOpenInvoicesForCustomer(isOutgoing ? null : customerId);
   const createMutation = useCreatePayment();
 
   const [paymentDate, setPaymentDate] = useState(
@@ -155,20 +158,26 @@ export const PaymentCreateModal = ({
         method,
         amount: numericAmount,
         currency,
+        direction,
         bankAccountInfo: bankAccountInfo || null,
         referenceNumber: referenceNumber || null,
         checkNumber: method === 'Check' ? checkNumber || null : null,
         checkDueDate: method === 'Check' && checkDueDate ? checkDueDate : null,
         notes: notes || null,
         autoConfirm: true,
-        isAdvance,
-        applications: isAdvance
-          ? []
-          : allocations
-              .filter((a) => a.selected && a.amount > 0)
-              .map((a) => ({ invoiceId: a.invoiceId, appliedAmount: a.amount })),
+        isAdvance: isOutgoing ? false : isAdvance,
+        applications:
+          isAdvance || isOutgoing
+            ? []
+            : allocations
+                .filter((a) => a.selected && a.amount > 0)
+                .map((a) => ({ invoiceId: a.invoiceId, appliedAmount: a.amount })),
       });
-      toast.success(t('payments.create.success', { defaultValue: 'Payment recorded' }));
+      toast.success(
+        isOutgoing
+          ? t('payments.create.successOutgoing', { defaultValue: 'Outgoing payment recorded' })
+          : t('payments.create.success', { defaultValue: 'Payment recorded' }),
+      );
       onClose();
     } catch (err) {
       toastApiError(err);
@@ -181,7 +190,11 @@ export const PaymentCreateModal = ({
   return (
     <Modal
       open={true}
-      title={t('payments.create.title', { defaultValue: 'Record payment' })}
+      title={
+        isOutgoing
+          ? t('payments.create.titleOutgoing', { defaultValue: 'Record outgoing payment' })
+          : t('payments.create.title', { defaultValue: 'Record payment' })
+      }
       subtitle={customerName}
       icon={<CreditCard size={18} />}
       onClose={requestClose}
@@ -283,19 +296,21 @@ export const PaymentCreateModal = ({
           </div>
         )}
 
-        <label className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-xs font-medium text-slate-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-slate-200">
-          <input
-            type="checkbox"
-            checked={isAdvance}
-            onChange={(e) => setIsAdvance(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
-          />
-          {t('Payments.advance.isAdvance', {
-            defaultValue: 'Bu bir avans ödemesidir (faturaya sonra mahsup edilir)',
-          })}
-        </label>
+        {!isOutgoing && (
+          <label className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50/40 px-3 py-2 text-xs font-medium text-slate-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-slate-200">
+            <input
+              type="checkbox"
+              checked={isAdvance}
+              onChange={(e) => setIsAdvance(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-primary-600 dark:border-slate-600 dark:bg-slate-900"
+            />
+            {t('Payments.advance.isAdvance', {
+              defaultValue: 'Bu bir avans ödemesidir (faturaya sonra mahsup edilir)',
+            })}
+          </label>
+        )}
 
-        {!isAdvance && (
+        {!isAdvance && !isOutgoing && (
           <div className="rounded-lg border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900/40">
               <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">

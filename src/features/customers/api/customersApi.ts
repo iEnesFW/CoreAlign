@@ -11,6 +11,7 @@ import type {
   CustomerContact,
   CustomerContactInput,
   CustomerListParams,
+  CustomerNote,
   CustomerOverview,
   CustomerSummary,
   CustomerTransaction,
@@ -62,6 +63,15 @@ export const customersApi = {
         params: { page, pageSize },
       })
       .then((r) => r.data),
+
+  getNotes: (id: string) =>
+    apiClient.get<ApiResponse<CustomerNote[]>>(`${BASE}/${id}/notes`).then((r) => r.data),
+
+  addNote: (id: string, body: string) =>
+    apiClient.post<ApiResponse<CustomerNote>>(`${BASE}/${id}/notes`, { body }).then((r) => {
+      invalidateHttpCache(CUSTOMERS_INVALIDATION);
+      return r.data;
+    }),
 
   create: (input: CreateCustomerInput) =>
     apiClient.post<ApiResponse<Customer>>(BASE, input).then((r) => {

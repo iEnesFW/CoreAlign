@@ -5,6 +5,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Download,
+  Minus,
   Plus,
   Receipt,
   Wallet,
@@ -55,6 +56,7 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [outgoingModalOpen, setOutgoingModalOpen] = useState(false);
   const [offsetModalOpen, setOffsetModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [fromUtc, setFromUtc] = useState<string | undefined>(undefined);
@@ -140,6 +142,14 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
           >
             <Plus size={12} />
             {t('payments.ledger.recordPayment', { defaultValue: 'Record payment' })}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOutgoingModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-danger-200 bg-white px-3 py-1.5 text-xs font-medium text-danger-700 hover:bg-danger-50 dark:border-danger-500/30 dark:bg-slate-900 dark:text-danger-300 dark:hover:bg-danger-500/10"
+          >
+            <Minus size={12} />
+            {t('payments.ledger.recordOutgoing', { defaultValue: 'Record outgoing payment' })}
           </button>
         </div>
       </div>
@@ -380,6 +390,16 @@ export const CustomerLedgerTab = ({ customerId, customerName, currency }: Props)
           customerName={customerName}
           currency={currency}
           onClose={() => setPaymentModalOpen(false)}
+        />
+      )}
+
+      {outgoingModalOpen && (
+        <PaymentCreateModal
+          customerId={customerId}
+          customerName={customerName}
+          currency={currency}
+          direction="CustomerRefund"
+          onClose={() => setOutgoingModalOpen(false)}
         />
       )}
 

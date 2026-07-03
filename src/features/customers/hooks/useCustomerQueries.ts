@@ -41,6 +41,24 @@ export const useCustomerOverviewQuery = (id: string | null) =>
     enabled: id !== null,
   });
 
+export const useCustomerNotesQuery = (id: string | null) =>
+  useQuery({
+    queryKey: customerKeys.notes(id),
+    queryFn: () => customersApi.getNotes(id as string),
+    enabled: id !== null,
+  });
+
+export const useAddCustomerNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { customerId: string; body: string }) =>
+      customersApi.addNote(params.customerId, params.body),
+    onSuccess: (_, params) => {
+      queryClient.invalidateQueries({ queryKey: customerKeys.notes(params.customerId) });
+    },
+  });
+};
+
 export const useCustomerAnalyticsQuery = (id: string | null, monthsBack = 12) =>
   useQuery({
     queryKey: customerKeys.analytics(id, monthsBack),

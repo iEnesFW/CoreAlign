@@ -82,6 +82,7 @@ public record CreateOrderFromPreviousCommand(Guid PreviousOrderId) : IRequest<Or
 public record DeleteOrderCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;
 
 public record SubmitOrderCommand(Guid Id) : IRequest<OrderDto>, ITransactionalRequest;
+public record RevertOrderToDraftCommand(Guid Id) : IRequest<OrderDto>, ITransactionalRequest;
 public record ApproveOrderCommand(Guid Id, Guid? ApprovedByUserId = null) : IRequest<OrderDto>, ITransactionalRequest;
 public record AllocateOrderCommand(Guid Id, Guid? PreferredWarehouseId = null) : IRequest<OrderDto>, ITransactionalRequest;
 public record CancelOrderCommand(Guid Id, string? Reason = null) : IRequest<OrderDto>, ITransactionalRequest;

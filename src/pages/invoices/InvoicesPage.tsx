@@ -37,7 +37,7 @@ import type { InvoiceStatus, InvoiceSummary } from '@/features/invoices/model/in
 
 const PAGE_SIZE = 10;
 
-type StatusBucket = 'all' | 'open' | 'overdue' | 'paid' | 'cancelled';
+type StatusBucket = 'all' | 'open' | 'partiallyPaid' | 'overdue' | 'paid' | 'cancelled';
 
 const matchesBucket = (
   status: InvoiceStatus,
@@ -51,6 +51,8 @@ const matchesBucket = (
       return isOverdue || status === 'Overdue';
     case 'open':
       return ['Issued', 'Sent', 'PartiallyPaid'].includes(status) && !isOverdue;
+    case 'partiallyPaid':
+      return status === 'PartiallyPaid';
     case 'paid':
       return status === 'Paid';
     case 'cancelled':
@@ -112,6 +114,7 @@ export const InvoicesPage = () => {
     const buckets: Record<StatusBucket, number> = {
       all: invoices.length,
       open: 0,
+      partiallyPaid: 0,
       overdue: 0,
       paid: 0,
       cancelled: 0,
@@ -121,7 +124,7 @@ export const InvoicesPage = () => {
     let paidTotal = 0;
     let overdueTotal = 0;
     invoices.forEach((i) => {
-      (['open', 'overdue', 'paid', 'cancelled'] as StatusBucket[]).forEach((b) => {
+      (['open', 'partiallyPaid', 'overdue', 'paid', 'cancelled'] as StatusBucket[]).forEach((b) => {
         if (matchesBucket(i.status, i.isOverdue, b)) buckets[b] += 1;
       });
       outstandingTotal += i.amountDue;
@@ -321,6 +324,11 @@ export const InvoicesPage = () => {
                 value: 'open',
                 label: t('invoices.filter.open', { defaultValue: 'Open' }),
                 count: stats.buckets.open,
+              },
+              {
+                value: 'partiallyPaid',
+                label: t('invoices.filter.partiallyPaid', { defaultValue: 'Partially paid' }),
+                count: stats.buckets.partiallyPaid,
               },
               {
                 value: 'overdue',

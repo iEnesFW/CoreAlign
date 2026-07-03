@@ -8,16 +8,19 @@ import {
   Send,
   ShieldCheck,
   Truck,
+  Undo2,
   XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
 import {
   useAllocateOrder,
   useApproveOrder,
   useCancelOrder,
   useCloseOrder,
   useDeliverOrder,
+  useRevertOrderToDraft,
   useSubmitOrder,
 } from '../hooks/useOrderQueries';
 import type { Order, OrderStatus } from '../model/order.types';
@@ -29,9 +32,9 @@ interface Props {
 
 const NEXT_ACTIONS: Record<OrderStatus, string[]> = {
   Draft: ['submit', 'cancel'],
-  Submitted: ['approve', 'cancel'],
-  Approved: ['allocate', 'cancel'],
-  Allocated: ['createShipment', 'cancel'],
+  Submitted: ['approve', 'revertToDraft', 'cancel'],
+  Approved: ['allocate', 'revertToDraft', 'cancel'],
+  Allocated: ['createShipment', 'revertToDraft', 'cancel'],
   Picking: ['createShipment'],
   Packed: ['createShipment'],
   PartiallyShipped: ['createShipment', 'close'],
@@ -46,6 +49,7 @@ const NEXT_ACTIONS: Record<OrderStatus, string[]> = {
 const ICONS: Record<string, React.ReactNode> = {
   submit: <Send size={14} />,
   approve: <ShieldCheck size={14} />,
+  revertToDraft: <Undo2 size={14} />,
   allocate: <PackageCheck size={14} />,
   createShipment: <Truck size={14} />,
   deliver: <CheckCircle2 size={14} />,
@@ -61,8 +65,10 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
   const cancelMutation = useCancelOrder();
   const deliverMutation = useDeliverOrder();
   const closeMutation = useCloseOrder();
+  const revertMutation = useRevertOrderToDraft();
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const cancelBackdrop = useBackdropClick(() => setConfirmCancel(false));
 
   const actions = NEXT_ACTIONS[order.status] ?? [];
   if (actions.length === 0) return null;
@@ -78,6 +84,9 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
       } else if (action === 'allocate') {
         await allocateMutation.mutateAsync({ id: order.id });
         toast.success(t('orders.actions.allocate'));
+      } else if (action === 'revertToDraft') {
+        await revertMutation.mutateAsync(order.id);
+        toast.success(t('orders.actions.revertToDraft'));
       } else if (action === 'createShipment') {
         onShipmentRequested?.();
       } else if (action === 'deliver') {
@@ -109,7 +118,8 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
     allocateMutation.isPending ||
     cancelMutation.isPending ||
     deliverMutation.isPending ||
-    closeMutation.isPending;
+    closeMutation.isPending ||
+    revertMutation.isPending;
 
   return (
     <>
@@ -142,7 +152,7 @@ export const OrderActionsBar = ({ order, onShipmentRequested }: Props) => {
       {confirmCancel && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={() => setConfirmCancel(false)}
+          {...cancelBackdrop}
           role="presentation"
         >
           <div

@@ -205,6 +205,13 @@ export interface CustomerTransaction {
   notes: string | null;
 }
 
+export interface CustomerNote {
+  id: string;
+  body: string;
+  createdByUserId: string;
+  createdAtUtc: string;
+}
+
 export interface CustomerAddress {
   id: string;
   customerId: string;

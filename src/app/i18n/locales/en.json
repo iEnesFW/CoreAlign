@@ -443,6 +443,7 @@
       "submit": "Submit",
       "approve": "Approve",
       "allocate": "Allocate stock",
+      "revertToDraft": "Revert to draft",
       "cancel": "Cancel",
       "deliver": "Mark delivered",
       "close": "Close order",
@@ -926,7 +927,8 @@
       "dueSoon": "Due in ≤7d",
       "open": "Open",
       "overdue": "Overdue",
-      "paid": "Paid"
+      "paid": "Paid",
+      "partiallyPaid": "Partially paid"
     },
     "resultCountLabel": "invoices",
     "stats": {
@@ -1354,6 +1356,12 @@
       "noInvoices": "No invoices for this customer yet.",
       "noTransactions": "No transactions yet.",
       "noNotes": "No notes for this customer.",
+      "notesTab": {
+        "addLabel": "Add a note",
+        "addButton": "Add Note",
+        "placeholder": "Write a note about this customer...",
+        "added": "Note added."
+      },
       "mailNotice": "Outbound mail is not yet wired to an SMTP provider — this is a preview.",
       "mailTo": "To",
       "mailSubject": "Subject",
@@ -4746,6 +4754,7 @@
       "to": "To",
       "exportCsv": "Export CSV",
       "recordPayment": "Record payment",
+      "recordOutgoing": "Record outgoing payment",
       "entries": "Ledger entries",
       "entryCount": "{{count}} entries",
       "empty": "No ledger entries yet.",
@@ -4769,7 +4778,9 @@
       "amountRequired": "Amount must be positive.",
       "overAllocated": "Allocated amount exceeds the payment amount.",
       "success": "Payment recorded.",
+      "successOutgoing": "Outgoing payment recorded.",
       "title": "Record payment",
+      "titleOutgoing": "Record outgoing payment",
       "paymentDate": "Payment date",
       "amount": "Amount",
       "method": "Method",

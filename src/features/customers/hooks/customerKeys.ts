@@ -15,4 +15,5 @@ export const customerKeys = {
   transactions: (id: string | null) => [...customerKeys.all, 'transactions', id] as const,
   addresses: (customerId: string | null) => [...customerKeys.all, 'addresses', customerId] as const,
   contacts: (customerId: string | null) => [...customerKeys.all, 'contacts', customerId] as const,
+  notes: (customerId: string | null) => [...customerKeys.all, 'notes', customerId] as const,
 };

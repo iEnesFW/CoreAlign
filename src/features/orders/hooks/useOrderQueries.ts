@@ -81,6 +81,14 @@ export const useSubmitOrder = () => {
   });
 };
 
+export const useRevertOrderToDraft = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => ordersApi.revertToDraft(id),
+    onSuccess: (_, id) => invalidateOrder(queryClient, id),
+  });
+};
+
 export const useReorderOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({

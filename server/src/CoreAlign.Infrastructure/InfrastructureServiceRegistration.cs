@@ -162,6 +162,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<CoreAlign.Application.Dunning.DunningRemindersJob>();
         services.AddScoped<CoreAlign.Application.Customers.Maintenance.ICustomerBalanceRecomputeDataSource, CoreAlign.Infrastructure.Customers.CustomerBalanceRecomputeDataSource>();
         services.AddScoped<CoreAlign.Application.Customers.Maintenance.CustomerBalanceRecomputeJob>();
+        services.AddScoped<ICustomerNoteRepository, CustomerNoteRepository>();
         services.AddScoped<IDocumentSequenceRepository, DocumentSequenceRepository>();
 
         services.AddScoped<IStockItemRepository, StockItemRepository>();

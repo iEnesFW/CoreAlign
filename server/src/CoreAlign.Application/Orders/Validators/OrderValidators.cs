@@ -54,6 +54,14 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
     }
 }
 
+public class RevertOrderToDraftCommandValidator : AbstractValidator<RevertOrderToDraftCommand>
+{
+    public RevertOrderToDraftCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+    }
+}
+
 public class UpdateOrderCommandValidator : AbstractValidator<UpdateOrderCommand>
 {
     public UpdateOrderCommandValidator()

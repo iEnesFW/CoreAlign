@@ -31,6 +31,11 @@ public class OrderImmutableException : DomainException
     }
 }
 
+public class OrderRevertBlockedException : ConflictException
+{
+    public OrderRevertBlockedException(string message) : base(message) { }
+}
+
 public class NoWarehouseConfiguredException : DomainException
 {
     public NoWarehouseConfiguredException()

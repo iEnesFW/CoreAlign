@@ -98,6 +98,10 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> SubmitOrderAsync(Guid id, CancellationToken cancellationToken)
         => (await _mediator.Send(new SubmitOrderCommand(id), cancellationToken)).ToOk();
 
+    [HttpPost("{id:guid}/revert-to-draft")]
+    public async Task<IActionResult> RevertOrderToDraftAsync(Guid id, CancellationToken cancellationToken)
+        => (await _mediator.Send(new RevertOrderToDraftCommand(id), cancellationToken)).ToOk();
+
     [HttpPost("{id:guid}/approve")]
     public async Task<IActionResult> ApproveOrderAsync(Guid id, [FromBody] ApproveOrderCommand? cmd, CancellationToken cancellationToken)
         => (await _mediator.Send(new ApproveOrderCommand(id, CurrentUserId), cancellationToken)).ToOk();

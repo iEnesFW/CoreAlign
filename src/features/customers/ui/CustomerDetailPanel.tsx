@@ -23,6 +23,7 @@ import { useInvoicesQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CustomerAddressesTab } from '@/features/customers/ui/CustomerAddressesTab';
 import { CustomerAnalyticsTab } from '@/features/customers/ui/CustomerAnalyticsTab';
 import { CustomerContactsTab } from '@/features/customers/ui/CustomerContactsTab';
+import { CustomerNotesTab } from '@/features/customers/ui/CustomerNotesTab';
 import { CustomerOverviewTab } from '@/features/customers/ui/CustomerOverviewTab';
 import { CustomerLedgerTab } from '@/features/payments/ui/CustomerLedgerTab';
 import type {
@@ -236,12 +237,8 @@ export const CustomerDetailPanel = ({
             }))}
           />
         )}
-        {tab === 'notes' && (
-          <div className="rounded border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-800/30 dark:text-slate-300">
-            {customer?.notes || (
-              <span className="italic text-slate-500">{t('customers.detail.noNotes')}</span>
-            )}
-          </div>
+        {tab === 'notes' && customerId && (
+          <CustomerNotesTab customerId={customerId} staticNotes={customer?.notes} />
         )}
       </div>
     </DetailPanel>
