@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FlipHorizontal } from 'lucide-react';
+import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import {
@@ -72,10 +73,27 @@ export function RunArcSection({
     }
   };
 
+  // The server validator rejects GeomArcRadiusMm < 100 — without this guard the arc APPEARED to
+  // apply, then the failed persist silently reverted it on the next refetch.
+  const guardRadius = (radiusMm: number): boolean => {
+    if (radiusMm >= 100) return true;
+    queueToast({
+      dedupeKey: 'glass-arc-radius-too-small',
+      variant: 'warning',
+      description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+        defaultValue:
+          'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+        r: radiusMm,
+      }),
+    });
+    return false;
+  };
+
   const commitSweep = () => {
     const deg = Number(sweepDraft);
     if (!deg || deg <= 0) return;
     const next = deriveArcFromSweep(draft.lengthMm, deg);
+    if (!guardRadius(next.radiusMm)) return;
     onDraftRadius(next.radiusMm);
     commit({
       geomArcRadiusMm: next.radiusMm,
@@ -91,6 +109,7 @@ export function RunArcSection({
     // A bow past half the chord is a MAJOR arc (> 180°) — allowed; only reject non-positive input.
     if (!chord || !sagitta || chord <= 0 || sagitta <= 0) return;
     const next = deriveArcFromChordSagitta(chord, sagitta);
+    if (!guardRadius(next.radiusMm)) return;
     onDraftRadius(next.radiusMm);
     commit({
       // CHORD-INVARIANT: a field-measured chord+sagitta — lengthMm is the CHORD (the fixed span).
@@ -186,10 +205,11 @@ export function RunArcSection({
         <p className="text-[11px] text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.Arc.DerivedInfo', {
             defaultValue:
-              'R{{r}} · {{deg}}° · kiriş {{chord}} mm · ok {{sagitta}} mm · eklem {{joint}}°',
+              'R{{r}} · {{deg}}° · kiriş {{chord}} mm · yay {{arc}} mm · ok {{sagitta}} mm · eklem {{joint}}°',
             r: derived.radiusMm,
             deg: derived.sweepDeg.toFixed(1),
             chord: derived.chordMm,
+            arc: derived.arcLengthMm,
             sagitta: derived.sagittaMm,
             joint: jointAngle.toFixed(1),
           })}

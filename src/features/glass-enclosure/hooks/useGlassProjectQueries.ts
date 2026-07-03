@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { isApiError } from '@/shared/api/ApiError';
 import { glassProjectsApi } from '../api/glassProjectsApi';
 import { glassProjectKeys } from './projectKeys';
 import type { ProjectsListParams } from '../model/project.types';
@@ -35,6 +36,13 @@ export const useSceneVersionsQuery = (id: string | null) =>
 const invalidateProject = (qc: ReturnType<typeof useQueryClient>, id: string | null) => {
   if (id) qc.invalidateQueries({ queryKey: glassProjectKeys.detail(id) });
   qc.invalidateQueries({ queryKey: glassProjectKeys.lists() });
+};
+
+// A 404 from a run/panel mutation means the client scene references a run the server no longer
+// has (undo/redo split-brain). Refetching replaces the scene with server truth via loadProject,
+// instead of leaving dead ids that 404 on every later drag/panel/rebalance commit.
+const healOn404 = (qc: ReturnType<typeof useQueryClient>, error: unknown, id: string) => {
+  if (isApiError(error) && error.statusCode === 404) invalidateProject(qc, id);
 };
 
 export const useCreateProjectMutation = () => {
@@ -136,6 +144,7 @@ export const useUpdateRunMutation = () => {
       input: Parameters<typeof glassProjectsApi.updateRun>[2];
     }) => glassProjectsApi.updateRun(id, runId, input),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 
@@ -145,6 +154,7 @@ export const useRemoveRunMutation = () => {
     mutationFn: ({ id, runId }: { id: string; runId: string }) =>
       glassProjectsApi.removeRun(id, runId),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 
@@ -161,6 +171,7 @@ export const useRebalancePanelsMutation = () => {
       input: Parameters<typeof glassProjectsApi.rebalancePanels>[2];
     }) => glassProjectsApi.rebalancePanels(id, runId, input),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 
@@ -177,6 +188,7 @@ export const useAddPanelMutation = () => {
       input: Parameters<typeof glassProjectsApi.addPanel>[2];
     }) => glassProjectsApi.addPanel(id, runId, input),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 
@@ -195,6 +207,7 @@ export const useUpdatePanelMutation = () => {
       input: Parameters<typeof glassProjectsApi.updatePanel>[3];
     }) => glassProjectsApi.updatePanel(id, runId, panelId, input),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 
@@ -204,6 +217,7 @@ export const useRemovePanelMutation = () => {
     mutationFn: ({ id, runId, panelId }: { id: string; runId: string; panelId: string }) =>
       glassProjectsApi.removePanel(id, runId, panelId),
     onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
   });
 };
 

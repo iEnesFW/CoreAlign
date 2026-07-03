@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
-import { effectiveArcRadiusMm } from '../model/arcGeometry';
+import { isRealArc, resolveArc } from '../model/arcGeometry';
 import type { GlassTypeDto, ProfileSystemDto } from '../model/glassEnclosure.types';
 
 interface TechnicalSummaryProps {
@@ -49,12 +49,16 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
     );
     const avgDb = dbValues.length === 0 ? 0 : dbValues.reduce((a, b) => a + b, 0) / dbValues.length;
     const curvedRuns = runs
-      .filter((r) => (r.geomArcRadiusMm ?? 0) > 0)
-      .map((r) => ({
-        label: r.label,
-        radiusMm: effectiveArcRadiusMm(r.lengthMm, r.geomArcRadiusMm ?? 0),
-        bent: r.arcGlassBent ?? false,
-      }));
+      .filter((r) => isRealArc(r.geomArcRadiusMm, r.geomArcSweepDeg))
+      .map((r) => {
+        const resolved = resolveArc(r.geomArcRadiusMm ?? 0, r.geomArcSweepDeg ?? 1);
+        return {
+          label: r.label,
+          radiusMm: resolved.radiusMm,
+          arcLengthMm: Math.round(resolved.arcLengthMm),
+          bent: r.arcGlassBent ?? false,
+        };
+      });
 
     return {
       panelCount,
@@ -64,9 +68,14 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
       totalWeightKg,
       maxThicknessMm,
       curvedRuns,
-      systemNames: Array.from(systemsUsed)
-        .map((id) => systemMap.get(id)?.name)
-        .filter((n): n is string => Boolean(n)),
+      systems: Array.from(systemsUsed)
+        .map((id) => systemMap.get(id))
+        .filter((s): s is ProfileSystemDto => Boolean(s))
+        .map((s) => ({
+          name: s.name,
+          fireClass: s.fireClass,
+          certificationClass: s.certificationClass,
+        })),
     };
   }, [runs, glassTypes, profileSystems]);
 
@@ -109,7 +118,10 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
           {summary.curvedRuns
             .map(
               (r) =>
-                `${r.label} (R${r.radiusMm} mm · ${
+                `${r.label} (R${r.radiusMm} mm · ${t('GlassEnclosure.Designer.Arc.DevelopedShort', {
+                  defaultValue: 'yay {{mm}} mm',
+                  mm: r.arcLengthMm,
+                })} · ${
                   r.bent
                     ? t('GlassEnclosure.Designer.Arc.ModeBent', { defaultValue: 'Bombeli cam' })
                     : t('GlassEnclosure.Designer.Arc.ModeFaceted', { defaultValue: 'Faseta' })
@@ -124,9 +136,31 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
           </div>
         </div>
       )}
-      {summary.systemNames.length > 0 && (
-        <div className="text-xs text-slate-500 dark:text-slate-400">
-          {summary.systemNames.join(' · ')}
+      {summary.systems.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+          {summary.systems.map((system) => (
+            <span key={system.name} className="inline-flex items-center gap-1">
+              {system.name}
+              {system.fireClass && (
+                <span
+                  title={t('GlassEnclosure.Designer.FireClass', { defaultValue: 'Yangın sınıfı' })}
+                  className="rounded bg-danger-100 px-1 py-px text-[10px] font-semibold text-danger-700 dark:bg-danger-950/50 dark:text-danger-300"
+                >
+                  {system.fireClass}
+                </span>
+              )}
+              {system.certificationClass && (
+                <span
+                  title={t('GlassEnclosure.Designer.CertificationClass', {
+                    defaultValue: 'Sertifika sınıfı',
+                  })}
+                  className="rounded bg-primary-100 px-1 py-px text-[10px] font-semibold text-primary-700 dark:bg-primary-950/50 dark:text-primary-300"
+                >
+                  {system.certificationClass}
+                </span>
+              )}
+            </span>
+          ))}
         </div>
       )}
     </section>

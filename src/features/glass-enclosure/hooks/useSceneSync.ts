@@ -1,5 +1,8 @@
 import { useCallback } from 'react';
+import { safeRequest } from '@/shared/lib/safeRequest';
 import { enqueuePersist } from '../model/persistQueue';
+import { glassProjectsApi } from '../api/glassProjectsApi';
+import { useDesignerStore } from '../model/designerStore';
 import {
   useAddConnectionMutation,
   useAddPanelMutation,
@@ -37,10 +40,13 @@ const toRunInput = (run: SceneRunState): AddRunInput => ({
   hasTopDrip: run.hasTopDrip,
   hasBottomThreshold: run.hasBottomThreshold,
   geomZ: run.geomZ ?? null,
+  // Round-trip notes/geomTiltDeg from the scene (carried off the DTO) — hard-coding null here
+  // WIPED the server values on every designer-driven run update.
+  geomTiltDeg: run.geomTiltDeg ?? null,
   geomArcRadiusMm: run.geomArcRadiusMm ?? null,
   geomArcSweepDeg: run.geomArcSweepDeg ?? null,
   arcGlassBent: run.arcGlassBent ?? false,
-  notes: null,
+  notes: run.notes ?? null,
 });
 
 const toPanelInput = (panel: ScenePanelState): AddPanelInput => ({
@@ -50,7 +56,7 @@ const toPanelInput = (panel: ScenePanelState): AddPanelInput => ({
   hasHandle: panel.hasHandle,
   hasLock: panel.hasLock,
   hasBrushSeal: panel.hasBrushSeal,
-  notes: null,
+  notes: panel.notes ?? null,
   heightMm: panel.heightMm ?? null,
   topShape: panel.topShape ?? null,
   topRightHeightMm: panel.topRightHeightMm ?? null,
@@ -78,9 +84,11 @@ const runDiffers = (server: GlassProjectRunDto, target: SceneRunState) =>
   server.hasTopDrip !== target.hasTopDrip ||
   server.hasBottomThreshold !== target.hasBottomThreshold ||
   (server.geomZ ?? null) !== (target.geomZ ?? null) ||
+  (server.geomTiltDeg ?? null) !== (target.geomTiltDeg ?? null) ||
   (server.geomArcRadiusMm ?? null) !== (target.geomArcRadiusMm ?? null) ||
   (server.geomArcSweepDeg ?? null) !== (target.geomArcSweepDeg ?? null) ||
-  (server.arcGlassBent ?? false) !== (target.arcGlassBent ?? false);
+  (server.arcGlassBent ?? false) !== (target.arcGlassBent ?? false) ||
+  (server.notes ?? null) !== (target.notes ?? null);
 
 const panelDiffers = (server: GlassProjectPanelDto, target: ScenePanelState) =>
   server.widthMm !== target.widthMm ||
@@ -89,6 +97,7 @@ const panelDiffers = (server: GlassProjectPanelDto, target: ScenePanelState) =>
   server.hasHandle !== target.hasHandle ||
   server.hasLock !== target.hasLock ||
   server.hasBrushSeal !== target.hasBrushSeal ||
+  (server.notes ?? null) !== (target.notes ?? null) ||
   (server.heightMm ?? null) !== (target.heightMm ?? null) ||
   (server.topShape ?? null) !== (target.topShape ?? null) ||
   (server.topRightHeightMm ?? null) !== (target.topRightHeightMm ?? null) ||
@@ -118,14 +127,20 @@ export const useSceneSync = () => {
     (project: GlassProjectDto, target: SceneState) =>
       enqueuePersist(async () => {
         const id = project.id;
+        // Diff against FRESH server truth, not the caller's cached DTO: the snapshot is captured
+        // synchronously but this task runs later in the persist queue, and a stale base re-issued
+        // deletes against already-deleted runs (404 'ProjectRun not found') or skipped re-creating
+        // runs on redo (permanent client-only runs where every later mutation 404s).
+        const [freshResp] = await safeRequest(glassProjectsApi.getById(id));
+        const server = freshResp?.data ?? project;
         const idMap = new Map<string, string>();
         const mapRunId = (runId: string) => idMap.get(runId) ?? runId;
         const targetRuns = new Map(target.runs.map((r) => [r.id, r]));
-        const serverRuns = new Map(project.runs.map((r) => [r.id, r]));
+        const serverRuns = new Map(server.runs.map((r) => [r.id, r]));
         const targetConnections = new Map(target.connections.map((c) => [c.id, c]));
-        const serverConnections = new Map(project.connections.map((c) => [c.id, c]));
+        const serverConnections = new Map(server.connections.map((c) => [c.id, c]));
 
-        for (const connection of project.connections) {
+        for (const connection of server.connections) {
           const targetConnection = targetConnections.get(connection.id);
           const refRemoved =
             !targetRuns.has(connection.runAId) || !targetRuns.has(connection.runBId);
@@ -135,7 +150,7 @@ export const useSceneSync = () => {
           }
         }
 
-        for (const serverRun of project.runs) {
+        for (const serverRun of server.runs) {
           const targetRun = targetRuns.get(serverRun.id);
           if (!targetRun) {
             await removeRunMutation.mutateAsync({ id, runId: serverRun.id });
@@ -222,6 +237,15 @@ export const useSceneSync = () => {
               },
             });
           }
+        }
+
+        // Runs re-created on redo get NEW server ids — the store scene must adopt them or every
+        // later persist against the old id 404s. Reconcile from server truth, guarded to the same
+        // scene reference so a newer local edit queued behind this task is never clobbered.
+        if (idMap.size > 0) {
+          const [reconciled] = await safeRequest(glassProjectsApi.getById(id));
+          const store = useDesignerStore.getState();
+          if (reconciled?.data && store.scene === target) store.loadProject(reconciled.data);
         }
       }),
     [

@@ -9,8 +9,10 @@ import {
   deriveArcFromChordSagitta,
   deriveArcFromRadius,
   deriveArcFromSweep,
+  developedLengthMm,
   isRealArc,
   minArcRadiusMm,
+  radiusFromChordSweep,
   resolveArc,
 } from './arcGeometry';
 
@@ -24,6 +26,26 @@ describe('isRealArc', () => {
     expect(isRealArc(0, 180)).toBe(false);
     // Straight (both absent).
     expect(isRealArc(null, null)).toBe(false);
+  });
+});
+
+describe('developedLengthMm', () => {
+  it('returns radius·sweep for a real arc and the fallback for a straight/half-arc body', () => {
+    // Half circle over a 3000 chord: radius 1500, developed = 1500·π ≈ 4712.
+    expect(developedLengthMm(3000, 1500, 180)).toBe(Math.round(1500 * Math.PI));
+    expect(developedLengthMm(3000, null, null)).toBe(3000);
+    expect(developedLengthMm(3000, 1500, 0)).toBe(3000);
+  });
+});
+
+describe('chordFromRadiusSweep keepWithinMm', () => {
+  it('keeps the stored value when it agrees within the tolerance, heals when it does not', () => {
+    const derived = chordFromRadiusSweep(1, 2122, 90);
+    // Integer-radius rounding: an exactly-entered 3000 chord derives back as 3001 — keep 3000.
+    expect(Math.abs(derived - 3000)).toBeLessThanOrEqual(2);
+    expect(chordFromRadiusSweep(3000, 2122, 90, 5)).toBe(3000);
+    // A legacy arc-length row (developed length ≈ 3334) is far outside the tolerance — heal it.
+    expect(chordFromRadiusSweep(3334, 2122, 90, 5)).toBe(derived);
   });
 });
 
@@ -216,5 +238,52 @@ describe('chord-invariant arc model', () => {
     const apexPreview = preview[Math.floor(preview.length / 2)];
     expect(renderedApex.x).toBeCloseTo(apexPreview.x, -1);
     expect(renderedApex.y).toBeCloseTo(apexPreview.y, -1);
+  });
+
+  it('the stored (radius, sweep) pair reproduces the chord within 1mm even near straight', () => {
+    for (const sagitta of [30, 60, 120, 900, 2500]) {
+      const bow = arcFromBow(4000, 0, sagitta);
+      const r = bow.geomArcRadiusMm as number;
+      const sweepRad = (Math.abs(bow.geomArcSweepDeg as number) * Math.PI) / 180;
+      expect(Math.abs(2 * r * Math.sin(sweepRad / 2) - 4000)).toBeLessThan(1);
+    }
+  });
+
+  it('radiusFromChordSweep makes the rendered chord equal lengthMm exactly', () => {
+    const bow = arcFromBow(4000, 0, 30);
+    const r = radiusFromChordSweep(4000, bow.geomArcRadiusMm, bow.geomArcSweepDeg);
+    const sweepRad = (Math.abs(bow.geomArcSweepDeg as number) * Math.PI) / 180;
+    expect(2 * r * Math.sin(sweepRad / 2)).toBeCloseTo(4000, 6);
+    expect(radiusFromChordSweep(2580, null, null)).toBe(0);
+    expect(radiusFromChordSweep(2580, 900, null)).toBe(900);
+  });
+
+  it('repeated bow commits never drift the chord; dragging back to straight restores it exactly', () => {
+    // Simulates the WallObject/ArcRunGroup commit loop: each commit reconstructs the chord from
+    // the STORED lengthMm and the chord direction from rotation + sweep/2 (the exact unroll),
+    // then re-commits through arcFromBow. The 4000→4042 bug came from re-measuring the chord out
+    // of the rounded radius each time.
+    let wall = {
+      lengthMm: 4000,
+      rotationDeg: 30,
+      geomArcRadiusMm: null as number | null,
+      geomArcSweepDeg: null as number | null,
+    };
+    const commit = (sagittaMm: number) => {
+      const chordDeg = wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2;
+      const bow = arcFromBow(wall.lengthMm, chordDeg, sagittaMm);
+      wall = {
+        lengthMm: bow.lengthMm,
+        rotationDeg: bow.rotationDeg,
+        geomArcRadiusMm: bow.geomArcRadiusMm,
+        geomArcSweepDeg: bow.geomArcSweepDeg,
+      };
+      expect(wall.lengthMm).toBe(4000);
+    };
+    for (const sag of [800, 400, 200, 120, 60, 30, 27, 26, 40, 80, 26, 5]) commit(sag);
+    expect(wall.lengthMm).toBe(4000);
+    expect(wall.geomArcRadiusMm).toBeNull();
+    expect(wall.geomArcSweepDeg).toBeNull();
+    expect(wall.rotationDeg).toBeCloseTo(30, 1);
   });
 });

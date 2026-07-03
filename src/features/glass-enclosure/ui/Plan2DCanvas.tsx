@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrickWall, Minus, MoveDiagonal2, Pencil, Plus, Square } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
-import { arcEndLocal, effectiveArcRadiusMm, isRealArc } from '../model/arcGeometry';
+import { arcEndLocal, isRealArc, resolveArc } from '../model/arcGeometry';
 import { snapAngleDeg } from '../model/angleSnap';
 import type { SceneRunState, SceneSlabState, SceneWallState } from '../model/project.types';
 
@@ -102,7 +102,9 @@ type ArcRenderParams = { radiusMm: number; largeArcFlag: 0 | 1; sweepFlag: 0 | 1
 
 const arcRenderParams = (run: SceneRunState): ArcRenderParams | null => {
   if (!isArcRun(run)) return null;
-  const radiusMm = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
+  // RAW stored radius — exactly what the 3D renderer, snap targets and collision footprints use,
+  // so the 2D plan can never draw an arc the other systems disagree with.
+  const radiusMm = resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1).radiusMm;
   // CHORD-INVARIANT: the sweep is stored directly (a major arc >180° sets the SVG large-arc flag).
   const sweepRad = Math.min((Math.abs(run.geomArcSweepDeg ?? 0) * Math.PI) / 180, Math.PI * 2);
   return {

@@ -25,6 +25,10 @@ interface FootprintCornerHandlesProps {
   topYM: number;
   onCommit: (next: BoxFootprint) => void;
   mode?: CornerHandleMode;
+  // Live-preview outline for NON-RECTANGULAR bodies (arc walls/runs, curved slabs): maps the
+  // previewed box to the ACTUAL outline the commit would produce, so the user sees the real
+  // shape instead of a dashed phantom rectangle detached from the curved body.
+  previewOutline?: (next: BoxFootprint) => [number, number, number][];
 }
 
 interface HandleSpec {
@@ -53,14 +57,17 @@ export function FootprintCornerHandles({
   topYM,
   onCommit,
   mode = 'corners',
+  previewOutline,
 }: FootprintCornerHandlesProps) {
   const [previewBox, setPreviewBox] = useState<BoxFootprint | null>(null);
   const specs = handleSpecs(box, mode);
-  const previewPoints =
-    previewBox &&
-    [...boxCornersMm(previewBox), boxCornersMm(previewBox)[0]].map(
-      (p): [number, number, number] => [p.x / MM, topYM, p.y / MM],
-    );
+  const previewPoints = previewBox
+    ? previewOutline
+      ? previewOutline(previewBox)
+      : [...boxCornersMm(previewBox), boxCornersMm(previewBox)[0]].map(
+          (p): [number, number, number] => [p.x / MM, topYM, p.y / MM],
+        )
+    : null;
   return (
     <>
       {previewPoints && (

@@ -2756,6 +2756,8 @@
       "WeightedU": "Weighted U-value",
       "AvgSoundDb": "Avg. sound (dB)",
       "MaxThickness": "Max. thickness",
+      "FireClass": "Fire class",
+      "CertificationClass": "Certification class",
       "NoSelection": "Select a run or panel in the 3D scene.",
       "DefaultRunLabel": "Run",
       "SearchPlaceholder": "Search…",
@@ -2872,7 +2874,9 @@
         "Chord": "Chord (mm)",
         "Sagitta": "Rise (mm)",
         "Apply": "Apply",
-        "DerivedInfo": "R{{r}} · {{deg}}° · chord {{chord}} mm · rise {{sagitta}} mm · joint {{joint}}°",
+        "RadiusTooSmall": "These measurements produce a {{r}} mm radius — the minimum is 100 mm. Increase the chord or reduce the rise.",
+        "DerivedInfo": "R{{r}} · {{deg}}° · chord {{chord}} mm · arc {{arc}} mm · rise {{sagitta}} mm · joint {{joint}}°",
+        "DevelopedShort": "arc {{mm}} mm",
         "BentGlass": "Bent glass (custom production, ~2.5-3× cost)",
         "WarnTightRadius": "Tight radius ({{r}} mm) — verify the system manufacturer minimum (typically ≥1500 mm).",
         "WarnJointAngle": "Joint angle {{deg}}° — increase the panel count for faceting (recommended ≤10°).",
@@ -2963,6 +2967,7 @@
         "BarrelTitle": "Barrel (curved) surface",
         "ArcRise": "Curve rise",
         "BarrelDropsFeatures": "Converting to a curve removed this roof's shapes.",
+        "PlanArcDropsFeatures": "Converting to a plan curve removed this surface's shapes.",
         "PitchTitle": "Pitched (gable) roof",
         "PitchRise": "Ridge rise",
         "PitchSymmetric": "Gable (two slopes)",
@@ -3026,6 +3031,18 @@
         "Pen": "Pen (draw surface / layer)",
         "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels"
       },
+      "Templates": {
+        "Title": "Templates — insert a ready-made composition with one click",
+        "LWalls": "L walls",
+        "UWalls": "U three walls",
+        "RoomDoor": "Four walls + door opening",
+        "GableRoof": "Gable roof",
+        "BarrelRoof": "Barrel roof",
+        "ArcRoof": "Curved roof (plan arc)",
+        "ArcRun": "Curved glass run",
+        "NoSystem": "Define a profile system before inserting a template.",
+        "Inserted": "Template added to the scene."
+      },
       "WallFeature": {
         "Title": "Wall layer",
         "Face": "Face",
@@ -3054,7 +3071,8 @@
         "Overlaps": "The area overlaps an existing opening or layer.",
         "DoesNotFitSlab": "The area does not fit within the floor/roof bounds.",
         "SlabTitle": "Floor/roof layer",
-        "TooSmall": "The drawn shape is too small."
+        "TooSmall": "The drawn shape is too small.",
+        "SelfIntersecting": "The stroke crosses itself — draw the shape as a single non-crossing loop."
       },
       "Pen": {
         "SelfIntersect": "The drawing intersects itself; no valid area could be formed.",
@@ -3296,6 +3314,7 @@
       "WindLoadFail": "Glass insufficient for wind load",
       "SystemOpeningMismatch": "System does not support this opening type",
       "SeismicTooLarge": "Panel too large for seismic zone",
+      "BendRadiusTight": "Bend radius too tight for this glass thickness (radius|recommended min mm)",
       "ConnectionAngleInvalid": "Mitre angle outside recommended range",
       "SystemNotFound": "Profile system not found",
       "GlassNotFound": "Glass type not found"

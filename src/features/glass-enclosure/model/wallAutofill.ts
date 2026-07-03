@@ -5,6 +5,7 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
+import { arcPointAt, isRealArc, resolveArc } from './arcGeometry';
 import { featureOutlineMm } from './wallFeatureGeometry';
 import { serializePanelPolygonPoints } from './panelPolygon';
 import type {
@@ -150,6 +151,14 @@ export const computeOpeningEdges = (
     // The opening's sill is measured from the wall's own base, so a raised wall
     // lifts the fill panel by the wall's geomZ on top of the local sill height.
     const wallBaseZ = wall.geomZ ?? 0;
+    // ARC wall: feature/opening offsets are DEVELOPED arc-length u, and rotationDeg is the ROLLED
+    // start tangent — walking origin + u·dir(rotationDeg) leaves the wall immediately (~0.3·R off
+    // at the mid-face of a 90° arc, the reported "detached glass"). The fill must be a SUB-ARC of
+    // the wall: same radius, sweep = uWidth/radius, origin ON the arc, rotation = the tangent at
+    // the hole's start (which reparametrizes the remaining arc identically).
+    const resolvedArcWall = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
+      ? resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1)
+      : null;
     const pushEdge = (
       startMm: number,
       widthMm: number,
@@ -158,9 +167,60 @@ export const computeOpeningEdges = (
       shape?: { shapeKind: PanelShapeKind; shapePointsJson: string | null } | null,
     ) => {
       if (widthMm < MIN_EDGE_MM || heightMm < MIN_EDGE_MM) return;
+      const geomZ = Math.round(wallBaseZ + sillMm);
+      if (resolvedArcWall) {
+        const u0 = Math.max(0, Math.min(startMm, resolvedArcWall.arcLengthMm));
+        const uWidth = Math.min(widthMm, resolvedArcWall.arcLengthMm - u0);
+        if (uWidth < MIN_EDGE_MM) return;
+        const phi0 = u0 / resolvedArcWall.radiusMm;
+        const subSweepRad = uWidth / resolvedArcWall.radiusMm;
+        const start = arcPointAt(resolvedArcWall.radiusMm, resolvedArcWall.direction, phi0);
+        const originX = Math.round(wall.originX + start.x * cos - start.z * sin);
+        const originY = Math.round(wall.originY + start.x * sin + start.z * cos);
+        const rotationDeg =
+          Math.round((wall.rotationDeg + resolvedArcWall.direction * phi0 * (180 / Math.PI)) * 10) /
+          10;
+        const subChordMm = Math.round(2 * resolvedArcWall.radiusMm * Math.sin(subSweepRad / 2));
+        const subSweepDeg =
+          Math.round(resolvedArcWall.direction * subSweepRad * (180 / Math.PI) * 10) / 10;
+        // Idempotency footprint from the REAL sub-arc band (a straight capsule along the phantom
+        // tangent would neither match the bent run it created nor the hole it should cover).
+        const pseudoRun: SceneRunState = {
+          id: 'opening-edge',
+          orderIndex: 0,
+          label: '',
+          lengthMm: subChordMm,
+          heightMm: Math.round(heightMm),
+          originX,
+          originY,
+          rotationDeg,
+          profileSystemId: '',
+          colorId: null,
+          hasTopDrip: false,
+          hasBottomThreshold: false,
+          geomZ,
+          geomArcRadiusMm: resolvedArcWall.radiusMm,
+          geomArcSweepDeg: subSweepDeg,
+          panels: [],
+        };
+        if (penetratesAny(buildRunFootprint(pseudoRun, 0, 0, rotationDeg), runFootprints)) return;
+        edges.push({
+          originX,
+          originY,
+          rotationDeg,
+          lengthMm: subChordMm,
+          heightMm: Math.round(heightMm),
+          geomZ,
+          geomArcRadiusMm: resolvedArcWall.radiusMm,
+          geomArcSweepDeg: subSweepDeg,
+          arcGlassBent: true,
+          shapeKind: shape?.shapeKind ?? null,
+          shapePointsJson: shape?.shapePointsJson ?? null,
+        });
+        return;
+      }
       const originX = Math.round(wall.originX + startMm * cos);
       const originY = Math.round(wall.originY + startMm * sin);
-      const geomZ = Math.round(wallBaseZ + sillMm);
       const footprint: PlanFootprint = buildPlanFootprint(
         'opening-edge',
         originX,

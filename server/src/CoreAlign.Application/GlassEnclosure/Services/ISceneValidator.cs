@@ -13,6 +13,9 @@ public interface ISceneValidator
 
 public class SceneValidator : ISceneValidator
 {
+    // WHY: thermally bent tempered glass is typically limited to a minimum radius of ~150x its thickness
+    private const int MinBendRadiusPerThicknessMm = 150;
+
     private readonly IProfileSystemRepository _systemRepo;
     private readonly IGlassTypeRepository _glassRepo;
     private readonly IWindZoneRepository _windRepo;
@@ -135,6 +138,23 @@ public class SceneValidator : ISceneValidator
                         "GlassEnclosure.Validation.WeightExceeds",
                         $"{panelWeight:F2}|{system.MaxPanelWeightKg:F2}",
                         run.Id, panel.Id));
+                }
+
+                if (run.ArcGlassBent
+                    && run.GeomArcRadiusMm is int bendRadiusMm
+                    && bendRadiusMm > 0
+                    && Math.Abs(run.GeomArcSweepDeg ?? 0m) >= 0.1m)
+                {
+                    var minBendRadiusMm = glass.ThicknessMm * MinBendRadiusPerThicknessMm;
+                    if (bendRadiusMm < minBendRadiusMm)
+                    {
+                        findings.Add(new GlassValidationFindingDto(
+                            GlassValidationSeverity.Warning,
+                            "GE.Arc.BendRadiusTight",
+                            "GlassEnclosure.Validation.BendRadiusTight",
+                            $"{bendRadiusMm}|{minBendRadiusMm}",
+                            run.Id, panel.Id));
+                    }
                 }
 
                 if (project.WindZoneId.HasValue)

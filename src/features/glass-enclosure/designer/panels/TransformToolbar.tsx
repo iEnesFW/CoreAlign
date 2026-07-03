@@ -20,6 +20,7 @@ import {
   findAttachedRunIds,
   findAttachedWallIds,
 } from '@/features/glass-enclosure/model/wallAttachment';
+import { arcFromCornerResize, isRealArc } from '@/features/glass-enclosure/model/arcGeometry';
 import type {
   SceneHardwareItem,
   ScenePanelState,
@@ -113,9 +114,20 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
   const { t } = useTranslation();
   const updateRun = useDesignerStore((s) => s.updateRun);
   const { persistRun } = useRunEntityActions();
+  const { persistPanel } = usePanelEntityActions();
 
   const commit = (patch: Partial<SceneRunState>) => {
-    const candidate = { ...run, ...patch };
+    // WHY: on an ARC run a typed length is a keep-sweep chord resize — persisting the new chord
+    // with the STALE radius made projectToScene revert it to the old chord on the next refetch.
+    const effective =
+      patch.lengthMm !== undefined && isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)
+        ? {
+            ...patch,
+            geomArcRadiusMm: arcFromCornerResize(patch.lengthMm, run.geomArcSweepDeg ?? 1)
+              .geomArcRadiusMm,
+          }
+        : patch;
+    const candidate = { ...run, ...effective };
     const attached = findAttachedWallIds(run, useDesignerStore.getState().scene.walls ?? []);
     const obstacles = solidObstaclesExcept(new Set([run.id, ...attached]));
     if (
@@ -130,8 +142,13 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
     ) {
       return;
     }
-    updateRun(run.id, patch);
-    void persistRun(candidate);
+    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+    updateRun(run.id, effective);
+    const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
+    void persistRun(freshRun ?? candidate);
+    for (const p of freshRun?.panels ?? []) {
+      if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(run.id, p);
+    }
   };
 
   return (
@@ -183,11 +200,23 @@ const PanelFields = ({ run, panel }: { run: SceneRunState; panel: ScenePanelStat
   const { persistRun } = useRunEntityActions();
 
   const commitWidth = (value: number) => {
+    // Persist the STORE's post-commit state: on an ARC run the width is pinned/clamped and the
+    // sibling widths are REDISTRIBUTED (pinPanelWidth) — persisting the raw value would leave the
+    // server with stale siblings (Σ ≠ the developed length).
     const widthMm = Math.max(100, Math.round(value));
+    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
     updatePanel(run.id, panel.id, { widthMm });
-    void persistPanel(run.id, { ...panel, widthMm });
     const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
-    if (freshRun) void persistRun(freshRun);
+    const freshPanel = freshRun?.panels.find((p) => p.id === panel.id);
+    void persistPanel(run.id, freshPanel ?? { ...panel, widthMm });
+    if (freshRun) {
+      freshRun.panels.forEach((p) => {
+        if (p.id !== panel.id && beforeWidths.get(p.id) !== p.widthMm) {
+          void persistPanel(run.id, p);
+        }
+      });
+      void persistRun(freshRun);
+    }
   };
 
   return (

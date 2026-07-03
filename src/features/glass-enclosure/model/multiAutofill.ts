@@ -1,6 +1,11 @@
-import { RUN_PLAN_THICKNESS_MM, penetratesAny } from '../scene/interaction/planCollision';
+import {
+  RUN_PLAN_THICKNESS_MM,
+  buildRunFootprint,
+  buildWallFootprint,
+  penetratesAny,
+} from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
-import { deriveArcFromChordSagitta } from './arcGeometry';
+import { arcEndLocal, deriveArcFromChordSagitta, isRealArc, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 import type { OpenEdge } from './wallAutofill';
 
@@ -81,6 +86,11 @@ const capsuleFootprint = (
 };
 
 const wallBlocker = (wall: SceneWallState): PlanFootprint => {
+  // Arc walls need the sampled band polygon — the straight capsule sits on the phantom
+  // start-tangent line, blocking/permitting fills in the wrong places.
+  if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
+    return buildWallFootprint(wall, 0, 0, wall.rotationDeg);
+  }
   const zMin = wall.geomZ ?? 0;
   return capsuleFootprint(
     wall.id,
@@ -95,6 +105,9 @@ const wallBlocker = (wall: SceneWallState): PlanFootprint => {
 };
 
 const runBlocker = (run: SceneRunState): PlanFootprint => {
+  if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+    return buildRunFootprint(run, 0, 0, run.rotationDeg);
+  }
   const zMin = run.geomZ ?? 0;
   return capsuleFootprint(
     run.id,
@@ -111,6 +124,30 @@ const runBlocker = (run: SceneRunState): PlanFootprint => {
 const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
   const rad = wall.rotationDeg * DEG2RAD;
   const baseZMm = wall.geomZ ?? 0;
+  // ARC wall: the far end is arcEndLocal rotated into world (origin + length·dir(rotationDeg) is
+  // the phantom straight end), and the outward direction at that end is the END tangent.
+  if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
+    const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+    const e = arcEndLocal(resolved.radiusMm, wall.geomArcSweepDeg ?? 1);
+    return [
+      {
+        wall,
+        x: wall.originX,
+        y: wall.originY,
+        outwardDeg: normalizeDeg(wall.rotationDeg + 180),
+        heightMm: wall.heightMm,
+        baseZMm,
+      },
+      {
+        wall,
+        x: wall.originX + e.xMm * Math.cos(rad) - e.yMm * Math.sin(rad),
+        y: wall.originY + e.xMm * Math.sin(rad) + e.yMm * Math.cos(rad),
+        outwardDeg: normalizeDeg(wall.rotationDeg + e.tangentDeg),
+        heightMm: wall.heightEndMm ?? wall.heightMm,
+        baseZMm,
+      },
+    ];
+  }
   return [
     {
       wall,

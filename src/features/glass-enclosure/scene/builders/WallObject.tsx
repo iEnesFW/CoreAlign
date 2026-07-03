@@ -8,12 +8,18 @@ import {
   Matrix4,
   Path,
   Quaternion,
+  Raycaster,
   ShapeGeometry,
   Vector3,
 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
-import { buildCurvedBandGeometry, curvedWallPickUv, curvedWallSurfacePoint } from './curvedExtrude';
+import {
+  buildCurvedBandGeometry,
+  curvedWallPickUv,
+  curvedWallSurfacePoint,
+  curvedWallSurfacePolyline,
+} from './curvedExtrude';
 import { buildBentWallGeometry } from './bentWallGeometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
@@ -62,12 +68,15 @@ import {
   type WallBoxDims,
   type WallFeatureSide,
 } from './wallFaces';
+import { ArcOutline } from './ArcOutline';
 import {
-  arcEndLocal,
   arcFromBow,
   arcFromCornerResize,
+  arcPointAt,
+  bowArcPlanPoints,
   bowFromArc,
   isRealArc,
+  radiusFromChordSweep,
   resolveArc,
 } from '../../model/arcGeometry';
 import { findAttachedRunIds } from '../../model/wallAttachment';
@@ -81,6 +90,7 @@ import {
   featureOutlineMm,
   formatDraftDimensionMm,
   outlineBoundsMm,
+  sanitizeFreeOutline,
   shrinkOutlineMm,
   simplifyFreePoints,
   wallHeightAtMm,
@@ -159,6 +169,7 @@ const HOLE_THRESHOLD_MM = 5;
 const SPLIT_PREVIEW_WIDTH_M = 0.006;
 const SPLIT_COLOR = '#dc2626';
 const DRAW_PREVIEW_OPACITY = 0.35;
+const ARC_PICK_RAYCASTER = new Raycaster();
 const EMPTY_OBSTACLES: PlanFootprint[] = [];
 const TMP_VEC = new Vector3();
 
@@ -238,9 +249,13 @@ const buildWallGeometries = (
   // features on a curved wall are a follow-up. A REAL arc needs both radius AND sweep — a half-arc
   // (radius without sweep) falls through to the straight build so it can't render as a flat band.
   if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
-    // CHORD-INVARIANT: wall.lengthMm is the chord (fixed span); the band is rendered straight from
-    // the stored radius+sweep, bowing between the two fixed ends.
-    const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+    // CHORD-INVARIANT: wall.lengthMm is the chord (fixed span). Re-derive the radius from
+    // chord+sweep at read time — the persisted integer radius (and legacy drifted rows) would
+    // otherwise render a band whose chord misses the stored lengthMm by millimetres.
+    const resolved = resolveArc(
+      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+      wall.geomArcSweepDeg ?? 1,
+    );
     const band = buildCurvedBandGeometry(
       resolved.radiusM,
       resolved.direction,
@@ -438,6 +453,7 @@ export function WallObject({
   const updateWallFeature = useDesignerStore((s) => s.updateWallFeature);
   const splitWall = useDesignerStore((s) => s.splitWall);
   const setSelection = useDesignerStore((s) => s.setSelection);
+  const multiSelection = useDesignerStore((s) => s.multiSelection);
 
   // A REAL arc needs BOTH a radius and a non-negligible sweep. A "half-arc" (radius set but sweep
   // null/0 — e.g. from an old persisted state) must render STRAIGHT, never get pitched flat by the
@@ -446,12 +462,10 @@ export function WallObject({
   // An L-shaped (bent) wall is a single mitred solid; its footprint resize / curve handles don't
   // apply and it can't carry surface features yet (#6c).
   const isBentWall = Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1);
-  // The 's' tool's resize faces scale the body imperatively — that lies on a curved band — so the
-  // stretch tool stays off for arc/bent walls. But the Q CORNER points commit an absolute footprint,
-  // so an ARC wall now keeps them: dragging resizes the CHORD (lengthMm) and the arc overlay
-  // re-derives its radius. Only a bent wall hides the corner points.
-  const stretchActive =
-    activeTool === 'stretch' && interactive && !wall.locked && !isArcWall && !isBentWall;
+  // ARC walls stretch too: a keep-sweep chord resize is mathematically a UNIFORM in-plane scale
+  // about the pinned end, so the imperative [s,1,s] body preview is EXACT — the end faces drag
+  // the chord, the top face drags the height. Only a bent (L) wall stays stretch-less.
+  const stretchActive = activeTool === 'stretch' && interactive && !wall.locked && !isBentWall;
   const vertexEditActive =
     transformActive && isSelected && interactive && !wall.locked && !isBentWall;
   // The curve (bow) handle stays available on an ALREADY-curved wall too, so the bow can be
@@ -463,15 +477,22 @@ export function WallObject({
   const wallRotRad = (wall.rotationDeg * Math.PI) / 180;
   const wallCos = Math.cos(wallRotRad);
   const wallSin = Math.sin(wallRotRad);
+  // The end point is derived from the AUTHORITATIVE chord (lengthMm) at the signed half-sweep in
+  // the local frame — reconstructing it from the rounded stored radius drifted the chord by tens
+  // of mm per bow commit near straight (the 4000→4042 bug).
+  const wallHalfSweepRad = isArcWall ? (((wall.geomArcSweepDeg ?? 0) / 2) * Math.PI) / 180 : 0;
   const wallEndLocal = isArcWall
-    ? arcEndLocal(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1)
+    ? {
+        xMm: wall.lengthMm * Math.cos(wallHalfSweepRad),
+        yMm: wall.lengthMm * Math.sin(wallHalfSweepRad),
+      }
     : { xMm: wall.lengthMm, yMm: 0 };
   const wallEndX = wall.originX + wallEndLocal.xMm * wallCos - wallEndLocal.yMm * wallSin;
   const wallEndY = wall.originY + wallEndLocal.xMm * wallSin + wallEndLocal.yMm * wallCos;
   const wallCurrentSagittaMm = isArcWall
     ? bowFromArc(
         wall.lengthMm,
-        resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1).radiusMm,
+        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
         wall.geomArcSweepDeg ?? 0,
       )
     : 0;
@@ -520,26 +541,49 @@ export function WallObject({
     setDraftState(value);
   };
 
-  const filteredTargets = useMemo<PlanSnapTargets>(
-    () => (snapTargets ? filterSnapTargets(snapTargets, wall.id) : EMPTY_SNAP_TARGETS),
-    [snapTargets, wall.id],
-  );
-
   const rad = wall.rotationDeg * DEG2RAD;
   const dirX = Math.cos(rad);
   const dirY = Math.sin(rad);
   const normalX = -dirY;
   const normalY = dirX;
-  const centerXMm = wall.originX + (wall.lengthMm / 2) * dirX;
-  const centerYMm = wall.originY + (wall.lengthMm / 2) * dirY;
+  // For an ARC wall, origin + length along rotationDeg is a PHANTOM straight box — rotationDeg is
+  // the ROLLED start tangent (chordDeg − dir·sweep/2), so that end sits sweep/2 away from the real
+  // one. Probe/centre from the CHORD frame (real fixed ends, same fix the corner handles got) plus
+  // the true apex; the centre doubles as the rotate pivot and the auto-stack ground probe.
+  const chordDxMm = wallEndX - wall.originX;
+  const chordDyMm = wallEndY - wall.originY;
+  const centerXMm = isArcWall
+    ? wall.originX + chordDxMm / 2
+    : wall.originX + (wall.lengthMm / 2) * dirX;
+  const centerYMm = isArcWall
+    ? wall.originY + chordDyMm / 2
+    : wall.originY + (wall.lengthMm / 2) * dirY;
 
-  const moveProbes: PlanPoint[] = lineProbePoints(
-    wall.originX,
-    wall.originY,
-    wall.lengthMm,
-    wall.rotationDeg,
-    wall.thicknessMm / 2,
-  );
+  const moveProbes: PlanPoint[] = useMemo(() => {
+    if (!isArcWall) {
+      return lineProbePoints(
+        wall.originX,
+        wall.originY,
+        wall.lengthMm,
+        wall.rotationDeg,
+        wall.thicknessMm / 2,
+      );
+    }
+    const resolved = resolveArc(
+      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+      wall.geomArcSweepDeg ?? 1,
+    );
+    const apex = arcPointAt(resolved.radiusMm, resolved.direction, resolved.sweepRad / 2);
+    const chordDeg = (Math.atan2(chordDyMm, chordDxMm) * 180) / Math.PI;
+    const chordLenMm = Math.hypot(chordDxMm, chordDyMm);
+    return [
+      ...lineProbePoints(wall.originX, wall.originY, chordLenMm, chordDeg, wall.thicknessMm / 2),
+      {
+        x: wall.originX + apex.x * wallCos - apex.z * wallSin,
+        y: wall.originY + apex.x * wallSin + apex.z * wallCos,
+      },
+    ];
+  }, [isArcWall, wall, chordDxMm, chordDyMm, wallCos, wallSin]);
 
   const coMove = useMemo(() => {
     const groupWalls = wall.groupId
@@ -553,14 +597,38 @@ export function WallObject({
     return { groupWalls, runs };
   }, [wall, sceneWalls, sceneRuns]);
 
+  // Exclude everything that travels WITH this wall (group walls, attached runs, multi-selection
+  // members) — a co-mover's stale pre-move endpoint must not act as a snap target for the group.
+  const filteredTargets = useMemo<PlanSnapTargets>(() => {
+    if (!snapTargets) return EMPTY_SNAP_TARGETS;
+    const excluded = new Set<string>([
+      wall.id,
+      ...coMove.groupWalls.map((w) => w.id),
+      ...coMove.runs.map((r) => r.id),
+    ]);
+    if (multiSelectionHas(multiSelection, 'wall', wall.id)) {
+      for (const id of multiSelection.runIds) excluded.add(id);
+      for (const id of multiSelection.wallIds) excluded.add(id);
+      for (const id of multiSelection.slabIds) excluded.add(id);
+    }
+    return filterSnapTargets(snapTargets, excluded);
+  }, [snapTargets, wall.id, coMove, multiSelection]);
+
   const gestureObstacles = useMemo(() => {
     const movingIds = new Set<string>([
       wall.id,
       ...coMove.groupWalls.map((w) => w.id),
       ...coMove.runs.map((r) => r.id),
     ]);
+    // Co-moving multi-selection members travel with this wall too — their stale footprints must
+    // not register as collisions mid-drag (same rule as the snap-target exclusion above).
+    if (multiSelectionHas(multiSelection, 'wall', wall.id)) {
+      for (const id of multiSelection.runIds) movingIds.add(id);
+      for (const id of multiSelection.wallIds) movingIds.add(id);
+      for (const id of multiSelection.slabIds) movingIds.add(id);
+    }
     return planObstacles.filter((o) => !movingIds.has(o.ownerId));
-  }, [planObstacles, wall.id, coMove]);
+  }, [planObstacles, wall.id, coMove, multiSelection]);
 
   // Default drag is lateral: the wall (plus any grouped walls / attached runs it
   // carries) collides side-to-side so it can butt flush against a neighbour. Holding
@@ -804,7 +872,19 @@ export function WallObject({
         x: spec.offsetMm + p.x,
         z: spec.centerZMm + p.z,
       }));
-      const simplified = simplifyFreePoints(absolute, FREE_SIMPLIFY_TOLERANCE_MM);
+      const simplified = sanitizeFreeOutline(
+        simplifyFreePoints(absolute, FREE_SIMPLIFY_TOLERANCE_MM),
+      );
+      if (!simplified) {
+        queueToast({
+          dedupeKey: 'glass-wall-feature-fit',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.WallFeature.SelfIntersecting', {
+            defaultValue: 'Çizim kendini kesiyor — şekli tek parça, kesişmeden çizin.',
+          }),
+        });
+        return;
+      }
       if (simplified.length < 3) return;
       const bounds = outlineBoundsMm(simplified.map((p) => ({ x: p.x, z: p.z })));
       offsetMm = (bounds.minX + bounds.maxX) / 2;
@@ -860,17 +940,39 @@ export function WallObject({
     });
   };
 
+  // ARC wall: useDrag3D's panelPlane measures on the FLAT chord plane while the draw session's
+  // start is in DEVELOPED arc units — adding plane deltas drifts off the cursor as the drag
+  // crosses the curve. The mesh's own pointermove hits are re-picked through faceUvMm (the same
+  // path the pen uses) and stored here; onMove prefers them over the plane delta.
+  const drawArcUvRef = useRef<{ x: number; z: number } | null>(null);
+  const bandMeshRef = useRef<Mesh>(null);
+  // WHY: during a captured drag R3F delivers the CAPTURE-TIME intersection whenever the fresh ray
+  // misses the mesh — re-picking from that stale e.point snapped arc strokes back to their start.
+  const freshArcHitPoint = (e: ThreeEvent<PointerEvent>): Vector3 | null => {
+    const mesh = bandMeshRef.current;
+    if (!mesh) return e.point;
+    ARC_PICK_RAYCASTER.ray.copy(e.ray);
+    const hits = ARC_PICK_RAYCASTER.intersectObject(mesh, false);
+    return hits.length > 0 ? hits[0].point : null;
+  };
+
   const drawDrag = useDrag3D({
     constraint: { mode: 'panelPlane', targetRef: drawAnchorRef },
     enabled: drawActive && !drawIsSplit,
     onMove: (delta) => {
       const session = drawSessionRef.current;
       if (!session) return;
-      if (delta.x === 0 && delta.y === 0) {
+      if (delta.x === 0 && delta.y === 0 && !(isArcWall && drawArcUvRef.current)) {
         setDraft(null);
         return;
       }
-      const cur = clampToFace(session.x0 + delta.x, session.z0 + delta.y, session.side);
+      // Arc wall: ONLY the mesh-re-picked (u,v) is valid — mixing the developed-space session
+      // origin with the flat chord-plane delta samples a phantom flat point, so a missing re-pick
+      // skips the sample instead of falling back.
+      const cur = isArcWall
+        ? drawArcUvRef.current
+        : clampToFace(session.x0 + delta.x, session.z0 + delta.y, session.side);
+      if (!cur) return;
       if (drawShape === 'free') {
         const last = session.points[session.points.length - 1];
         if (!last || Math.hypot(cur.x - last.x, cur.z - last.z) >= FREE_SAMPLE_STEP_MM) {
@@ -933,9 +1035,20 @@ export function WallObject({
       if (uv) {
         const start = clampToFace(uv.u, uv.v, side);
         drawSessionRef.current = { x0: start.x, z0: start.z, side, points: [start] };
+        drawArcUvRef.current = null;
       }
     }
     drawDrag.handlers.onPointerDown(e);
+  };
+
+  const handleDrawPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    const session = drawSessionRef.current;
+    if (isArcWall && session) {
+      const point = freshArcHitPoint(e);
+      const uv = point ? faceUvMm(point, session.side) : null;
+      if (uv) drawArcUvRef.current = clampToFace(uv.u, uv.v, session.side);
+    }
+    drawDrag.handlers.onPointerMove(e);
   };
 
   const updateSplitHover = (e: ThreeEvent<PointerEvent>) => {
@@ -1009,7 +1122,8 @@ export function WallObject({
     if (!arc?.active) return;
     (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
     const session = useDesignerStore.getState().penFace;
-    const local = penFacePoint(e.point, e.face?.normal);
+    const point = isArcWall ? freshArcHitPoint(e) : e.point;
+    const local = point ? penFacePoint(point, e.face?.normal) : null;
     if (!session || !local) return;
     penSuppressClickRef.current = true;
     const anchor = session.points[session.points.length - 1];
@@ -1026,7 +1140,8 @@ export function WallObject({
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
     const arc = penArcRef.current;
-    const local = penFacePoint(e.point, e.face?.normal);
+    const point = isArcWall && arc?.active ? freshArcHitPoint(e) : e.point;
+    const local = point ? penFacePoint(point, e.face?.normal) : null;
     if (!local) return;
     if (arc?.active) {
       const session = useDesignerStore.getState().penFace;
@@ -1101,13 +1216,16 @@ export function WallObject({
         ? { onPointerMove: updateSplitHover }
         : {
             onPointerDown: handleDrawPointerDown,
-            onPointerMove: drawDrag.handlers.onPointerMove,
+            onPointerMove: handleDrawPointerMove,
             onPointerUp: drawDrag.handlers.onPointerUp,
             onPointerCancel: drawDrag.handlers.onPointerCancel,
           }
       : gestures.handlers;
 
-  const penLine = useMemo<[number, number, number][] | null>(() => {
+  const penPreview = useMemo<{
+    line: [number, number, number][];
+    markers: [number, number, number][];
+  } | null>(() => {
     if (!penActive || !penFace || penFace.hostId !== wall.id) return null;
     const pts = penArcPreview ? [...penArcPreview] : [...penFace.points];
     if (!penArcPreview && penFace.cursor) pts.push(penFace.cursor);
@@ -1117,23 +1235,40 @@ export function WallObject({
     // curved band (same forward map as the committed feature) so the preview line follows the cursor
     // on the curve, instead of the flat XY plane (which lands it at the chord, far to the side).
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const arc = resolveArc(
+        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+        wall.geomArcSweepDeg ?? 1,
+      );
       const halfT = wall.thicknessMm / 1000 / 2;
       const surfaceR =
         side === 'front'
           ? arc.radiusM + halfT + FEATURE_FACE_LIFT_M
           : arc.radiusM - halfT - FEATURE_FACE_LIFT_M;
-      return pts.map((p) =>
-        curvedWallSurfacePoint(
-          p.x,
-          p.z,
+      // The LINE is densified (straight 3D chords between mapped vertices sag INSIDE the band on
+      // horizontal spans — the disappearing blue stick); the sphere MARKERS stay vertex-only or a
+      // single stroke would render a bead chain of ~50 overlapping spheres.
+      return {
+        line: curvedWallSurfacePolyline(
+          pts,
           arc.radiusM,
           surfaceR,
           arc.direction,
           arc.sweepRad,
           arc.arcLengthMm,
+          false,
         ),
-      );
+        markers: pts.map((p) =>
+          curvedWallSurfacePoint(
+            p.x,
+            p.z,
+            arc.radiusM,
+            surfaceR,
+            arc.direction,
+            arc.sweepRad,
+            arc.arcLengthMm,
+          ),
+        ),
+      };
     }
     // Flat wall (or top/bottom/side faces): map the face (u,v) onto the flat plane, lifted slightly
     // off the surface along its normal.
@@ -1142,7 +1277,7 @@ export function WallObject({
       heightM: Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000,
       thicknessM: wall.thicknessMm / 1000,
     });
-    return pts.map((p): [number, number, number] => {
+    const mapped = pts.map((p): [number, number, number] => {
       const u = p.x / 1000;
       const v = p.z / 1000;
       return [
@@ -1160,6 +1295,7 @@ export function WallObject({
           frame.normal.z * FEATURE_FACE_LIFT_M,
       ];
     });
+    return { line: mapped, markers: mapped };
   }, [
     penActive,
     penFace,
@@ -1174,6 +1310,42 @@ export function WallObject({
     wall.geomArcSweepDeg,
   ]);
 
+  // The DRAW tool's filled DraftPreview lives on the flat face frame — on an arc wall it detaches
+  // from the surface. Render the draft OUTLINE mapped onto the curved band instead (same forward
+  // map as penLine); the commit itself is exact, this is the matching visual.
+  const arcDraftLine = useMemo<[number, number, number][] | null>(() => {
+    if (!draft || !isArcWall) return null;
+    const side = normalizeWallSide(draft.side);
+    if (side !== 'front' && side !== 'back') return null;
+    const outline = featureOutlineMm(draft);
+    if (outline.length < 3) return null;
+    const arc = resolveArc(
+      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+      wall.geomArcSweepDeg ?? 1,
+    );
+    const halfT = wall.thicknessMm / 1000 / 2;
+    const surfaceR =
+      side === 'front'
+        ? arc.radiusM + halfT + FEATURE_FACE_LIFT_M
+        : arc.radiusM - halfT - FEATURE_FACE_LIFT_M;
+    return curvedWallSurfacePolyline(
+      outline,
+      arc.radiusM,
+      surfaceR,
+      arc.direction,
+      arc.sweepRad,
+      arc.arcLengthMm,
+      true,
+    );
+  }, [
+    draft,
+    isArcWall,
+    wall.lengthMm,
+    wall.geomArcRadiusMm,
+    wall.geomArcSweepDeg,
+    wall.thicknessMm,
+  ]);
+
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
   const heightLevels = collectHeightLevels(fullScene, wall.id);
   const levelDelta = (base: number, deltaMm: number) =>
@@ -1185,12 +1357,66 @@ export function WallObject({
   };
   useLayoutEffect(
     () => resetBody(),
-    [wall.lengthMm, wall.heightMm, wall.heightEndMm, wall.thicknessMm],
+    [wall.lengthMm, wall.heightMm, wall.heightEndMm, wall.thicknessMm, wall.geomArcRadiusMm],
   );
 
   const previewLength = (deltaMm: number, fromStart: boolean) => {
     const scale = Math.max(0.05, (wall.lengthMm + deltaMm) / wall.lengthMm);
     setBodyPreview(bodyRef, [scale, 1, 1], [fromStart ? -deltaMm / 1000 : 0, 0, 0]);
+  };
+
+  // ARC wall chord stretch: keep-sweep resize scales the whole arc SIMILARLY about the pinned
+  // end (radius = chord/(2·sin(sweep/2)) scales linearly with the chord), so a uniform in-plane
+  // scale IS the exact committed geometry — pinned at the start (scale about origin) or at the
+  // fixed end (translate by (1−s)·end).
+  const previewArcLength = (deltaMm: number, fromStart: boolean) => {
+    const chord = Math.hypot(chordDxMm, chordDyMm);
+    if (chord < 1) return;
+    const scale = Math.max(0.05, (chord + deltaMm) / chord);
+    setBodyPreview(
+      bodyRef,
+      [scale, 1, scale],
+      fromStart
+        ? [((1 - scale) * wallEndLocal.xMm) / 1000, 0, ((1 - scale) * wallEndLocal.yMm) / 1000]
+        : [0, 0, 0],
+    );
+  };
+
+  const commitArcLength = (deltaMm: number, fromStart: boolean) => {
+    const chord = Math.hypot(chordDxMm, chordDyMm);
+    const target = stickyDelta(chord, deltaMm);
+    const newChord = Math.max(MIN_LENGTH_MM, Math.round(chord + target));
+    const scaled = arcFromCornerResize(newChord, wall.geomArcSweepDeg ?? 1);
+    if (scaled.geomArcRadiusMm < 100 || newChord === Math.round(chord)) {
+      resetBody();
+      return;
+    }
+    const chordRad = Math.atan2(chordDyMm, chordDxMm);
+    const shift = fromStart ? -(newChord - chord) : 0;
+    const originX = Math.round(wall.originX + shift * Math.cos(chordRad));
+    const originY = Math.round(wall.originY + shift * Math.sin(chordRad));
+    const resized = buildWallFootprint(
+      {
+        ...wall,
+        originX,
+        originY,
+        lengthMm: scaled.lengthMm,
+        geomArcRadiusMm: scaled.geomArcRadiusMm,
+      },
+      0,
+      0,
+      wall.rotationDeg,
+    );
+    if (penetratesAny(resized, planObstacles)) {
+      resetBody();
+      return;
+    }
+    updateWall(wall.id, {
+      originX,
+      originY,
+      lengthMm: scaled.lengthMm,
+      geomArcRadiusMm: scaled.geomArcRadiusMm,
+    });
   };
 
   const previewTop = (deltaMm: number) => {
@@ -1329,93 +1555,146 @@ export function WallObject({
     }
     return labelMm(Math.abs(signed));
   };
-  const stretchFaces: StretchFaceDef[] = stretchActive
-    ? [
-        {
-          id: 'start',
-          centerM: [-FACE_LIFT_M, heightStartM / 2, 0],
-          rotation: [0, -HALF_PI, 0],
-          widthM: thicknessM,
-          heightM: heightStartM,
-          hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
-          axis: [-1, 0, 0],
-          label: lengthLabel,
-          onPreview: (d) => previewLength(stickyDelta(wall.lengthMm, d), true),
-          onCommit: (d) => commitLength(d, true),
-        },
-        {
-          id: 'end',
-          centerM: [lengthM + FACE_LIFT_M, heightEndM / 2, 0],
-          rotation: [0, HALF_PI, 0],
-          widthM: thicknessM,
-          heightM: heightEndM,
-          hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
-          axis: [1, 0, 0],
-          label: lengthLabel,
-          onPreview: (d) => previewLength(stickyDelta(wall.lengthMm, d), false),
-          onCommit: (d) => commitLength(d, false),
-        },
-        {
-          id: 'top',
-          centerM: [lengthM / 2, (heightStartM + heightEndM) / 2 + FACE_LIFT_M, 0],
-          rotation: [-HALF_PI, -slopeRad, 0],
-          widthM: Math.hypot(lengthM, heightEndM - heightStartM),
-          heightM: thicknessM,
-          hitHeightM: Math.max(thicknessM, FACE_HIT_SIZE_M),
-          axis: [0, 1, 0],
-          label: heightLabel,
-          onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
-          onCommit: commitTop,
-        },
-        {
-          id: 'side-a',
-          centerM: [lengthM / 2, sideHeightM / 2, thicknessM / 2 + FACE_LIFT_M],
-          rotation: [0, 0, 0],
-          widthM: lengthM,
-          heightM: sideHeightM,
-          axis: [0, 0, 1],
-          label: thicknessLabel,
-          onPreview: (d) => previewSide(stickyDelta(wall.thicknessMm, d), 1),
-          onCommit: (d) => commitSide(d, 1),
-        },
-        {
-          id: 'side-b',
-          centerM: [lengthM / 2, sideHeightM / 2, -thicknessM / 2 - FACE_LIFT_M],
-          rotation: [0, Math.PI, 0],
-          widthM: lengthM,
-          heightM: sideHeightM,
-          axis: [0, 0, -1],
-          label: thicknessLabel,
-          onPreview: (d) => previewSide(stickyDelta(wall.thicknessMm, d), -1),
-          onCommit: (d) => commitSide(d, -1),
-        },
-        ...featureItems
-          .filter(({ feature }) => feature.side === 1 || feature.side === -1)
-          .map(({ feature, bounds }): StretchFaceDef => {
-            const signedDepthMm = featureSignedDepthMm(feature);
-            const s = featureSideSignZ(feature.side);
-            const faceZ =
-              s * (thicknessM / 2) +
-              (s * Math.max(signedDepthMm, 0)) / 1000 +
-              s * FEATURE_FACE_LIFT_M;
-            return {
-              id: `feature-${feature.id}`,
-              centerM: [
-                (bounds.minX + bounds.maxX) / 2000,
-                (bounds.minZ + bounds.maxZ) / 2000,
-                faceZ,
-              ],
-              rotation: s === 1 ? [0, 0, 0] : [0, Math.PI, 0],
-              widthM: (bounds.maxX - bounds.minX) / 1000,
-              heightM: (bounds.maxZ - bounds.minZ) / 1000,
-              axis: [0, 0, s],
-              label: featureDepthLabel(feature),
-              onPreview: () => {},
-              onCommit: (d) => commitFeatureDepth(feature, d),
-            };
-          }),
-      ]
-    : [];
+  // ARC wall stretch faces sit on the CHORD frame (real fixed ends) with the drag axis along the
+  // chord; the top face keeps the height semantics (curvature-independent).
+  const chordLenMm = Math.hypot(chordDxMm, chordDyMm);
+  const chordUx = chordLenMm > 0 ? wallEndLocal.xMm / chordLenMm : 1;
+  const chordUz = chordLenMm > 0 ? wallEndLocal.yMm / chordLenMm : 0;
+  const chordThetaL = Math.atan2(chordUz, chordUx);
+  const arcChordLabel = (d: number) =>
+    labelMm(Math.max(MIN_LENGTH_MM, chordLenMm + stickyDelta(chordLenMm, d)));
+  const arcStretchFaces: StretchFaceDef[] = [
+    {
+      id: 'start',
+      centerM: [0, heightStartM / 2, 0],
+      rotation: [0, -HALF_PI - chordThetaL, 0],
+      widthM: thicknessM,
+      heightM: heightStartM,
+      hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+      axis: [-chordUx, 0, -chordUz],
+      label: arcChordLabel,
+      onPreview: (d) => previewArcLength(stickyDelta(chordLenMm, d), true),
+      onCommit: (d) => commitArcLength(d, true),
+    },
+    {
+      id: 'end',
+      centerM: [wallEndLocal.xMm / 1000, heightEndM / 2, wallEndLocal.yMm / 1000],
+      rotation: [0, HALF_PI - chordThetaL, 0],
+      widthM: thicknessM,
+      heightM: heightEndM,
+      hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+      axis: [chordUx, 0, chordUz],
+      label: arcChordLabel,
+      onPreview: (d) => previewArcLength(stickyDelta(chordLenMm, d), false),
+      onCommit: (d) => commitArcLength(d, false),
+    },
+    {
+      id: 'top',
+      centerM: [
+        wallEndLocal.xMm / 2000,
+        Math.max(heightStartM, heightEndM) + FACE_LIFT_M,
+        wallEndLocal.yMm / 2000,
+      ],
+      rotation: [-HALF_PI, -chordThetaL, 0],
+      widthM: chordLenMm / 1000,
+      heightM: thicknessM,
+      hitHeightM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+      axis: [0, 1, 0],
+      label: heightLabel,
+      onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
+      onCommit: commitTop,
+    },
+  ];
+
+  const stretchFaces: StretchFaceDef[] = !stretchActive
+    ? []
+    : isArcWall
+      ? arcStretchFaces
+      : [
+          {
+            id: 'start',
+            centerM: [-FACE_LIFT_M, heightStartM / 2, 0],
+            rotation: [0, -HALF_PI, 0],
+            widthM: thicknessM,
+            heightM: heightStartM,
+            hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+            axis: [-1, 0, 0],
+            label: lengthLabel,
+            onPreview: (d) => previewLength(stickyDelta(wall.lengthMm, d), true),
+            onCommit: (d) => commitLength(d, true),
+          },
+          {
+            id: 'end',
+            centerM: [lengthM + FACE_LIFT_M, heightEndM / 2, 0],
+            rotation: [0, HALF_PI, 0],
+            widthM: thicknessM,
+            heightM: heightEndM,
+            hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+            axis: [1, 0, 0],
+            label: lengthLabel,
+            onPreview: (d) => previewLength(stickyDelta(wall.lengthMm, d), false),
+            onCommit: (d) => commitLength(d, false),
+          },
+          {
+            id: 'top',
+            centerM: [lengthM / 2, (heightStartM + heightEndM) / 2 + FACE_LIFT_M, 0],
+            rotation: [-HALF_PI, -slopeRad, 0],
+            widthM: Math.hypot(lengthM, heightEndM - heightStartM),
+            heightM: thicknessM,
+            hitHeightM: Math.max(thicknessM, FACE_HIT_SIZE_M),
+            axis: [0, 1, 0],
+            label: heightLabel,
+            onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
+            onCommit: commitTop,
+          },
+          {
+            id: 'side-a',
+            centerM: [lengthM / 2, sideHeightM / 2, thicknessM / 2 + FACE_LIFT_M],
+            rotation: [0, 0, 0],
+            widthM: lengthM,
+            heightM: sideHeightM,
+            axis: [0, 0, 1],
+            label: thicknessLabel,
+            onPreview: (d) => previewSide(stickyDelta(wall.thicknessMm, d), 1),
+            onCommit: (d) => commitSide(d, 1),
+          },
+          {
+            id: 'side-b',
+            centerM: [lengthM / 2, sideHeightM / 2, -thicknessM / 2 - FACE_LIFT_M],
+            rotation: [0, Math.PI, 0],
+            widthM: lengthM,
+            heightM: sideHeightM,
+            axis: [0, 0, -1],
+            label: thicknessLabel,
+            onPreview: (d) => previewSide(stickyDelta(wall.thicknessMm, d), -1),
+            onCommit: (d) => commitSide(d, -1),
+          },
+          ...featureItems
+            .filter(({ feature }) => feature.side === 1 || feature.side === -1)
+            .map(({ feature, bounds }): StretchFaceDef => {
+              const signedDepthMm = featureSignedDepthMm(feature);
+              const s = featureSideSignZ(feature.side);
+              const faceZ =
+                s * (thicknessM / 2) +
+                (s * Math.max(signedDepthMm, 0)) / 1000 +
+                s * FEATURE_FACE_LIFT_M;
+              return {
+                id: `feature-${feature.id}`,
+                centerM: [
+                  (bounds.minX + bounds.maxX) / 2000,
+                  (bounds.minZ + bounds.maxZ) / 2000,
+                  faceZ,
+                ],
+                rotation: s === 1 ? [0, 0, 0] : [0, Math.PI, 0],
+                widthM: (bounds.maxX - bounds.minX) / 1000,
+                heightM: (bounds.maxZ - bounds.minZ) / 1000,
+                axis: [0, 0, s],
+                label: featureDepthLabel(feature),
+                onPreview: () => {},
+                onCommit: (d) => commitFeatureDepth(feature, d),
+              };
+            }),
+        ];
 
   const materialTexture = useTiledProceduralTexture(
     wall.materialKey,
@@ -1438,8 +1717,11 @@ export function WallObject({
         <group ref={drawAnchorRef} />
         <group ref={bodyRef}>
           <mesh
+            ref={bandMeshRef}
             geometry={geometry}
-            rotation={isArcWall ? [-Math.PI / 2, 0, 0] : undefined}
+            // WHY: R3F skips explicitly-undefined props, so arc→straight must set an explicit zero
+            // Euler — otherwise the mesh keeps the stale −90° pitch and the wall renders lying flat.
+            rotation={isArcWall ? [-Math.PI / 2, 0, 0] : [0, 0, 0]}
             castShadow
             receiveShadow
             {...wallHandlers}
@@ -1460,10 +1742,26 @@ export function WallObject({
               roughness={0.9}
               metalness={0.05}
             />
-            {!presentation && (
+            {!presentation && !isArcWall && (
               <Edges color={isSelected ? WALL_SELECTED : WALL_EDGE} threshold={15} />
             )}
           </mesh>
+          {/* Arc walls get an ANALYTIC outline: <Edges> culls the curved silhouette (facet seams
+              under the threshold) and fragments after CSG holes are carved into the band. */}
+          {!presentation && isArcWall && (
+            <ArcOutline
+              radiusMm={radiusFromChordSweep(
+                wall.lengthMm,
+                wall.geomArcRadiusMm,
+                wall.geomArcSweepDeg,
+              )}
+              sweepDeg={wall.geomArcSweepDeg ?? 1}
+              baseYM={0}
+              topYM={Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000}
+              halfWidthM={wall.thicknessMm / 2000}
+              color={isSelected ? WALL_SELECTED : WALL_EDGE}
+            />
+          )}
         </group>
         {featureItems.map((item) => (
           <WallFeatureObject
@@ -1490,11 +1788,14 @@ export function WallObject({
             <meshBasicMaterial color={SPLIT_COLOR} transparent opacity={0.8} depthWrite={false} />
           </mesh>
         )}
-        {draft && <DraftPreview draft={draft} dims={drawDims()} />}
-        {penLine && penLine.length >= 2 && (
-          <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
+        {draft && !isArcWall && <DraftPreview draft={draft} dims={drawDims()} />}
+        {arcDraftLine && (
+          <Line points={arcDraftLine} color="#2563eb" lineWidth={2} raycast={() => null} />
         )}
-        {penLine?.map((p, i) => (
+        {penPreview && penPreview.line.length >= 2 && (
+          <Line points={penPreview.line} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
+        )}
+        {penPreview?.markers.map((p, i) => (
           <mesh key={i} position={p} raycast={() => null}>
             <sphereGeometry args={[0.03, 8, 8]} />
             <meshBasicMaterial color={REGION_COLOR} />
@@ -1522,14 +1823,42 @@ export function WallObject({
           topYM={
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
+          previewOutline={
+            isArcWall
+              ? (next) => {
+                  // Preview the EXACT arc the commit would produce (keep-sweep chord resize),
+                  // not a phantom dashed rectangle detached from the curved body.
+                  const rad = (next.rotationDeg * Math.PI) / 180;
+                  const ex = next.originX + next.lengthMm * Math.cos(rad);
+                  const ey = next.originY + next.lengthMm * Math.sin(rad);
+                  const scaled = arcFromCornerResize(
+                    Math.max(100, next.lengthMm),
+                    wall.geomArcSweepDeg ?? 1,
+                  );
+                  const sag = bowFromArc(
+                    next.lengthMm,
+                    scaled.geomArcRadiusMm,
+                    wall.geomArcSweepDeg ?? 1,
+                  );
+                  const topY =
+                    ((wall.geomZ ?? 0) +
+                      Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) /
+                    1000;
+                  return bowArcPlanPoints(next.originX, next.originY, ex, ey, sag).map(
+                    (p): [number, number, number] => [p.x / 1000, topY, p.y / 1000],
+                  );
+                }
+              : undefined
+          }
           onCommit={(next) => {
             if (isArcWall) {
               // Dragging an end changes the CHORD (span) along the chord direction; keep the sweep
               // (curl shape), re-derive the radius (arcFromCornerResize), and shift the origin along
               // the chord. The ends stay on the curve.
-              const chordDeg = Math.atan2(wallEndY - wall.originY, wallEndX - wall.originX);
-              const dirX = Math.cos(chordDeg);
-              const dirY = Math.sin(chordDeg);
+              const chordRad =
+                ((wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2) * Math.PI) / 180;
+              const dirX = Math.cos(chordRad);
+              const dirY = Math.sin(chordRad);
               const along =
                 (next.originX - wall.originX) * dirX + (next.originY - wall.originY) * dirY;
               const newChord = Math.max(100, Math.round(next.lengthMm));
@@ -1591,13 +1920,11 @@ export function WallObject({
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
           onCommit={(sagittaMm) => {
-            // CHORD-INVARIANT: the wall's two ends stay FIXED. arcFromBow keeps the chord (lengthMm)
-            // and rolls rotationDeg so the body bows between them; the sweep is free 1–360°. Below
-            // the straighten threshold the wall returns to straight (null radius/sweep).
-            const chordDeg =
-              (Math.atan2(wallEndY - wall.originY, wallEndX - wall.originX) * 180) / Math.PI;
-            const chord = Math.hypot(wallEndX - wall.originX, wallEndY - wall.originY);
-            const bow = arcFromBow(chord, chordDeg, sagittaMm);
+            // CHORD-INVARIANT: the wall's two ends stay FIXED. The chord comes from the STORED
+            // lengthMm and the chord direction from the exact unroll (rotation + sweep/2) — never
+            // re-measured from the rounded radius, which drifted lengthMm on every shallow commit.
+            const chordDeg = wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2;
+            const bow = arcFromBow(wall.lengthMm, chordDeg, sagittaMm);
             updateWall(wall.id, {
               lengthMm: bow.lengthMm,
               rotationDeg: bow.rotationDeg,

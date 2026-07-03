@@ -56,7 +56,9 @@ const selectionTabKeys = (
 ): InspectorTabKey[] => {
   if (isSimple) return ['properties'];
   if (kind === 'run') return ['general', 'dimensions', 'hardware', 'glass'];
-  if (kind === 'panel') return ['general', 'dimensions', 'glass'];
+  // 'hardware' MUST stay in the panel tabs: PanelInspector's hardware section hosts the
+  // hasHandle/hasLock toggles AND HardwareManager — the ONLY add-hardware flow in the app.
+  if (kind === 'panel') return ['general', 'dimensions', 'hardware', 'glass'];
   return ['properties'];
 };
 

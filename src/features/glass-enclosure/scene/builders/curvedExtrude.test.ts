@@ -4,6 +4,24 @@ import {
   buildCurvedWallFeatureSolid,
   curvedWallPickUv,
 } from './curvedExtrude';
+import { outlineSelfIntersects, sanitizeFreeOutline } from '../../model/wallFeatureGeometry';
+
+const signedVolume = (positions: ArrayLike<number>) => {
+  let volume = 0;
+  for (let i = 0; i + 8 < positions.length; i += 9) {
+    const ax = positions[i];
+    const ay = positions[i + 1];
+    const az = positions[i + 2];
+    const bx = positions[i + 3];
+    const by = positions[i + 4];
+    const bz = positions[i + 5];
+    const cx = positions[i + 6];
+    const cy = positions[i + 7];
+    const cz = positions[i + 8];
+    volume += (ax * (by * cz - bz * cy) - ay * (bx * cz - bz * cx) + az * (bx * cy - by * cx)) / 6;
+  }
+  return volume;
+};
 
 describe('buildCurvedShapedGeometry', () => {
   const R = 2;
@@ -171,5 +189,117 @@ describe('buildCurvedWallFeatureSolid', () => {
       R + 0.1,
     );
     expect(g.attributes.position?.count ?? 0).toBe(0);
+  });
+
+  it.each([1, -1] as const)(
+    'emits an OUTWARD-oriented (positive-volume) cutter for direction %d — an inverted cutter makes the CSG keep only the plug',
+    (direction) => {
+      const g = buildCurvedWallFeatureSolid(
+        rect,
+        lengthMm,
+        R,
+        direction,
+        sweep,
+        R - 0.15,
+        R + 0.15,
+      );
+      expect(signedVolume(g.getAttribute('position').array)).toBeGreaterThan(0);
+    },
+  );
+
+  it.each([1, -1] as const)(
+    'densifies CAP triangles for a WIDE outline so no flat chord sags below the band skin (direction %d)',
+    (direction) => {
+      const wide = [
+        { x: 800, z: 800 },
+        { x: 2000, z: 800 },
+        { x: 2000, z: 1600 },
+        { x: 800, z: 1600 },
+      ];
+      const g = buildCurvedWallFeatureSolid(
+        wide,
+        lengthMm,
+        R,
+        direction,
+        sweep,
+        R - 0.15,
+        R + 0.15,
+      );
+      const positions = g.getAttribute('position').array;
+      expect(signedVolume(positions)).toBeGreaterThan(0);
+      const centerY = -direction * R;
+      const phiOf = (x: number, y: number) => {
+        const a = Math.atan2(y - centerY, x);
+        return direction === 1 ? Math.PI / 2 - a : a + Math.PI / 2;
+      };
+      let maxSpan = 0;
+      for (let i = 0; i + 8 < positions.length; i += 9) {
+        const phis = [0, 3, 6].map((o) => phiOf(positions[i + o], positions[i + o + 1]));
+        maxSpan = Math.max(maxSpan, Math.max(...phis) - Math.min(...phis));
+      }
+      expect(maxSpan).toBeLessThanOrEqual(0.031);
+    },
+  );
+
+  it('handles a concave freehand-like outline with a positive volume', () => {
+    const concave = [
+      { x: 1000, z: 800 },
+      { x: 1600, z: 700 },
+      { x: 1900, z: 1100 },
+      { x: 1600, z: 1000 },
+      { x: 1450, z: 1500 },
+      { x: 1150, z: 1350 },
+    ];
+    const g = buildCurvedWallFeatureSolid(concave, lengthMm, R, -1, sweep, R - 0.15, R + 0.15);
+    expect(signedVolume(g.getAttribute('position').array)).toBeGreaterThan(0);
+  });
+});
+
+describe('sanitizeFreeOutline', () => {
+  const square = [
+    { x: 0, z: 0 },
+    { x: 400, z: 0 },
+    { x: 400, z: 400 },
+    { x: 0, z: 400 },
+  ];
+
+  it('passes a simple loop through untouched', () => {
+    expect(outlineSelfIntersects(square)).toBe(false);
+    expect(sanitizeFreeOutline(square)).toEqual(square);
+  });
+
+  it('trims a closing hook that crosses the loop', () => {
+    const hooked = [...square, { x: 200, z: -80 }];
+    expect(outlineSelfIntersects(hooked)).toBe(true);
+    const cleaned = sanitizeFreeOutline(hooked);
+    expect(cleaned).not.toBeNull();
+    expect(outlineSelfIntersects(cleaned ?? [])).toBe(false);
+    expect(cleaned).toHaveLength(4);
+  });
+
+  it('never returns a self-crossing loop — repairs to a simple polygon or rejects', () => {
+    const bowtie = [
+      { x: 0, z: 0 },
+      { x: 400, z: 400 },
+      { x: 400, z: 0 },
+      { x: 0, z: 400 },
+    ];
+    expect(outlineSelfIntersects(bowtie)).toBe(true);
+    const repaired = sanitizeFreeOutline(bowtie);
+    expect(repaired === null || !outlineSelfIntersects(repaired)).toBe(true);
+    const densePoints: { x: number; z: number }[] = [];
+    for (let i = 0; i < bowtie.length; i += 1) {
+      const p = bowtie[i];
+      const q = bowtie[(i + 1) % bowtie.length];
+      for (let k = 0; k < 10; k += 1) {
+        densePoints.push({
+          x: p.x + ((q.x - p.x) * k) / 10,
+          z: p.z + ((q.z - p.z) * k) / 10,
+        });
+      }
+    }
+    expect(outlineSelfIntersects(densePoints)).toBe(true);
+    const dense = sanitizeFreeOutline(densePoints);
+    expect(dense === null || !outlineSelfIntersects(dense)).toBe(true);
   });
 });

@@ -99,10 +99,19 @@ export const stickyDimensionMm = (value: number) => {
 
 const snapToPlanGrid = (value: number) => Math.round(value / PLAN_GRID_MM) * PLAN_GRID_MM;
 
-export const filterSnapTargets = (targets: PlanSnapTargets, ownerId: string): PlanSnapTargets => ({
-  points: targets.points.filter((p) => p.ownerId !== ownerId),
-  segments: targets.segments.filter((s) => s.ownerId !== ownerId),
-});
+// Accepts one owner id or a set — a multi-selection drag must exclude EVERY co-moving member,
+// otherwise the group snaps onto a member's own stale pre-move endpoint.
+export const filterSnapTargets = (
+  targets: PlanSnapTargets,
+  owner: string | ReadonlySet<string>,
+): PlanSnapTargets => {
+  const excluded = typeof owner === 'string' ? null : owner;
+  const drop = (id?: string) => id !== undefined && (excluded ? excluded.has(id) : id === owner);
+  return {
+    points: targets.points.filter((p) => !drop(p.ownerId)),
+    segments: targets.segments.filter((s) => !drop(s.ownerId)),
+  };
+};
 
 interface CornerCorrection {
   x: number;
