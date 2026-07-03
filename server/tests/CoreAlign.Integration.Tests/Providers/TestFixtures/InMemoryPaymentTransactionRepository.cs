@@ -7,8 +7,9 @@ namespace CoreAlign.Integration.Tests.Providers.TestFixtures;
 /// <summary>
 /// Thread-safe in-memory <see cref="IPaymentTransactionRepository"/>. Mirrors EF Core
 /// semantics closely enough for dispatcher integration tests: AddAsync stores, Update is a no-op
-/// because the entity reference is already tracked, and an idempotency-style duplicate add is
-/// rejected (mirrors the unique index on TenantId+OrderReference+Amount that the production DbContext enforces).
+/// because the entity reference is already tracked, and a duplicate add is rejected
+/// (mirrors the ux_payment_transactions_tenant_idempotency_key unique index on
+/// TenantId+IdempotencyKey, filtered to non-null keys, that the production DbContext enforces).
 /// </summary>
 public sealed class InMemoryPaymentTransactionRepository : IPaymentTransactionRepository
 {
@@ -29,13 +30,13 @@ public sealed class InMemoryPaymentTransactionRepository : IPaymentTransactionRe
 
     public Task AddAsync(PaymentTransaction transaction, CancellationToken cancellationToken = default)
     {
-        var key = $"{transaction.TenantId:N}|{transaction.OrderReference}|{transaction.Amount}|{transaction.Currency}";
         lock (_lock)
         {
-            if (!_idempotencyKeys.Add(key))
+            if (!string.IsNullOrWhiteSpace(transaction.IdempotencyKey)
+                && !_idempotencyKeys.Add($"{transaction.TenantId:N}|{transaction.IdempotencyKey}"))
             {
                 throw new InvalidOperationException(
-                    $"Duplicate PaymentTransaction insert rejected (idempotency key {key}).");
+                    $"Duplicate PaymentTransaction insert rejected (tenant {transaction.TenantId:N}, idempotency key {transaction.IdempotencyKey}).");
             }
             _store.Add(transaction);
             AddCount++;

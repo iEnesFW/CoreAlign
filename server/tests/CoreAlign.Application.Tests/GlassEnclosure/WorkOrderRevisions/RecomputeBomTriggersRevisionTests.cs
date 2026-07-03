@@ -20,24 +20,42 @@ public class RecomputeBomTriggersRevisionTests
     private readonly IGlassWorkOrderRepository _workOrderRepo = Substitute.For<IGlassWorkOrderRepository>();
     private readonly IWorkOrderRevisionService _revisionService = Substitute.For<IWorkOrderRevisionService>();
 
-    private static BOMCompositionResult BuildComposition(decimal grandTotal = 1000m) => new(
-        TotalAreaM2: 0m,
-        TotalPanels: 0,
-        TotalWeightKg: 0m,
-        ProfileCost: 0m,
-        GlassCost: 0m,
-        HardwareCost: 0m,
-        LaborCost: 0m,
-        WasteCost: 0m,
-        TransportCost: 0m,
-        ScaffoldingCost: 0m,
-        CraneCost: 0m,
-        Subtotal: grandTotal,
-        MarginAmount: 0m,
-        TaxAmount: 0m,
-        GrandTotal: grandTotal,
-        Currency: "TRY",
-        Lines: Array.Empty<BOMLineDraft>());
+    private static BOMCompositionResult BuildComposition(decimal subtotal = 1000m)
+    {
+        var taxAmount = decimal.Round(subtotal * BomQuoteTotalsCalculator.TaxRate, 4);
+        return new BOMCompositionResult(
+            TotalAreaM2: 0m,
+            TotalPanels: 0,
+            TotalWeightKg: 0m,
+            ProfileCost: 0m,
+            GlassCost: subtotal,
+            HardwareCost: 0m,
+            LaborCost: 0m,
+            WasteCost: 0m,
+            TransportCost: 0m,
+            ScaffoldingCost: 0m,
+            CraneCost: 0m,
+            Subtotal: subtotal,
+            MarginAmount: 0m,
+            TaxAmount: taxAmount,
+            GrandTotal: decimal.Round(subtotal + taxAmount, 4),
+            Currency: "TRY",
+            Lines: new[]
+            {
+                new BOMLineDraft(
+                    Kind: GlassBOMLineKind.GlassPiece,
+                    RefId: null,
+                    ProductId: Guid.NewGuid(),
+                    IsService: false,
+                    Description: "Tempered glass panel",
+                    Quantity: 1m,
+                    Unit: "m²",
+                    UnitCost: subtotal,
+                    Currency: "TRY",
+                    Source: "Composer",
+                    SortOrder: 0),
+            });
+    }
 
     private static GlassProject BuildProject() => new(
         code: "PRJ-REV",
@@ -97,8 +115,9 @@ public class RecomputeBomTriggersRevisionTests
     public async Task Handler_triggers_revision_when_released_work_order_with_snapshot_exists()
     {
         var project = BuildProject();
+        var composition = BuildComposition(1000m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
-        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition(1200m));
+        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
         _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
@@ -117,9 +136,10 @@ public class RecomputeBomTriggersRevisionTests
 
         await handler.Handle(new RecomputeBOMCommand(project.Id), default);
 
+        var expectedSnapshot = BomSnapshotJsonBuilder.Build(composition.Lines);
         await _revisionService.Received(1).CreateRevisionAsync(
             releasedWorkOrder.Id,
-            Arg.Any<string>(),
+            expectedSnapshot,
             1200m,
             Arg.Any<string>(),
             Arg.Any<CancellationToken>());
@@ -129,8 +149,9 @@ public class RecomputeBomTriggersRevisionTests
     public async Task RecomputeBOM_with_pending_status_workOrder_with_snapshot_triggers_revision()
     {
         var project = BuildProject();
+        var composition = BuildComposition(1041.6667m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
-        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition(1250m));
+        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
         _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
@@ -149,9 +170,10 @@ public class RecomputeBomTriggersRevisionTests
 
         await handler.Handle(new RecomputeBOMCommand(project.Id), default);
 
+        var expectedSnapshot = BomSnapshotJsonBuilder.Build(composition.Lines);
         await _revisionService.Received(1).CreateRevisionAsync(
             pendingWithSnapshot.Id,
-            Arg.Any<string>(),
+            expectedSnapshot,
             1250m,
             Arg.Any<string>(),
             Arg.Any<CancellationToken>());
@@ -161,8 +183,9 @@ public class RecomputeBomTriggersRevisionTests
     public async Task RecomputeBOM_with_multiple_released_workOrders_triggers_revision_for_each()
     {
         var project = BuildProject();
+        var composition = BuildComposition(1250m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
-        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition(1500m));
+        _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
         _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
@@ -185,9 +208,10 @@ public class RecomputeBomTriggersRevisionTests
 
         await handler.Handle(new RecomputeBOMCommand(project.Id), default);
 
-        await _revisionService.Received(1).CreateRevisionAsync(wo1.Id, Arg.Any<string>(), 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await _revisionService.Received(1).CreateRevisionAsync(wo2.Id, Arg.Any<string>(), 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
-        await _revisionService.Received(1).CreateRevisionAsync(wo3.Id, Arg.Any<string>(), 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
+        var expectedSnapshot = BomSnapshotJsonBuilder.Build(composition.Lines);
+        await _revisionService.Received(1).CreateRevisionAsync(wo1.Id, expectedSnapshot, 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _revisionService.Received(1).CreateRevisionAsync(wo2.Id, expectedSnapshot, 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _revisionService.Received(1).CreateRevisionAsync(wo3.Id, expectedSnapshot, 1500m, Arg.Any<string>(), Arg.Any<CancellationToken>());
         await _revisionService.Received(3).CreateRevisionAsync(
             Arg.Any<Guid>(), Arg.Any<string>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }

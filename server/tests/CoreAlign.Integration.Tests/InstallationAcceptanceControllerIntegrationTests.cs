@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Common.Storage;
 using CoreAlign.Application.Installation;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Enums;
@@ -53,7 +54,7 @@ public class InstallationAcceptanceControllerIntegrationTests
         var patchCmd = new UpdateChecklistItemCommand(
             AcceptanceId: acceptanceId,
             Category: "Glass",
-            ItemKey: "NoChips",
+            ItemKey: "Glass.NoChips",
             Result: InstallationChecklistResult.Pass,
             Notes: "Looks good");
 
@@ -73,7 +74,7 @@ public class InstallationAcceptanceControllerIntegrationTests
         var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
         var acceptanceId = await StartAcceptanceAsync(client, workOrderId);
 
-        var fileId = Guid.NewGuid();
+        var fileId = await SeedAcceptanceFileAsync(acceptanceId);
         var signatureCmd = new CaptureCustomerSignatureCommand(
             AcceptanceId: acceptanceId,
             FileId: fileId,
@@ -99,7 +100,7 @@ public class InstallationAcceptanceControllerIntegrationTests
 
         var signatureCmd = new CaptureCustomerSignatureCommand(
             AcceptanceId: acceptanceId,
-            FileId: Guid.NewGuid(),
+            FileId: await SeedAcceptanceFileAsync(acceptanceId),
             CustomerName: "John Customer");
         var signatureResponse = await client.PostAsJsonAsync(
             $"/api/v1/installation-acceptances/{acceptanceId}/signature", signatureCmd);
@@ -117,6 +118,23 @@ public class InstallationAcceptanceControllerIntegrationTests
         body!.Data.Should().NotBeNull();
         body.Data!.Status.Should().Be(InstallationAcceptanceStatus.Accepted);
         body.Data.CompletedAtUtc.Should().NotBeNull();
+    }
+
+    private async Task<Guid> SeedAcceptanceFileAsync(Guid acceptanceId)
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
+        using (TenantContextAccessor.PushTenant(_factory.TenantA.TenantId))
+        {
+            await using var content = new MemoryStream(new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A });
+            var stored = await storage.SaveAsync(
+                $"installation-acceptance/{acceptanceId:N}",
+                "signature.png",
+                content,
+                "image/png");
+            var fileName = stored.RelativePath[(stored.RelativePath.LastIndexOf('/') + 1)..];
+            return Guid.ParseExact(fileName[..fileName.IndexOf('_')], "N");
+        }
     }
 
     private async Task<Guid> StartAcceptanceAsync(HttpClient client, Guid workOrderId)

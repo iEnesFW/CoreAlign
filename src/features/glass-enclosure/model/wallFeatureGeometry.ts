@@ -189,6 +189,18 @@ export const simplifyFreePoints = (
 const orient = (o: SceneWallFeaturePoint, a: SceneWallFeaturePoint, b: SceneWallFeaturePoint) =>
   (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
 
+const onCollinearSegment = (
+  a: SceneWallFeaturePoint,
+  b: SceneWallFeaturePoint,
+  p: SceneWallFeaturePoint,
+) =>
+  Math.min(a.x, b.x) <= p.x &&
+  p.x <= Math.max(a.x, b.x) &&
+  Math.min(a.z, b.z) <= p.z &&
+  p.z <= Math.max(a.z, b.z);
+
+// WHY: non-adjacent edges of a simple polygon may not even TOUCH — a loop that passes exactly
+// through one of its own vertices (orientation 0) still pinches the contour and breaks earcut.
 const segmentsCross = (
   p1: SceneWallFeaturePoint,
   p2: SceneWallFeaturePoint,
@@ -199,7 +211,13 @@ const segmentsCross = (
   const d2 = orient(p3, p4, p2);
   const d3 = orient(p1, p2, p3);
   const d4 = orient(p1, p2, p4);
-  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+  if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+    return true;
+  }
+  if (d1 === 0 && onCollinearSegment(p3, p4, p1)) return true;
+  if (d2 === 0 && onCollinearSegment(p3, p4, p2)) return true;
+  if (d3 === 0 && onCollinearSegment(p1, p2, p3)) return true;
+  return d4 === 0 && onCollinearSegment(p1, p2, p4);
 };
 
 export const outlineSelfIntersects = (points: SceneWallFeaturePoint[]): boolean => {

@@ -67,7 +67,7 @@ public class InstallationAcceptanceServiceTests
         var acceptance = BuildAcceptance(Guid.NewGuid());
         _acceptances.GetByIdAsync(acceptance.Id, Arg.Any<CancellationToken>()).Returns(acceptance);
 
-        await _sut.UpdateChecklistAsync(acceptance.Id, "Glass", "NoChips", InstallationChecklistResult.Pass, "OK");
+        await _sut.UpdateChecklistAsync(acceptance.Id, "Glass", "Glass.NoChips", InstallationChecklistResult.Pass, "OK");
 
         acceptance.ChecklistJson.Should().Contain("\"result\":\"Pass\"");
         acceptance.ChecklistJson.Should().Contain("\"notes\":\"OK\"");

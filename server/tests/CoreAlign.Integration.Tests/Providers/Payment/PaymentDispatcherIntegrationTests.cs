@@ -93,7 +93,7 @@ public sealed class PaymentDispatcherIntegrationTests
     }
 
     [Fact]
-    public async Task ChargeAsync_idempotency_duplicate_order_reference_rejects_second_insert()
+    public async Task ChargeAsync_idempotency_duplicate_charge_replays_existing_without_second_insert()
     {
         var harness = new RealDispatcherExercisedHarness();
         harness.MockHttp.When(HttpMethod.Post, IntentsEndpoint)
@@ -102,13 +102,31 @@ public sealed class PaymentDispatcherIntegrationTests
                 """);
 
         var charge = BuildCharge(amount: 150m, orderReference: "ORD-DUP-1");
-        await harness.RealDispatcher.ChargeAsync(charge, CancellationToken.None);
+        var first = await harness.RealDispatcher.ChargeAsync(charge, CancellationToken.None);
 
-        var act = async () => await harness.RealDispatcher.ChargeAsync(charge, CancellationToken.None);
+        var second = await harness.RealDispatcher.ChargeAsync(charge, CancellationToken.None);
+
+        second.Result.Success.Should().BeTrue("the replay must surface the original outcome, not re-charge the card");
+        second.TransactionId.Should().Be(first.TransactionId);
+        second.ProviderUsed.Should().Be(first.ProviderUsed);
+        harness.TransactionRepository.AddCount.Should().Be(1, "the duplicate charge must NOT insert a second ledger row");
+        harness.TransactionRepository.Snapshot.Should().ContainSingle();
+        harness.OutboxRepository.Messages.Should().ContainSingle(m => m.Type == "PaymentSucceeded");
+    }
+
+    [Fact]
+    public async Task AddAsync_raced_duplicate_idempotency_key_rejects_second_insert()
+    {
+        var repository = new InMemoryPaymentTransactionRepository();
+        var tenantId = Guid.NewGuid();
+
+        await repository.AddAsync(BuildTransaction(tenantId, "idem-race-1"), CancellationToken.None);
+
+        var act = async () => await repository.AddAsync(BuildTransaction(tenantId, "idem-race-1"), CancellationToken.None);
         await act.Should().ThrowAsync<InvalidOperationException>(
-            "the in-memory repository emulates the prod unique index (TenantId+OrderReference+Amount)");
+            "the in-memory repository emulates the prod unique index (TenantId+IdempotencyKey) that backstops raced inserts");
 
-        harness.TransactionRepository.AddCount.Should().Be(1, "the duplicate insert must NOT increment AddCount past 1");
+        repository.AddCount.Should().Be(1, "the duplicate insert must NOT increment AddCount past 1");
     }
 
     [Fact]
@@ -159,6 +177,21 @@ public sealed class PaymentDispatcherIntegrationTests
 
         harness.AuditContext.PendingEntries.Should().Contain(e => e.ChangeKind == "PaymentDispatchAttempted");
     }
+
+    private static CoreAlign.Domain.Entities.Payments.PaymentTransaction BuildTransaction(Guid tenantId, string idempotencyKey) =>
+        new(
+            tenantId,
+            orderId: Guid.NewGuid(),
+            invoiceId: null,
+            orderReference: "ORD-RACE-1",
+            amount: 150m,
+            currency: "USD",
+            providerName: StripePaymentProvider.ProviderKey,
+            externalTransactionId: null,
+            requiresThreeDSecure: false,
+            redirectUrl: null,
+            metadataJson: null,
+            idempotencyKey: idempotencyKey);
 
     private static PaymentChargeRequest BuildCharge(decimal amount, string orderReference = "ORD-INT-1") =>
         new(

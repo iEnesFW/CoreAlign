@@ -31,14 +31,15 @@ public class StandardChecklistTests
 
         foreach (var category in doc.RootElement.EnumerateArray())
         {
-            category.GetProperty("category").GetString().Should().NotBeNullOrEmpty();
+            var categoryKey = category.GetProperty("category").GetString();
+            categoryKey.Should().NotBeNullOrEmpty();
             var items = category.GetProperty("items");
             items.GetArrayLength().Should().BeGreaterThan(0);
             foreach (var item in items.EnumerateArray())
             {
                 item.GetProperty("result").GetString().Should().Be("NotEvaluated");
-                item.GetProperty("key").GetString().Should().NotBeNullOrEmpty();
-                item.GetProperty("label").GetString().Should().NotBeNullOrEmpty();
+                item.GetProperty("key").GetString().Should().StartWith($"{categoryKey}.");
+                item.GetProperty("notes").ValueKind.Should().Be(JsonValueKind.Null);
             }
         }
     }
