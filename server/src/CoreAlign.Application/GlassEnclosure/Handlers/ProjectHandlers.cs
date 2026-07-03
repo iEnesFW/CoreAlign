@@ -15,6 +15,21 @@ using MediatR;
 
 namespace CoreAlign.Application.GlassEnclosure.Handlers;
 
+// WHY: on an arc run panels divide the DEVELOPED length (radius·sweep, the physical glass span) —
+// LengthMm is the CHORD (the fixed span between the ends), shorter by up to ×1.57 at 180°.
+public static class GlassRunPanelMath
+{
+    public static int PanelSpanMm(int lengthMm, int? arcRadiusMm, decimal? arcSweepDeg)
+    {
+        if (arcRadiusMm is > 0 && arcSweepDeg is not null && Math.Abs(arcSweepDeg.Value) >= 0.1m)
+        {
+            var sweepRad = Math.Min((double)Math.Abs(arcSweepDeg.Value) * Math.PI / 180.0, Math.PI * 2);
+            return Math.Max(1, (int)Math.Round(arcRadiusMm.Value * sweepRad));
+        }
+        return lengthMm;
+    }
+}
+
 public class CreateGlassProjectCommandHandler : IRequestHandler<CreateGlassProjectCommand, GlassProjectDto>
 {
     private readonly IGlassProjectRepository _projectRepo;
@@ -290,12 +305,14 @@ public class AddRunCommandHandler : IRequestHandler<AddRunCommand, GlassProjectR
             if (defaultGlassType is not null)
             {
                 var clampedCount = Math.Min(panelCount, 50);
-                var panelWidth = Math.Max(1, request.Data.LengthMm / clampedCount);
+                var spanMm = GlassRunPanelMath.PanelSpanMm(request.Data.LengthMm, request.Data.GeomArcRadiusMm, request.Data.GeomArcSweepDeg);
+                var baseWidth = Math.Max(1, spanMm / clampedCount);
                 for (var i = 0; i < clampedCount; i++)
                 {
+                    var widthMm = i == clampedCount - 1 ? Math.Max(1, spanMm - baseWidth * (clampedCount - 1)) : baseWidth;
                     run.AddPanel(new GlassProjectPanel(
                         run.Id, i,
-                        panelWidth, GlassOpeningType.Fixed, defaultGlassType.Id,
+                        widthMm, GlassOpeningType.Fixed, defaultGlassType.Id,
                         false, false, false, null));
                 }
             }
@@ -334,18 +351,33 @@ public class UpdateRunCommandHandler : IRequestHandler<UpdateRunCommand, GlassPr
 public class RemoveRunCommandHandler : IRequestHandler<RemoveRunCommand, Unit>
 {
     private readonly IGlassProjectRunRepository _runRepo;
+    private readonly IRunConnectionRepository _connectionRepo;
     private readonly IBomStaleSignal _bomStaleSignal;
-    public RemoveRunCommandHandler(IGlassProjectRunRepository runRepo, IBomStaleSignal bomStaleSignal)
+    public RemoveRunCommandHandler(
+        IGlassProjectRunRepository runRepo,
+        IRunConnectionRepository connectionRepo,
+        IBomStaleSignal bomStaleSignal)
     {
         _runRepo = runRepo;
+        _connectionRepo = connectionRepo;
         _bomStaleSignal = bomStaleSignal;
     }
 
     public async Task<Unit> Handle(RemoveRunCommand request, CancellationToken cancellationToken)
     {
-        var run = await _runRepo.GetByIdAsync(request.RunId, cancellationToken)
-            ?? throw new GlassEnclosureNotFoundException("ProjectRun");
+        // WHY: deleting an already-deleted run is success — the undo/redo reconciler retries
+        // deletes against a base that may have advanced, and a 404 here poisons the whole sync.
+        var run = await _runRepo.GetByIdAsync(request.RunId, cancellationToken);
+        if (run is null) return Unit.Value;
         if (run.ProjectId != request.ProjectId) throw new CrossTenantAccessException();
+        var connections = await _connectionRepo.ListByProjectAsync(run.ProjectId, cancellationToken);
+        foreach (var connection in connections)
+        {
+            if (connection.RunAId == run.Id || connection.RunBId == run.Id)
+            {
+                _connectionRepo.Remove(connection);
+            }
+        }
         _runRepo.Remove(run);
         await _bomStaleSignal.SignalStaleAsync(run.ProjectId, BomStaleReason.RunChanged, cancellationToken);
         return Unit.Value;
@@ -370,13 +402,16 @@ public class BulkRebalancePanelsCommandHandler : IRequestHandler<BulkRebalancePa
             ?? throw new GlassEnclosureNotFoundException("ProjectRun");
         if (run.ProjectId != request.ProjectId) throw new CrossTenantAccessException();
         var count = Math.Max(1, request.Data.PanelCount);
-        var widthMm = run.LengthMm / count;
+        var spanMm = GlassRunPanelMath.PanelSpanMm(run.LengthMm, run.GeomArcRadiusMm, run.GeomArcSweepDeg);
+        var baseWidth = Math.Max(1, spanMm / count);
 
         foreach (var existing in run.Panels.ToList()) _panelRepo.Remove(existing);
 
         var newPanels = Enumerable.Range(0, count).Select(i =>
             new GlassProjectPanel(
-                run.Id, i, widthMm, request.Data.DefaultOpeningType, request.Data.DefaultGlassTypeId)).ToList();
+                run.Id, i,
+                i == count - 1 ? Math.Max(1, spanMm - baseWidth * (count - 1)) : baseWidth,
+                request.Data.DefaultOpeningType, request.Data.DefaultGlassTypeId)).ToList();
         run.ReplacePanels(newPanels);
         // WHY: insert/delete the panels explicitly through the DbSet. A graph-walk over the tracked
         // run (DetectChanges or _context.Update) marks new panels with a pre-set Guid PK as Modified,

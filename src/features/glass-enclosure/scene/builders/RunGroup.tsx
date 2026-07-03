@@ -192,17 +192,35 @@ export function RunGroup({
   // walls it sits beside (unlike a wall, which carries its attached runs), so excluding them
   // let a run be pushed straight THROUGH a wall. The no-deepen gate still lets a mounted run
   // slide ALONG a wall (depth constant) and out of an existing overlap; it just can't go deeper.
-  const gestureObstacles = planObstacles;
+  // Co-moving MULTI-SELECTION members are the one exception: they travel with this run, so their
+  // stale footprints must not register as collisions mid-drag (same rule as SlabObject/WallObject).
+  const gestureObstacles = useMemo(() => {
+    if (!multiSelectionHas(multiSelection, 'run', run.id)) return planObstacles;
+    const coMoving = new Set<string>([
+      ...multiSelection.runIds,
+      ...multiSelection.wallIds,
+      ...multiSelection.slabIds,
+    ]);
+    return planObstacles.filter((o) => !coMoving.has(o.ownerId));
+  }, [planObstacles, multiSelection, run.id]);
 
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
     registerSceneRef(run.id, group);
   };
 
-  const filteredTargets = useMemo<PlanSnapTargets>(
-    () => (snapTargets ? filterSnapTargets(snapTargets, run.id) : EMPTY_SNAP_TARGETS),
-    [snapTargets, run.id],
-  );
+  // Exclude co-moving multi-selection members too — their stale pre-move endpoints must not
+  // act as snap targets while the group drags.
+  const filteredTargets = useMemo<PlanSnapTargets>(() => {
+    if (!snapTargets) return EMPTY_SNAP_TARGETS;
+    const excluded = new Set<string>([run.id]);
+    if (multiSelectionHas(multiSelection, 'run', run.id)) {
+      for (const id of multiSelection.runIds) excluded.add(id);
+      for (const id of multiSelection.wallIds) excluded.add(id);
+      for (const id of multiSelection.slabIds) excluded.add(id);
+    }
+    return filterSnapTargets(snapTargets, excluded);
+  }, [snapTargets, run.id, multiSelection]);
 
   const baseY = (run.geomZ ?? 0) / 1000;
   const rad = run.rotationDeg * DEG2RAD;

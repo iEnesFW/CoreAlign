@@ -19,7 +19,7 @@ import type {
 import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
-import { chordFromRadiusSweep, isRealArc } from './arcGeometry';
+import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -292,9 +292,13 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
   const prevFrame = new Map<string, RunFrameEdges>();
   const prevMullions = new Map<string, boolean>();
   const prevCustomColor = new Map<string, string>();
+  const prevLocked = new Map<string, boolean>();
   if (prev) {
     for (const r of prev.runs) {
       if (r.arcGlassBent) prevBent.set(r.id, true);
+      // locked is blob-only (not on the run DTO) — without this carry, every refetch (which fires
+      // after every run/panel mutation) silently UNLOCKED a run the user locked.
+      if (r.locked) prevLocked.set(r.id, true);
       // customColorHex lives only in the blob (not the run DTO), so carry it across a structured
       // re-fetch from the previous scene like arcGlassBent / frameEdges.
       if (r.customColorHex) prevCustomColor.set(r.id, r.customColorHex);
@@ -316,57 +320,71 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
     walls: prev?.walls ?? [],
     slabs: prev?.slabs ?? [],
     surfaces: prev?.surfaces ?? [],
-    runs: project.runs.map((run) => ({
-      id: run.id,
-      orderIndex: run.orderIndex,
-      label: run.label,
+    runs: project.runs.map((run) => {
       // CHORD-INVARIANT migration: lengthMm is the chord (the fixed span = 2·radius·sin(sweep/2)).
-      // Recovers it from the stored radius+sweep — idempotent, and converts old arc-length data
-      // (which stored the developed length) back to the chord. The rendered arc is unchanged (it
-      // reads radius+sweep), only lengthMm's meaning shifts to the chord for the handles/inspector.
-      lengthMm: chordFromRadiusSweep(
+      // Recovers it from the stored radius+sweep — idempotent, converts old arc-length data back
+      // to the chord, and KEEPS the stored value when it already agrees within integer-radius
+      // rounding (±5mm) so an exactly-entered kiriş isn't clobbered on every refetch.
+      const chordMm = chordFromRadiusSweep(
         Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
         run.geomArcRadiusMm,
         run.geomArcSweepDeg,
-      ),
-      heightMm: run.heightMm,
-      originX: run.originX,
-      originY: run.originY,
-      rotationDeg: run.rotationDeg,
-      profileSystemId: run.profileSystemId,
-      colorId: run.colorId,
-      customColorHex: prevCustomColor.get(run.id) ?? null,
-      hasTopDrip: run.hasTopDrip,
-      hasBottomThreshold: run.hasBottomThreshold,
-      geomZ: run.geomZ ?? null,
-      geomArcRadiusMm: run.geomArcRadiusMm ?? null,
-      geomArcSweepDeg: run.geomArcSweepDeg ?? null,
-      arcGlassBent: run.arcGlassBent ?? prevBent.get(run.id) ?? false,
-      frameEdges: prevFrame.get(run.id) ?? null,
-      hasMullions: prevMullions.has(run.id) ? false : null,
-      panels: normalizePanelWidths(
-        run.panels.map((panel) => ({
-          id: panel.id,
-          panelIndex: panel.panelIndex,
-          widthMm: panel.widthMm,
-          openingType: panel.openingType,
-          glassTypeId: panel.glassTypeId,
-          hasHandle: panel.hasHandle,
-          hasLock: panel.hasLock,
-          hasBrushSeal: panel.hasBrushSeal,
-          heightMm: panel.heightMm ?? null,
-          topShape: panel.topShape ?? null,
-          topRightHeightMm: panel.topRightHeightMm ?? null,
-          archRiseMm: panel.archRiseMm ?? null,
-          cornerRadiiMm: panel.cornerRadiiMm ?? undefined,
-          cornerNotchMm: prevNotch.get(panel.id) ?? undefined,
-          shapeKind: panel.shapeKind ?? null,
-          shapePointsJson: panel.shapePointsJson ?? null,
-          hardware: prevHardware.get(panel.id) ?? [],
-        })),
-        Math.max(run.lengthMm, run.panels.length * MIN_PANEL_MM),
-      ),
-    })),
+        5,
+      );
+      // Panels divide the DEVELOPED length (the physical glass span, radius·sweep) — derived from
+      // the arc fields, NOT the possibly-legacy stored lengthMm, so old rows self-heal on load.
+      const panelTargetMm = Math.max(
+        developedLengthMm(chordMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
+        run.panels.length * MIN_PANEL_MM,
+      );
+      return {
+        id: run.id,
+        orderIndex: run.orderIndex,
+        label: run.label,
+        lengthMm: chordMm,
+        heightMm: run.heightMm,
+        originX: run.originX,
+        originY: run.originY,
+        rotationDeg: run.rotationDeg,
+        profileSystemId: run.profileSystemId,
+        colorId: run.colorId,
+        customColorHex: prevCustomColor.get(run.id) ?? null,
+        hasTopDrip: run.hasTopDrip,
+        hasBottomThreshold: run.hasBottomThreshold,
+        geomZ: run.geomZ ?? null,
+        geomTiltDeg: run.geomTiltDeg ?? null,
+        geomArcRadiusMm: run.geomArcRadiusMm ?? null,
+        geomArcSweepDeg: run.geomArcSweepDeg ?? null,
+        arcGlassBent: run.arcGlassBent ?? prevBent.get(run.id) ?? false,
+        frameEdges: prevFrame.get(run.id) ?? null,
+        hasMullions: prevMullions.has(run.id) ? false : null,
+        locked: prevLocked.get(run.id) ?? false,
+        notes: run.notes ?? null,
+        panels: normalizePanelWidths(
+          run.panels.map((panel) => ({
+            id: panel.id,
+            panelIndex: panel.panelIndex,
+            widthMm: panel.widthMm,
+            openingType: panel.openingType,
+            glassTypeId: panel.glassTypeId,
+            hasHandle: panel.hasHandle,
+            hasLock: panel.hasLock,
+            hasBrushSeal: panel.hasBrushSeal,
+            notes: panel.notes ?? null,
+            heightMm: panel.heightMm ?? null,
+            topShape: panel.topShape ?? null,
+            topRightHeightMm: panel.topRightHeightMm ?? null,
+            archRiseMm: panel.archRiseMm ?? null,
+            cornerRadiiMm: panel.cornerRadiiMm ?? undefined,
+            cornerNotchMm: prevNotch.get(panel.id) ?? undefined,
+            shapeKind: panel.shapeKind ?? null,
+            shapePointsJson: panel.shapePointsJson ?? null,
+            hardware: prevHardware.get(panel.id) ?? [],
+          })),
+          panelTargetMm,
+        ),
+      };
+    }),
     connections: project.connections.map((c) => ({
       id: c.id,
       runAId: c.runAId,
@@ -428,14 +446,54 @@ export const distributePanelWidths = (
   return panels.map((panel, index) => ({ ...panel, widthMm: widths[index] }));
 };
 
+// Σ panel widths = the DEVELOPED length (physical glass) — for an arc run that's radius·sweep,
+// for a straight run the length itself. The run passed here must already carry the arc fields
+// the widths should follow (i.e. call AFTER merging a patch).
+const runPanelTargetMm = (run: SceneRunState): number =>
+  Math.max(
+    developedLengthMm(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
+    run.panels.length * MIN_PANEL_MM,
+  );
+
 const withClampedRunLength = (run: SceneRunState, lengthMm: number): SceneRunState => {
-  const clamped = Math.max(run.panels.length * MIN_PANEL_MM, Math.round(lengthMm));
-  return { ...run, lengthMm: clamped, panels: distributePanelWidths(run.panels, clamped) };
+  // Panels bound the DEVELOPED length, not the chord: on an arc run a legitimate panel count can
+  // exceed chord/MIN (the glass lives on radius·sweep), so clamping the CHORD against the panel
+  // count would corrupt chord = 2r·sin(sweep/2) on every commit. Straight runs keep the old rule
+  // (there chord IS the panel span).
+  const floorMm = isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)
+    ? MIN_PANEL_MM
+    : run.panels.length * MIN_PANEL_MM;
+  const clamped = Math.max(floorMm, Math.round(lengthMm));
+  const next = { ...run, lengthMm: clamped };
+  return { ...next, panels: distributePanelWidths(next.panels, runPanelTargetMm(next)) };
 };
 
 const normalizePanelWidths = (panels: ScenePanelState[], lengthMm: number): ScenePanelState[] => {
   const sum = panels.reduce((acc, panel) => acc + panel.widthMm, 0);
   return sum === lengthMm ? panels : distributePanelWidths(panels, lengthMm);
+};
+
+// Pin ONE panel's edited width and redistribute the rest over the remaining developed length —
+// on an arc run the total is FIXED by the curve (ends can't move), so a width edit trades glass
+// with the sibling panes instead of silently rewriting the chord.
+const pinPanelWidth = (
+  panels: ScenePanelState[],
+  pinnedId: string,
+  totalMm: number,
+): ScenePanelState[] => {
+  const count = panels.length;
+  if (count === 0) return panels;
+  if (count === 1) return panels.map((p) => ({ ...p, widthMm: totalMm }));
+  const pinned = panels.find((p) => p.id === pinnedId);
+  if (!pinned) return distributePanelWidths(panels, totalMm);
+  const maxPinned = Math.max(MIN_PANEL_MM, totalMm - (count - 1) * MIN_PANEL_MM);
+  const width = Math.min(Math.max(MIN_PANEL_MM, Math.round(pinned.widthMm)), maxPinned);
+  const others = distributePanelWidths(
+    panels.filter((p) => p.id !== pinnedId),
+    totalMm - width,
+  );
+  const byId = new Map(others.map((p) => [p.id, p]));
+  return panels.map((p) => (p.id === pinnedId ? { ...p, widthMm: width } : (byId.get(p.id) ?? p)));
 };
 
 const typedRunKey = (run: SceneRunState) =>
@@ -1055,7 +1113,15 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       runs: current.scene.runs.map((run) => {
         if (run.id !== runId) return run;
         const merged = { ...run, ...patch };
-        if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
+        // An ARC change with an unchanged chord (inspector radius/sweep, the bow handle — ends
+        // fixed) still changes the DEVELOPED length the panels divide, so it must redistribute
+        // the widths just like a length change does.
+        const arcChanged =
+          (patch.geomArcRadiusMm !== undefined &&
+            (patch.geomArcRadiusMm ?? null) !== (run.geomArcRadiusMm ?? null)) ||
+          (patch.geomArcSweepDeg !== undefined &&
+            (patch.geomArcSweepDeg ?? null) !== (run.geomArcSweepDeg ?? null));
+        if ((patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) || arcChanged) {
           return withClampedRunLength(merged, merged.lengthMm);
         }
         return merged;
@@ -1115,9 +1181,19 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         // shape from the existing panes and the new one alike.
         const multi = run.panels.length >= 1;
         const existing = multi ? run.panels.map(stripPanelShape) : run.panels;
+        const panels = [...existing, multi ? stripPanelShape(nextPanel) : nextPanel];
+        // ARC run: the curve (and its fixed ends) doesn't change — the new pane shares the fixed
+        // developed length instead of growing the chord (which would break chord=2r·sin(sweep/2)).
+        if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+          const withPanels = { ...run, panels };
+          return {
+            ...withPanels,
+            panels: distributePanelWidths(panels, runPanelTargetMm(withPanels)),
+          };
+        }
         return {
           ...run,
-          panels: [...existing, multi ? stripPanelShape(nextPanel) : nextPanel],
+          panels,
           lengthMm: run.lengthMm + nextPanel.widthMm,
         };
       }),
@@ -1135,6 +1211,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
           panel.id === panelId ? { ...panel, ...patch } : panel,
         );
         if (patch.widthMm !== undefined) {
+          // ARC run: the developed length is FIXED by the curve — a width edit trades glass with
+          // the sibling panes. Rewriting lengthMm := Σwidths here silently replaced the CHORD
+          // with the panel sum and broke chord=2r·sin(sweep/2) (the ends visibly jumped).
+          if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+            return { ...run, panels: pinPanelWidth(panels, panelId, runPanelTargetMm(run)) };
+          }
           const lengthMm = panels.reduce((sum, panel) => sum + panel.widthMm, 0);
           return { ...run, panels, lengthMm };
         }
@@ -1152,6 +1234,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (run.id !== runId) return run;
         const removed = run.panels.find((p) => p.id === panelId);
         const panels = reindexPanels(run.panels.filter((p) => p.id !== panelId));
+        // ARC run: the curve stays — remaining panes re-share the fixed developed length.
+        if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+          const withPanels = { ...run, panels };
+          return panels.length > 0
+            ? { ...withPanels, panels: distributePanelWidths(panels, runPanelTargetMm(withPanels)) }
+            : withPanels;
+        }
         const lengthMm =
           removed && panels.length > 0 ? Math.max(1, run.lengthMm - removed.widthMm) : run.lengthMm;
         return { ...run, panels, lengthMm };
@@ -1167,11 +1256,14 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       runs: current.scene.runs.map((run) => {
         if (run.id !== runId) return run;
-        const base = Math.floor(run.lengthMm / safeCount);
+        // Panels divide the DEVELOPED length (radius·sweep on an arc run — the physical glass),
+        // remainder to the last pane, matching the server-side rebalance exactly.
+        const targetMm = developedLengthMm(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg);
+        const base = Math.floor(targetMm / safeCount);
         const panels: ScenePanelState[] = Array.from({ length: safeCount }, (_, i) => ({
           id: crypto.randomUUID(),
           panelIndex: i,
-          widthMm: i === safeCount - 1 ? run.lengthMm - base * (safeCount - 1) : base,
+          widthMm: i === safeCount - 1 ? targetMm - base * (safeCount - 1) : base,
           openingType,
           glassTypeId,
           hasHandle: false,
@@ -1253,11 +1345,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const frameByRun = new Map<string, RunFrameEdges>();
     const mullionsByRun = new Map<string, boolean>();
     const colorByRun = new Map<string, string>();
+    const lockedByRun = new Map<string, boolean>();
     for (const r of scene.runs) {
       if (r.arcGlassBent) bentByRun.set(r.id, true);
       if (r.frameEdges) frameByRun.set(r.id, r.frameEdges);
       if (r.hasMullions === false) mullionsByRun.set(r.id, false);
       if (r.customColorHex) colorByRun.set(r.id, r.customColorHex);
+      if (r.locked) lockedByRun.set(r.id, true);
       for (const p of r.panels) {
         if (p.hardware?.length) hwByPanel.set(p.id, p.hardware);
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
@@ -1271,7 +1365,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       if (isRealArc(w.geomArcRadiusMm, w.geomArcSweepDeg)) {
         return {
           ...w,
-          lengthMm: chordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg),
+          lengthMm: chordFromRadiusSweep(w.lengthMm, w.geomArcRadiusMm, w.geomArcSweepDeg, 5),
         };
       }
       if ((w.geomArcRadiusMm ?? 0) > 0 || w.geomArcSweepDeg) {
@@ -1279,7 +1373,15 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       }
       return w;
     });
-    const snapshotSlabs = scene.slabs ?? [];
+    // Slabs get the same half-arc hygiene as walls: a radius without a real sweep (stale/legacy
+    // blob data) is normalized to FLAT instead of being consumed as a degenerate 1° arc.
+    const snapshotSlabs = (scene.slabs ?? []).map((s) => {
+      if (isRealArc(s.geomArcRadiusMm, s.geomArcSweepDeg)) return s;
+      if ((s.geomArcRadiusMm ?? 0) > 0 || s.geomArcSweepDeg) {
+        return { ...s, geomArcRadiusMm: null, geomArcSweepDeg: null };
+      }
+      return s;
+    });
     const snapshotSurfaces = scene.surfaces ?? [];
     if (
       hwByPanel.size === 0 &&
@@ -1288,6 +1390,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       frameByRun.size === 0 &&
       mullionsByRun.size === 0 &&
       colorByRun.size === 0 &&
+      lockedByRun.size === 0 &&
       snapshotWalls.length === 0 &&
       snapshotSlabs.length === 0 &&
       snapshotSurfaces.length === 0
@@ -1304,6 +1407,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         frameEdges: frameByRun.get(run.id) ?? run.frameEdges ?? null,
         hasMullions: mullionsByRun.has(run.id) ? false : (run.hasMullions ?? true),
         customColorHex: colorByRun.get(run.id) ?? run.customColorHex ?? null,
+        locked: lockedByRun.get(run.id) ?? run.locked ?? false,
         panels: run.panels.map((panel) => {
           const hw = hwByPanel.get(panel.id);
           const notch = notchByPanel.get(panel.id);

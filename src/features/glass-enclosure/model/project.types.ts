@@ -462,12 +462,16 @@ export interface SceneRunState {
   hasTopDrip: boolean;
   hasBottomThreshold: boolean;
   geomZ?: number | null;
+  geomTiltDeg?: number | null;
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
   arcGlassBent?: boolean;
   frameEdges?: RunFrameEdges | null;
   hasMullions?: boolean | null;
   locked?: boolean;
+  // Carried from the DTO so run updates round-trip it — toRunInput used to hard-code notes:null,
+  // which WIPED the server value on every designer-driven update (same for geomTiltDeg above).
+  notes?: string | null;
   panels: ScenePanelState[];
 }
 
@@ -525,6 +529,8 @@ export interface ScenePanelState {
   hasHandle: boolean;
   hasLock: boolean;
   hasBrushSeal: boolean;
+  // Carried from the DTO so panel updates round-trip it (toPanelInput used to wipe it to null).
+  notes?: string | null;
   hardware: SceneHardwareItem[];
   heightMm?: number | null;
   topShape?: PanelTopShape | null;

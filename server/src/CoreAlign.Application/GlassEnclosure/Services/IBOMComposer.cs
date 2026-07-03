@@ -1,5 +1,6 @@
 using CoreAlign.Application.Catalog.Linker;
 using CoreAlign.Application.GlassEnclosure.Cutting;
+using CoreAlign.Application.GlassEnclosure.Handlers;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -101,10 +102,10 @@ public class BOMComposer : IBOMComposer
                 : null;
             var priceModifier = 1m + (color?.PriceModifierPercent ?? 0m) / 100m;
 
-            var lengthMeters = run.LengthMm / 1000m;
+            var lengthMeters = GlassRunPanelMath.PanelSpanMm(run.LengthMm, run.GeomArcRadiusMm, run.GeomArcSweepDeg) / 1000m;
             var heightMeters = run.HeightMm / 1000m;
             var panelCount = Math.Max(1, run.Panels.Count);
-            var isArcRun = (run.GeomArcRadiusMm ?? 0) > 0;
+            var isArcRun = (run.GeomArcRadiusMm ?? 0) > 0 && Math.Abs(run.GeomArcSweepDeg ?? 0m) >= 0.1m;
             var glassCostFactor = isArcRun && run.ArcGlassBent ? settings.BentGlassCostFactor : 1m;
 
             var roleMeters = new (ProfileRole Role, decimal Meters)[]
@@ -301,6 +302,7 @@ public class BOMComposer : IBOMComposer
         {
             ["panel_count"] = (decimal)panelCount,
             ["run_length_mm"] = (decimal)run.LengthMm,
+            ["run_developed_length_mm"] = (decimal)GlassRunPanelMath.PanelSpanMm(run.LengthMm, run.GeomArcRadiusMm, run.GeomArcSweepDeg),
             ["run_height_mm"] = (decimal)run.HeightMm,
             ["opening_count_folding"] = (decimal)openings.Count(o => o == GlassOpeningType.Folding),
             ["opening_count_sliding"] = (decimal)openings.Count(o => o == GlassOpeningType.SlidingLeft || o == GlassOpeningType.SlidingRight),

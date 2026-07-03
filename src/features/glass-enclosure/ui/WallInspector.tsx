@@ -423,7 +423,7 @@ export function WallInspector() {
               ['right', -90],
             ] as const
           ).map(([key, sweep]) => {
-            const curved = (draft.geomArcRadiusMm ?? 0) > 0;
+            const curved = isArc;
             const side = (draft.geomArcSweepDeg ?? 1) >= 0 ? 'left' : 'right';
             const active = key === 'straight' ? !curved : curved && side === key;
             return (
@@ -448,7 +448,7 @@ export function WallInspector() {
             );
           })}
         </div>
-        {(draft.geomArcRadiusMm ?? 0) > 0 && (
+        {isArc && (
           <NumberField
             label={`${t('GlassEnclosure.Designer.Wall.ArcRadius', { defaultValue: 'Kavis yarıçapı' })} (mm)`}
             value={draft.geomArcRadiusMm ?? draft.lengthMm}
@@ -583,63 +583,69 @@ export function WallInspector() {
               ))
             )}
           </div>
+        </>
+      )}
 
-          <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
-            </p>
-            {(wall.features ?? []).length === 0 ? (
-              <p className="text-[11px] text-slate-400">
-                {t('GlassEnclosure.Designer.WallFeature.None', {
-                  defaultValue:
-                    "Katman yok — üstteki 'Yüzeye çiz' aracıyla duvar üzerine şekil çizin.",
-                })}
-              </p>
-            ) : (
-              (wall.features ?? []).map((feature) => {
-                const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
-                const modeLabel = wallFeatureModeLabelKey(feature.mode);
-                return (
-                  <div
-                    key={feature.id}
-                    className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelection({
-                          kind: 'wallFeature',
-                          runId: null,
-                          panelId: null,
-                          connectionId: null,
-                          hardwareId: null,
-                          wallId: wall.id,
-                          slabId: null,
-                          featureId: feature.id,
-                        })
-                      }
-                      className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
-                    >
-                      {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
-                      {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
-                      {feature.heightMm}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeWallFeature(wall.id, feature.id)}
-                      className="text-slate-400 hover:text-danger-500"
-                      aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
-                        defaultValue: 'Katmanı sil',
-                      })}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </div>
+      {/* The features list stays visible on ARC walls too: curved bands carve pen shapes via CSG
+          but render no on-surface selection proxies yet, so this list is the ONLY way to select
+          or delete a feature drawn on a curved wall. */}
+      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}
+        </p>
+        {(wall.features ?? []).length === 0 ? (
+          <p className="text-[11px] text-slate-400">
+            {t('GlassEnclosure.Designer.WallFeature.None', {
+              defaultValue: "Katman yok — üstteki 'Yüzeye çiz' aracıyla duvar üzerine şekil çizin.",
+            })}
+          </p>
+        ) : (
+          (wall.features ?? []).map((feature) => {
+            const shapeLabel = wallFeatureShapeLabelKey(feature.shape);
+            const modeLabel = wallFeatureModeLabelKey(feature.mode);
+            return (
+              <div
+                key={feature.id}
+                className="flex items-center justify-between gap-2 rounded border border-slate-200 px-2 py-1.5 dark:border-slate-700"
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSelection({
+                      kind: 'wallFeature',
+                      runId: null,
+                      panelId: null,
+                      connectionId: null,
+                      hardwareId: null,
+                      wallId: wall.id,
+                      slabId: null,
+                      featureId: feature.id,
+                    })
+                  }
+                  className="min-w-0 flex-1 truncate text-left text-[11px] font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400"
+                >
+                  {t(shapeLabel.key, { defaultValue: shapeLabel.fallback })} ·{' '}
+                  {t(modeLabel.key, { defaultValue: modeLabel.fallback })} · {feature.widthMm}×
+                  {feature.heightMm}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeWallFeature(wall.id, feature.id)}
+                  className="text-slate-400 hover:text-danger-500"
+                  aria-label={t('GlassEnclosure.Designer.WallFeature.Remove', {
+                    defaultValue: 'Katmanı sil',
+                  })}
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            );
+          })
+        )}
+      </div>
 
+      {!isArc && (
+        <>
           <button
             type="button"
             onClick={() => void handleAutofill()}

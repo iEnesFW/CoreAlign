@@ -55,11 +55,21 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
   const canShape = run.panels.length === 1;
 
   const commit = (patch: Partial<typeof panel>) => {
+    // Persist the STORE's post-commit state: on an ARC run a width edit is pinned/clamped and
+    // REDISTRIBUTES the sibling widths (pinPanelWidth) — persisting the raw patch would leave the
+    // server with the unclamped value and stale siblings (Σ ≠ the developed length).
+    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
     updatePanel(run.id, panel.id, patch);
-    void persistPanel(run.id, { ...panel, ...patch });
-    if (patch.widthMm !== undefined) {
-      const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
-      if (freshRun) void persistRun(freshRun);
+    const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
+    const freshPanel = freshRun?.panels.find((p) => p.id === panel.id);
+    void persistPanel(run.id, freshPanel ?? { ...panel, ...patch });
+    if (patch.widthMm !== undefined && freshRun) {
+      freshRun.panels.forEach((p) => {
+        if (p.id !== panel.id && beforeWidths.get(p.id) !== p.widthMm) {
+          void persistPanel(run.id, p);
+        }
+      });
+      void persistRun(freshRun);
     }
   };
   const show = (section: InspectorSection) => (sections ?? []).includes(section);

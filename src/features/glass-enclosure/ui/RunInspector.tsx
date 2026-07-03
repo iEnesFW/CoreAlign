@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
-import { minArcRadiusMm } from '../model/arcGeometry';
+import { queueToast } from '@/shared/api/toastQueue';
+import { arcFromCornerResize, isRealArc, minArcRadiusMm } from '../model/arcGeometry';
 import { RunArcSection } from './RunArcSection';
 import type {
   ColorOptionDto,
@@ -42,16 +43,45 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   const commit = (patch: Partial<typeof run>) => {
     const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
     updateRun(run.id, patch);
-    void persistRun({ ...run, ...patch });
+    // Persist the STORE's post-commit state, not the raw patch — the store clamps lengthMm
+    // (withClampedRunLength), so persisting the raw value diverged local vs server.
+    const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
+    void persistRun(fresh ?? { ...run, ...patch });
     // A length/arc edit rescales the panel widths (withClampedRunLength). Persist the changed
     // panels so the server stays consistent — otherwise a later reload re-normalizes them and an
     // arc panel's glass jumps (e.g. when toggling its hardware checkboxes afterwards).
     if (patch.lengthMm !== undefined || patch.geomArcRadiusMm !== undefined) {
-      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
       fresh?.panels.forEach((p) => {
         if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(run.id, p);
       });
     }
+  };
+
+  // Editing the Length of an ARC run changes the CHORD: keep the curl angle (sweep) and re-derive
+  // the radius so chord = 2r·sin(sweep/2) stays true — otherwise the rendered end (from the stale
+  // radius) no longer matches the logical span and the endpoints visibly drift apart. The server
+  // rejects GeomArcRadiusMm < 100, so a too-small derived radius warns instead of silently
+  // applying-then-reverting on the failed persist.
+  const commitLength = (lengthMm: number) => {
+    if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg)) {
+      const scaled = arcFromCornerResize(lengthMm, draft.geomArcSweepDeg ?? 1);
+      if (scaled.geomArcRadiusMm < 100) {
+        queueToast({
+          dedupeKey: 'glass-arc-radius-too-small',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+            defaultValue:
+              'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+            r: scaled.geomArcRadiusMm,
+          }),
+        });
+        setDraft(run);
+        return;
+      }
+      commit({ lengthMm: scaled.lengthMm, geomArcRadiusMm: scaled.geomArcRadiusMm });
+      return;
+    }
+    commit({ lengthMm });
   };
   // customColorHex is scene-local (persistRun/toRunInput never sends it) — update the store only
   // and let the debounced scene autosave persist it. Calling persistRun on every color-picker
@@ -194,7 +224,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                 max={20000}
                 value={draft.lengthMm}
                 onChange={(e) => setDraft({ ...draft, lengthMm: Number(e.target.value) })}
-                onBlur={() => commit({ lengthMm: draft.lengthMm })}
+                onBlur={() => commitLength(draft.lengthMm)}
                 className={inputClass}
               />
             </Field>

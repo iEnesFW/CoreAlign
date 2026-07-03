@@ -305,10 +305,11 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         {
             if (!systems.TryGetValue(run.ProfileSystemId, out var system)) continue;
             var panelCount = Math.Max(1, run.Panels.Count);
+            var railSpanMm = GlassRunPanelMath.PanelSpanMm(run.LengthMm, run.GeomArcRadiusMm, run.GeomArcSweepDeg);
             var segments = new[]
             {
-                (Role: ProfileRole.Top, LengthMm: run.LengthMm, Count: 1),
-                (Role: ProfileRole.Bottom, LengthMm: run.LengthMm, Count: 1),
+                (Role: ProfileRole.Top, LengthMm: railSpanMm, Count: 1),
+                (Role: ProfileRole.Bottom, LengthMm: railSpanMm, Count: 1),
                 (Role: ProfileRole.SideJamb, LengthMm: run.HeightMm, Count: 2),
                 (Role: ProfileRole.Sash, LengthMm: run.HeightMm, Count: 2 * panelCount),
                 (Role: ProfileRole.Mullion, LengthMm: run.HeightMm, Count: Math.Max(0, panelCount - 1)),

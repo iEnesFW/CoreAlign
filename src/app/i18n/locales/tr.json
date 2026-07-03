@@ -2744,6 +2744,8 @@
       "WeightedU": "Ağırlıklı U değeri",
       "AvgSoundDb": "Ort. ses yalıtımı",
       "MaxThickness": "Maks. kalınlık",
+      "FireClass": "Yangın sınıfı",
+      "CertificationClass": "Sertifika sınıfı",
       "NoSelection": "3D sahnede bir hat veya panel seçin.",
       "DefaultRunLabel": "Hat",
       "SearchPlaceholder": "Ara…",
@@ -2860,7 +2862,9 @@
         "Chord": "Kiriş (mm)",
         "Sagitta": "Ok (mm)",
         "Apply": "Uygula",
-        "DerivedInfo": "R{{r}} · {{deg}}° · kiriş {{chord}} mm · ok {{sagitta}} mm · eklem {{joint}}°",
+        "RadiusTooSmall": "Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.",
+        "DerivedInfo": "R{{r}} · {{deg}}° · kiriş {{chord}} mm · yay {{arc}} mm · ok {{sagitta}} mm · eklem {{joint}}°",
+        "DevelopedShort": "yay {{mm}} mm",
         "BentGlass": "Bombeli cam (özel üretim, ~2.5-3× maliyet)",
         "WarnTightRadius": "Dar yarıçap ({{r}} mm) — sistem üreticisinin minimumunu doğrulayın (tipik ≥1500 mm).",
         "WarnJointAngle": "Eklem açısı {{deg}}° — faseta için panel sayısını artırın (önerilen ≤10°).",
@@ -2951,6 +2955,7 @@
         "BarrelTitle": "Tonoz (kavisli) yüzey",
         "ArcRise": "Kavis yüksekliği",
         "BarrelDropsFeatures": "Kavise çevirince bu çatının şekilleri kaldırıldı.",
+        "PlanArcDropsFeatures": "Plan kavisine çevirince bu yüzeyin şekilleri kaldırıldı.",
         "PitchTitle": "Beşik (eğimli) çatı",
         "PitchRise": "Mahya yüksekliği",
         "PitchSymmetric": "Beşik (çift eğim)",
@@ -3014,6 +3019,18 @@
         "Pen": "Kalemle yüzey / katman çiz",
         "PenHint": "Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal"
       },
+      "Templates": {
+        "Title": "Şablonlar — tek tıkla hazır kompozisyon ekle",
+        "LWalls": "L duvar",
+        "UWalls": "U üç duvar",
+        "RoomDoor": "Dört duvar + kapı boşluğu",
+        "GableRoof": "Beşik çatı",
+        "BarrelRoof": "Tonoz çatı",
+        "ArcRoof": "Kavisli çatı (plan arc)",
+        "ArcRun": "Kavisli cam hattı",
+        "NoSystem": "Şablon için önce bir profil sistemi tanımlı olmalı.",
+        "Inserted": "Şablon sahneye eklendi."
+      },
       "WallFeature": {
         "Title": "Duvar katmanı",
         "Face": "Yüz",
@@ -3042,7 +3059,8 @@
         "Overlaps": "Alan mevcut bir boşluk veya katmanla çakışıyor.",
         "DoesNotFitSlab": "Alan zemin/çatı sınırlarına sığmıyor.",
         "SlabTitle": "Zemin/çatı katmanı",
-        "TooSmall": "Çizilen şekil çok küçük."
+        "TooSmall": "Çizilen şekil çok küçük.",
+        "SelfIntersecting": "Çizim kendini kesiyor — şekli tek parça, kesişmeden çizin."
       },
       "Pen": {
         "SelfIntersect": "Çizim kendisiyle kesişiyor; geçerli bir alan oluşturulamadı.",
@@ -3284,6 +3302,7 @@
       "WindLoadFail": "Cam, rüzgar yükü için yetersiz",
       "SystemOpeningMismatch": "Sistem bu açılım tipini desteklemiyor",
       "SeismicTooLarge": "Panel, deprem bölgesi için çok büyük",
+      "BendRadiusTight": "Bükme yarıçapı bu cam kalınlığı için çok dar (yarıçap|önerilen min mm)",
       "ConnectionAngleInvalid": "Gönye açısı önerilen aralığın dışında",
       "SystemNotFound": "Profil sistemi bulunamadı",
       "GlassNotFound": "Cam tipi bulunamadı"

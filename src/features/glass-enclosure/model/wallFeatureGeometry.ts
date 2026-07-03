@@ -1,3 +1,4 @@
+import { isRealArc, resolveArc } from './arcGeometry';
 import type {
   SceneWallFeature,
   SceneWallFeaturePoint,
@@ -32,7 +33,9 @@ const DEFAULT_POLYGON_SIDES = 6;
 export const FEATURE_EDGE_MARGIN_MM = 20;
 export const MIN_FEATURE_SIZE_MM = 60;
 export const FREE_SAMPLE_STEP_MM = 25;
-export const FREE_SIMPLIFY_TOLERANCE_MM = 12;
+// 4mm keeps freehand DRAW strokes faithful (12mm visibly rounded corners); point counts stay small
+// (the stream is already sampled at FREE_SAMPLE_STEP_MM).
+export const FREE_SIMPLIFY_TOLERANCE_MM = 4;
 
 const ellipseOutline = (
   cx: number,
@@ -183,10 +186,68 @@ export const simplifyFreePoints = (
   return points.filter((_, i) => keep[i]);
 };
 
+const orient = (o: SceneWallFeaturePoint, a: SceneWallFeaturePoint, b: SceneWallFeaturePoint) =>
+  (a.x - o.x) * (b.z - o.z) - (a.z - o.z) * (b.x - o.x);
+
+const segmentsCross = (
+  p1: SceneWallFeaturePoint,
+  p2: SceneWallFeaturePoint,
+  p3: SceneWallFeaturePoint,
+  p4: SceneWallFeaturePoint,
+) => {
+  const d1 = orient(p3, p4, p1);
+  const d2 = orient(p3, p4, p2);
+  const d3 = orient(p1, p2, p3);
+  const d4 = orient(p1, p2, p4);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+};
+
+export const outlineSelfIntersects = (points: SceneWallFeaturePoint[]): boolean => {
+  const n = points.length;
+  if (n < 4) return false;
+  for (let i = 0; i < n; i += 1) {
+    const a1 = points[i];
+    const a2 = points[(i + 1) % n];
+    for (let j = i + 2; j < n; j += 1) {
+      if (i === 0 && j === n - 1) continue;
+      if (segmentsCross(a1, a2, points[j], points[(j + 1) % n])) return true;
+    }
+  }
+  return false;
+};
+
+// A freehand stroke often hooks past its own start when closing, and the implicit closing edge
+// then CROSSES the loop — earcut mis-triangulates a self-intersecting contour into caps that no
+// longer match the side walls, so the CSG carve goes partial/unpredictable. Trim the tail (then
+// the head) until the closed loop is simple; a stroke that stays self-crossing is rejected (null).
+export const sanitizeFreeOutline = (
+  points: SceneWallFeaturePoint[],
+): SceneWallFeaturePoint[] | null => {
+  let pts = points;
+  for (let i = 0; i < 12 && pts.length > 3; i += 1) {
+    if (!outlineSelfIntersects(pts)) return pts;
+    pts = pts.slice(0, -1);
+  }
+  for (let i = 0; i < 12 && pts.length > 3; i += 1) {
+    if (!outlineSelfIntersects(pts)) return pts;
+    pts = pts.slice(1);
+  }
+  return outlineSelfIntersects(pts) ? null : pts;
+};
+
+// A curved wall's face coordinates run in DEVELOPED arc-length units (curvedWallPickUv maps hits
+// with u ∈ [0, radius·sweep]), so the usable face length is the developed length — the chord
+// (lengthMm) is always shorter and would reject shapes on the far part of a deep curve.
+export const wallFaceLengthMm = (wall: SceneWallState): number =>
+  isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
+    ? resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1).arcLengthMm
+    : wall.lengthMm;
+
 export const wallHeightAtMm = (wall: SceneWallState, xMm: number): number => {
   const heightEnd = wall.heightEndMm ?? wall.heightMm;
-  if (wall.lengthMm <= 0) return wall.heightMm;
-  const ratio = Math.min(1, Math.max(0, xMm / wall.lengthMm));
+  const faceLength = wallFaceLengthMm(wall);
+  if (faceLength <= 0) return wall.heightMm;
+  const ratio = Math.min(1, Math.max(0, xMm / faceLength));
   return wall.heightMm + (heightEnd - wall.heightMm) * ratio;
 };
 
@@ -196,7 +257,7 @@ export const featureFitsWall = (wall: SceneWallState, outline: FeatureOutlinePoi
   if (bounds.maxX - bounds.minX < MIN_FEATURE_SIZE_MM / 2) return false;
   if (bounds.maxZ - bounds.minZ < MIN_FEATURE_SIZE_MM / 2) return false;
   if (bounds.minX < FEATURE_EDGE_MARGIN_MM) return false;
-  if (bounds.maxX > wall.lengthMm - FEATURE_EDGE_MARGIN_MM) return false;
+  if (bounds.maxX > wallFaceLengthMm(wall) - FEATURE_EDGE_MARGIN_MM) return false;
   if (bounds.minZ < FEATURE_EDGE_MARGIN_MM / 2) return false;
   const topLimit =
     Math.min(wallHeightAtMm(wall, bounds.minX), wallHeightAtMm(wall, bounds.maxX)) -

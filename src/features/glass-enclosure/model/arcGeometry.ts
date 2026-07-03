@@ -76,17 +76,33 @@ export const resolveArc = (radiusMm: number, sweepDeg: number): ResolvedArc => {
 // Recover the CHORD (span between the fixed ends) from the stored radius+sweep: chord =
 // 2·radius·sin(sweep/2). Doubles as an idempotent migration of lengthMm to the chord (it held the
 // developed arc length under the old arc-length model). Falls back when there is no arc (a straight
-// run's lengthMm already IS its chord).
+// run's lengthMm already IS its chord). keepWithinMm keeps the STORED value when it already agrees
+// within rounding — the radius is persisted as an integer, so re-deriving on every refetch would
+// clobber an exactly field-measured chord (3000 → 2999/3001) while healing nothing.
 export const chordFromRadiusSweep = (
   fallbackMm: number,
   radiusMm: number | null | undefined,
   sweepDeg: number | null | undefined,
+  keepWithinMm = 0,
 ): number => {
   if (!radiusMm || radiusMm <= 0 || !sweepDeg) return fallbackMm;
   const sweepRad = Math.min(MAX_SWEEP_RAD, (Math.abs(sweepDeg) * Math.PI) / 180);
   const chord = Math.round(2 * radiusMm * Math.sin(sweepRad / 2));
-  return chord > 0 ? chord : fallbackMm;
+  if (chord <= 0) return fallbackMm;
+  return Math.abs(chord - fallbackMm) <= keepWithinMm ? fallbackMm : chord;
 };
+
+// The DEVELOPED length (physical glass span, radius·sweep) of a body — panel widths divide THIS,
+// not the chord: on a curved run every pane's real glass is longer than its chord share (×1.11 at
+// 90°, ×1.57 at 180°). Falls back to the given straight length when there is no real arc.
+export const developedLengthMm = (
+  fallbackMm: number,
+  radiusMm?: number | null,
+  sweepDeg?: number | null,
+): number =>
+  isRealArc(radiusMm, sweepDeg)
+    ? Math.round(resolveArc(radiusMm ?? 0, sweepDeg ?? 1).arcLengthMm)
+    : fallbackMm;
 
 export interface ArcEndLocal {
   xMm: number;
@@ -268,23 +284,29 @@ export const arcFromBow = (
   sagittaMm: number,
   straightenMm = 25,
 ): BowArc => {
-  if (Math.abs(sagittaMm) < straightenMm) {
-    return {
-      geomArcRadiusMm: null,
-      geomArcSweepDeg: null,
-      rotationDeg: Math.round(chordDeg * 10) / 10,
-      lengthMm: Math.round(chordMm),
-      arcLengthMm: Math.round(chordMm),
-    };
-  }
+  const straight: BowArc = {
+    geomArcRadiusMm: null,
+    geomArcSweepDeg: null,
+    rotationDeg: Math.round(chordDeg * 100) / 100,
+    lengthMm: Math.round(chordMm),
+    arcLengthMm: Math.round(chordMm),
+  };
+  if (Math.abs(sagittaMm) < straightenMm) return straight;
   const dir = sagittaMm >= 0 ? -1 : 1;
   const d = deriveArcFromChordSagitta(chordMm, Math.abs(sagittaMm));
+  // WHY: quantize the sweep FIRST, then derive radius + rotation roll from the QUANTIZED value —
+  // rolling with the unrounded sweep while storing the rounded one made repeated bow commits
+  // re-measure a drifted chord (tens of mm per shallow commit near straight).
+  const sweepStoredDeg = Math.round(d.sweepDeg * 10) / 10;
+  if (sweepStoredDeg < 0.5) return straight;
+  const sweepStoredRad = Math.min(MAX_SWEEP_RAD, (sweepStoredDeg * Math.PI) / 180);
+  const radius = chordMm / (2 * Math.sin(sweepStoredRad / 2));
   return {
-    geomArcRadiusMm: d.radiusMm,
-    geomArcSweepDeg: Math.round(dir * d.sweepDeg * 10) / 10,
-    rotationDeg: Math.round((chordDeg - dir * (d.sweepDeg / 2)) * 10) / 10,
+    geomArcRadiusMm: Math.round(radius),
+    geomArcSweepDeg: dir * sweepStoredDeg,
+    rotationDeg: Math.round((chordDeg - dir * (sweepStoredDeg / 2)) * 100) / 100,
     lengthMm: Math.round(chordMm),
-    arcLengthMm: d.arcLengthMm,
+    arcLengthMm: Math.round(radius * sweepStoredRad),
   };
 };
 
@@ -297,6 +319,21 @@ export const arcFromCornerResize = (
   const sweepRad = Math.min(MAX_SWEEP_RAD, Math.max(0.0001, (Math.abs(sweepDeg) * Math.PI) / 180));
   const radius = chordMm / (2 * Math.sin(sweepRad / 2));
   return { lengthMm: Math.round(chordMm), geomArcRadiusMm: Math.round(radius) };
+};
+
+// Read-time radius from the AUTHORITATIVE chord + stored sweep: the persisted radius is integer-
+// rounded (and legacy rows carry drifted values), so consumers that must render the chord at
+// exactly lengthMm re-derive it. Falls back to the stored radius when the pair is not a real arc.
+export const radiusFromChordSweep = (
+  chordMm: number,
+  radiusMm?: number | null,
+  sweepDeg?: number | null,
+): number => {
+  if (!isRealArc(radiusMm, sweepDeg)) return radiusMm ?? 0;
+  const sweepRad = Math.min(MAX_SWEEP_RAD, (Math.abs(sweepDeg ?? 0) * Math.PI) / 180);
+  const sin = Math.sin(sweepRad / 2);
+  if (sin < 1e-6 || chordMm <= 0) return radiusMm ?? 0;
+  return chordMm / (2 * sin);
 };
 
 // The current signed bow (sagitta in the +90° across direction) of an existing arc, so a re-adjust

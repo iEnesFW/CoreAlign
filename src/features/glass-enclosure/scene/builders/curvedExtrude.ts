@@ -1,6 +1,15 @@
-import { BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, Shape } from 'three';
+import {
+  BufferGeometry,
+  ExtrudeGeometry,
+  Float32BufferAttribute,
+  Shape,
+  ShapeUtils,
+  Vector2,
+} from 'three';
 
-const CURVE_STEP_RAD = 0.08;
+// Shared angular facet step for the band body AND the feature cutter: two different pitches made
+// three-csg-ts leave jagged beat-frequency edges where the grids intersected.
+const CURVE_STEP_RAD = 0.03;
 
 // WHY: spine passes through the local origin at phi=0; callers lay it flat with
 // rotation [-π/2,0,0] so extrude depth becomes world-up height (shared glass + wall body).
@@ -196,12 +205,55 @@ export interface CurvedWallFeaturePoint {
   z: number; // height, mm
 }
 
+// Densifying polyline mapper for the LIVE previews (pen elastic line, draft outlines) on a curved
+// wall: mapping only the vertices and connecting them with straight 3D segments buries any
+// horizontal span ≳20cm inside the band (the chord sags R·(1−cos(Δφ/2)) below the surface, far
+// beyond the 4mm face lift), which is why the blue preview vanished on horizontal movement.
+// Subdivides every edge with the same CURVE_STEP_RAD rule the committed CSG cutter uses, then maps
+// each dense point through curvedWallSurfacePoint. The wall-equivalent of curvedSlabMapOutlineMm.
+export const curvedWallSurfacePolyline = (
+  ptsMm: CurvedWallFeaturePoint[],
+  bandRadiusM: number,
+  surfaceRM: number,
+  direction: 1 | -1,
+  sweep: number,
+  lengthMm: number,
+  close: boolean,
+): [number, number, number][] => {
+  const span = Math.max(1e-4, sweep);
+  const len = Math.max(1, lengthMm);
+  const maxSegMm = Math.max(5, (CURVE_STEP_RAD / span) * len);
+  const out: [number, number, number][] = [];
+  const mapPoint = (p: CurvedWallFeaturePoint) =>
+    curvedWallSurfacePoint(p.x, p.z, bandRadiusM, surfaceRM, direction, sweep, lengthMm);
+  const edgeCount = close ? ptsMm.length : ptsMm.length - 1;
+  for (let i = 0; i < edgeCount; i += 1) {
+    const p = ptsMm[i];
+    const q = ptsMm[(i + 1) % ptsMm.length];
+    out.push(mapPoint(p));
+    const segments = Math.ceil(Math.abs(q.x - p.x) / maxSegMm);
+    for (let k = 1; k < segments; k += 1) {
+      const t = k / segments;
+      out.push(mapPoint({ x: p.x + (q.x - p.x) * t, z: p.z + (q.z - p.z) * t }));
+    }
+  }
+  if (ptsMm.length > 0) out.push(mapPoint(ptsMm[close ? 0 : ptsMm.length - 1]));
+  return out;
+};
+
 // A closed solid that follows the feature's outline along a curved wall, occupying the radial
 // band [rNearM, rFarM]. Built in the SAME pre-rotation frame as buildCurvedBandGeometry (arc in
 // XY, height along Z) so it can be CSG-subtracted from / unioned with the curved wall body, or
 // rendered as a thin on-surface proxy for selection. The outline x maps along the arc (0 → sweep);
 // z is the height. Used for holes (through), recesses (partial radial), protrusions (outward) and
 // the selectable surface decal on a curved wall.
+//
+// EXACT OUTLINE SWEEP: every drawn vertex maps 1:1 through cyl() — the previous version resampled
+// the outline into as few as 8 single-span vertical columns, which chamfered corners (up to half a
+// column pitch of material left standing) and FILLED any vertical concavity (spanAtX kept only the
+// min/max crossings). Caps are earcut-triangulated (concave-safe); long edges are subdivided so
+// straight outline edges still follow the curve; side walls are radial quads per outline edge with
+// the same winding relationship the band's own rim quads used.
 export const buildCurvedWallFeatureSolid = (
   outlineMm: CurvedWallFeaturePoint[],
   lengthMm: number,
@@ -224,68 +276,116 @@ export const buildCurvedWallFeatureSolid = (
     return [Math.cos(a) * r, centerY + Math.sin(a) * r, zMm / 1000];
   };
 
-  let minX = Infinity;
-  let maxX = -Infinity;
+  const deduped: CurvedWallFeaturePoint[] = [];
   for (const p of outlineMm) {
-    if (p.x < minX) minX = p.x;
-    if (p.x > maxX) maxX = p.x;
+    const prev = deduped[deduped.length - 1];
+    if (!prev || Math.hypot(p.x - prev.x, p.z - prev.z) > 0.5) deduped.push(p);
   }
-  if (!Number.isFinite(minX) || maxX - minX < 0.5) return new BufferGeometry();
-  // Column density tracks the arc length the feature spans, so a wider feature stays smooth.
-  const featureSpanRad = ((maxX - minX) / len) * span;
-  const cols = Math.max(8, Math.ceil(featureSpanRad / SHAPED_COL_STEP_RAD));
-  const ySpanAt = (x: number) =>
-    spanAtX(
-      outlineMm.map((p) => ({ x: p.x, y: p.z })),
-      x,
-    );
-  const edgeEps = (maxX - minX) * 1e-4 + 1e-3;
-  const columns: { x: number; lo: number; hi: number }[] = [];
-  for (let i = 0; i <= cols; i += 1) {
-    let x = minX + ((maxX - minX) * i) / cols;
-    if (i === 0) x = minX + edgeEps;
-    else if (i === cols) x = maxX - edgeEps;
-    const s = ySpanAt(x);
-    if (s && s[1] - s[0] > 0.5) columns.push({ x, lo: s[0], hi: s[1] });
+  if (deduped.length >= 2) {
+    const first = deduped[0];
+    const last = deduped[deduped.length - 1];
+    if (Math.hypot(first.x - last.x, first.z - last.z) <= 0.5) deduped.pop();
   }
-  if (columns.length < 2) return new BufferGeometry();
+  if (deduped.length < 3) return new BufferGeometry();
+
+  let area2 = 0;
+  for (let i = 0; i < deduped.length; i += 1) {
+    const p = deduped[i];
+    const q = deduped[(i + 1) % deduped.length];
+    area2 += p.x * q.z - q.x * p.z;
+  }
+  const loop = area2 >= 0 ? deduped : [...deduped].reverse();
+
+  // Subdivide edges so no sub-segment spans more than CURVE_STEP_RAD of arc — a long straight
+  // outline edge otherwise cuts as a chord through the curved band.
+  const maxSegMm = Math.max(5, (CURVE_STEP_RAD / span) * len);
+  const dense: CurvedWallFeaturePoint[] = [];
+  for (let i = 0; i < loop.length; i += 1) {
+    const p = loop[i];
+    const q = loop[(i + 1) % loop.length];
+    dense.push(p);
+    const segments = Math.ceil(Math.abs(q.x - p.x) / maxSegMm);
+    for (let k = 1; k < segments; k += 1) {
+      const t = k / segments;
+      dense.push({ x: p.x + (q.x - p.x) * t, z: p.z + (q.z - p.z) * t });
+    }
+  }
+  if (dense.length < 3) return new BufferGeometry();
 
   const pos: number[] = [];
-  const tri = (a: number[], b: number[], c: number[]) => pos.push(...a, ...b, ...c);
+  // WHY: for direction === +1 the (u,z)→3D map cyl() is a REFLECTION (toAngle decreases as u
+  // grows), so CCW-in-(u,z) winding comes out inside-out in 3D — the winding-based CSG then
+  // computed band∩cutter instead of band−cutter, keeping only the plug (empirically verified).
+  const flip = direction === 1;
+  const tri = (a: number[], b: number[], c: number[]) =>
+    flip ? pos.push(...a, ...c, ...b) : pos.push(...a, ...b, ...c);
   const quad = (a: number[], b: number[], c: number[], d: number[]) => {
     tri(a, b, c);
     tri(a, c, d);
   };
-  for (let i = 0; i < columns.length - 1; i += 1) {
-    const c0 = columns[i];
-    const c1 = columns[i + 1];
-    const fb0 = cyl(c0.x, c0.lo, rOut);
-    const ft0 = cyl(c0.x, c0.hi, rOut);
-    const fb1 = cyl(c1.x, c1.lo, rOut);
-    const ft1 = cyl(c1.x, c1.hi, rOut);
-    const bb0 = cyl(c0.x, c0.lo, rIn);
-    const bt0 = cyl(c0.x, c0.hi, rIn);
-    const bb1 = cyl(c1.x, c1.lo, rIn);
-    const bt1 = cyl(c1.x, c1.hi, rIn);
-    quad(fb0, fb1, ft1, ft0); // outer face
-    quad(bb1, bb0, bt0, bt1); // inner face
-    quad(ft0, ft1, bt1, bt0); // top rim
-    quad(bb0, bb1, fb1, fb0); // bottom rim
+
+  // WHY: cap triangles are FLAT while their vertices sit on the cylinder — a triangle spanning
+  // more arc than CURVE_STEP_RAD sags r·(1−cos(Δφ/2)) below the band skin and leaves an uncut
+  // shell inside wide holes. Subdivide until each cap triangle stays within the same step the
+  // outline edges already use, then map every vertex through cyl().
+  const emitCap = (
+    a: CurvedWallFeaturePoint,
+    b: CurvedWallFeaturePoint,
+    c: CurvedWallFeaturePoint,
+    r: number,
+    reversed: boolean,
+  ) => {
+    const dab = Math.abs(a.x - b.x);
+    const dbc = Math.abs(b.x - c.x);
+    const dca = Math.abs(c.x - a.x);
+    if (Math.max(dab, dbc, dca) > maxSegMm) {
+      if (dab >= dbc && dab >= dca) {
+        const m = { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 };
+        emitCap(a, m, c, r, reversed);
+        emitCap(m, b, c, r, reversed);
+      } else if (dbc >= dca) {
+        const m = { x: (b.x + c.x) / 2, z: (b.z + c.z) / 2 };
+        emitCap(a, b, m, r, reversed);
+        emitCap(a, m, c, r, reversed);
+      } else {
+        const m = { x: (c.x + a.x) / 2, z: (c.z + a.z) / 2 };
+        emitCap(a, b, m, r, reversed);
+        emitCap(m, b, c, r, reversed);
+      }
+      return;
+    }
+    const pa = cyl(a.x, a.z, r);
+    const pb = cyl(b.x, b.z, r);
+    const pc = cyl(c.x, c.z, r);
+    if (reversed) tri(pa, pc, pb);
+    else tri(pa, pb, pc);
+  };
+
+  const contour = dense.map((p) => new Vector2(p.x, p.z));
+  const faces = ShapeUtils.triangulateShape(contour, []);
+  for (const face of faces) {
+    const i0 = face[0];
+    let i1 = face[1];
+    let i2 = face[2];
+    const a = contour[i0];
+    const b = contour[i1];
+    const c = contour[i2];
+    // Normalize each cap triangle to CCW in (u,z) so the solid's orientation is deterministic
+    // (earcut's output winding follows its input; the outline arrives in either direction).
+    if ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) < 0) {
+      const swap = i1;
+      i1 = i2;
+      i2 = swap;
+    }
+    emitCap(dense[i0], dense[i1], dense[i2], rOut, false);
+    emitCap(dense[i0], dense[i1], dense[i2], rIn, true);
   }
-  const first = columns[0];
-  quad(
-    cyl(first.x, first.lo, rOut),
-    cyl(first.x, first.hi, rOut),
-    cyl(first.x, first.hi, rIn),
-    cyl(first.x, first.lo, rIn),
-  );
-  const last = columns[columns.length - 1];
-  quad(
-    cyl(last.x, last.lo, rIn),
-    cyl(last.x, last.hi, rIn),
-    cyl(last.x, last.hi, rOut),
-    cyl(last.x, last.lo, rOut),
-  );
+
+  for (let i = 0; i < dense.length; i += 1) {
+    const a = dense[i];
+    const b = dense[(i + 1) % dense.length];
+    quad(cyl(a.x, a.z, rIn), cyl(b.x, b.z, rIn), cyl(b.x, b.z, rOut), cyl(a.x, a.z, rOut));
+  }
 
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new Float32BufferAttribute(pos, 3));

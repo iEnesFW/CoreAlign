@@ -32,9 +32,20 @@ import {
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
-import { buildCurvedSlabGeometry } from './curvedSlabGeometry';
+import {
+  curvedSlabFrame,
+  curvedSlabMapOutlineMm,
+  curvedSlabPickSc,
+  curvedSlabPlanOutlineMm,
+  curvedSlabPointAt,
+} from './curvedSlabGeometry';
 import { buildPitchedRoofGeometry } from './pitchedRoofGeometry';
-import { bowFromArc, deriveArcFromChordSagitta, isRealArc } from '../../model/arcGeometry';
+import {
+  bowFromArc,
+  deriveArcFromChordSagitta,
+  deriveArcFromSweep,
+  isRealArc,
+} from '../../model/arcGeometry';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
@@ -50,6 +61,7 @@ import {
   formatDraftDimensionMm,
   outlineBoundsMm,
   outlineFitsRect,
+  sanitizeFreeOutline,
   shrinkOutlineMm,
   simplifyFreePoints,
 } from '../../model/wallFeatureGeometry';
@@ -122,23 +134,76 @@ const buildSlabGeometries = (
 ): { body: BufferGeometry; featureItems: SlabFeatureItem[] } => {
   const thicknessMm = slab.thicknessMm;
   const thicknessM = thicknessMm / 1000;
+  const orient = (geometry: ExtrudeGeometry, extraYM: number) => {
+    geometry.rotateX(HALF_PI);
+    geometry.translate(0, thicknessM + extraYM, 0);
+    return geometry;
+  };
 
-  // PLAN arc (curves left/right like a wall): bend the slab SYMMETRICALLY along the chosen axis
-  // (length or depth) in its local frame — no rotation, bent-axis ends fixed, one-sided depth.
-  // Features deferred (#6b), like the barrel/pitch shapes.
+  // PLAN arc (curves left/right like a wall): the bend is purely in PLAN and the cut is vertical
+  // along Y, so the curved body is an EXTRUDE of the sampled band outline — and features cut
+  // exactly like the flat slab (shape.holes), with each (s,c) outline forward-mapped into plan.
+  // #6b: features are fully supported on plan-arc slabs (barrel/pitch remain deferred).
   if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
-    return {
-      body: buildCurvedSlabGeometry(
+    const frame = curvedSlabFrame(
+      slab.lengthMm,
+      slab.depthMm,
+      slab.geomArcRadiusMm ?? 0,
+      slab.geomArcSweepDeg ?? 1,
+      slab.slabArcAxis ?? 'length',
+    );
+    const shape = outlineToShape(
+      curvedSlabPlanOutlineMm(
         slab.lengthMm,
         slab.depthMm,
-        slab.thicknessMm,
         slab.geomArcRadiusMm ?? 0,
         slab.geomArcSweepDeg ?? 1,
         slab.slabArcAxis ?? 'length',
-        (slab.geomArcSweepDeg ?? 1) < 0 ? -1 : 1,
       ),
-      featureItems: [],
-    };
+    );
+    const composed = composeSurfaceFeatures(
+      slab.features ?? [],
+      (outline) =>
+        outlineFitsRect(outline, frame.developedMm, frame.acrossMm, FEATURE_EDGE_MARGIN_MM),
+      [],
+      thicknessMm,
+    );
+    const featureItems: SlabFeatureItem[] = [];
+    for (const baseItem of composed) {
+      const item =
+        cutFeatures || baseItem.kind === 'protrude'
+          ? baseItem
+          : { ...baseItem, kind: 'outline' as const, cut: false };
+      const mappedOutline = curvedSlabMapOutlineMm(frame, item.outline);
+      if (item.cut) shape.holes.push(outlineToPath(mappedOutline));
+      let geometry: ExtrudeGeometry | null = null;
+      if (item.kind === 'plug') {
+        const plugDepthM = Math.max(MIN_PLUG_DEPTH_M, (thicknessMm - item.feature.depthMm) / 1000);
+        geometry = orient(
+          new ExtrudeGeometry(
+            outlineToShape(
+              curvedSlabMapOutlineMm(frame, shrinkOutlineMm(item.outline, PLUG_INSET_MM)),
+            ),
+            { depth: plugDepthM, bevelEnabled: false },
+          ),
+          item.feature.side === 1 ? -item.feature.depthMm / 1000 : 0,
+        );
+      } else if (item.kind === 'protrude') {
+        const depthM = Math.max(0.002, item.feature.depthMm / 1000);
+        geometry = orient(
+          new ExtrudeGeometry(outlineToShape(mappedOutline), {
+            depth: depthM,
+            bevelEnabled: false,
+          }),
+          item.feature.side === 1 ? depthM : -thicknessM,
+        );
+      }
+      // outline is overridden with the PLAN-mapped polyline so the selection decal / region line
+      // renders ON the band; bounds stay in (s,c) for the move clamp.
+      featureItems.push({ ...item, outline: mappedOutline, geometry });
+    }
+    const body = orient(new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false }), 0);
+    return { body, featureItems };
   }
 
   // Barrel (single-curvature) slab — a curved sheet (roof OR floor), already in the slab's
@@ -180,11 +245,6 @@ const buildSlabGeometries = (
     [],
     thicknessMm,
   );
-  const orient = (geometry: ExtrudeGeometry, extraYM: number) => {
-    geometry.rotateX(HALF_PI);
-    geometry.translate(0, thicknessM + extraYM, 0);
-    return geometry;
-  };
   const featureItems: SlabFeatureItem[] = [];
   for (const baseItem of composed) {
     const item =
@@ -260,8 +320,11 @@ export function SlabObject({
   const isShapedSlab = isArcSlab || isBarrelRoof;
   // Length/depth stretch assumes a flat slab; a curved/pitched roof is resized via its rise/curve.
   const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isShapedSlab;
+  // Corner handles stay available on a PLAN-ARC slab (its logical rect is still authoritative — the
+  // bent axis' chord ends sit exactly on the rect corners); resizing re-derives the radius for the
+  // new chord below. Barrel/pitched (up-curve) slabs are resized via their rise instead.
   const vertexEditActive =
-    transformActive && isSelected && interactive && !slab.locked && !isShapedSlab;
+    transformActive && isSelected && interactive && !slab.locked && !isBarrelRoof;
   // The plan-arc (bow) handle: on a flat slab (to START a plan curve) or an already plan-curved one
   // (to re-adjust), but NOT a barrel/pitched (up-curve) slab — mutually exclusive.
   const curveEditActive =
@@ -278,6 +341,28 @@ export function SlabObject({
   const slabCurrentSagittaMm = isArcSlab
     ? bowFromArc(chordLenMm, slab.geomArcRadiusMm ?? 0, slab.geomArcSweepDeg ?? 0)
     : 0;
+  // Developed (s,c) frame of a plan-curved slab: ALL pen/draw/feature coordinates live in it, so
+  // the surface never "behaves flat" — picks invert plan→(s,c), previews/cuts map (s,c)→plan.
+  const arcFrame = useMemo(
+    () =>
+      isArcSlab
+        ? curvedSlabFrame(
+            slab.lengthMm,
+            slab.depthMm,
+            slab.geomArcRadiusMm ?? 0,
+            slab.geomArcSweepDeg ?? 1,
+            slabArcAxis,
+          )
+        : null,
+    [
+      isArcSlab,
+      slab.lengthMm,
+      slab.depthMm,
+      slab.geomArcRadiusMm,
+      slab.geomArcSweepDeg,
+      slabArcAxis,
+    ],
+  );
   // WHY: always cut features even while stretching — suppressing the cut during the Stretch
   // tool (where depth is given) hid the recess/hole on the slab face until the tool was left.
   const { body, featureItems } = useMemo(() => buildSlabGeometries(slab, true), [slab]);
@@ -306,10 +391,18 @@ export function SlabObject({
     setDraftState(value);
   };
 
-  const filteredTargets = useMemo<PlanSnapTargets>(
-    () => (snapTargets ? filterSnapTargets(snapTargets, slab.id) : EMPTY_SNAP_TARGETS),
-    [snapTargets, slab.id],
-  );
+  // Exclude co-moving multi-selection members too — their stale pre-move endpoints must not
+  // act as snap targets while the group drags.
+  const filteredTargets = useMemo<PlanSnapTargets>(() => {
+    if (!snapTargets) return EMPTY_SNAP_TARGETS;
+    const excluded = new Set<string>([slab.id]);
+    if (multiSelectionHas(multiSelection, 'slab', slab.id)) {
+      for (const id of multiSelection.runIds) excluded.add(id);
+      for (const id of multiSelection.wallIds) excluded.add(id);
+      for (const id of multiSelection.slabIds) excluded.add(id);
+    }
+    return filterSnapTargets(snapTargets, excluded);
+  }, [snapTargets, slab.id, multiSelection]);
 
   const rad = slab.rotationDeg * DEG2RAD;
   const dirX = Math.cos(rad);
@@ -416,19 +509,29 @@ export function SlabObject({
     if (!group) return null;
     TMP_VEC.copy(point);
     group.worldToLocal(TMP_VEC);
-    return {
-      x: TMP_VEC.x * 1000,
-      z: TMP_VEC.z * 1000,
-      side: TMP_VEC.y >= thicknessM / 2 ? 1 : -1,
-    };
+    const side: 1 | -1 = TMP_VEC.y >= thicknessM / 2 ? 1 : -1;
+    // ARC slab: invert the plan hit into the developed (s,c) frame — the raw plan coords range
+    // outside the flat rect (the bulge) and would otherwise clamp to a phantom rectangle.
+    if (arcFrame) {
+      const sc = curvedSlabPickSc(arcFrame, TMP_VEC.x * 1000, TMP_VEC.z * 1000);
+      return { x: sc.s, z: sc.c, side };
+    }
+    return { x: TMP_VEC.x * 1000, z: TMP_VEC.z * 1000, side };
   };
 
-  const clampDrawPoint = (xMm: number, zMm: number): SceneWallFeaturePoint => ({
-    x: clampValue(xMm, FEATURE_EDGE_MARGIN_MM, slab.lengthMm - FEATURE_EDGE_MARGIN_MM),
-    z: clampValue(zMm, FEATURE_EDGE_MARGIN_MM, slab.depthMm - FEATURE_EDGE_MARGIN_MM),
-  });
+  const clampDrawPoint = (xMm: number, zMm: number): SceneWallFeaturePoint =>
+    arcFrame
+      ? {
+          x: clampValue(xMm, FEATURE_EDGE_MARGIN_MM, arcFrame.developedMm - FEATURE_EDGE_MARGIN_MM),
+          z: clampValue(zMm, FEATURE_EDGE_MARGIN_MM, arcFrame.acrossMm - FEATURE_EDGE_MARGIN_MM),
+        }
+      : {
+          x: clampValue(xMm, FEATURE_EDGE_MARGIN_MM, slab.lengthMm - FEATURE_EDGE_MARGIN_MM),
+          z: clampValue(zMm, FEATURE_EDGE_MARGIN_MM, slab.depthMm - FEATURE_EDGE_MARGIN_MM),
+        };
 
   const commitDraft = (spec: DraftFeature) => {
+    // Plan-arc slabs now carve + render features (#6b); only barrel/pitch remain deferred.
     if (isBarrelRoof) {
       queueToast({
         dedupeKey: 'glass-arc-no-feature',
@@ -459,7 +562,19 @@ export function SlabObject({
         x: spec.offsetMm + p.x,
         z: spec.centerZMm + p.z,
       }));
-      const simplified = simplifyFreePoints(absolute, FREE_SIMPLIFY_TOLERANCE_MM);
+      const simplified = sanitizeFreeOutline(
+        simplifyFreePoints(absolute, FREE_SIMPLIFY_TOLERANCE_MM),
+      );
+      if (!simplified) {
+        queueToast({
+          dedupeKey: 'glass-slab-feature-fit',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.WallFeature.SelfIntersecting', {
+            defaultValue: 'Çizim kendini kesiyor — şekli tek parça, kesişmeden çizin.',
+          }),
+        });
+        return;
+      }
       if (simplified.length < 3) return;
       const bounds = outlineBoundsMm(simplified.map((p) => ({ x: p.x, z: p.z })));
       offsetMm = (bounds.minX + bounds.maxX) / 2;
@@ -489,7 +604,10 @@ export function SlabObject({
       colorHex: null,
     };
     const outline = featureOutlineMm(feature);
-    if (!outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM)) {
+    const fits = arcFrame
+      ? outlineFitsRect(outline, arcFrame.developedMm, arcFrame.acrossMm, FEATURE_EDGE_MARGIN_MM)
+      : outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM);
+    if (!fits) {
       queueToast({
         dedupeKey: 'glass-slab-feature-fit',
         variant: 'warning',
@@ -517,18 +635,25 @@ export function SlabObject({
     z: -dxMm * dirY + dzMm * dirX,
   });
 
+  // ARC slab: linear plan deltas diverge from the cursor on the bend — track the latest MESH hit
+  // in (s,c) instead (same pattern as the curved wall's draw fix).
+  const drawArcScRef = useRef<SceneWallFeaturePoint | null>(null);
+
   const drawDrag = useDrag3D({
     constraint: { mode: 'ground' },
     enabled: drawActive,
     onMove: (delta) => {
       const session = drawSessionRef.current;
       if (!session) return;
-      if (delta.x === 0 && delta.z === 0) {
+      if (delta.x === 0 && delta.z === 0 && !(arcFrame && drawArcScRef.current)) {
         setDraft(null);
         return;
       }
       const local = worldToLocalDelta(delta.x, delta.z);
-      const cur = clampDrawPoint(session.x0 + local.x, session.z0 + local.z);
+      const cur =
+        arcFrame && drawArcScRef.current
+          ? drawArcScRef.current
+          : clampDrawPoint(session.x0 + local.x, session.z0 + local.z);
       if (drawShape === 'free') {
         const last = session.points[session.points.length - 1];
         if (!last || Math.hypot(cur.x - last.x, cur.z - last.z) >= FREE_SAMPLE_STEP_MM) {
@@ -581,9 +706,18 @@ export function SlabObject({
       if (local) {
         const start = clampDrawPoint(local.x, local.z);
         drawSessionRef.current = { x0: start.x, z0: start.z, side: local.side, points: [start] };
+        drawArcScRef.current = null;
       }
     }
     drawDrag.handlers.onPointerDown(e);
+  };
+
+  const handleDrawPointerMove = (e: ThreeEvent<PointerEvent>) => {
+    if (arcFrame && drawSessionRef.current) {
+      const local = localPointMm(e.point);
+      if (local) drawArcScRef.current = clampDrawPoint(local.x, local.z);
+    }
+    drawDrag.handlers.onPointerMove(e);
   };
 
   const penFacePoint = (point: Vector3): { x: number; z: number; side: 1 | -1 } | null => {
@@ -724,7 +858,7 @@ export function SlabObject({
     : drawActive
       ? {
           onPointerDown: handleDrawPointerDown,
-          onPointerMove: drawDrag.handlers.onPointerMove,
+          onPointerMove: handleDrawPointerMove,
           onPointerUp: drawDrag.handlers.onPointerUp,
           onPointerCancel: drawDrag.handlers.onPointerCancel,
         }
@@ -736,8 +870,31 @@ export function SlabObject({
     if (!penArcPreview && penFace.cursor) pts.push(penFace.cursor);
     if (pts.length < 1) return null;
     const yFace = penFace.side === 'front' ? thicknessM + FACE_LIFT_M : -FACE_LIFT_M;
+    // ARC slab: points are in (s,c) — forward-map onto the band so the line follows the curve.
+    if (arcFrame) {
+      return pts.map((p): [number, number, number] => {
+        const plan = curvedSlabPointAt(arcFrame, p.x, p.z);
+        return [plan.x / 1000, yFace, plan.z / 1000];
+      });
+    }
     return pts.map((p): [number, number, number] => [p.x / 1000, yFace, p.z / 1000]);
-  }, [penActive, penFace, penArcPreview, slab.id, thicknessM]);
+  }, [penActive, penFace, penArcPreview, slab.id, thicknessM, arcFrame]);
+
+  // ARC slab draw preview: the flat SlabDraftPreview would hover off the band — render the draft
+  // outline forward-mapped onto the curved surface instead (commit is exact; this matches it).
+  const arcDraftLine = useMemo<[number, number, number][] | null>(() => {
+    if (!draft || !arcFrame) return null;
+    const outline = featureOutlineMm(draft);
+    if (outline.length < 3) return null;
+    const yFace = draft.side === 1 ? thicknessM + FACE_LIFT_M : -FACE_LIFT_M;
+    const pts = curvedSlabMapOutlineMm(arcFrame, outline).map((p): [number, number, number] => [
+      p.x / 1000,
+      yFace,
+      p.z / 1000,
+    ]);
+    pts.push(pts[0]);
+    return pts;
+  }, [draft, arcFrame, thicknessM]);
 
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
   const heightLevels = collectHeightLevels(sceneRef, slab.id);
@@ -1056,10 +1213,33 @@ export function SlabObject({
             interactive={interactive}
             thicknessM={thicknessM}
             presentation={presentation}
-            worldToLocalDelta={worldToLocalDelta}
+            boundsAlongMm={arcFrame ? arcFrame.developedMm : slab.lengthMm}
+            boundsAcrossMm={arcFrame ? arcFrame.acrossMm : slab.depthMm}
+            worldToLocalDelta={
+              arcFrame
+                ? (dxMm: number, dzMm: number) => {
+                    // Convert the plan drag into an EXACT (s,c) delta by inverse-mapping the
+                    // feature's anchor moved by the plan delta (linear addition drifts on a bend).
+                    const local = worldToLocalDelta(dxMm, dzMm);
+                    const anchor = curvedSlabPointAt(
+                      arcFrame,
+                      item.feature.offsetMm,
+                      item.feature.centerZMm,
+                    );
+                    const sc = curvedSlabPickSc(arcFrame, anchor.x + local.x, anchor.z + local.z);
+                    return {
+                      x: sc.s - item.feature.offsetMm,
+                      z: sc.c - item.feature.centerZMm,
+                    };
+                  }
+                : worldToLocalDelta
+            }
           />
         ))}
-        {draft && <SlabDraftPreview draft={draft} thicknessM={thicknessM} />}
+        {draft && !arcFrame && <SlabDraftPreview draft={draft} thicknessM={thicknessM} />}
+        {arcDraftLine && (
+          <Line points={arcDraftLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
+        )}
         {penLine && penLine.length >= 2 && (
           <Line points={penLine} color={REGION_COLOR} lineWidth={2} raycast={() => null} />
         )}
@@ -1085,15 +1265,69 @@ export function SlabObject({
             rotationDeg: slab.rotationDeg,
           }}
           topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
+          previewOutline={
+            isArcSlab
+              ? (next) => {
+                  // Preview the ACTUAL curved band the commit would produce (re-derived radius on
+                  // the new chord), not a dashed phantom rectangle detached from the bow.
+                  const nr = next.rotationDeg * DEG2RAD;
+                  const cosN = Math.cos(nr);
+                  const sinN = Math.sin(nr);
+                  const backHalf = next.crossMm / 2;
+                  const nextOriginX = next.originX + Math.sin(nr) * backHalf;
+                  const nextOriginY = next.originY - Math.cos(nr) * backHalf;
+                  const bentChordMm = slabArcAxis === 'length' ? next.lengthMm : next.crossMm;
+                  const radius = deriveArcFromSweep(
+                    Math.max(100, bentChordMm),
+                    Math.abs(slab.geomArcSweepDeg ?? 90),
+                  ).radiusMm;
+                  const outline = curvedSlabPlanOutlineMm(
+                    next.lengthMm,
+                    next.crossMm,
+                    radius,
+                    slab.geomArcSweepDeg ?? 1,
+                    slabArcAxis,
+                  );
+                  const topY = (slab.elevationMm + slab.thicknessMm) / 1000;
+                  const pts = outline.map((p): [number, number, number] => [
+                    (nextOriginX + p.x * cosN - p.z * sinN) / 1000,
+                    topY,
+                    (nextOriginY + p.x * sinN + p.z * cosN) / 1000,
+                  ]);
+                  pts.push(pts[0]);
+                  return pts;
+                }
+              : undefined
+          }
           onCommit={(next) => {
             // Convert the centreline box origin back to the slab's one-sided (corner) origin.
             const nr = next.rotationDeg * DEG2RAD;
             const backHalf = next.crossMm / 2;
             const originX = Math.round(next.originX + Math.sin(nr) * backHalf);
             const originY = Math.round(next.originY - Math.cos(nr) * backHalf);
-            // Reject a corner resize that would grow the slab into a neighbour.
+            // A corner resize on a plan-arc slab changes the bent axis' CHORD: keep the curl angle
+            // (sweep) and re-derive the radius so the arc ends stay pinned to the new corners
+            // (arcFromCornerResize semantics — same rule the wall/run end handles use).
+            const bentChordMm = slabArcAxis === 'length' ? next.lengthMm : next.crossMm;
+            const arcPatch = isArcSlab
+              ? {
+                  geomArcRadiusMm: deriveArcFromSweep(
+                    bentChordMm,
+                    Math.abs(slab.geomArcSweepDeg ?? 90),
+                  ).radiusMm,
+                }
+              : {};
+            // Reject a corner resize that would grow the slab into a neighbour — checked against
+            // the SAME band that will be committed (the re-derived radius), not the stale one.
             const resized = buildSlabFootprint(
-              { ...slab, originX, originY, lengthMm: next.lengthMm, depthMm: next.crossMm },
+              {
+                ...slab,
+                originX,
+                originY,
+                lengthMm: next.lengthMm,
+                depthMm: next.crossMm,
+                ...arcPatch,
+              },
               0,
               0,
               next.rotationDeg,
@@ -1104,6 +1338,7 @@ export function SlabObject({
               originY,
               lengthMm: next.lengthMm,
               depthMm: next.crossMm,
+              ...arcPatch,
             });
           }}
         />
@@ -1124,10 +1359,15 @@ export function SlabObject({
               updateSlab(slab.id, { geomArcRadiusMm: null, geomArcSweepDeg: null });
               return;
             }
+            // Canonical arcFromBow/bowFromArc sign pair: +sagitta (the chord's CCW "+across", what
+            // the handle reports) → NEGATIVE sweep — so the re-grab handle rests on the visible
+            // apex instead of its mirror, and the mesh (slabArcDirSign) bows on the dragged side.
+            // Features SURVIVE the curve (#6b): the arc branch carves + renders them in the
+            // developed (s,c) frame, so nothing needs dropping.
             const d = deriveArcFromChordSagitta(chordLenMm, Math.abs(sagittaMm));
             updateSlab(slab.id, {
               geomArcRadiusMm: d.radiusMm,
-              geomArcSweepDeg: (sagittaMm >= 0 ? 1 : -1) * d.sweepDeg,
+              geomArcSweepDeg: Math.round((sagittaMm >= 0 ? -1 : 1) * d.sweepDeg * 10) / 10,
               slabArcAxis,
               arcRiseMm: null,
               pitchRiseMm: null,
@@ -1147,6 +1387,10 @@ interface SlabFeatureObjectProps {
   interactive: boolean;
   thicknessM: number;
   presentation: boolean;
+  // Feature-space bounds for the move clamp: the flat rect on a flat slab, the DEVELOPED
+  // (s ∈ developedMm, c ∈ acrossMm) domain on a plan-arc slab.
+  boundsAlongMm: number;
+  boundsAcrossMm: number;
   worldToLocalDelta: (dxMm: number, dzMm: number) => { x: number; z: number };
 }
 
@@ -1158,6 +1402,8 @@ function SlabFeatureObject({
   interactive,
   thicknessM,
   presentation,
+  boundsAlongMm,
+  boundsAcrossMm,
   worldToLocalDelta,
 }: SlabFeatureObjectProps) {
   const { feature, outline, geometry } = item;
@@ -1193,13 +1439,13 @@ function SlabFeatureObject({
     return {
       x: Math.round(
         Math.min(
-          slab.lengthMm - FEATURE_EDGE_MARGIN_MM - bounds.maxX,
+          boundsAlongMm - FEATURE_EDGE_MARGIN_MM - bounds.maxX,
           Math.max(FEATURE_EDGE_MARGIN_MM - bounds.minX, dxMm),
         ),
       ),
       z: Math.round(
         Math.min(
-          slab.depthMm - FEATURE_EDGE_MARGIN_MM - bounds.maxZ,
+          boundsAcrossMm - FEATURE_EDGE_MARGIN_MM - bounds.maxZ,
           Math.max(FEATURE_EDGE_MARGIN_MM - bounds.minZ, dzMm),
         ),
       ),

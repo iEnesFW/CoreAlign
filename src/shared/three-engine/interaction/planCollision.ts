@@ -207,11 +207,61 @@ const polygonsOverlap = (a: Vec[], b: Vec[]): boolean => {
   return false;
 };
 
+const distPointToSegmentMm = (p: Vec, a: Vec, b: Vec): number => {
+  const vx = b.x - a.x;
+  const vy = b.y - a.y;
+  const lenSq = vx * vx + vy * vy;
+  const t =
+    lenSq === 0 ? 0 : Math.min(1, Math.max(0, ((p.x - a.x) * vx + (p.y - a.y) * vy) / lenSq));
+  return Math.hypot(a.x + t * vx - p.x, a.y + t * vy - p.y);
+};
+
+const pointDepthInPolygonMm = (p: Vec, poly: Vec[]): number => {
+  if (!pointInPolygon(p.x, p.y, poly)) return 0;
+  let min = Infinity;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i, i += 1) {
+    const d = distPointToSegmentMm(p, poly[j], poly[i]);
+    if (d < min) min = d;
+  }
+  return Number.isFinite(min) ? min : 0;
+};
+
+// Vertex-containment depth is structurally CAPPED at the contained body's inradius (its
+// halfWidth), so the OBB joint tolerance (min halfWidth + 1) would let two equal-width bands
+// overlap along their WHOLE length without ever registering. Polygon (arc/curved) bodies
+// therefore get a small CONTACT-scale tolerance instead: enough for a snapped joint's grid and
+// rounding overlap (grid step 5mm), nothing more.
+const POLYGON_CONTACT_TOLERANCE_MM = 6;
+const polygonToleranceMm = (a: PlanFootprint, b: PlanFootprint): number =>
+  Math.min(jointToleranceMm(a, b), POLYGON_CONTACT_TOLERANCE_MM);
+
+// Approximate polygon-vs-polygon penetration depth via mutual vertex containment (a corner butt /
+// flush joint shows up as a vertex a few mm inside the other body — the exact measure the joint
+// tolerance exists for). Crossing edges WITHOUT any contained vertex (a plus-sign overlap) is a
+// genuinely deep intersection, reported as Infinity.
+const polygonPenetrationDepthMm = (a: Vec[], b: Vec[]): number => {
+  if (!polygonsOverlap(a, b)) return 0;
+  let depth = 0;
+  for (const p of a) {
+    const d = pointDepthInPolygonMm(p, b);
+    if (d > depth) depth = d;
+  }
+  for (const p of b) {
+    const d = pointDepthInPolygonMm(p, a);
+    if (d > depth) depth = d;
+  }
+  return depth > 0 ? depth : Infinity;
+};
+
 export const footprintsPenetrate = (a: PlanFootprint, b: PlanFootprint) => {
   if (a.zMaxMm <= b.zMinMm + CONTACT_EPS_MM || b.zMaxMm <= a.zMinMm + CONTACT_EPS_MM) return false;
   if (a.polygon || b.polygon) {
     if (aabbSeparated(a, b)) return false;
-    return polygonsOverlap(footprintOutline(a), footprintOutline(b));
+    // A contact-scale tolerance — without it an arc body could NEVER corner-join or butt flush
+    // (snap engaged, then the zero-tolerance collision slid the body away).
+    return (
+      polygonPenetrationDepthMm(footprintOutline(a), footprintOutline(b)) > polygonToleranceMm(a, b)
+    );
   }
   const extent = obbOverlapExtent(footprintCorners(a), footprintCorners(b));
   return extent > jointToleranceMm(a, b);
@@ -385,7 +435,11 @@ const penetrationDepthMm = (a: PlanFootprint, b: PlanFootprint): number => {
   if (a.zMaxMm <= b.zMinMm + CONTACT_EPS_MM || b.zMaxMm <= a.zMinMm + CONTACT_EPS_MM) return 0;
   if (a.polygon || b.polygon) {
     if (aabbSeparated(a, b)) return 0;
-    if (!polygonsOverlap(footprintOutline(a), footprintOutline(b))) return 0;
+    const depth = polygonPenetrationDepthMm(footprintOutline(a), footprintOutline(b));
+    const jointTolerance = polygonToleranceMm(a, b);
+    if (depth <= jointTolerance) return 0;
+    if (Number.isFinite(depth)) return depth - jointTolerance;
+    // Crossing-without-containment: magnitude from the AABB overlap (finite, monotonic in travel).
     const ba = outlineAabb(footprintOutline(a));
     const bb = outlineAabb(footprintOutline(b));
     const ox = Math.min(ba.maxX, bb.maxX) - Math.max(ba.minX, bb.minX);

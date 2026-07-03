@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   BrickWall,
@@ -8,6 +9,7 @@ import {
   Home,
   LassoSelect,
   Layers,
+  LayoutTemplate,
   Minus,
   MousePointer2,
   Move,
@@ -33,7 +35,9 @@ import {
   type WallDrawShape,
 } from '@/features/glass-enclosure/model/designerStore';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
+import { useTemplateInsert } from '@/features/glass-enclosure/hooks/useTemplateInsert';
 import { useColorOptionsQuery } from '@/features/glass-enclosure/hooks/useGlassEnclosureQueries';
+import type { GlassTemplateKey } from '@/features/glass-enclosure/model/templates';
 
 interface ToolDef {
   tool: DesignerTool;
@@ -87,6 +91,16 @@ const PLACEMENTS: {
   { kind: 'pen', labelKey: 'Pen', defaultLabel: 'Kalemle yüzey çiz', shortcut: 'P', Icon: PenTool },
 ];
 
+const TEMPLATES: { key: GlassTemplateKey; labelKey: string; defaultLabel: string }[] = [
+  { key: 'l-walls', labelKey: 'LWalls', defaultLabel: 'L duvar' },
+  { key: 'u-walls', labelKey: 'UWalls', defaultLabel: 'U üç duvar' },
+  { key: 'room-door', labelKey: 'RoomDoor', defaultLabel: 'Dört duvar + kapı boşluğu' },
+  { key: 'gable-roof', labelKey: 'GableRoof', defaultLabel: 'Beşik çatı' },
+  { key: 'barrel-roof', labelKey: 'BarrelRoof', defaultLabel: 'Tonoz çatı' },
+  { key: 'arc-roof', labelKey: 'ArcRoof', defaultLabel: 'Kavisli çatı (plan arc)' },
+  { key: 'arc-run', labelKey: 'ArcRun', defaultLabel: 'Kavisli cam hattı' },
+];
+
 const MATERIAL_FALLBACKS: Record<string, string> = {
   wood: 'Ahşap',
   marble: 'Mermer',
@@ -135,6 +149,8 @@ export function ToolPalette() {
   const placementShape = useDesignerStore((s) => s.placementShape);
   const setPlacementShape = useDesignerStore((s) => s.setPlacementShape);
   const { autofill } = useWallAutofill();
+  const { insertTemplate } = useTemplateInsert();
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const colorsQuery = useColorOptionsQuery();
   const colors = colorsQuery.data?.data ?? [];
 
@@ -173,6 +189,15 @@ export function ToolPalette() {
         >
           <Layers size={15} />
         </PaletteButton>
+        <PaletteButton
+          title={t('GlassEnclosure.Designer.Templates.Title', {
+            defaultValue: 'Şablonlar — tek tıkla hazır kompozisyon ekle',
+          })}
+          active={templatesOpen}
+          onClick={() => setTemplatesOpen((open) => !open)}
+        >
+          <LayoutTemplate size={15} />
+        </PaletteButton>
         <span className="mx-0.5 h-5 w-px bg-slate-300 dark:bg-slate-700" />
         {PLACEMENTS.map(({ kind, labelKey, defaultLabel, shortcut, Icon }) => (
           <PaletteButton
@@ -185,6 +210,25 @@ export function ToolPalette() {
           </PaletteButton>
         ))}
       </div>
+      {templatesOpen && (
+        <div className="pointer-events-auto flex flex-col gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+          {TEMPLATES.map((template) => (
+            <button
+              key={template.key}
+              type="button"
+              className="rounded px-2 py-1 text-left text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+              onClick={() => {
+                setTemplatesOpen(false);
+                void insertTemplate(template.key);
+              }}
+            >
+              {t(`GlassEnclosure.Designer.Templates.${template.labelKey}`, {
+                defaultValue: template.defaultLabel,
+              })}
+            </button>
+          ))}
+        </div>
+      )}
       {placement === 'pen' && (
         <span className="pointer-events-auto rounded bg-slate-900/80 px-2 py-0.5 text-[10px] font-medium text-white">
           {label(

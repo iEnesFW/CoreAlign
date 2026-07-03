@@ -5,7 +5,8 @@ export interface ArcPoint {
 
 const MAX_ARC_SEGMENTS = 96;
 const MIN_BULGE_MM = 10;
-const SEGMENT_ARC_LEN_MM = 50;
+// 20mm chords keep a shift-drawn arc visually smooth after the cutter sweep (50mm read as facets).
+const SEGMENT_ARC_LEN_MM = 20;
 
 export const chordBulgeMm = (a: ArcPoint, b: ArcPoint, m: ArcPoint): number => {
   const dx = b.x - a.x;

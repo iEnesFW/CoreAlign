@@ -25,7 +25,14 @@ import { MeasureController } from './interaction/MeasureController';
 import { pointInPolygonMm } from './interaction/pointInPolygon';
 import { multiSelectionHas } from './interaction/multiMove';
 import { parsePolygonVertices } from '../model/polygonGeometry';
-import { arcEndLocal, arcPointAt, effectiveArcRadiusMm, isRealArc } from '../model/arcGeometry';
+import {
+  arcEndLocal,
+  arcPointAt,
+  developedLengthMm,
+  isRealArc,
+  resolveArc,
+} from '../model/arcGeometry';
+import { curvedSlabFrame, curvedSlabPlanColumnsMm } from './builders/curvedSlabGeometry';
 import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
@@ -52,11 +59,9 @@ import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
   FEATURE_EDGE_MARGIN_MM,
-  FREE_SIMPLIFY_TOLERANCE_MM,
   featureFitsWall,
   featureOutlineMm,
   outlineFitsRect,
-  simplifyFreePoints,
 } from '../model/wallFeatureGeometry';
 import type { PlanFootprint } from './interaction/planCollision';
 import type {
@@ -140,7 +145,50 @@ const buildPlanSnapTargets = (
       { ownerId, x1: x - nx, y1: y - ny, x2: endX - nx, y2: endY - ny },
     );
   };
+  // Arc bodies (CHORD-INVARIANT): the true fixed ends come from arcEndLocal on the RAW stored
+  // radius (exactly what the renderer draws — no clamp), plus the apex and the chord midpoint.
+  // The CHORD is the honest alignment segment for an arc (its faces are not straight lines).
+  // rotationDeg alone is a PHANTOM here — it's the rolled start tangent, not the chord direction.
+  const addArcTargets = (
+    ownerId: string,
+    originX: number,
+    originY: number,
+    rotationDeg: number,
+    radiusMm: number,
+    sweepDeg: number,
+  ) => {
+    const rad = rotationDeg * DEG2RAD;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const resolved = resolveArc(radiusMm, sweepDeg);
+    const e = arcEndLocal(resolved.radiusMm, sweepDeg);
+    const apex = arcPointAt(resolved.radiusMm, resolved.direction, resolved.sweepRad / 2);
+    const toWorld = (lx: number, ly: number) => ({
+      x: originX + lx * cos - ly * sin,
+      y: originY + lx * sin + ly * cos,
+    });
+    const end = toWorld(e.xMm, e.yMm);
+    const mid = toWorld(apex.x, apex.z);
+    points.push(
+      { ownerId, x: originX, y: originY },
+      { ownerId, x: end.x, y: end.y },
+      { ownerId, x: mid.x, y: mid.y },
+      { ownerId, x: (originX + end.x) / 2, y: (originY + end.y) / 2 },
+    );
+    segments.push({ ownerId, x1: originX, y1: originY, x2: end.x, y2: end.y });
+  };
   for (const wall of walls) {
+    if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
+      addArcTargets(
+        wall.id,
+        wall.originX,
+        wall.originY,
+        wall.rotationDeg,
+        wall.geomArcRadiusMm ?? 0,
+        wall.geomArcSweepDeg ?? 1,
+      );
+      continue;
+    }
     addLineTargets(
       wall.id,
       wall.originX,
@@ -152,25 +200,13 @@ const buildPlanSnapTargets = (
   }
   for (const run of runs) {
     if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
-      const rad = run.rotationDeg * DEG2RAD;
-      const cos = Math.cos(rad);
-      const sin = Math.sin(rad);
-      const dir = (run.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-      // CHORD-INVARIANT: radius+sweep are stored; the ends are fixed at the chord.
-      const radius = effectiveArcRadiusMm(run.lengthMm, run.geomArcRadiusMm ?? 0);
-      const sweepRad = Math.min((Math.abs(run.geomArcSweepDeg ?? 0) * Math.PI) / 180, Math.PI * 2);
-      const e = arcEndLocal(radius, run.geomArcSweepDeg ?? 1);
-      const apex = arcPointAt(radius, dir, sweepRad / 2);
-      const toWorld = (lx: number, ly: number) => ({
-        x: run.originX + lx * cos - ly * sin,
-        y: run.originY + lx * sin + ly * cos,
-      });
-      const end = toWorld(e.xMm, e.yMm);
-      const mid = toWorld(apex.x, apex.z);
-      points.push(
-        { ownerId: run.id, x: run.originX, y: run.originY },
-        { ownerId: run.id, x: end.x, y: end.y },
-        { ownerId: run.id, x: mid.x, y: mid.y },
+      addArcTargets(
+        run.id,
+        run.originX,
+        run.originY,
+        run.rotationDeg,
+        run.geomArcRadiusMm ?? 0,
+        run.geomArcSweepDeg ?? 1,
       );
       continue;
     }
@@ -192,6 +228,33 @@ const buildPlanSnapTargets = (
       x: slab.originX + lx * cos - ly * sin,
       y: slab.originY + lx * sin + ly * cos,
     });
+    // A plan-curved slab's real edges are the sampled band (same columns as the mesh) — the flat
+    // rect corners are phantoms it bows away from. Emit the band's true ends/apexes + the front
+    // chord as the alignment segment.
+    if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+      const columns = curvedSlabPlanColumnsMm(
+        slab.lengthMm,
+        slab.depthMm,
+        slab.geomArcRadiusMm ?? 0,
+        slab.geomArcSweepDeg ?? 1,
+        slab.slabArcAxis ?? 'length',
+      );
+      const first = columns[0];
+      const last = columns[columns.length - 1];
+      const midCol = columns[Math.floor(columns.length / 2)];
+      const fs = corner(first.front.x, first.front.z);
+      const fe = corner(last.front.x, last.front.z);
+      points.push(
+        fs,
+        fe,
+        corner(midCol.front.x, midCol.front.z),
+        corner(first.back.x, first.back.z),
+        corner(last.back.x, last.back.z),
+        corner(midCol.back.x, midCol.back.z),
+      );
+      segments.push({ ownerId: slab.id, x1: fs.x, y1: fs.y, x2: fe.x, y2: fe.y });
+      continue;
+    }
     const corners = [
       corner(0, 0),
       corner(slab.lengthMm, 0),
@@ -574,10 +637,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       const l = pts[pts.length - 1];
       if (Math.hypot(f.x - l.x, f.z - l.z) < 1) pts = pts.slice(0, -1);
     }
-    pts = simplifyFreePoints(
-      pts.map((p) => ({ x: p.x, z: p.z })),
-      FREE_SIMPLIFY_TOLERANCE_MM,
-    );
+    // Pen points are deliberately CLICKED vertices (plus shift-arc tessellations) — running RDP
+    // over them deleted intentional corners under the tolerance, so the committed shape was never
+    // 1:1 with the drawing. Only near-identical consecutive points are dropped.
+    pts = pts
+      .map((p) => ({ x: p.x, z: p.z }))
+      .filter((p, i, arr) => i === 0 || Math.hypot(p.x - arr[i - 1].x, p.z - arr[i - 1].z) > 1.5);
     if (pts.length < 3) {
       queueToast({
         dedupeKey: 'glass-pen-too-small',
@@ -703,6 +768,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     } else {
       const slab = (scene.slabs ?? []).find((s) => s.id === session.hostId);
       if (!slab) return;
+      // Plan-arc slabs carve + render features now (#6b); only barrel/pitch remain deferred.
       if ((slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0) {
         queueToast({
           dedupeKey: 'glass-arc-no-feature',
@@ -713,7 +779,25 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         });
         return;
       }
-      if (!outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM)) {
+      // ARC slab: pen coordinates live in the developed (s,c) frame — fit against that domain.
+      const slabFits = isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)
+        ? (() => {
+            const frame = curvedSlabFrame(
+              slab.lengthMm,
+              slab.depthMm,
+              slab.geomArcRadiusMm ?? 0,
+              slab.geomArcSweepDeg ?? 1,
+              slab.slabArcAxis ?? 'length',
+            );
+            return outlineFitsRect(
+              outline,
+              frame.developedMm,
+              frame.acrossMm,
+              FEATURE_EDGE_MARGIN_MM,
+            );
+          })()
+        : outlineFitsRect(outline, slab.lengthMm, slab.depthMm, FEATURE_EDGE_MARGIN_MM);
+      if (!slabFits) {
         queueToast({
           dedupeKey: 'glass-pen-no-fit',
           variant: 'warning',
@@ -737,12 +821,33 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     }
   };
 
+  // Block the pen SESSION on a barrel/pitched slab up-front (not only at commit) so the user
+  // isn't led through drawing a shape that would then be rejected. Plan-arc slabs now carve and
+  // render features (#6b), so they draw freely.
+  const shapedSlabPenBlocked = (hostKind: 'wall' | 'slab', hostId: string): boolean => {
+    if (hostKind !== 'slab') return false;
+    const slab = (useDesignerStore.getState().scene.slabs ?? []).find((s) => s.id === hostId);
+    if (!slab) return false;
+    const blocked = (slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0;
+    if (blocked) {
+      queueToast({
+        dedupeKey: 'glass-arc-no-feature',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Pen.ArcNoFeature', {
+          defaultValue: 'Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor.',
+        }),
+      });
+    }
+    return blocked;
+  };
+
   const onPenFaceClick = (
     hostKind: 'wall' | 'slab',
     hostId: string,
     side: WallFeatureSide,
     pt: { x: number; z: number },
   ) => {
+    if (shapedSlabPenBlocked(hostKind, hostId)) return;
     const session = useDesignerStore.getState().penFace;
     if (!session || session.hostId !== hostId) {
       setPenFace({ hostKind, hostId, side, points: [pt], cursor: pt });
@@ -768,6 +873,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     pts: { x: number; z: number }[],
   ) => {
     if (pts.length === 0) return;
+    if (shapedSlabPenBlocked(hostKind, hostId)) return;
     const session = useDesignerStore.getState().penFace;
     const cursor = pts[pts.length - 1];
     if (!session || session.hostId !== hostId) {
@@ -896,7 +1002,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           : sl,
       ),
     }));
-    for (const id of ms.runIds) persistFreshRun(id);
+    // Persist the FULL moved set — a wall-attached run carried via extraRunIds is moved in the
+    // scene patch above, and skipping its persist would snap the glass back on the next refetch.
+    for (const id of runSet) persistFreshRun(id);
   };
 
   const onMoveRun = (runId: string, delta: PlanMoveDelta) => {
@@ -949,6 +1057,21 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   };
 
   const onStretchRun = (runId: string, patch: RunStretchPatch) => {
+    // The server validator rejects GeomArcRadiusMm < 100 — without this gate the bow/corner
+    // handles could commit a tiny-radius arc that APPEARS to apply, then silently reverts when
+    // the persist 400s (RunArcSection has the same guard for its inspector inputs).
+    if (typeof patch.geomArcRadiusMm === 'number' && patch.geomArcRadiusMm < 100) {
+      queueToast({
+        dedupeKey: 'glass-arc-radius-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+          defaultValue:
+            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+          r: patch.geomArcRadiusMm,
+        }),
+      });
+      return;
+    }
     const beforeWidths = new Map(
       (scene.runs.find((r) => r.id === runId)?.panels ?? []).map((p) => [p.id, p.widthMm]),
     );
@@ -1093,8 +1216,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const wall = (state.scene.walls ?? []).find((w) => w.id === wallId);
     if (!wall) return;
     const rad = wall.rotationDeg * DEG2RAD;
-    const pivotX = wall.originX + (wall.lengthMm / 2) * Math.cos(rad);
-    const pivotY = wall.originY + (wall.lengthMm / 2) * Math.sin(rad);
+    // The commit pivot must equal the gesture/preview pivot (the adapter's CHORD midpoint) — for
+    // an arc wall the straight origin+length/2 midpoint is a phantom (rotationDeg is the rolled
+    // start tangent), so attached runs would rotate about a different point than the preview.
+    const halfSweepRad = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
+      ? (((wall.geomArcSweepDeg ?? 0) / 2) * Math.PI) / 180
+      : 0;
+    const endHalfX = (wall.lengthMm * Math.cos(halfSweepRad)) / 2;
+    const endHalfY = (wall.lengthMm * Math.sin(halfSweepRad)) / 2;
+    const pivotX = wall.originX + endHalfX * Math.cos(rad) - endHalfY * Math.sin(rad);
+    const pivotY = wall.originY + endHalfX * Math.sin(rad) + endHalfY * Math.cos(rad);
     const groupIds = new Set(groupWallIds);
     const movingRunIds = new Set(attachedRunIds);
     state.applyScenePatch((sceneState) => ({
@@ -1131,33 +1262,62 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     for (const runId of attachedRunIds) persistFreshRun(runId);
   };
 
+  // Membership centre of a straight OR arc body: for an arc the straight-line midpoint is a
+  // phantom (rotationDeg is the rolled tangent) — use the CHORD midpoint from the true end.
+  const planBodyCenterMm = (body: {
+    originX: number;
+    originY: number;
+    rotationDeg: number;
+    lengthMm: number;
+    geomArcRadiusMm?: number | null;
+    geomArcSweepDeg?: number | null;
+  }) => {
+    const rad = body.rotationDeg * DEG2RAD;
+    if (isRealArc(body.geomArcRadiusMm, body.geomArcSweepDeg)) {
+      const e = arcEndLocal(body.geomArcRadiusMm ?? 0, body.geomArcSweepDeg ?? 1);
+      return {
+        x: body.originX + (e.xMm / 2) * Math.cos(rad) - (e.yMm / 2) * Math.sin(rad),
+        y: body.originY + (e.xMm / 2) * Math.sin(rad) + (e.yMm / 2) * Math.cos(rad),
+      };
+    }
+    return {
+      x: body.originX + (body.lengthMm / 2) * Math.cos(rad),
+      y: body.originY + (body.lengthMm / 2) * Math.sin(rad),
+    };
+  };
+
   const handleMarquee = (polygonMm: { x: number; y: number }[]) => {
     const state = useDesignerStore.getState().scene;
     const runIds = state.runs
-      .filter((run) => {
-        const rad = run.rotationDeg * DEG2RAD;
-        const center = {
-          x: run.originX + (run.lengthMm / 2) * Math.cos(rad),
-          y: run.originY + (run.lengthMm / 2) * Math.sin(rad),
-        };
-        return pointInPolygonMm(center, polygonMm);
-      })
+      .filter((run) => pointInPolygonMm(planBodyCenterMm(run), polygonMm))
       .map((run) => run.id);
     const wallIds = (state.walls ?? [])
-      .filter((wall) => {
-        const rad = wall.rotationDeg * DEG2RAD;
-        const center = {
-          x: wall.originX + (wall.lengthMm / 2) * Math.cos(rad),
-          y: wall.originY + (wall.lengthMm / 2) * Math.sin(rad),
-        };
-        return pointInPolygonMm(center, polygonMm);
-      })
+      .filter((wall) => pointInPolygonMm(planBodyCenterMm(wall), polygonMm))
       .map((wall) => wall.id);
     const slabIds = (state.slabs ?? [])
       .filter((slab) => {
         const rad = slab.rotationDeg * DEG2RAD;
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
+        // A plan-curved slab bows AWAY from its flat rect — test the real band's mid-column
+        // (between the front and back apex) instead of the phantom rect centre.
+        if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+          const columns = curvedSlabPlanColumnsMm(
+            slab.lengthMm,
+            slab.depthMm,
+            slab.geomArcRadiusMm ?? 0,
+            slab.geomArcSweepDeg ?? 1,
+            slab.slabArcAxis ?? 'length',
+          );
+          const mid = columns[Math.floor(columns.length / 2)];
+          const lx = (mid.front.x + mid.back.x) / 2;
+          const lz = (mid.front.z + mid.back.z) / 2;
+          const center = {
+            x: slab.originX + lx * cos - lz * sin,
+            y: slab.originY + lx * sin + lz * cos,
+          };
+          return pointInPolygonMm(center, polygonMm);
+        }
         const center = {
           x: slab.originX + (slab.lengthMm / 2) * cos - (slab.depthMm / 2) * sin,
           y: slab.originY + (slab.lengthMm / 2) * sin + (slab.depthMm / 2) * cos,
@@ -1227,6 +1387,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     setPlacement(null);
     if (!projectId || profileSystems.length === 0) return;
     const runCount = useDesignerStore.getState().scene.runs.length;
+    // Curved placement creates the run AS AN ARC in one call (the pasteRunAt pattern): the server
+    // then sizes the panels from the DEVELOPED length. A straight create + arc patch left the
+    // server panels summing to the CHORD (BOM glass under-measured ~4.5% at 60°), and the old
+    // local patch targeted runs[runs.length-1] — the wrong run before the refetch landed.
+    // rotationDeg rolls by −sweep/2 so the chord stays along the placement direction; at 60° the
+    // radius equals the chord (2·r·sin30° = r).
+    const curved = placementShape === 'curved';
+    const developedMm = curved
+      ? developedLengthMm(draft.lengthMm, draft.lengthMm, 60)
+      : draft.lengthMm;
     await safeRequestWithNotify(
       enqueuePersist(() =>
         addRunMutation.mutateAsync({
@@ -1237,30 +1407,26 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             profileSystemId: profileSystems[0].id,
             originX: draft.originX,
             originY: draft.originY,
-            rotationDeg: draft.rotationDeg,
-            panelCount: Math.max(1, Math.ceil(draft.lengthMm / PANEL_TARGET_WIDTH_MM)),
+            rotationDeg: curved
+              ? Math.round((draft.rotationDeg - 30) * 100) / 100
+              : draft.rotationDeg,
+            panelCount: Math.max(1, Math.ceil(developedMm / PANEL_TARGET_WIDTH_MM)),
             label: `${t('GlassEnclosure.Designer.DefaultRunLabel', { defaultValue: 'Hat' })} ${
               runCount + 1
             }`,
             colorId: colors[0]?.id ?? null,
             hasTopDrip: true,
             hasBottomThreshold: false,
+            geomZ: 0,
+            geomArcRadiusMm: curved ? draft.lengthMm : null,
+            geomArcSweepDeg: curved ? 60 : null,
+            arcGlassBent: false,
             notes: null,
           },
         }),
       ),
       { successMessage: t('GlassEnclosure.Designer.RunAdded', { defaultValue: 'Hat eklendi' }) },
     );
-    if (placementShape === 'curved') {
-      const runs = useDesignerStore.getState().scene.runs;
-      const created = runs[runs.length - 1];
-      if (created) {
-        useDesignerStore.getState().updateRun(created.id, {
-          geomArcRadiusMm: created.lengthMm,
-          geomArcSweepDeg: 60,
-        });
-      }
-    }
   };
 
   const pasteSpec = useMemo<PasteGhostSpec | null>(() => {

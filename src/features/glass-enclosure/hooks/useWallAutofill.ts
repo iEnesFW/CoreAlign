@@ -6,6 +6,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns } from '../model/multiAutofill';
+import { developedLengthMm } from '../model/arcGeometry';
 import {
   useAddConnectionMutation,
   useAddRunMutation,
@@ -56,8 +57,15 @@ export const useWallAutofill = () => {
               geomArcRadiusMm: edge.geomArcRadiusMm ?? null,
               geomArcSweepDeg: edge.geomArcSweepDeg ?? null,
               arcGlassBent: edge.arcGlassBent ?? null,
-              // A shaped hole is glazed by a single shape-matched panel, not a strip.
-              panelCount: edge.shapeKind ? 1 : panelCountForWidth(edge.lengthMm, maxPanelWidthMm),
+              // A shaped hole is glazed by a single shape-matched panel, not a strip. On an ARC
+              // corner fill the manufacturer's max-panel-width cap applies to the DEVELOPED
+              // (physical) width — the chord understates it by up to ×1.57 at 180°.
+              panelCount: edge.shapeKind
+                ? 1
+                : panelCountForWidth(
+                    developedLengthMm(edge.lengthMm, edge.geomArcRadiusMm, edge.geomArcSweepDeg),
+                    maxPanelWidthMm,
+                  ),
               label: `${runPrefix} ${state.scene.runs.length + created.length + 1}`,
               colorId: colorsQuery.data?.data?.[0]?.id ?? null,
               hasTopDrip: true,

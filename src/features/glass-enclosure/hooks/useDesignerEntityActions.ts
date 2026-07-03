@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { useDesignerStore } from '../model/designerStore';
+import { developedLengthMm } from '../model/arcGeometry';
 import { createPanelFromTemplate } from '../model/panelDefaults';
 import { enqueuePersist } from '../model/persistQueue';
 import {
@@ -31,10 +32,13 @@ const toRunInput = (run: SceneRunState): UpdateRunInput => ({
   hasTopDrip: run.hasTopDrip,
   hasBottomThreshold: run.hasBottomThreshold,
   geomZ: run.geomZ ?? null,
+  // Round-trip notes/geomTiltDeg (carried off the DTO) — hard-coding null here WIPED the
+  // server values on every designer-driven run update.
+  geomTiltDeg: run.geomTiltDeg ?? null,
   geomArcRadiusMm: run.geomArcRadiusMm ?? null,
   geomArcSweepDeg: run.geomArcSweepDeg ?? null,
   arcGlassBent: run.arcGlassBent ?? false,
-  notes: null,
+  notes: run.notes ?? null,
 });
 
 const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelInput => ({
@@ -44,7 +48,7 @@ const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelIn
   hasHandle: panel.hasHandle,
   hasLock: panel.hasLock,
   hasBrushSeal: panel.hasBrushSeal,
-  notes: null,
+  notes: panel.notes ?? null,
   // Shape lives on structured columns (projectToScene hydrates these on reload); omitting
   // them here silently dropped manual shaping on the next load. cornerNotchMm is blob-only
   // (not on the DTO) and rides the scene-json rescue instead.
@@ -142,8 +146,15 @@ export const usePanelEntityActions = () => {
   ) => {
     const run = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
     const base = createPanelFromTemplate(template, fallbackGlassTypeId);
+    // Panels divide the DEVELOPED length (radius·sweep on an arc run), not the chord.
     const widthMm = run
-      ? Math.max(100, Math.round(run.lengthMm / (run.panels.length + 1)))
+      ? Math.max(
+          100,
+          Math.round(
+            developedLengthMm(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg) /
+              (run.panels.length + 1),
+          ),
+        )
       : base.widthMm;
     return createPanelFrom(runId, { ...base, widthMm });
   };

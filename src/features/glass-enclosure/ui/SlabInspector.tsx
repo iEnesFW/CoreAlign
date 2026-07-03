@@ -16,6 +16,7 @@ import {
   isRealArc,
   minArcRadiusMm,
 } from '../model/arcGeometry';
+import { slabArcDefaultSweepSign } from '../scene/builders/curvedSlabGeometry';
 import type { SceneSlabState } from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
@@ -51,15 +52,20 @@ export function SlabInspector() {
 
   if (!slab || !draft) return null;
 
-  // A plan-arc (curves like a wall), barrel or pitched slab defers surface features — they aren't
-  // projected onto the non-flat surface yet (#6b). Roofs AND floors can take any profile.
+  // Plan-arc slabs now carve + render features (#6b); only barrel/pitched surfaces still defer
+  // them. isShapedSurface keeps gating the flat-only geometry knobs (corner fillets).
+  const isBarrelOrPitch = (draft.arcRiseMm ?? 0) > 0 || (draft.pitchRiseMm ?? 0) > 0;
   const isShapedSurface =
-    isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) ||
-    (draft.arcRiseMm ?? 0) > 0 ||
-    (draft.pitchRiseMm ?? 0) > 0;
+    isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) || isBarrelOrPitch;
   const planArcAxis = draft.slabArcAxis ?? 'length';
   const planArcChordMm = planArcAxis === 'length' ? draft.lengthMm : draft.depthMm;
-  const planArcSign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
+  // Preserve an existing curve's side; a FRESH inspector-entered curve defaults to the slab's own
+  // body side (the sweep sign is axis-relative — see slabArcDirSign).
+  const planArcSign = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg)
+    ? (draft.geomArcSweepDeg ?? 1) < 0
+      ? -1
+      : 1
+    : slabArcDefaultSweepSign(planArcAxis);
 
   const commit = (patch: Partial<typeof slab>) => {
     const candidate: SceneSlabState = { ...slab, ...patch };
@@ -93,7 +99,9 @@ export function SlabInspector() {
     const dropFeatures = rise !== null && (slab.features ?? []).length > 0;
     commit({
       arcRiseMm: rise,
-      ...(rise !== null ? { pitchRiseMm: null } : {}),
+      // WHY: the plan-arc profile must clear too — coexisting profiles keep rendering the plan
+      // arc while the barrel gating hides every handle (silent dead-end state).
+      ...(rise !== null ? { pitchRiseMm: null, geomArcRadiusMm: null, geomArcSweepDeg: null } : {}),
       ...(dropFeatures ? { features: [] } : {}),
     });
     if (dropFeatures) {
@@ -112,7 +120,7 @@ export function SlabInspector() {
     const dropFeatures = rise !== null && (slab.features ?? []).length > 0;
     commit({
       pitchRiseMm: rise,
-      ...(rise !== null ? { arcRiseMm: null } : {}),
+      ...(rise !== null ? { arcRiseMm: null, geomArcRadiusMm: null, geomArcSweepDeg: null } : {}),
       ...(dropFeatures ? { features: [] } : {}),
     });
     if (dropFeatures) {
@@ -126,17 +134,16 @@ export function SlabInspector() {
     }
   };
 
-  // Plan arc (curves like a wall) — mutually exclusive with barrel/pitch (the up-curve). Radius/sweep
-  // set the curve while the bent axis' two ends stay fixed (symmetric, no rotation).
+  // Plan arc (curves like a wall) — mutually exclusive with barrel/pitch (the up-curve). Radius/
+  // sweep set the curve while the bent axis' two ends stay fixed (symmetric, no rotation).
+  // Features SURVIVE (#6b): the arc branch carves + renders them in the developed (s,c) frame.
   const planArcPatch = (radiusMm: number, sweepDeg: number) => {
-    const dropFeatures = (slab.features ?? []).length > 0;
     commit({
       geomArcRadiusMm: radiusMm,
       geomArcSweepDeg: planArcSign * Math.abs(Math.round(sweepDeg * 10) / 10),
       slabArcAxis: planArcAxis,
       arcRiseMm: null,
       pitchRiseMm: null,
-      ...(dropFeatures ? { features: [] } : {}),
     });
   };
   const commitPlanArcRadius = (v: number) => {
@@ -155,16 +162,49 @@ export function SlabInspector() {
   const setPlanArcAxis = (axis: 'length' | 'depth') => {
     if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg)) {
       // Keep the curl angle; re-derive the radius for the new axis' chord so the ends stay on it.
+      // The sweep sign is AXIS-relative, so carry the body-relative side over to the new axis
+      // (raw sign reuse would flip which side of the slab the bow lands on). Features live in the
+      // developed (s = along the bend, c = across) frame — swapping the bend axis swaps their
+      // coordinates so each shape stays on the same physical spot of the sheet.
       const chord = axis === 'length' ? draft.lengthMm : draft.depthMm;
       const next = deriveArcFromSweep(chord, Math.abs(draft.geomArcSweepDeg ?? 90));
+      const onBodySide = planArcSign === slabArcDefaultSweepSign(planArcAxis);
+      const nextSign = onBodySide ? slabArcDefaultSweepSign(axis) : -slabArcDefaultSweepSign(axis);
+      const swappedFeatures =
+        axis !== planArcAxis && (slab.features ?? []).length > 0
+          ? {
+              features: (slab.features ?? []).map((f) => ({
+                ...f,
+                offsetMm: f.centerZMm,
+                centerZMm: f.offsetMm,
+                widthMm: f.heightMm,
+                heightMm: f.widthMm,
+                points: f.points?.map((p) => ({ x: p.z, z: p.x })),
+              })),
+            }
+          : {};
       commit({
         slabArcAxis: axis,
         geomArcRadiusMm: next.radiusMm,
-        geomArcSweepDeg: planArcSign * Math.abs(next.sweepDeg),
+        geomArcSweepDeg: nextSign * Math.abs(next.sweepDeg),
+        ...swappedFeatures,
       });
     } else {
       commit({ slabArcAxis: axis });
     }
+  };
+
+  // Editing the BENT axis' dimension changes the arc's chord: keep the curl angle (sweep) and
+  // re-derive the radius so the arc ends stay pinned to the new corners — otherwise the stored
+  // radius+sweep imply the OLD chord and the "fixed" bent-edge endpoints visibly shift.
+  const commitDimension = (dim: 'lengthMm' | 'depthMm', v: number) => {
+    const dimAxis = dim === 'lengthMm' ? 'length' : 'depth';
+    if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) && planArcAxis === dimAxis) {
+      const next = deriveArcFromSweep(v, Math.abs(draft.geomArcSweepDeg ?? 90));
+      commit({ [dim]: v, geomArcRadiusMm: next.radiusMm });
+      return;
+    }
+    commit({ [dim]: v });
   };
 
   const handleDelete = () => {
@@ -238,14 +278,14 @@ export function SlabInspector() {
           label={`${t('GlassEnclosure.Field.Length', { defaultValue: 'Uzunluk' })} (mm)`}
           value={draft.lengthMm}
           min={100}
-          onCommit={(v) => commit({ lengthMm: v })}
+          onCommit={(v) => commitDimension('lengthMm', v)}
           onDraft={(v) => setDraft({ ...draft, lengthMm: v })}
         />
         <NumberField
           label={`${t('GlassEnclosure.Designer.Slab.Depth', { defaultValue: 'Derinlik' })} (mm)`}
           value={draft.depthMm}
           min={100}
-          onCommit={(v) => commit({ depthMm: v })}
+          onCommit={(v) => commitDimension('depthMm', v)}
           onDraft={(v) => setDraft({ ...draft, depthMm: v })}
         />
         <NumberField
@@ -405,39 +445,41 @@ export function SlabInspector() {
         )}
       </div>
 
-      <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {t('GlassEnclosure.Designer.Corner.Title', { defaultValue: 'Köşe ovalliği (mm)' })}
-        </p>
-        <div className="grid grid-cols-4 gap-1.5">
-          {(
-            [
-              ['tl', t('GlassEnclosure.Designer.Corner.TL', { defaultValue: 'Sol üst' })],
-              ['tr', t('GlassEnclosure.Designer.Corner.TR', { defaultValue: 'Sağ üst' })],
-              ['bl', t('GlassEnclosure.Designer.Corner.BL', { defaultValue: 'Sol alt' })],
-              ['br', t('GlassEnclosure.Designer.Corner.BR', { defaultValue: 'Sağ alt' })],
-            ] as const
-          ).map(([key, cornerLabel]) => (
-            <NumberField
-              key={key}
-              label={cornerLabel}
-              value={slab.cornerRadiiMm?.[key] ?? 0}
-              min={0}
-              onCommit={(v) =>
-                commit({
-                  cornerRadiiMm: {
-                    ...slab.cornerRadiiMm,
-                    [key]: Math.max(0, Math.round(v)),
-                  },
-                })
-              }
-              onDraft={() => {}}
-            />
-          ))}
-        </div>
-      </div>
-
       {!isShapedSurface && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.Corner.Title', { defaultValue: 'Köşe ovalliği (mm)' })}
+          </p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {(
+              [
+                ['tl', t('GlassEnclosure.Designer.Corner.TL', { defaultValue: 'Sol üst' })],
+                ['tr', t('GlassEnclosure.Designer.Corner.TR', { defaultValue: 'Sağ üst' })],
+                ['bl', t('GlassEnclosure.Designer.Corner.BL', { defaultValue: 'Sol alt' })],
+                ['br', t('GlassEnclosure.Designer.Corner.BR', { defaultValue: 'Sağ alt' })],
+              ] as const
+            ).map(([key, cornerLabel]) => (
+              <NumberField
+                key={key}
+                label={cornerLabel}
+                value={slab.cornerRadiiMm?.[key] ?? 0}
+                min={0}
+                onCommit={(v) =>
+                  commit({
+                    cornerRadiiMm: {
+                      ...slab.cornerRadiiMm,
+                      [key]: Math.max(0, Math.round(v)),
+                    },
+                  })
+                }
+                onDraft={() => {}}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isBarrelOrPitch && (
         <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('GlassEnclosure.Designer.WallFeature.ListTitle', { defaultValue: 'Katmanlar' })}

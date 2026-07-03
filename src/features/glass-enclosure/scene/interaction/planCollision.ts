@@ -1,5 +1,6 @@
 import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine';
-import { resolveArc } from '../../model/arcGeometry';
+import { isRealArc, resolveArc } from '../../model/arcGeometry';
+import { curvedSlabPlanOutlineMm } from '../builders/curvedSlabGeometry';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
   SceneRunState,
@@ -76,7 +77,9 @@ export const buildWallFootprint = (
   dyMm: number,
   rotationDeg: number,
 ): PlanFootprint => {
-  if (wall.geomArcRadiusMm && wall.geomArcRadiusMm > 0) {
+  // isRealArc, NOT radius-only: a legacy "half-arc" row (radius set, sweep null/0) RENDERS straight
+  // — a radius-only gate gave it a ~1° phantom stub footprint while the body showed full length.
+  if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
     return buildArcWallFootprint(wall, dxMm, dyMm, rotationDeg);
   }
   const zMin = wall.geomZ ?? 0;
@@ -140,7 +143,7 @@ export const buildRunFootprint = (
   dyMm: number,
   rotationDeg: number,
 ): PlanFootprint => {
-  if (run.geomArcRadiusMm && run.geomArcRadiusMm > 0) {
+  if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
     return buildArcRunFootprint(run, dxMm, dyMm, rotationDeg);
   }
   const zMin = run.geomZ ?? 0;
@@ -163,6 +166,30 @@ export const buildSlabFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const rad = rotationDeg * DEG2RAD;
+  // A plan-curved slab's body bows OUTSIDE the flat rect (apex by the sagitta, back edge fanning
+  // past the ends) — collide/snap/stack against the real band, not a phantom rectangle. Sampled
+  // from the SAME plan columns the mesh is built from.
+  if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+    const cosR = Math.cos(rad);
+    const sinR = Math.sin(rad);
+    const outline = curvedSlabPlanOutlineMm(
+      slab.lengthMm,
+      slab.depthMm,
+      slab.geomArcRadiusMm ?? 0,
+      slab.geomArcSweepDeg ?? 1,
+      slab.slabArcAxis ?? 'length',
+    ).map((p) => ({
+      x: slab.originX + dxMm + p.x * cosR - p.z * sinR,
+      y: slab.originY + dyMm + p.x * sinR + p.z * cosR,
+    }));
+    return buildPolygonFootprint(
+      slab.id,
+      outline,
+      slab.elevationMm,
+      slab.elevationMm + slab.thicknessMm,
+      Math.min(slab.lengthMm, slab.depthMm) / 2,
+    );
+  }
   return buildPlanFootprint(
     slab.id,
     slab.originX + dxMm - (Math.sin(rad) * slab.depthMm) / 2,

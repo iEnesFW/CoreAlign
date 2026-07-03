@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeOpeningEdges, panelCountForWidth, suggestedPanelCount } from './wallAutofill';
+import { arcEndLocal, arcPointAt, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
 const fillRun = (
@@ -152,5 +153,90 @@ describe('computeOpeningEdges (raised-wall aware)', () => {
     // bottom-centred, y-up: apex at top-centre (y≈height), base at y≈0
     expect(pts).toContainEqual({ x: 0, y: 1000 });
     expect(pts.some((p) => p.y === 0)).toBe(true);
+  });
+});
+
+describe('computeOpeningEdges on an ARC wall (sub-arc fill)', () => {
+  const arcWallWithHole = (): SceneWallState => ({
+    id: 'w-arc',
+    originX: 1000,
+    originY: 500,
+    lengthMm: 2828,
+    rotationDeg: 0,
+    heightMm: 2600,
+    heightEndMm: null,
+    thicknessMm: 200,
+    colorHex: null,
+    geomZ: 0,
+    geomArcRadiusMm: 2000,
+    geomArcSweepDeg: 90,
+    openings: [],
+    features: [
+      {
+        id: 'f-arc',
+        shape: 'rect',
+        mode: 'hole',
+        side: 1,
+        offsetMm: 1571,
+        centerZMm: 1200,
+        widthMm: 600,
+        heightMm: 900,
+        depthMm: 0,
+        colorHex: null,
+      },
+    ],
+  });
+
+  it('emits a SUB-ARC edge whose start AND end both lie on the wall arc', () => {
+    const edges = computeOpeningEdges([arcWallWithHole()]);
+    expect(edges).toHaveLength(1);
+    const edge = edges[0];
+
+    const resolved = resolveArc(2000, 90);
+    const u0 = 1571 - 300;
+    const phi0 = u0 / resolved.radiusMm;
+    const subSweepRad = 600 / resolved.radiusMm;
+    const expectedStart = arcPointAt(resolved.radiusMm, resolved.direction, phi0);
+    expect(edge.originX).toBeCloseTo(1000 + expectedStart.x, 0);
+    expect(edge.originY).toBeCloseTo(500 + expectedStart.z, 0);
+
+    expect(edge.geomArcRadiusMm).toBe(resolved.radiusMm);
+    expect(Math.abs(edge.geomArcSweepDeg ?? 0)).toBeCloseTo((subSweepRad * 180) / Math.PI, 1);
+    expect(edge.arcGlassBent).toBe(true);
+    expect(edge.lengthMm).toBe(Math.round(2 * resolved.radiusMm * Math.sin(subSweepRad / 2)));
+
+    // The sub-arc END (origin + rotate(arcEndLocal, edge.rotation)) lands back ON the wall arc at
+    // phi0 + subSweep — the reparametrization is exact, so the fill glass hugs the wall.
+    const rad = (edge.rotationDeg * Math.PI) / 180;
+    const e = arcEndLocal(edge.geomArcRadiusMm ?? 0, edge.geomArcSweepDeg ?? 1);
+    const endWorldX = edge.originX + e.xMm * Math.cos(rad) - e.yMm * Math.sin(rad);
+    const endWorldY = edge.originY + e.xMm * Math.sin(rad) + e.yMm * Math.cos(rad);
+    const expectedEnd = arcPointAt(resolved.radiusMm, resolved.direction, phi0 + subSweepRad);
+    expect(endWorldX).toBeCloseTo(1000 + expectedEnd.x, -1);
+    expect(endWorldY).toBeCloseTo(500 + expectedEnd.z, -1);
+  });
+
+  it('is idempotent: the created bent run covers the hole on a second pass', () => {
+    const wall = arcWallWithHole();
+    const [edge] = computeOpeningEdges([wall]);
+    const createdRun: SceneRunState = {
+      id: 'r-arc',
+      orderIndex: 0,
+      label: 'fill',
+      lengthMm: edge.lengthMm,
+      heightMm: edge.heightMm ?? 900,
+      originX: edge.originX,
+      originY: edge.originY,
+      rotationDeg: edge.rotationDeg,
+      profileSystemId: 'ps',
+      colorId: null,
+      hasTopDrip: true,
+      hasBottomThreshold: false,
+      geomZ: edge.geomZ,
+      geomArcRadiusMm: edge.geomArcRadiusMm ?? null,
+      geomArcSweepDeg: edge.geomArcSweepDeg ?? null,
+      panels: [],
+    };
+    expect(computeOpeningEdges([wall], [createdRun])).toHaveLength(0);
   });
 });

@@ -145,6 +145,15 @@ export function CurvedPanelMesh({
     [radiusM, direction, phiStart, phiEnd],
   );
 
+  // Hardware/fittings anchor ON the cylinder, not the chord plane: the chord frame floats off the
+  // curved glass by the panel-span sagitta (R·(1−cos(Δφ/2)) — tens to hundreds of mm), which is
+  // exactly the "pins hovering off the glass" report. Each item's offsetXmm is treated as the
+  // DEVELOPED (arc-length) coordinate from the panel mid — matching the developed panel widths —
+  // and baked into its own tangent-frame anchor (offsetXmm passed as 0 so it isn't double-applied).
+  const phiMid = (phiStart + phiEnd) / 2;
+  const tangentYawAt = (phi: number) => Math.atan2(direction * Math.sin(phi), Math.cos(phi));
+  const surfaceAnchor = (phi: number) => arcPointAt(radiusM, direction, phi);
+
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
     onSelect();
@@ -172,8 +181,8 @@ export function CurvedPanelMesh({
       </mesh>
 
       <group
-        position={[chord.midX, baseY + heightM / 2, chord.midZ]}
-        rotation={[0, -chord.yawRad, 0]}
+        position={[surfaceAnchor(phiMid).x, baseY + heightM / 2, surfaceAnchor(phiMid).z]}
+        rotation={[0, -tangentYawAt(phiMid), 0]}
       >
         <PanelFittings
           widthM={chord.chordM}
@@ -183,21 +192,30 @@ export function CurvedPanelMesh({
           hasLock={hasLock}
           onSelect={onSelect}
         />
-        {hardware.map((hw) => (
-          <HardwareObject
-            key={hw.id}
-            item={hw}
-            isSelected={selectedHardwareId === hw.id}
-            onSelect={() => onSelectHardware(hw.id)}
-            onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
-            onResize={
-              onResizeHardware
-                ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
-                : undefined
-            }
-          />
-        ))}
       </group>
+      {hardware.map((hw) => {
+        const phi = phiMid + hw.offsetXmm / 1000 / radiusM;
+        const anchor = surfaceAnchor(phi);
+        return (
+          <group
+            key={hw.id}
+            position={[anchor.x, baseY + heightM / 2, anchor.z]}
+            rotation={[0, -tangentYawAt(phi), 0]}
+          >
+            <HardwareObject
+              item={{ ...hw, offsetXmm: 0 }}
+              isSelected={selectedHardwareId === hw.id}
+              onSelect={() => onSelectHardware(hw.id)}
+              onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
+              onResize={
+                onResizeHardware
+                  ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
+                  : undefined
+              }
+            />
+          </group>
+        );
+      })}
 
       {showAnnotations && chord.chordM > 0.18 && (
         <Billboard
