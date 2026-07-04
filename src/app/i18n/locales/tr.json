@@ -83,6 +83,7 @@
       "orders": "Siparişler",
       "invoices": "Faturalar",
       "recurringInvoices": "Tekrarlayan Faturalar",
+      "incomingInvoices": "Gelen Faturalar",
       "returns": "İadeler",
       "projects": "Projeler",
       "vendors": "Tedarikçiler",
@@ -6609,6 +6610,57 @@
       "done": "Tamamlandı",
       "partial": "Kısmi",
       "pending": "Bekliyor"
+    }
+  },
+  "incomingInvoices": {
+    "title": "Gelen Faturalar",
+    "subtitle": "e-Fatura sağlayıcısından gelen faturaları inceleyin ve sisteme işleyin.",
+    "count": "{{count}} fatura",
+    "empty": "Gelen fatura bulunamadı.",
+    "emptyHint": "e-Fatura sağlayıcısından gelen faturalar burada listelenir.",
+    "columns": {
+      "senderVkn": "Gönderen VKN",
+      "sender": "Gönderen",
+      "invoiceNumber": "Fatura No",
+      "issueDate": "Tarih",
+      "provider": "Sağlayıcı",
+      "status": "Durum",
+      "actions": "İşlemler"
+    },
+    "status": {
+      "New": "Yeni",
+      "Reviewed": "İncelendi",
+      "Processed": "İşlendi",
+      "Ignored": "Yok Sayıldı"
+    },
+    "filter": {
+      "all": "Tüm durumlar",
+      "new": "Yeni",
+      "processed": "İşlendi",
+      "ignored": "Yok Sayıldı"
+    },
+    "actions": {
+      "process": "Sisteme İşle",
+      "ignore": "Yoksay"
+    },
+    "process": {
+      "title": "Faturayı Sisteme İşle",
+      "subtotal": "Ara toplam",
+      "subtotalRequired": "Ara toplam sıfırdan büyük olmalı.",
+      "taxAmount": "KDV tutarı",
+      "vendorName": "Tedarikçi adı",
+      "vendorNamePlaceholder": "Boş bırakılırsa gönderen adı kullanılır",
+      "currency": "Para birimi",
+      "total": "Genel toplam",
+      "submit": "Sisteme İşle",
+      "success": "Fatura sisteme işlendi.",
+      "vendorCreated": "Tedarikçi Faturası oluşturuldu."
+    },
+    "ignore": {
+      "title": "Faturayı Yoksay",
+      "confirm": "{{n}} numaralı fatura yoksayılsın mı?",
+      "reason": "Yoksayma nedeni",
+      "success": "Fatura yoksayıldı."
     }
   },
   "RecurringInvoices": {

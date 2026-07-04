@@ -83,6 +83,7 @@
       "orders": "Orders",
       "invoices": "Invoices",
       "recurringInvoices": "Recurring Invoices",
+      "incomingInvoices": "Incoming Invoices",
       "returns": "Returns",
       "projects": "Projects",
       "vendors": "Vendors",
@@ -6613,6 +6614,57 @@
       "done": "Done",
       "partial": "Partial",
       "pending": "Pending"
+    }
+  },
+  "incomingInvoices": {
+    "title": "Incoming Invoices",
+    "subtitle": "Review invoices received from the e-invoice provider and process them into the system.",
+    "count": "{{count}} invoices",
+    "empty": "No incoming invoices found.",
+    "emptyHint": "Invoices received from the e-invoice provider are listed here.",
+    "columns": {
+      "senderVkn": "Sender Tax ID",
+      "sender": "Sender",
+      "invoiceNumber": "Invoice No.",
+      "issueDate": "Date",
+      "provider": "Provider",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "New": "New",
+      "Reviewed": "Reviewed",
+      "Processed": "Processed",
+      "Ignored": "Ignored"
+    },
+    "filter": {
+      "all": "All statuses",
+      "new": "New",
+      "processed": "Processed",
+      "ignored": "Ignored"
+    },
+    "actions": {
+      "process": "Process",
+      "ignore": "Ignore"
+    },
+    "process": {
+      "title": "Process Invoice",
+      "subtotal": "Subtotal",
+      "subtotalRequired": "Subtotal must be greater than zero.",
+      "taxAmount": "Tax amount",
+      "vendorName": "Vendor name",
+      "vendorNamePlaceholder": "Leave blank to use the sender name",
+      "currency": "Currency",
+      "total": "Total",
+      "submit": "Process",
+      "success": "Invoice processed into the system.",
+      "vendorCreated": "Vendor bill created."
+    },
+    "ignore": {
+      "title": "Ignore Invoice",
+      "confirm": "Ignore invoice {{n}}?",
+      "reason": "Reason for ignoring",
+      "success": "Invoice ignored."
     }
   },
   "RecurringInvoices": {

@@ -154,6 +154,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IUnitOfMeasureRepository, UnitOfMeasureRepository>();
         services.AddScoped<ITaxRateRepository, TaxRateRepository>();
         services.AddScoped<IGibCodeRepository, GibCodeRepository>();
+        services.AddScoped<IIncomingInvoiceRepository, IncomingInvoiceRepository>();
+        services.AddScoped<CoreAlign.Infrastructure.Providers.EFatura.IncomingInvoiceFetchJob>();
         services.AddScoped<IPaymentTermRepository, PaymentTermRepository>();
         services.AddScoped<IPriceListRepository, PriceListRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();

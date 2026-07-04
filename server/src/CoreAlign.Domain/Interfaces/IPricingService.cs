@@ -153,6 +153,7 @@ public interface IVendorRepository
 {
     Task<Vendor?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Vendor?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
+    Task<Vendor?> GetByTaxNumberAsync(string taxNumber, CancellationToken cancellationToken = default);
     Task<bool> CodeExistsAsync(string code, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<bool> TaxNumberExistsAsync(string taxNumber, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<VendorSearchRow> Items, int Total)> SearchAsync(

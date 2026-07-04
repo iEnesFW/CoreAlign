@@ -170,6 +170,16 @@ public sealed class EFaturaDispatcher : IEFaturaDispatcher
         return await entry.Provider.CheckTaxpayerAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<EFaturaInboxItem>> ListReceivedAsync(DateTime fromUtc, DateTime toUtc, string? providerNameOverride = null, CancellationToken cancellationToken = default)
+    {
+        var tenantId = _tenantContext.RequireTenantId();
+        var entry = await ResolveSingleProviderAsync(tenantId, providerNameOverride, cancellationToken).ConfigureAwait(false);
+
+        var creds = entry.Provider.UnprotectCredentials(_credentialProtector, tenantId, entry.Config?.EncryptedCredentialsJson);
+        var request = new EFaturaListReceivedRequest(fromUtc, toUtc, tenantId, creds);
+        return await entry.Provider.ListReceivedAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<IReadOnlyList<ResolvedProvider>> ResolveOrderedProvidersAsync(Guid tenantId, CancellationToken cancellationToken)
     {
         var configs = await _configRepository

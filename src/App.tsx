@@ -40,6 +40,7 @@ import {
   InvoicesPage,
   NewInvoicePage,
   RecurringInvoicesPage,
+  IncomingInvoicesPage,
   JournalEntriesPage,
   LoginPage,
   NewProjectWizardPage,
@@ -173,6 +174,7 @@ function App() {
                             <Route path="invoices" element={<InvoicesPage />} />
                             <Route path="invoices/new" element={<NewInvoicePage />} />
                             <Route path="recurring-invoices" element={<RecurringInvoicesPage />} />
+                            <Route path="incoming-invoices" element={<IncomingInvoicesPage />} />
                             <Route path="returns" element={<ReturnsPage />} />
                             <Route path="returns/:id" element={<ReturnDetailPage />} />
                             <Route path="vendors" element={<VendorsPage />} />

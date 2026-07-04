@@ -25,8 +25,20 @@
 > (provider+dispatcher+gateway) + issue akışında otomatik e-Fatura/e-Arşiv yönlendirme (VKN mükellefse e-Fatura).
 > (D) UBL-TR zenginleştirme: ProfileID (profil), InvoiceTypeCode senaryosu (TEVKIFAT/ISTISNA/SATIS),
 > `WithholdingTaxTotal` kod bloğu, satır iskonto `AllowanceCharge`, istisna `TaxExemptionReasonCode/Reason`.
-> **Kalan (S4+):** EDM/Payflex provider'ları (NDA API dokümanı bekliyor), gelen faturalar modülü (D5), firma profili paneli.
+> **Kalan (S4+):** EDM/Payflex provider'ları (NDA API dokümanı bekliyor).
 > Testler: +18 Application (2202), +5 Integration (240), UBL builder 3 yeni senaryo; tümü yeşil.
+>
+> **S5 DURUMU (2026-07-04): TAMAMLANDI (§1.5 Gelen Faturalar).** Yeni `IncomingInvoices` modülü: `incoming_invoices`
+> inbox tablosu (Phase116, Postgres'e UYGULANDI, `(TenantId, Ettn)` unique idempotency), durum FSM
+> (Yeni→İncelendi/İşlendi/YokSayıldı, terminal-korumalı). `IEFaturaDispatcher.ListReceivedAsync` eklendi (Nilvera
+> zaten destekliyor); `IncomingInvoiceFetchJob` (Hangfire günlük, PushScope tenant döngüsü) provider'dan çeker,
+> Ettn'e göre dedupe eder. "Sisteme işle" akışı: gönderen VKN'den tedarikçi çöz (`Vendor.GetByTaxNumberAsync`)
+> veya yoksa VKN'den hızlı-oluştur → draft VendorBill (mevcut AP/GL zinciri). "Yoksay" akışı. `IncomingInvoicesController`
+> (liste/detay/process/ignore), FE Gelen Faturalar sayfası + Sidebar. **NOT:** provider'ın inbox DTO'su yalnız 5 alan
+> (Ettn/VKN/no/tarih/durum) döndürüyor — tutar yok; "sisteme işle" formunda kullanıcı tutarı girer, satır-eşleştirme
+> provider "belge detayı çekme" yeteneği geldiğinde eklenecek (bilinçli kapsam sınırı). **Firma Profili** zaten
+> mevcut (`/settings/company` + `CompanyProfileSection`, Tenant kimliği VKN/vergi dairesi/MERSIS/adres) — yeniden
+> yapılmadı. Testler: +10 Application (2212), +5 Integration (245).
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,

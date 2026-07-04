@@ -36,6 +36,7 @@ import {
   ClipboardList,
   ShoppingBag,
   ReceiptText,
+  Inbox,
   ListChecks,
   CalendarClock,
   Mail,
@@ -137,6 +138,12 @@ const baseNavigation: NavItem[] = [
     labelKey: 'ap.navLabel',
     href: '/dashboard/purchasing/vendor-bills',
     icon: ReceiptText,
+  },
+  {
+    name: 'Incoming Invoices',
+    labelKey: 'Sidebar.nav.incomingInvoices',
+    href: '/dashboard/incoming-invoices',
+    icon: Inbox,
   },
   {
     name: 'Goods Receipts',

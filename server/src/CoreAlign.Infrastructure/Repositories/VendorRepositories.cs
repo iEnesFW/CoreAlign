@@ -31,6 +31,9 @@ public class VendorRepository : IVendorRepository
         return query.AnyAsync(cancellationToken);
     }
 
+    public Task<Vendor?> GetByTaxNumberAsync(string taxNumber, CancellationToken cancellationToken = default)
+        => _context.Vendors.FirstOrDefaultAsync(v => v.TaxNumber == taxNumber, cancellationToken);
+
     public async Task<(IReadOnlyList<VendorSearchRow> Items, int Total)> SearchAsync(
         string? search,
         VendorStatus? status,

@@ -6,6 +6,7 @@ using CoreAlign.Application.Invoices.Recurring.Jobs;
 using CoreAlign.Application.Jobs;
 using CoreAlign.Application.Sales.OrderTemplates.Jobs;
 using CoreAlign.Application.Treasury.Fx;
+using CoreAlign.Infrastructure.Providers.EFatura;
 using Hangfire;
 
 namespace CoreAlign.API.Hangfire;
@@ -90,5 +91,10 @@ public static class RecurringJobsRegistration
             "customer-balance-recompute",
             job => job.RunAsync(CancellationToken.None),
             "30 2 * * *");
+
+        manager.AddOrUpdate<IncomingInvoiceFetchJob>(
+            "incoming-invoice-fetch",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(9));
     }
 }

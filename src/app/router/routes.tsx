@@ -71,6 +71,10 @@ export const RecurringInvoicesPage = lazyNamed(
   () => import('@/pages/invoices/RecurringInvoicesPage'),
   'RecurringInvoicesPage',
 );
+export const IncomingInvoicesPage = lazyNamed(
+  () => import('@/pages/incoming-invoices/IncomingInvoicesPage'),
+  'IncomingInvoicesPage',
+);
 export const InvoicePrintView = lazyNamed(
   () => import('@/pages/invoices/InvoicePrintView'),
   'InvoicePrintView',
