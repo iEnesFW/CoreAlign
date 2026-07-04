@@ -37,11 +37,27 @@ public class CreateReturnRequestCommandHandler : IRequestHandler<CreateReturnReq
         var order = await _orderRepository.GetWithLinesAsync(request.OrderId, cancellationToken)
             ?? throw new OrderNotFoundException();
 
+        // WHY: uygunluk + satır-üyelik kontrolleri belge-sırası TÜKETİMİNDEN ÖNCE — aksi halde reddedilecek
+        // istek RMA numarasını boşa harcar ve sequence hatası domain guard'ını maskeleyip 500'e dönüşür.
+        if (!IsReturnableOrderStatus(order.Status))
+        {
+            throw new InvalidReturnRequestStateException(
+                $"Return cannot be created for an order in status '{order.Status}'.");
+        }
+
         var inputByLine = request.Lines
             .GroupBy(l => l.OrderLineId)
             .ToDictionary(g => g.Key, g => (Qty: g.Sum(x => x.QuantityReturned), Sample: g.First()));
 
         var orderLinesById = order.Lines.ToDictionary(l => l.Id);
+        foreach (var lineId in inputByLine.Keys)
+        {
+            if (!orderLinesById.ContainsKey(lineId))
+            {
+                throw new InvalidReturnRequestStateException(
+                    $"Order line {lineId} does not belong to order {order.OrderNumber}.");
+            }
+        }
 
         await _sequenceRepository.EnsureExistsAsync(
             DocumentSequenceType.ReturnRequestNumber, "RMA", 6, DateTime.UtcNow.Year, cancellationToken);
@@ -57,20 +73,13 @@ public class CreateReturnRequestCommandHandler : IRequestHandler<CreateReturnReq
             request.SourceInvoiceId,
             request.CustomerNotes);
 
-        var lines = new List<ReturnRequestLine>();
-        foreach (var (lineId, payload) in inputByLine)
-        {
-            if (!orderLinesById.TryGetValue(lineId, out var orderLine))
-            {
-                throw new InvalidReturnRequestStateException(
-                    $"Order line {lineId} does not belong to order {order.OrderNumber}.");
-            }
-            lines.Add(new ReturnRequestLine(
-                orderLine,
-                payload.Qty,
-                payload.Sample.Restockable,
-                payload.Sample.LineNotes));
-        }
+        var lines = inputByLine
+            .Select(kvp => new ReturnRequestLine(
+                orderLinesById[kvp.Key],
+                kvp.Value.Qty,
+                kvp.Value.Sample.Restockable,
+                kvp.Value.Sample.LineNotes))
+            .ToList();
         entity.ReplaceLines(lines);
         if (!string.IsNullOrWhiteSpace(request.InternalNotes))
         {
@@ -82,4 +91,11 @@ public class CreateReturnRequestCommandHandler : IRequestHandler<CreateReturnReq
         entity.Order = order;
         return ReturnRequestMapper.ToDto(entity, orderNumber: order.OrderNumber);
     }
+
+    private static bool IsReturnableOrderStatus(OrderStatus status) => status
+        is OrderStatus.Shipped
+        or OrderStatus.PartiallyShipped
+        or OrderStatus.Delivered
+        or OrderStatus.Closed
+        or OrderStatus.Returned;
 }

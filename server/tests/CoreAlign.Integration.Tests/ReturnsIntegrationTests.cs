@@ -43,6 +43,21 @@ public class ReturnsIntegrationTests
     }
 
     [Fact]
+    public async Task Creating_return_on_ineligible_draft_order_returns_bad_request()
+    {
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
+
+        var create = await client.PostAsJsonAsync("/api/v1/returns", new
+        {
+            orderId = _factory.TenantA.OrderId,
+            reason = "Other",
+            lines = new[] { new { orderLineId = Guid.NewGuid(), quantityReturned = 1m } },
+        });
+
+        create.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
     public async Task Creating_return_without_lines_is_rejected()
     {
         var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);

@@ -47,10 +47,12 @@
 > quantityShipped−quantityReturned, neden dropdown, miktar) + Order detay panelinde "İade Oluştur" butonu
 > (order.status ∈ Shipped/PartiallyShipped/Delivered/Closed/Returned), oluşturunca `/dashboard/returns/{id}`'e gider;
 > i18n Returns.create.\* tr+en. Tarayıcıda demo'da uçtan uca doğrulandı (sevk edilmiş sipariş → RTN-2026-00001
-> "Talep Edildi"). Returns entegrasyon testleri eklendi (auth-deny, liste-OK, satırsız-red, olmayan-onay-404).
-> **Bilinen kusur (ayrı görev):** uygun olmayan siparişte (Draft/geçersiz satır) iade oluşturma 500 dönüyor,
-> temiz 400 olmalı — CreateReturnRequestCommandHandler'da eşlenmemiş exception. **Erteleme:** Refund adımı
-> (Refunded durumu / `MarkRefunded` komutu) hâlâ ulaşılamaz — ödeme-oluşturma kararı gerektiriyor (S7+).
+> "Talep Edildi"). Returns entegrasyon testleri eklendi (auth-deny, liste-OK, satırsız-red, olmayan-onay-404,
+> uygun-olmayan-sipariş-400). **Düzeltildi:** uygun olmayan siparişte (Draft/geçersiz satır) iade oluşturma artık
+> temiz 400 dönüyor — handler uygunluk + satır-üyelik kontrolünü belge-sırası tüketiminden ÖNCE yapıyor
+> (aksi halde reddedilecek istek RMA numarasını harcıyor ve sequence hatası domain guard'ını maskeleyip 500'e
+> dönüşüyordu). **Erteleme:** Refund adımı (Refunded durumu / `MarkRefunded` komutu) hâlâ ulaşılamaz — ödeme-oluşturma
+> kararı gerektiriyor (S7+).
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,
