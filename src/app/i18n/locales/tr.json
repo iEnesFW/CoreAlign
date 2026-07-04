@@ -2758,7 +2758,11 @@
         "CornerRadii": "Köşe ovalliği (mm)",
         "CornerNotch": "Köşe girintisi (mm) — ovalliği geçersiz kılar",
         "Polygon": "Çokgen (ön ayar)",
-        "Poly": { "3": "Üçgen", "5": "Beşgen", "6": "Altıgen" },
+        "Poly": {
+          "3": "Üçgen",
+          "5": "Beşgen",
+          "6": "Altıgen"
+        },
         "PolygonHint": "Tıkla: nokta ekle · Sürükle: taşı · Çift tık: sil",
         "ShapeSinglePanelOnly": "Şekil yalnızca tek panelli hatlarda verilebilir."
       },
@@ -7411,20 +7415,29 @@
         "deductions": "Kesintiler"
       },
       "fields": {
-        "number": "Sicil",
-        "tc": "TC Kimlik",
-        "iban": "IBAN",
-        "department": "Departman",
-        "email": "E-posta",
-        "phone": "Telefon",
-        "hireDate": "İşe Giriş",
-        "terminationDate": "Çıkış Tarihi",
-        "currency": "Para Birimi",
-        "payFrequency": "Ödeme Periyodu",
         "bankName": "Banka",
         "componentsCount": "Bileşen Sayısı",
-        "notes": "Notlar"
-      }
+        "currency": "Para Birimi",
+        "department": "Departman",
+        "dependentCount": "Bakmakla Yükümlü",
+        "disabilityDegree": "Engellilik Derecesi",
+        "email": "E-posta",
+        "hireDate": "İşe Giriş",
+        "iban": "IBAN",
+        "notes": "Notlar",
+        "number": "Sicil",
+        "payFrequency": "Ödeme Periyodu",
+        "phone": "Telefon",
+        "retiredWorking": "Emekli Çalışan",
+        "sgkExempt": "SGK Muaf",
+        "sgkIncentiveEligible": "SGK Teşvik",
+        "sgkRegistrationNo": "SGK Sicil No",
+        "spouseEmployed": "Eş Çalışıyor",
+        "tc": "TC Kimlik",
+        "terminationDate": "Çıkış Tarihi",
+        "terminationReason": "Çıkış Nedeni"
+      },
+      "downloadVCard": "vCard İndir"
     },
     "componentForm": {
       "newTitle": "Maaş Bileşeni Ekle",
@@ -7600,6 +7613,21 @@
       "addBracket": "Dilim ekle",
       "upperLimit": "Üst Sınır (boş = sınırsız)",
       "ratePercent": "Oran %"
+    },
+    "changeSalary": {
+      "currentSalary": "Mevcut Brüt Maaş",
+      "effectiveDate": "Geçerlilik Tarihi",
+      "invalidAmount": "Geçerli bir maaş girin.",
+      "newSalary": "Yeni Brüt Maaş",
+      "submit": "Kaydet",
+      "success": "Maaş güncellendi.",
+      "title": "Maaş Değiştir"
+    },
+    "disabilityDegree": {
+      "Degree1": "1. Derece",
+      "Degree2": "2. Derece",
+      "Degree3": "3. Derece",
+      "None": "Yok"
     }
   },
   "CustomerCard": {

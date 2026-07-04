@@ -53,6 +53,19 @@
 > (aksi halde reddedilecek istek RMA numarasını harcıyor ve sequence hatası domain guard'ını maskeleyip 500'e
 > dönüşüyordu). **Erteleme:** Refund adımı (Refunded durumu / `MarkRefunded` komutu) hâlâ ulaşılamaz — ödeme-oluşturma
 > kararı gerektiriyor (S7+).
+>
+> **S7 DURUMU (2026-07-04): KISMİ — FE cila dilimi TAMAMLANDI (§4 Personel).** Keşif, HR/Payroll'un Phase92'de
+> baştan sona kurulu olduğunu gösterdi (Employee CRUD + yaşam döngüsü, dönem-bazlı toplu bordro çalışması "Yeni
+> Dönem→Hesapla", bordro yazdırma, parametreler, tam FSM + GL muhasebeleştirme, 20+ Application testi) — "ham"
+> DEĞİL. Gerçek boşluklar ek özelliklerdi. Bu turda saf-FE, hesap-motoruna-dokunmayan dilim yapıldı:
+> (1) **vCard indir** — EmployeeDetail'de "vCard İndir", `.vcf` RFC 6350 vCard 3.0 (ad/ünvan/firma=tenant/tel/e-posta,
+> PII yok), FE Blob, sıfır backend/migration; (2) **Maaş Değiştir UI** — mevcut ama kullanılmayan `useUpdateBaseSalary`
+> hook'u bir modala bağlandı (aktif personelde); (3) **Personel detay overview zenginleştirildi** (SGK teşvik,
+> engellilik, bakmakla yükümlü, eş çalışıyor, SGK muaf, emekli, SGK sicil no); (4) ölü `PayslipLinesTable.tsx` silindi.
+> Tarayıcıda uçtan uca doğrulandı (vCard içeriği geçerli, maaş 500k→550k güncellendi). typecheck+lint+vitest(464) 0.
+> **Ertelenen (büyük, standalone, hesap-motoruna dokunuyor):** PDKS/mesai (gün-çalışıldı/fazla-mesai girişi —
+> Payslip.DaysWorked hep 30 varsayılıyor, girişi yok; roadmap'te gelecek ay-sonu job'u), personel avans defteri
+> (şu an sadece kesinti tipi), taban maaş geçmişi/leave takvimi.
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,

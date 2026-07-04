@@ -1,14 +1,26 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Coins, LogIn, LogOut, MinusCircle, Pencil, UserCog, UserRound } from 'lucide-react';
+import {
+  Coins,
+  Contact,
+  LogIn,
+  LogOut,
+  MinusCircle,
+  Pencil,
+  UserCog,
+  UserRound,
+} from 'lucide-react';
 import { DetailPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { Button } from '@/shared/ui/Button/Button';
 import { Badge, type BadgeVariant } from '@/shared/ui/Badge/Badge';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { useEmployeeQuery } from '@/features/hr/hooks/useEmployees';
+import { downloadVCard } from '@/features/hr/lib/employeeVCard';
+import { ChangeBaseSalaryModal } from '@/features/hr/ui/ChangeBaseSalaryModal';
 import { EmployeeFormModal } from '@/features/hr/ui/EmployeeFormModal';
 import { SalaryComponentEditor } from '@/features/hr/ui/SalaryComponentEditor';
 import { DeductionEditor } from '@/features/hr/ui/DeductionEditor';
@@ -35,6 +47,8 @@ export const EmployeeDetailPage = () => {
 
   const [tab, setTab] = useState<Tab>('overview');
   const [showEdit, setShowEdit] = useState(false);
+  const [showChangeSalary, setShowChangeSalary] = useState(false);
+  const orgName = useAuthStore((s) => s.user?.tenantName ?? '');
   const [componentModal, setComponentModal] = useState<{
     component: SalaryComponent | null;
   } | null>(null);
@@ -74,6 +88,8 @@ export const EmployeeDetailPage = () => {
   }
 
   const statusLabel = t(`Payroll.employmentStatus.${e.status}`, { defaultValue: e.status });
+  const yesNo = (value: boolean) =>
+    value ? t('Common.Yes', { defaultValue: 'Evet' }) : t('Common.No', { defaultValue: 'Hayır' });
 
   const tabs: { id: Tab; label: string; icon: typeof UserRound }[] = [
     {
@@ -109,12 +125,20 @@ export const EmployeeDetailPage = () => {
           ]}
           actions={
             <div className="flex flex-wrap items-center gap-2">
+              <Button variant="secondary" size="sm" onClick={() => downloadVCard(e, orgName)}>
+                <Contact size={14} />
+                {t('Payroll.employeeDetail.downloadVCard', { defaultValue: 'vCard İndir' })}
+              </Button>
               <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>
                 <Pencil size={14} />
                 {t('common.edit', { defaultValue: 'Düzenle' })}
               </Button>
               {e.status === 'Active' && (
                 <>
+                  <Button variant="outline" size="sm" onClick={() => setShowChangeSalary(true)}>
+                    <Coins size={14} />
+                    {t('Payroll.changeSalary.title', { defaultValue: 'Maaş Değiştir' })}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -219,6 +243,67 @@ export const EmployeeDetailPage = () => {
             >
               {e.salaryComponents.length}
             </Field>
+            {e.sgkRegistrationNo && (
+              <Field
+                label={t('Payroll.employeeDetail.fields.sgkRegistrationNo', {
+                  defaultValue: 'SGK Sicil No',
+                })}
+              >
+                <span className="font-mono">{e.sgkRegistrationNo}</span>
+              </Field>
+            )}
+            <Field
+              label={t('Payroll.employeeDetail.fields.sgkIncentiveEligible', {
+                defaultValue: 'SGK Teşvik',
+              })}
+            >
+              {yesNo(e.isSgkIncentiveEligible)}
+            </Field>
+            <Field
+              label={t('Payroll.employeeDetail.fields.disabilityDegree', {
+                defaultValue: 'Engellilik Derecesi',
+              })}
+            >
+              {t(`Payroll.disabilityDegree.${e.disabilityDegree}`, {
+                defaultValue: e.disabilityDegree,
+              })}
+            </Field>
+            <Field
+              label={t('Payroll.employeeDetail.fields.retiredWorking', {
+                defaultValue: 'Emekli Çalışan',
+              })}
+            >
+              {yesNo(e.isRetiredWorking)}
+            </Field>
+            <Field
+              label={t('Payroll.employeeDetail.fields.sgkExempt', { defaultValue: 'SGK Muaf' })}
+            >
+              {yesNo(e.sgkExempt)}
+            </Field>
+            <Field
+              label={t('Payroll.employeeDetail.fields.dependentCount', {
+                defaultValue: 'Bakmakla Yükümlü',
+              })}
+            >
+              {e.dependentCount}
+            </Field>
+            <Field
+              label={t('Payroll.employeeDetail.fields.spouseEmployed', {
+                defaultValue: 'Eş Çalışıyor',
+              })}
+            >
+              {yesNo(e.spouseEmployed)}
+            </Field>
+            {e.status === 'Terminated' && e.terminationReason && (
+              <Field
+                full
+                label={t('Payroll.employeeDetail.fields.terminationReason', {
+                  defaultValue: 'Çıkış Nedeni',
+                })}
+              >
+                {e.terminationReason}
+              </Field>
+            )}
           </dl>
         )}
 
@@ -248,6 +333,9 @@ export const EmployeeDetailPage = () => {
       </div>
 
       {showEdit && <EmployeeFormModal employee={e} onClose={() => setShowEdit(false)} />}
+      {showChangeSalary && (
+        <ChangeBaseSalaryModal employee={e} onClose={() => setShowChangeSalary(false)} />
+      )}
       {componentModal && (
         <SalaryComponentEditor
           employeeId={e.id}

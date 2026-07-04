@@ -7415,20 +7415,29 @@
         "deductions": "Deductions"
       },
       "fields": {
-        "number": "No.",
-        "tc": "National ID",
-        "iban": "IBAN",
-        "department": "Department",
-        "email": "Email",
-        "phone": "Phone",
-        "hireDate": "Hire Date",
-        "terminationDate": "Termination Date",
-        "currency": "Currency",
-        "payFrequency": "Pay Frequency",
         "bankName": "Bank",
         "componentsCount": "Components",
-        "notes": "Notes"
-      }
+        "currency": "Currency",
+        "department": "Department",
+        "dependentCount": "Dependents",
+        "disabilityDegree": "Disability Degree",
+        "email": "Email",
+        "hireDate": "Hire Date",
+        "iban": "IBAN",
+        "notes": "Notes",
+        "number": "No.",
+        "payFrequency": "Pay Frequency",
+        "phone": "Phone",
+        "retiredWorking": "Retired & Working",
+        "sgkExempt": "SGK Exempt",
+        "sgkIncentiveEligible": "SGK Incentive",
+        "sgkRegistrationNo": "SGK Registration No",
+        "spouseEmployed": "Spouse Employed",
+        "tc": "National ID",
+        "terminationDate": "Termination Date",
+        "terminationReason": "Termination Reason"
+      },
+      "downloadVCard": "Download vCard"
     },
     "componentForm": {
       "newTitle": "Add Salary Component",
@@ -7604,6 +7613,21 @@
       "addBracket": "Add bracket",
       "upperLimit": "Upper Limit (empty = unlimited)",
       "ratePercent": "Rate %"
+    },
+    "changeSalary": {
+      "currentSalary": "Current Gross Salary",
+      "effectiveDate": "Effective Date",
+      "invalidAmount": "Enter a valid salary.",
+      "newSalary": "New Gross Salary",
+      "submit": "Save",
+      "success": "Salary updated.",
+      "title": "Change Salary"
+    },
+    "disabilityDegree": {
+      "Degree1": "Degree 1",
+      "Degree2": "Degree 2",
+      "Degree3": "Degree 3",
+      "None": "None"
     }
   },
   "CustomerCard": {
