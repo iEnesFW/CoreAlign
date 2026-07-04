@@ -124,6 +124,7 @@ export interface InvoiceSummary {
   amountPaid: number;
   amountDue: number;
   isOverdue: boolean;
+  orderNumber: string | null;
 }
 
 export interface GenerateInvoiceRequest {

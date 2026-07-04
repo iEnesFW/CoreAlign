@@ -7,6 +7,7 @@ import {
   Eye,
   FileText,
   Printer,
+  ShoppingCart,
   XCircle,
 } from 'lucide-react';
 import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
@@ -105,6 +106,27 @@ export const InvoiceList = ({
           cell: (i) => (
             <span className="font-medium text-slate-900 dark:text-slate-100">{i.customerName}</span>
           ),
+        },
+        {
+          key: 'order',
+          label: t('invoices.columns.order'),
+          hideOnMobile: true,
+          sortable: true,
+          sortValue: (i) => i.orderNumber ?? '',
+          cell: (i) =>
+            i.orderId && i.orderNumber ? (
+              <Link
+                to={`/dashboard/orders?focus=${i.orderId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
+                title={t('invoices.documents.openOrder')}
+              >
+                <ShoppingCart size={10} />
+                {i.orderNumber}
+              </Link>
+            ) : (
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">—</span>
+            ),
         },
         {
           key: 'issueDate',

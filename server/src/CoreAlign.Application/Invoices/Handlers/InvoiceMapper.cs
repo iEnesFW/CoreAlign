@@ -125,6 +125,7 @@ public static class InvoiceMapper
             AmountPaid = row.AmountPaid,
             AmountDue = row.Total - row.AmountPaid,
             IsOverdue = isOverdue,
+            OrderNumber = row.OrderNumber,
         };
     }
 

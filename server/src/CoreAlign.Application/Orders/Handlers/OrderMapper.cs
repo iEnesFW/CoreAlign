@@ -92,6 +92,10 @@ public static class OrderMapper
         Status = row.Status,
         Currency = row.Currency,
         Total = row.Total,
+        InvoiceId = row.InvoiceId,
+        InvoiceNumber = row.InvoiceNumber,
+        ShipmentId = row.ShipmentId,
+        ShipmentNumber = row.ShipmentNumber,
     };
 
     public static OrderLineDto ToLineDto(OrderLine line) => new()

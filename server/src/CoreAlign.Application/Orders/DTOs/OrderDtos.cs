@@ -133,4 +133,8 @@ public class OrderSummaryDto
     public OrderStatus Status { get; set; }
     public string Currency { get; set; } = string.Empty;
     public decimal Total { get; set; }
+    public Guid? InvoiceId { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public Guid? ShipmentId { get; set; }
+    public string? ShipmentNumber { get; set; }
 }

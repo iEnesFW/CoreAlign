@@ -40,6 +40,7 @@ export const ProductsPage = lazyNamed(
   'ProductsPage',
 );
 export const OrdersPage = lazyNamed(() => import('@/pages/orders/OrdersPage'), 'OrdersPage');
+export const NewOrderPage = lazyNamed(() => import('@/pages/orders/NewOrderPage'), 'NewOrderPage');
 export const QuotesPage = lazyNamed(() => import('@/pages/Quotes/QuotesPage'), 'QuotesPage');
 export const ReturnsPage = lazyNamed(() => import('@/pages/returns/ReturnsPage'), 'ReturnsPage');
 export const ReturnDetailPage = lazyNamed(
@@ -61,6 +62,10 @@ export const StockCountDetailPage = lazyNamed(
 export const InvoicesPage = lazyNamed(
   () => import('@/pages/invoices/InvoicesPage'),
   'InvoicesPage',
+);
+export const NewInvoicePage = lazyNamed(
+  () => import('@/pages/invoices/NewInvoicePage'),
+  'NewInvoicePage',
 );
 export const RecurringInvoicesPage = lazyNamed(
   () => import('@/pages/invoices/RecurringInvoicesPage'),

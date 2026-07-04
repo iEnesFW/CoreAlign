@@ -481,8 +481,12 @@
       "customer": "Müşteri",
       "orderDate": "Tarih",
       "status": "Durum",
+      "documents": "Belgeler",
       "total": "Toplam",
       "actions": "İşlemler"
+    },
+    "documents": {
+      "openInvoice": "Faturayı aç"
     },
     "fields": {
       "orderNumber": "Sipariş Numarası",
@@ -782,12 +786,16 @@
     },
     "columns": {
       "invoiceNumber": "Fatura No",
+      "order": "Sipariş",
       "customer": "Müşteri",
       "issueDate": "Düzenleme",
       "dueDate": "Vade",
       "status": "Durum",
       "total": "Toplam",
       "actions": "İşlemler"
+    },
+    "documents": {
+      "openOrder": "Siparişi aç"
     },
     "fields": {
       "product": "Ürün",

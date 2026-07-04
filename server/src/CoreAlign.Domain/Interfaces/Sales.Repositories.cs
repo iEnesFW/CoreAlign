@@ -305,7 +305,11 @@ public record OrderSearchRow(
     string Currency,
     decimal Total,
     string? DealerApprovalStatus = null,
-    Guid? OriginDealerAccountId = null);
+    Guid? OriginDealerAccountId = null,
+    Guid? InvoiceId = null,
+    string? InvoiceNumber = null,
+    Guid? ShipmentId = null,
+    string? ShipmentNumber = null);
 
 public record InvoiceSearchRow(
     Guid Id,
@@ -318,7 +322,8 @@ public record InvoiceSearchRow(
     Domain.Enums.InvoiceStatus Status,
     string Currency,
     decimal Total,
-    decimal AmountPaid);
+    decimal AmountPaid,
+    string? OrderNumber = null);
 
 public record MonthlyInvoiceTotal(int Year, int Month, decimal Revenue, int InvoiceCount, decimal Paid);
 

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Edit2, FileText, Hash, PanelRightOpen, ShoppingCart, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Edit2, FileText, Hash, PanelRightOpen, ShoppingCart, Trash2, Truck } from 'lucide-react';
 import { DataTable, RowActionButton } from '@/shared/ui/DataTable/DataTable';
 import type { OrderStatus, OrderSummary } from '../model/order.types';
 import { OrderStatusCell } from './OrderStatusCell';
@@ -182,6 +183,35 @@ export const OrderList = ({
               >
                 {t(`orders.status.${o.status}` as never)}
               </span>
+            ),
+        },
+        {
+          key: 'documents',
+          label: t('orders.columns.documents'),
+          hideOnMobile: true,
+          cell: (o) =>
+            o.invoiceNumber || o.shipmentNumber ? (
+              <div className="flex flex-col gap-0.5">
+                {o.invoiceId && o.invoiceNumber && (
+                  <Link
+                    to={`/dashboard/invoices?focus=${o.invoiceId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 font-mono text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
+                    title={t('orders.documents.openInvoice')}
+                  >
+                    <FileText size={10} />
+                    {o.invoiceNumber}
+                  </Link>
+                )}
+                {o.shipmentNumber && (
+                  <span className="inline-flex items-center gap-1 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                    <Truck size={10} />
+                    {o.shipmentNumber}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">—</span>
             ),
         },
         {

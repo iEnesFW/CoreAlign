@@ -141,6 +141,10 @@ export interface OrderSummary {
   status: OrderStatus;
   currency: string;
   total: number;
+  invoiceId: string | null;
+  invoiceNumber: string | null;
+  shipmentId: string | null;
+  shipmentNumber: string | null;
 }
 
 export interface OrderLineInput {

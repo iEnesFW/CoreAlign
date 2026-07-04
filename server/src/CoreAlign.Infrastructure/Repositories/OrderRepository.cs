@@ -126,7 +126,27 @@ public class OrderRepository : IOrderRepository
                 o.Currency,
                 o.Total,
                 o.DealerApprovalStatus,
-                o.OriginDealerAccountId))
+                o.OriginDealerAccountId,
+                _context.Invoices
+                    .Where(i => i.OrderId == o.Id && i.Status != InvoiceStatus.Cancelled && i.Status != InvoiceStatus.Void)
+                    .OrderByDescending(i => i.IssueDate).ThenByDescending(i => i.Id)
+                    .Select(i => (Guid?)i.Id)
+                    .FirstOrDefault(),
+                _context.Invoices
+                    .Where(i => i.OrderId == o.Id && i.Status != InvoiceStatus.Cancelled && i.Status != InvoiceStatus.Void)
+                    .OrderByDescending(i => i.IssueDate).ThenByDescending(i => i.Id)
+                    .Select(i => i.InvoiceNumber)
+                    .FirstOrDefault(),
+                _context.Shipments
+                    .Where(s => s.OrderId == o.Id && s.Status != ShipmentStatus.Cancelled)
+                    .OrderByDescending(s => s.CreatedAtUtc).ThenByDescending(s => s.Id)
+                    .Select(s => (Guid?)s.Id)
+                    .FirstOrDefault(),
+                _context.Shipments
+                    .Where(s => s.OrderId == o.Id && s.Status != ShipmentStatus.Cancelled)
+                    .OrderByDescending(s => s.CreatedAtUtc).ThenByDescending(s => s.Id)
+                    .Select(s => s.ShipmentNumber)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
         return (items, total);

@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
@@ -32,7 +33,6 @@ import {
   useMarkInvoicePaid,
 } from '@/features/invoices/hooks/useInvoiceQueries';
 import { PaymentCreateModal } from '@/features/payments/ui/PaymentCreateModal';
-import { CreateStandaloneInvoiceModal } from './components/CreateStandaloneInvoiceModal';
 import type { InvoiceStatus, InvoiceSummary } from '@/features/invoices/model/invoice.types';
 
 const PAGE_SIZE = 10;
@@ -69,6 +69,7 @@ const exportInvoicesCsv = (rows: InvoiceSummary[]) =>
     rows,
     columns: [
       { header: 'InvoiceNumber', value: (i) => i.invoiceNumber },
+      { header: 'OrderNumber', value: (i) => i.orderNumber ?? '' },
       { header: 'Customer', value: (i) => i.customerName },
       { header: 'IssueDate', value: (i) => i.issueDate },
       { header: 'DueDate', value: (i) => i.dueDate },
@@ -83,6 +84,7 @@ const exportInvoicesCsv = (rows: InvoiceSummary[]) =>
 export const InvoicesPage = () => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [search, setSearch] = useState(
@@ -91,10 +93,20 @@ export const InvoicesPage = () => {
   const debouncedSearch = useDebouncedValue(search, 300);
   const [statusBucket, setStatusBucket] = useState<StatusBucket>('all');
   const [hasDueSoonOnly, setHasDueSoonOnly] = useState(false);
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusFromUrl = searchParams.get('focus') ?? searchParams.get('selected');
+  const [viewingId, setViewingId] = useState<string | null>(focusFromUrl);
+  const [panelOpen, setPanelOpen] = useState<boolean>(!!focusFromUrl);
   const [paymentForInvoiceId, setPaymentForInvoiceId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
+
+  useEffect(() => {
+    if (focusFromUrl) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('focus');
+      next.delete('selected');
+      setSearchParams(next, { replace: true });
+    }
+  }, [focusFromUrl, searchParams, setSearchParams]);
 
   const params = useMemo(
     () => ({ page, pageSize, search: debouncedSearch.trim() || undefined }),
@@ -281,7 +293,7 @@ export const InvoicesPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => setCreateOpen(true)}
+              onClick={() => navigate('/dashboard/invoices/new')}
               className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary-600 to-purple-600 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-primary-500/20 transition hover:shadow-lg hover:shadow-primary-500/30 hover:-translate-y-px"
             >
               <Plus size={13} />
@@ -430,15 +442,6 @@ export const InvoicesPage = () => {
           onClose={() => setPaymentForInvoiceId(null)}
         />
       )}
-
-      <CreateStandaloneInvoiceModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(id) => {
-          setViewingId(id);
-          setPanelOpen(true);
-        }}
-      />
     </div>
   );
 };

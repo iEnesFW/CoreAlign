@@ -112,4 +112,5 @@ public class InvoiceSummaryDto
     public decimal AmountPaid { get; set; }
     public decimal AmountDue { get; set; }
     public bool IsOverdue { get; set; }
+    public string? OrderNumber { get; set; }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
@@ -82,12 +82,15 @@ const exportOrdersCsv = (rows: OrderSummary[]) =>
       { header: 'Status', value: (o) => o.status },
       { header: 'Currency', value: (o) => o.currency },
       { header: 'Total', value: (o) => o.total },
+      { header: 'InvoiceNumber', value: (o) => o.invoiceNumber ?? '' },
+      { header: 'ShipmentNumber', value: (o) => o.shipmentNumber ?? '' },
     ],
   });
 
 export const OrdersPage = () => {
   const { t, i18n } = useTranslation();
   const locale = i18n.language;
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [search, setSearch] = useState(
@@ -248,8 +251,7 @@ export const OrdersPage = () => {
   };
 
   const handleCreate = () => {
-    setEditingId(null);
-    setModalOpen(true);
+    navigate('/dashboard/orders/new');
   };
 
   const handleEdit = (order: OrderSummary) => {

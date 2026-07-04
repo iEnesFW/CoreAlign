@@ -481,8 +481,12 @@
       "customer": "Customer",
       "orderDate": "Date",
       "status": "Status",
+      "documents": "Documents",
       "total": "Total",
       "actions": "Actions"
+    },
+    "documents": {
+      "openInvoice": "Open invoice"
     },
     "fields": {
       "orderNumber": "Order Number",
@@ -782,12 +786,16 @@
     },
     "columns": {
       "invoiceNumber": "Invoice #",
+      "order": "Order",
       "customer": "Customer",
       "issueDate": "Issue Date",
       "dueDate": "Due Date",
       "status": "Status",
       "total": "Total",
       "actions": "Actions"
+    },
+    "documents": {
+      "openOrder": "Open order"
     },
     "fields": {
       "product": "Product",

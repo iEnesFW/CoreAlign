@@ -109,7 +109,11 @@ public class InvoiceRepository : IInvoiceRepository
                 i.Status,
                 i.Currency,
                 i.Total,
-                i.AmountPaid))
+                i.AmountPaid,
+                _context.Orders
+                    .Where(o => o.Id == i.OrderId)
+                    .Select(o => o.OrderNumber)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
 
         return (items, total);
@@ -279,7 +283,11 @@ public class InvoiceRepository : IInvoiceRepository
                 i.Status,
                 i.Currency,
                 i.Total,
-                i.AmountPaid))
+                i.AmountPaid,
+                _context.Orders
+                    .Where(o => o.Id == i.OrderId)
+                    .Select(o => o.OrderNumber)
+                    .FirstOrDefault()))
             .ToListAsync(cancellationToken);
         return (items, total);
     }

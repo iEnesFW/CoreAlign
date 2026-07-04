@@ -104,6 +104,7 @@ export const useDocumentChain = ({ entity, id }: { entity: ChainEntity; id: stri
                 amountPaid: invoice.amountPaid,
                 amountDue: invoice.amountDue,
                 isOverdue: false,
+                orderNumber: null,
               },
             ]
           : [];

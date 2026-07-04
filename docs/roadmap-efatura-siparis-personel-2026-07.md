@@ -2,10 +2,19 @@
 
 > **S1 DURUMU (2026-07-03): TAMAMLANDI.** RevertOrderToDraft (FSM + guard'lar + endpoint + FE), kısmi ödeme filtresi,
 > tediye FE (PaymentCreateModal direction), klon UI (validator fix'iyle açıldı), customer_notes (entity + Phase114
-> migration + endpoint'ler + panel UI). **Migration takibi:** `20260728000000_Phase114CustomerNotes` idempotent yazıldı
-> ama bu geliştirme makinesi SQLite EnsureCreated modunda olduğundan Postgres'e UYGULANMADI — Postgres ortamında ilk
-> `dotnet ef database update` (veya startup MigrateAsync) uygular. Lokalde tabloyu görmek için `corealign.db`(+wal/shm)
-> silinip app yeniden başlatılmalı (EnsureCreated şemayı modelden yeniden üretir, demo seed yeniden koşar).
+> migration + endpoint'ler + panel UI). **Migration takibi (GÜNCEL):** `20260728000000_Phase114CustomerNotes` lokal
+> Postgres'e UYGULANDI (2026-07-03'te bu makine native PostgreSQL 18'e geçti, startup `MigrateAsync` otomatik uygular).
+>
+> **S2 DURUMU (2026-07-04): TAMAMLANDI.** Çapraz bağlantı kolonları: `OrderSearchRow`/`OrderSummaryDto`'ya aktif
+> (İptal/Void olmayan) fatura + irsaliye no/id scalar subquery ile eklendi — fatura iptalinde kolon kendiliğinden
+> boşalır, sipariş durumu DEĞİŞMEZ (silme geri-bağlantısı bu tasarımla çözüldü, event handler gerekmedi);
+> `InvoiceSearchRow`/`InvoiceSummaryDto`'ya OrderNumber eklendi. Liste kolonları tıklanabilir (`?focus=` deep-link,
+> InvoicesPage'e focus/selected desteği eklendi — DocumentChain'in `?selected=` linkleri de artık çalışıyor).
+> Sipariş/fatura oluşturma tam sayfaya taşındı: `/dashboard/orders/new` + `/dashboard/invoices/new`
+> (OrderFormModal + CreateStandaloneInvoiceModal `presentation="page"` çift-mod; düzenleme modal'da kaldı,
+> taslak-otokayıt korunuyor). N+1 bütçeleri korunuyor (scalar subquery tek round-trip);
+> `OrderInvoiceCrossLinkIntegrationTests` iptal-sonrası boşalmayı da kanıtlıyor. Ek bugfix: `fx-rates/resolve`
+> query-bound DateTime Kind=Unspecified → Npgsql 500 (handler + repository çift normalizasyon, INVARIANTS'a işlendi).
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,

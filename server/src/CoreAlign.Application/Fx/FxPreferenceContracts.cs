@@ -83,7 +83,9 @@ public sealed class ResolveFxRateHandler : IRequestHandler<ResolveFxRateQuery, F
     public async Task<FxResolutionDto?> Handle(ResolveFxRateQuery request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantContext.CurrentTenantId;
-        var asOf = request.AsOfDate ?? DateTime.UtcNow;
+        var asOf = request.AsOfDate.HasValue
+            ? DateTime.SpecifyKind(request.AsOfDate.Value, DateTimeKind.Utc)
+            : DateTime.UtcNow;
         var result = await _resolver.ResolveDetailedAsync(request.CurrencyCode, asOf, tenantId, cancellationToken);
         if (result is null) return null;
         return new FxResolutionDto(

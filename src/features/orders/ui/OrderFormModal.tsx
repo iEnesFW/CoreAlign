@@ -46,6 +46,7 @@ interface Props {
   open: boolean;
   order: Order | null;
   onClose: () => void;
+  presentation?: 'modal' | 'page';
 }
 
 const ORDER_TYPES: OrderType[] = ['Standard', 'Blanket', 'Return', 'Sample', 'Internal'];
@@ -100,7 +101,7 @@ const toIsoOrNull = (value?: string): string | null =>
 const numOrUndefined = (value?: string): number | undefined =>
   value && Number(value) ? Number(value) : undefined;
 
-export const OrderFormModal = ({ open, order, onClose }: Props) => {
+export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }: Props) => {
   const { t, i18n } = useTranslation();
   const createMutation = useCreateOrder();
   const updateMutation = useUpdateOrder();
@@ -445,503 +446,520 @@ export const OrderFormModal = ({ open, order, onClose }: Props) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSubmit();
   };
 
+  const isPage = presentation === 'page';
+  const quickAddModal = quickAdd ? (
+    <MasterDataQuickModal
+      kind={quickAdd}
+      onClose={() => setQuickAdd(null)}
+      onCreated={(id) => {
+        setValue(quickAdd === 'paymentTerm' ? 'paymentTermsId' : 'priceListId', id, {
+          shouldDirty: true,
+        });
+        setQuickAdd(null);
+      }}
+    />
+  ) : null;
+
+  const card = (
+    <div
+      className={
+        isPage
+          ? 'w-full rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900'
+          : 'w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-slate-900'
+      }
+      onClick={isPage ? undefined : (e) => e.stopPropagation()}
+      role={isPage ? undefined : 'dialog'}
+      aria-modal={isPage ? undefined : true}
+    >
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          {isEdit ? t('orders.modal.editTitle') : t('orders.modal.createTitle')}
+        </h2>
+        <button
+          type="button"
+          onClick={requestClose}
+          className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+          aria-label={t('common.cancel')}
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      <ModalTabs
+        tabs={[
+          {
+            id: 'info',
+            label: t('orders.tabs.info', { defaultValue: 'Genel Bilgiler' }),
+            hasError: infoHasError,
+          },
+          {
+            id: 'lines',
+            label: t('orders.tabs.lines', { defaultValue: 'Kalemler' }),
+            badge: fields.length,
+            hasError: linesHaveError,
+          },
+        ]}
+        active={tab}
+        onChange={(id) => setTab(id as typeof tab)}
+      />
+
+      <form
+        onSubmit={onSubmit}
+        onKeyDown={onFormKeyDown}
+        noValidate
+        className="space-y-4 px-5 py-4"
+      >
+        {!isEdit && draftToRestore && (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-xs dark:border-primary-500/30 dark:bg-primary-500/10">
+            <span className="text-primary-800 dark:text-primary-200">
+              {t('orders.draft.found', { defaultValue: 'Kaydedilmiş bir taslak bulundu.' })}
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  reset(draftToRestore);
+                  setDraftToRestore(null);
+                }}
+                className="rounded bg-primary-600 px-2 py-1 font-medium text-white hover:bg-primary-700"
+              >
+                {t('orders.draft.restore', { defaultValue: 'Geri yükle' })}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  draft.clearDraft();
+                  setDraftToRestore(null);
+                }}
+                className="rounded px-2 py-1 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                {t('orders.draft.discard', { defaultValue: 'Yoksay' })}
+              </button>
+            </div>
+          </div>
+        )}
+        <div className={tab === 'info' ? 'space-y-4' : 'hidden'}>
+          <section className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {!isEdit && !manualNumber ? (
+                <div>
+                  <label className={labelCls}>{t('orders.fields.orderNumber')}</label>
+                  <div className="flex items-center gap-2">
+                    <NextNumberBadge type="OrderNumber" />
+                    <button
+                      type="button"
+                      onClick={() => setManualNumber(true)}
+                      className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
+                    >
+                      {t('numbering.enterManually', { defaultValue: 'Numarayı elle gir' })}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <Input
+                    label={t('orders.fields.orderNumber')}
+                    placeholder="ORD-2026-0001"
+                    disabled={isEdit && !isDraft}
+                    error={translateError(errors.orderNumber?.message)}
+                    {...register('orderNumber')}
+                  />
+                  {!isEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setManualNumber(false);
+                        setValue('orderNumber', '');
+                      }}
+                      className="mt-1 text-[11px] font-medium text-slate-500 hover:underline dark:text-slate-400"
+                    >
+                      {t('numbering.useAutomatic', { defaultValue: 'Otomatik numara kullan' })}
+                    </button>
+                  )}
+                </div>
+              )}
+              <Input
+                label={t('orders.fields.orderDate')}
+                type="date"
+                disabled={!isDraft}
+                error={translateError(errors.orderDate?.message)}
+                {...register('orderDate')}
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>{t('orders.fields.customer')}</label>
+              <select disabled={!isDraft} className={fieldCls} {...register('customerId')}>
+                <option value="">{t('orders.fields.customerPlaceholder')}</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              {errors.customerId?.message && (
+                <span className="mt-1 block text-xs text-danger-500">
+                  {translateError(errors.customerId.message)}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className={labelCls}>{t('orders.fields.type')}</label>
+                <select disabled={!isDraft} className={fieldCls} {...register('type')}>
+                  {ORDER_TYPES.map((ty) => (
+                    <option key={ty} value={ty}>
+                      {t(`orders.type.${ty}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>{t('orders.fields.source')}</label>
+                <select disabled={!isDraft} className={fieldCls} {...register('source')}>
+                  {ORDER_SOURCES.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`orders.source.${s}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>{t('orders.fields.status')}</label>
+                <select disabled={!isEdit} className={fieldCls} {...register('status')}>
+                  {ORDER_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`orders.status.${s}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className={sectionCls}>
+            <h3 className={sectionTitleCls}>{t('orders.sections.commercial')}</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <label className={labelCls}>{t('orders.fields.currency')}</label>
+                <Controller
+                  name="currency"
+                  control={control}
+                  render={({ field }) => (
+                    <CurrencySelect value={field.value} onChange={field.onChange} />
+                  )}
+                />
+              </div>
+              <div>
+                <Input
+                  label={t('orders.fields.exchangeRate')}
+                  type="number"
+                  step="0.0001"
+                  min="0"
+                  {...register('exchangeRate')}
+                />
+                {fxSnapshot && (
+                  <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                    {t('orders.fx.autoRate', {
+                      source: fxSnapshot.source,
+                      date: new Date(fxSnapshot.effectiveDate).toLocaleDateString(locale),
+                    })}
+                  </p>
+                )}
+              </div>
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('orders.fields.paymentTerms')}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setQuickAdd('paymentTerm')}
+                    className={quickAddBtnCls}
+                  >
+                    <Plus size={11} /> Yeni
+                  </button>
+                </div>
+                <select className={fieldCls} {...register('paymentTermsId')}>
+                  <option value="">{t('orders.lines.none')}</option>
+                  {paymentTerms.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {t('orders.fields.priceList')}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setQuickAdd('priceList')}
+                    className={quickAddBtnCls}
+                  >
+                    <Plus size={11} /> Yeni
+                  </button>
+                </div>
+                <select className={fieldCls} {...register('priceListId')}>
+                  <option value="">{t('orders.lines.none')}</option>
+                  {priceLists.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Input
+                label={t('orders.fields.headerDiscount')}
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                {...register('headerDiscountPercent')}
+              />
+              <Input
+                label={t('orders.fields.shippingCost')}
+                type="number"
+                step="0.01"
+                min="0"
+                {...register('shippingCost')}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Input
+                label={t('orders.fields.requestedDelivery')}
+                type="date"
+                {...register('requestedDeliveryDate')}
+              />
+              <Input
+                label={t('orders.fields.promisedDelivery')}
+                type="date"
+                {...register('promisedDeliveryDate')}
+              />
+              <Input label={t('orders.fields.channel')} {...register('channel')} />
+            </div>
+          </section>
+
+          <section className={sectionCls}>
+            <h3 className={sectionTitleCls}>{t('orders.sections.addresses')}</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className={labelCls}>{t('orders.fields.billingAddress')}</label>
+                <select
+                  className={fieldCls}
+                  disabled={!watchedCustomerId}
+                  {...register('billingAddressId')}
+                >
+                  <option value="">{t('orders.lines.none')}</option>
+                  {addresses.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label} — {a.line1}
+                      {a.city ? `, ${a.city}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>{t('orders.fields.shippingAddress')}</label>
+                <select
+                  className={fieldCls}
+                  disabled={!watchedCustomerId}
+                  {...register('shippingAddressId')}
+                >
+                  <option value="">{t('orders.lines.none')}</option>
+                  {addresses.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.label} — {a.line1}
+                      {a.city ? `, ${a.city}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className={sectionCls}>
+            <h3 className={sectionTitleCls}>{t('orders.sections.notes')}</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className={labelCls}>{t('orders.fields.customerNotes')}</label>
+                <textarea rows={2} className={fieldCls} {...register('customerNotes')} />
+              </div>
+              <div>
+                <label className={labelCls}>{t('orders.fields.internalNotes')}</label>
+                <textarea rows={2} className={fieldCls} {...register('internalNotes')} />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>{t('orders.fields.notes')}</label>
+              <textarea
+                rows={2}
+                placeholder={t('orders.fields.notesPlaceholder')}
+                className={fieldCls}
+                {...register('notes')}
+              />
+            </div>
+          </section>
+        </div>
+
+        <div className={tab === 'lines' ? 'space-y-4' : 'hidden'}>
+          <section className={sectionCls}>
+            <div className="flex items-center justify-between">
+              <h3 className={sectionTitleCls}>{t('orders.fields.lines')}</h3>
+              <button
+                type="button"
+                disabled={!isDraft}
+                onClick={addLine}
+                className="inline-flex items-center gap-1 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20"
+              >
+                <Plus size={12} />
+                {t('orders.lines.add')}
+              </button>
+            </div>
+
+            {errors.lines?.message && (
+              <div className="text-xs text-danger-500">{translateError(errors.lines.message)}</div>
+            )}
+
+            <div className="space-y-2">
+              {fields.map((field, index) => (
+                <OrderLineEditor
+                  key={field.id}
+                  index={index}
+                  isLast={index === fields.length - 1}
+                  register={register}
+                  errors={errors.lines?.[index]}
+                  line={watchedLines?.[index]}
+                  products={products}
+                  taxRates={taxRates}
+                  warehouses={warehouses}
+                  disabled={!isDraft}
+                  canRemove={fields.length > 1}
+                  locale={locale}
+                  currency={currency}
+                  decimals={decimals}
+                  setProductRef={(el) => {
+                    if (el) productRefs.current.set(field.id, el);
+                    else productRefs.current.delete(field.id);
+                  }}
+                  onProductSelect={handleProductSelect}
+                  onTaxRateSelect={handleTaxRateSelect}
+                  onRemove={remove}
+                  onAddLine={addLine}
+                />
+              ))}
+            </div>
+
+            <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/50">
+              <dl className="space-y-1">
+                <SummaryRow
+                  label={t('orders.summary.subtotal')}
+                  value={formatCurrency(summary.subtotal, locale, currency, decimals)}
+                />
+                <SummaryRow
+                  label={
+                    summary.lineDiscountPct !== null
+                      ? t('orders.summary.lineDiscountWithRate', { pct: summary.lineDiscountPct })
+                      : t('orders.summary.lineDiscount')
+                  }
+                  value={`- ${formatCurrency(summary.lineDiscount, locale, currency, decimals)}`}
+                />
+                <SummaryRow
+                  label={
+                    summary.headerDiscountPct > 0
+                      ? t('orders.summary.headerDiscountWithRate', {
+                          pct: summary.headerDiscountPct,
+                        })
+                      : t('orders.summary.headerDiscount')
+                  }
+                  value={`- ${formatCurrency(summary.headerDiscount, locale, currency, decimals)}`}
+                />
+                <SummaryRow
+                  label={
+                    summary.taxPct !== null
+                      ? t('orders.summary.taxWithRate', { pct: summary.taxPct })
+                      : t('orders.summary.tax')
+                  }
+                  value={formatCurrency(summary.tax, locale, currency, decimals)}
+                />
+                <SummaryRow
+                  label={
+                    summary.withholdingPct !== null
+                      ? t('orders.summary.withholdingWithRate', { pct: summary.withholdingPct })
+                      : t('orders.summary.withholding')
+                  }
+                  value={`- ${formatCurrency(summary.withholding, locale, currency, decimals)}`}
+                />
+                <SummaryRow
+                  label={t('orders.summary.shipping')}
+                  value={formatCurrency(summary.shipping, locale, currency, decimals)}
+                />
+                <div className="mt-1 flex justify-between border-t border-slate-200 pt-1 font-semibold text-slate-900 dark:border-slate-700 dark:text-slate-100">
+                  <dt>{t('orders.summary.grandTotal')}</dt>
+                  <dd>{formatCurrency(summary.grandTotal, locale, currency, decimals)}</dd>
+                </div>
+              </dl>
+              <p className="mt-2 text-[11px] text-slate-400">{t('orders.summary.estimate')}</p>
+            </div>
+          </section>
+        </div>
+
+        <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-slate-200 bg-white pt-3 dark:border-slate-800 dark:bg-slate-900">
+          <div className="text-sm">
+            <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {t('orders.summary.grandTotal')}
+            </span>{' '}
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {formatCurrency(summary.grandTotal, locale, currency, decimals)}
+            </span>
+            {!isEdit && draft.lastSavedAt && (
+              <div className="text-[10px] text-slate-400 dark:text-slate-500">
+                {t('orders.draft.savedAt', {
+                  defaultValue: 'Taslak kaydedildi {{time}}',
+                  time: new Date(draft.lastSavedAt).toLocaleTimeString(locale),
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={requestClose}
+              className="rounded px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              {t('common.cancel')}
+            </button>
+            <Button type="submit" isLoading={isBusy}>
+              {t('common.save')}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+
+  if (isPage) {
+    return (
+      <>
+        {card}
+        {quickAddModal}
+      </>
+    );
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       {...backdrop}
       role="presentation"
     >
-      <div
-        className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-slate-900"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            {isEdit ? t('orders.modal.editTitle') : t('orders.modal.createTitle')}
-          </h2>
-          <button
-            type="button"
-            onClick={requestClose}
-            className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-            aria-label={t('common.cancel')}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <ModalTabs
-          tabs={[
-            {
-              id: 'info',
-              label: t('orders.tabs.info', { defaultValue: 'Genel Bilgiler' }),
-              hasError: infoHasError,
-            },
-            {
-              id: 'lines',
-              label: t('orders.tabs.lines', { defaultValue: 'Kalemler' }),
-              badge: fields.length,
-              hasError: linesHaveError,
-            },
-          ]}
-          active={tab}
-          onChange={(id) => setTab(id as typeof tab)}
-        />
-
-        <form
-          onSubmit={onSubmit}
-          onKeyDown={onFormKeyDown}
-          noValidate
-          className="space-y-4 px-5 py-4"
-        >
-          {!isEdit && draftToRestore && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-xs dark:border-primary-500/30 dark:bg-primary-500/10">
-              <span className="text-primary-800 dark:text-primary-200">
-                {t('orders.draft.found', { defaultValue: 'Kaydedilmiş bir taslak bulundu.' })}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    reset(draftToRestore);
-                    setDraftToRestore(null);
-                  }}
-                  className="rounded bg-primary-600 px-2 py-1 font-medium text-white hover:bg-primary-700"
-                >
-                  {t('orders.draft.restore', { defaultValue: 'Geri yükle' })}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    draft.clearDraft();
-                    setDraftToRestore(null);
-                  }}
-                  className="rounded px-2 py-1 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                >
-                  {t('orders.draft.discard', { defaultValue: 'Yoksay' })}
-                </button>
-              </div>
-            </div>
-          )}
-          <div className={tab === 'info' ? 'space-y-4' : 'hidden'}>
-            <section className="space-y-3">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {!isEdit && !manualNumber ? (
-                  <div>
-                    <label className={labelCls}>{t('orders.fields.orderNumber')}</label>
-                    <div className="flex items-center gap-2">
-                      <NextNumberBadge type="OrderNumber" />
-                      <button
-                        type="button"
-                        onClick={() => setManualNumber(true)}
-                        className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
-                      >
-                        {t('numbering.enterManually', { defaultValue: 'Numarayı elle gir' })}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <Input
-                      label={t('orders.fields.orderNumber')}
-                      placeholder="ORD-2026-0001"
-                      disabled={isEdit && !isDraft}
-                      error={translateError(errors.orderNumber?.message)}
-                      {...register('orderNumber')}
-                    />
-                    {!isEdit && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setManualNumber(false);
-                          setValue('orderNumber', '');
-                        }}
-                        className="mt-1 text-[11px] font-medium text-slate-500 hover:underline dark:text-slate-400"
-                      >
-                        {t('numbering.useAutomatic', { defaultValue: 'Otomatik numara kullan' })}
-                      </button>
-                    )}
-                  </div>
-                )}
-                <Input
-                  label={t('orders.fields.orderDate')}
-                  type="date"
-                  disabled={!isDraft}
-                  error={translateError(errors.orderDate?.message)}
-                  {...register('orderDate')}
-                />
-              </div>
-
-              <div>
-                <label className={labelCls}>{t('orders.fields.customer')}</label>
-                <select disabled={!isDraft} className={fieldCls} {...register('customerId')}>
-                  <option value="">{t('orders.fields.customerPlaceholder')}</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.customerId?.message && (
-                  <span className="mt-1 block text-xs text-danger-500">
-                    {translateError(errors.customerId.message)}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <label className={labelCls}>{t('orders.fields.type')}</label>
-                  <select disabled={!isDraft} className={fieldCls} {...register('type')}>
-                    {ORDER_TYPES.map((ty) => (
-                      <option key={ty} value={ty}>
-                        {t(`orders.type.${ty}` as never)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>{t('orders.fields.source')}</label>
-                  <select disabled={!isDraft} className={fieldCls} {...register('source')}>
-                    {ORDER_SOURCES.map((s) => (
-                      <option key={s} value={s}>
-                        {t(`orders.source.${s}` as never)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>{t('orders.fields.status')}</label>
-                  <select disabled={!isEdit} className={fieldCls} {...register('status')}>
-                    {ORDER_STATUSES.map((s) => (
-                      <option key={s} value={s}>
-                        {t(`orders.status.${s}` as never)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section className={sectionCls}>
-              <h3 className={sectionTitleCls}>{t('orders.sections.commercial')}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <label className={labelCls}>{t('orders.fields.currency')}</label>
-                  <Controller
-                    name="currency"
-                    control={control}
-                    render={({ field }) => (
-                      <CurrencySelect value={field.value} onChange={field.onChange} />
-                    )}
-                  />
-                </div>
-                <div>
-                  <Input
-                    label={t('orders.fields.exchangeRate')}
-                    type="number"
-                    step="0.0001"
-                    min="0"
-                    {...register('exchangeRate')}
-                  />
-                  {fxSnapshot && (
-                    <p className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-                      {t('orders.fx.autoRate', {
-                        source: fxSnapshot.source,
-                        date: new Date(fxSnapshot.effectiveDate).toLocaleDateString(locale),
-                      })}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {t('orders.fields.paymentTerms')}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setQuickAdd('paymentTerm')}
-                      className={quickAddBtnCls}
-                    >
-                      <Plus size={11} /> Yeni
-                    </button>
-                  </div>
-                  <select className={fieldCls} {...register('paymentTermsId')}>
-                    <option value="">{t('orders.lines.none')}</option>
-                    {paymentTerms.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {t('orders.fields.priceList')}
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setQuickAdd('priceList')}
-                      className={quickAddBtnCls}
-                    >
-                      <Plus size={11} /> Yeni
-                    </button>
-                  </div>
-                  <select className={fieldCls} {...register('priceListId')}>
-                    <option value="">{t('orders.lines.none')}</option>
-                    {priceLists.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Input
-                  label={t('orders.fields.headerDiscount')}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="100"
-                  {...register('headerDiscountPercent')}
-                />
-                <Input
-                  label={t('orders.fields.shippingCost')}
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  {...register('shippingCost')}
-                />
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <Input
-                  label={t('orders.fields.requestedDelivery')}
-                  type="date"
-                  {...register('requestedDeliveryDate')}
-                />
-                <Input
-                  label={t('orders.fields.promisedDelivery')}
-                  type="date"
-                  {...register('promisedDeliveryDate')}
-                />
-                <Input label={t('orders.fields.channel')} {...register('channel')} />
-              </div>
-            </section>
-
-            <section className={sectionCls}>
-              <h3 className={sectionTitleCls}>{t('orders.sections.addresses')}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={labelCls}>{t('orders.fields.billingAddress')}</label>
-                  <select
-                    className={fieldCls}
-                    disabled={!watchedCustomerId}
-                    {...register('billingAddressId')}
-                  >
-                    <option value="">{t('orders.lines.none')}</option>
-                    {addresses.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.label} — {a.line1}
-                        {a.city ? `, ${a.city}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>{t('orders.fields.shippingAddress')}</label>
-                  <select
-                    className={fieldCls}
-                    disabled={!watchedCustomerId}
-                    {...register('shippingAddressId')}
-                  >
-                    <option value="">{t('orders.lines.none')}</option>
-                    {addresses.map((a) => (
-                      <option key={a.id} value={a.id}>
-                        {a.label} — {a.line1}
-                        {a.city ? `, ${a.city}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            <section className={sectionCls}>
-              <h3 className={sectionTitleCls}>{t('orders.sections.notes')}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={labelCls}>{t('orders.fields.customerNotes')}</label>
-                  <textarea rows={2} className={fieldCls} {...register('customerNotes')} />
-                </div>
-                <div>
-                  <label className={labelCls}>{t('orders.fields.internalNotes')}</label>
-                  <textarea rows={2} className={fieldCls} {...register('internalNotes')} />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>{t('orders.fields.notes')}</label>
-                <textarea
-                  rows={2}
-                  placeholder={t('orders.fields.notesPlaceholder')}
-                  className={fieldCls}
-                  {...register('notes')}
-                />
-              </div>
-            </section>
-          </div>
-
-          <div className={tab === 'lines' ? 'space-y-4' : 'hidden'}>
-            <section className={sectionCls}>
-              <div className="flex items-center justify-between">
-                <h3 className={sectionTitleCls}>{t('orders.fields.lines')}</h3>
-                <button
-                  type="button"
-                  disabled={!isDraft}
-                  onClick={addLine}
-                  className="inline-flex items-center gap-1 rounded bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 disabled:opacity-50 dark:bg-primary-500/10 dark:text-primary-300 dark:hover:bg-primary-500/20"
-                >
-                  <Plus size={12} />
-                  {t('orders.lines.add')}
-                </button>
-              </div>
-
-              {errors.lines?.message && (
-                <div className="text-xs text-danger-500">
-                  {translateError(errors.lines.message)}
-                </div>
-              )}
-
-              <div className="space-y-2">
-                {fields.map((field, index) => (
-                  <OrderLineEditor
-                    key={field.id}
-                    index={index}
-                    isLast={index === fields.length - 1}
-                    register={register}
-                    errors={errors.lines?.[index]}
-                    line={watchedLines?.[index]}
-                    products={products}
-                    taxRates={taxRates}
-                    warehouses={warehouses}
-                    disabled={!isDraft}
-                    canRemove={fields.length > 1}
-                    locale={locale}
-                    currency={currency}
-                    decimals={decimals}
-                    setProductRef={(el) => {
-                      if (el) productRefs.current.set(field.id, el);
-                      else productRefs.current.delete(field.id);
-                    }}
-                    onProductSelect={handleProductSelect}
-                    onTaxRateSelect={handleTaxRateSelect}
-                    onRemove={remove}
-                    onAddLine={addLine}
-                  />
-                ))}
-              </div>
-
-              <div className="rounded border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-800/50">
-                <dl className="space-y-1">
-                  <SummaryRow
-                    label={t('orders.summary.subtotal')}
-                    value={formatCurrency(summary.subtotal, locale, currency, decimals)}
-                  />
-                  <SummaryRow
-                    label={
-                      summary.lineDiscountPct !== null
-                        ? t('orders.summary.lineDiscountWithRate', { pct: summary.lineDiscountPct })
-                        : t('orders.summary.lineDiscount')
-                    }
-                    value={`- ${formatCurrency(summary.lineDiscount, locale, currency, decimals)}`}
-                  />
-                  <SummaryRow
-                    label={
-                      summary.headerDiscountPct > 0
-                        ? t('orders.summary.headerDiscountWithRate', {
-                            pct: summary.headerDiscountPct,
-                          })
-                        : t('orders.summary.headerDiscount')
-                    }
-                    value={`- ${formatCurrency(summary.headerDiscount, locale, currency, decimals)}`}
-                  />
-                  <SummaryRow
-                    label={
-                      summary.taxPct !== null
-                        ? t('orders.summary.taxWithRate', { pct: summary.taxPct })
-                        : t('orders.summary.tax')
-                    }
-                    value={formatCurrency(summary.tax, locale, currency, decimals)}
-                  />
-                  <SummaryRow
-                    label={
-                      summary.withholdingPct !== null
-                        ? t('orders.summary.withholdingWithRate', { pct: summary.withholdingPct })
-                        : t('orders.summary.withholding')
-                    }
-                    value={`- ${formatCurrency(summary.withholding, locale, currency, decimals)}`}
-                  />
-                  <SummaryRow
-                    label={t('orders.summary.shipping')}
-                    value={formatCurrency(summary.shipping, locale, currency, decimals)}
-                  />
-                  <div className="mt-1 flex justify-between border-t border-slate-200 pt-1 font-semibold text-slate-900 dark:border-slate-700 dark:text-slate-100">
-                    <dt>{t('orders.summary.grandTotal')}</dt>
-                    <dd>{formatCurrency(summary.grandTotal, locale, currency, decimals)}</dd>
-                  </div>
-                </dl>
-                <p className="mt-2 text-[11px] text-slate-400">{t('orders.summary.estimate')}</p>
-              </div>
-            </section>
-          </div>
-
-          <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-slate-200 bg-white pt-3 dark:border-slate-800 dark:bg-slate-900">
-            <div className="text-sm">
-              <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {t('orders.summary.grandTotal')}
-              </span>{' '}
-              <span className="font-semibold text-slate-900 dark:text-slate-100">
-                {formatCurrency(summary.grandTotal, locale, currency, decimals)}
-              </span>
-              {!isEdit && draft.lastSavedAt && (
-                <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                  {t('orders.draft.savedAt', {
-                    defaultValue: 'Taslak kaydedildi {{time}}',
-                    time: new Date(draft.lastSavedAt).toLocaleTimeString(locale),
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={requestClose}
-                className="rounded px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-              >
-                {t('common.cancel')}
-              </button>
-              <Button type="submit" isLoading={isBusy}>
-                {t('common.save')}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </div>
-
-      {quickAdd && (
-        <MasterDataQuickModal
-          kind={quickAdd}
-          onClose={() => setQuickAdd(null)}
-          onCreated={(id) => {
-            setValue(quickAdd === 'paymentTerm' ? 'paymentTermsId' : 'priceListId', id, {
-              shouldDirty: true,
-            });
-            setQuickAdd(null);
-          }}
-        />
-      )}
+      {card}
+      {quickAddModal}
     </div>
   );
 };

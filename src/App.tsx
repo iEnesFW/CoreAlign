@@ -38,11 +38,13 @@ import {
   StockCountDetailPage,
   InvoicePrintView,
   InvoicesPage,
+  NewInvoicePage,
   RecurringInvoicesPage,
   JournalEntriesPage,
   LoginPage,
   NewProjectWizardPage,
   OrdersPage,
+  NewOrderPage,
   QuotesPage,
   ReturnsPage,
   ReturnDetailPage,
@@ -167,7 +169,9 @@ function App() {
                             />
                             <Route path="quotes" element={<QuotesPage />} />
                             <Route path="orders" element={<OrdersPage />} />
+                            <Route path="orders/new" element={<NewOrderPage />} />
                             <Route path="invoices" element={<InvoicesPage />} />
+                            <Route path="invoices/new" element={<NewInvoicePage />} />
                             <Route path="recurring-invoices" element={<RecurringInvoicesPage />} />
                             <Route path="returns" element={<ReturnsPage />} />
                             <Route path="returns/:id" element={<ReturnDetailPage />} />

@@ -47,27 +47,43 @@ public sealed class ExchangeRateRepository : IExchangeRateRepository
     private readonly CoreAlignDbContext _context;
     public ExchangeRateRepository(CoreAlignDbContext context) => _context = context;
 
-    public Task<ExchangeRate?> GetAsync(string currency, DateTime validOnDate, CancellationToken ct) =>
-        _context.ExchangeRates
+    // WHY: query-bound DateTime'lar Kind=Unspecified gelir; Npgsql timestamptz parametresi yalnız UTC kabul eder.
+    private static DateTime AsUtc(DateTime value) =>
+        value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+
+    public Task<ExchangeRate?> GetAsync(string currency, DateTime validOnDate, CancellationToken ct)
+    {
+        var validOn = AsUtc(validOnDate);
+        return _context.ExchangeRates
             .IgnoreQueryFilters()
             .Where(r => r.TenantId == Guid.Empty)
-            .FirstOrDefaultAsync(r => r.Currency == currency && r.ValidOnDate == validOnDate, ct);
+            .FirstOrDefaultAsync(r => r.Currency == currency && r.ValidOnDate == validOn, ct);
+    }
 
     public async Task<IReadOnlyList<ExchangeRate>> ListAsync(DateTime? from, DateTime? to, string? currency, CancellationToken ct)
     {
         var query = _context.ExchangeRates.AsNoTracking().IgnoreQueryFilters().Where(r => r.TenantId == Guid.Empty);
-        if (from.HasValue) query = query.Where(r => r.ValidOnDate >= from.Value);
-        if (to.HasValue) query = query.Where(r => r.ValidOnDate <= to.Value);
+        if (from.HasValue)
+        {
+            var fromUtc = AsUtc(from.Value);
+            query = query.Where(r => r.ValidOnDate >= fromUtc);
+        }
+        if (to.HasValue)
+        {
+            var toUtc = AsUtc(to.Value);
+            query = query.Where(r => r.ValidOnDate <= toUtc);
+        }
         if (!string.IsNullOrWhiteSpace(currency)) query = query.Where(r => r.Currency == currency);
         return await query.OrderByDescending(r => r.ValidOnDate).ThenBy(r => r.Currency).Take(500).ToListAsync(ct);
     }
 
     public async Task<IReadOnlyList<ExchangeRate>> GetLatestPerCurrencyOnOrBeforeAsync(DateTime asOf, CancellationToken ct)
     {
+        var asOfUtc = AsUtc(asOf);
         var rows = await _context.ExchangeRates
             .AsNoTracking()
             .IgnoreQueryFilters()
-            .Where(r => r.TenantId == Guid.Empty && r.ValidOnDate <= asOf)
+            .Where(r => r.TenantId == Guid.Empty && r.ValidOnDate <= asOfUtc)
             .ToListAsync(ct);
         return rows
             .GroupBy(r => r.Currency, StringComparer.OrdinalIgnoreCase)
