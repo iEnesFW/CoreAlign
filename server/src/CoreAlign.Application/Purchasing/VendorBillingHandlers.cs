@@ -798,6 +798,19 @@ public class VoidVendorPaymentHandler : IRequestHandler<VoidVendorPaymentCommand
                 bill.ReverseRecordedPayment(app.AppliedAmount);
                 _bills.Update(bill);
             }
+            // WHY: an advance offset booked DR 320 / CR 159 (VendorAdvanceApplied); voiding must reverse it (DR 159 / CR 320).
+            if (payment.IsAdvance)
+            {
+                await _outbox.EnqueueAsync(new GLPostingRequest(
+                    JournalSourceType.VendorAdvanceAppliedReversal, app.Id, payment.PaymentNumber, DateTime.UtcNow.Date,
+                    JournalEntryType.Mahsup, $"Tedarikçi avans mahsup iptali {payment.PaymentNumber}",
+                    new[]
+                    {
+                        new GLPostingLine(GLPostingKey.VendorAdvancePaid, app.AppliedAmount, 0m),
+                        new GLPostingLine(GLPostingKey.AccountsPayable, 0m, app.AppliedAmount),
+                    },
+                    payment.Currency, payment.ExchangeRate), ct);
+            }
             payment.ReverseApplication(app.AppliedAmount);
             _applications.Remove(app);
         }
@@ -811,10 +824,15 @@ public class VoidVendorPaymentHandler : IRequestHandler<VoidVendorPaymentCommand
         var cashKey = string.Equals(payment.Method, "Cash", StringComparison.OrdinalIgnoreCase)
             ? GLPostingKey.Cash
             : GLPostingKey.Bank;
+        // WHY: an advance was booked DR 159 (VendorAdvancePaid) / CR cash — reverse it back to 159, not AP(320).
+        var controlKey = payment.IsAdvance ? GLPostingKey.VendorAdvancePaid : GLPostingKey.AccountsPayable;
+        var reversalSource = payment.IsAdvance
+            ? JournalSourceType.VendorAdvancePaidReversal
+            : JournalSourceType.VendorPaymentReversal;
         await _outbox.EnqueueAsync(new GLPostingRequest(
-            JournalSourceType.VendorPaymentReversal, payment.Id, payment.PaymentNumber, DateTime.UtcNow.Date,
+            reversalSource, payment.Id, payment.PaymentNumber, DateTime.UtcNow.Date,
             JournalEntryType.Mahsup, $"Tedarikçi ödeme iptali {payment.PaymentNumber}",
-            PaymentGLLines.CashMovement(cashKey, GLPostingKey.AccountsPayable, payment.Amount, cashIsDebit: true),
+            PaymentGLLines.CashMovement(cashKey, controlKey, payment.Amount, cashIsDebit: true),
             payment.Currency, payment.ExchangeRate), ct);
 
         _payments.Update(payment);
@@ -1005,13 +1023,11 @@ public class GetVendorBillApplicationsHandler : IRequestHandler<GetVendorBillApp
         if (apps.Count == 0) return Array.Empty<VendorPaymentApplicationDto>();
         var bill = await _bills.GetByIdAsync(q.VendorBillId, ct);
         var billNumber = bill?.BillNumber ?? string.Empty;
-        var result = new List<VendorPaymentApplicationDto>(apps.Count);
-        foreach (var a in apps)
-        {
-            var payment = await _payments.GetByIdAsync(a.VendorPaymentId, ct);
-            result.Add(VendorBillingMapper.ToDto(a, payment?.PaymentNumber ?? string.Empty, billNumber));
-        }
-        return result;
+        var payments = await _payments.GetByIdsAsync(apps.Select(a => a.VendorPaymentId).Distinct(), ct);
+        var paymentNumbers = payments.ToDictionary(p => p.Id, p => p.PaymentNumber);
+        return apps
+            .Select(a => VendorBillingMapper.ToDto(a, paymentNumbers.GetValueOrDefault(a.VendorPaymentId, string.Empty), billNumber))
+            .ToList();
     }
 }
 
@@ -1037,13 +1053,11 @@ public class GetVendorPaymentApplicationsHandler : IRequestHandler<GetVendorPaym
         if (apps.Count == 0) return Array.Empty<VendorPaymentApplicationDto>();
         var payment = await _payments.GetByIdAsync(q.VendorPaymentId, ct);
         var paymentNumber = payment?.PaymentNumber ?? string.Empty;
-        var result = new List<VendorPaymentApplicationDto>(apps.Count);
-        foreach (var a in apps)
-        {
-            var bill = await _bills.GetByIdAsync(a.VendorBillId, ct);
-            result.Add(VendorBillingMapper.ToDto(a, paymentNumber, bill?.BillNumber ?? string.Empty));
-        }
-        return result;
+        var bills = await _bills.GetByIdsAsync(apps.Select(a => a.VendorBillId).Distinct(), ct);
+        var billNumbers = bills.ToDictionary(b => b.Id, b => b.BillNumber);
+        return apps
+            .Select(a => VendorBillingMapper.ToDto(a, paymentNumber, billNumbers.GetValueOrDefault(a.VendorBillId, string.Empty)))
+            .ToList();
     }
 }
 

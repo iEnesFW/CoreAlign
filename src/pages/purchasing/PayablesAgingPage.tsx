@@ -55,7 +55,9 @@ export const PayablesAgingPage = () => {
   const query = useVendorAgingQuery();
   const rows = query.data?.data ?? [];
 
-  const sum = (key: keyof VendorAgingRow) => rows.reduce((acc, r) => acc + (r[key] as number), 0);
+  const currencies = [...new Set(rows.map((r) => r.currency))];
+  const sumByCurrency = (currency: string, key: keyof VendorAgingRow) =>
+    rows.filter((r) => r.currency === currency).reduce((acc, r) => acc + (r[key] as number), 0);
 
   return (
     <DetailPageTemplate
@@ -137,22 +139,25 @@ export const PayablesAgingPage = () => {
           </tbody>
           {rows.length > 0 && (
             <tfoot className="border-t-2 border-slate-200 bg-slate-50/60 font-semibold dark:border-slate-700 dark:bg-slate-900/30">
-              <tr>
-                <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
-                  {t('apAging.grandTotal', { defaultValue: 'Genel Toplam' })}
-                </td>
-                {BUCKETS.map((b) => (
-                  <td
-                    key={b.key}
-                    className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200"
-                  >
-                    {formatCurrency(sum(b.key), locale)}
+              {currencies.map((currency) => (
+                <tr key={currency}>
+                  <td className="px-3 py-2 text-slate-700 dark:text-slate-200">
+                    {t('apAging.grandTotal', { defaultValue: 'Genel Toplam' })}
+                    {currencies.length > 1 ? ` · ${currency}` : ''}
                   </td>
-                ))}
-                <td className="px-3 py-2 text-right font-mono text-slate-900 dark:text-slate-100">
-                  {formatCurrency(sum('total'), locale)}
-                </td>
-              </tr>
+                  {BUCKETS.map((b) => (
+                    <td
+                      key={b.key}
+                      className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200"
+                    >
+                      {formatCurrency(sumByCurrency(currency, b.key), locale, currency)}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 text-right font-mono text-slate-900 dark:text-slate-100">
+                    {formatCurrency(sumByCurrency(currency, 'total'), locale, currency)}
+                  </td>
+                </tr>
+              ))}
             </tfoot>
           )}
         </table>

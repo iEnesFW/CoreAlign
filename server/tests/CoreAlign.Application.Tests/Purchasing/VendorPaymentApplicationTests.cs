@@ -1,4 +1,6 @@
+using CoreAlign.Application.Accounting.Services;
 using CoreAlign.Application.B2B;
+using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Purchasing;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
@@ -268,6 +270,107 @@ public class VendorBillReverseRecordedPaymentTests
         b.AmountPaid.Should().Be(500m);
         b.Status.Should().Be(VendorBillStatus.PartiallyPaid);
     }
+}
+
+public class VoidVendorPaymentHandlerTests
+{
+    private readonly IVendorPaymentRepository _payments = Substitute.For<IVendorPaymentRepository>();
+    private readonly IVendorBillRepository _bills = Substitute.For<IVendorBillRepository>();
+    private readonly IVendorPaymentApplicationRepository _apps = Substitute.For<IVendorPaymentApplicationRepository>();
+    private readonly IVendorLedgerRepository _ledger = Substitute.For<IVendorLedgerRepository>();
+    private readonly IVendorRepository _vendors = Substitute.For<IVendorRepository>();
+    private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
+    private readonly List<GLPostingRequest> _captured = new();
+    private readonly VoidVendorPaymentHandler _sut;
+
+    public VoidVendorPaymentHandlerTests()
+    {
+        _apps.GetByVendorPaymentAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<VendorPaymentApplication>());
+        _outbox.WhenForAnyArgs(o => o.EnqueueAsync(default!, default))
+            .Do(ci => _captured.Add(ci.Arg<GLPostingRequest>()));
+        _sut = new VoidVendorPaymentHandler(_payments, _bills, _apps, _ledger, _vendors, _outbox, _uow);
+    }
+
+    [Fact]
+    public async Task Voiding_a_regular_payment_reverses_to_accounts_payable()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY") { Id = Guid.NewGuid() };
+        payment.Post();
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+
+        await _sut.Handle(new VoidVendorPaymentCommand(payment.Id, "test"), default);
+
+        var req = _captured.Should().ContainSingle().Subject;
+        req.SourceType.Should().Be(JournalSourceType.VendorPaymentReversal);
+        req.Lines.Single(l => l.Key == GLPostingKey.AccountsPayable).Credit.Should().Be(1000m);
+        req.Lines.Should().NotContain(l => l.Key == GLPostingKey.VendorAdvancePaid);
+        AssertBalanced(req);
+    }
+
+    [Fact]
+    public async Task Voiding_an_unoffset_advance_reverses_to_vendor_advance_not_ap()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VADV-1", DateTime.UtcNow, 1000m, "TRY", isAdvance: true)
+        {
+            Id = Guid.NewGuid(),
+        };
+        payment.Post();
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+
+        await _sut.Handle(new VoidVendorPaymentCommand(payment.Id, "test"), default);
+
+        var req = _captured.Should().ContainSingle().Subject;
+        req.SourceType.Should().Be(JournalSourceType.VendorAdvancePaidReversal);
+        req.Lines.Single(l => l.Key == GLPostingKey.VendorAdvancePaid).Credit.Should().Be(1000m);
+        req.Lines.Should().NotContain(l => l.Key == GLPostingKey.AccountsPayable);
+        AssertBalanced(req);
+    }
+
+    [Fact]
+    public async Task Voiding_an_offset_advance_reverses_both_the_offset_and_the_advance()
+    {
+        var payment = new VendorPayment(Guid.NewGuid(), "Acme", "VADV-2", DateTime.UtcNow, 1000m, "TRY", isAdvance: true)
+        {
+            Id = Guid.NewGuid(),
+        };
+        payment.Post();
+        payment.RecordApplication(600m);
+
+        var bill = new VendorBill(payment.VendorId, "Acme", "INV-1", DateTime.UtcNow, "TRY", 1000m, 0m) { Id = Guid.NewGuid() };
+        bill.Post();
+        bill.RecordPayment(600m);
+
+        var app = new VendorPaymentApplication(payment.Id, bill.Id, 600m) { Id = Guid.NewGuid() };
+
+        _payments.GetByIdAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+        _apps.GetByVendorPaymentAsync(payment.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<VendorPaymentApplication> { app });
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+
+        await _sut.Handle(new VoidVendorPaymentCommand(payment.Id, "test"), default);
+
+        _captured.Should().HaveCount(2);
+        _captured.Should().OnlyContain(r => IsBalanced(r));
+
+        var offsetReversal = _captured.Single(r => r.SourceType == JournalSourceType.VendorAdvanceAppliedReversal);
+        offsetReversal.SourceDocumentId.Should().Be(app.Id);
+        offsetReversal.Lines.Single(l => l.Key == GLPostingKey.VendorAdvancePaid).Debit.Should().Be(600m);
+        offsetReversal.Lines.Single(l => l.Key == GLPostingKey.AccountsPayable).Credit.Should().Be(600m);
+
+        var advanceReversal = _captured.Single(r => r.SourceType == JournalSourceType.VendorAdvancePaidReversal);
+        advanceReversal.Lines.Single(l => l.Key == GLPostingKey.VendorAdvancePaid).Credit.Should().Be(1000m);
+        advanceReversal.Lines.Should().NotContain(l => l.Key == GLPostingKey.AccountsPayable);
+
+        payment.IsVoided.Should().BeTrue();
+    }
+
+    private static bool IsBalanced(GLPostingRequest r) =>
+        r.Lines.Sum(l => l.Debit) == r.Lines.Sum(l => l.Credit);
+
+    private static void AssertBalanced(GLPostingRequest r) =>
+        r.Lines.Sum(l => l.Debit).Should().Be(r.Lines.Sum(l => l.Credit));
 }
 
 public class UpdateVendorBillHandlerTests

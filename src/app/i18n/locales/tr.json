@@ -1467,6 +1467,7 @@
     "loading": "Yükleniyor...",
     "success": "Başarılı",
     "error": "Hata",
+    "retry": "Yeniden dene",
     "warning": "Uyarı",
     "info": "Bilgi",
     "pagination": "Sayfa {{page}} / {{totalPages}}",
@@ -5757,6 +5758,7 @@
     "count": "{{count}} sipariş",
     "resultCountLabel": "sipariş",
     "empty": "Satın alma siparişi bulunamadı.",
+    "error": "Satınalma siparişleri yüklenemedi.",
     "cols": {
       "number": "No",
       "vendor": "Tedarikçi",
@@ -5840,6 +5842,7 @@
     "count": "{{count}} fatura",
     "paymentCount": "{{count}} ödeme",
     "empty": "Tedarikçi faturası bulunamadı.",
+    "error": "Tedarikçi faturaları yüklenemedi.",
     "cols": {
       "number": "Fatura No",
       "vendor": "Tedarikçi",
@@ -5857,7 +5860,8 @@
       "edit": "Düzenle"
     },
     "payments": {
-      "empty": "Tedarikçi ödemesi bulunamadı."
+      "empty": "Tedarikçi ödemesi bulunamadı.",
+      "error": "Tedarikçi ödemeleri yüklenemedi."
     },
     "payCols": {
       "number": "Ödeme No",
@@ -6513,6 +6517,9 @@
       },
       "count": "{{count}} satır",
       "empty": "Tüm sipariş-mal kabul-fatura zincirleri uyumlu.",
+      "error": "3-Way Match raporu yüklenemedi.",
+      "fromDate": "Başlangıç",
+      "toDate": "Bitiş",
       "navLabel": "3'lü Eşleştirme",
       "subtitle": "Sipariş ↔ Mal Kabul ↔ Fatura uyumsuzluklarını listeler. Uyumsuzluk kodlarına göre filtreleyin.",
       "title": "3-Way Match Raporu",
@@ -7081,6 +7088,7 @@
     },
     "count": "{{count}} fiş",
     "empty": "Mal kabul fişi bulunamadı.",
+    "error": "Mal kabul fişleri yüklenemedi.",
     "toggleLines": "Satırları aç/kapat",
     "filter": {
       "vendor": "Tedarikçi",

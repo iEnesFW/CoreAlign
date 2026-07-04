@@ -16,6 +16,16 @@ public class VendorBillRepository : IVendorBillRepository
             .Include(b => b.Lines)
             .FirstOrDefaultAsync(b => b.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<VendorBill>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        if (idList.Count == 0) return Array.Empty<VendorBill>();
+        return await _context.VendorBills
+            .AsNoTracking()
+            .Where(b => idList.Contains(b.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> BillNumberExistsAsync(Guid vendorId, string billNumber, Guid? excludeId, CancellationToken cancellationToken = default) =>
         _context.VendorBills.AnyAsync(
             b => b.VendorId == vendorId && b.BillNumber == billNumber && (excludeId == null || b.Id != excludeId),
@@ -100,6 +110,16 @@ public class VendorPaymentRepository : IVendorPaymentRepository
 
     public Task<VendorPayment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.VendorPayments.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<VendorPayment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        if (idList.Count == 0) return Array.Empty<VendorPayment>();
+        return await _context.VendorPayments
+            .AsNoTracking()
+            .Where(p => idList.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<(IReadOnlyList<VendorPayment> Items, int Total)> SearchAsync(
         Guid? vendorId,

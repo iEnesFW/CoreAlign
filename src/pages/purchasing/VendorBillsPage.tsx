@@ -78,6 +78,13 @@ const STATUSES: VendorBillStatus[] = [
   'PendingApproval',
 ];
 
+const METHOD_LABEL_KEY: Record<string, string> = {
+  BankTransfer: 'ap.pay.bankTransfer',
+  Cash: 'ap.pay.cash',
+  Check: 'ap.pay.check',
+  Card: 'ap.pay.card',
+};
+
 const fmtDate = (iso: string | null, locale: string) => formatDate(iso, locale);
 
 type View = 'bills' | 'payments';
@@ -104,7 +111,7 @@ export const VendorBillsPage = () => {
   const [applyBill, setApplyBill] = useState<VendorBill | null>(null);
   const [offsetBill, setOffsetBill] = useState<VendorBill | null>(null);
   const [advanceOpen, setAdvanceOpen] = useState(false);
-  const [appsBillId, setAppsBillId] = useState<string | null>(null);
+  const [appsBill, setAppsBill] = useState<{ id: string; currency: string } | null>(null);
   const [glSource, setGlSource] = useState<{ id: string; label: string } | null>(null);
 
   const vendorFilter = vendorId || undefined;
@@ -127,6 +134,8 @@ export const VendorBillsPage = () => {
     (view === 'bills' ? billsQuery.data?.data?.totalPages : paymentsQuery.data?.data?.totalPages) ??
     0;
   const isPending = view === 'bills' ? billsQuery.isPending : paymentsQuery.isPending;
+  const isError = view === 'bills' ? billsQuery.isError : paymentsQuery.isError;
+  const refetch = view === 'bills' ? billsQuery.refetch : paymentsQuery.refetch;
 
   const switchView = (next: View) => {
     setView(next);
@@ -286,6 +295,17 @@ export const VendorBillsPage = () => {
           <div className="px-3 py-8 text-center text-sm text-slate-500">
             {t('common.loading', { defaultValue: 'Yükleniyor…' })}
           </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center gap-2 px-3 py-10 text-center text-sm text-danger-600 dark:text-danger-400">
+            <span>
+              {view === 'bills'
+                ? t('ap.error', { defaultValue: 'Tedarikçi faturaları yüklenemedi.' })
+                : t('ap.payments.error', { defaultValue: 'Tedarikçi ödemeleri yüklenemedi.' })}
+            </span>
+            <Button size="sm" variant="secondary" onClick={() => refetch()}>
+              {t('common.retry', { defaultValue: 'Yeniden dene' })}
+            </Button>
+          </div>
         ) : view === 'bills' ? (
           bills.length === 0 ? (
             <div className="px-3 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -422,7 +442,7 @@ export const VendorBillsPage = () => {
                           <button
                             type="button"
                             onClick={() => setOffsetBill(b)}
-                            className="rounded p-1 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-500/10"
+                            className="rounded p-1 text-warning-500 hover:bg-warning-50 dark:hover:bg-warning-500/10"
                             title={t('Vendors.offset.action', { defaultValue: 'Avans Mahsup Et' })}
                           >
                             <HandCoins size={13} />
@@ -431,7 +451,7 @@ export const VendorBillsPage = () => {
                         {hasLedger(b.status) && (
                           <button
                             type="button"
-                            onClick={() => setAppsBillId(b.id)}
+                            onClick={() => setAppsBill({ id: b.id, currency: b.currency })}
                             className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
                             title={t('VendorPayments.viewApplications', {
                               defaultValue: 'Uygulanan ödemeler',
@@ -491,7 +511,7 @@ export const VendorBillsPage = () => {
                     <span className="inline-flex items-center gap-1.5">
                       {p.paymentNumber}
                       {p.isAdvance && (
-                        <span className="rounded bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800 dark:bg-amber-500/20 dark:text-amber-300">
+                        <span className="rounded bg-warning-100 px-1.5 text-[10px] font-medium text-warning-800 dark:bg-warning-500/20 dark:text-warning-300">
                           {t('Vendors.advance.badge', { defaultValue: 'Avans' })}
                         </span>
                       )}
@@ -502,7 +522,7 @@ export const VendorBillsPage = () => {
                     {fmtDate(p.paymentDate, locale)}
                   </td>
                   <td className="px-3 py-2 text-xs text-slate-500 dark:text-slate-400">
-                    {p.method ?? '—'}
+                    {p.method ? t(METHOD_LABEL_KEY[p.method] ?? p.method) : '—'}
                   </td>
                   <td className="px-3 py-2 text-right font-mono text-slate-800 dark:text-slate-200">
                     {formatCurrency(p.amount, locale, p.currency)}
@@ -532,8 +552,12 @@ export const VendorBillsPage = () => {
         <OffsetVendorAdvanceModal bill={offsetBill} onClose={() => setOffsetBill(null)} />
       )}
       {advanceOpen && <VendorAdvancePaymentModal onClose={() => setAdvanceOpen(false)} />}
-      {appsBillId && (
-        <VendorBillApplicationsModal billId={appsBillId} onClose={() => setAppsBillId(null)} />
+      {appsBill && (
+        <VendorBillApplicationsModal
+          billId={appsBill.id}
+          billCurrency={appsBill.currency}
+          onClose={() => setAppsBill(null)}
+        />
       )}
       {glSource && (
         <SourceJournalEntriesModal
@@ -548,10 +572,11 @@ export const VendorBillsPage = () => {
 
 interface ApplicationsModalProps {
   billId: string;
+  billCurrency: string;
   onClose: () => void;
 }
 
-const VendorBillApplicationsModal = ({ billId, onClose }: ApplicationsModalProps) => {
+const VendorBillApplicationsModal = ({ billId, billCurrency, onClose }: ApplicationsModalProps) => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
   const { data, isPending } = useVendorBillApplicationsQuery(billId);
@@ -600,7 +625,7 @@ const VendorBillApplicationsModal = ({ billId, onClose }: ApplicationsModalProps
                 </td>
                 <td className="px-2 py-1 text-slate-500">{formatDate(a.appliedAtUtc, locale)}</td>
                 <td className="px-2 py-1 text-right font-mono">
-                  {formatCurrency(a.appliedAmount, locale, 'TRY')}
+                  {formatCurrency(a.appliedAmount, locale, billCurrency)}
                 </td>
               </tr>
             ))}

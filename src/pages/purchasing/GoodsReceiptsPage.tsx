@@ -182,6 +182,13 @@ export const GoodsReceiptsPage = ({ purchaseOrderId }: Props) => {
           <div className="px-3 py-8 text-center text-sm text-slate-500">
             {t('common.loading', { defaultValue: 'Yükleniyor…' })}
           </div>
+        ) : query.isError ? (
+          <div className="flex flex-col items-center gap-2 px-3 py-10 text-center text-sm text-danger-600 dark:text-danger-400">
+            <span>{t('grn.error', { defaultValue: 'Mal kabul fişleri yüklenemedi.' })}</span>
+            <Button variant="outline" size="sm" onClick={() => query.refetch()}>
+              {t('common.retry', { defaultValue: 'Yeniden dene' })}
+            </Button>
+          </div>
         ) : items.length === 0 ? (
           <div className="px-3 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
             {t('grn.empty', { defaultValue: 'Mal kabul fişi bulunamadı.' })}

@@ -36,6 +36,7 @@ public interface IGoodsReceiptRepository
 public interface IVendorBillRepository
 {
     Task<VendorBill?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VendorBill>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<bool> BillNumberExistsAsync(Guid vendorId, string billNumber, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<VendorBill> Items, int Total)> SearchAsync(
         Guid? vendorId,
@@ -67,6 +68,7 @@ public record VendorAgingRow(
 public interface IVendorPaymentRepository
 {
     Task<VendorPayment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<VendorPayment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<VendorPayment> Items, int Total)> SearchAsync(
         Guid? vendorId,
         int page,

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle, CheckCircle2, ListChecks } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
+import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { Select } from '@/shared/ui/Select/Select';
 import { Badge } from '@/shared/ui/Badge/Badge';
@@ -56,12 +57,14 @@ const ThreeWayMatchReport = () => {
           </Select>
           <Input
             type="date"
+            label={t('VendorBills.threeWayMatch.fromDate', { defaultValue: 'Başlangıç' })}
             value={fromUtc}
             onChange={(e) => setFromUtc(e.target.value)}
             className="w-full sm:w-44"
           />
           <Input
             type="date"
+            label={t('VendorBills.threeWayMatch.toDate', { defaultValue: 'Bitiş' })}
             value={toUtc}
             onChange={(e) => setToUtc(e.target.value)}
             className="w-full sm:w-44"
@@ -79,6 +82,17 @@ const ThreeWayMatchReport = () => {
         {rows.isPending ? (
           <div className="px-3 py-8 text-center text-sm text-slate-500">
             {t('common.loading', { defaultValue: 'Yükleniyor…' })}
+          </div>
+        ) : rows.isError ? (
+          <div className="flex flex-col items-center gap-2 px-3 py-10 text-center text-sm text-danger-600 dark:text-danger-400">
+            <span>
+              {t('VendorBills.threeWayMatch.error', {
+                defaultValue: '3-Way Match raporu yüklenemedi.',
+              })}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => rows.refetch()}>
+              {t('common.retry', { defaultValue: 'Yeniden dene' })}
+            </Button>
           </div>
         ) : items.length === 0 ? (
           <div className="px-3 py-10 text-center text-sm text-slate-500 dark:text-slate-400">

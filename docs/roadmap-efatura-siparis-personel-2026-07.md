@@ -67,6 +67,25 @@
 > Payslip.DaysWorked hep 30 varsayılıyor, girişi yok; roadmap'te gelecek ay-sonu job'u), personel avans defteri
 > (şu an sadece kesinti tipi), taban maaş geçmişi/leave takvimi.
 
+> **S8 DURUMU (2026-07-04): §5 Satın Alma denetimi TAMAMLANDI; e-İrsaliye (D4) ayrı dilim.** Çok-boyutlu adversaryal
+> denetim (para/GL + tenant/N+1 + FSM/idempotency + FE) 14 bulgu üretti; kendi doğrulamamla triyaj yapıldı.
+> **Düzeltilenler (bu turda, testli):** (1) HIGH — `VoidVendorPaymentHandler` avans ödemesini koşulsuz `AccountsPayable(320)`'ye
+> reverse ediyordu; artık `payment.IsAdvance`'e göre `VendorAdvancePaid(159)`'a reverse eder (create'i aynalar) + offset
+> edilmiş avansın `VendorAdvanceApplied` GL'ini de ters çevirir (DR 159/CR 320, key app.Id) → 159/320/kasa tam sıfıra
+> netleşir; 3 yeni unit test (regular→320 regresyon + unoffset-advance→159 red-before + offset-advance→iki balanced
+> reversal). (2) MED×2 — `GetVendorBillApplicationsHandler`/`GetVendorPaymentApplicationsHandler` N+1 (döngü-içi
+> `GetByIdAsync`); `GetByIdsAsync` batch (tek `WHERE Id IN`) ile N+2→sabit. (3) MED/LOW×6 FE — PayablesAging çapraz-döviz
+> toplamı (döviz başına ayrı toplam satırı), ham ödeme-yöntemi enum'u (`METHOD_LABEL_KEY` + t()), 4 sayfada eksik
+> `isError` durumu (retry'lı), VendorBillApplicationsModal hardcoded 'TRY' (bill döviziyle), 3-way-match tarih
+> input'ları label'sız, `amber-*` → semantik `warning-*` token. Doğrulama: Application 2215 test 0-fail, FE typecheck+lint 0,
+> `npm run build` ✓, i18n tr+en parite. **Ayrı göreve alınan mimari bulgular (migration/politika gerektiriyor):**
+> (a) VendorBill/VendorPayment/PurchaseOrder'da optimistic concurrency YOK — `ApplyXminConcurrencyTokens` PG18'de kasıtlı
+> NO-OP; app-managed `IHasConcurrencyToken` + migration lazım (CLAUDE.md §4.6 de bu koddan sapmış, güncellenecek);
+> (b) `CreateVendorPaymentCommand` idempotency-key'siz (retry double-apply); (c) 3-way-match hold gate'i PO-bağlı ama
+> satırları unlinked/header-only bill'i atlıyor (politika kararı); (d) müşteri tarafı `PaymentVoidedGLHandler` avans-void
+> twin'i (120→340) hâlâ latent. **e-İrsaliye (§1.3-D4):** provider katmanı (`Despatch`→"IRSALIYE") hazır; eksik olan
+> Shipment carrier VKN/plaka/sürücü alanları + DespatchAdvice UBL builder + issue command/outbox/endpoint + FE — ayrı dilim.
+
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,
 > sprint'lere bölünmesi gereken kalemleri kapsar. Her bölüm: mevcut durum → karar → iş dilimleri.

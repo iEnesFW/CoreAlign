@@ -1203,6 +1203,7 @@
     "loading": "Loading...",
     "success": "Success",
     "error": "Error",
+    "retry": "Retry",
     "warning": "Warning",
     "info": "Information",
     "active": "Active",
@@ -5757,6 +5758,7 @@
     "count": "{{count}} purchase orders",
     "resultCountLabel": "purchase orders",
     "empty": "No purchase orders found.",
+    "error": "Failed to load purchase orders.",
     "cols": {
       "number": "No.",
       "vendor": "Vendor",
@@ -5840,6 +5842,7 @@
     "count": "{{count}} bills",
     "paymentCount": "{{count}} payments",
     "empty": "No vendor bills found.",
+    "error": "Failed to load vendor bills.",
     "cols": {
       "number": "Bill #",
       "vendor": "Vendor",
@@ -5857,7 +5860,8 @@
       "edit": "Edit"
     },
     "payments": {
-      "empty": "No vendor payments found."
+      "empty": "No vendor payments found.",
+      "error": "Failed to load vendor payments."
     },
     "payCols": {
       "number": "Payment #",
@@ -6513,6 +6517,9 @@
       },
       "count": "{{count}} lines",
       "empty": "All PO–receipt–bill chains match.",
+      "error": "Failed to load the 3-Way Match report.",
+      "fromDate": "From",
+      "toDate": "To",
       "navLabel": "3-Way Match",
       "subtitle": "Lists PO ↔ Receipt ↔ Bill discrepancies. Filter by discrepancy code.",
       "title": "3-Way Match Report",
@@ -7081,6 +7088,7 @@
     },
     "count": "{{count}} receipts",
     "empty": "No goods receipts found.",
+    "error": "Failed to load goods receipts.",
     "toggleLines": "Toggle lines",
     "filter": {
       "vendor": "Vendor",
