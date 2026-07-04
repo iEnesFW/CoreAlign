@@ -6115,6 +6115,19 @@
       "title": "Activity"
     },
     "backToList": "Back to Returns",
+    "create": {
+      "atLeastOneLine": "Enter a return quantity for at least one line.",
+      "customerNotes": "Customer Note",
+      "noReturnableLines": "This order has no returnable lines.",
+      "quantityReturned": "Return Quantity",
+      "reason": "Reason",
+      "reasonText": "Description",
+      "returnableQty": "Returnable: {{qty}}",
+      "submit": "Create Return",
+      "subtitle": "Create a return request from order {{number}}",
+      "success": "Return request created.",
+      "title": "Create Return"
+    },
     "empty": "No return requests found.",
     "fields": {
       "creditNote": "Credit Note",

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Activity,
   Boxes,
@@ -12,6 +12,7 @@ import {
   ListOrdered,
   NotebookPen,
   Percent,
+  RotateCcw,
   ShoppingCart,
   Truck,
   User,
@@ -23,6 +24,7 @@ import { DetailPanel, PanelTabs } from '@/shared/ui/DetailPanel/DetailPanel';
 import { useOrderQuery, useReorderOrder } from '@/features/orders/hooks/useOrderQueries';
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
+import { CreateReturnModal } from '@/features/returns/ui/CreateReturnModal';
 import { DocumentChain } from '@/widgets/DocumentChain';
 import { NextBestAction } from '@/widgets/NextBestAction';
 import { AuditTimeline } from '@/features/audit';
@@ -64,6 +66,14 @@ const INVOICEABLE: OrderStatus[] = [
   'PartiallyShipped',
 ];
 
+const RETURNABLE: OrderStatus[] = [
+  'Shipped',
+  'PartiallyShipped',
+  'Delivered',
+  'Closed',
+  'Returned',
+];
+
 const fmtCurrency = (value: number, currency: string, locale: string) => {
   try {
     return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
@@ -84,8 +94,10 @@ const fmtNumber = (value: number, locale: string) => new Intl.NumberFormat(local
 
 export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }: Props) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('overview');
   const [shipmentCreateOpen, setShipmentCreateOpen] = useState(false);
+  const [returnCreateOpen, setReturnCreateOpen] = useState(false);
 
   const orderQuery = useOrderQuery(orderId);
   const order = orderQuery.data?.data ?? null;
@@ -199,6 +211,16 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
               <Copy size={13} />
               {t('orders.reorder.button', { defaultValue: 'Tekrarla' })}
             </button>
+            {RETURNABLE.includes(order.status) && (
+              <button
+                type="button"
+                onClick={() => setReturnCreateOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <RotateCcw size={13} />
+                {t('Returns.create.title')}
+              </button>
+            )}
           </div>
         )}
         {tab === 'overview' && order && (
@@ -256,6 +278,12 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
           </div>
         )}
       </div>
+      <CreateReturnModal
+        order={order}
+        open={returnCreateOpen}
+        onClose={() => setReturnCreateOpen(false)}
+        onCreated={(returnId) => navigate(`/dashboard/returns/${returnId}`)}
+      />
     </DetailPanel>
   );
 };

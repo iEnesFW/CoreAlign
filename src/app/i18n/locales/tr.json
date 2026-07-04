@@ -6111,6 +6111,19 @@
       "title": "İşlem Geçmişi"
     },
     "backToList": "İade Listesine Dön",
+    "create": {
+      "atLeastOneLine": "En az bir kalem için iade miktarı girin.",
+      "customerNotes": "Müşteri Notu",
+      "noReturnableLines": "Bu siparişte iade edilebilir kalem yok.",
+      "quantityReturned": "İade Miktarı",
+      "reason": "Neden",
+      "reasonText": "Açıklama",
+      "returnableQty": "İade edilebilir: {{qty}}",
+      "submit": "İade Oluştur",
+      "subtitle": "{{number}} numaralı siparişten iade talebi oluşturun",
+      "success": "İade talebi oluşturuldu.",
+      "title": "İade Oluştur"
+    },
     "empty": "İade talebi bulunamadı.",
     "fields": {
       "creditNote": "Alacak Dekontu",

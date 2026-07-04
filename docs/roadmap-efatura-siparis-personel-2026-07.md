@@ -39,6 +39,18 @@
 > provider "belge detayı çekme" yeteneği geldiğinde eklenecek (bilinçli kapsam sınırı). **Firma Profili** zaten
 > mevcut (`/settings/company` + `CompanyProfileSection`, Tenant kimliği VKN/vergi dairesi/MERSIS/adres) — yeniden
 > yapılmadı. Testler: +10 Application (2212), +5 Integration (245).
+>
+> **S6 DURUMU (2026-07-04): TAMAMLANDI (§3 İade oluştur).** Returns backend'i zaten baştan sona vardı (Phase33:
+> CreateReturnRequest/Approve/Reject/Cancel/Receive + otomatik kredi notu + stok geri-yükleme + COGS ters kaydı,
+> 17+ Application testi). TEK boşluk admin'de **"İade Oluştur" UI'ıydı** — `useCreateReturnRequest` hook'u + tip +
+> endpoint hazır ama hiç UI'dan çağrılmıyordu. Eklendi: `CreateReturnModal` (iade edilebilir satırlar =
+> quantityShipped−quantityReturned, neden dropdown, miktar) + Order detay panelinde "İade Oluştur" butonu
+> (order.status ∈ Shipped/PartiallyShipped/Delivered/Closed/Returned), oluşturunca `/dashboard/returns/{id}`'e gider;
+> i18n Returns.create.\* tr+en. Tarayıcıda demo'da uçtan uca doğrulandı (sevk edilmiş sipariş → RTN-2026-00001
+> "Talep Edildi"). Returns entegrasyon testleri eklendi (auth-deny, liste-OK, satırsız-red, olmayan-onay-404).
+> **Bilinen kusur (ayrı görev):** uygun olmayan siparişte (Draft/geçersiz satır) iade oluşturma 500 dönüyor,
+> temiz 400 olmalı — CreateReturnRequestCommandHandler'da eşlenmemiş exception. **Erteleme:** Refund adımı
+> (Refunded durumu / `MarkRefunded` komutu) hâlâ ulaşılamaz — ödeme-oluşturma kararı gerektiriyor (S7+).
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,
