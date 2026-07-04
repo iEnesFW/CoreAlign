@@ -316,17 +316,22 @@ public class VendorBillLineAwarePostingTests
 
     // ---- (f) PO-less / header-only bill still posts the OLD single-322 path. ----
     [Fact]
-    public async Task PoLess_headerOnly_bill_posts_old_single_322_path()
+    public async Task HeaderOnly_po_bill_holds_then_approval_posts_single_322_path()
     {
         _vendors.GetByIdAsync(VendorId, Arg.Any<CancellationToken>()).Returns(new Vendor("Acme") { Id = VendorId });
         _ledger.GetLastRunningBalanceAsync(VendorId, Arg.Any<CancellationToken>()).Returns(0m);
+        _orders.GetByIdAsync(PoId, Arg.Any<CancellationToken>()).Returns(Po(poUnitCost: 1m, qtyReceived: 10m, qtyOrdered: 10m));
 
-        // Header-only bill linked to a PO id but with NO lines -> inventory single-322 path.
+        // Header-only bill linked to a PO id but with NO lines. Under the hold policy it can no
+        // longer post blind — it goes PendingApproval; approval then books the single-322 path.
         var bill = new VendorBill(VendorId, "Acme", "INV-1", DateTime.UtcNow, "TRY", 1000m, 180m, purchaseOrderId: PoId)
         { Id = Guid.NewGuid() };
         _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
 
-        var gl = CaptureGl(() => PostSut().Handle(new PostVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
+        await PostSut().Handle(new PostVendorBillCommand(bill.Id), default);
+        bill.Status.Should().Be(VendorBillStatus.PendingApproval);
+
+        var gl = CaptureGl(() => ApproveSut().Handle(new ApproveVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
 
         // Single 322 leg at full subtotal, no PPV leg.
         Leg(gl, GLPostingKey.GoodsReceiptClearing).Debit.Should().Be(1000m);

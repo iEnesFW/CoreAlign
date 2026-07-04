@@ -85,7 +85,8 @@ public record CreateVendorPaymentCommand(
     Guid? VendorBillId = null,
     decimal ExchangeRate = 1m,
     string? Notes = null,
-    bool IsAdvance = false) : IRequest<VendorPaymentDto>, ITransactionalRequest;
+    bool IsAdvance = false,
+    Guid? OperationId = null) : IRequest<VendorPaymentDto>, ITransactionalRequest;
 
 public record UpdateVendorBillCommand(
     Guid Id,

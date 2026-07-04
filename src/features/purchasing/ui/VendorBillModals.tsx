@@ -6,6 +6,7 @@ import { Modal } from '@/shared/ui/Modal/Modal';
 import { Button } from '@/shared/ui/Button/Button';
 import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { newOperationId } from '@/shared/lib/operationId';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
@@ -632,6 +633,7 @@ export const VendorPaymentModal = ({
         method,
         vendorBillId: bill.id,
         notes: notes.trim() || null,
+        operationId: newOperationId(),
       });
       toast.success(t('ap.pay.done', { defaultValue: 'Ödeme kaydedildi.' }));
       onClose();

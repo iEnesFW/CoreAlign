@@ -155,18 +155,39 @@ internal static class VendorBillLineFactory
 
 internal static class ThreeWayMatchEvaluator
 {
-    // Evaluates the two per-line gates against the matched PO line. Lines without
-    // a PO link are never matched (nothing to compare). Returns a hold reason when
-    // any line breaches, otherwise null (post straight through).
+    // Evaluates the two per-line gates against the matched PO line. A bill raised
+    // against a PO but left header-only, or carrying lines not linked to a PO line,
+    // cannot be verified against received quantities/prices — it is held for approval
+    // rather than posting blind (bypassing the tolerance gate). Returns a hold reason
+    // when any check breaches, otherwise null (post straight through).
     public static string? Breach(VendorBill bill, PurchaseOrder? po, ThreeWayMatchTolerance policy)
     {
-        if (!policy.Enabled || po is null) return null;
+        if (!policy.Enabled) return null;
+
+        // The caller only invokes Breach when bill.PurchaseOrderId is set, so a null PO here means
+        // the referenced order does not resolve in-tenant (deleted / cross-tenant / stale id) — it
+        // cannot be three-way matched and must NOT post blind; hold it for approval.
+        if (po is null)
+        {
+            return "Bill references a purchase order that could not be resolved and requires approval.";
+        }
+
+        if (bill.Lines.Count == 0)
+        {
+            return "Header-only bill against a purchase order requires approval (no lines to three-way match).";
+        }
 
         foreach (var line in bill.Lines)
         {
-            if (line.PurchaseOrderLineId is not { } poLineId) continue;
+            if (line.PurchaseOrderLineId is not { } poLineId)
+            {
+                return $"Line {line.LineNumber} is not linked to a purchase order line and requires approval.";
+            }
             var poLine = po.Lines.FirstOrDefault(l => l.Id == poLineId);
-            if (poLine is null) continue;
+            if (poLine is null)
+            {
+                return $"Line {line.LineNumber} references an unknown purchase order line and requires approval.";
+            }
 
             var qtyCeiling = poLine.QuantityReceived * (1m + policy.QtyTolerancePercent / 100m) + policy.QtyToleranceAbsolute;
             if (poLine.QuantityBilled + line.Quantity > qtyCeiling)
@@ -355,7 +376,7 @@ public class PostVendorBillHandler : IRequestHandler<PostVendorBillCommand, Vend
     {
         var bill = await _bills.GetByIdAsync(c.Id, ct) ?? throw new VendorBillNotFoundException();
 
-        if (bill.PurchaseOrderId is { } poId && VendorGLLines.HasPoLinkedLines(bill))
+        if (bill.PurchaseOrderId is { } poId)
         {
             var policy = await _tolerance.GetAsync(ct);
             if (policy.Enabled)
@@ -530,6 +551,16 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
 
     public async Task<VendorPaymentDto> Handle(CreateVendorPaymentCommand c, CancellationToken ct)
     {
+        // WHY: durable idempotency — a network retry/double-submit with the same OperationId replays the
+        // original payment instead of consuming a new sequence + double-applying against the bill.
+        if (c.OperationId is { } operationId)
+        {
+            var replay = await _payments.GetByOperationIdAsync(operationId, ct);
+            if (replay is not null)
+            {
+                return VendorBillingMapper.ToDto(replay);
+            }
+        }
         if (c.Amount <= 0m)
         {
             throw new StockMovementValidationException("Payment amount must be positive.");
@@ -566,7 +597,7 @@ public class CreateVendorPaymentHandler : IRequestHandler<CreateVendorPaymentCom
         var number = await _sequences.ConsumeAsync(DocumentSequenceType.VendorPaymentNumber, now, ct);
 
         var payment = new VendorPayment(vendor.Id, vendor.Name, number, c.PaymentDate, c.Amount,
-            paymentCurrency, c.ExchangeRate, c.Method, c.IsAdvance ? null : c.VendorBillId, c.Notes, c.IsAdvance);
+            paymentCurrency, c.ExchangeRate, c.Method, c.IsAdvance ? null : c.VendorBillId, c.Notes, c.IsAdvance, c.OperationId);
         await _payments.AddAsync(payment, ct);
 
         if (autoBill is not null && autoApplyAmount > 0m)

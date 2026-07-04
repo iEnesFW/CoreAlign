@@ -230,24 +230,47 @@ public class PaymentVoidedGLHandler : INotificationHandler<PaymentVoidedEvent>
 
     public async Task Handle(PaymentVoidedEvent n, CancellationToken cancellationToken)
     {
-        var payment = await _payments.GetByIdAsync(n.PaymentId, cancellationToken);
+        var payment = await _payments.GetWithApplicationsAsync(n.PaymentId, cancellationToken);
         var cashKey = payment?.Method == PaymentMethod.Cash ? GLPostingKey.Cash : GLPostingKey.Bank;
         var currency = payment?.Currency ?? "TRY";
         var exchangeRate = payment?.ExchangeRate ?? 1m;
         var wasReceipt = payment is null || payment.Direction == PaymentDirection.CustomerReceipt;
+        var isAdvance = payment?.IsAdvance == true;
 
-        // Reverse the original cash movement: a receipt becomes DR AR / CR Cash
-        // (cash credited), a refund the opposite.
+        // WHY: an advance offset booked DR 340 / CR 120 (CustomerAdvanceApplied); voiding must reverse it (DR 120 / CR 340).
+        if (isAdvance && payment is not null)
+        {
+            foreach (var app in payment.Applications)
+            {
+                await _outbox.EnqueueAsync(new GLPostingRequest(
+                    JournalSourceType.CustomerAdvanceAppliedReversal, app.Id, n.PaymentNumber, n.OccurredAtUtc.Date,
+                    JournalEntryType.Mahsup, $"Avans mahsup iptali {n.PaymentNumber}",
+                    new[]
+                    {
+                        new GLPostingLine(GLPostingKey.AccountsReceivable, app.AppliedAmount, 0m),
+                        new GLPostingLine(GLPostingKey.CustomerAdvanceReceived, 0m, app.AppliedAmount),
+                    },
+                    currency, exchangeRate), cancellationToken);
+            }
+        }
+
+        // Reverse the original cash movement: a receipt becomes DR control / CR Cash (cash credited),
+        // a refund the opposite. An advance was booked to 340 (CustomerAdvanceReceived), so reverse it
+        // there — NOT to AR(120), which never held the prepayment.
+        var controlKey = isAdvance ? GLPostingKey.CustomerAdvanceReceived : GLPostingKey.AccountsReceivable;
+        var reversalSource = isAdvance
+            ? JournalSourceType.CustomerAdvanceReceivedReversal
+            : JournalSourceType.CustomerPaymentReversal;
         var lines = PaymentGLLines.CashMovement(
-            cashKey, GLPostingKey.AccountsReceivable, n.Amount, cashIsDebit: !wasReceipt);
+            cashKey, controlKey, n.Amount, cashIsDebit: !wasReceipt);
 
         await _outbox.EnqueueAsync(new GLPostingRequest(
-            JournalSourceType.CustomerPaymentReversal,
+            reversalSource,
             n.PaymentId,
             n.PaymentNumber,
             n.OccurredAtUtc.Date,
             JournalEntryType.Mahsup,
-            $"Tahsilat iptali {n.PaymentNumber}",
+            isAdvance ? $"Avans iptali {n.PaymentNumber}" : $"Tahsilat iptali {n.PaymentNumber}",
             lines,
             currency, exchangeRate), cancellationToken);
     }

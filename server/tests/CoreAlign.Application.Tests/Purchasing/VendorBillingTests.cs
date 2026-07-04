@@ -81,6 +81,65 @@ public class PostVendorBillHandlerTests
             Arg.Any<CancellationToken>());
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task Posting_header_only_bill_against_a_po_holds_for_approval_and_posts_no_gl()
+    {
+        _tolerance.GetAsync(Arg.Any<CancellationToken>()).Returns(ThreeWayMatchTolerance.EnabledDefault);
+        var poId = Guid.NewGuid();
+        var bill = new VendorBill(Guid.NewGuid(), "Acme", "INV-1", DateTime.UtcNow, "TRY", 1000m, 180m, purchaseOrderId: poId)
+        {
+            Id = Guid.NewGuid(),
+        };
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+        _orders.GetByIdAsync(poId, Arg.Any<CancellationToken>())
+            .Returns(new PurchaseOrder("PO-1", bill.VendorId, "Acme", DateTime.UtcNow, "TRY") { Id = poId });
+
+        await _sut.Handle(new PostVendorBillCommand(bill.Id), default);
+
+        bill.Status.Should().Be(VendorBillStatus.PendingApproval);
+        await _outbox.DidNotReceiveWithAnyArgs().EnqueueAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task Posting_po_bill_with_an_unlinked_line_holds_for_approval()
+    {
+        _tolerance.GetAsync(Arg.Any<CancellationToken>()).Returns(ThreeWayMatchTolerance.EnabledDefault);
+        var poId = Guid.NewGuid();
+        var bill = new VendorBill(Guid.NewGuid(), "Acme", "INV-1", DateTime.UtcNow, "TRY", 100m, 18m, purchaseOrderId: poId)
+        {
+            Id = Guid.NewGuid(),
+        };
+        bill.ReplaceLines(new[]
+        {
+            new VendorBillLine(Guid.NewGuid(), "SKU", "Item", 1m, 100m, poUnitCost: 100m, purchaseOrderLineId: null, taxRatePercent: 18m),
+        });
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+        _orders.GetByIdAsync(poId, Arg.Any<CancellationToken>())
+            .Returns(new PurchaseOrder("PO-1", bill.VendorId, "Acme", DateTime.UtcNow, "TRY") { Id = poId });
+
+        await _sut.Handle(new PostVendorBillCommand(bill.Id), default);
+
+        bill.Status.Should().Be(VendorBillStatus.PendingApproval);
+        await _outbox.DidNotReceiveWithAnyArgs().EnqueueAsync(default!, default);
+    }
+
+    [Fact]
+    public async Task Posting_po_bill_whose_po_does_not_resolve_holds_for_approval()
+    {
+        _tolerance.GetAsync(Arg.Any<CancellationToken>()).Returns(ThreeWayMatchTolerance.EnabledDefault);
+        var bill = new VendorBill(Guid.NewGuid(), "Acme", "INV-1", DateTime.UtcNow, "TRY", 1000m, 180m, purchaseOrderId: Guid.NewGuid())
+        {
+            Id = Guid.NewGuid(),
+        };
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+        // _orders.GetByIdAsync(poId) is deliberately NOT stubbed → returns null (deleted / cross-tenant / stale PO id).
+
+        await _sut.Handle(new PostVendorBillCommand(bill.Id), default);
+
+        bill.Status.Should().Be(VendorBillStatus.PendingApproval);
+        await _outbox.DidNotReceiveWithAnyArgs().EnqueueAsync(default!, default);
+    }
 }
 
 public class CancelVendorBillHandlerTests

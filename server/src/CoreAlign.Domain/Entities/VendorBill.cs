@@ -4,8 +4,11 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class VendorBill : TenantEntity, IXminConcurrency
+public class VendorBill : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public Guid VendorId { get; private set; }
     public string VendorName { get; private set; } = string.Empty;
     public string BillNumber { get; private set; } = string.Empty;

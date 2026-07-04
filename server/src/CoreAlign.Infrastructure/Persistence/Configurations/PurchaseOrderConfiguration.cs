@@ -27,6 +27,8 @@ public class PurchaseOrderConfiguration : IEntityTypeConfiguration<PurchaseOrder
         builder.Property(p => p.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
+
         builder.HasOne(p => p.Vendor).WithMany().HasForeignKey(p => p.VendorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(p => p.Lines).WithOne(l => l.PurchaseOrder).HasForeignKey(l => l.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
 

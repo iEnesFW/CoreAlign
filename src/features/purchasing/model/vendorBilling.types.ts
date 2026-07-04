@@ -167,6 +167,7 @@ export interface CreateVendorPaymentInput {
   exchangeRate?: number;
   notes?: string | null;
   isAdvance?: boolean;
+  operationId?: string | null;
 }
 
 export interface VendorBillListParams {

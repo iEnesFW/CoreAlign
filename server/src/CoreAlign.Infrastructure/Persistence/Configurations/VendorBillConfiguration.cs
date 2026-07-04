@@ -28,6 +28,8 @@ public class VendorBillConfiguration : IEntityTypeConfiguration<VendorBill>
         builder.Property(b => b.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(b => b.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(b => b.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
+
         builder.HasOne(b => b.Vendor).WithMany().HasForeignKey(b => b.VendorId).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(b => b.Lines).WithOne(l => l.VendorBill).HasForeignKey(l => l.VendorBillId).OnDelete(DeleteBehavior.Cascade);
 
@@ -88,11 +90,17 @@ public class VendorPaymentConfiguration : IEntityTypeConfiguration<VendorPayment
         builder.Property(p => p.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
+
         builder.HasOne(p => p.Vendor).WithMany().HasForeignKey(p => p.VendorId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(p => new { p.TenantId, p.PaymentNumber }).IsUnique();
         builder.HasIndex(p => new { p.TenantId, p.VendorId });
         builder.HasIndex(p => new { p.TenantId, p.VendorBillId });
+        builder.HasIndex(p => new { p.TenantId, p.OperationId })
+            .IsUnique()
+            .HasFilter("operation_id IS NOT NULL")
+            .HasDatabaseName("ux_vendor_payments_tenant_operation");
 
         builder.Ignore(p => p.UnappliedAmount);
         builder.Ignore(p => p.IsDraft);

@@ -3,8 +3,11 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class VendorPayment : TenantEntity, IXminConcurrency
+public class VendorPayment : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public Guid VendorId { get; private set; }
     public string VendorName { get; private set; } = string.Empty;
     public string PaymentNumber { get; private set; } = string.Empty;
@@ -17,6 +20,7 @@ public class VendorPayment : TenantEntity, IXminConcurrency
     public string? Notes { get; private set; }
     public decimal AppliedAmount { get; private set; }
     public bool IsAdvance { get; private set; }
+    public Guid? OperationId { get; private set; }
     public bool IsVoided { get; private set; }
     public DateTime? VoidedAtUtc { get; private set; }
     public string? VoidReason { get; private set; }
@@ -43,7 +47,8 @@ public class VendorPayment : TenantEntity, IXminConcurrency
         string? method = null,
         Guid? vendorBillId = null,
         string? notes = null,
-        bool isAdvance = false)
+        bool isAdvance = false,
+        Guid? operationId = null)
     {
         VendorId = vendorId;
         VendorName = vendorName;
@@ -56,6 +61,7 @@ public class VendorPayment : TenantEntity, IXminConcurrency
         VendorBillId = vendorBillId;
         Notes = notes;
         IsAdvance = isAdvance;
+        OperationId = operationId;
         _isPosted = false;
     }
 

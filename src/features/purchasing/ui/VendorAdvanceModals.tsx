@@ -6,6 +6,7 @@ import { Modal } from '@/shared/ui/Modal/Modal';
 import { Button } from '@/shared/ui/Button/Button';
 import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { newOperationId } from '@/shared/lib/operationId';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
@@ -49,6 +50,7 @@ export const VendorAdvancePaymentModal = ({ onClose }: { onClose: () => void }) 
         method,
         notes: notes.trim() || null,
         isAdvance: true,
+        operationId: newOperationId(),
       });
       toast.success(t('Vendors.advance.created', { defaultValue: 'Tedarikçi avansı kaydedildi.' }));
       onClose();

@@ -373,6 +373,56 @@ public class VoidVendorPaymentHandlerTests
         r.Lines.Sum(l => l.Debit).Should().Be(r.Lines.Sum(l => l.Credit));
 }
 
+public class CreateVendorPaymentHandlerTests
+{
+    private readonly IVendorPaymentRepository _payments = Substitute.For<IVendorPaymentRepository>();
+    private readonly IVendorBillRepository _bills = Substitute.For<IVendorBillRepository>();
+    private readonly IVendorRepository _vendors = Substitute.For<IVendorRepository>();
+    private readonly IVendorLedgerRepository _ledger = Substitute.For<IVendorLedgerRepository>();
+    private readonly IDocumentSequenceRepository _sequences = Substitute.For<IDocumentSequenceRepository>();
+    private readonly IVendorPaymentApplicationRepository _apps = Substitute.For<IVendorPaymentApplicationRepository>();
+    private readonly ICurrentUserAccessor _user = Substitute.For<ICurrentUserAccessor>();
+    private readonly IGLPostingOutbox _outbox = Substitute.For<IGLPostingOutbox>();
+    private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
+    private readonly CreateVendorPaymentHandler _sut;
+
+    public CreateVendorPaymentHandlerTests()
+    {
+        _sut = new CreateVendorPaymentHandler(_payments, _bills, _vendors, _ledger, _sequences, _apps, _user, _outbox, _uow);
+    }
+
+    [Fact]
+    public async Task Duplicate_create_with_same_operation_id_replays_the_original_payment()
+    {
+        var operationId = Guid.NewGuid();
+        var existing = new VendorPayment(Guid.NewGuid(), "Acme", "VPAY-1", DateTime.UtcNow, 1000m, "TRY", operationId: operationId)
+        {
+            Id = Guid.NewGuid(),
+        };
+        _payments.GetByOperationIdAsync(operationId, Arg.Any<CancellationToken>()).Returns(existing);
+
+        var dto = await _sut.Handle(
+            new CreateVendorPaymentCommand(existing.VendorId, 1000m, DateTime.UtcNow, "TRY", OperationId: operationId), default);
+
+        dto.PaymentNumber.Should().Be("VPAY-1");
+        await _payments.DidNotReceive().AddAsync(Arg.Any<VendorPayment>(), Arg.Any<CancellationToken>());
+        await _sequences.DidNotReceive().ConsumeAsync(Arg.Any<DocumentSequenceType>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _uow.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Create_without_operation_id_skips_the_replay_guard()
+    {
+        _vendors.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Vendor?)null);
+
+        Func<Task> act = () => _sut.Handle(
+            new CreateVendorPaymentCommand(Guid.NewGuid(), 1000m, DateTime.UtcNow, "TRY"), default);
+
+        await act.Should().ThrowAsync<VendorNotFoundForPurchaseException>();
+        await _payments.DidNotReceive().GetByOperationIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
+}
+
 public class UpdateVendorBillHandlerTests
 {
     private readonly IVendorBillRepository _bills = Substitute.For<IVendorBillRepository>();

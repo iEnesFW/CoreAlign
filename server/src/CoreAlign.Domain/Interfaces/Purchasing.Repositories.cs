@@ -68,6 +68,7 @@ public record VendorAgingRow(
 public interface IVendorPaymentRepository
 {
     Task<VendorPayment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<VendorPayment?> GetByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<VendorPayment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<VendorPayment> Items, int Total)> SearchAsync(
         Guid? vendorId,

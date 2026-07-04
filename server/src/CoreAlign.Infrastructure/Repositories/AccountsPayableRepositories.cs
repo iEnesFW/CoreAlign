@@ -111,6 +111,9 @@ public class VendorPaymentRepository : IVendorPaymentRepository
     public Task<VendorPayment?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         _context.VendorPayments.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
+    public Task<VendorPayment?> GetByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default) =>
+        _context.VendorPayments.FirstOrDefaultAsync(p => p.OperationId == operationId, cancellationToken);
+
     public async Task<IReadOnlyList<VendorPayment>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
     {
         var idList = ids.Distinct().ToList();
