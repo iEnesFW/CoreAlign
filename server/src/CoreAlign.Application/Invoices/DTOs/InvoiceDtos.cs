@@ -23,6 +23,10 @@ public class InvoiceLineDto
     public bool IsTaxInclusive { get; set; }
     public decimal WithholdingRatePercent { get; set; }
     public decimal WithholdingAmount { get; set; }
+    public Guid? WithholdingTaxCodeId { get; set; }
+    public string? WithholdingCode { get; set; }
+    public int? WithholdingNumerator { get; set; }
+    public int? WithholdingDenominator { get; set; }
     public decimal LineSubtotal { get; set; }
     public decimal LineNetAmount { get; set; }
     public decimal LineTotal { get; set; }
@@ -84,6 +88,13 @@ public class InvoiceDto
     public string? Notes { get; set; }
     public string? EInvoiceUuid { get; set; }
     public string? EInvoiceStatus { get; set; }
+    public string? EInvoiceProfile { get; set; }
+    public string? EInvoiceGibStatusCode { get; set; }
+    public string? EInvoiceRejectReason { get; set; }
+    public DateTime? EInvoiceSentAtUtc { get; set; }
+    public Guid? VatExemptionCodeId { get; set; }
+    public string? VatExemptionCode { get; set; }
+    public string? VatExemptionReason { get; set; }
     public bool IsPostedToLedger { get; set; }
     public bool IsOverdue { get; set; }
     public List<InvoiceLineDto> Lines { get; set; } = new();

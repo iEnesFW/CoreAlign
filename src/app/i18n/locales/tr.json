@@ -572,6 +572,8 @@
       "taxRate": "KDV",
       "taxRatePlaceholder": "KDV oranı",
       "withholding": "Tevkifat%",
+      "withholdingCode": "Tevkifat",
+      "withholdingCodePlaceholder": "Tevkifat yok",
       "warehouse": "Depo",
       "warehousePlaceholder": "Depo seç",
       "lineNotes": "Satır notu",
@@ -850,6 +852,8 @@
       "eInvoice": "E-Fatura",
       "eInvoiceUuid": "E-Fatura UUID",
       "eInvoiceStatus": "Durum",
+      "eInvoiceGibStatus": "GİB Durum Kodu",
+      "eInvoiceRejectReason": "Red Sebebi",
       "postedToLedger": "Muhasebeye yansıdı",
       "issuedAt": "Düzenleme zamanı",
       "noNotes": "Bu fatura için not yok.",
@@ -974,6 +978,9 @@
       "customer": "Müşteri",
       "dueDays": "Vade (Gün)",
       "duePreview": "Net {{days}} → Vade: {{date}}",
+      "exemptionCode": "KDV İstisnası",
+      "exemptionCodePlaceholder": "İstisna yok",
+      "exemptionReason": "İstisna Açıklaması",
       "internalNotes": "Dahili Notlar",
       "issueDate": "Fatura Tarihi",
       "lineName": "Kalem adı",
@@ -989,7 +996,9 @@
       "validation": {
         "customerRequired": "Lütfen bir müşteri seçin.",
         "lineNamePositive": "En az bir satıra stok kodu, ad ve sıfırdan büyük miktar girin."
-      }
+      },
+      "withholdingCode": "Tevkifat",
+      "withholdingTotal": "Tevkifat"
     }
   },
   "products": {

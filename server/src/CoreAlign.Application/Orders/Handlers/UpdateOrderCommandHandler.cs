@@ -20,6 +20,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
     private readonly IAllocationService _allocationService;
     private readonly ICreditLimitGuard _creditGuard;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IGibCodeRepository? _gibCodeRepository;
 
     public UpdateOrderCommandHandler(
         IOrderRepository orderRepository,
@@ -28,7 +29,8 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         IProductComponentRepository componentRepository,
         IAllocationService allocationService,
         ICreditLimitGuard creditGuard,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IGibCodeRepository? gibCodeRepository = null)
     {
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
@@ -37,6 +39,7 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
         _allocationService = allocationService;
         _creditGuard = creditGuard;
         _unitOfWork = unitOfWork;
+        _gibCodeRepository = gibCodeRepository;
     }
 
     public async Task<OrderDto> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
@@ -160,9 +163,26 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
             request.CustomerNotes,
             request.OriginOrderId);
 
+        var withholdingCodeIds = request.Lines
+            .Where(l => l.WithholdingTaxCodeId.HasValue)
+            .Select(l => l.WithholdingTaxCodeId!.Value)
+            .Distinct()
+            .ToList();
+        IReadOnlyDictionary<Guid, WithholdingTaxCode> withholdingCodesById =
+            withholdingCodeIds.Count == 0 || _gibCodeRepository is null
+                ? new Dictionary<Guid, WithholdingTaxCode>()
+                : await _gibCodeRepository.GetWithholdingByIdsAsync(withholdingCodeIds, cancellationToken);
+        if (withholdingCodesById.Count != withholdingCodeIds.Count)
+        {
+            throw new InvalidOrderLineException("Validation.WithholdingCodeNotFound");
+        }
+
         var newLines = request.Lines.Select((input, idx) =>
         {
             var product = products[input.ProductId];
+            var withholdingCode = input.WithholdingTaxCodeId.HasValue
+                ? withholdingCodesById[input.WithholdingTaxCodeId.Value]
+                : null;
             var line = new OrderLine(product.Id, product.Sku, product.Name, input.Quantity, input.UnitPrice);
             line.SetLineNumber(idx + 1);
             line.ApplyPricing(
@@ -184,7 +204,11 @@ public class UpdateOrderCommandHandler : IRequestHandler<UpdateOrderCommand, Ord
                 input.LineNotes,
                 null,
                 false,
-                product.Description);
+                product.Description,
+                withholdingTaxCodeId: withholdingCode?.Id,
+                withholdingCode: withholdingCode?.Code,
+                withholdingNumerator: withholdingCode?.Numerator,
+                withholdingDenominator: withholdingCode?.Denominator);
             return line;
         });
         order.ReplaceLines(newLines);

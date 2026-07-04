@@ -51,6 +51,13 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.Property(i => i.EInvoiceUuid).HasMaxLength(64);
         builder.Property(i => i.EInvoiceStatus).HasMaxLength(40);
         builder.Property(i => i.EInvoicePdfPath).HasMaxLength(500);
+        builder.Property(i => i.EInvoiceProfile).HasMaxLength(32);
+        builder.Property(i => i.EInvoiceGibStatusCode).HasMaxLength(40);
+        builder.Property(i => i.EInvoiceRejectReason).HasMaxLength(500);
+        builder.Property(i => i.EInvoiceSentAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(i => i.EInvoiceLastSyncUtc).HasColumnType("timestamp with time zone");
+        builder.Property(i => i.VatExemptionCode).HasMaxLength(8);
+        builder.Property(i => i.VatExemptionReason).HasMaxLength(500);
 
         var jsonOpts = new JsonSerializerOptions();
         builder.Property(i => i.CustomerSnapshot)
@@ -72,6 +79,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
         builder.HasOne(i => i.Customer).WithMany().HasForeignKey(i => i.CustomerId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(i => i.Order).WithMany().HasForeignKey(i => i.OrderId).OnDelete(DeleteBehavior.SetNull);
         builder.HasMany(i => i.Lines).WithOne(l => l.Invoice).HasForeignKey(l => l.InvoiceId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<VatExemptionCode>().WithMany().HasForeignKey(i => i.VatExemptionCodeId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(i => new { i.TenantId, i.InvoiceNumber }).IsUnique();
         builder.HasIndex(i => new { i.TenantId, i.CustomerId });
@@ -106,6 +114,7 @@ public class InvoiceLineConfiguration : IEntityTypeConfiguration<InvoiceLine>
         builder.Property(l => l.TaxAmount).HasColumnType("numeric(18,4)");
         builder.Property(l => l.WithholdingRatePercent).HasColumnType("numeric(6,3)");
         builder.Property(l => l.WithholdingAmount).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.WithholdingCode).HasMaxLength(8);
         builder.Property(l => l.LineSubtotal).HasColumnType("numeric(18,4)");
         builder.Property(l => l.LineNetAmount).HasColumnType("numeric(18,4)");
         builder.Property(l => l.LineTotal).HasColumnType("numeric(18,4)");
@@ -116,6 +125,7 @@ public class InvoiceLineConfiguration : IEntityTypeConfiguration<InvoiceLine>
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasOne(l => l.Product).WithMany().HasForeignKey(l => l.ProductId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WithholdingTaxCode>().WithMany().HasForeignKey(l => l.WithholdingTaxCodeId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(l => l.InvoiceId);
         builder.HasIndex(l => l.ProductId);

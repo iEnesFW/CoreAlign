@@ -103,6 +103,7 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.Property(l => l.TaxAmount).HasColumnType("numeric(18,4)");
         builder.Property(l => l.WithholdingRatePercent).HasColumnType("numeric(6,3)");
         builder.Property(l => l.WithholdingAmount).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.WithholdingCode).HasMaxLength(8);
         builder.Property(l => l.LineSubtotal).HasColumnType("numeric(18,4)");
         builder.Property(l => l.LineNetAmount).HasColumnType("numeric(18,4)");
         builder.Property(l => l.LineTotal).HasColumnType("numeric(18,4)");
@@ -113,6 +114,7 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasOne(l => l.Product).WithMany().HasForeignKey(l => l.ProductId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<WithholdingTaxCode>().WithMany().HasForeignKey(l => l.WithholdingTaxCodeId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(l => l.OrderId);
         builder.HasIndex(l => l.ProductId);

@@ -129,7 +129,11 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
                 revenueAccountCode: null,
                 costCenter: null,
                 project: null,
-                originOrderLineId: line.Id);
+                originOrderLineId: line.Id,
+                withholdingTaxCodeId: line.WithholdingTaxCodeId,
+                withholdingCode: line.WithholdingCode,
+                withholdingNumerator: line.WithholdingNumerator,
+                withholdingDenominator: line.WithholdingDenominator);
             invoice.Lines.Add(invLine);
         }
 

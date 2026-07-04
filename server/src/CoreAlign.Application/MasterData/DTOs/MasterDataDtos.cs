@@ -70,6 +70,27 @@ public class PaymentTermDto
     public bool IsActive { get; set; }
 }
 
+public class WithholdingTaxCodeDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Kind { get; set; } = string.Empty;
+    public int Numerator { get; set; }
+    public int Denominator { get; set; }
+    public bool IsActive { get; set; }
+}
+
+public class VatExemptionCodeDto
+{
+    public Guid Id { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? LawReference { get; set; }
+    public string Kind { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
+}
+
 public class PriceListDto
 {
     public Guid Id { get; set; }

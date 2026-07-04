@@ -46,14 +46,19 @@ public sealed class InvoiceIssuedEInvoiceOutboxHandler : IOutboxMessageHandler
         var seller = BuildSellerParty(invoice);
         var buyer = BuildBuyerParty(invoice, customer);
 
+        var buyerTaxNumber = invoice.CustomerSnapshot?.TaxNumber ?? customer?.TaxNumber;
+        var documentKind = await ResolveDocumentKindAsync(buyerTaxNumber, cancellationToken);
+        invoice.SetEInvoiceProfile(documentKind == EInvoiceDocumentKind.EArchive ? "EARSIV" : "TICARIFATURA");
+
         var xml = UblTrInvoiceXmlBuilder.Build(invoice, seller, buyer);
 
         var request = new EInvoiceSubmissionRequest(
             invoice.TenantId,
             invoice.Id,
             xml,
-            invoice.CustomerSnapshot?.TaxNumber ?? customer?.TaxNumber,
-            invoice.CustomerNameSnapshot);
+            buyerTaxNumber,
+            invoice.CustomerNameSnapshot,
+            documentKind);
 
         var result = await _gateway.SubmitAsync(request, cancellationToken);
 
@@ -77,6 +82,20 @@ public sealed class InvoiceIssuedEInvoiceOutboxHandler : IOutboxMessageHandler
             invoice.Id, _gateway.GatewayName, result.RemoteUuid, result.Status);
 
         return OutboxHandlerResult.Processed($"Submitted:{result.RemoteUuid}");
+    }
+
+    private async Task<EInvoiceDocumentKind> ResolveDocumentKindAsync(string? buyerTaxNumber, CancellationToken cancellationToken)
+    {
+        // WHY: VKN'si e-Fatura mükellefi olan alıcıya e-Fatura, aksi halde (bireysel/kayıtsız) e-Arşiv kesilir.
+        if (string.IsNullOrWhiteSpace(buyerTaxNumber))
+        {
+            return EInvoiceDocumentKind.EArchive;
+        }
+
+        var taxpayer = await _gateway.CheckTaxpayerAsync(buyerTaxNumber, cancellationToken);
+        return taxpayer.IsEFaturaRegistered
+            ? EInvoiceDocumentKind.EFatura
+            : EInvoiceDocumentKind.EArchive;
     }
 
     private static SellerParty BuildSellerParty(Domain.Entities.Invoice invoice) =>

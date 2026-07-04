@@ -11,8 +11,10 @@ import type {
   ProductCategory,
   TaxRate,
   UnitOfMeasure,
+  VatExemptionCode,
   Warehouse,
   WarehouseType,
+  WithholdingTaxCode,
 } from '../model/masterData.types';
 
 const BASE = '/master-data';
@@ -197,6 +199,18 @@ export const masterDataApi = {
       }),
   },
   taxRates: buildCrud<TaxRate, TaxRateInput, TaxRateUpdateInput>('tax-rates'),
+  withholdingTaxCodes: {
+    list: (isActive?: boolean) =>
+      cachedGet<ApiResponse<WithholdingTaxCode[]>>(apiClient, `${BASE}/withholding-tax-codes`, {
+        params: isActive === undefined ? {} : { isActive },
+      }),
+  },
+  vatExemptionCodes: {
+    list: (isActive?: boolean) =>
+      cachedGet<ApiResponse<VatExemptionCode[]>>(apiClient, `${BASE}/vat-exemption-codes`, {
+        params: isActive === undefined ? {} : { isActive },
+      }),
+  },
   paymentTerms: buildCrud<PaymentTerm, PaymentTermInput, PaymentTermUpdateInput>('payment-terms'),
   priceLists: buildCrud<PriceList, PriceListInput, PriceListUpdateInput>('price-lists'),
   priceListItems: (listId: string) =>

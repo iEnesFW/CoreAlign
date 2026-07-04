@@ -138,6 +138,8 @@ public class CoreAlignDbContext : DbContext
     public DbSet<Province> Provinces => Set<Province>();
     public DbSet<District> Districts => Set<District>();
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+    public DbSet<WithholdingTaxCode> WithholdingTaxCodes => Set<WithholdingTaxCode>();
+    public DbSet<VatExemptionCode> VatExemptionCodes => Set<VatExemptionCode>();
 
     // Auth, audit, compliance, two-factor, sessions
     public DbSet<TwoFactorBackupCode> TwoFactorBackupCodes => Set<TwoFactorBackupCode>();

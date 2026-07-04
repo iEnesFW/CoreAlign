@@ -57,6 +57,10 @@ public class OrderLineDto
     public bool IsTaxInclusive { get; set; }
     public decimal WithholdingRatePercent { get; set; }
     public decimal WithholdingAmount { get; set; }
+    public Guid? WithholdingTaxCodeId { get; set; }
+    public string? WithholdingCode { get; set; }
+    public int? WithholdingNumerator { get; set; }
+    public int? WithholdingDenominator { get; set; }
     public decimal LineSubtotal { get; set; }
     public decimal LineNetAmount { get; set; }
     public decimal LineTotal { get; set; }

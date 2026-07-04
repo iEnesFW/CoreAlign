@@ -153,6 +153,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<ICustomerGroupRepository, CustomerGroupRepository>();
         services.AddScoped<IUnitOfMeasureRepository, UnitOfMeasureRepository>();
         services.AddScoped<ITaxRateRepository, TaxRateRepository>();
+        services.AddScoped<IGibCodeRepository, GibCodeRepository>();
         services.AddScoped<IPaymentTermRepository, PaymentTermRepository>();
         services.AddScoped<IPriceListRepository, PriceListRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();

@@ -50,6 +50,29 @@ export interface TaxRate {
   isActive: boolean;
 }
 
+export type WithholdingTaxKind = 'Partial' | 'Full';
+
+export interface WithholdingTaxCode {
+  id: string;
+  code: string;
+  name: string;
+  kind: WithholdingTaxKind;
+  numerator: number;
+  denominator: number;
+  isActive: boolean;
+}
+
+export type VatExemptionKind = 'Full' | 'Partial' | 'NotSubject' | 'ExportRegistered';
+
+export interface VatExemptionCode {
+  id: string;
+  code: string;
+  name: string;
+  lawReference: string | null;
+  kind: VatExemptionKind;
+  isActive: boolean;
+}
+
 export interface PaymentTerm {
   id: string;
   code: string;

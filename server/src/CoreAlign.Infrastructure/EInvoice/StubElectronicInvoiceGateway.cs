@@ -50,4 +50,12 @@ public sealed class StubElectronicInvoiceGateway : IElectronicInvoiceGateway
         }
         return Task.FromResult(new EInvoiceStatusResult("Accepted", null, null));
     }
+
+    public Task<EInvoiceTaxpayerResult> CheckTaxpayerAsync(string taxNumber, CancellationToken ct)
+    {
+        var registered = !string.IsNullOrWhiteSpace(taxNumber)
+            && taxNumber.Length == 10
+            && taxNumber.All(char.IsDigit);
+        return Task.FromResult(new EInvoiceTaxpayerResult(taxNumber ?? string.Empty, registered, null));
+    }
 }

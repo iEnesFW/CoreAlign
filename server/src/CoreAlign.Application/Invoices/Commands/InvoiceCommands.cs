@@ -36,7 +36,8 @@ public record StandaloneInvoiceLineInput(
     bool IsTaxInclusive = false,
     decimal? WithholdingRatePercent = null,
     Guid? UomId = null,
-    string? UomCode = null);
+    string? UomCode = null,
+    Guid? WithholdingTaxCodeId = null);
 
 public record CreateStandaloneInvoiceCommand(
     Guid CustomerId,
@@ -55,4 +56,6 @@ public record CreateStandaloneInvoiceCommand(
     string? InternalNotes = null,
     string? PublicNotes = null,
     string? TermsAndConditions = null,
-    string? Notes = null) : IRequest<InvoiceDto>, ITransactionalRequest;
+    string? Notes = null,
+    Guid? VatExemptionCodeId = null,
+    string? VatExemptionReason = null) : IRequest<InvoiceDto>, ITransactionalRequest;

@@ -29,3 +29,6 @@ public record GetWarehouseByIdQuery(Guid Id) : IRequest<WarehouseDto?>;
 
 public record ListBankAccountsQuery(bool? IsActive = null) : IRequest<IReadOnlyList<BankAccountDto>>;
 public record GetBankAccountByIdQuery(Guid Id) : IRequest<BankAccountDto>;
+
+public record ListWithholdingTaxCodesQuery(bool? IsActive = true) : IRequest<IReadOnlyList<WithholdingTaxCodeDto>>;
+public record ListVatExemptionCodesQuery(bool? IsActive = true) : IRequest<IReadOnlyList<VatExemptionCodeDto>>;

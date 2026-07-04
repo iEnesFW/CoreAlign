@@ -50,6 +50,10 @@ export interface InvoiceLine {
   isTaxInclusive: boolean;
   withholdingRatePercent: number;
   withholdingAmount: number;
+  withholdingTaxCodeId: string | null;
+  withholdingCode: string | null;
+  withholdingNumerator: number | null;
+  withholdingDenominator: number | null;
   lineSubtotal: number;
   lineNetAmount: number;
   lineTotal: number;
@@ -103,6 +107,13 @@ export interface Invoice {
   notes: string | null;
   eInvoiceUuid: string | null;
   eInvoiceStatus: string | null;
+  eInvoiceProfile: string | null;
+  eInvoiceGibStatusCode: string | null;
+  eInvoiceRejectReason: string | null;
+  eInvoiceSentAtUtc: string | null;
+  vatExemptionCodeId: string | null;
+  vatExemptionCode: string | null;
+  vatExemptionReason: string | null;
   isPostedToLedger: boolean;
   isOverdue: boolean;
   lines: InvoiceLine[];
@@ -169,6 +180,7 @@ export interface StandaloneInvoiceLineInput {
   taxRateId?: string | null;
   isTaxInclusive?: boolean;
   withholdingRatePercent?: number | null;
+  withholdingTaxCodeId?: string | null;
   uomId?: string | null;
   uomCode?: string | null;
 }
@@ -187,6 +199,8 @@ export interface CreateStandaloneInvoiceInput {
   headerDiscountAmount?: number | null;
   shippingCost?: number | null;
   roundingAdjustment?: number | null;
+  vatExemptionCodeId?: string | null;
+  vatExemptionReason?: string | null;
   internalNotes?: string | null;
   publicNotes?: string | null;
   termsAndConditions?: string | null;

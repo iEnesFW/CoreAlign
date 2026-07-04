@@ -29,6 +29,7 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
     private readonly ICreditLimitGuard _creditGuard;
     private readonly IFxRateResolverDetailed? _fxResolver;
     private readonly ITenantContext? _tenantContext;
+    private readonly IGibCodeRepository? _gibCodeRepository;
 
     public CreateStandaloneInvoiceCommandHandler(
         ICustomerRepository customerRepository,
@@ -43,7 +44,8 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
         IEInvoiceSubmissionOutbox eInvoiceOutbox,
         ICreditLimitGuard creditGuard,
         IFxRateResolverDetailed? fxResolver = null,
-        ITenantContext? tenantContext = null)
+        ITenantContext? tenantContext = null,
+        IGibCodeRepository? gibCodeRepository = null)
     {
         _customerRepository = customerRepository;
         _addressRepository = addressRepository;
@@ -58,6 +60,7 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
         _creditGuard = creditGuard;
         _fxResolver = fxResolver;
         _tenantContext = tenantContext;
+        _gibCodeRepository = gibCodeRepository;
     }
 
     public async Task<InvoiceDto> Handle(CreateStandaloneInvoiceCommand request, CancellationToken cancellationToken)
@@ -76,6 +79,20 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
         if (productsById.Count != productIdsWithValue.Count)
         {
             throw new InvalidInvoiceLineException("Validation.ProductNotFoundOrCrossTenant");
+        }
+
+        var withholdingCodeIds = request.Lines
+            .Where(l => l.WithholdingTaxCodeId.HasValue)
+            .Select(l => l.WithholdingTaxCodeId!.Value)
+            .Distinct()
+            .ToList();
+        IReadOnlyDictionary<Guid, WithholdingTaxCode> withholdingCodesById =
+            withholdingCodeIds.Count == 0 || _gibCodeRepository is null
+                ? new Dictionary<Guid, WithholdingTaxCode>()
+                : await _gibCodeRepository.GetWithholdingByIdsAsync(withholdingCodeIds, cancellationToken);
+        if (withholdingCodesById.Count != withholdingCodeIds.Count)
+        {
+            throw new InvalidInvoiceLineException("Validation.WithholdingCodeNotFound");
         }
 
         var now = DateTime.UtcNow;
@@ -159,6 +176,10 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
                 line = new InvoiceLine(input.ProductSku, input.ProductName, input.Description, input.Quantity, input.UnitPrice);
             }
 
+            var withholdingCode = input.WithholdingTaxCodeId.HasValue
+                ? withholdingCodesById[input.WithholdingTaxCodeId.Value]
+                : null;
+
             line.SetLineNumber(lineNumber++);
             line.ApplyPricing(
                 quantity: input.Quantity,
@@ -175,10 +196,27 @@ public class CreateStandaloneInvoiceCommandHandler : IRequestHandler<CreateStand
                 revenueAccountCode: null,
                 costCenter: null,
                 project: null,
-                originOrderLineId: null);
+                originOrderLineId: null,
+                withholdingTaxCodeId: withholdingCode?.Id,
+                withholdingCode: withholdingCode?.Code,
+                withholdingNumerator: withholdingCode?.Numerator,
+                withholdingDenominator: withholdingCode?.Denominator);
             lines.Add(line);
         }
         invoice.ReplaceLines(lines);
+
+        if (request.VatExemptionCodeId.HasValue)
+        {
+            var exemption = _gibCodeRepository is null
+                ? null
+                : await _gibCodeRepository.GetExemptionByIdAsync(request.VatExemptionCodeId.Value, cancellationToken);
+            if (exemption is null)
+            {
+                throw new InvalidInvoiceLineException("Validation.VatExemptionCodeNotFound");
+            }
+
+            invoice.SetVatExemption(exemption.Id, exemption.Code, request.VatExemptionReason);
+        }
 
         if (_fxResolver is not null &&
             !string.Equals(invoice.Currency, BaseCurrency, StringComparison.OrdinalIgnoreCase))

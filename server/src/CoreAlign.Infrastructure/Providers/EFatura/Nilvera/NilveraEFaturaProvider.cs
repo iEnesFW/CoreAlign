@@ -62,7 +62,8 @@ public sealed class NilveraEFaturaProvider : IEFaturaProvider
         | EFaturaProviderCapabilities.CanCreditNote
         | EFaturaProviderCapabilities.CanQueryStatus
         | EFaturaProviderCapabilities.CanListReceived
-        | EFaturaProviderCapabilities.CanWebhook;
+        | EFaturaProviderCapabilities.CanWebhook
+        | EFaturaProviderCapabilities.CanCheckTaxpayer;
 
     public object? UnprotectCredentials(IProviderCredentialProtector protector, Guid tenantId, string? encryptedJson)
     {
@@ -189,6 +190,29 @@ public sealed class NilveraEFaturaProvider : IEFaturaProvider
             ct).ConfigureAwait(false);
 
         return new EFaturaCreditNoteResult(result.Uuid, result.Status, result.IssuedAt);
+    }
+
+    public async Task<EFaturaTaxpayerStatus> CheckTaxpayerAsync(EFaturaTaxpayerCheckRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentException.ThrowIfNullOrWhiteSpace(request.TaxNumber);
+
+        var ctx = await ResolveContextAsync(request.TenantId, request.Credentials, ct).ConfigureAwait(false);
+        try
+        {
+            var result = await SendJsonAsync<NilveraTaxpayerResult>(
+                ctx,
+                HttpMethod.Get,
+                $"/api/v1/taxpayers/{Uri.EscapeDataString(request.TaxNumber)}",
+                body: null,
+                ct).ConfigureAwait(false);
+
+            return new EFaturaTaxpayerStatus(request.TaxNumber, result.IsRegistered, result.Alias, result.Title);
+        }
+        catch (NilveraProviderException ex) when (ex.ErrorCode is "HTTP_404" or "TAXPAYER_NOT_FOUND")
+        {
+            return new EFaturaTaxpayerStatus(request.TaxNumber, IsEFaturaRegistered: false);
+        }
     }
 
     private async Task<NilveraInvocationContext> ResolveContextAsync(Guid requestTenantId, object? requestCredentials, CancellationToken ct)

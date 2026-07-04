@@ -7,6 +7,10 @@ import { Button } from '@/shared/ui/Button/Button';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { useCustomersQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useCreateStandaloneInvoice } from '@/features/invoices/hooks/useInvoiceQueries';
+import {
+  useVatExemptionCodesQuery,
+  useWithholdingTaxCodesQuery,
+} from '@/shared/master-data/hooks/useMasterData';
 import type { Invoice } from '@/features/invoices/model/invoice.types';
 import type { ApiResponse } from '@/shared/types/api';
 
@@ -25,6 +29,7 @@ interface LineDraft {
   quantity: number;
   unitPrice: number;
   taxRatePercent: number;
+  withholdingTaxCodeId: string;
 }
 
 const newLine = (): LineDraft => ({
@@ -35,7 +40,11 @@ const newLine = (): LineDraft => ({
   quantity: 1,
   unitPrice: 0,
   taxRatePercent: 20,
+  withholdingTaxCodeId: '',
 });
+
+const truncateName = (name: string, max = 40): string =>
+  name.length > max ? `${name.slice(0, max)}…` : name;
 
 const toIsoUtcMidnight = (date: string): string =>
   date ? new Date(`${date}T00:00:00Z`).toISOString() : new Date().toISOString();
@@ -48,6 +57,8 @@ export const CreateStandaloneInvoiceModal = ({
 }: Props) => {
   const { t, i18n } = useTranslation();
   const customersQuery = useCustomersQuery({ page: 1, pageSize: 100 });
+  const withholdingCodesQuery = useWithholdingTaxCodesQuery(true);
+  const vatExemptionCodesQuery = useVatExemptionCodesQuery(true);
   const createMutation = useCreateStandaloneInvoice();
 
   const today = useMemo(() => new Date().toISOString().substring(0, 10), []);
@@ -56,22 +67,37 @@ export const CreateStandaloneInvoiceModal = ({
   const [issueDate, setIssueDate] = useState(today);
   const [dueDays, setDueDays] = useState(30);
   const [currency, setCurrency] = useState('TRY');
+  const [vatExemptionCodeId, setVatExemptionCodeId] = useState('');
+  const [vatExemptionReason, setVatExemptionReason] = useState('');
   const [publicNotes, setPublicNotes] = useState('');
   const [internalNotes, setInternalNotes] = useState('');
   const [lines, setLines] = useState<LineDraft[]>([newLine()]);
 
   const customers = customersQuery.data?.data?.items ?? [];
+  const withholdingCodes = useMemo(
+    () => withholdingCodesQuery.data?.data ?? [],
+    [withholdingCodesQuery.data],
+  );
+  const vatExemptionCodes = vatExemptionCodesQuery.data?.data ?? [];
 
   const totals = useMemo(() => {
     let subtotal = 0;
     let tax = 0;
+    let withholding = 0;
     lines.forEach((l) => {
       const lineSub = l.quantity * l.unitPrice;
+      const lineTax = (lineSub * l.taxRatePercent) / 100;
       subtotal += lineSub;
-      tax += (lineSub * l.taxRatePercent) / 100;
+      tax += lineTax;
+      const code = l.withholdingTaxCodeId
+        ? withholdingCodes.find((c) => c.id === l.withholdingTaxCodeId)
+        : undefined;
+      if (code && code.denominator > 0) {
+        withholding += lineTax * (code.numerator / code.denominator);
+      }
     });
-    return { subtotal, tax, total: subtotal + tax };
-  }, [lines]);
+    return { subtotal, tax, withholding, total: subtotal + tax - withholding };
+  }, [lines, withholdingCodes]);
 
   const dueDatePreview = useMemo(() => {
     if (!issueDate) return '';
@@ -93,6 +119,8 @@ export const CreateStandaloneInvoiceModal = ({
     setIssueDate(today);
     setDueDays(30);
     setCurrency('TRY');
+    setVatExemptionCodeId('');
+    setVatExemptionReason('');
     setPublicNotes('');
     setInternalNotes('');
     setLines([newLine()]);
@@ -116,6 +144,9 @@ export const CreateStandaloneInvoiceModal = ({
         issueDate: toIsoUtcMidnight(issueDate),
         dueDays,
         currency,
+        vatExemptionCodeId: vatExemptionCodeId || null,
+        vatExemptionReason:
+          vatExemptionCodeId && vatExemptionReason.trim() ? vatExemptionReason.trim() : null,
         publicNotes: publicNotes.trim() || null,
         internalNotes: internalNotes.trim() || null,
         lines: validLines.map((l) => ({
@@ -126,6 +157,7 @@ export const CreateStandaloneInvoiceModal = ({
           quantity: l.quantity,
           unitPrice: l.unitPrice,
           taxRatePercent: l.taxRatePercent,
+          withholdingTaxCodeId: l.withholdingTaxCodeId || null,
         })),
       },
       {
@@ -218,6 +250,30 @@ export const CreateStandaloneInvoiceModal = ({
             </span>
           )}
         </Field>
+        <Field label={t('invoices.standalone.exemptionCode')}>
+          <select
+            value={vatExemptionCodeId}
+            onChange={(e) => setVatExemptionCodeId(e.target.value)}
+            className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">{t('invoices.standalone.exemptionCodePlaceholder')}</option>
+            {vatExemptionCodes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} — {truncateName(c.name)}
+              </option>
+            ))}
+          </select>
+        </Field>
+        {vatExemptionCodeId && (
+          <Field label={t('invoices.standalone.exemptionReason')}>
+            <input
+              type="text"
+              value={vatExemptionReason}
+              onChange={(e) => setVatExemptionReason(e.target.value)}
+              className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </Field>
+        )}
       </div>
 
       <div className="rounded-lg border border-slate-200 dark:border-slate-800">
@@ -239,7 +295,7 @@ export const CreateStandaloneInvoiceModal = ({
           {lines.map((line, idx) => (
             <div
               key={line.key}
-              className="grid grid-cols-1 gap-2 px-3 py-2 sm:grid-cols-[1fr_2fr_1fr_1fr_1fr_auto]"
+              className="grid grid-cols-1 gap-2 px-3 py-2 sm:grid-cols-[1fr_2fr_1fr_1fr_1fr_1.5fr_auto]"
             >
               <TextInput
                 placeholder={t('invoices.standalone.lineSku')}
@@ -285,6 +341,25 @@ export const CreateStandaloneInvoiceModal = ({
                 }
                 ariaLabel={t('invoices.standalone.lineTaxRate')}
               />
+              <select
+                value={line.withholdingTaxCodeId}
+                onChange={(e) =>
+                  setLines((prev) =>
+                    prev.map((l, i) =>
+                      i === idx ? { ...l, withholdingTaxCodeId: e.target.value } : l,
+                    ),
+                  )
+                }
+                aria-label={t('invoices.standalone.withholdingCode')}
+                className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              >
+                <option value="">—</option>
+                {withholdingCodes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code} — {truncateName(c.name)} ({c.numerator}/{c.denominator})
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}
@@ -306,6 +381,12 @@ export const CreateStandaloneInvoiceModal = ({
             {t('quotes.detail.tax')}:{' '}
             <strong className="tabular-nums">{totals.tax.toFixed(2)}</strong>
           </span>
+          {totals.withholding > 0 && (
+            <span>
+              {t('invoices.standalone.withholdingTotal')}:{' '}
+              <strong className="tabular-nums">-{totals.withholding.toFixed(2)}</strong>
+            </span>
+          )}
           <span>
             {t('quotes.detail.grandTotal')}:{' '}
             <strong className="tabular-nums">

@@ -158,6 +158,18 @@ public sealed class EFaturaDispatcher : IEFaturaDispatcher
         return await entry.Provider.CancelAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<EFaturaTaxpayerStatus> CheckTaxpayerAsync(string taxNumber, string? providerNameOverride = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taxNumber);
+
+        var tenantId = _tenantContext.RequireTenantId();
+        var entry = await ResolveSingleProviderAsync(tenantId, providerNameOverride, cancellationToken).ConfigureAwait(false);
+
+        var creds = entry.Provider.UnprotectCredentials(_credentialProtector, tenantId, entry.Config?.EncryptedCredentialsJson);
+        var request = new EFaturaTaxpayerCheckRequest(taxNumber, tenantId, creds);
+        return await entry.Provider.CheckTaxpayerAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+
     private async Task<IReadOnlyList<ResolvedProvider>> ResolveOrderedProvidersAsync(Guid tenantId, CancellationToken cancellationToken)
     {
         var configs = await _configRepository

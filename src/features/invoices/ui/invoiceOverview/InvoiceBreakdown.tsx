@@ -187,6 +187,26 @@ export const EInvoicePanel = ({ invoice, locale }: { invoice: Invoice; locale: s
             </dd>
           </div>
         )}
+        {invoice.eInvoiceGibStatusCode && (
+          <div className="flex items-center justify-between gap-2">
+            <dt className="text-slate-500 dark:text-slate-400">
+              {t('invoices.detail.eInvoiceGibStatus')}
+            </dt>
+            <dd className="font-mono font-medium text-slate-900 dark:text-slate-100">
+              {invoice.eInvoiceGibStatusCode}
+            </dd>
+          </div>
+        )}
+        {invoice.eInvoiceRejectReason && (
+          <div className="col-span-2 flex items-center justify-between gap-2">
+            <dt className="text-slate-500 dark:text-slate-400">
+              {t('invoices.detail.eInvoiceRejectReason')}
+            </dt>
+            <dd className="min-w-0 truncate font-medium text-danger-600 dark:text-danger-400">
+              {invoice.eInvoiceRejectReason}
+            </dd>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-2">
           <dt className="text-slate-500 dark:text-slate-400">
             {t('invoices.detail.postedToLedger')}

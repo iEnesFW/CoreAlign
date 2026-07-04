@@ -30,7 +30,9 @@ import {
   useTaxRatesQuery,
   useUomsQuery,
   useWarehousesQuery,
+  useWithholdingTaxCodesQuery,
 } from '@/shared/master-data/hooks/useMasterData';
+import type { WithholdingTaxCode } from '@/shared/master-data/model/masterData.types';
 import { orderSchema, type OrderFormValues } from '../model/orderSchema';
 import {
   ORDER_STATUSES,
@@ -112,6 +114,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
   const productsQuery = useProductsQuery({ page: 1, pageSize: 200, isActive: true });
   const taxRatesQuery = useTaxRatesQuery(true);
   const warehousesQuery = useWarehousesQuery(true);
+  const withholdingCodesQuery = useWithholdingTaxCodesQuery(true);
   const paymentTermsQuery = usePaymentTermsQuery(true);
   const priceListsQuery = usePriceListsQuery(true);
   const uomsQuery = useUomsQuery(true);
@@ -121,6 +124,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
   const products = productsQuery.data?.data?.items ?? [];
   const taxRates = taxRatesQuery.data?.data ?? [];
   const warehouses = warehousesQuery.data?.data ?? [];
+  const withholdingCodes = withholdingCodesQuery.data?.data ?? [];
   const paymentTerms = paymentTermsQuery.data?.data ?? [];
   const priceLists = priceListsQuery.data?.data ?? [];
   const uoms = uomsQuery.data?.data ?? [];
@@ -211,6 +215,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
           taxRateId: l.taxRateId ?? '',
           taxRatePercent: l.taxRatePercent ? String(l.taxRatePercent) : '',
           withholdingRatePercent: l.withholdingRatePercent ? String(l.withholdingRatePercent) : '',
+          withholdingTaxCodeId: l.withholdingTaxCodeId ?? '',
           warehouseId: l.warehouseId ?? '',
           lineNotes: l.lineNotes ?? '',
         })),
@@ -239,8 +244,6 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
     return m;
   }, [priceListItemsQuery.data]);
 
-  // New order: prefill commercial terms from the chosen customer (currency, payment terms,
-  // price list, default discount). The user can still override. Skipped when editing an order.
   const appliedCustomerRef = useRef<string | null>(null);
   useEffect(() => {
     if (order) return;
@@ -291,6 +294,12 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
   const currency = (watchedCurrency || 'USD').toUpperCase();
   const locale = i18n.language;
 
+  const withholdingCodeById = useMemo(() => {
+    const m = new Map<string, WithholdingTaxCode>();
+    for (const c of withholdingCodesQuery.data?.data ?? []) m.set(c.id, c);
+    return m;
+  }, [withholdingCodesQuery.data]);
+
   const summary = useMemo(() => {
     const lines = watchedLines ?? [];
     let subtotal = 0;
@@ -303,8 +312,15 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
       const net = gross - disc;
       subtotal += gross;
       lineDiscount += disc;
-      tax += net * ((Number(l.taxRatePercent) || 0) / 100);
-      withholding += net * ((Number(l.withholdingRatePercent) || 0) / 100);
+      const lineTax = net * ((Number(l.taxRatePercent) || 0) / 100);
+      tax += lineTax;
+      const code = l.withholdingTaxCodeId
+        ? withholdingCodeById.get(l.withholdingTaxCodeId)
+        : undefined;
+      withholding +=
+        code && code.denominator > 0
+          ? lineTax * (code.numerator / code.denominator)
+          : net * ((Number(l.withholdingRatePercent) || 0) / 100);
     }
     const afterLineDiscount = subtotal - lineDiscount;
     const headerDiscount = afterLineDiscount * ((Number(watchedHeaderDiscount) || 0) / 100);
@@ -333,7 +349,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
       lineDiscountPct: uniformPct((l) => l.lineDiscountPercent),
       headerDiscountPct: Number(watchedHeaderDiscount) || 0,
     };
-  }, [watchedLines, watchedHeaderDiscount, watchedShipping]);
+  }, [watchedLines, watchedHeaderDiscount, watchedShipping, withholdingCodeById]);
 
   const handleProductSelect = (index: number, productId: string) => {
     setValue(`lines.${index}.productId`, productId, { shouldValidate: true });
@@ -367,6 +383,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
         taxRateId: l.taxRateId || null,
         taxRatePercent: numOrUndefined(l.taxRatePercent),
         withholdingRatePercent: numOrUndefined(l.withholdingRatePercent),
+        withholdingTaxCodeId: l.withholdingTaxCodeId || null,
         warehouseId: l.warehouseId || null,
         lineNotes: l.lineNotes || null,
       }));
@@ -838,6 +855,7 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
                   products={products}
                   taxRates={taxRates}
                   warehouses={warehouses}
+                  withholdingCodes={withholdingCodes}
                   disabled={!isDraft}
                   canRemove={fields.length > 1}
                   locale={locale}

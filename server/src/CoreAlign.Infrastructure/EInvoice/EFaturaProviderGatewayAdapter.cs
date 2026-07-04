@@ -106,6 +106,28 @@ public sealed class EFaturaProviderGatewayAdapter : IElectronicInvoiceGateway
         }
     }
 
+    public async Task<EInvoiceTaxpayerResult> CheckTaxpayerAsync(string taxNumber, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(taxNumber))
+        {
+            return new EInvoiceTaxpayerResult(taxNumber ?? string.Empty, false, null);
+        }
+
+        try
+        {
+            var status = await _dispatcher.CheckTaxpayerAsync(taxNumber, providerNameOverride: null, ct).ConfigureAwait(false);
+            return new EInvoiceTaxpayerResult(status.TaxNumber, status.IsEFaturaRegistered, status.Alias);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "EFatura taxpayer check failed for tax number {TaxNumber}; defaulting to e-Arşiv.",
+                taxNumber);
+            return new EInvoiceTaxpayerResult(taxNumber, false, null);
+        }
+    }
+
     private static EFaturaDocument MapToDocument(EInvoiceSubmissionRequest request)
     {
         var doc = XDocument.Parse(request.UblTrXml);
@@ -118,8 +140,12 @@ public sealed class EFaturaProviderGatewayAdapter : IElectronicInvoiceGateway
 
         var totalAmount = ParseDecimal(ReadValue(doc, "PayableAmount")) ?? 0m;
 
+        var documentType = request.DocumentKind == EInvoiceDocumentKind.EArchive
+            ? EFaturaDocumentType.EArchive
+            : EFaturaDocumentType.Invoice;
+
         return new EFaturaDocument(
-            Type: EFaturaDocumentType.Invoice,
+            Type: documentType,
             DocumentNumber: documentNumber,
             IssueDate: issueDate,
             BuyerVkn: buyerVkn,

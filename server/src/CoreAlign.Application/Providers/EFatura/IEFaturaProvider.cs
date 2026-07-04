@@ -109,6 +109,17 @@ public sealed record EFaturaListReceivedRequest(
     Guid TenantId = default,
     object? Credentials = null);
 
+public sealed record EFaturaTaxpayerCheckRequest(
+    string TaxNumber,
+    Guid TenantId = default,
+    object? Credentials = null);
+
+public sealed record EFaturaTaxpayerStatus(
+    string TaxNumber,
+    bool IsEFaturaRegistered,
+    string? Alias = null,
+    string? Title = null);
+
 [Flags]
 public enum EFaturaProviderCapabilities
 {
@@ -118,7 +129,8 @@ public enum EFaturaProviderCapabilities
     CanCreditNote = 4,
     CanQueryStatus = 8,
     CanListReceived = 16,
-    CanWebhook = 32
+    CanWebhook = 32,
+    CanCheckTaxpayer = 64
 }
 
 public interface IEFaturaProvider : IExternalProvider
@@ -149,4 +161,8 @@ public interface IEFaturaProvider : IExternalProvider
     /// <summary>Issue a credit note (iade faturasi) against a previous invoice.</summary>
     Task<EFaturaCreditNoteResult> CreditNoteAsync(EFaturaCreditNoteRequest request, CancellationToken ct) =>
         throw new NotSupportedException($"{Name} does not implement CreditNoteAsync.");
+
+    /// <summary>Check whether a VKN/TCKN is a registered e-Fatura taxpayer (mukellef sorgusu).</summary>
+    Task<EFaturaTaxpayerStatus> CheckTaxpayerAsync(EFaturaTaxpayerCheckRequest request, CancellationToken ct) =>
+        throw new NotSupportedException($"{Name} does not implement CheckTaxpayerAsync.");
 }

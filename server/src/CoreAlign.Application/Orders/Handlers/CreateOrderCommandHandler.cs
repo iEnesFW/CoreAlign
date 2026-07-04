@@ -18,6 +18,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
     private readonly IPaymentTermRepository _paymentTermRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IGibCodeRepository? _gibCodeRepository;
 
     public CreateOrderCommandHandler(
         IOrderRepository orderRepository,
@@ -26,7 +27,8 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         ICustomerAddressRepository addressRepository,
         IPaymentTermRepository paymentTermRepository,
         IDocumentSequenceRepository sequenceRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IGibCodeRepository? gibCodeRepository = null)
     {
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
@@ -35,6 +37,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         _paymentTermRepository = paymentTermRepository;
         _sequenceRepository = sequenceRepository;
         _unitOfWork = unitOfWork;
+        _gibCodeRepository = gibCodeRepository;
     }
 
     public async Task<OrderDto> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -111,9 +114,14 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
             paymentTerm?.NetDays,
             paymentTerm?.ResolveDueDate(request.OrderDate));
 
+        var withholdingCodesById = await ResolveWithholdingCodesAsync(request.Lines, cancellationToken);
+
         var lines = request.Lines.Select((input, idx) =>
         {
             var product = products[input.ProductId];
+            var withholdingCode = input.WithholdingTaxCodeId.HasValue
+                ? withholdingCodesById[input.WithholdingTaxCodeId.Value]
+                : null;
             var line = new OrderLine(product.Id, product.Sku, product.Name, input.Quantity, input.UnitPrice);
             line.SetLineNumber(idx + 1);
             line.ApplyPricing(
@@ -135,7 +143,11 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                 input.LineNotes,
                 null,
                 false,
-                product.Description);
+                product.Description,
+                withholdingTaxCodeId: withholdingCode?.Id,
+                withholdingCode: withholdingCode?.Code,
+                withholdingNumerator: withholdingCode?.Numerator,
+                withholdingDenominator: withholdingCode?.Denominator);
             return line;
         }).ToList();
 
@@ -145,6 +157,26 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
 
         order.Customer = customer;
         return OrderMapper.ToDto(order);
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, WithholdingTaxCode>> ResolveWithholdingCodesAsync(
+        IReadOnlyList<OrderLineInput> lines,
+        CancellationToken cancellationToken)
+    {
+        var ids = lines
+            .Where(l => l.WithholdingTaxCodeId.HasValue)
+            .Select(l => l.WithholdingTaxCodeId!.Value)
+            .Distinct()
+            .ToList();
+        IReadOnlyDictionary<Guid, WithholdingTaxCode> byId = ids.Count == 0 || _gibCodeRepository is null
+            ? new Dictionary<Guid, WithholdingTaxCode>()
+            : await _gibCodeRepository.GetWithholdingByIdsAsync(ids, cancellationToken);
+        if (byId.Count != ids.Count)
+        {
+            throw new InvalidOrderLineException("Validation.WithholdingCodeNotFound");
+        }
+
+        return byId;
     }
 
     private static AddressSnapshot ToSnapshot(CustomerAddress a) => new()

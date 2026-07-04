@@ -572,6 +572,8 @@
       "taxRate": "Tax",
       "taxRatePlaceholder": "Tax rate",
       "withholding": "WHT%",
+      "withholdingCode": "Withholding",
+      "withholdingCodePlaceholder": "No withholding",
       "warehouse": "Warehouse",
       "warehousePlaceholder": "Select warehouse",
       "lineNotes": "Line note",
@@ -850,6 +852,8 @@
       "eInvoice": "E-Invoice",
       "eInvoiceUuid": "E-Invoice UUID",
       "eInvoiceStatus": "Status",
+      "eInvoiceGibStatus": "GIB Status Code",
+      "eInvoiceRejectReason": "Rejection Reason",
       "postedToLedger": "Posted to ledger",
       "issuedAt": "Issued at",
       "noNotes": "No notes on this invoice.",
@@ -974,6 +978,9 @@
       "customer": "Customer",
       "dueDays": "Due Days",
       "duePreview": "Net {{days}} → Due: {{date}}",
+      "exemptionCode": "VAT Exemption",
+      "exemptionCodePlaceholder": "No exemption",
+      "exemptionReason": "Exemption Reason",
       "internalNotes": "Internal Notes",
       "issueDate": "Issue Date",
       "lineName": "Item name",
@@ -989,7 +996,9 @@
       "validation": {
         "customerRequired": "Please select a customer.",
         "lineNamePositive": "Add at least one line with SKU, name and a positive quantity."
-      }
+      },
+      "withholdingCode": "Withholding",
+      "withholdingTotal": "Withholding"
     }
   },
   "products": {

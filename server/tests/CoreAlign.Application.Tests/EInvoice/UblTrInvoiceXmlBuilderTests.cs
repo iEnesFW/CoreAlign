@@ -97,7 +97,66 @@ public class UblTrInvoiceXmlBuilderTests
         idElement.Value.Should().Be("10000000146");
     }
 
-    private static Invoice BuildInvoice(InvoiceType type, int lineCount)
+    [Fact]
+    public void Emits_earchive_profile_when_invoice_profile_is_set()
+    {
+        var invoice = BuildInvoice(InvoiceType.SalesInvoice, lineCount: 1);
+        invoice.SetEInvoiceProfile("EARSIV");
+        var seller = new SellerParty("Acme", "1234567890", null, null, null, null, null, null);
+        var buyer = new BuyerParty("Bireysel", null, "10000000146", null, null, null, null, null);
+
+        var xml = UblTrInvoiceXmlBuilder.Build(invoice, seller, buyer);
+        var doc = XDocument.Parse(xml);
+
+        doc.Root!.Element(CbcNs + "ProfileID")!.Value.Should().Be("EARSIV");
+    }
+
+    [Fact]
+    public void Withholding_line_emits_withholding_tax_total_with_code_and_tevkifat_type()
+    {
+        var invoice = BuildInvoice(InvoiceType.SalesInvoice, lineCount: 1, withholdingNumerator: 7, withholdingDenominator: 10, withholdingCode: "617");
+        var seller = new SellerParty("Acme", "1234567890", null, null, null, null, null, null);
+        var buyer = new BuyerParty("Buyer", "1234567890", null, null, null, null, null, null);
+
+        var xml = UblTrInvoiceXmlBuilder.Build(invoice, seller, buyer);
+        var doc = XDocument.Parse(xml);
+
+        doc.Root!.Element(CbcNs + "InvoiceTypeCode")!.Value.Should().Be("TEVKIFAT");
+        var withholding = doc.Root.Element(CacNs + "WithholdingTaxTotal");
+        withholding.Should().NotBeNull();
+        var code = withholding!.Element(CacNs + "TaxSubtotal")!
+            .Element(CacNs + "TaxCategory")!
+            .Element(CbcNs + "TaxExemptionReasonCode")!.Value;
+        code.Should().Be("617");
+    }
+
+    [Fact]
+    public void Zero_vat_line_with_exemption_emits_reason_code()
+    {
+        var invoice = BuildInvoice(InvoiceType.SalesInvoice, lineCount: 1, taxRatePercent: 0m);
+        invoice.SetVatExemption(Guid.NewGuid(), "301", "Mal İhracatı");
+        var seller = new SellerParty("Acme", "1234567890", null, null, null, null, null, null);
+        var buyer = new BuyerParty("Buyer", "1234567890", null, null, null, null, null, null);
+
+        var xml = UblTrInvoiceXmlBuilder.Build(invoice, seller, buyer);
+        var doc = XDocument.Parse(xml);
+
+        doc.Root!.Element(CbcNs + "InvoiceTypeCode")!.Value.Should().Be("ISTISNA");
+        var lineTaxCategory = doc.Root.Elements(CacNs + "InvoiceLine").First()
+            .Element(CacNs + "TaxTotal")!
+            .Element(CacNs + "TaxSubtotal")!
+            .Element(CacNs + "TaxCategory")!;
+        lineTaxCategory.Element(CbcNs + "TaxExemptionReasonCode")!.Value.Should().Be("301");
+        lineTaxCategory.Element(CbcNs + "TaxExemptionReason")!.Value.Should().Be("Mal İhracatı");
+    }
+
+    private static Invoice BuildInvoice(
+        InvoiceType type,
+        int lineCount,
+        decimal taxRatePercent = 20m,
+        int? withholdingNumerator = null,
+        int? withholdingDenominator = null,
+        string? withholdingCode = null)
     {
         var invoice = new Invoice("INV-0001", CustomerId, "Demo Müşteri", "TRY", type)
         {
@@ -119,7 +178,7 @@ public class UblTrInvoiceXmlBuilderTests
                 unitPrice: 50m,
                 lineDiscountPercent: 0m,
                 lineDiscountAmount: 0m,
-                taxRatePercent: 20m,
+                taxRatePercent: taxRatePercent,
                 taxRateId: null,
                 isTaxInclusive: false,
                 withholdingRatePercent: 0m,
@@ -129,7 +188,11 @@ public class UblTrInvoiceXmlBuilderTests
                 revenueAccountCode: null,
                 costCenter: null,
                 project: null,
-                originOrderLineId: null);
+                originOrderLineId: null,
+                withholdingTaxCodeId: withholdingNumerator.HasValue ? Guid.NewGuid() : null,
+                withholdingCode: withholdingCode,
+                withholdingNumerator: withholdingNumerator,
+                withholdingDenominator: withholdingDenominator);
             lines.Add(line);
         }
         invoice.ReplaceLines(lines);

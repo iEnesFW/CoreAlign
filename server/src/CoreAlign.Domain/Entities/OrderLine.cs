@@ -38,6 +38,10 @@ public class OrderLine : TenantEntity
 
     public decimal WithholdingRatePercent { get; private set; }
     public decimal WithholdingAmount { get; private set; }
+    public Guid? WithholdingTaxCodeId { get; private set; }
+    public string? WithholdingCode { get; private set; }
+    public int? WithholdingNumerator { get; private set; }
+    public int? WithholdingDenominator { get; private set; }
 
     public decimal LineSubtotal { get; private set; }
     public decimal LineNetAmount { get; private set; }
@@ -108,7 +112,11 @@ public class OrderLine : TenantEntity
         string? lineNotes,
         Guid? parentLineId,
         bool isKitComponent,
-        string? productDescriptionSnapshot)
+        string? productDescriptionSnapshot,
+        Guid? withholdingTaxCodeId = null,
+        string? withholdingCode = null,
+        int? withholdingNumerator = null,
+        int? withholdingDenominator = null)
     {
         Quantity = quantity;
         ListPriceSnapshot = listPriceSnapshot;
@@ -120,6 +128,10 @@ public class OrderLine : TenantEntity
         TaxRateId = taxRateId;
         IsTaxInclusive = isTaxInclusive;
         WithholdingRatePercent = withholdingRatePercent;
+        WithholdingTaxCodeId = withholdingTaxCodeId;
+        WithholdingCode = withholdingCode;
+        WithholdingNumerator = withholdingNumerator;
+        WithholdingDenominator = withholdingDenominator;
         UnitCostSnapshot = unitCostSnapshot;
         UomId = uomId;
         UomCode = uomCode;
@@ -156,9 +168,17 @@ public class OrderLine : TenantEntity
             LineTotal = Math.Round(net + TaxAmount, 4);
         }
 
-        WithholdingAmount = WithholdingRatePercent > 0
-            ? Math.Round((net + (IsTaxInclusive ? 0m : TaxAmount)) * (WithholdingRatePercent / 100m), 4)
-            : 0m;
+        // WHY: GİB tevkifatı KDV tutarının pay/payda kesridir; kod yoksa eski brüt-yüzde davranışı korunur.
+        if (WithholdingNumerator is > 0 && WithholdingDenominator is > 0)
+        {
+            WithholdingAmount = Math.Round(TaxAmount * WithholdingNumerator.Value / WithholdingDenominator.Value, 4);
+        }
+        else
+        {
+            WithholdingAmount = WithholdingRatePercent > 0
+                ? Math.Round((net + (IsTaxInclusive ? 0m : TaxAmount)) * (WithholdingRatePercent / 100m), 4)
+                : 0m;
+        }
     }
 
     public decimal LineTaxAmount => TaxAmount;

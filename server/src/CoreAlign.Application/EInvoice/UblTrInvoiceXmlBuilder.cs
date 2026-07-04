@@ -28,28 +28,36 @@ public static class UblTrInvoiceXmlBuilder
 
     private static string BuildInvoice(Invoice invoice, SellerParty seller, BuyerParty buyer)
     {
+        var profileId = string.IsNullOrWhiteSpace(invoice.EInvoiceProfile) ? "TEMELFATURA" : invoice.EInvoiceProfile;
         var root = new XElement(InvoiceNs + "Invoice",
             new XAttribute(XNamespace.Xmlns + "cbc", CbcNs.NamespaceName),
             new XAttribute(XNamespace.Xmlns + "cac", CacNs.NamespaceName),
             new XAttribute(XNamespace.Xmlns + "xsi", SellerXsi.NamespaceName),
             new XElement(CbcNs + "UBLVersionID", "2.1"),
             new XElement(CbcNs + "CustomizationID", "TR1.2"),
-            new XElement(CbcNs + "ProfileID", "TEMELFATURA"),
+            new XElement(CbcNs + "ProfileID", profileId),
             new XElement(CbcNs + "ID", invoice.InvoiceNumber),
             new XElement(CbcNs + "UUID", invoice.Id.ToString()),
             new XElement(CbcNs + "IssueDate", FormatDate(invoice.IssueDate)),
             new XElement(CbcNs + "IssueTime", FormatTime(invoice.IssueDate)),
-            new XElement(CbcNs + "InvoiceTypeCode", MapInvoiceTypeCode(invoice.Type)),
+            new XElement(CbcNs + "InvoiceTypeCode", ResolveInvoiceTypeCode(invoice)),
             new XElement(CbcNs + "DocumentCurrencyCode", invoice.Currency),
             new XElement(CbcNs + "LineCountNumeric", invoice.Lines.Count.ToString(CultureInfo.InvariantCulture)),
             BuildSupplierParty(seller),
             BuildCustomerParty(buyer),
-            BuildTaxTotal(invoice),
-            BuildLegalMonetaryTotal(invoice));
+            BuildTaxTotal(invoice));
+
+        var withholdingTotal = BuildWithholdingTaxTotal(invoice);
+        if (withholdingTotal is not null)
+        {
+            root.Add(withholdingTotal);
+        }
+
+        root.Add(BuildLegalMonetaryTotal(invoice));
 
         foreach (var line in invoice.Lines.OrderBy(l => l.LineNumber))
         {
-            root.Add(BuildInvoiceLine(line, invoice.Currency));
+            root.Add(BuildInvoiceLine(line, invoice.Currency, invoice.VatExemptionCode, invoice.VatExemptionReason));
         }
 
         var doc = new XDocument(new XDeclaration("1.0", "UTF-8", null), root);
@@ -160,6 +168,51 @@ public static class UblTrInvoiceXmlBuilder
         return element;
     }
 
+    private static XElement? BuildWithholdingTaxTotal(Invoice invoice)
+    {
+        if (invoice.WithholdingTotal <= 0m)
+        {
+            return null;
+        }
+
+        var element = new XElement(CacNs + "WithholdingTaxTotal",
+            new XElement(CbcNs + "TaxAmount",
+                new XAttribute("currencyID", invoice.Currency),
+                FormatAmount(invoice.WithholdingTotal)));
+
+        var byCode = invoice.Lines
+            .Where(l => l.WithholdingAmount > 0m)
+            .GroupBy(l => l.WithholdingCode ?? string.Empty)
+            .Select(g => new
+            {
+                Code = g.Key,
+                Base = Math.Round(g.Sum(l => l.TaxAmount), 2),
+                Amount = Math.Round(g.Sum(l => l.WithholdingAmount), 2),
+            })
+            .OrderBy(x => x.Code);
+
+        foreach (var w in byCode)
+        {
+            var taxCategory = new XElement(CacNs + "TaxCategory");
+            if (!string.IsNullOrEmpty(w.Code))
+            {
+                taxCategory.Add(new XElement(CbcNs + "TaxExemptionReasonCode", w.Code));
+            }
+            taxCategory.Add(new XElement(CacNs + "TaxScheme",
+                new XElement(CbcNs + "Name", "KDV Tevkifatı"),
+                new XElement(CbcNs + "TaxTypeCode", "0021")));
+
+            element.Add(new XElement(CacNs + "TaxSubtotal",
+                new XElement(CbcNs + "TaxableAmount",
+                    new XAttribute("currencyID", invoice.Currency), FormatAmount(w.Base)),
+                new XElement(CbcNs + "TaxAmount",
+                    new XAttribute("currencyID", invoice.Currency), FormatAmount(w.Amount)),
+                taxCategory));
+        }
+
+        return element;
+    }
+
     private static XElement BuildLegalMonetaryTotal(Invoice invoice) =>
         new(CacNs + "LegalMonetaryTotal",
             new XElement(CbcNs + "LineExtensionAmount",
@@ -175,21 +228,34 @@ public static class UblTrInvoiceXmlBuilder
             new XElement(CbcNs + "PayableAmount",
                 new XAttribute("currencyID", invoice.Currency), FormatAmount(invoice.Total)));
 
-    private static XElement BuildInvoiceLine(InvoiceLine line, string currency) =>
-        new(CacNs + "InvoiceLine",
+    private static XElement BuildInvoiceLine(InvoiceLine line, string currency, string? exemptionCode, string? exemptionReason)
+    {
+        var element = new XElement(CacNs + "InvoiceLine",
             new XElement(CbcNs + "ID", line.LineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "InvoicedQuantity",
                 new XAttribute("unitCode", line.UomCode ?? "C62"), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
-                new XAttribute("currencyID", currency), FormatAmount(line.LineNetAmount)),
-            BuildLineTaxTotal(line, currency),
-            new XElement(CacNs + "Item",
-                new XElement(CbcNs + "Name", line.ProductName),
-                new XElement(CbcNs + "SellersItemIdentification",
-                    new XElement(CbcNs + "ID", line.ProductSku))),
-            new XElement(CacNs + "Price",
-                new XElement(CbcNs + "PriceAmount",
-                    new XAttribute("currencyID", currency), FormatAmount(line.UnitPrice))));
+                new XAttribute("currencyID", currency), FormatAmount(line.LineNetAmount)));
+
+        if (line.LineDiscountAmount > 0m || line.LineDiscountPercent > 0m)
+        {
+            element.Add(new XElement(CacNs + "AllowanceCharge",
+                new XElement(CbcNs + "ChargeIndicator", "false"),
+                new XElement(CbcNs + "MultiplierFactorNumeric", FormatAmount(line.LineDiscountPercent / 100m)),
+                new XElement(CbcNs + "Amount",
+                    new XAttribute("currencyID", currency), FormatAmount(line.LineDiscountAmount))));
+        }
+
+        element.Add(BuildLineTaxTotal(line, currency, exemptionCode, exemptionReason));
+        element.Add(new XElement(CacNs + "Item",
+            new XElement(CbcNs + "Name", line.ProductName),
+            new XElement(CbcNs + "SellersItemIdentification",
+                new XElement(CbcNs + "ID", line.ProductSku))));
+        element.Add(new XElement(CacNs + "Price",
+            new XElement(CbcNs + "PriceAmount",
+                new XAttribute("currencyID", currency), FormatAmount(line.UnitPrice))));
+        return element;
+    }
 
     private static XElement BuildCreditNoteLine(InvoiceLine line, string currency) =>
         new(CacNs + "CreditNoteLine",
@@ -198,7 +264,7 @@ public static class UblTrInvoiceXmlBuilder
                 new XAttribute("unitCode", line.UomCode ?? "C62"), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
                 new XAttribute("currencyID", currency), FormatAmount(line.LineNetAmount)),
-            BuildLineTaxTotal(line, currency),
+            BuildLineTaxTotal(line, currency, exemptionCode: null, exemptionReason: null),
             new XElement(CacNs + "Item",
                 new XElement(CbcNs + "Name", line.ProductName),
                 new XElement(CbcNs + "SellersItemIdentification",
@@ -207,8 +273,25 @@ public static class UblTrInvoiceXmlBuilder
                 new XElement(CbcNs + "PriceAmount",
                     new XAttribute("currencyID", currency), FormatAmount(line.UnitPrice))));
 
-    private static XElement BuildLineTaxTotal(InvoiceLine line, string currency) =>
-        new(CacNs + "TaxTotal",
+    private static XElement BuildLineTaxTotal(InvoiceLine line, string currency, string? exemptionCode, string? exemptionReason)
+    {
+        var taxCategory = new XElement(CacNs + "TaxCategory");
+
+        // WHY: KDV oranı 0 ve istisna kodu varsa GİB TaxExemptionReasonCode/Reason bekler.
+        if (line.TaxRatePercent == 0m && !string.IsNullOrEmpty(exemptionCode))
+        {
+            taxCategory.Add(new XElement(CbcNs + "TaxExemptionReasonCode", exemptionCode));
+            if (!string.IsNullOrEmpty(exemptionReason))
+            {
+                taxCategory.Add(new XElement(CbcNs + "TaxExemptionReason", exemptionReason));
+            }
+        }
+
+        taxCategory.Add(new XElement(CacNs + "TaxScheme",
+            new XElement(CbcNs + "Name", "KDV"),
+            new XElement(CbcNs + "TaxTypeCode", "0015")));
+
+        return new XElement(CacNs + "TaxTotal",
             new XElement(CbcNs + "TaxAmount",
                 new XAttribute("currencyID", currency), FormatAmount(line.TaxAmount)),
             new XElement(CacNs + "TaxSubtotal",
@@ -217,10 +300,23 @@ public static class UblTrInvoiceXmlBuilder
                 new XElement(CbcNs + "TaxAmount",
                     new XAttribute("currencyID", currency), FormatAmount(line.TaxAmount)),
                 new XElement(CbcNs + "Percent", FormatAmount(line.TaxRatePercent)),
-                new XElement(CacNs + "TaxCategory",
-                    new XElement(CacNs + "TaxScheme",
-                        new XElement(CbcNs + "Name", "KDV"),
-                        new XElement(CbcNs + "TaxTypeCode", "0015")))));
+                taxCategory));
+    }
+
+    private static string ResolveInvoiceTypeCode(Invoice invoice)
+    {
+        if (invoice.Lines.Any(l => l.WithholdingAmount > 0m))
+        {
+            return "TEVKIFAT";
+        }
+
+        if (!string.IsNullOrEmpty(invoice.VatExemptionCode))
+        {
+            return "ISTISNA";
+        }
+
+        return MapInvoiceTypeCode(invoice.Type);
+    }
 
     private static string MapInvoiceTypeCode(InvoiceType type) => type switch
     {

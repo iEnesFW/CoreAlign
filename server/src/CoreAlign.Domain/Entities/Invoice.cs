@@ -69,6 +69,15 @@ public class Invoice : TenantEntity, IXminConcurrency
     public string? EInvoiceUuid { get; private set; }
     public string? EInvoiceStatus { get; private set; }
     public string? EInvoicePdfPath { get; private set; }
+    public string? EInvoiceProfile { get; private set; }
+    public string? EInvoiceGibStatusCode { get; private set; }
+    public string? EInvoiceRejectReason { get; private set; }
+    public DateTime? EInvoiceSentAtUtc { get; private set; }
+    public DateTime? EInvoiceLastSyncUtc { get; private set; }
+
+    public Guid? VatExemptionCodeId { get; private set; }
+    public string? VatExemptionCode { get; private set; }
+    public string? VatExemptionReason { get; private set; }
 
     public bool IsPostedToLedger { get; private set; }
     public bool IsPeriodLocked { get; private set; }
@@ -420,9 +429,48 @@ public class Invoice : TenantEntity, IXminConcurrency
 
     public void RegisterEInvoice(string? uuid, string status, string? pdfPath)
     {
-        EInvoiceUuid = uuid;
-        EInvoiceStatus = status;
-        EInvoicePdfPath = pdfPath;
+        EInvoiceUuid = uuid ?? EInvoiceUuid;
+        EInvoicePdfPath = pdfPath ?? EInvoicePdfPath;
+        ApplyEInvoiceStatus(status, gibStatusCode: null, rejectReason: null);
+    }
+
+    public void SetEInvoiceProfile(string profile)
+    {
+        EInvoiceProfile = profile;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public bool ApplyEInvoiceStatus(string status, string? gibStatusCode, string? rejectReason)
+    {
+        var normalized = EInvoiceStatuses.Normalize(status);
+        EInvoiceLastSyncUtc = DateTime.UtcNow;
+
+        if (EInvoiceStatuses.IsTerminal(EInvoiceStatus) &&
+            !string.Equals(EInvoiceStatus, normalized, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var changed = !string.Equals(EInvoiceStatus, normalized, StringComparison.Ordinal);
+        EInvoiceStatus = normalized;
+        if (gibStatusCode is not null) EInvoiceGibStatusCode = gibStatusCode;
+        if (rejectReason is not null) EInvoiceRejectReason = rejectReason;
+        if (EInvoiceSentAtUtc is null &&
+            string.Equals(normalized, EInvoiceStatuses.Submitted, StringComparison.OrdinalIgnoreCase))
+        {
+            EInvoiceSentAtUtc = DateTime.UtcNow;
+        }
+
+        UpdatedAtUtc = DateTime.UtcNow;
+        return changed;
+    }
+
+    public void SetVatExemption(Guid? codeId, string? code, string? reason)
+    {
+        EnsureDraft();
+        VatExemptionCodeId = codeId;
+        VatExemptionCode = code;
+        VatExemptionReason = reason;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 }

@@ -74,6 +74,10 @@ export interface OrderLine {
   isTaxInclusive: boolean;
   withholdingRatePercent: number;
   withholdingAmount: number;
+  withholdingTaxCodeId: string | null;
+  withholdingCode: string | null;
+  withholdingNumerator: number | null;
+  withholdingDenominator: number | null;
   lineSubtotal: number;
   lineNetAmount: number;
   lineTotal: number;
@@ -157,6 +161,7 @@ export interface OrderLineInput {
   taxRateId?: string | null;
   isTaxInclusive?: boolean;
   withholdingRatePercent?: number;
+  withholdingTaxCodeId?: string | null;
   uomId?: string | null;
   uomCode?: string | null;
   uomConversionFactor?: number;

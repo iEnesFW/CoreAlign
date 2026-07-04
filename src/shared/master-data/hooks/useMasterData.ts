@@ -51,6 +51,20 @@ export const useTaxRatesQuery = (isActive?: boolean) =>
     staleTime: FIVE_MINUTES,
   });
 
+export const useWithholdingTaxCodesQuery = (isActive?: boolean) =>
+  useQuery({
+    queryKey: ['master-data', 'withholding-tax-codes', { isActive }] as const,
+    queryFn: () => masterDataApi.withholdingTaxCodes.list(isActive),
+    staleTime: FIVE_MINUTES,
+  });
+
+export const useVatExemptionCodesQuery = (isActive?: boolean) =>
+  useQuery({
+    queryKey: ['master-data', 'vat-exemption-codes', { isActive }] as const,
+    queryFn: () => masterDataApi.vatExemptionCodes.list(isActive),
+    staleTime: FIVE_MINUTES,
+  });
+
 export const usePaymentTermsQuery = (isActive?: boolean) =>
   useQuery({
     queryKey: ['master-data', 'payment-terms', { isActive }] as const,

@@ -4,7 +4,11 @@ import { Trash2 } from 'lucide-react';
 import { Input } from '@/shared/ui/Input/Input';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
 import type { Product } from '@/shared/model/product.types';
-import type { TaxRate, Warehouse } from '@/shared/master-data/model/masterData.types';
+import type {
+  TaxRate,
+  Warehouse,
+  WithholdingTaxCode,
+} from '@/shared/master-data/model/masterData.types';
 import type { OrderFormValues, OrderLineFormValues } from '../model/orderSchema';
 import { ProductPicker } from '@/shared/ui/ProductPicker';
 
@@ -20,6 +24,7 @@ interface Props {
   products: Product[];
   taxRates: TaxRate[];
   warehouses: Warehouse[];
+  withholdingCodes: WithholdingTaxCode[];
   disabled: boolean;
   canRemove: boolean;
   locale: string;
@@ -32,7 +37,10 @@ interface Props {
   onAddLine: () => void;
 }
 
-const computeLine = (line?: Partial<OrderLineFormValues>) => {
+const truncateName = (name: string, max = 40): string =>
+  name.length > max ? `${name.slice(0, max)}…` : name;
+
+const computeLine = (line?: Partial<OrderLineFormValues>, withholdingCode?: WithholdingTaxCode) => {
   const qty = Number(line?.quantity) || 0;
   const price = Number(line?.unitPrice) || 0;
   const discountPct = Number(line?.lineDiscountPercent) || 0;
@@ -42,7 +50,10 @@ const computeLine = (line?: Partial<OrderLineFormValues>) => {
   const discount = gross * (discountPct / 100);
   const net = gross - discount;
   const tax = net * (taxPct / 100);
-  const withholding = net * (whtPct / 100);
+  const withholding =
+    withholdingCode && withholdingCode.denominator > 0
+      ? tax * (withholdingCode.numerator / withholdingCode.denominator)
+      : net * (whtPct / 100);
   return {
     qty,
     price,
@@ -65,6 +76,7 @@ export const OrderLineEditor = ({
   products,
   taxRates,
   warehouses,
+  withholdingCodes,
   disabled,
   canRemove,
   locale,
@@ -81,7 +93,10 @@ export const OrderLineEditor = ({
     key ? t(key, { defaultValue: key }) : undefined;
 
   const step = (1 / Math.pow(10, decimals)).toString();
-  const calc = computeLine(line);
+  const selectedWithholding = line?.withholdingTaxCodeId
+    ? withholdingCodes.find((c) => c.id === line.withholdingTaxCodeId)
+    : undefined;
+  const calc = computeLine(line, selectedWithholding);
 
   const handleLastFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled || !isLast) return;
@@ -178,18 +193,22 @@ export const OrderLineEditor = ({
       </div>
 
       <div className="mt-2 grid grid-cols-12 gap-2">
-        <div className="col-span-6 sm:col-span-2">
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            placeholder={t('orders.lines.withholding')}
+        <div className="col-span-6 sm:col-span-3">
+          <select
             disabled={disabled}
-            {...register(`lines.${index}.withholdingRatePercent`)}
-          />
+            className={selectCls}
+            {...register(`lines.${index}.withholdingTaxCodeId`)}
+            aria-label={t('orders.lines.withholdingCode')}
+          >
+            <option value="">{t('orders.lines.withholdingCodePlaceholder')}</option>
+            {withholdingCodes.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.code} — {truncateName(c.name)} ({c.numerator}/{c.denominator})
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="col-span-6 sm:col-span-4">
+        <div className="col-span-6 sm:col-span-3">
           <select
             disabled={disabled}
             className={selectCls}

@@ -21,7 +21,8 @@ public record OrderLineInput(
     Guid? WarehouseId = null,
     string? LineNotes = null,
     bool IsManualPriceOverride = false,
-    decimal UnitCostSnapshot = 0m);
+    decimal UnitCostSnapshot = 0m,
+    Guid? WithholdingTaxCodeId = null);
 
 public record CreateOrderCommand(
     string OrderNumber,

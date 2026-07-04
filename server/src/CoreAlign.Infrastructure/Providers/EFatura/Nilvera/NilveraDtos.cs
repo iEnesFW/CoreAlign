@@ -57,6 +57,12 @@ public sealed record NilveraCreditNoteRequest(
     [property: JsonPropertyName("currency")] string Currency,
     [property: JsonPropertyName("reason")] string? Reason);
 
+public sealed record NilveraTaxpayerResult(
+    [property: JsonPropertyName("taxNumber")] string TaxNumber,
+    [property: JsonPropertyName("isRegistered")] bool IsRegistered,
+    [property: JsonPropertyName("alias")] string? Alias,
+    [property: JsonPropertyName("title")] string? Title);
+
 public sealed record NilveraCreditNoteResult(
     [property: JsonPropertyName("uuid")] string Uuid,
     [property: JsonPropertyName("status")] string Status,

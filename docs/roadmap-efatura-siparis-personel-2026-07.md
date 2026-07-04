@@ -15,6 +15,18 @@
 > taslak-otokayıt korunuyor). N+1 bütçeleri korunuyor (scalar subquery tek round-trip);
 > `OrderInvoiceCrossLinkIntegrationTests` iptal-sonrası boşalmayı da kanıtlıyor. Ek bugfix: `fx-rates/resolve`
 > query-bound DateTime Kind=Unspecified → Npgsql 500 (handler + repository çift normalizasyon, INVARIANTS'a işlendi).
+>
+> **S3 DURUMU (2026-07-04): D1 TAMAMLANDI (§1.3-D1).** (A) GİB kod tabloları: `withholding_tax_codes` (52 kod: 601-627
+> kısmi + 801-825 tam tevkifat) + `vat_exemption_codes` (88 kod: 201-250 kısmi istisna, 301-351 tam istisna, 701-704
+> ihraç-kayıtlı) — `IGlobalReadable`, Phase115 migration (Postgres'e UYGULANDI), her-açılışta idempotent seed
+> (`GibCodeSystemDataSeeder`), GİB "UBL-TR Kod Listeleri V 1.42/Mart 2026" ile birebir doğrulandı; `/master-data/{withholding-tax-codes,vat-exemption-codes}` endpoint'leri + FE dropdown'ları (fatura + sipariş satır editörü, oran koddan otomatik). Tevkifat artık KDV×pay/payda kesri. (B) Invoice e-belge alanları
+> (profil, GİB durum kodu, red sebebi, sentAt, lastSync) + terminal-korumalı durum FSM (`ApplyEInvoiceStatus`);
+> `EFaturaReconciliationJob` stub'ı gerçek invoice sorgusuna bağlandı. (C) `CheckTaxpayerAsync` capability
+> (provider+dispatcher+gateway) + issue akışında otomatik e-Fatura/e-Arşiv yönlendirme (VKN mükellefse e-Fatura).
+> (D) UBL-TR zenginleştirme: ProfileID (profil), InvoiceTypeCode senaryosu (TEVKIFAT/ISTISNA/SATIS),
+> `WithholdingTaxTotal` kod bloğu, satır iskonto `AllowanceCharge`, istisna `TaxExemptionReasonCode/Reason`.
+> **Kalan (S4+):** EDM/Payflex provider'ları (NDA API dokümanı bekliyor), gelen faturalar modülü (D5), firma profili paneli.
+> Testler: +18 Application (2202), +5 Integration (240), UBL builder 3 yeni senaryo; tümü yeşil.
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,

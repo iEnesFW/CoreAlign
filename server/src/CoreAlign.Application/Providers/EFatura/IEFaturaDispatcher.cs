@@ -7,6 +7,8 @@ public interface IEFaturaDispatcher
     Task<EFaturaStatus> GetStatusAsync(string ettn, string? providerNameOverride = null, CancellationToken cancellationToken = default);
 
     Task<EFaturaCancelResult> CancelAsync(string ettn, string reason, string? providerNameOverride = null, CancellationToken cancellationToken = default);
+
+    Task<EFaturaTaxpayerStatus> CheckTaxpayerAsync(string taxNumber, string? providerNameOverride = null, CancellationToken cancellationToken = default);
 }
 
 public sealed record EFaturaDispatchResult(

@@ -106,11 +106,17 @@ public sealed class EFaturaReconciliationJob : BackgroundService
         var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
         var outboxSignal = scope.ServiceProvider.GetRequiredService<IOutboxSignal>();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var tenantDb = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+        var providerName = configs
+            .Where(c => c.IsEnabled)
+            .OrderByDescending(c => c.IsDefault)
+            .First()
+            .ProviderName;
 
         var changedCount = 0;
         try
         {
-            var pending = await LoadPendingTrackedSubmissionsAsync(scope.ServiceProvider, tenantId, cancellationToken).ConfigureAwait(false);
+            var pending = await LoadPendingTrackedSubmissionsAsync(tenantDb, providerName, cancellationToken).ConfigureAwait(false);
             foreach (var entry in pending)
             {
                 if (cancellationToken.IsCancellationRequested) break;
@@ -122,6 +128,11 @@ public sealed class EFaturaReconciliationJob : BackgroundService
 
                     if (!string.Equals(status.Status, entry.LastKnownStatus, StringComparison.OrdinalIgnoreCase))
                     {
+                        var invoice = await tenantDb.Invoices
+                            .FirstOrDefaultAsync(i => i.Id == entry.InvoiceId, cancellationToken)
+                            .ConfigureAwait(false);
+                        invoice?.ApplyEInvoiceStatus(status.Status, gibStatusCode: null, rejectReason: null);
+
                         await RaiseStatusChangedAsync(
                             outboxRepository,
                             outboxSignal,
@@ -161,20 +172,26 @@ public sealed class EFaturaReconciliationJob : BackgroundService
         }
     }
 
-    private static Task<IReadOnlyList<TrackedSubmission>> LoadPendingTrackedSubmissionsAsync(
-        IServiceProvider services,
-        Guid tenantId,
+    private static async Task<IReadOnlyList<TrackedSubmission>> LoadPendingTrackedSubmissionsAsync(
+        CoreAlignDbContext tenantDb,
+        string providerName,
         CancellationToken cancellationToken)
     {
-        // F2.1 scope: the EFaturaSubmission/EFaturaInvoice tracking tables are not
-        // yet wired into the domain — once the Phase51 schema lands and the
-        // repository ships, this query reads from there. For now we return an
-        // empty set so the job loop still exercises end-to-end without blocking
-        // the rest of F2.1.
-        _ = services;
-        _ = tenantId;
-        _ = cancellationToken;
-        return Task.FromResult<IReadOnlyList<TrackedSubmission>>(Array.Empty<TrackedSubmission>());
+        // WHY: tenant filtresi PushScope ile aktif; Take(200) tenant başına tur maliyetini sınırlar.
+        var pending = await tenantDb.Invoices
+            .Where(i => i.EInvoiceUuid != null
+                && i.EInvoiceStatus != EInvoiceStatuses.Accepted
+                && i.EInvoiceStatus != EInvoiceStatuses.Rejected
+                && i.EInvoiceStatus != EInvoiceStatuses.Cancelled)
+            .OrderBy(i => i.Id)
+            .Take(200)
+            .Select(i => new { i.Id, i.EInvoiceUuid, i.EInvoiceStatus })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return pending
+            .Select(p => new TrackedSubmission(p.Id, p.EInvoiceUuid!, providerName, p.EInvoiceStatus ?? string.Empty))
+            .ToList();
     }
 
     private static async Task RaiseStatusChangedAsync(
@@ -202,5 +219,5 @@ public sealed class EFaturaReconciliationJob : BackgroundService
         outboxSignal.MarkPending();
     }
 
-    private sealed record TrackedSubmission(string Ettn, string ProviderName, string LastKnownStatus);
+    private sealed record TrackedSubmission(Guid InvoiceId, string Ettn, string ProviderName, string LastKnownStatus);
 }

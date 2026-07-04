@@ -130,6 +130,15 @@ public class MasterDataController : ControllerBase
     public async Task<IActionResult> DeleteTaxRate(Guid id, CancellationToken ct)
         => (await _mediator.Send(new DeleteTaxRateCommand(id), ct)).ToOk();
 
+    // ---------- GİB Codes (global reference) ----------
+    [HttpGet("withholding-tax-codes")]
+    public async Task<IActionResult> ListWithholdingTaxCodes([FromQuery] bool? isActive, CancellationToken ct)
+        => (await _mediator.Send(new ListWithholdingTaxCodesQuery(isActive ?? true), ct)).ToOk();
+
+    [HttpGet("vat-exemption-codes")]
+    public async Task<IActionResult> ListVatExemptionCodes([FromQuery] bool? isActive, CancellationToken ct)
+        => (await _mediator.Send(new ListVatExemptionCodesQuery(isActive ?? true), ct)).ToOk();
+
     // ---------- Payment Terms ----------
     [HttpGet("payment-terms")]
     public async Task<IActionResult> ListPaymentTerms([FromQuery] bool? isActive, CancellationToken ct)

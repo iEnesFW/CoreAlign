@@ -21,7 +21,8 @@ public sealed class MockEFaturaProvider : IEFaturaProvider
     public EFaturaProviderCapabilities SupportedCapabilities =>
         EFaturaProviderCapabilities.CanIssue
         | EFaturaProviderCapabilities.CanCancel
-        | EFaturaProviderCapabilities.CanQueryStatus;
+        | EFaturaProviderCapabilities.CanQueryStatus
+        | EFaturaProviderCapabilities.CanCheckTaxpayer;
 
     public object? UnprotectCredentials(IProviderCredentialProtector protector, Guid tenantId, string? encryptedJson) => null;
 
@@ -52,6 +53,17 @@ public sealed class MockEFaturaProvider : IEFaturaProvider
             CurrentStatus: "Accepted",
             GibResponseCode: "1000",
             DeliveredAtUtc: SubmittedAtUtcFixed));
+    }
+
+    public Task<EFaturaTaxpayerStatus> CheckTaxpayerAsync(EFaturaTaxpayerCheckRequest request, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var registered = request.TaxNumber.Length == 10 && request.TaxNumber.All(char.IsDigit);
+        return Task.FromResult(new EFaturaTaxpayerStatus(
+            request.TaxNumber,
+            IsEFaturaRegistered: registered,
+            Alias: registered ? "urn:mail:defaultpk@mock.local" : null,
+            Title: registered ? "Mock Mükellef A.Ş." : null));
     }
 
     private static string BuildEttn() =>

@@ -15,6 +15,7 @@ export const orderLineSchema = z.object({
   taxRateId: optionalId,
   taxRatePercent: optionalNumeric,
   withholdingRatePercent: optionalNumeric,
+  withholdingTaxCodeId: optionalId,
   warehouseId: optionalId,
   lineNotes: z.string().max(500, { message: 'Validation.TooLong' }).optional().or(z.literal('')),
 });
