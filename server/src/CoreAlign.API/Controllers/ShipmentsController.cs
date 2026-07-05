@@ -3,6 +3,7 @@ using Asp.Versioning;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Shipments.Commands;
+using CoreAlign.Application.Shipments.EDespatch;
 using CoreAlign.Application.Shipments.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -69,4 +70,13 @@ public class ShipmentsController : ControllerBase
     [HttpPost("{id:guid}/cancel")]
     public async Task<IActionResult> Cancel(Guid id, [FromBody] CancelShipmentCommand? cmd, CancellationToken ct)
         => (await _mediator.Send(new CancelShipmentCommand(id, cmd?.Reason), ct)).ToOk();
+
+    [HttpPost("{id:guid}/e-despatch")]
+    [Authorize(Roles = "TenantAdmin")]
+    public async Task<IActionResult> IssueEDespatch(Guid id, [FromBody] IssueEDespatchCommand? cmd, CancellationToken ct)
+    {
+        var enriched = new IssueEDespatchCommand(
+            id, cmd?.CarrierVkn, cmd?.VehiclePlate, cmd?.DriverName, cmd?.DriverTckn, cmd?.OperationId);
+        return (await _mediator.Send(enriched, ct)).ToOk();
+    }
 }

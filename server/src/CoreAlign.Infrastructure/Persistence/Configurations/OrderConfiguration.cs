@@ -142,6 +142,13 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
         builder.Property(s => s.ReceivedBy).HasMaxLength(150);
         builder.Property(s => s.Notes).HasMaxLength(2000);
         builder.Property(s => s.CancelReason).HasMaxLength(500);
+        builder.Property(s => s.CarrierVkn).HasMaxLength(11);
+        builder.Property(s => s.VehiclePlate).HasMaxLength(20);
+        builder.Property(s => s.DriverName).HasMaxLength(150);
+        builder.Property(s => s.DriverTckn).HasMaxLength(11);
+        builder.Property(s => s.EDespatchUuid).HasMaxLength(64);
+        builder.Property(s => s.EDespatchStatus).HasMaxLength(20);
+        builder.Property(s => s.EDespatchProfile).HasMaxLength(32);
         builder.Property(s => s.CreatedDate).HasColumnType("timestamp with time zone");
         builder.Property(s => s.PickedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(s => s.PackedAtUtc).HasColumnType("timestamp with time zone");

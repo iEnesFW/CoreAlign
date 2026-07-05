@@ -140,9 +140,12 @@ public sealed class EFaturaProviderGatewayAdapter : IElectronicInvoiceGateway
 
         var totalAmount = ParseDecimal(ReadValue(doc, "PayableAmount")) ?? 0m;
 
-        var documentType = request.DocumentKind == EInvoiceDocumentKind.EArchive
-            ? EFaturaDocumentType.EArchive
-            : EFaturaDocumentType.Invoice;
+        var documentType = request.DocumentKind switch
+        {
+            EInvoiceDocumentKind.EArchive => EFaturaDocumentType.EArchive,
+            EInvoiceDocumentKind.Despatch => EFaturaDocumentType.Despatch,
+            _ => EFaturaDocumentType.Invoice,
+        };
 
         return new EFaturaDocument(
             Type: documentType,

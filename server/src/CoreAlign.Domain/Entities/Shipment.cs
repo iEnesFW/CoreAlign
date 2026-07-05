@@ -28,6 +28,14 @@ public class Shipment : TenantEntity
     public Guid? PostedByUserId { get; private set; }
     public string? CancelReason { get; private set; }
 
+    public string? CarrierVkn { get; private set; }
+    public string? VehiclePlate { get; private set; }
+    public string? DriverName { get; private set; }
+    public string? DriverTckn { get; private set; }
+    public string? EDespatchUuid { get; private set; }
+    public string? EDespatchStatus { get; private set; }
+    public string? EDespatchProfile { get; private set; }
+
     public Order Order { get; set; } = null!;
     public Warehouse Warehouse { get; set; } = null!;
     public ICollection<ShipmentLine> Lines { get; private set; } = new List<ShipmentLine>();
@@ -112,6 +120,36 @@ public class Shipment : TenantEntity
     {
         Notes = notes;
         if (shippingAddressSnapshot != null) ShippingAddressSnapshot = shippingAddressSnapshot;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetEDespatchCarrier(string? carrierVkn, string? vehiclePlate, string? driverName, string? driverTckn)
+    {
+        CarrierVkn = carrierVkn;
+        VehiclePlate = vehiclePlate;
+        DriverName = driverName;
+        DriverTckn = driverTckn;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetEDespatchProfile(string profile)
+    {
+        EDespatchProfile = profile;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // WHY: e-Belge durumu terminal-korumalı FSM (Invoice.ApplyEInvoiceStatus deseni) — Accepted/Rejected/Cancelled'a
+    // düşen e-İrsaliye daha erken duruma gerilemez.
+    public void RegisterEDespatch(string? uuid, string status)
+    {
+        if (uuid is not null) EDespatchUuid = uuid;
+        var normalized = EInvoiceStatuses.Normalize(status);
+        if (EInvoiceStatuses.IsTerminal(EDespatchStatus)
+            && !string.Equals(EDespatchStatus, normalized, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+        EDespatchStatus = normalized;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

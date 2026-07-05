@@ -85,6 +85,16 @@
 > satırları unlinked/header-only bill'i atlıyor (politika kararı); (d) müşteri tarafı `PaymentVoidedGLHandler` avans-void
 > twin'i (120→340) hâlâ latent. **e-İrsaliye (§1.3-D4):** provider katmanı (`Despatch`→"IRSALIYE") hazır; eksik olan
 > Shipment carrier VKN/plaka/sürücü alanları + DespatchAdvice UBL builder + issue command/outbox/endpoint + FE — ayrı dilim.
+>
+> **S8 e-İrsaliye BACKEND (2026-07-05): TAMAMLANDI.** Shipment'a taşıyıcı VKN/araç plaka/sürücü ad-TCKN + e-belge sonuç
+> alanları (EDespatchUuid/Status/Profile) + `RegisterEDespatch` terminal-FSM (Phase118 migration, uygulandı). Yeni
+> `UblTrInvoiceXmlBuilder.BuildDespatch` → UBL-TR **DespatchAdvice-2** (CarrierParty[VKN]/DriverPerson[TCKN]/LicensePlateID/
+> DespatchLine). `IssueEDespatchCommand`(+validator) + `EDespatchSubmissionOutbox` + `ShipmentEDespatchOutboxHandler` →
+> `IElectronicInvoiceGateway`(yeni `EInvoiceDocumentKind.Despatch`)→dispatcher→"IRSALIYE". `POST /shipments/{id}/e-despatch`
+> (TenantAdmin). 7 test (UBL yapısı + command idempotency/FSM). Application 2232 + Integration 0-fail, has-pending "No changes".
+> **NDA/S4 sınırı:** gerçek Nilvera e-İrsaliye iletimi entegratör dökümanına bağlı (dispatcher XML'i EFaturaDocument'ten yeniden
+> kurar → dev'de Mock ile uçtan uca çalışır, gerçek provider'a literal DespatchAdvice iletimi S4). **FE dilimi** (dispatch modalı
+> taşıyıcı/plaka/sürücü alanları + "e-İrsaliye Gönder" + ETTN/durum çipi + i18n) sonraki dilim.
 
 > Kullanıcı geri bildirim taramasından (2026-07-02) çıkan **büyük kapsamlı** işlerin karar ve planlama dokümanı.
 > Küçük/orta düzeltmeler (P0 çökme, 403, dark mode, i18n, cache) ayrıca uygulandı — bu doküman tek oturumda bitmeyecek,

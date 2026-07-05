@@ -9,6 +9,7 @@ public static class UblTrInvoiceXmlBuilder
 {
     private static readonly XNamespace InvoiceNs = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2";
     private static readonly XNamespace CreditNoteNs = "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2";
+    private static readonly XNamespace DespatchNs = "urn:oasis:names:specification:ubl:schema:xsd:DespatchAdvice-2";
     private static readonly XNamespace CbcNs = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
     private static readonly XNamespace CacNs = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
 
@@ -25,6 +26,104 @@ public static class UblTrInvoiceXmlBuilder
             ? BuildCreditNote(invoice, seller, buyer)
             : BuildInvoice(invoice, seller, buyer);
     }
+
+    // Builds a UBL-TR DespatchAdvice-2 (e-İrsaliye) document from a Shipment. Carries the carrier
+    // (VKN + name), driver (TCKN + name) and vehicle plate in the ShipmentStage, and one DespatchLine
+    // per shipment line. No monetary totals — an irsaliye has no price obligation.
+    public static string BuildDespatch(Shipment shipment, SellerParty seller, BuyerParty buyer)
+    {
+        if (shipment is null) throw new ArgumentNullException(nameof(shipment));
+        if (seller is null) throw new ArgumentNullException(nameof(seller));
+        if (buyer is null) throw new ArgumentNullException(nameof(buyer));
+
+        var profileId = string.IsNullOrWhiteSpace(shipment.EDespatchProfile) ? "TEMELIRSALIYE" : shipment.EDespatchProfile;
+        var despatchDate = shipment.DispatchedAtUtc ?? DateTime.UtcNow;
+
+        var root = new XElement(DespatchNs + "DespatchAdvice",
+            new XAttribute(XNamespace.Xmlns + "cbc", CbcNs.NamespaceName),
+            new XAttribute(XNamespace.Xmlns + "cac", CacNs.NamespaceName),
+            new XAttribute(XNamespace.Xmlns + "xsi", SellerXsi.NamespaceName),
+            new XElement(CbcNs + "UBLVersionID", "2.1"),
+            new XElement(CbcNs + "CustomizationID", "TR1.2"),
+            new XElement(CbcNs + "ProfileID", profileId),
+            new XElement(CbcNs + "ID", shipment.ShipmentNumber),
+            new XElement(CbcNs + "UUID", shipment.Id.ToString()),
+            new XElement(CbcNs + "IssueDate", FormatDate(despatchDate)),
+            new XElement(CbcNs + "IssueTime", FormatTime(despatchDate)),
+            new XElement(CbcNs + "DespatchAdviceTypeCode", "SEVK"),
+            new XElement(CbcNs + "LineCountNumeric", shipment.Lines.Count.ToString(CultureInfo.InvariantCulture)),
+            new XElement(CacNs + "DespatchSupplierParty", BuildParty(seller.Name, seller.TaxNumber, seller.NationalId, seller.TaxOffice, seller.AddressLine, seller.City, seller.PostalCode, seller.Country)),
+            new XElement(CacNs + "DeliveryCustomerParty", BuildParty(buyer.Name, buyer.TaxNumber, buyer.NationalId, buyer.TaxOffice, buyer.AddressLine, buyer.City, buyer.PostalCode, buyer.Country)),
+            BuildDespatchShipment(shipment, despatchDate));
+
+        var lineNumber = 1;
+        foreach (var line in shipment.Lines)
+        {
+            root.Add(BuildDespatchLine(line, lineNumber++));
+        }
+
+        var doc = new XDocument(new XDeclaration("1.0", "UTF-8", null), root);
+        return doc.ToString(SaveOptions.DisableFormatting);
+    }
+
+    private static XElement BuildParty(string name, string? taxNumber, string? nationalId, string? taxOffice, string? line, string? city, string? postal, string? country) =>
+        new(CacNs + "Party",
+            new XElement(CacNs + "PartyIdentification",
+                new XElement(CbcNs + "ID",
+                    new XAttribute("schemeID", string.IsNullOrEmpty(nationalId) ? "VKN" : "TCKN"),
+                    string.IsNullOrEmpty(nationalId) ? taxNumber ?? string.Empty : nationalId)),
+            new XElement(CacNs + "PartyName",
+                new XElement(CbcNs + "Name", name)),
+            BuildPostalAddress(line, city, postal, country),
+            new XElement(CacNs + "PartyTaxScheme",
+                new XElement(CacNs + "TaxScheme",
+                    new XElement(CbcNs + "Name", taxOffice ?? string.Empty))));
+
+    private static XElement BuildDespatchShipment(Shipment shipment, DateTime despatchDate)
+    {
+        var shipmentEl = new XElement(CacNs + "Shipment",
+            new XElement(CbcNs + "ID", shipment.ShipmentNumber));
+
+        var stage = new XElement(CacNs + "ShipmentStage");
+        if (!string.IsNullOrWhiteSpace(shipment.CarrierVkn) || !string.IsNullOrWhiteSpace(shipment.CarrierName))
+        {
+            stage.Add(new XElement(CacNs + "CarrierParty",
+                new XElement(CacNs + "PartyIdentification",
+                    new XElement(CbcNs + "ID", new XAttribute("schemeID", "VKN"), shipment.CarrierVkn ?? string.Empty)),
+                new XElement(CacNs + "PartyName",
+                    new XElement(CbcNs + "Name", shipment.CarrierName ?? string.Empty))));
+        }
+        if (!string.IsNullOrWhiteSpace(shipment.DriverTckn) || !string.IsNullOrWhiteSpace(shipment.DriverName))
+        {
+            stage.Add(new XElement(CacNs + "DriverPerson",
+                new XElement(CbcNs + "FirstName", shipment.DriverName ?? string.Empty),
+                new XElement(CbcNs + "NationalID", shipment.DriverTckn ?? string.Empty)));
+        }
+        if (!string.IsNullOrWhiteSpace(shipment.VehiclePlate))
+        {
+            stage.Add(new XElement(CacNs + "TransportMeans",
+                new XElement(CacNs + "RoadTransport",
+                    new XElement(CbcNs + "LicensePlateID", shipment.VehiclePlate))));
+        }
+        if (stage.HasElements)
+        {
+            shipmentEl.Add(stage);
+        }
+
+        shipmentEl.Add(new XElement(CacNs + "Delivery",
+            new XElement(CbcNs + "ActualDeliveryDate", FormatDate(despatchDate))));
+        return shipmentEl;
+    }
+
+    private static XElement BuildDespatchLine(ShipmentLine line, int lineNumber) =>
+        new(CacNs + "DespatchLine",
+            new XElement(CbcNs + "ID", lineNumber.ToString(CultureInfo.InvariantCulture)),
+            new XElement(CbcNs + "DeliveredQuantity",
+                new XAttribute("unitCode", "C62"), FormatAmount(line.Quantity)),
+            new XElement(CacNs + "Item",
+                new XElement(CbcNs + "Name", line.ProductName),
+                new XElement(CbcNs + "SellersItemIdentification",
+                    new XElement(CbcNs + "ID", line.ProductSku))));
 
     private static string BuildInvoice(Invoice invoice, SellerParty seller, BuyerParty buyer)
     {

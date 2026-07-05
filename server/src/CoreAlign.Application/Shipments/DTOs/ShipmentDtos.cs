@@ -42,6 +42,13 @@ public class ShipmentDto
     public AddressSnapshotDto? ShippingAddressSnapshot { get; set; }
     public string? Notes { get; set; }
     public string? CancelReason { get; set; }
+    public string? CarrierVkn { get; set; }
+    public string? VehiclePlate { get; set; }
+    public string? DriverName { get; set; }
+    public string? DriverTckn { get; set; }
+    public string? EDespatchUuid { get; set; }
+    public string? EDespatchStatus { get; set; }
+    public string? EDespatchProfile { get; set; }
     public List<ShipmentLineDto> Lines { get; set; } = new();
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

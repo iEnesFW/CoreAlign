@@ -13,7 +13,8 @@ public interface IElectronicInvoiceGateway
 public enum EInvoiceDocumentKind
 {
     EFatura = 0,
-    EArchive = 1
+    EArchive = 1,
+    Despatch = 2
 }
 
 public record EInvoiceTaxpayerResult(string TaxNumber, bool IsEFaturaRegistered, string? Alias);

@@ -201,6 +201,8 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Application.Providers.EFatura.Handlers.EFaturaWebhookEventHandler>();
         services.AddScoped<CoreAlign.Application.Common.Outbox.IOutboxMessageHandler,
             CoreAlign.Application.Providers.Payment.Handlers.PaymentWebhookEventHandler>();
+        services.AddScoped<CoreAlign.Application.Common.Outbox.IOutboxMessageHandler,
+            CoreAlign.Application.Shipments.EDespatch.ShipmentEDespatchOutboxHandler>();
 
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<IPortalScopeService, PortalScopeService>();
@@ -453,6 +455,8 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Application.Common.Email.EmailQueuedOutbox>();
         services.AddScoped<CoreAlign.Application.EInvoice.IEInvoiceSubmissionOutbox,
             CoreAlign.Application.EInvoice.EInvoiceSubmissionOutbox>();
+        services.AddScoped<CoreAlign.Application.Shipments.EDespatch.IEDespatchSubmissionOutbox,
+            CoreAlign.Application.Shipments.EDespatch.EDespatchSubmissionOutbox>();
 
         // Auth servisleri
         services.AddScoped<CoreAlign.Application.Auth.Services.ITwoFactorService,

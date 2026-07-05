@@ -66,6 +66,11 @@ public class ShipmentNotFoundException : NotFoundException
     public ShipmentNotFoundException() : base("Shipment not found.") { }
 }
 
+public class EDespatchAlreadyIssuedException : ConflictException
+{
+    public EDespatchAlreadyIssuedException() : base("An e-despatch has already been issued for this shipment.") { }
+}
+
 public class InvalidShipmentStateException : DomainException
 {
     public InvalidShipmentStateException(string message) : base(message) { }
