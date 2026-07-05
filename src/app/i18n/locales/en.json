@@ -475,7 +475,24 @@
       "receivedBy": "Received by",
       "createTitle": "Create shipment",
       "selectLines": "Select lines and quantities to ship",
-      "remaining": "Remaining: {{value}}"
+      "remaining": "Remaining: {{value}}",
+      "eDespatch": {
+        "action": "Send e-Despatch",
+        "ettn": "ETTN",
+        "success": "e-Despatch sent.",
+        "carrierVkn": "Carrier Tax No",
+        "vehiclePlate": "Vehicle Plate",
+        "driverName": "Driver Name",
+        "driverTckn": "Driver National ID",
+        "status": {
+          "Queued": "Queued",
+          "Submitted": "Submitted",
+          "Accepted": "Accepted",
+          "Rejected": "Rejected",
+          "Failed": "Failed",
+          "Cancelled": "Cancelled"
+        }
+      }
     },
     "columns": {
       "orderNumber": "Order #",

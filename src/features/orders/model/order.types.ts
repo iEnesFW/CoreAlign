@@ -218,6 +218,14 @@ export type ShipmentStatus =
   | 'Cancelled'
   | 'Returned';
 
+export type EDespatchStatus =
+  | 'Queued'
+  | 'Submitted'
+  | 'Accepted'
+  | 'Rejected'
+  | 'Failed'
+  | 'Cancelled';
+
 export interface ShipmentLine {
   id: string;
   orderLineId: string;
@@ -255,6 +263,13 @@ export interface Shipment {
   shippingAddressSnapshot: AddressSnapshot | null;
   notes: string | null;
   cancelReason: string | null;
+  carrierVkn: string | null;
+  vehiclePlate: string | null;
+  driverName: string | null;
+  driverTckn: string | null;
+  eDespatchUuid: string | null;
+  eDespatchStatus: EDespatchStatus | null;
+  eDespatchProfile: string | null;
   lines: ShipmentLine[];
   createdAtUtc: string;
   updatedAtUtc: string;
@@ -285,6 +300,15 @@ export interface DeliverShipmentInput {
   id: string;
   receivedBy?: string | null;
   deliveredAtUtc?: string | null;
+}
+
+export interface IssueEDespatchInput {
+  id: string;
+  carrierVkn?: string | null;
+  vehiclePlate?: string | null;
+  driverName?: string | null;
+  driverTckn?: string | null;
+  operationId?: string | null;
 }
 
 export interface RecordOrderScrapInput {

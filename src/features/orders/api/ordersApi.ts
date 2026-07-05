@@ -6,6 +6,7 @@ import type {
   CreateShipmentInput,
   DeliverShipmentInput,
   DispatchShipmentInput,
+  IssueEDespatchInput,
   Order,
   OrderListParams,
   OrderSummary,
@@ -171,6 +172,20 @@ export const ordersApi = {
   cancelShipment: (id: string, reason?: string | null) =>
     apiClient
       .post<ApiResponse<Shipment>>(`${SHIPMENT_BASE}/${id}/cancel`, { id, reason: reason ?? null })
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      }),
+
+  issueEDespatch: (id: string, input: Omit<IssueEDespatchInput, 'id'>) =>
+    apiClient
+      .post<ApiResponse<Shipment>>(`${SHIPMENT_BASE}/${id}/e-despatch`, {
+        carrierVkn: input.carrierVkn ?? null,
+        vehiclePlate: input.vehiclePlate ?? null,
+        driverName: input.driverName ?? null,
+        driverTckn: input.driverTckn ?? null,
+        operationId: input.operationId ?? null,
+      })
       .then((r) => {
         invalidateHttpCache(INVALIDATION);
         return r.data;

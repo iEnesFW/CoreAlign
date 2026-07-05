@@ -1,18 +1,20 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, ExternalLink, Package, Truck, XCircle } from 'lucide-react';
+import { CheckCircle2, ExternalLink, FileText, Package, Truck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { newOperationId } from '@/shared/lib/operationId';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { safeHref } from '@/shared/lib/safeHref';
 import {
   useCancelShipment,
   useDeliverShipment,
   useDispatchShipment,
+  useIssueEDespatch,
   usePackShipment,
   usePickShipment,
   useShipmentsByOrderQuery,
 } from '../hooks/useOrderQueries';
-import type { Order, Shipment, ShipmentStatus } from '../model/order.types';
+import type { EDespatchStatus, Order, Shipment, ShipmentStatus } from '../model/order.types';
 import { CreateShipmentModal } from './CreateShipmentModal';
 
 interface Props {
@@ -29,6 +31,15 @@ const STATUS_STYLES: Record<ShipmentStatus, string> = {
   Delivered: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
   Cancelled: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
   Returned: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+};
+
+const EDESPATCH_STATUS_STYLES: Record<EDespatchStatus, string> = {
+  Queued: 'bg-warning-100 text-warning-800 dark:bg-warning-500/20 dark:text-warning-300',
+  Submitted: 'bg-info-100 text-info-700 dark:bg-info-500/20 dark:text-info-300',
+  Accepted: 'bg-success-100 text-success-700 dark:bg-success-500/20 dark:text-success-300',
+  Rejected: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Failed: 'bg-danger-100 text-danger-700 dark:bg-danger-500/20 dark:text-danger-300',
+  Cancelled: 'bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300',
 };
 
 const fmtDateTime = (iso: string | null, locale: string) => {
@@ -50,6 +61,7 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
   const locale = i18n.language;
   const shipmentsQuery = useShipmentsByOrderQuery(order.id);
   const [dispatchTarget, setDispatchTarget] = useState<Shipment | null>(null);
+  const [eDespatchTarget, setEDespatchTarget] = useState<Shipment | null>(null);
 
   const shipments = shipmentsQuery.data?.data ?? [];
 
@@ -78,6 +90,7 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
               shipment={s}
               locale={locale}
               onDispatchClick={() => setDispatchTarget(s)}
+              onEDespatchClick={() => setEDespatchTarget(s)}
             />
           ))}
         </ul>
@@ -91,6 +104,9 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
           onClose={() => setDispatchTarget(null)}
         />
       )}
+      {eDespatchTarget && (
+        <IssueEDespatchModal shipment={eDespatchTarget} onClose={() => setEDespatchTarget(null)} />
+      )}
     </div>
   );
 
@@ -98,10 +114,12 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
     shipment,
     locale,
     onDispatchClick,
+    onEDespatchClick,
   }: {
     shipment: Shipment;
     locale: string;
     onDispatchClick: () => void;
+    onEDespatchClick: () => void;
   }) {
     const pickMutation = usePickShipment();
     const packMutation = usePackShipment();
@@ -168,6 +186,15 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
                 primary
               />
             )}
+            {(shipment.status === 'Dispatched' || shipment.status === 'Delivered') &&
+              !shipment.eDespatchUuid && (
+                <ActionButton
+                  onClick={onEDespatchClick}
+                  label={t('orders.shipments.eDespatch.action')}
+                  icon={<FileText size={11} />}
+                  primary
+                />
+              )}
             {(shipment.status === 'Draft' ||
               shipment.status === 'Picked' ||
               shipment.status === 'Packed') && (
@@ -202,6 +229,25 @@ export const ShipmentsTab = ({ order, showCreateModal, onCloseCreateModal }: Pro
             <InfoChip label={t('orders.shipments.receivedBy')} value={shipment.receivedBy} />
           )}
         </div>
+
+        {shipment.eDespatchUuid && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded border border-slate-200 bg-slate-50 px-2 py-1.5 dark:border-slate-800 dark:bg-slate-800/40">
+            <FileText size={12} className="text-slate-500" />
+            <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {t('orders.shipments.eDespatch.ettn')}
+            </span>
+            <span className="font-mono text-[11px] font-medium text-slate-800 dark:text-slate-200">
+              {shipment.eDespatchUuid}
+            </span>
+            {shipment.eDespatchStatus && (
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${EDESPATCH_STATUS_STYLES[shipment.eDespatchStatus]}`}
+              >
+                {t(`orders.shipments.eDespatch.status.${shipment.eDespatchStatus}` as never)}
+              </span>
+            )}
+          </div>
+        )}
 
         <details className="mt-2">
           <summary className="cursor-pointer text-[11px] font-semibold text-slate-600 dark:text-slate-400">
@@ -432,3 +478,119 @@ const Field = ({
     />
   </div>
 );
+
+interface EDespatchModalProps {
+  shipment: Shipment;
+  onClose: () => void;
+}
+
+const LabelledField = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) => {
+  const fieldId = useId();
+  return (
+    <div>
+      <label
+        htmlFor={fieldId}
+        className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+      >
+        {label}
+      </label>
+      <input
+        id={fieldId}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      />
+    </div>
+  );
+};
+
+const IssueEDespatchModal = ({ shipment, onClose }: EDespatchModalProps) => {
+  const { t } = useTranslation();
+  const issueMutation = useIssueEDespatch();
+  const [carrierVkn, setCarrierVkn] = useState(shipment.carrierVkn ?? '');
+  const [vehiclePlate, setVehiclePlate] = useState(shipment.vehiclePlate ?? '');
+  const [driverName, setDriverName] = useState(shipment.driverName ?? '');
+  const [driverTckn, setDriverTckn] = useState(shipment.driverTckn ?? '');
+
+  const handleSubmit = async () => {
+    try {
+      await issueMutation.mutateAsync({
+        id: shipment.id,
+        carrierVkn: carrierVkn || null,
+        vehiclePlate: vehiclePlate || null,
+        driverName: driverName || null,
+        driverTckn: driverTckn || null,
+        operationId: newOperationId(),
+      });
+      toast.success(t('orders.shipments.eDespatch.success'));
+      onClose();
+    } catch (err) {
+      toastApiError(err);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl dark:bg-slate-900"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t('orders.shipments.eDespatch.action')} — {shipment.shipmentNumber}
+        </h3>
+        <div className="mt-4 space-y-3">
+          <LabelledField
+            label={t('orders.shipments.eDespatch.carrierVkn')}
+            value={carrierVkn}
+            onChange={setCarrierVkn}
+          />
+          <LabelledField
+            label={t('orders.shipments.eDespatch.vehiclePlate')}
+            value={vehiclePlate}
+            onChange={setVehiclePlate}
+          />
+          <LabelledField
+            label={t('orders.shipments.eDespatch.driverName')}
+            value={driverName}
+            onChange={setDriverName}
+          />
+          <LabelledField
+            label={t('orders.shipments.eDespatch.driverTckn')}
+            value={driverTckn}
+            onChange={setDriverTckn}
+          />
+        </div>
+        <div className="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={issueMutation.isPending}
+            className="inline-flex items-center gap-1.5 rounded bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+          >
+            <FileText size={14} />
+            {t('orders.shipments.eDespatch.action')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

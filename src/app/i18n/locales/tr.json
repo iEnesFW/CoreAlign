@@ -475,7 +475,24 @@
       "receivedBy": "Teslim alan",
       "createTitle": "Sevkiyat oluştur",
       "selectLines": "Sevk edilecek kalem ve miktarları seçin",
-      "remaining": "Kalan: {{value}}"
+      "remaining": "Kalan: {{value}}",
+      "eDespatch": {
+        "action": "e-İrsaliye Gönder",
+        "ettn": "ETTN",
+        "success": "e-İrsaliye gönderildi.",
+        "carrierVkn": "Taşıyıcı VKN",
+        "vehiclePlate": "Araç Plakası",
+        "driverName": "Sürücü Adı",
+        "driverTckn": "Sürücü TCKN",
+        "status": {
+          "Queued": "Kuyrukta",
+          "Submitted": "Gönderildi",
+          "Accepted": "Kabul Edildi",
+          "Rejected": "Reddedildi",
+          "Failed": "Başarısız",
+          "Cancelled": "İptal Edildi"
+        }
+      }
     },
     "columns": {
       "orderNumber": "Sipariş No",

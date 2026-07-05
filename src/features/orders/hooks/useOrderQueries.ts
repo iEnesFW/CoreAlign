@@ -6,6 +6,7 @@ import type {
   CreateShipmentInput,
   DeliverShipmentInput,
   DispatchShipmentInput,
+  IssueEDespatchInput,
   OrderListParams,
   RecordOrderScrapInput,
   UpdateOrderInput,
@@ -198,6 +199,17 @@ export const useCancelShipment = () => {
   return useMutation({
     mutationFn: (params: { id: string; reason?: string | null }) =>
       ordersApi.cancelShipment(params.id, params.reason),
+    onSuccess: () => invalidateOrder(queryClient),
+  });
+};
+
+export const useIssueEDespatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: IssueEDespatchInput) => {
+      const { id, ...rest } = input;
+      return ordersApi.issueEDespatch(id, rest);
+    },
     onSuccess: () => invalidateOrder(queryClient),
   });
 };
