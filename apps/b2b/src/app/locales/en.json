@@ -162,6 +162,8 @@
       "productSearch": "Search products (SKU or name)",
       "searchPrompt": "Start typing to add products",
       "noProducts": "No matching products.",
+      "inStock": "In stock: {{qty}} {{unit}}",
+      "outOfStock": "Out of stock",
       "priceLockedTooltip": "Price comes from the customer's price list (dealer cannot edit).",
       "minQtyHint": "Min: {{count}}",
       "minQtyError": "Quantity is below the minimum for this product.",

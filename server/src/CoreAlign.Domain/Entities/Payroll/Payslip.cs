@@ -3,8 +3,11 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Entities.Payroll;
 
-public class Payslip : TenantEntity, IXminConcurrency
+public class Payslip : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string PayslipNumber { get; private set; } = string.Empty;
     public Guid RunId { get; private set; }
     public Guid EmployeeId { get; private set; }

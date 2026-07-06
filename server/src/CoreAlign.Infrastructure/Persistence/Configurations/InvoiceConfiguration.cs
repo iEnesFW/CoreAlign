@@ -11,6 +11,7 @@ public class InvoiceConfiguration : IEntityTypeConfiguration<Invoice>
     public void Configure(EntityTypeBuilder<Invoice> builder)
     {
         builder.HasKey(i => i.Id);
+        builder.Property(i => i.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(i => i.InvoiceNumber).HasMaxLength(64).IsRequired();
         builder.Property(i => i.CustomerNameSnapshot).HasMaxLength(200).IsRequired();
         builder.Property(i => i.Currency).HasMaxLength(3).IsRequired();
@@ -138,6 +139,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
         builder.HasKey(p => p.Id);
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(p => p.PaymentNumber).HasMaxLength(64).IsRequired();
         builder.Property(p => p.CustomerNameSnapshot).HasMaxLength(200).IsRequired();
         builder.Property(p => p.Currency).HasMaxLength(3).IsRequired();
@@ -205,6 +207,7 @@ public class CustomerLedgerEntryConfiguration : IEntityTypeConfiguration<Custome
     public void Configure(EntityTypeBuilder<CustomerLedgerEntry> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(e => e.EntryType).HasMaxLength(10).HasConversion<string>();
         builder.Property(e => e.SourceType).HasMaxLength(30).HasConversion<string>();
         builder.Property(e => e.SourceDocumentNumber).HasMaxLength(64);

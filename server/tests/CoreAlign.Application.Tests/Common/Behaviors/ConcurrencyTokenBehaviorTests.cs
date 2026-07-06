@@ -26,7 +26,7 @@ public class ConcurrencyTokenBehaviorTests
     }
 
     [Fact]
-    public async Task Force_overwrite_retries_next_after_concurrency_failure()
+    public async Task Force_overwrite_is_rejected_as_unsupported_and_does_not_retry()
     {
         var sut = new ConcurrencyTokenBehavior<SampleRequest, SampleResponse>(
             NullLogger<ConcurrencyTokenBehavior<SampleRequest, SampleResponse>>.Instance);
@@ -34,17 +34,15 @@ public class ConcurrencyTokenBehaviorTests
         RequestHandlerDelegate<SampleResponse> next = () =>
         {
             calls++;
-            if (calls == 1)
-            {
-                throw new DbUpdateConcurrencyException("conflict");
-            }
-            return Task.FromResult(new SampleResponse(true));
+            throw new DbUpdateConcurrencyException("conflict");
         };
 
-        var response = await sut.Handle(new SampleRequest(true), next, CancellationToken.None);
+        var act = async () => await sut.Handle(new SampleRequest(true), next, CancellationToken.None);
 
-        calls.Should().Be(2);
-        response.Ok.Should().BeTrue();
+        // Re-running next() would re-run the whole handler and DOUBLE-APPLY its mutation
+        // (INVARIANTS §88), so a force-overwrite request must fail loudly, not silently retry.
+        await act.Should().ThrowAsync<NotSupportedException>();
+        calls.Should().Be(1);
     }
 
     [Fact]

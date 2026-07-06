@@ -20,6 +20,7 @@ import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
+import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -191,6 +192,7 @@ interface DesignerState {
   updateWallFeature: (wallId: string, featureId: string, patch: Partial<SceneWallFeature>) => void;
   removeWallFeature: (wallId: string, featureId: string) => void;
   splitWall: (wallId: string, alongMm: number) => void;
+  convertWallBendToLegs: (wallId: string, bendAtMm: number, bendAngleDeg: number) => boolean;
   addSlabFeature: (slabId: string, feature: SceneWallFeature) => void;
   updateSlabFeature: (slabId: string, featureId: string, patch: Partial<SceneWallFeature>) => void;
   removeSlabFeature: (slabId: string, featureId: string) => void;
@@ -834,6 +836,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     if (!wall) return;
     const along = Math.round(alongMm);
     if (along < MIN_SPLIT_SEGMENT_MM || along > wall.lengthMm - MIN_SPLIT_SEGMENT_MM) return;
+    if (wallSplitCrossesOpening(wall, along)) return;
     const rad = (wall.rotationDeg * Math.PI) / 180;
     const ratio = along / wall.lengthMm;
     const heightEnd = wall.heightEndMm ?? null;
@@ -873,6 +876,21 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       walls: walls.flatMap((w) => (w.id === wallId ? [first, second] : [w])),
     };
     set(pushHistory(current, next));
+  },
+
+  convertWallBendToLegs: (wallId, bendAtMm, bendAngleDeg) => {
+    const current = get();
+    const walls = current.scene.walls ?? [];
+    const wall = walls.find((w) => w.id === wallId);
+    if (!wall) return false;
+    const legs = computeBendLegs(wall, bendAtMm, bendAngleDeg);
+    if (!legs) return false;
+    const next: SceneState = {
+      ...current.scene,
+      walls: walls.flatMap((w) => (w.id === wallId ? [legs.legA, legs.legB] : [w])),
+    };
+    set(pushHistory(current, next));
+    return true;
   },
 
   addSlab: (slab) => {

@@ -148,6 +148,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
                 withholdingCode: withholdingCode?.Code,
                 withholdingNumerator: withholdingCode?.Numerator,
                 withholdingDenominator: withholdingCode?.Denominator);
+            line.SetGlassDimensions(input.WidthMm, input.HeightMm, input.Pieces, product.Unit);
             return line;
         }).ToList();
 

@@ -1,6 +1,8 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
+import { queueToast } from '@/shared/api/toastQueue';
 import { ArcOutline } from './ArcOutline';
 import { CurvedPanelMesh } from './CurvedPanelMesh';
 import { PanelMesh } from './PanelMesh';
@@ -115,6 +117,7 @@ export function ArcRunGroup({
   obstacles,
   supports,
 }: ArcRunGroupProps) {
+  const { t } = useTranslation();
   const heightM = run.heightMm / 1000;
   // CHORD-INVARIANT: run.lengthMm is the chord (the fixed span). The radius is re-derived from
   // chord+sweep at read time — the persisted integer radius would otherwise render a chord that
@@ -307,8 +310,25 @@ export function ArcRunGroup({
     const target = stickyDelta(chordMm, deltaMm);
     const newChord = Math.max(MIN_RUN_LENGTH_MM, Math.round(chordMm + target));
     const scaled = arcFromCornerResize(newChord, run.geomArcSweepDeg ?? 1);
-    if (scaled.geomArcRadiusMm < 100 || newChord === Math.round(chordMm)) {
+    if (newChord === Math.round(chordMm)) {
       resetBody();
+      return;
+    }
+    if (scaled.geomArcRadiusMm < 100) {
+      // Toast LOCALLY (like WallObject/SlabObject) — a silent snap-back read as "stretch is broken"
+      // on tight arcs. Routing the refused radius-only patch through onStretchRun would ship a
+      // chord/radius pair that is out of sync across a component boundary (the split-brain class
+      // the arc model prevents), relying on a remote guard to reject it.
+      resetBody();
+      queueToast({
+        dedupeKey: 'glass-arc-radius-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+          defaultValue:
+            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+          r: scaled.geomArcRadiusMm,
+        }),
+      });
       return;
     }
     const chordRad = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
@@ -355,9 +375,11 @@ export function ArcRunGroup({
   const stretchFaces: StretchFaceDef[] = stretchActive
     ? [
         {
+          // The grab planes face the local END TANGENTS (start = local +x) — a chord-normal
+          // plane sits up to sweep/2 off the visible band end and is hard to hover on deep arcs.
           id: 'start',
           centerM: [0, heightM / 2, 0],
-          rotation: [0, -Math.PI / 2 - chordThetaL, 0],
+          rotation: [0, -Math.PI / 2, 0],
           widthM: RUN_PLAN_THICKNESS_MM / 1000,
           heightM,
           hitWidthM: 0.16,
@@ -369,7 +391,11 @@ export function ArcRunGroup({
         {
           id: 'end',
           centerM: [end.xMm / 1000, heightM / 2, end.yMm / 1000],
-          rotation: [0, Math.PI / 2 - chordThetaL, 0],
+          rotation: [
+            0,
+            Math.atan2(Math.cos(arc.sweepRad), arc.direction * Math.sin(arc.sweepRad)),
+            0,
+          ],
           widthM: RUN_PLAN_THICKNESS_MM / 1000,
           heightM,
           hitWidthM: 0.16,

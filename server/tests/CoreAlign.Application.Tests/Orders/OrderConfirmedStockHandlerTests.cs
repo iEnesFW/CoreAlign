@@ -1,6 +1,7 @@
 using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Orders.EventHandlers;
+using CoreAlign.Infrastructure.Services;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Events;
@@ -38,7 +39,8 @@ public class OrderConfirmedStockHandlerTests
             _stockItemRepository,
             _stockMovementRepository,
             _glOutbox,
-            _openingBalanceBridge);
+            _openingBalanceBridge,
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
     }
 
     [Fact]
@@ -187,6 +189,79 @@ public class OrderConfirmedStockHandlerTests
         await _stockMovementRepository.Received(1).AddAsync(
             Arg.Is<StockMovement>(m => m.Quantity == 50m && m.Type == StockMovementType.Issue),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Make_to_stock_composite_is_sold_from_its_own_stock_not_exploded_to_components()
+    {
+        // A manufactured composite (ProcurementType.Make) — e.g. a produced "4+4+4" glass unit —
+        // is sold from its OWN finished-goods stock; its BOM was consumed at production time, so
+        // the sale must NOT re-explode it to components.
+        var componentId = Guid.NewGuid();
+        var composite = new Product("SKU-4+4+4", "Cift cam", "pcs", 100m, "USD", initialStock: 10)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        composite.SetProcurementType(ProcurementType.Make);
+        var component = new Product("SKU-4MM", "4mm cam", "pcs", 10m, "USD", initialStock: 100)
+        {
+            Id = componentId,
+            TenantId = TenantId
+        };
+        _componentRepository.GetTreeForProductsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, IReadOnlyList<(Guid, decimal)>>
+            {
+                [ProductId] = new List<(Guid, decimal)> { (componentId, 2m) }
+            });
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [ProductId] = composite, [componentId] = component });
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 3m) }, DateTime.UtcNow);
+
+        await _sut.Handle(ev, default);
+
+        composite.StockQuantity.Should().Be(7m);
+        component.StockQuantity.Should().Be(100m);
+        await _stockTransactionRepository.Received(1).AddAsync(
+            Arg.Is<StockTransaction>(t => t.ProductId == ProductId && t.Quantity == -3m),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Phantom_kit_composite_Buy_explodes_to_components_on_sale()
+    {
+        // A phantom/kit composite (ProcurementType.Buy, the default) explodes to its components on
+        // sale: 3 kits × 2 = 6 of the component is issued; the kit itself is not stocked.
+        var componentId = Guid.NewGuid();
+        var kit = new Product("SKU-KIT", "Kit", "pcs", 100m, "USD", initialStock: 0)
+        {
+            Id = ProductId,
+            TenantId = TenantId
+        };
+        var component = new Product("SKU-4MM", "4mm cam", "pcs", 10m, "USD", initialStock: 100)
+        {
+            Id = componentId,
+            TenantId = TenantId
+        };
+        _componentRepository.GetTreeForProductsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, IReadOnlyList<(Guid, decimal)>>
+            {
+                [ProductId] = new List<(Guid, decimal)> { (componentId, 2m) }
+            });
+        _productRepository.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [ProductId] = kit, [componentId] = component });
+
+        var ev = new OrderConfirmedEvent(
+            TenantId, OrderId, "ORD-1",
+            new[] { new OrderLineSnapshot(ProductId, 3m) }, DateTime.UtcNow);
+
+        await _sut.Handle(ev, default);
+
+        component.StockQuantity.Should().Be(94m);
+        kit.StockQuantity.Should().Be(0m);
     }
 
     [Fact]

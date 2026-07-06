@@ -21,6 +21,7 @@ import {
   curvedWallSurfacePolyline,
 } from './curvedExtrude';
 import { buildBentWallGeometry } from './bentWallGeometry';
+import { edgeColorFor } from './edgeColor';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
@@ -52,6 +53,7 @@ import {
   buildRunFootprint,
   buildWallFootprint,
   clampPlanStretch,
+  footprintsPenetrate,
   penetratesAny,
   restElevationAtPointMm,
   restElevationMm,
@@ -452,6 +454,7 @@ export function WallObject({
   const addWallFeature = useDesignerStore((s) => s.addWallFeature);
   const updateWallFeature = useDesignerStore((s) => s.updateWallFeature);
   const splitWall = useDesignerStore((s) => s.splitWall);
+  const convertWallBendToLegs = useDesignerStore((s) => s.convertWallBendToLegs);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
 
@@ -629,6 +632,23 @@ export function WallObject({
     }
     return planObstacles.filter((o) => !movingIds.has(o.ownerId));
   }, [planObstacles, wall.id, coMove, multiSelection]);
+
+  // Static commit-time checks (stretch/resize/thickness) exempt a group sibling ONLY where it
+  // already touches this wall — an L-wall's legs live permanently joined at the corner, and that
+  // standing contact must not veto every later edit. A sibling that is currently CLEAR (e.g. two
+  // walls the user grouped just to move together) keeps its collision safety net, so an edit can't
+  // silently drive one straight through the other.
+  const editObstacles = useMemo(() => {
+    const siblingIds = new Set(coMove.groupWalls.map((w) => w.id));
+    const selfFootprint = buildWallFootprint(wall, 0, 0, wall.rotationDeg);
+    const contactSiblings = new Set<string>();
+    for (const o of planObstacles) {
+      if (siblingIds.has(o.ownerId) && footprintsPenetrate(selfFootprint, o)) {
+        contactSiblings.add(o.ownerId);
+      }
+    }
+    return planObstacles.filter((o) => o.ownerId !== wall.id && !contactSiblings.has(o.ownerId));
+  }, [planObstacles, wall, coMove]);
 
   // Default drag is lateral: the wall (plus any grouped walls / attached runs it
   // carries) collides side-to-side so it can butt flush against a neighbour. Holding
@@ -1387,8 +1407,23 @@ export function WallObject({
     const target = stickyDelta(chord, deltaMm);
     const newChord = Math.max(MIN_LENGTH_MM, Math.round(chord + target));
     const scaled = arcFromCornerResize(newChord, wall.geomArcSweepDeg ?? 1);
-    if (scaled.geomArcRadiusMm < 100 || newChord === Math.round(chord)) {
+    if (newChord === Math.round(chord)) {
       resetBody();
+      return;
+    }
+    if (scaled.geomArcRadiusMm < 100) {
+      // A silent snap-back read as "stretch is broken" on tight arcs — explain the rejection the
+      // same way the run path does.
+      resetBody();
+      queueToast({
+        dedupeKey: 'glass-arc-radius-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+          defaultValue:
+            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+          r: scaled.geomArcRadiusMm,
+        }),
+      });
       return;
     }
     const chordRad = Math.atan2(chordDyMm, chordDxMm);
@@ -1407,7 +1442,7 @@ export function WallObject({
       0,
       wall.rotationDeg,
     );
-    if (penetratesAny(resized, planObstacles)) {
+    if (penetratesAny(resized, editObstacles)) {
       resetBody();
       return;
     }
@@ -1439,7 +1474,7 @@ export function WallObject({
           fromStart ? -d * dirY : 0,
           wall.rotationDeg,
         ),
-      planObstacles,
+      editObstacles,
       target,
     );
     const next = Math.max(MIN_LENGTH_MM, Math.round(wall.lengthMm + clamped));
@@ -1474,7 +1509,7 @@ export function WallObject({
           0,
           wall.rotationDeg,
         ),
-      planObstacles,
+      editObstacles,
       target,
     );
     const next = Math.max(MIN_HEIGHT_MM, Math.round(wall.heightMm + clamped));
@@ -1503,7 +1538,7 @@ export function WallObject({
           sign * (d / 2) * normalY,
           wall.rotationDeg,
         ),
-      planObstacles,
+      editObstacles,
       target,
     );
     const next = Math.max(MIN_THICKNESS_MM, Math.round(wall.thicknessMm + clamped));
@@ -1525,14 +1560,14 @@ export function WallObject({
     return -feature.depthMm;
   };
 
-  const commitFeatureDepth = (feature: SceneWallFeature, deltaMm: number) => {
+  const commitFeatureDepth = (feature: SceneWallFeature, deltaMm: number, noProtrude = false) => {
     const thicknessMm = wall.thicknessMm;
     const signed = stickyDimensionMm(featureSignedDepthMm(feature) + deltaMm);
     if (signed <= -(thicknessMm - HOLE_THRESHOLD_MM)) {
       updateWallFeature(wall.id, feature.id, { mode: 'hole', depthMm: thicknessMm });
     } else if (signed < 0) {
       updateWallFeature(wall.id, feature.id, { mode: 'recess', depthMm: -signed });
-    } else if (signed > 0) {
+    } else if (signed > 0 && !noProtrude) {
       updateWallFeature(wall.id, feature.id, { mode: 'protrude', depthMm: signed });
     } else {
       updateWallFeature(wall.id, feature.id, { mode: 'recess', depthMm: 0 });
@@ -1556,18 +1591,107 @@ export function WallObject({
     return labelMm(Math.abs(signed));
   };
   // ARC wall stretch faces sit on the CHORD frame (real fixed ends) with the drag axis along the
-  // chord; the top face keeps the height semantics (curvature-independent).
+  // chord; the top face keeps the height semantics (curvature-independent). The grab PLANES face
+  // the local END TANGENTS (start tangent = local +x, end tangent at φ=sweep) — a chord-normal
+  // plane is up to sweep/2 off the visible band end and hard to hover on deep arcs.
   const chordLenMm = Math.hypot(chordDxMm, chordDyMm);
   const chordUx = chordLenMm > 0 ? wallEndLocal.xMm / chordLenMm : 1;
   const chordUz = chordLenMm > 0 ? wallEndLocal.yMm / chordLenMm : 0;
   const chordThetaL = Math.atan2(chordUz, chordUx);
   const arcChordLabel = (d: number) =>
     labelMm(Math.max(MIN_LENGTH_MM, chordLenMm + stickyDelta(chordLenMm, d)));
+  const wallArcResolved = isArcWall
+    ? resolveArc(
+        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+        wall.geomArcSweepDeg ?? 1,
+      )
+    : null;
+  const endTangentYaw = wallArcResolved
+    ? Math.atan2(
+        Math.cos(wallArcResolved.sweepRad),
+        wallArcResolved.direction * Math.sin(wallArcResolved.sweepRad),
+      )
+    : HALF_PI;
+  const apexPhi = wallArcResolved ? wallArcResolved.sweepRad / 2 : 0;
+  const apexLocal = wallArcResolved
+    ? arcPointAt(wallArcResolved.radiusMm, wallArcResolved.direction, apexPhi)
+    : { x: 0, z: 0 };
+  const apexRadialX = wallArcResolved ? Math.sin(apexPhi) : 0;
+  const apexRadialZ = wallArcResolved ? -wallArcResolved.direction * Math.cos(apexPhi) : 1;
+  const commitArcThickness = (deltaMm: number) => {
+    const target = stickyDelta(wall.thicknessMm, deltaMm);
+    const next = Math.max(MIN_THICKNESS_MM, Math.round(wall.thicknessMm + target));
+    if (next === wall.thicknessMm) {
+      resetBody();
+      return;
+    }
+    const resized = buildWallFootprint({ ...wall, thicknessMm: next }, 0, 0, wall.rotationDeg);
+    if (penetratesAny(resized, editObstacles)) {
+      resetBody();
+      return;
+    }
+    updateWall(wall.id, { thicknessMm: next });
+  };
+  const arcThicknessFace = (side: 1 | -1): StretchFaceDef => {
+    const r = side * (thicknessM / 2 + FACE_LIFT_M);
+    return {
+      id: side === 1 ? 'arc-outer' : 'arc-inner',
+      centerM: [
+        apexLocal.x / 1000 + apexRadialX * r,
+        Math.min(heightStartM, heightEndM) / 2,
+        apexLocal.z / 1000 + apexRadialZ * r,
+      ],
+      rotation: [0, Math.atan2(side * apexRadialX, side * apexRadialZ), 0],
+      widthM: Math.max(0.3, thicknessM),
+      heightM: Math.min(heightStartM, heightEndM),
+      axis: [side * apexRadialX, 0, side * apexRadialZ],
+      label: thicknessLabel,
+      onPreview: () => {},
+      onCommit: commitArcThickness,
+    };
+  };
+  const arcFeatureFaces: StretchFaceDef[] = wallArcResolved
+    ? (wall.features ?? [])
+        .filter((feature) => feature.side === 1 || feature.side === -1)
+        .map((feature): StretchFaceDef => {
+          const signedDepthMm = featureSignedDepthMm(feature);
+          const outwardM = Math.max(signedDepthMm, 0) / 1000 + FEATURE_FACE_LIFT_M;
+          const s = feature.side === 1 ? 1 : -1;
+          const surfaceR = wallArcResolved.radiusM + s * (thicknessM / 2 + outwardM);
+          const center = curvedWallSurfacePoint(
+            feature.offsetMm,
+            feature.centerZMm,
+            wallArcResolved.radiusM,
+            surfaceR,
+            wallArcResolved.direction,
+            wallArcResolved.sweepRad,
+            wallArcResolved.arcLengthMm,
+          );
+          const phi =
+            (feature.offsetMm / Math.max(1, wallArcResolved.arcLengthMm)) *
+            wallArcResolved.sweepRad;
+          const rx = Math.sin(phi);
+          const rz = -wallArcResolved.direction * Math.cos(phi);
+          return {
+            id: `feature-${feature.id}`,
+            centerM: [center[0], center[1], center[2]],
+            rotation: [0, Math.atan2(s * rx, s * rz), 0],
+            widthM: feature.widthMm / 1000,
+            heightM: feature.heightMm / 1000,
+            axis: [s * rx, 0, s * rz],
+            label: featureDepthLabel(feature),
+            onPreview: () => {},
+            // WHY: curved walls only CARVE (hole/recess), never render protrusions — a positive
+            // depth would make the feature vanish. Clamp the outward drag to a flush recess.
+            onCommit: (d) => commitFeatureDepth(feature, d, true),
+          };
+        })
+    : [];
   const arcStretchFaces: StretchFaceDef[] = [
     {
       id: 'start',
       centerM: [0, heightStartM / 2, 0],
-      rotation: [0, -HALF_PI - chordThetaL, 0],
+      rotation: [0, -HALF_PI, 0],
       widthM: thicknessM,
       heightM: heightStartM,
       hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
@@ -1579,7 +1703,7 @@ export function WallObject({
     {
       id: 'end',
       centerM: [wallEndLocal.xMm / 1000, heightEndM / 2, wallEndLocal.yMm / 1000],
-      rotation: [0, HALF_PI - chordThetaL, 0],
+      rotation: [0, endTangentYaw, 0],
       widthM: thicknessM,
       heightM: heightEndM,
       hitWidthM: Math.max(thicknessM, FACE_HIT_SIZE_M),
@@ -1604,6 +1728,9 @@ export function WallObject({
       onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
       onCommit: commitTop,
     },
+    arcThicknessFace(1),
+    arcThicknessFace(-1),
+    ...arcFeatureFaces,
   ];
 
   const stretchFaces: StretchFaceDef[] = !stretchActive
@@ -1743,7 +1870,14 @@ export function WallObject({
               metalness={0.05}
             />
             {!presentation && !isArcWall && (
-              <Edges color={isSelected ? WALL_SELECTED : WALL_EDGE} threshold={15} />
+              <Edges
+                color={
+                  isSelected
+                    ? WALL_SELECTED
+                    : edgeColorFor(materialTexture ? null : wall.colorHex, WALL_EDGE)
+                }
+                threshold={15}
+              />
             )}
           </mesh>
           {/* Arc walls get an ANALYTIC outline: <Edges> culls the curved silhouette (facet seams
@@ -1759,7 +1893,11 @@ export function WallObject({
               baseYM={0}
               topYM={Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm) / 1000}
               halfWidthM={wall.thicknessMm / 2000}
-              color={isSelected ? WALL_SELECTED : WALL_EDGE}
+              color={
+                isSelected
+                  ? WALL_SELECTED
+                  : edgeColorFor(materialTexture ? null : wall.colorHex, WALL_EDGE)
+              }
             />
           )}
         </group>
@@ -1877,7 +2015,7 @@ export function WallObject({
                 0,
                 wall.rotationDeg,
               );
-              if (penetratesAny(resized, planObstacles)) return;
+              if (penetratesAny(resized, editObstacles)) return;
               updateWall(wall.id, {
                 originX,
                 originY,
@@ -1899,7 +2037,7 @@ export function WallObject({
               0,
               next.rotationDeg,
             );
-            if (penetratesAny(resized, planObstacles)) return;
+            if (penetratesAny(resized, editObstacles)) return;
             updateWall(wall.id, {
               originX: next.originX,
               originY: next.originY,
@@ -1950,10 +2088,23 @@ export function WallObject({
               updateWall(wall.id, { bendAngleDeg: null });
               return;
             }
-            updateWall(wall.id, {
-              bendAtMm: wall.bendAtMm ?? Math.round(wall.lengthMm / 2),
-              bendAngleDeg: bendDeg,
-            });
+            // The bend now CONVERTS into two grouped straight walls — each leg is a normal wall,
+            // so stretch / arc / freehand work on both sides (the single mitred L solid had them
+            // all gated off). Legacy bendAngleDeg walls keep rendering; re-dragging converts them.
+            const converted = convertWallBendToLegs(
+              wall.id,
+              wall.bendAtMm ?? Math.round(wall.lengthMm / 2),
+              bendDeg,
+            );
+            if (!converted) {
+              queueToast({
+                dedupeKey: 'glass-bend-split-blocked',
+                variant: 'warning',
+                description: t('GlassEnclosure.Designer.Bend.SplitBlocked', {
+                  defaultValue: 'Bacaklar çok kısa — kıvrım noktası uçlara çok yakın.',
+                }),
+              });
+            }
           }}
         />
       )}
@@ -2123,7 +2274,14 @@ function WallFeatureObject({
             metalness={0.05}
           />
           {!presentation && (
-            <Edges color={isSelected ? FEATURE_SELECTED : WALL_EDGE} threshold={15} />
+            <Edges
+              color={
+                isSelected
+                  ? FEATURE_SELECTED
+                  : edgeColorFor(featureMap ? null : (feature.colorHex ?? wall.colorHex), WALL_EDGE)
+              }
+              threshold={15}
+            />
           )}
         </mesh>
       );
@@ -2169,7 +2327,17 @@ function WallFeatureObject({
               emissiveIntensity={isSelected ? 0.15 : 0}
             />
             {!presentation && (
-              <Edges color={isSelected ? FEATURE_SELECTED : WALL_EDGE} threshold={15} />
+              <Edges
+                color={
+                  isSelected
+                    ? FEATURE_SELECTED
+                    : edgeColorFor(
+                        featureMap ? null : (feature.colorHex ?? wall.colorHex),
+                        WALL_EDGE,
+                      )
+                }
+                threshold={15}
+              />
             )}
           </mesh>
         ) : (

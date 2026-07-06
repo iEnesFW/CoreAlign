@@ -31,7 +31,8 @@ public class StockTransferTests
 
     private AllocationService BuildService() =>
         new(_stockItems, _movements, _allocations, _warehouses, _products,
-            new StockOpeningBalanceBridge(_stockItems, _products, _movements));
+            new StockOpeningBalanceBridge(_stockItems, _products, _movements),
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
     private static StockItem StockAt(Guid warehouseId, decimal onHand, decimal avgCost)
     {

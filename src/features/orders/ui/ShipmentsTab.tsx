@@ -2,7 +2,6 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ExternalLink, FileText, Package, Truck, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { newOperationId } from '@/shared/lib/operationId';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { safeHref } from '@/shared/lib/safeHref';
 import {
@@ -528,7 +527,6 @@ const IssueEDespatchModal = ({ shipment, onClose }: EDespatchModalProps) => {
         vehiclePlate: vehiclePlate || null,
         driverName: driverName || null,
         driverTckn: driverTckn || null,
-        operationId: newOperationId(),
       });
       toast.success(t('orders.shipments.eDespatch.success'));
       onClose();

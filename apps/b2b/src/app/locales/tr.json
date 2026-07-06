@@ -162,6 +162,8 @@
       "productSearch": "Ürün arayın (SKU veya ad)",
       "searchPrompt": "Ürün eklemek için aramaya başlayın",
       "noProducts": "Eşleşen ürün bulunamadı.",
+      "inStock": "Stokta: {{qty}} {{unit}}",
+      "outOfStock": "Stokta yok",
       "priceLockedTooltip": "Fiyat müşteri fiyat listesinden gelir (bayi tarafından düzenlenemez).",
       "minQtyHint": "Min: {{count}}",
       "minQtyError": "Bu ürün için belirlenen minimumun altında bir adet girdiniz.",

@@ -5,8 +5,11 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities.Payroll;
 
-public class Employee : TenantEntity, IXminConcurrency, ISoftDeletable
+public class Employee : TenantEntity, IHasConcurrencyToken, ISoftDeletable
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string EmployeeNumber { get; private set; } = string.Empty;
     public string FirstName { get; private set; } = string.Empty;
     public string LastName { get; private set; } = string.Empty;

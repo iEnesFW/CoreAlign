@@ -74,6 +74,29 @@ public class ProductHandlerTests
         captured!.ProcurementType.Should().Be(ProcurementType.Make);
     }
 
+    [Fact]
+    public async Task Create_persists_glass_color_and_thickness_trimmed()
+    {
+        _productRepository.SkuExistsAsync(Arg.Any<string>(), null, Arg.Any<CancellationToken>()).Returns(false);
+        Product? captured = null;
+        await _productRepository.AddAsync(Arg.Do<Product>(p => captured = p), Arg.Any<CancellationToken>());
+
+        var command = new CreateProductCommand(
+            Sku: "SKU-4MM",
+            Name: "4mm cam",
+            Unit: "m2",
+            Price: 100m,
+            Currency: "TRY",
+            Color: "  Bronz  ",
+            ThicknessMm: 4m);
+        var result = await _createSut.Handle(command, default);
+
+        captured!.Color.Should().Be("Bronz");
+        captured.ThicknessMm.Should().Be(4m);
+        result.Color.Should().Be("Bronz");
+        result.ThicknessMm.Should().Be(4m);
+    }
+
     private static UpdateProductCommand BuildUpdate(Guid id, string sku) =>
         new(
             Id: id,

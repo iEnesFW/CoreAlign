@@ -15,6 +15,7 @@ const valid = {
   isLotTracked: false,
   isSerialTracked: false,
   procurementType: 'Buy' as const,
+  costingMethod: 'WeightedAverage' as const,
   isActive: true,
 };
 

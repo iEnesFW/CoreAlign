@@ -192,7 +192,11 @@ public class ReturnRequest : TenantEntity
         ReceivedAtUtc = now;
         UpdatedAtUtc = now;
 
+        // Only restockable lines re-enter sellable inventory (and reverse their COGS). A damaged /
+        // quarantined line (Restockable == false) must NOT be put back into stock — its cost stays
+        // recognized as COGS (the goods are a loss), pending a dedicated scrap flow.
         var snapshot = Lines
+            .Where(l => l.Restockable)
             .Select(l => new ReturnRequestLineSnapshot(l.Id, l.ProductId, l.QuantityReturned, l.UnitPrice, l.UnitCostSnapshot))
             .ToList();
         AddDomainEvent(new ReturnRequestReceivedEvent(

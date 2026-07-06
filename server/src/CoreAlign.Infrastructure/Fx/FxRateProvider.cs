@@ -75,7 +75,7 @@ public sealed class FxRateProvider : IFxRateProvider
 
     public async Task<IReadOnlyList<FxRateSnapshot>> GetLatestAsync(CancellationToken ct = default)
     {
-        const string cacheKey = "fx-rates:latest";
+        var cacheKey = $"fx-rates:{TenantSegment()}:latest";
         if (_memoryCache.TryGetValue<IReadOnlyList<FxRateSnapshot>>(cacheKey, out var cached) && cached is not null)
         {
             return cached;
@@ -145,8 +145,12 @@ public sealed class FxRateProvider : IFxRateProvider
             DateTime.SpecifyKind(rate.ValidOnDate.Date, DateTimeKind.Utc),
             string.IsNullOrWhiteSpace(rate.Source) ? SourceTcmb : rate.Source);
 
-    private static string BuildRateCacheKey(string code, DateTime asOfDate) =>
-        $"fx-rates:{code}:{DateOnlyUtc(asOfDate):yyyy-MM-dd}";
+    // The resolved snapshot is tenant-specific (tenant rate override + source preference), so the
+    // cache key MUST be tenant-scoped or Tenant A's negotiated rate leaks to Tenant B for the TTL.
+    private string BuildRateCacheKey(string code, DateTime asOfDate) =>
+        $"fx-rates:{TenantSegment()}:{code}:{DateOnlyUtc(asOfDate):yyyy-MM-dd}";
+
+    private string TenantSegment() => _tenantContext?.CurrentTenantId?.ToString() ?? "global";
 
     private void SetCache<T>(string key, T value)
     {

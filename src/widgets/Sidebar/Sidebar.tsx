@@ -34,6 +34,7 @@ import {
   KeyRound,
   LayoutGrid,
   ClipboardList,
+  ScanBarcode,
   ShoppingBag,
   ReceiptText,
   Inbox,
@@ -198,6 +199,12 @@ const baseNavigation: NavItem[] = [
     href: '/dashboard/inventory/stock-counts',
     icon: ClipboardList,
     tourAnchor: 'sidebar-stock-counts',
+  },
+  {
+    name: 'Serial Lookup',
+    labelKey: 'Sidebar.nav.serialLookup',
+    href: '/dashboard/inventory/serial-lookup',
+    icon: ScanBarcode,
   },
 
   { section: 'PRODUCTION' },

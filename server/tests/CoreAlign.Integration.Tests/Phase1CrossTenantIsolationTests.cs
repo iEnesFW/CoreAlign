@@ -22,7 +22,18 @@ public class Phase1CrossTenantIsolationTests
 
     private HttpClient AdminOfTenantA() => _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
 
+    // A cross-tenant GET must surface as not-found / forbidden. Accepting 400 BadRequest here
+    // would let a missing tenant guard pass whenever model-binding/validation happens to 400
+    // (false-positive IDOR pass). INVARIANTS §59.
     private static readonly HashSet<HttpStatusCode> AcceptableDeny = new()
+    {
+        HttpStatusCode.NotFound,
+        HttpStatusCode.Forbidden,
+    };
+
+    // Writes may additionally be rejected by validation (400/422) or a state conflict (409)
+    // before the tenant guard runs; those endpoints opt in explicitly via AssertDeniedAllowValidation.
+    private static readonly HashSet<HttpStatusCode> AcceptableDenyWithValidation = new()
     {
         HttpStatusCode.NotFound,
         HttpStatusCode.Forbidden,
@@ -37,7 +48,16 @@ public class Phase1CrossTenantIsolationTests
         response.StatusCode.Should().NotBe(HttpStatusCode.Created);
         response.StatusCode.Should().NotBe(HttpStatusCode.NoContent);
         AcceptableDeny.Should().Contain(response.StatusCode,
-            "Phase 1 cross-tenant lookups must surface as not-found / forbidden / bad-request, not as success");
+            "cross-tenant GET lookups must surface as not-found / forbidden, not bad-request (which can mask a missing tenant guard)");
+    }
+
+    private static void AssertDeniedAllowValidation(HttpResponseMessage response)
+    {
+        response.StatusCode.Should().NotBe(HttpStatusCode.OK);
+        response.StatusCode.Should().NotBe(HttpStatusCode.Created);
+        response.StatusCode.Should().NotBe(HttpStatusCode.NoContent);
+        AcceptableDenyWithValidation.Should().Contain(response.StatusCode,
+            "cross-tenant writes must be denied (not-found / forbidden) or rejected by validation");
     }
 
     [Fact]
@@ -81,7 +101,7 @@ public class Phase1CrossTenantIsolationTests
             Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json"),
         };
         var response = await client.SendAsync(request);
-        AssertDenied(response);
+        AssertDeniedAllowValidation(response);
     }
 
     [Fact]
@@ -112,7 +132,7 @@ public class Phase1CrossTenantIsolationTests
             Content = new StringContent("{}", System.Text.Encoding.UTF8, "application/json"),
         };
         var response = await client.SendAsync(request);
-        AssertDenied(response);
+        AssertDeniedAllowValidation(response);
     }
 
     [Fact]

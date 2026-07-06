@@ -24,7 +24,12 @@ import {
 } from '@/shared/master-data/hooks/useMasterData';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
 import { productSchema, type ProductFormValues } from '../model/productSchema';
-import type { ProcurementType, ProductStatus, Product } from '../model/product.types';
+import type {
+  ProcurementType,
+  CostingMethod,
+  ProductStatus,
+  Product,
+} from '../model/product.types';
 import { useCreateProduct, useUpdateProduct } from '../hooks/useProductQueries';
 
 type ProductIdField =
@@ -69,6 +74,9 @@ const PRODUCT_FIELD_TAB: Record<string, ProductTab> = {
   safetyStock: 'pricing',
   leadTimeDays: 'pricing',
   procurementType: 'pricing',
+  costingMethod: 'pricing',
+  color: 'logistics',
+  thicknessMm: 'logistics',
   weightKg: 'logistics',
   widthCm: 'logistics',
   heightCm: 'logistics',
@@ -87,6 +95,10 @@ interface Props {
 
 const PRODUCT_STATUSES: ProductStatus[] = ['Active', 'New', 'Discontinued', 'EndOfLife'];
 const PROCUREMENT_TYPES: ProcurementType[] = ['Buy', 'Make'];
+// Standard cost is intentionally not offered yet: it requires an issue-time cost-variance GL leg
+// (and a seeded variance account) to keep inventory netting at actual — shipped separately so the
+// selector never exposes a method that would silently behave as weighted-average.
+const COSTING_METHODS: CostingMethod[] = ['WeightedAverage', 'Fifo'];
 
 const fieldCls =
   'w-full rounded border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
@@ -129,6 +141,9 @@ const emptyValues: ProductFormValues = {
   safetyStock: '',
   leadTimeDays: '',
   procurementType: 'Buy',
+  costingMethod: 'WeightedAverage',
+  color: '',
+  thicknessMm: '',
   weightKg: '',
   widthCm: '',
   heightCm: '',
@@ -212,6 +227,9 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
         safetyStock: str(product.safetyStock),
         leadTimeDays: str(product.leadTimeDays),
         procurementType: product.procurementType ?? 'Buy',
+        costingMethod: product.costingMethod ?? 'WeightedAverage',
+        color: product.color ?? '',
+        thicknessMm: str(product.thicknessMm),
         weightKg: str(product.weightKg),
         widthCm: str(product.widthCm),
         heightCm: str(product.heightCm),
@@ -246,6 +264,9 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
         taxRateId: values.taxRateId || null,
         status: values.status,
         procurementType: values.procurementType,
+        costingMethod: values.costingMethod,
+        color: values.color || null,
+        thicknessMm: numOrNull(values.thicknessMm),
         launchDate: values.launchDate || null,
         endOfLifeDate: values.endOfLifeDate || null,
       };
@@ -708,6 +729,22 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
                   </div>
                 )}
               />
+
+              <div className="mt-4">
+                <label className={labelCls} htmlFor="costingMethod">
+                  {t('products.fields.costingMethod')}
+                </label>
+                <select id="costingMethod" className={fieldCls} {...register('costingMethod')}>
+                  {COSTING_METHODS.map((cm) => (
+                    <option key={cm} value={cm}>
+                      {t(`products.costingMethod.${cm}`)}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {t('products.costingMethodHint')}
+                </p>
+              </div>
             </section>
           </div>
 
@@ -715,6 +752,13 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.logistics')}</h3>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                <Input label={t('products.fields.color')} {...register('color')} />
+                <Input
+                  label={t('products.fields.thicknessMm')}
+                  type="number"
+                  step="0.1"
+                  {...register('thicknessMm')}
+                />
                 <Input
                   label={t('products.fields.weightKg')}
                   type="number"

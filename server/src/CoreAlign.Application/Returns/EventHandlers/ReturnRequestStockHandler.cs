@@ -18,19 +18,22 @@ public class ReturnRequestReceivedStockHandler : INotificationHandler<ReturnRequ
     private readonly IStockMovementRepository _stockMovementRepository;
     private readonly IStockTransactionRepository _stockTransactionRepository;
     private readonly IGLPostingOutbox _glOutbox;
+    private readonly Inventory.Services.IInventoryCostingService _costing;
 
     public ReturnRequestReceivedStockHandler(
         IProductRepository productRepository,
         IStockItemRepository stockItemRepository,
         IStockMovementRepository stockMovementRepository,
         IStockTransactionRepository stockTransactionRepository,
-        IGLPostingOutbox glOutbox)
+        IGLPostingOutbox glOutbox,
+        Inventory.Services.IInventoryCostingService costing)
     {
         _productRepository = productRepository;
         _stockItemRepository = stockItemRepository;
         _stockMovementRepository = stockMovementRepository;
         _stockTransactionRepository = stockTransactionRepository;
         _glOutbox = glOutbox;
+        _costing = costing;
     }
 
     public async Task Handle(ReturnRequestReceivedEvent notification, CancellationToken cancellationToken)
@@ -78,6 +81,10 @@ public class ReturnRequestReceivedStockHandler : INotificationHandler<ReturnRequ
                 sourceReference: notification.ReturnNumber,
                 notes: ReasonNote);
             await _stockMovementRepository.AddAsync(movement, cancellationToken);
+            // Returned goods re-enter the FIFO stack as a new layer at their captured cost so the
+            // next FIFO issue can consume them (no-op for non-Fifo products).
+            await _costing.RecordReceiptLayerAsync(
+                stockItem, product, qty, receiptUnitCost, notification.OccurredAtUtc, movement.Id, cancellationToken);
             cogsCost += movement.TotalCost;
 
             await _stockTransactionRepository.AddAsync(new StockTransaction(

@@ -5,8 +5,11 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities.Payroll;
 
-public class PayrollRun : TenantEntity, IXminConcurrency
+public class PayrollRun : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string RunNumber { get; private set; } = string.Empty;
     public int PeriodYear { get; private set; }
     public int PeriodMonth { get; private set; }

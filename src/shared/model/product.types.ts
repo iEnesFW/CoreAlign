@@ -2,6 +2,8 @@ export type ProductStatus = 'Active' | 'New' | 'Discontinued' | 'EndOfLife';
 
 export type ProcurementType = 'Buy' | 'Make';
 
+export type CostingMethod = 'WeightedAverage' | 'Fifo' | 'Standard';
+
 export interface Product {
   id: string;
   sku: string;
@@ -15,6 +17,8 @@ export interface Product {
   categoryId: string | null;
   parentProductId: string | null;
   variantAttributesJson: string | null;
+  color: string | null;
+  thicknessMm: number | null;
   tagsJson: string | null;
   unit: string;
   baseUomId: string | null;
@@ -39,6 +43,7 @@ export interface Product {
   safetyStock: number;
   leadTimeDays: number;
   procurementType: ProcurementType;
+  costingMethod: CostingMethod;
   weightKg: number | null;
   widthCm: number | null;
   heightCm: number | null;

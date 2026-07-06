@@ -59,6 +59,7 @@ public class JournalEntryConfiguration : IEntityTypeConfiguration<JournalEntry>
     public void Configure(EntityTypeBuilder<JournalEntry> builder)
     {
         builder.HasKey(j => j.Id);
+        builder.Property(j => j.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(j => j.Number).HasMaxLength(32).IsRequired();
         builder.Property(j => j.Description).HasMaxLength(1000);
         builder.Property(j => j.Reference).HasMaxLength(200);

@@ -18,7 +18,49 @@ export const orderLineSchema = z.object({
   withholdingTaxCodeId: optionalId,
   warehouseId: optionalId,
   lineNotes: z.string().max(500, { message: 'Validation.TooLong' }).optional().or(z.literal('')),
+  // Optional glass cut size — when width/height/pieces are all set the line quantity is derived
+  // as the total m² (server-authoritative; mirrored client-side for the preview).
+  widthMm: optionalNumeric,
+  heightMm: optionalNumeric,
+  pieces: optionalNumeric,
 });
+
+// Square millimetres per unit for a square unit of measure, mirroring the server GlassLineMath.
+// Returns null for non-area units (mt, kg, adet …) so those keep a single plain quantity input.
+export const areaUnitDivisor = (unitCode?: string | null): number | null => {
+  const code = unitCode?.trim().toLowerCase().replace('²', '2');
+  switch (code) {
+    case 'm2':
+    case 'sqm':
+    case 'metrekare':
+      return 1_000_000;
+    case 'dm2':
+      return 10_000;
+    case 'cm2':
+      return 100;
+    case 'mm2':
+      return 1;
+    default:
+      return null;
+  }
+};
+
+export const isAreaUnit = (unitCode?: string | null): boolean => areaUnitDivisor(unitCode) !== null;
+
+// Total area in the unit's own square measure from a cut size (width × height mm) × pieces.
+export const glassLineArea = (
+  unitCode: string | null | undefined,
+  widthMm?: string | number | null,
+  heightMm?: string | number | null,
+  pieces?: string | number | null,
+): number | null => {
+  const divisor = areaUnitDivisor(unitCode);
+  const w = Number(widthMm);
+  const h = Number(heightMm);
+  const p = Number(pieces);
+  if (divisor === null || !(w > 0) || !(h > 0) || !(p > 0)) return null;
+  return Math.round((p * w * h * 10000) / divisor) / 10000;
+};
 
 export const orderSchema = z.object({
   orderNumber: z.string().max(64, { message: 'Validation.TooLong' }).optional().or(z.literal('')),

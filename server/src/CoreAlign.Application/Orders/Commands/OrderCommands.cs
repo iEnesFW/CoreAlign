@@ -22,7 +22,10 @@ public record OrderLineInput(
     string? LineNotes = null,
     bool IsManualPriceOverride = false,
     decimal UnitCostSnapshot = 0m,
-    Guid? WithholdingTaxCodeId = null);
+    Guid? WithholdingTaxCodeId = null,
+    decimal? WidthMm = null,
+    decimal? HeightMm = null,
+    decimal? Pieces = null);
 
 public record CreateOrderCommand(
     string OrderNumber,

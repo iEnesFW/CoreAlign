@@ -235,8 +235,22 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
 
   const commit = (patch: Partial<SceneWallState>) => {
     const candidate = { ...wall, ...patch };
-    const attached = findAttachedRunIds(wall, useDesignerStore.getState().scene.runs);
-    const obstacles = solidObstaclesExcept(new Set([wall.id, ...attached]));
+    const state = useDesignerStore.getState();
+    const attached = findAttachedRunIds(wall, state.scene.runs);
+    // Exempt a group sibling ONLY where it already touches this wall (an L-leg joint) — a sibling
+    // the user grouped but left clear keeps its collision safety net.
+    const selfFp = buildWallFootprint(wall, 0, 0, wall.rotationDeg);
+    const groupSiblings = wall.groupId
+      ? (state.scene.walls ?? [])
+          .filter(
+            (w) =>
+              w.id !== wall.id &&
+              w.groupId === wall.groupId &&
+              footprintsPenetrate(selfFp, buildWallFootprint(w, 0, 0, w.rotationDeg)),
+          )
+          .map((w) => w.id)
+      : [];
+    const obstacles = solidObstaclesExcept(new Set([wall.id, ...groupSiblings, ...attached]));
     if (
       !transformAllowed(
         buildWallFootprint(wall, 0, 0, wall.rotationDeg),

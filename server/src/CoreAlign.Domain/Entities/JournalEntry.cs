@@ -8,8 +8,11 @@ namespace CoreAlign.Domain.Entities;
 /// Yevmiye fişi — the core posting document in Turkish accounting. Lines are
 /// owned by the aggregate; balance (Σdebit = Σcredit) is enforced on Post.
 /// </summary>
-public class JournalEntry : TenantEntity, IXminConcurrency
+public class JournalEntry : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string Number { get; private set; } = string.Empty;
     public DateTime EntryDate { get; private set; }
     public DateTime PostingDate { get; private set; }

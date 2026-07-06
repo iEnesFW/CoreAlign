@@ -113,6 +113,8 @@ export interface ProductSummary {
   price: number;
   currency: string;
   minOrderQuantity?: number | null;
+  stockQuantity?: number | null;
+  isStockTracked?: boolean;
 }
 
 export interface CreditSnapshot {

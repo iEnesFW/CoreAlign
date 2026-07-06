@@ -25,7 +25,10 @@ public sealed record EFaturaDocument(
     string BuyerName,
     IReadOnlyList<EFaturaLine> Lines,
     string Currency,
-    decimal TotalAmount);
+    decimal TotalAmount,
+    // The full UBL-TR XML (invoice or DespatchAdvice) produced upstream. When present it is sent
+    // to the provider verbatim; the scalar fields above are a parsed summary for logging/routing.
+    string? RawUblTrXml = null);
 
 public sealed record EFaturaCredentials(
     string Username,

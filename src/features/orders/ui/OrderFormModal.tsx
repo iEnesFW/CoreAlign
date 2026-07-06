@@ -33,7 +33,7 @@ import {
   useWithholdingTaxCodesQuery,
 } from '@/shared/master-data/hooks/useMasterData';
 import type { WithholdingTaxCode } from '@/shared/master-data/model/masterData.types';
-import { orderSchema, type OrderFormValues } from '../model/orderSchema';
+import { orderSchema, glassLineArea, type OrderFormValues } from '../model/orderSchema';
 import {
   ORDER_STATUSES,
   type Order,
@@ -218,6 +218,9 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
           withholdingTaxCodeId: l.withholdingTaxCodeId ?? '',
           warehouseId: l.warehouseId ?? '',
           lineNotes: l.lineNotes ?? '',
+          widthMm: l.widthMm ? String(l.widthMm) : '',
+          heightMm: l.heightMm ? String(l.heightMm) : '',
+          pieces: l.pieces ? String(l.pieces) : '',
         })),
       });
     } else {
@@ -373,20 +376,32 @@ export const OrderFormModal = ({ open, order, onClose, presentation = 'modal' }:
 
   const onSubmit = handleSubmit(
     (values) => {
-      const lines: OrderLineInput[] = values.lines.map((l) => ({
-        productId: l.productId,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        uomId: l.uomId || null,
-        uomCode: l.uomCode || null,
-        lineDiscountPercent: numOrUndefined(l.lineDiscountPercent),
-        taxRateId: l.taxRateId || null,
-        taxRatePercent: numOrUndefined(l.taxRatePercent),
-        withholdingRatePercent: numOrUndefined(l.withholdingRatePercent),
-        withholdingTaxCodeId: l.withholdingTaxCodeId || null,
-        warehouseId: l.warehouseId || null,
-        lineNotes: l.lineNotes || null,
-      }));
+      const unitByProductId = new Map(products.map((p) => [p.id, p.unit]));
+      const lines: OrderLineInput[] = values.lines.map((l) => {
+        const area = glassLineArea(
+          unitByProductId.get(l.productId),
+          l.widthMm,
+          l.heightMm,
+          l.pieces,
+        );
+        return {
+          productId: l.productId,
+          quantity: area ?? l.quantity,
+          unitPrice: l.unitPrice,
+          uomId: l.uomId || null,
+          uomCode: l.uomCode || null,
+          lineDiscountPercent: numOrUndefined(l.lineDiscountPercent),
+          taxRateId: l.taxRateId || null,
+          taxRatePercent: numOrUndefined(l.taxRatePercent),
+          withholdingRatePercent: numOrUndefined(l.withholdingRatePercent),
+          withholdingTaxCodeId: l.withholdingTaxCodeId || null,
+          warehouseId: l.warehouseId || null,
+          lineNotes: l.lineNotes || null,
+          widthMm: numOrUndefined(l.widthMm),
+          heightMm: numOrUndefined(l.heightMm),
+          pieces: numOrUndefined(l.pieces),
+        };
+      });
 
       const payload = {
         orderNumber: values.orderNumber ?? '',

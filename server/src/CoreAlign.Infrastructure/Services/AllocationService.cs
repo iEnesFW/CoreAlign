@@ -15,6 +15,7 @@ public class AllocationService : IAllocationService
     private readonly IWarehouseRepository _warehouses;
     private readonly IProductRepository _products;
     private readonly IStockOpeningBalanceBridge _openingBalance;
+    private readonly IInventoryCostingService _costing;
 
     public AllocationService(
         IStockItemRepository stockItems,
@@ -22,7 +23,8 @@ public class AllocationService : IAllocationService
         IStockAllocationRepository allocations,
         IWarehouseRepository warehouses,
         IProductRepository products,
-        IStockOpeningBalanceBridge openingBalance)
+        IStockOpeningBalanceBridge openingBalance,
+        IInventoryCostingService costing)
     {
         _stockItems = stockItems;
         _movements = movements;
@@ -30,6 +32,7 @@ public class AllocationService : IAllocationService
         _warehouses = warehouses;
         _products = products;
         _openingBalance = openingBalance;
+        _costing = costing;
     }
 
     public async Task<AllocationResult> ReserveAsync(AllocationRequest request, CancellationToken cancellationToken = default)
@@ -126,10 +129,18 @@ public class AllocationService : IAllocationService
         allocation.Consume(consumeQty, now);
 
         var product = await _products.GetByIdAsync(allocation.ProductId, cancellationToken);
-        if (product is not null && product.IsStockTracked)
+        var issueUnitCost = item.AvgCost;
+        var issueTotalCost = Math.Round(consumeQty * item.AvgCost, 4);
+        if (product is not null)
         {
-            product.AdjustStock(-consumeQty);
-            _products.Update(product);
+            if (product.IsStockTracked)
+            {
+                product.AdjustStock(-consumeQty);
+                _products.Update(product);
+            }
+            var costing = await _costing.ResolveIssueCostAsync(item, product, consumeQty, now, cancellationToken);
+            issueUnitCost = costing.UnitCost;
+            issueTotalCost = costing.TotalCost;
         }
 
         var movement = new StockMovement(
@@ -137,7 +148,7 @@ public class AllocationService : IAllocationService
             warehouseId: allocation.WarehouseId,
             type: StockMovementType.Issue,
             quantity: consumeQty,
-            unitCost: item.AvgCost,
+            unitCost: issueUnitCost,
             onHandAfter: item.OnHand,
             avgCostAfter: item.AvgCost,
             occurredAtUtc: now,
@@ -147,6 +158,7 @@ public class AllocationService : IAllocationService
             lotId: allocation.LotId,
             postedByUserId: postedByUserId,
             notes: "Reservation consumed (shipment)");
+        movement.OverrideTotalCost(issueTotalCost);
         await _movements.AddAsync(movement, cancellationToken);
         _allocations.Update(allocation);
         return movement;
@@ -189,6 +201,7 @@ public class AllocationService : IAllocationService
         var now = DateTime.UtcNow;
         item.ApplyReceipt(request.Quantity, request.UnitCost, now);
         await SyncProductStockAsync(request.ProductId, request.Quantity, cancellationToken);
+        var product = await _products.GetByIdAsync(request.ProductId, cancellationToken);
 
         var movement = new StockMovement(
             productId: request.ProductId,
@@ -209,6 +222,11 @@ public class AllocationService : IAllocationService
             postedByUserId: request.PostedByUserId,
             notes: request.Notes);
         await _movements.AddAsync(movement, cancellationToken);
+        if (product is not null)
+        {
+            await _costing.RecordReceiptLayerAsync(
+                item, product, request.Quantity, request.UnitCost, now, movement.Id, cancellationToken);
+        }
         return movement;
     }
 
@@ -222,14 +240,28 @@ public class AllocationService : IAllocationService
             ?? throw new StockMovementValidationException("No stock available at this warehouse to issue.");
         var now = DateTime.UtcNow;
         item.ApplyIssue(request.Quantity, now);
-        await SyncProductStockAsync(request.ProductId, -request.Quantity, cancellationToken);
+
+        var product = await _products.GetByIdAsync(request.ProductId, cancellationToken);
+        var issueUnitCost = item.AvgCost;
+        var issueTotalCost = Math.Round(request.Quantity * item.AvgCost, 4);
+        if (product is not null)
+        {
+            if (product.IsStockTracked)
+            {
+                product.AdjustStock(-request.Quantity);
+                _products.Update(product);
+            }
+            var costing = await _costing.ResolveIssueCostAsync(item, product, request.Quantity, now, cancellationToken);
+            issueUnitCost = costing.UnitCost;
+            issueTotalCost = costing.TotalCost;
+        }
 
         var movement = new StockMovement(
             productId: request.ProductId,
             warehouseId: request.WarehouseId,
             type: request.MovementType,
             quantity: request.Quantity,
-            unitCost: item.AvgCost,
+            unitCost: issueUnitCost,
             onHandAfter: item.OnHand,
             avgCostAfter: item.AvgCost,
             occurredAtUtc: now,
@@ -242,6 +274,7 @@ public class AllocationService : IAllocationService
             reasonCodeId: request.ReasonCodeId,
             postedByUserId: request.PostedByUserId,
             notes: request.Notes);
+        movement.OverrideTotalCost(issueTotalCost);
         await _movements.AddAsync(movement, cancellationToken);
         return movement;
     }
@@ -271,6 +304,19 @@ public class AllocationService : IAllocationService
         var now = DateTime.UtcNow;
         item.ApplyAdjustment(request.Delta, request.UnitCost, now);
         await SyncProductStockAsync(request.ProductId, request.Delta, cancellationToken);
+        var product = await _products.GetByIdAsync(request.ProductId, cancellationToken);
+        var isFifo = product is not null && product.CostingMethod == CostingMethod.Fifo;
+
+        var absQty = Math.Abs(request.Delta);
+        var adjustUnitCost = request.UnitCost ?? item.AvgCost;
+        var adjustTotalCost = Math.Round(absQty * adjustUnitCost, 4);
+        // FIFO shrinkage (negative) must consume real cost layers at their own cost, not AvgCost.
+        if (isFifo && request.Delta < 0m)
+        {
+            var costing = await _costing.ResolveIssueCostAsync(item, product!, absQty, now, cancellationToken);
+            adjustUnitCost = costing.UnitCost;
+            adjustTotalCost = costing.TotalCost;
+        }
 
         var movementType = request.Delta > 0
             ? request.PositiveMovementType ?? StockMovementType.AdjustmentPositive
@@ -280,8 +326,8 @@ public class AllocationService : IAllocationService
             productId: request.ProductId,
             warehouseId: request.WarehouseId,
             type: movementType,
-            quantity: Math.Abs(request.Delta),
-            unitCost: request.UnitCost ?? item.AvgCost,
+            quantity: absQty,
+            unitCost: adjustUnitCost,
             onHandAfter: item.OnHand,
             avgCostAfter: item.AvgCost,
             occurredAtUtc: now,
@@ -291,7 +337,15 @@ public class AllocationService : IAllocationService
             reasonCodeId: request.ReasonCodeId,
             postedByUserId: request.PostedByUserId,
             notes: request.Notes);
+        movement.OverrideTotalCost(adjustTotalCost);
         await _movements.AddAsync(movement, cancellationToken);
+        // FIFO found-stock (positive) enters as a new layer at the adjustment cost (a real cost when
+        // the caller supplies one — e.g. a cycle-count snapshot — never a silent AvgCost phantom for
+        // a costed adjustment).
+        if (isFifo && request.Delta > 0m)
+        {
+            await _costing.RecordReceiptLayerAsync(item, product!, absQty, adjustUnitCost, now, movement.Id, cancellationToken);
+        }
         return movement;
     }
 

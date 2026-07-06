@@ -9,15 +9,21 @@ public class StockOpeningBalanceBridge : IStockOpeningBalanceBridge
     private readonly IStockItemRepository _stockItems;
     private readonly IProductRepository _products;
     private readonly IStockMovementRepository _movements;
+    private readonly IInventoryCostingService? _costing;
 
+    // costing is optional (default null) so existing test constructions stay valid; production DI
+    // injects it so a Fifo product's opening balance seeds an initial cost layer (otherwise the first
+    // FIFO issue would hit the exhausted-layer hard error).
     public StockOpeningBalanceBridge(
         IStockItemRepository stockItems,
         IProductRepository products,
-        IStockMovementRepository movements)
+        IStockMovementRepository movements,
+        IInventoryCostingService? costing = null)
     {
         _stockItems = stockItems;
         _products = products;
         _movements = movements;
+        _costing = costing;
     }
 
     public async Task EnsureMaterializedAsync(StockItem item, CancellationToken cancellationToken = default)
@@ -43,7 +49,7 @@ public class StockOpeningBalanceBridge : IStockOpeningBalanceBridge
         var now = DateTime.UtcNow;
         var openingCost = product.AverageCost > 0m ? product.AverageCost : product.StandardCost;
         item.SeedOpeningBalance(product.StockQuantity, openingCost, now);
-        await _movements.AddAsync(new StockMovement(
+        var openingMovement = new StockMovement(
             productId: item.ProductId,
             warehouseId: item.WarehouseId,
             type: StockMovementType.OpeningBalance,
@@ -53,6 +59,12 @@ public class StockOpeningBalanceBridge : IStockOpeningBalanceBridge
             avgCostAfter: item.AvgCost,
             occurredAtUtc: now,
             sourceDocumentType: StockSourceDocumentType.OpeningBalance,
-            notes: "Açılış bakiyesi (ürün stoğundan otomatik)"), cancellationToken);
+            notes: "Açılış bakiyesi (ürün stoğundan otomatik)");
+        await _movements.AddAsync(openingMovement, cancellationToken);
+        if (_costing is not null)
+        {
+            await _costing.RecordReceiptLayerAsync(
+                item, product, product.StockQuantity, openingCost, now, openingMovement.Id, cancellationToken);
+        }
     }
 }

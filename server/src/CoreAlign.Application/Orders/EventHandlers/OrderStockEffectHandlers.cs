@@ -38,14 +38,19 @@ internal static class CogsGLLines
 
 public static class BomResolver
 {
+    // treatAsLeaf lets a caller stop explosion at a node even though it has a BOM — used so a
+    // MANUFACTURED (make-to-stock) composite is sold from its OWN finished-goods stock (its BOM is
+    // consumed at PRODUCTION time, not re-exploded on every sale). A phantom/kit composite (the
+    // default) has no treatAsLeaf entry and still explodes to its components.
     public static Dictionary<Guid, decimal> ExpandToLeaves(
         IEnumerable<OrderLineSnapshot> lines,
-        IReadOnlyDictionary<Guid, IReadOnlyList<(Guid ComponentId, decimal Quantity)>> bomTree)
+        IReadOnlyDictionary<Guid, IReadOnlyList<(Guid ComponentId, decimal Quantity)>> bomTree,
+        Func<Guid, bool>? treatAsLeaf = null)
     {
         var leafTotals = new Dictionary<Guid, decimal>();
         foreach (var line in lines)
         {
-            ExpandRecursive(line.ProductId, line.Quantity, bomTree, leafTotals, new HashSet<Guid>());
+            ExpandRecursive(line.ProductId, line.Quantity, bomTree, leafTotals, new HashSet<Guid>(), treatAsLeaf);
         }
         return leafTotals;
     }
@@ -55,14 +60,15 @@ public static class BomResolver
         decimal multiplier,
         IReadOnlyDictionary<Guid, IReadOnlyList<(Guid ComponentId, decimal Quantity)>> tree,
         Dictionary<Guid, decimal> leafTotals,
-        HashSet<Guid> path)
+        HashSet<Guid> path,
+        Func<Guid, bool>? treatAsLeaf)
     {
         if (!path.Add(productId))
         {
             throw new InvalidOperationException($"Cycle detected at product {productId}.");
         }
 
-        if (!tree.TryGetValue(productId, out var children) || children.Count == 0)
+        if (treatAsLeaf?.Invoke(productId) == true || !tree.TryGetValue(productId, out var children) || children.Count == 0)
         {
             if (leafTotals.TryGetValue(productId, out var existing))
             {
@@ -77,7 +83,7 @@ public static class BomResolver
         {
             foreach (var (componentId, quantity) in children)
             {
-                ExpandRecursive(componentId, multiplier * quantity, tree, leafTotals, new HashSet<Guid>(path));
+                ExpandRecursive(componentId, multiplier * quantity, tree, leafTotals, new HashSet<Guid>(path), treatAsLeaf);
             }
         }
     }
@@ -93,6 +99,7 @@ public class OrderConfirmedStockHandler : INotificationHandler<OrderConfirmedEve
     private readonly IStockMovementRepository _stockMovementRepository;
     private readonly IGLPostingOutbox _glOutbox;
     private readonly IStockOpeningBalanceBridge _openingBalanceBridge;
+    private readonly IInventoryCostingService _costing;
 
     public OrderConfirmedStockHandler(
         IProductRepository productRepository,
@@ -102,7 +109,8 @@ public class OrderConfirmedStockHandler : INotificationHandler<OrderConfirmedEve
         IStockItemRepository stockItemRepository,
         IStockMovementRepository stockMovementRepository,
         IGLPostingOutbox glOutbox,
-        IStockOpeningBalanceBridge openingBalanceBridge)
+        IStockOpeningBalanceBridge openingBalanceBridge,
+        IInventoryCostingService costing)
     {
         _productRepository = productRepository;
         _componentRepository = componentRepository;
@@ -112,13 +120,23 @@ public class OrderConfirmedStockHandler : INotificationHandler<OrderConfirmedEve
         _stockMovementRepository = stockMovementRepository;
         _glOutbox = glOutbox;
         _openingBalanceBridge = openingBalanceBridge;
+        _costing = costing;
     }
 
     public async Task Handle(OrderConfirmedEvent notification, CancellationToken cancellationToken)
     {
         var lineProductIds = notification.Lines.Select(l => l.ProductId).Distinct().ToList();
         var bomTree = await _componentRepository.GetTreeForProductsAsync(lineProductIds, cancellationToken);
-        var leafTotals = BomResolver.ExpandToLeaves(notification.Lines, bomTree);
+
+        // A make-to-stock composite (ProcurementType.Make) is sold from its own finished-goods
+        // stock, so BOM explosion stops at it; a phantom/kit composite (Buy, the default) explodes.
+        var nodeIds = bomTree.Keys.Concat(lineProductIds).Distinct().ToList();
+        var nodeProducts = await _productRepository.GetByIdsAsync(nodeIds, cancellationToken);
+        var makeIds = nodeProducts.Values
+            .Where(p => p.ProcurementType == ProcurementType.Make)
+            .Select(p => p.Id)
+            .ToHashSet();
+        var leafTotals = BomResolver.ExpandToLeaves(notification.Lines, bomTree, makeIds.Contains);
 
         var leafProductIds = leafTotals.Keys.ToList();
         var products = await _productRepository.GetByIdsAsync(leafProductIds, cancellationToken);
@@ -188,12 +206,14 @@ public class OrderConfirmedStockHandler : INotificationHandler<OrderConfirmedEve
                 var stockItem = issueStockItems[productId];
                 var occurred = notification.OccurredAtUtc;
                 stockItem.ApplyIssue(required, occurred, allowNegative: false);
+                var issueUnitCost = (await _costing.ResolveIssueCostAsync(
+                    stockItem, product, required, occurred, cancellationToken)).UnitCost;
                 var movement = new StockMovement(
                     productId: product.Id,
                     warehouseId: defaultWarehouse.Id,
                     type: StockMovementType.Issue,
                     quantity: required,
-                    unitCost: stockItem.AvgCost,
+                    unitCost: issueUnitCost,
                     onHandAfter: stockItem.OnHand,
                     avgCostAfter: stockItem.AvgCost,
                     occurredAtUtc: occurred,
@@ -232,6 +252,7 @@ public class OrderCancelledStockHandler : INotificationHandler<OrderCancelledFro
     private readonly IStockItemRepository _stockItemRepository;
     private readonly IStockMovementRepository _stockMovementRepository;
     private readonly IGLPostingOutbox _glOutbox;
+    private readonly IInventoryCostingService _costing;
 
     public OrderCancelledStockHandler(
         IProductRepository productRepository,
@@ -240,7 +261,8 @@ public class OrderCancelledStockHandler : INotificationHandler<OrderCancelledFro
         IWarehouseRepository warehouseRepository,
         IStockItemRepository stockItemRepository,
         IStockMovementRepository stockMovementRepository,
-        IGLPostingOutbox glOutbox)
+        IGLPostingOutbox glOutbox,
+        IInventoryCostingService costing)
     {
         _productRepository = productRepository;
         _componentRepository = componentRepository;
@@ -249,17 +271,40 @@ public class OrderCancelledStockHandler : INotificationHandler<OrderCancelledFro
         _stockItemRepository = stockItemRepository;
         _stockMovementRepository = stockMovementRepository;
         _glOutbox = glOutbox;
+        _costing = costing;
     }
 
     public async Task Handle(OrderCancelledFromActiveEvent notification, CancellationToken cancellationToken)
     {
         var lineProductIds = notification.Lines.Select(l => l.ProductId).Distinct().ToList();
         var bomTree = await _componentRepository.GetTreeForProductsAsync(lineProductIds, cancellationToken);
-        var leafTotals = BomResolver.ExpandToLeaves(notification.Lines, bomTree);
+
+        // A make-to-stock composite (ProcurementType.Make) is sold from its own finished-goods
+        // stock, so BOM explosion stops at it; a phantom/kit composite (Buy, the default) explodes.
+        var nodeIds = bomTree.Keys.Concat(lineProductIds).Distinct().ToList();
+        var nodeProducts = await _productRepository.GetByIdsAsync(nodeIds, cancellationToken);
+        var makeIds = nodeProducts.Values
+            .Where(p => p.ProcurementType == ProcurementType.Make)
+            .Select(p => p.Id)
+            .ToHashSet();
+        var leafTotals = BomResolver.ExpandToLeaves(notification.Lines, bomTree, makeIds.Contains);
 
         var leafProductIds = leafTotals.Keys.ToList();
         var products = await _productRepository.GetByIdsAsync(leafProductIds, cancellationToken);
         var defaultWarehouse = await _warehouseRepository.GetDefaultAsync(cancellationToken);
+
+        // Reverse at the ORIGINAL issue cost, not live AvgCost: the confirm handler relieved 153 at
+        // the issue-time unit cost, so the cancel must debit 153 by that same amount or the pair
+        // never nets to zero (a later receipt that moved AvgCost would leave a permanent residual on
+        // 153/621). The confirm's Issue movements carry the exact per-product cost of record.
+        var priorMovements = await _stockMovementRepository.GetBySourceAsync(
+            StockSourceDocumentType.Order, notification.OrderId, cancellationToken);
+        var issuedByProduct = priorMovements
+            .Where(m => m.Type == StockMovementType.Issue)
+            .GroupBy(m => m.ProductId)
+            .ToDictionary(
+                g => g.Key,
+                g => (Quantity: g.Sum(m => m.Quantity), Cost: g.Sum(m => m.TotalCost)));
 
         var cogsCost = 0m;
         foreach (var (productId, restored) in leafTotals)
@@ -285,13 +330,17 @@ public class OrderCancelledStockHandler : INotificationHandler<OrderCancelledFro
             {
                 var stockItem = await _stockItemRepository.GetOrCreateAsync(product.Id, defaultWarehouse.Id, null, cancellationToken);
                 var occurred = notification.OccurredAtUtc;
-                stockItem.ApplyReceipt(restored, stockItem.AvgCost, occurred);
+                var reversalUnitCost =
+                    issuedByProduct.TryGetValue(product.Id, out var issued) && issued.Quantity > 0m
+                        ? Math.Round(issued.Cost / issued.Quantity, 4)
+                        : stockItem.AvgCost;
+                stockItem.ApplyReceipt(restored, reversalUnitCost, occurred);
                 var movement = new StockMovement(
                     productId: product.Id,
                     warehouseId: defaultWarehouse.Id,
                     type: StockMovementType.Receipt,
                     quantity: restored,
-                    unitCost: stockItem.AvgCost,
+                    unitCost: reversalUnitCost,
                     onHandAfter: stockItem.OnHand,
                     avgCostAfter: stockItem.AvgCost,
                     occurredAtUtc: occurred,
@@ -300,6 +349,10 @@ public class OrderCancelledStockHandler : INotificationHandler<OrderCancelledFro
                     sourceReference: notification.OrderNumber,
                     notes: "Order cancelled (BOM-resolved)");
                 await _stockMovementRepository.AddAsync(movement, cancellationToken);
+                // Returned-to-stock units re-enter the FIFO stack as a new layer at the reversed
+                // (original issue) cost — keeps Σlayer == OnHand for Fifo products (no-op otherwise).
+                await _costing.RecordReceiptLayerAsync(
+                    stockItem, product, restored, reversalUnitCost, occurred, movement.Id, cancellationToken);
                 cogsCost += movement.TotalCost;
             }
         }

@@ -4,7 +4,7 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class Product : TenantEntity
+public class Product : TenantEntity, IHasConcurrencyToken
 {
     public string Sku { get; private set; } = string.Empty;
     public string? Barcode { get; private set; }
@@ -53,9 +53,16 @@ public class Product : TenantEntity
     public decimal? DepthCm { get; private set; }
     public decimal? VolumeM3 { get; private set; }
 
+    // First-class glass attributes (searchable / filterable columns). Free-form extras still live
+    // in VariantAttributesJson; colour + thickness are promoted to columns because they are the
+    // primary filter axes for glass.
+    public string? Color { get; private set; }
+    public decimal? ThicknessMm { get; private set; }
+
     public decimal? MinOrderQuantity { get; private set; }
 
     public ProcurementType ProcurementType { get; private set; } = ProcurementType.Buy;
+    public CostingMethod CostingMethod { get; private set; } = CostingMethod.WeightedAverage;
     public LotSizingPolicy LotSizingPolicy { get; private set; } = LotSizingPolicy.MinMax;
     public decimal FixedOrderQuantity { get; private set; }
     public decimal OrderMultiple { get; private set; }
@@ -75,6 +82,12 @@ public class Product : TenantEntity
     public DateTime? LaunchDate { get; private set; }
     public DateTime? EndOfLifeDate { get; private set; }
     public bool IsActive => Status == ProductStatus.Active || Status == ProductStatus.New;
+
+    // Optimistic concurrency: the order-confirm availability guard reads/writes StockQuantity (the
+    // global sellable rollup), so concurrent confirm/allocation/consume/return would otherwise
+    // last-writer-win into an oversell. Bumped automatically on Modified by SaveChangesBehavior.
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
 
     public Brand? Brand { get; set; }
     public ProductCategory? Category { get; set; }
@@ -217,6 +230,23 @@ public class Product : TenantEntity
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    public void SetSerialTracked(bool value)
+    {
+        IsSerialTracked = value;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetGlassAttributes(string? color, decimal? thicknessMm)
+    {
+        if (thicknessMm is < 0m)
+        {
+            throw new ArgumentOutOfRangeException(nameof(thicknessMm), "Thickness cannot be negative.");
+        }
+        Color = string.IsNullOrWhiteSpace(color) ? null : color.Trim();
+        ThicknessMm = thicknessMm;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void Activate() => ChangeStatus(ProductStatus.Active);
 
     public void Deactivate() => ChangeStatus(ProductStatus.Discontinued);
@@ -240,6 +270,12 @@ public class Product : TenantEntity
     public void SetProcurementType(ProcurementType procurementType)
     {
         ProcurementType = procurementType;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetCostingMethod(CostingMethod costingMethod)
+    {
+        CostingMethod = costingMethod;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

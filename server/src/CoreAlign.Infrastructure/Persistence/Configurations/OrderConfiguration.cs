@@ -11,6 +11,7 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
     public void Configure(EntityTypeBuilder<Order> builder)
     {
         builder.HasKey(o => o.Id);
+        builder.Property(o => o.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(o => o.OrderNumber).HasMaxLength(64).IsRequired();
         builder.Property(o => o.Type).HasMaxLength(20).HasConversion<string>();
         builder.Property(o => o.Status).HasMaxLength(20).HasConversion<string>();
@@ -88,6 +89,9 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.Property(l => l.ProductDescriptionSnapshot).HasMaxLength(2000);
         builder.Property(l => l.UomCode).HasMaxLength(20);
         builder.Property(l => l.UomConversionFactor).HasColumnType("numeric(18,6)");
+        builder.Property(l => l.WidthMm).HasColumnType("numeric(12,2)");
+        builder.Property(l => l.HeightMm).HasColumnType("numeric(12,2)");
+        builder.Property(l => l.Pieces).HasColumnType("numeric(12,2)");
         builder.Property(l => l.Quantity).HasColumnType("numeric(18,4)");
         builder.Property(l => l.QuantityAllocated).HasColumnType("numeric(18,4)");
         builder.Property(l => l.QuantityShipped).HasColumnType("numeric(18,4)");
@@ -133,6 +137,7 @@ public class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
     public void Configure(EntityTypeBuilder<Shipment> builder)
     {
         builder.HasKey(s => s.Id);
+        builder.Property(s => s.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(s => s.ShipmentNumber).HasMaxLength(64).IsRequired();
         builder.Property(s => s.Status).HasMaxLength(20).HasConversion<string>();
         builder.Property(s => s.CarrierName).HasMaxLength(150);

@@ -11,6 +11,7 @@ import {
   useTiledProceduralTexture,
 } from '@/shared/three-engine';
 import { StretchFaces } from '../interaction/StretchFaces';
+import { edgeColorFor } from './edgeColor';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
 import { buildSurfaceFootprint, restElevationMm } from '../interaction/planCollision';
@@ -291,7 +292,14 @@ export function PolygonSurfaceObject({
           emissiveIntensity={isSelected ? 0.12 : 0}
         />
         {!presentation && (
-          <Edges color={isSelected ? SELECTED_EDGE : EDGE_COLOR} threshold={EDGE_THRESHOLD_DEG} />
+          <Edges
+            color={
+              isSelected
+                ? SELECTED_EDGE
+                : edgeColorFor(texture ? null : surface.colorHex, EDGE_COLOR)
+            }
+            threshold={EDGE_THRESHOLD_DEG}
+          />
         )}
       </mesh>
       {stretchToolActive && <StretchFaces faces={stretchFaces} />}

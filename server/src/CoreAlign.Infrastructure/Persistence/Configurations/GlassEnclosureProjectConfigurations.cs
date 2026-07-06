@@ -90,6 +90,7 @@ public class GlassProjectRunConfiguration : IEntityTypeConfiguration<GlassProjec
         builder.Property(r => r.GeomTiltDeg).HasColumnType("numeric(5,2)");
         builder.Property(r => r.GeomArcSweepDeg).HasColumnType("numeric(5,2)");
         builder.Property(r => r.ArcGlassBent).HasDefaultValue(false);
+        builder.Property(r => r.ConcurrencyToken).IsConcurrencyToken();
 
         builder.HasMany(r => r.Panels)
             .WithOne()
@@ -128,6 +129,7 @@ public class GlassProjectPanelConfiguration : IEntityTypeConfiguration<GlassProj
         builder.Property(p => p.ShapePointsJson).HasMaxLength(8000);
         builder.Property(p => p.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(p => p.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken();
 
         builder.HasIndex(p => new { p.TenantId, p.RunId, p.PanelIndex });
     }
@@ -313,6 +315,7 @@ public class GlassWorkOrderConfiguration : IEntityTypeConfiguration<GlassWorkOrd
 
         builder.Property(w => w.BomSnapshotJson).HasMaxLength(64000);
         builder.Property(w => w.BomSnapshotTotal).HasColumnType("numeric(18,4)");
+        builder.Property(w => w.ConcurrencyToken).IsConcurrencyToken();
 
         builder.Property(w => w.RevisionCountAtLastDefect).HasDefaultValue(0);
 

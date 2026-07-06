@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection;
 using CoreAlign.Application.Common.Caching;
 using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.GlassEnclosure.WorkOrderRevisions;
+using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Lookups;
 using CoreAlign.Domain.Interfaces;
 using CoreAlign.Application.EInvoice;
@@ -169,11 +170,14 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IDocumentSequenceRepository, DocumentSequenceRepository>();
 
         services.AddScoped<IStockItemRepository, StockItemRepository>();
+        services.AddScoped<IStockCostLayerRepository, StockCostLayerRepository>();
+        services.AddScoped<ISerialUnitRepository, SerialUnitRepository>();
         services.AddScoped<IStockMovementRepository, StockMovementRepository>();
         services.AddScoped<IStockAllocationRepository, StockAllocationRepository>();
         services.AddScoped<IStockReasonCodeRepository, StockReasonCodeRepository>();
         services.AddScoped<ILotRepository, LotRepository>();
         services.AddScoped<IAllocationService, AllocationService>();
+        services.AddScoped<IInventoryCostingService, InventoryCostingService>();
         services.AddScoped<IFefoLotSelector, FefoLotSelector>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();

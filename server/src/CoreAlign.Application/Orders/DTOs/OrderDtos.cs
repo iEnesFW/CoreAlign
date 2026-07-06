@@ -38,6 +38,9 @@ public class OrderLineDto
     public Guid? UomId { get; set; }
     public string? UomCode { get; set; }
     public decimal UomConversionFactor { get; set; } = 1m;
+    public decimal? WidthMm { get; set; }
+    public decimal? HeightMm { get; set; }
+    public decimal? Pieces { get; set; }
     public decimal Quantity { get; set; }
     public decimal QuantityAllocated { get; set; }
     public decimal QuantityShipped { get; set; }

@@ -187,6 +187,10 @@ export const DocumentNumberGapPage = lazyNamed(
   () => import('@/pages/reports/DocumentNumberGapPage'),
   'DocumentNumberGapPage',
 );
+export const SerialLookupPage = lazyNamed(
+  () => import('@/pages/inventory/SerialLookupPage'),
+  'SerialLookupPage',
+);
 export const ReportLibraryPage = lazyNamed(
   () => import('@/pages/reports/ReportLibraryPage'),
   'ReportLibraryPage',

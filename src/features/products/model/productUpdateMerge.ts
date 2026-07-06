@@ -37,6 +37,7 @@ export const buildProductUpdateInput = (
   safetyStock: product.safetyStock,
   leadTimeDays: product.leadTimeDays,
   procurementType: product.procurementType,
+  costingMethod: product.costingMethod,
   weightKg: product.weightKg,
   widthCm: product.widthCm,
   heightCm: product.heightCm,

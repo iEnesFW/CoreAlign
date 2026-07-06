@@ -76,7 +76,7 @@ public class ShipmentsController : ControllerBase
     public async Task<IActionResult> IssueEDespatch(Guid id, [FromBody] IssueEDespatchCommand? cmd, CancellationToken ct)
     {
         var enriched = new IssueEDespatchCommand(
-            id, cmd?.CarrierVkn, cmd?.VehiclePlate, cmd?.DriverName, cmd?.DriverTckn, cmd?.OperationId);
+            id, cmd?.CarrierVkn, cmd?.VehiclePlate, cmd?.DriverName, cmd?.DriverTckn);
         return (await _mediator.Send(enriched, ct)).ToOk();
     }
 }

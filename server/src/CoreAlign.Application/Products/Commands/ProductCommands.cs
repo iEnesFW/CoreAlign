@@ -47,7 +47,10 @@ public record CreateProductCommand(
     ProductStatus Status = ProductStatus.Active,
     DateTime? LaunchDate = null,
     DateTime? EndOfLifeDate = null,
-    ProcurementType ProcurementType = ProcurementType.Buy
+    ProcurementType ProcurementType = ProcurementType.Buy,
+    CostingMethod CostingMethod = CostingMethod.WeightedAverage,
+    string? Color = null,
+    decimal? ThicknessMm = null
 ) : IRequest<ProductDto>, ITransactionalRequest;
 
 public record UpdateProductCommand(
@@ -92,7 +95,10 @@ public record UpdateProductCommand(
     ProductStatus Status,
     DateTime? LaunchDate,
     DateTime? EndOfLifeDate,
-    ProcurementType ProcurementType = ProcurementType.Buy
+    ProcurementType ProcurementType = ProcurementType.Buy,
+    CostingMethod CostingMethod = CostingMethod.WeightedAverage,
+    string? Color = null,
+    decimal? ThicknessMm = null
 ) : IRequest<ProductDto>, ITransactionalRequest;
 
 public record DeleteProductCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;

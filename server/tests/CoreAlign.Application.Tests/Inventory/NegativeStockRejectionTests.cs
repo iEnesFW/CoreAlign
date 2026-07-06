@@ -32,7 +32,8 @@ public class NegativeStockRejectionTests
 
     private AllocationService BuildService() =>
         new(_stockItems, _movements, _allocations, _warehouses, _products,
-            new StockOpeningBalanceBridge(_stockItems, _products, _movements));
+            new StockOpeningBalanceBridge(_stockItems, _products, _movements),
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
     private AdjustStockHandler BuildAdjustHandler() =>
         new(BuildService(), _reasons, _outbox, _uow);

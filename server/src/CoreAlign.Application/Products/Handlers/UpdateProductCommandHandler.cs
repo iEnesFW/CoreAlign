@@ -70,11 +70,13 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             launchDate: request.LaunchDate,
             endOfLifeDate: request.EndOfLifeDate);
 
+        product.SetCostingMethod(request.CostingMethod);
         product.SetProcurementType(request.ProcurementType);
         if (request.RequiresInspection.HasValue)
         {
             product.SetRequiresInspection(request.RequiresInspection.Value);
         }
+        product.SetGlassAttributes(request.Color, request.ThicknessMm);
 
         _productRepository.Update(product);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

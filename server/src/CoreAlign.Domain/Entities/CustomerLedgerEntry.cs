@@ -3,8 +3,11 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Entities;
 
-public class CustomerLedgerEntry : TenantEntity, IXminConcurrency
+public class CustomerLedgerEntry : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public Guid CustomerId { get; private set; }
     public DateTime OccurredAtUtc { get; private set; } = DateTime.UtcNow;
     public DateTime PostingDate { get; private set; } = DateTime.UtcNow.Date;

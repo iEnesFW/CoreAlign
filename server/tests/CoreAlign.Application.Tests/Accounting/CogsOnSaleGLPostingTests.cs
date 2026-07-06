@@ -56,10 +56,12 @@ public class CogsOnSaleGLPostingTests
     }
 
     private OrderConfirmedStockHandler ConfirmHandler() => new(
-        _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox, _openingBalance);
+        _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox, _openingBalance,
+        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
     private OrderCancelledStockHandler CancelHandler() => new(
-        _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox);
+        _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox,
+        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
     private static Product TrackedProduct() =>
         new("SKU-A", "Widget", "pcs", 10m, "TRY", initialStock: 100m) { Id = ProductId, TenantId = TenantId };
@@ -117,6 +119,46 @@ public class CogsOnSaleGLPostingTests
     }
 
     [Fact]
+    public async Task Cancelling_reverses_at_original_issue_cost_not_drifted_avgcost()
+    {
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [ProductId] = TrackedProduct() });
+
+        // The confirm relieved 153 at the issue-time cost (4 @ 7 = 28). Between confirm and cancel a
+        // receipt moved AvgCost up to 12. The cancel must debit 153 by the ORIGINAL 28, NOT 4 @ 12 =
+        // 48, so the confirm/cancel pair nets 153 and 621 to exactly zero.
+        var issueMovement = new StockMovement(
+            ProductId, WarehouseId, StockMovementType.Issue, Qty, AvgCost,
+            onHandAfter: 96m, avgCostAfter: AvgCost, occurredAtUtc: DateTime.UtcNow,
+            sourceDocumentType: StockSourceDocumentType.Order, sourceDocumentId: OrderId,
+            sourceReference: "ORD-1", notes: "issue");
+        _movements.GetBySourceAsync(StockSourceDocumentType.Order, OrderId, Arg.Any<CancellationToken>())
+            .Returns(new List<StockMovement> { issueMovement });
+        _stockItems.GetOrCreateAsync(ProductId, WarehouseId, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                var item = new StockItem(ProductId, WarehouseId) { Id = Guid.NewGuid(), TenantId = TenantId };
+                item.SeedOpeningBalance(96m, 12m, DateTime.UtcNow);
+                return item;
+            });
+
+        GLPostingRequest? captured = null;
+        await _outbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => captured = r), Arg.Any<CancellationToken>());
+
+        await CancelHandler().Handle(
+            new OrderCancelledFromActiveEvent(TenantId, OrderId, "ORD-1",
+                new[] { new OrderLineSnapshot(ProductId, Qty) }, DateTime.UtcNow),
+            default);
+
+        captured.Should().NotBeNull();
+        captured!.SourceType.Should().Be(JournalSourceType.CostOfGoodsSoldReversal);
+        // Reversal at the ORIGINAL 28 (not the drifted 48) — proves 153/621 net to zero vs confirm.
+        Line(captured, GLPostingKey.Inventory).Debit.Should().Be(ExpectedCogs);
+        Line(captured, GLPostingKey.CostOfGoodsSold).Credit.Should().Be(ExpectedCogs);
+        captured.Lines.Sum(l => l.Debit).Should().Be(captured.Lines.Sum(l => l.Credit));
+    }
+
+    [Fact]
     public async Task Service_only_sale_posts_no_cogs()
     {
         _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
@@ -143,7 +185,7 @@ public class CogsOnSaleGLPostingTests
         GLPostingRequest? captured = null;
         await _outbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => captured = r), Arg.Any<CancellationToken>());
 
-        var sut = new ReturnRequestReceivedStockHandler(_products, _stockItems, _movements, _stockTxns, _outbox);
+        var sut = new ReturnRequestReceivedStockHandler(_products, _stockItems, _movements, _stockTxns, _outbox, new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
         await sut.Handle(
             new ReturnRequestReceivedEvent(TenantId, returnId, "RMA-1", OrderId, Guid.NewGuid(), WarehouseId,
                 new[] { new ReturnRequestLineSnapshot(Guid.NewGuid(), ProductId, Qty, 10m, AvgCost) },
@@ -280,7 +322,8 @@ public class ConfirmThenShipDoesNotDoubleCountCogsTests
             });
 
         var confirmHandler = new OrderConfirmedStockHandler(
-            products, components, stockTxns, warehouses, stockItems, movements, confirmOutbox, openingBalance);
+            products, components, stockTxns, warehouses, stockItems, movements, confirmOutbox, openingBalance,
+            new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
         GLPostingRequest? confirmPosting = null;
         await confirmOutbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => confirmPosting = r), Arg.Any<CancellationToken>());

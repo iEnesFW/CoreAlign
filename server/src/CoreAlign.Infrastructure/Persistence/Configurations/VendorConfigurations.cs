@@ -112,6 +112,7 @@ public class VendorLedgerEntryConfiguration : IEntityTypeConfiguration<VendorLed
     public void Configure(EntityTypeBuilder<VendorLedgerEntry> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(e => e.EntryType).HasConversion<string>().HasMaxLength(8);
         builder.Property(e => e.Amount).HasColumnType("numeric(18,4)");
         builder.Property(e => e.Currency).HasMaxLength(3).IsRequired();

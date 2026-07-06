@@ -59,6 +59,7 @@ import {
   CustomReportBuilderPage,
   DuplicateDetectionPage,
   DocumentNumberGapPage,
+  SerialLookupPage,
   ReportLibraryPage,
   ReportSchedulesPage,
   ReportsPage,
@@ -237,6 +238,7 @@ function App() {
                               path="reports/document-number-gaps"
                               element={<DocumentNumberGapPage />}
                             />
+                            <Route path="inventory/serial-lookup" element={<SerialLookupPage />} />
                             <Route path="reports/library" element={<ReportLibraryPage />} />
                             <Route path="reports/custom" element={<CustomReportBuilderPage />} />
                             <Route path="reports/schedules" element={<ReportSchedulesPage />} />

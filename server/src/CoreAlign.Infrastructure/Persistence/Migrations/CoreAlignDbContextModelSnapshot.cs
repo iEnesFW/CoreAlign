@@ -1497,6 +1497,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("amount_in_base");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -4321,6 +4326,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("arch_rise_mm");
 
                     b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
                         .HasColumnType("bigint")
                         .HasColumnName("concurrency_token");
 
@@ -4514,6 +4520,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("color_id");
 
                     b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
                         .HasColumnType("bigint")
                         .HasColumnName("concurrency_token");
 
@@ -4888,6 +4895,7 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("checklists_json");
 
                     b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
                         .HasColumnType("bigint")
                         .HasColumnName("concurrency_token");
 
@@ -6608,6 +6616,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("cancelled_at_utc");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -7351,6 +7364,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -9018,6 +9036,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("channel");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -9269,6 +9292,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
+                    b.Property<decimal?>("HeightMm")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("height_mm");
+
                     b.Property<bool>("IsKitComponent")
                         .HasColumnType("boolean")
                         .HasColumnName("is_kit_component");
@@ -9325,6 +9352,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ParentLineId")
                         .HasColumnType("uuid")
                         .HasColumnName("parent_line_id");
+
+                    b.Property<decimal?>("Pieces")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("pieces");
 
                     b.Property<string>("ProductDescriptionSnapshot")
                         .HasMaxLength(2000)
@@ -9437,6 +9468,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("WarehouseId")
                         .HasColumnType("uuid")
                         .HasColumnName("warehouse_id");
+
+                    b.Property<decimal?>("WidthMm")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("width_mm");
 
                     b.Property<decimal>("WithholdingAmount")
                         .HasColumnType("numeric(18,4)")
@@ -9677,6 +9712,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)")
                         .HasColumnName("check_number");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime?>("ConfirmedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -10268,6 +10308,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("base_salary_gross");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -10680,6 +10725,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("calculated_at_utc");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -10854,6 +10904,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -11671,6 +11726,24 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
+                    b.Property<string>("Color")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("color");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<string>("CostingMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("costing_method");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -11869,6 +11942,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
 
+                    b.Property<decimal?>("ThicknessMm")
+                        .HasColumnType("numeric(9,2)")
+                        .HasColumnName("thickness_mm");
+
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -11928,6 +12005,9 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "CategoryId")
                         .HasDatabaseName("ix_products_tenant_id_category_id");
 
+                    b.HasIndex("TenantId", "Color")
+                        .HasDatabaseName("ix_products_tenant_id_color");
+
                     b.HasIndex("TenantId", "Name")
                         .HasDatabaseName("ix_products_tenant_id_name");
 
@@ -11937,6 +12017,9 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("ix_products_tenant_id_status");
+
+                    b.HasIndex("TenantId", "ThicknessMm")
+                        .HasDatabaseName("ix_products_tenant_id_thickness_mm");
 
                     b.ToTable("products");
                 });
@@ -14145,6 +14228,100 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("order_template_lines");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.SerialUnit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("CurrentOwnerCustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("current_owner_customer_id");
+
+                    b.Property<Guid?>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_id");
+
+                    b.Property<Guid?>("ParentSerialUnitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_serial_unit_id");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at_utc");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("serial_number");
+
+                    b.Property<Guid?>("ShipmentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("shipment_id");
+
+                    b.Property<Guid?>("SourceReceiptMovementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_receipt_movement_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("unit_cost");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_stock_serial_units");
+
+                    b.HasIndex("ParentSerialUnitId")
+                        .HasDatabaseName("ix_stock_serial_units_parent_serial_unit_id");
+
+                    b.HasIndex("TenantId", "SerialNumber")
+                        .HasDatabaseName("ix_stock_serial_units_tenant_id_serial_number");
+
+                    b.HasIndex("TenantId", "ProductId", "SerialNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_stock_serial_units_tenant_id_product_id_serial_number");
+
+                    b.ToTable("stock_serial_units", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Shipment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -14170,6 +14347,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasMaxLength(11)
                         .HasColumnType("character varying(11)")
                         .HasColumnName("carrier_vkn");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -14643,6 +14825,83 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_stock_allocations_tenant_id_product_id_status");
 
                     b.ToTable("stock_allocations");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.StockCostLayer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid?>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<decimal>("OriginalQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("original_quantity");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at_utc");
+
+                    b.Property<decimal>("RemainingQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("remaining_quantity");
+
+                    b.Property<Guid?>("SourceMovementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_movement_id");
+
+                    b.Property<Guid>("StockItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stock_item_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("unit_cost");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_stock_cost_layers");
+
+                    b.HasIndex("SourceMovementId")
+                        .HasDatabaseName("ix_stock_cost_layers_source_movement_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_stock_cost_layers_tenant_id");
+
+                    b.HasIndex("StockItemId", "ReceivedAtUtc")
+                        .HasDatabaseName("ix_stock_cost_layers_stock_item_id_received_at_utc");
+
+                    b.ToTable("stock_cost_layers", (string)null);
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.StockCount", b =>
@@ -17580,6 +17839,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("AmountInBase")
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("amount_in_base");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -20686,6 +20950,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("OrderTemplate");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.SerialUnit", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_serial_units_tenants_tenant_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Shipment", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Order", "Order")
@@ -20813,6 +21087,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.StockCostLayer", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_cost_layers_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.StockCount", b =>

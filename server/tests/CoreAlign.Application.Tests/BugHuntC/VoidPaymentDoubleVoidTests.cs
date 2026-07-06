@@ -48,6 +48,29 @@ public class VoidPaymentDoubleVoidTests
             .ContainSingle("voiding an already-Void payment must be a no-op, not a second cash reversal");
     }
 
+    [Fact]
+    public async Task DoubleVoid_DoesNotReRunInvoiceReversalOnRetry()
+    {
+        // The reversal loop runs BEFORE Payment.Void()'s guard, so on a retry it would re-reverse
+        // every applied invoice — corrupting AR when an invoice carries more than one payment (the
+        // ReversePayment clamp only saves the single-payment case). The terminal guard must short-
+        // circuit before the loop.
+        var invoiceId = Guid.NewGuid();
+        var payment = BuildConfirmedPayment(100m);
+        payment.Apply(invoiceId, 100m, 100m);
+        payment.ClearDomainEvents();
+        _payments.GetWithApplicationsAsync(payment.Id, Arg.Any<CancellationToken>()).Returns(payment);
+        _invoices.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Invoice>());
+
+        await _sut.Handle(new VoidPaymentCommand(payment.Id, "dispute"), default);
+        // Network retry / double-click of the already-Void payment.
+        await _sut.Handle(new VoidPaymentCommand(payment.Id, "dispute"), default);
+
+        // The reversal loop queried invoices exactly once — the retry short-circuited on the guard.
+        await _invoices.Received(1).GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>());
+    }
+
     private static Payment BuildConfirmedPayment(decimal amount)
     {
         var payment = new Payment(

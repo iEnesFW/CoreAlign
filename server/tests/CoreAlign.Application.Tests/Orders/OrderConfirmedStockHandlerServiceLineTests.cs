@@ -1,6 +1,7 @@
 using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Orders.EventHandlers;
+using CoreAlign.Infrastructure.Services;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Events;
@@ -51,7 +52,8 @@ public class OrderConfirmedStockHandlerServiceLineTests
             _stockItemRepository,
             _stockMovementRepository,
             _glOutbox,
-            _openingBalanceBridge);
+            _openingBalanceBridge,
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
     }
 
     [Fact]

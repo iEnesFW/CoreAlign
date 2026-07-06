@@ -8,8 +8,11 @@ namespace CoreAlign.Domain.Entities;
 /// <see cref="CustomerLedgerEntry"/>; conventions: a vendor invoice posts a
 /// Credit entry (we owe more), a supplier payment posts a Debit (we paid).
 /// </summary>
-public class VendorLedgerEntry : TenantEntity, IXminConcurrency
+public class VendorLedgerEntry : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public Guid VendorId { get; private set; }
     public DateTime OccurredAtUtc { get; private set; } = DateTime.UtcNow;
     public DateTime PostingDate { get; private set; } = DateTime.UtcNow.Date;

@@ -55,7 +55,7 @@ public class MyInvoicesControllerIntegrationTests
 
         var response = await client.GetAsync($"/api/v1/customer-portal/invoices/{_factory.TenantB.InvoiceId}/download-pdf");
 
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.Forbidden);
     }
 
     [Fact]

@@ -28,8 +28,11 @@ public static class DealerOrderApprovalStatuses
     public const string Rejected = "Rejected";
 }
 
-public class Order : TenantEntity, IXminConcurrency
+public class Order : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string OrderNumber { get; private set; } = string.Empty;
     public OrderType Type { get; private set; } = OrderType.Standard;
     public OrderStatus Status { get; private set; } = OrderStatus.Draft;

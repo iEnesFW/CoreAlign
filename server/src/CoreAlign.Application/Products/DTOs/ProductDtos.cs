@@ -16,6 +16,8 @@ public class ProductDto
     public Guid? CategoryId { get; set; }
     public Guid? ParentProductId { get; set; }
     public string? VariantAttributesJson { get; set; }
+    public string? Color { get; set; }
+    public decimal? ThicknessMm { get; set; }
     public string? TagsJson { get; set; }
     public string Unit { get; set; } = string.Empty;
     public Guid? BaseUomId { get; set; }
@@ -41,6 +43,7 @@ public class ProductDto
     public decimal SafetyStock { get; set; }
     public decimal? MinOrderQuantity { get; set; }
     public ProcurementType ProcurementType { get; set; }
+    public CostingMethod CostingMethod { get; set; }
     public int LeadTimeDays { get; set; }
     public decimal? WeightKg { get; set; }
     public decimal? WidthCm { get; set; }

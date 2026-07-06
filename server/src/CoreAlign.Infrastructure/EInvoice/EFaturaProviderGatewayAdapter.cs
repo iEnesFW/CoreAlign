@@ -155,7 +155,10 @@ public sealed class EFaturaProviderGatewayAdapter : IElectronicInvoiceGateway
             BuyerName: buyerName,
             Lines: Array.Empty<EFaturaLine>(),
             Currency: currency,
-            TotalAmount: totalAmount);
+            TotalAmount: totalAmount,
+            // Carry the real UBL-TR through so the dispatcher sends the full document (lines, tax,
+            // totals, despatch carrier/plate) to the provider instead of a stub.
+            RawUblTrXml: request.UblTrXml);
     }
 
     private static string? ReadValue(XDocument doc, string localName) =>

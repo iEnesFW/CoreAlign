@@ -55,6 +55,9 @@ export interface OrderLine {
   uomId: string | null;
   uomCode: string | null;
   uomConversionFactor: number;
+  widthMm: number | null;
+  heightMm: number | null;
+  pieces: number | null;
   quantity: number;
   quantityAllocated: number;
   quantityShipped: number;
@@ -155,6 +158,9 @@ export interface OrderLineInput {
   productId: string;
   quantity: number;
   unitPrice: number;
+  widthMm?: number;
+  heightMm?: number;
+  pieces?: number;
   lineDiscountPercent?: number;
   lineDiscountAmount?: number;
   taxRatePercent?: number;
@@ -308,7 +314,6 @@ export interface IssueEDespatchInput {
   vehiclePlate?: string | null;
   driverName?: string | null;
   driverTckn?: string | null;
-  operationId?: string | null;
 }
 
 export interface RecordOrderScrapInput {

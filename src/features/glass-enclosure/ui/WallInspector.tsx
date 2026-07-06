@@ -14,6 +14,7 @@ import {
   buildRunFootprint,
   buildSlabFootprint,
   buildWallFootprint,
+  footprintsPenetrate,
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
@@ -31,6 +32,7 @@ export function WallInspector() {
   const updateWallOpening = useDesignerStore((s) => s.updateWallOpening);
   const removeWallOpening = useDesignerStore((s) => s.removeWallOpening);
   const removeWallFeature = useDesignerStore((s) => s.removeWallFeature);
+  const convertWallBendToLegs = useDesignerStore((s) => s.convertWallBendToLegs);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { autofill } = useWallAutofill();
 
@@ -40,14 +42,23 @@ export function WallInspector() {
   );
   const runs = useDesignerStore((s) => s.scene.runs);
   const slabs = useDesignerStore((s) => s.scene.slabs ?? []);
-  const obstacles = useMemo(
-    () => [
-      ...walls.map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
+  // A group sibling (an L-wall's other leg) is exempted from the collision check ONLY where it
+  // already touches this wall's standing footprint — a sibling the user grouped but left clear
+  // keeps its safety net so an edit can't drive this wall straight through it.
+  const obstacles = useMemo(() => {
+    const selfFp = wall ? buildWallFootprint(wall, 0, 0, wall.rotationDeg) : null;
+    return [
+      ...walls
+        .filter((w) => {
+          if (!wall || w.id === wall.id) return false;
+          if (!(wall.groupId && w.groupId === wall.groupId) || !selfFp) return true;
+          return !footprintsPenetrate(selfFp, buildWallFootprint(w, 0, 0, w.rotationDeg));
+        })
+        .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
       ...runs.map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
       ...slabs.map((s) => buildSlabFootprint(s, 0, 0, s.rotationDeg)),
-    ],
-    [walls, runs, slabs],
-  );
+    ];
+  }, [walls, runs, slabs, wall]);
   const [draft, setDraft] = useState(wall);
   const [tracked, setTracked] = useState(wall);
   if (wall !== tracked) {
@@ -195,6 +206,42 @@ export function WallInspector() {
         materialKey={wall.materialKey}
         onChange={(patch) => updateWall(wall.id, patch)}
       />
+
+      {Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1) && (
+        <div className="flex items-center justify-between gap-2 rounded border border-warning-500/50 bg-warning-50 p-2 text-xs text-warning-800 dark:border-warning-500/40 dark:bg-warning-950/30 dark:text-warning-300">
+          <span>
+            {t('GlassEnclosure.Designer.Bend.SplitHint', {
+              defaultValue:
+                'L duvar tek parça — ikiye ayırınca her iki taraf bağımsız düzenlenebilir (genişlet, kavis, serbest çizim).',
+            })}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              const converted = convertWallBendToLegs(
+                wall.id,
+                wall.bendAtMm ?? wall.lengthMm / 2,
+                wall.bendAngleDeg ?? 0,
+              );
+              queueToast({
+                dedupeKey: 'glass-bend-split',
+                variant: converted ? 'success' : 'warning',
+                description: converted
+                  ? t('GlassEnclosure.Designer.Bend.SplitDone', {
+                      defaultValue:
+                        'L duvar iki bağımsız duvara ayrıldı — iki taraf da ayrı düzenlenebilir.',
+                    })
+                  : t('GlassEnclosure.Designer.Bend.SplitBlocked', {
+                      defaultValue: 'Bacaklar çok kısa — kıvrım noktası uçlara çok yakın.',
+                    }),
+              });
+            }}
+            className="shrink-0 rounded border border-warning-500/60 px-2 py-1 font-medium hover:bg-warning-100 dark:hover:bg-warning-900/40"
+          >
+            {t('GlassEnclosure.Designer.Bend.SplitAction', { defaultValue: 'İkiye ayır' })}
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-2">
         <NumberField

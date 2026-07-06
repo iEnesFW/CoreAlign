@@ -5,8 +5,11 @@ using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Domain.Entities;
 
-public class Payment : TenantEntity, IXminConcurrency
+public class Payment : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string PaymentNumber { get; private set; } = string.Empty;
     public PaymentDirection Direction { get; private set; } = PaymentDirection.CustomerReceipt;
     public PaymentStatus Status { get; private set; } = PaymentStatus.Draft;

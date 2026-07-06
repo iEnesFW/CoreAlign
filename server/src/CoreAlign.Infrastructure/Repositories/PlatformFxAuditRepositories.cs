@@ -51,6 +51,17 @@ public sealed class ExchangeRateRepository : IExchangeRateRepository
     private static DateTime AsUtc(DateTime value) =>
         value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
+    public async Task AcquireIngestLockAsync(CancellationToken ct)
+    {
+        if (!_context.Database.IsNpgsql())
+        {
+            return;
+        }
+        const string key = "tcmb-fx-ingest";
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", ct);
+    }
+
     public Task<ExchangeRate?> GetAsync(string currency, DateTime validOnDate, CancellationToken ct)
     {
         var validOn = AsUtc(validOnDate);

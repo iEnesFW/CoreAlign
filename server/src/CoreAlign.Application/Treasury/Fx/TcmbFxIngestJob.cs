@@ -29,8 +29,21 @@ public sealed class TcmbFxIngestJob
             return 0;
         }
 
+        // Guard against a currency appearing twice in one feed (would self-collide on the key).
+        var deduped = rates
+            .GroupBy(r => (r.Currency, Date: r.ValidOnDate.Date))
+            .Select(g => g.Last())
+            .ToList();
+
+        // Serialise concurrent ingest runs (a Hangfire missed-run can overlap another trigger) inside
+        // one transaction so the check-then-insert below cannot race two runs into a duplicate-key on
+        // (tenant_id, currency, valid_on_date). The advisory lock releases on commit/rollback; a second
+        // run blocks until the first commits, then finds the rows and updates instead of inserting.
+        await using var tx = await _uow.BeginTransactionAsync(cancellationToken);
+        await _repo.AcquireIngestLockAsync(cancellationToken);
+
         var upserted = 0;
-        foreach (var rate in rates)
+        foreach (var rate in deduped)
         {
             var existing = await _repo.GetAsync(rate.Currency, rate.ValidOnDate.Date, cancellationToken);
             if (existing is null)
@@ -56,6 +69,7 @@ public sealed class TcmbFxIngestJob
         }
 
         await _uow.SaveChangesAsync(cancellationToken);
+        await tx.CommitAsync(cancellationToken);
         _logger.LogInformation("TCMB FX feed upserted {Count} rates.", upserted);
         return upserted;
     }

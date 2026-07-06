@@ -9,6 +9,7 @@ import type {
   Warehouse,
   WithholdingTaxCode,
 } from '@/shared/master-data/model/masterData.types';
+import { glassLineArea, isAreaUnit } from '../model/orderSchema';
 import type { OrderFormValues, OrderLineFormValues } from '../model/orderSchema';
 import { ProductPicker } from '@/shared/ui/ProductPicker';
 
@@ -96,7 +97,20 @@ export const OrderLineEditor = ({
   const selectedWithholding = line?.withholdingTaxCodeId
     ? withholdingCodes.find((c) => c.id === line.withholdingTaxCodeId)
     : undefined;
-  const calc = computeLine(line, selectedWithholding);
+  const selectedProduct = line?.productId
+    ? products.find((p) => p.id === line.productId)
+    : undefined;
+  const unitCode = selectedProduct?.unit;
+  const areaMode = isAreaUnit(unitCode);
+  const glassArea = areaMode
+    ? glassLineArea(unitCode, line?.widthMm, line?.heightMm, line?.pieces)
+    : null;
+  // For an area-unit line the quantity is DERIVED from the cut size, so the summary/pricing use the
+  // computed area rather than the (hidden) plain quantity field.
+  const calc = computeLine(
+    glassArea !== null ? { ...line, quantity: glassArea } : line,
+    selectedWithholding,
+  );
 
   const handleLastFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled || !isLast) return;
@@ -137,21 +151,36 @@ export const OrderLineEditor = ({
 
       <div className="mt-2 grid grid-cols-12 gap-2">
         <div className="col-span-6 sm:col-span-3">
-          <div className="relative">
-            <Input
-              type="number"
-              step={step}
-              placeholder={t('orders.lines.quantity')}
-              disabled={disabled}
-              error={translateError(errors?.quantity?.message)}
-              {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-            />
-            {line?.uomCode && (
-              <span className="pointer-events-none absolute right-2 top-2 text-xs text-slate-400">
-                {line.uomCode}
+          {areaMode ? (
+            <div className="flex h-full min-h-[38px] flex-col justify-center rounded border border-dashed border-emerald-300 px-2 py-1 dark:border-emerald-800">
+              <span className="text-[10px] uppercase tracking-wide text-slate-400">
+                {t('orders.lines.quantity')}
               </span>
-            )}
-          </div>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                {glassArea !== null ? `${formatNumber(glassArea, locale, 4)} ${unitCode}` : '—'}
+              </span>
+              <input
+                type="hidden"
+                {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+              />
+            </div>
+          ) : (
+            <div className="relative">
+              <Input
+                type="number"
+                step={step}
+                placeholder={t('orders.lines.quantity')}
+                disabled={disabled}
+                error={translateError(errors?.quantity?.message)}
+                {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+              />
+              {line?.uomCode && (
+                <span className="pointer-events-none absolute right-2 top-2 text-xs text-slate-400">
+                  {line.uomCode}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="col-span-6 sm:col-span-3">
           <Input
@@ -233,6 +262,43 @@ export const OrderLineEditor = ({
           />
         </div>
       </div>
+
+      {areaMode && (
+        <div className="mt-2 grid grid-cols-12 items-center gap-2">
+          <div className="col-span-4 sm:col-span-3">
+            <Input
+              type="number"
+              step="0.1"
+              placeholder={t('orders.lines.widthMm')}
+              disabled={disabled}
+              {...register(`lines.${index}.widthMm`)}
+            />
+          </div>
+          <div className="col-span-4 sm:col-span-3">
+            <Input
+              type="number"
+              step="0.1"
+              placeholder={t('orders.lines.heightMm')}
+              disabled={disabled}
+              {...register(`lines.${index}.heightMm`)}
+            />
+          </div>
+          <div className="col-span-4 sm:col-span-2">
+            <Input
+              type="number"
+              step="1"
+              placeholder={t('orders.lines.pieces')}
+              disabled={disabled}
+              {...register(`lines.${index}.pieces`)}
+            />
+          </div>
+          {glassArea !== null && (
+            <div className="col-span-12 flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 sm:col-span-4">
+              = {formatNumber(glassArea, locale, 4)} {unitCode}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
         <span>

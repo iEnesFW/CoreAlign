@@ -109,6 +109,7 @@ public class ProductRepository : IProductRepository
                     EF.Functions.ILike(p.Name, lower) ||
                     EF.Functions.ILike(p.Sku, lower) ||
                     (p.Barcode != null && EF.Functions.ILike(p.Barcode, lower)) ||
+                    (p.Color != null && EF.Functions.ILike(p.Color, lower)) ||
                     (p.Description != null && EF.Functions.ILike(p.Description, lower)));
             }
             else
@@ -117,6 +118,7 @@ public class ProductRepository : IProductRepository
                     EF.Functions.Like(p.Name.ToLower(), lower) ||
                     EF.Functions.Like(p.Sku.ToLower(), lower) ||
                     (p.Barcode != null && EF.Functions.Like(p.Barcode.ToLower(), lower)) ||
+                    (p.Color != null && EF.Functions.Like(p.Color.ToLower(), lower)) ||
                     (p.Description != null && EF.Functions.Like(p.Description.ToLower(), lower)));
             }
         }

@@ -378,6 +378,14 @@ public class VoidPaymentHandler : IRequestHandler<VoidPaymentCommand, PaymentDto
     {
         var payment = await _payments.GetWithApplicationsAsync(c.Id, ct) ?? throw new PaymentNotFoundException();
 
+        // Terminal-state idempotency guard: a network retry of an already-voided payment must NOT
+        // re-run the invoice reversal loop below (Payment.Void() only guards the event, not the
+        // per-application ReversePayment) or every applied invoice is reversed twice → AR corruption.
+        if (payment.Status == PaymentStatus.Void)
+        {
+            return PaymentMapper.ToDto(payment);
+        }
+
         var apps = payment.Applications.ToList();
         if (apps.Count > 0)
         {

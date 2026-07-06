@@ -24,11 +24,18 @@ public class ConcurrencyTokenBehavior<TRequest, TResponse> : IPipelineBehavior<T
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            var force = request is IForceConcurrencyOverride o && o.ForceOverwrite;
-            if (force)
+            if (request is IForceConcurrencyOverride { ForceOverwrite: true })
             {
-                _logger.LogWarning("Concurrency conflict force-overwritten on {Request}", typeof(TRequest).Name);
-                return await ResolveForceOverwriteAsync(ex, next, cancellationToken);
+                // Force-overwrite is NOT safely implementable here: recovering by re-running
+                // next() re-runs the whole handler and DOUBLE-APPLIES its mutation (INVARIANTS
+                // §88). Fail loudly if a command ever opts in, rather than silently corrupting
+                // data — implement save-level retry before enabling this.
+                _logger.LogError(
+                    "Force concurrency override attempted on {Request} but is unsupported (would double-apply the mutation).",
+                    typeof(TRequest).Name);
+                throw new NotSupportedException(
+                    $"Force concurrency override is not supported for {typeof(TRequest).Name}; " +
+                    "re-running the handler would double-apply its mutation. Implement save-level retry instead.");
             }
 
             var conflicting = ex.Entries
@@ -51,21 +58,5 @@ public class ConcurrencyTokenBehavior<TRequest, TResponse> : IPipelineBehavior<T
 
             throw new DomainConcurrencyException(currentVersion, attemptedVersion, conflicting);
         }
-    }
-
-    private static async Task<TResponse> ResolveForceOverwriteAsync(
-        DbUpdateConcurrencyException ex,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
-    {
-        foreach (var entry in ex.Entries)
-        {
-            var dbValues = await entry.GetDatabaseValuesAsync(cancellationToken);
-            if (dbValues != null)
-            {
-                entry.OriginalValues.SetValues(dbValues);
-            }
-        }
-        return await next();
     }
 }

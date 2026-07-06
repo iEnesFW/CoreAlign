@@ -71,7 +71,7 @@ public sealed class EFaturaDispatcher : IEFaturaDispatcher
             try
             {
                 var creds = entry.Provider.UnprotectCredentials(_credentialProtector, tenantId, entry.Config?.EncryptedCredentialsJson);
-                var ublXmlBase64 = BuildUblXmlBase64(document);
+                var ublXmlBase64 = EFaturaUblPayload.ToBase64(document);
                 var request = new EFaturaIssueRequest(
                     Document: document,
                     UblXmlBase64: ublXmlBase64,
@@ -233,11 +233,6 @@ public sealed class EFaturaDispatcher : IEFaturaDispatcher
         return new ResolvedProvider(defaultProvider, defaultConfig);
     }
 
-    private static string BuildUblXmlBase64(EFaturaDocument document)
-    {
-        var raw = $"<Invoice><DocumentNumber>{document.DocumentNumber}</DocumentNumber></Invoice>";
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(raw));
-    }
 
     private async Task RaiseAttemptEventAsync(
         Guid tenantId,

@@ -32,7 +32,8 @@ public class StockConservationBugHuntTests
 
     private AllocationService BuildService() =>
         new(_stockItems, _movements, _allocations, _warehouses, _products,
-            new StockOpeningBalanceBridge(_stockItems, _products, _movements));
+            new StockOpeningBalanceBridge(_stockItems, _products, _movements),
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
 
     private static StockItem StockWith(decimal onHand, decimal avgCost = 5m)
     {

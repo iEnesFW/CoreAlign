@@ -86,7 +86,7 @@ public class WarrantyContractsControllerIntegrationTests
 
         var response = await clientB.GetAsync($"/api/v1/warranty-contracts/{contractId}");
 
-        var acceptableDeny = new[] { HttpStatusCode.NotFound, HttpStatusCode.Forbidden, HttpStatusCode.BadRequest };
+        var acceptableDeny = new[] { HttpStatusCode.NotFound, HttpStatusCode.Forbidden };
         if (response.StatusCode == HttpStatusCode.OK)
         {
             var body = await response.Content.ReadFromJsonAsync<ApiResponse<WarrantyContractDto>>(JsonOptions);

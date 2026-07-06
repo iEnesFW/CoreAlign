@@ -40,7 +40,9 @@ import {
   curvedSlabPointAt,
 } from './curvedSlabGeometry';
 import { buildPitchedRoofGeometry } from './pitchedRoofGeometry';
+import { edgeColorFor } from './edgeColor';
 import {
+  arcFromCornerResize,
   bowFromArc,
   deriveArcFromChordSagitta,
   deriveArcFromSweep,
@@ -318,8 +320,13 @@ export function SlabObject({
   const isArcSlab = isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg);
   const isBarrelRoof = (slab.arcRiseMm ?? 0) > 0 || (slab.pitchRiseMm ?? 0) > 0;
   const isShapedSlab = isArcSlab || isBarrelRoof;
-  // Length/depth stretch assumes a flat slab; a curved/pitched roof is resized via its rise/curve.
-  const stretchActive = activeTool === 'stretch' && interactive && !slab.locked && !isShapedSlab;
+  // The stretch TOOL stays live on shaped slabs — gating the whole toolset on flatness read as
+  // "stretch is broken after any curve". Flat slabs keep all six faces + feature depths; shaped
+  // slabs keep the curvature-independent thickness/elevation faces, and a PLAN-ARC slab also gets
+  // the two chord-end faces (keep-sweep resize, like the wall/run ends).
+  const stretchToolOn = activeTool === 'stretch' && interactive && !slab.locked;
+  const stretchActive = stretchToolOn && !isShapedSlab;
+  const shapedStretchActive = stretchToolOn && isShapedSlab;
   // Corner handles stay available on a PLAN-ARC slab (its logical rect is still authoritative — the
   // bent axis' chord ends sit exactly on the rect corners); resizing re-derives the radius for the
   // new chord below. Barrel/pitched (up-curve) slabs are resized via their rise instead.
@@ -1030,6 +1037,68 @@ export function SlabObject({
     return -feature.depthMm;
   };
 
+  const previewArcChord = (deltaMm: number, fromStart: boolean) => {
+    const isLength = slabArcAxis === 'length';
+    const current = isLength ? slab.lengthMm : slab.depthMm;
+    const scale = Math.max(0.05, (current + deltaMm) / current);
+    // Scale ONLY the bent axis — the commit leaves the perpendicular plan dimension untouched, so
+    // a uniform [s,1,s] scale on a metres-wide slab previews the wrong axis growing (then snapping
+    // back). The bulge flattens slightly in preview; the commit's geometry is exact.
+    const scaleVec: [number, number, number] = isLength ? [scale, 1, 1] : [1, 1, scale];
+    const offset: [number, number, number] = fromStart
+      ? isLength
+        ? [-deltaMm / 1000, 0, 0]
+        : [0, 0, -deltaMm / 1000]
+      : [0, 0, 0];
+    setBodyPreview(bodyRef, scaleVec, offset);
+  };
+
+  const commitArcChord = (deltaMm: number, fromStart: boolean) => {
+    const isLength = slabArcAxis === 'length';
+    const current = isLength ? slab.lengthMm : slab.depthMm;
+    const next = Math.max(MIN_PLAN_MM, Math.round(current + stickyDelta(current, deltaMm)));
+    if (next === current) {
+      resetBody();
+      return;
+    }
+    const scaled = arcFromCornerResize(next, slab.geomArcSweepDeg ?? 1);
+    if (scaled.geomArcRadiusMm < 100) {
+      resetBody();
+      queueToast({
+        dedupeKey: 'glass-arc-radius-too-small',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+          defaultValue:
+            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+          r: scaled.geomArcRadiusMm,
+        }),
+      });
+      return;
+    }
+    const shift = fromStart ? next - current : 0;
+    const patch: Partial<SceneSlabState> = {
+      ...(isLength ? { lengthMm: next } : { depthMm: next }),
+      geomArcRadiusMm: scaled.geomArcRadiusMm,
+      ...(fromStart
+        ? isLength
+          ? {
+              originX: Math.round(slab.originX - shift * dirX),
+              originY: Math.round(slab.originY - shift * dirY),
+            }
+          : {
+              originX: Math.round(slab.originX + shift * dirY),
+              originY: Math.round(slab.originY - shift * dirX),
+            }
+        : {}),
+    };
+    const candidate = { ...slab, ...patch };
+    if (penetratesAny(buildSlabFootprint(candidate, 0, 0, slab.rotationDeg), planObstacles)) {
+      resetBody();
+      return;
+    }
+    updateSlab(slab.id, patch);
+  };
+
   const commitFeatureDepth = (feature: SceneWallFeature, deltaMm: number) => {
     const thicknessMm = slab.thicknessMm;
     const signed = stickyDimensionMm(featureSignedDepthMm(feature) + deltaMm);
@@ -1159,6 +1228,106 @@ export function SlabObject({
       ]
     : [];
 
+  // Shaped (plan-arc / barrel / pitched) slabs keep the curvature-independent thickness +
+  // elevation faces (the top plane lifts above the rise so the raised body can't occlude it);
+  // a PLAN-ARC slab additionally gets its two chord-end faces as a keep-sweep resize.
+  const shapeRiseM = Math.max(slab.arcRiseMm ?? 0, slab.pitchRiseMm ?? 0) / 1000;
+  // A PLAN-ARC slab bends AWAY from the flat rect (for one sweep sign the whole band is outside
+  // it), so the grab faces must sit on the ACTUAL bent band via curvedSlabPointAt — anchored on
+  // the rect they float in empty space. Barrel/pitch slabs are flat in plan, so they keep the rect.
+  const bandAnchors = arcFrame
+    ? {
+        start: curvedSlabPointAt(arcFrame, 0, arcFrame.acrossMm / 2),
+        end: curvedSlabPointAt(arcFrame, arcFrame.developedMm, arcFrame.acrossMm / 2),
+        apex: curvedSlabPointAt(arcFrame, arcFrame.developedMm / 2, arcFrame.acrossMm / 2),
+      }
+    : null;
+  const arcChordEndFaces: StretchFaceDef[] =
+    isArcSlab && bandAnchors
+      ? slabArcAxis === 'length'
+        ? [
+            {
+              id: 'arc-end',
+              centerM: [bandAnchors.end.x / 1000, thicknessM / 2, bandAnchors.end.z / 1000],
+              rotation: [0, HALF_PI, 0],
+              widthM: depthM,
+              heightM: thicknessM,
+              axis: [1, 0, 0],
+              label: lengthLabel,
+              onPreview: (d) => previewArcChord(stickyDelta(slab.lengthMm, d), false),
+              onCommit: (d) => commitArcChord(d, false),
+            },
+            {
+              id: 'arc-start',
+              centerM: [bandAnchors.start.x / 1000, thicknessM / 2, bandAnchors.start.z / 1000],
+              rotation: [0, -HALF_PI, 0],
+              widthM: depthM,
+              heightM: thicknessM,
+              axis: [-1, 0, 0],
+              label: lengthLabel,
+              onPreview: (d) => previewArcChord(stickyDelta(slab.lengthMm, d), true),
+              onCommit: (d) => commitArcChord(d, true),
+            },
+          ]
+        : [
+            {
+              id: 'arc-end',
+              centerM: [bandAnchors.end.x / 1000, thicknessM / 2, bandAnchors.end.z / 1000],
+              rotation: [0, 0, 0],
+              widthM: lengthM,
+              heightM: thicknessM,
+              axis: [0, 0, 1],
+              label: depthLabel,
+              onPreview: (d) => previewArcChord(stickyDelta(slab.depthMm, d), false),
+              onCommit: (d) => commitArcChord(d, false),
+            },
+            {
+              id: 'arc-start',
+              centerM: [bandAnchors.start.x / 1000, thicknessM / 2, bandAnchors.start.z / 1000],
+              rotation: [0, Math.PI, 0],
+              widthM: lengthM,
+              heightM: thicknessM,
+              axis: [0, 0, -1],
+              label: depthLabel,
+              onPreview: (d) => previewArcChord(stickyDelta(slab.depthMm, d), true),
+              onCommit: (d) => commitArcChord(d, true),
+            },
+          ]
+      : [];
+  const shapedTopCenter: [number, number, number] = bandAnchors
+    ? [bandAnchors.apex.x / 1000, thicknessM + shapeRiseM + FACE_LIFT_M, bandAnchors.apex.z / 1000]
+    : [lengthM / 2, thicknessM + shapeRiseM + FACE_LIFT_M, depthM / 2];
+  const shapedBottomCenter: [number, number, number] = bandAnchors
+    ? [bandAnchors.apex.x / 1000, -FACE_LIFT_M, bandAnchors.apex.z / 1000]
+    : [lengthM / 2, -FACE_LIFT_M, depthM / 2];
+  const shapedStretchFaces: StretchFaceDef[] = shapedStretchActive
+    ? [
+        {
+          id: 'top',
+          centerM: shapedTopCenter,
+          rotation: [-HALF_PI, 0, 0],
+          widthM: lengthM,
+          heightM: depthM,
+          axis: [0, 1, 0],
+          label: thicknessLabel,
+          onPreview: (d) => previewThickness(topDelta(d)),
+          onCommit: commitThickness,
+        },
+        {
+          id: 'bottom',
+          centerM: shapedBottomCenter,
+          rotation: [HALF_PI, 0, 0],
+          widthM: lengthM,
+          heightM: depthM,
+          axis: [0, -1, 0],
+          label: elevationLabel,
+          onPreview: (d) => previewElevation(-levelDelta(slab.elevationMm, -d)),
+          onCommit: commitElevation,
+        },
+        ...arcChordEndFaces,
+      ]
+    : [];
+
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
     registerSceneRef(slab.id, group);
@@ -1199,7 +1368,14 @@ export function SlabObject({
               side={isArcSlab ? DoubleSide : undefined}
             />
             {!presentation && (
-              <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />
+              <Edges
+                color={
+                  isSelected
+                    ? SELECTED_EDGE
+                    : edgeColorFor(materialTexture ? null : slab.colorHex, SLAB_EDGE)
+                }
+                threshold={15}
+              />
             )}
           </mesh>
         </group>
@@ -1250,6 +1426,7 @@ export function SlabObject({
           </mesh>
         ))}
         {stretchActive && <StretchFaces faces={stretchFaces} />}
+        {shapedStretchActive && <StretchFaces faces={shapedStretchFaces} />}
       </group>
       {vertexEditActive && (
         <FootprintCornerHandles
@@ -1521,7 +1698,16 @@ function SlabFeatureObject({
             roughness={0.85}
             metalness={0.05}
           />
-          {!presentation && <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />}
+          {!presentation && (
+            <Edges
+              color={
+                isSelected
+                  ? SELECTED_EDGE
+                  : edgeColorFor(featureMap ? null : (feature.colorHex ?? slab.colorHex), SLAB_EDGE)
+              }
+              threshold={15}
+            />
+          )}
         </mesh>
       );
     }
@@ -1562,7 +1748,16 @@ function SlabFeatureObject({
             emissive={isSelected ? SELECTED_EDGE : '#000000'}
             emissiveIntensity={isSelected ? 0.15 : 0}
           />
-          {!presentation && <Edges color={isSelected ? SELECTED_EDGE : SLAB_EDGE} threshold={15} />}
+          {!presentation && (
+            <Edges
+              color={
+                isSelected
+                  ? SELECTED_EDGE
+                  : edgeColorFor(featureMap ? null : (feature.colorHex ?? slab.colorHex), SLAB_EDGE)
+              }
+              threshold={15}
+            />
+          )}
         </mesh>
       ) : (
         <>

@@ -73,6 +73,17 @@ export const ProductPicker = ({ customerId, onPick }: ProductPickerProps) => {
                     {p.name}
                   </p>
                   <p className="truncate text-xs text-slate-500">{p.sku}</p>
+                  {p.isStockTracked ? (
+                    (p.stockQuantity ?? 0) > 0 ? (
+                      <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                        {t('b2b.newOrder.inStock', { qty: p.stockQuantity, unit: p.unit })}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] font-medium text-red-500 dark:text-red-400">
+                        {t('b2b.newOrder.outOfStock')}
+                      </p>
+                    )
+                  ) : null}
                 </div>
                 <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                   {formatCurrency(p.price, locale, p.currency || 'TRY')}

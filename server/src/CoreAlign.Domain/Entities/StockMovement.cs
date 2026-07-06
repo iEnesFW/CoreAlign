@@ -69,4 +69,12 @@ public class StockMovement : TenantEntity
         PostedByUserId = postedByUserId;
         Notes = notes;
     }
+
+    // Stamps the authoritative total cost (the figure the COGS journal reads). Used for FIFO issues
+    // whose exact summed-layer cost cannot be recovered from a single rounded unit cost × quantity;
+    // a no-op change for weighted-average (its total already equals round(qty × unitCost)).
+    public void OverrideTotalCost(decimal totalCost)
+    {
+        TotalCost = Math.Round(totalCost, 4);
+    }
 }

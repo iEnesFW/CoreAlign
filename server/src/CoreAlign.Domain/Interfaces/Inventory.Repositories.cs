@@ -71,6 +71,33 @@ public interface IStockMovementRepository
     Task<IReadOnlyList<StockMovement>> GetBySourceAsync(StockSourceDocumentType type, Guid sourceId, CancellationToken cancellationToken = default);
 }
 
+public interface IStockCostLayerRepository
+{
+    // Open layers (RemainingQuantity > 0) for a stock item, oldest-first (FIFO consumption order).
+    Task<IReadOnlyList<StockCostLayer>> GetOpenByStockItemAsync(Guid stockItemId, CancellationToken cancellationToken = default);
+    Task<decimal> SumRemainingByStockItemAsync(Guid stockItemId, CancellationToken cancellationToken = default);
+    Task AddAsync(StockCostLayer layer, CancellationToken cancellationToken = default);
+    void Update(StockCostLayer layer);
+    // Serializes FIFO consumption per (product, warehouse, lot) with a transaction-scoped advisory
+    // lock so concurrent issues cannot double-consume the same physical units (StockItem's token
+    // guards OnHand arithmetic, not the correctness of the layer-selection plan). No-op off Npgsql.
+    Task AcquireItemLockAsync(Guid productId, Guid warehouseId, Guid? lotId, CancellationToken cancellationToken = default);
+}
+
+public interface ISerialUnitRepository
+{
+    Task<SerialUnit?> GetBySerialAsync(Guid productId, string serialNumber, CancellationToken cancellationToken = default);
+    // Where-used lookup by serial string alone (tenant-scoped; a serial string may exist under more
+    // than one product, so returns all matches).
+    Task<IReadOnlyList<SerialUnit>> GetBySerialNumberAsync(string serialNumber, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SerialUnit>> GetBySerialNumbersAsync(Guid productId, IEnumerable<string> serialNumbers, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SerialUnit>> GetChildrenAsync(Guid parentSerialUnitId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<string>> GetExistingSerialNumbersAsync(Guid productId, IEnumerable<string> serialNumbers, CancellationToken cancellationToken = default);
+    Task AddAsync(SerialUnit unit, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<SerialUnit> units, CancellationToken cancellationToken = default);
+    void Update(SerialUnit unit);
+}
+
 public interface IStockAllocationRepository
 {
     Task<StockAllocation?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

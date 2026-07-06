@@ -23,12 +23,17 @@ public static class CachingRegistration
         var redisEnabled = configuration.GetValue<bool?>($"{RedisOptions.SectionName}:Enabled") ?? false;
         if (redisEnabled)
         {
-            services.AddSingleton<IDistributedCacheService, RedisDistributedCacheService>();
+            // RedisDistributedCacheService is a package-missing stub that throws on every call
+            // (the Redis client is not included in this build). Fail fast at startup rather than
+            // silently falling back to an in-memory cache (which would be incoherent across
+            // instances) or throwing on the first cache access.
+            throw new InvalidOperationException(
+                $"Distributed cache provider Redis is enabled ({RedisOptions.SectionName}:Enabled=true) " +
+                "but is not implemented in this build. Disable it (the in-memory cache is used by default) " +
+                "or complete the Redis adapter before enabling it.");
         }
-        else
-        {
-            services.AddSingleton<IDistributedCacheService, InMemoryDistributedCacheService>();
-        }
+
+        services.AddSingleton<IDistributedCacheService, InMemoryDistributedCacheService>();
 
         services.RemoveAll<IDashboardCacheService>();
         services.RemoveAll<ILookupCacheService>();

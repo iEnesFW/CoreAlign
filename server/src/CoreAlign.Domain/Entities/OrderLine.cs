@@ -59,6 +59,13 @@ public class OrderLine : TenantEntity
     public Guid? SubstituteFromProductId { get; private set; }
     public bool IsService { get; private set; }
 
+    // Glass area-based lines: when width/height/pieces are set the line Quantity is DERIVED as the
+    // total m² (pieces × width × height), so pricing, cost and stock all run off the cut area.
+    // Nullable — a normal quantity-based line leaves these null and is unchanged.
+    public decimal? WidthMm { get; private set; }
+    public decimal? HeightMm { get; private set; }
+    public decimal? Pieces { get; private set; }
+
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
@@ -142,6 +149,23 @@ public class OrderLine : TenantEntity
         IsKitComponent = isKitComponent;
         ProductDescriptionSnapshot = productDescriptionSnapshot;
         Recalculate();
+    }
+
+    // Sets the cut dimensions and, when the unit is a square unit (m²/cm²/…) and all three are
+    // positive, DERIVES Quantity as the total area in that unit (pieces × width × height). Call
+    // AFTER ApplyPricing so the derived area overrides the base quantity for glass lines; a normal
+    // (non-area) line, or one with missing dimensions, keeps its quantity unchanged.
+    public void SetGlassDimensions(decimal? widthMm, decimal? heightMm, decimal? pieces, string? unitCode)
+    {
+        WidthMm = widthMm is > 0m ? widthMm : null;
+        HeightMm = heightMm is > 0m ? heightMm : null;
+        Pieces = pieces is > 0m ? pieces : null;
+        var area = GlassLineMath.Area(unitCode, WidthMm, HeightMm, Pieces);
+        if (area is > 0m)
+        {
+            Quantity = area.Value;
+            Recalculate();
+        }
     }
 
     public void Recalculate()

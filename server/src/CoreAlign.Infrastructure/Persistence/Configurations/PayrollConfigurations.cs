@@ -10,6 +10,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
     public void Configure(EntityTypeBuilder<Employee> builder)
     {
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(e => e.EmployeeNumber).HasMaxLength(32).IsRequired();
         builder.Property(e => e.FirstName).HasMaxLength(100).IsRequired();
         builder.Property(e => e.LastName).HasMaxLength(100).IsRequired();
@@ -131,6 +132,7 @@ public class PayrollRunConfiguration : IEntityTypeConfiguration<PayrollRun>
     public void Configure(EntityTypeBuilder<PayrollRun> builder)
     {
         builder.HasKey(r => r.Id);
+        builder.Property(r => r.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(r => r.RunNumber).HasMaxLength(64).IsRequired();
         builder.Property(r => r.RunType).HasMaxLength(24).HasConversion<string>();
         builder.Property(r => r.Status).HasMaxLength(24).HasConversion<string>();
@@ -165,6 +167,7 @@ public class PayslipConfiguration : IEntityTypeConfiguration<Payslip>
     public void Configure(EntityTypeBuilder<Payslip> builder)
     {
         builder.HasKey(p => p.Id);
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken();
         builder.Property(p => p.PayslipNumber).HasMaxLength(64).IsRequired();
         builder.Property(p => p.EmployeeNumber).HasMaxLength(32).IsRequired();
         builder.Property(p => p.EmployeeFullName).HasMaxLength(201).IsRequired();

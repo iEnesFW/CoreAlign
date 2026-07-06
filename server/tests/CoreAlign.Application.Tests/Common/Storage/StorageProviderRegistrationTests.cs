@@ -58,25 +58,21 @@ public class StorageProviderRegistrationTests
     }
 
     [Fact]
-    public void AddStorageProvider_selects_s3_implementation_when_configured()
+    public void AddStorageProvider_fails_fast_when_s3_selected_but_unimplemented()
     {
-        using var sp = BuildProvider(StorageProviderNames.S3);
+        // S3FileStorage is a package-missing stub; selecting it must fail at startup rather
+        // than surface a NotSupportedException on the first upload.
+        var act = () => BuildProvider(StorageProviderNames.S3);
 
-        using var scope = sp.CreateScope();
-        var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
-
-        storage.Should().BeOfType<VirusScanFileStorage>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     [Fact]
-    public void AddStorageProvider_selects_azureblob_implementation_when_configured()
+    public void AddStorageProvider_fails_fast_when_azureblob_selected_but_unimplemented()
     {
-        using var sp = BuildProvider(StorageProviderNames.AzureBlob);
+        var act = () => BuildProvider(StorageProviderNames.AzureBlob);
 
-        using var scope = sp.CreateScope();
-        var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
-
-        storage.Should().BeOfType<VirusScanFileStorage>();
+        act.Should().Throw<InvalidOperationException>();
     }
 
     [Fact]

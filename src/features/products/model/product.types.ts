@@ -1,6 +1,11 @@
-import type { Product, ProductStatus, ProcurementType } from '@/shared/model/product.types';
+import type {
+  Product,
+  ProductStatus,
+  ProcurementType,
+  CostingMethod,
+} from '@/shared/model/product.types';
 
-export type { Product, ProductStatus, ProcurementType };
+export type { Product, ProductStatus, ProcurementType, CostingMethod };
 
 export interface CreateProductInput {
   sku: string;
@@ -14,6 +19,8 @@ export interface CreateProductInput {
   categoryId?: string | null;
   parentProductId?: string | null;
   variantAttributesJson?: string | null;
+  color?: string | null;
+  thicknessMm?: number | null;
   tagsJson?: string | null;
   unit: string;
   baseUomId?: string | null;
@@ -36,6 +43,7 @@ export interface CreateProductInput {
   safetyStock?: number;
   leadTimeDays?: number;
   procurementType?: ProcurementType;
+  costingMethod?: CostingMethod;
   weightKg?: number | null;
   widthCm?: number | null;
   heightCm?: number | null;
@@ -59,6 +67,8 @@ export interface UpdateProductInput {
   categoryId?: string | null;
   parentProductId?: string | null;
   variantAttributesJson?: string | null;
+  color?: string | null;
+  thicknessMm?: number | null;
   tagsJson?: string | null;
   unit: string;
   baseUomId?: string | null;
@@ -80,6 +90,7 @@ export interface UpdateProductInput {
   safetyStock: number;
   leadTimeDays: number;
   procurementType: ProcurementType;
+  costingMethod: CostingMethod;
   weightKg?: number | null;
   widthCm?: number | null;
   heightCm?: number | null;

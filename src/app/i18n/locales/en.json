@@ -97,6 +97,7 @@
       "reports": "Reports",
       "duplicateDetection": "Duplicate Records",
       "documentNumberGap": "Number Gaps",
+      "serialLookup": "Serial Lookup",
       "activityLog": "Activity Log",
       "settings": "Settings",
       "providers": "Providers",
@@ -585,6 +586,9 @@
       "product": "Product",
       "productPlaceholder": "Select product",
       "quantity": "Qty",
+      "widthMm": "Width (mm)",
+      "heightMm": "Height (mm)",
+      "pieces": "Pieces",
       "unitPrice": "Unit Price",
       "discountPercent": "Disc%",
       "taxRate": "Tax",
@@ -1075,6 +1079,9 @@
       "safetyStock": "Safety Stock",
       "leadTimeDays": "Lead Time (days)",
       "procurementType": "Procurement type",
+      "costingMethod": "Costing method",
+      "color": "Color",
+      "thicknessMm": "Thickness (mm)",
       "weightKg": "Weight (kg)",
       "widthCm": "Width (cm)",
       "heightCm": "Height (cm)",
@@ -1092,6 +1099,12 @@
       "Buy": "Replenished from a vendor — MRP plans a purchase requisition.",
       "Make": "Manufactured in-house — MRP plans a production order and explodes its BOM."
     },
+    "costingMethod": {
+      "WeightedAverage": "Weighted average",
+      "Fifo": "FIFO (first-in, first-out)",
+      "Standard": "Standard cost"
+    },
+    "costingMethodHint": "On a sale, stock is relieved to cost of goods sold using this method. Weighted average is the default; FIFO consumes the oldest cost layers in order; standard cost uses a fixed standard (the difference is booked to a cost-variance account).",
     "sections": {
       "identity": "Identity",
       "uom": "Units",
@@ -1125,7 +1138,7 @@
         "overview": "Overview",
         "transactions": "Transactions",
         "warehouses": "Warehouses",
-        "rules": "Rules",
+        "rules": "Recipe / BOM",
         "movements": "Movements"
       },
       "txnType": {
@@ -1138,9 +1151,8 @@
       "balance": "Balance",
       "noTransactions": "No stock transactions yet.",
       "warehousesComingSoon": "Warehouse breakdown will land in an upcoming release.",
-      "rulesComingSoon": "Composite stock rules (BOM) are coming soon.",
       "components": {
-        "intro": "Composite stock: list sub-products that this product consumes. When this product is sold, the listed components are decremented from stock instead.",
+        "intro": "Composite stock recipe (BOM): define the sub-products and per-unit quantities this product contains. A 'Buy' product works as a phantom kit — its components are deducted from stock automatically on sale. A 'Make' product keeps its own stock — production consumes the components and adds this product; a sale then draws down its own stock.",
         "addNew": "Add component",
         "empty": "No components defined. This product behaves as a standalone item.",
         "confirmDelete": "Remove component \"{{name}}\"?",
@@ -3066,6 +3078,12 @@
         "Material_panel": "Panel",
         "Pen": "Pen (draw surface / layer)",
         "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels"
+      },
+      "Bend": {
+        "SplitAction": "Split into two walls",
+        "SplitHint": "The L wall is a single solid — splitting it makes both legs independently editable (stretch, curve, freehand).",
+        "SplitDone": "L wall split into two grouped walls — both legs are now independently editable.",
+        "SplitBlocked": "Legs too short — the bend point is too close to an end."
       },
       "Templates": {
         "Title": "Templates — insert a ready-made composition with one click",
@@ -6786,6 +6804,28 @@
       "paused": "Paused.",
       "resumed": "Resumed.",
       "cancelled": "Cancelled."
+    }
+  },
+  "Serials": {
+    "title": "Serial Lookup",
+    "subtitle": "See where a serial number is used, who owns it, and its production genealogy.",
+    "searchPlaceholder": "Enter a serial number…",
+    "search": "Look up",
+    "notFound": "No records found for '{{serial}}'.",
+    "components": "Component genealogy",
+    "status": {
+      "InStock": "In stock",
+      "Shipped": "Shipped",
+      "Returned": "Returned",
+      "Scrapped": "Scrapped"
+    },
+    "fields": {
+      "orderId": "Order",
+      "shipmentId": "Shipment",
+      "owner": "Customer",
+      "warehouseId": "Warehouse",
+      "lotId": "Lot",
+      "parent": "Parent assembly"
     }
   },
   "DocumentNumberGap": {

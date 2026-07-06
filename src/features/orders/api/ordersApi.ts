@@ -184,7 +184,6 @@ export const ordersApi = {
         vehiclePlate: input.vehiclePlate ?? null,
         driverName: input.driverName ?? null,
         driverTckn: input.driverTckn ?? null,
-        operationId: input.operationId ?? null,
       })
       .then((r) => {
         invalidateHttpCache(INVALIDATION);

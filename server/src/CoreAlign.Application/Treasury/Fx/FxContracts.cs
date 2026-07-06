@@ -31,6 +31,11 @@ public interface IExchangeRateRepository
     Task<IReadOnlyList<ExchangeRate>> GetLatestPerCurrencyOnOrBeforeAsync(DateTime asOf, CancellationToken ct);
     Task AddAsync(ExchangeRate rate, CancellationToken ct);
     void Update(ExchangeRate rate);
+
+    // Serialises concurrent TCMB ingest runs so the check-then-insert upsert cannot race two
+    // runs into a duplicate (tenant_id, currency, valid_on_date) key. Must be called inside a
+    // transaction (the xact lock releases on commit/rollback).
+    Task AcquireIngestLockAsync(CancellationToken ct);
 }
 
 internal static class ExchangeRateMapper

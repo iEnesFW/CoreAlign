@@ -59,6 +59,42 @@ public class ReturnRequestStateMachineTests
     }
 
     [Fact]
+    public void MarkReceived_excludes_non_restockable_lines_from_restock_snapshot()
+    {
+        // A damaged (Restockable == false) line must NOT re-enter sellable inventory: it is filtered
+        // out of the received-event snapshot the stock handler restocks from.
+        var goodProductId = Guid.NewGuid();
+        var order = new Order("ORD-1", CustomerId, DateTime.UtcNow, "TRY")
+        {
+            Id = OrderId,
+            TenantId = TenantId,
+            Customer = new Customer("Acme") { Id = CustomerId, TenantId = TenantId },
+        };
+        var goodLine = new OrderLine(goodProductId, "SKU-OK", "Widget", 4m, 25m) { Id = Guid.NewGuid(), TenantId = TenantId };
+        var damagedLine = new OrderLine(Guid.NewGuid(), "SKU-DMG", "Widget-2", 4m, 25m) { Id = Guid.NewGuid(), TenantId = TenantId };
+        order.ReplaceLines(new[] { goodLine, damagedLine });
+        order.ChangeStatus(OrderStatus.Confirmed);
+        goodLine.RecordShipment(4m);
+        damagedLine.RecordShipment(4m);
+        order.ChangeStatus(OrderStatus.Shipped);
+
+        var ret = new ReturnRequest("RMA-1", order, ReturnReasonCode.Defective, "broken", null, null, null);
+        ret.ReplaceLines(new[]
+        {
+            new ReturnRequestLine(goodLine, 2m, restockable: true, lineNotes: null),
+            new ReturnRequestLine(damagedLine, 1m, restockable: false, lineNotes: "damaged"),
+        });
+        ret.Approve(Guid.NewGuid());
+        ret.ClearDomainEvents();
+
+        ret.MarkReceived(Guid.NewGuid(), WarehouseId);
+
+        var received = ret.DomainEvents.OfType<ReturnRequestReceivedEvent>().Single();
+        received.Lines.Should().ContainSingle();
+        received.Lines.Single().ProductId.Should().Be(goodProductId);
+    }
+
+    [Fact]
     public void MarkReceived_emits_received_event_with_line_snapshot()
     {
         var entity = BuildRequestedReturn();

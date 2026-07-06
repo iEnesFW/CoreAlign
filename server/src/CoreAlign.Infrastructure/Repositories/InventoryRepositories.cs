@@ -252,3 +252,80 @@ public class LotRepository : ILotRepository
     public void Update(Lot lot) => _context.Lots.Update(lot);
     public void Remove(Lot lot) => _context.Lots.Remove(lot);
 }
+
+public class SerialUnitRepository : ISerialUnitRepository
+{
+    private readonly CoreAlignDbContext _context;
+    public SerialUnitRepository(CoreAlignDbContext context) => _context = context;
+
+    public Task<SerialUnit?> GetBySerialAsync(Guid productId, string serialNumber, CancellationToken ct = default) =>
+        _context.Set<SerialUnit>().FirstOrDefaultAsync(s => s.ProductId == productId && s.SerialNumber == serialNumber, ct);
+
+    public async Task<IReadOnlyList<SerialUnit>> GetBySerialNumberAsync(string serialNumber, CancellationToken ct = default) =>
+        await _context.Set<SerialUnit>().AsNoTracking().Where(s => s.SerialNumber == serialNumber).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<SerialUnit>> GetBySerialNumbersAsync(Guid productId, IEnumerable<string> serialNumbers, CancellationToken ct = default)
+    {
+        var set = serialNumbers.Select(s => s.Trim()).Distinct().ToArray();
+        if (set.Length == 0) return Array.Empty<SerialUnit>();
+        return await _context.Set<SerialUnit>()
+            .Where(s => s.ProductId == productId && set.Contains(s.SerialNumber))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<SerialUnit>> GetChildrenAsync(Guid parentSerialUnitId, CancellationToken ct = default) =>
+        await _context.Set<SerialUnit>().AsNoTracking()
+            .Where(s => s.ParentSerialUnitId == parentSerialUnitId).ToListAsync(ct);
+
+    public async Task<IReadOnlyList<string>> GetExistingSerialNumbersAsync(Guid productId, IEnumerable<string> serialNumbers, CancellationToken ct = default)
+    {
+        var set = serialNumbers.Select(s => s.Trim()).Distinct().ToArray();
+        if (set.Length == 0) return Array.Empty<string>();
+        return await _context.Set<SerialUnit>().AsNoTracking()
+            .Where(s => s.ProductId == productId && set.Contains(s.SerialNumber))
+            .Select(s => s.SerialNumber)
+            .ToListAsync(ct);
+    }
+
+    public async Task AddAsync(SerialUnit unit, CancellationToken ct = default) =>
+        await _context.Set<SerialUnit>().AddAsync(unit, ct);
+
+    public async Task AddRangeAsync(IEnumerable<SerialUnit> units, CancellationToken ct = default) =>
+        await _context.Set<SerialUnit>().AddRangeAsync(units, ct);
+
+    public void Update(SerialUnit unit) => _context.Set<SerialUnit>().Update(unit);
+}
+
+public class StockCostLayerRepository : IStockCostLayerRepository
+{
+    private readonly CoreAlignDbContext _context;
+    public StockCostLayerRepository(CoreAlignDbContext context) => _context = context;
+
+    public async Task<IReadOnlyList<StockCostLayer>> GetOpenByStockItemAsync(Guid stockItemId, CancellationToken ct = default) =>
+        await _context.Set<StockCostLayer>()
+            .Where(l => l.StockItemId == stockItemId && l.RemainingQuantity > 0m)
+            .OrderBy(l => l.ReceivedAtUtc)
+            .ThenBy(l => l.Id)
+            .ToListAsync(ct);
+
+    public async Task<decimal> SumRemainingByStockItemAsync(Guid stockItemId, CancellationToken ct = default) =>
+        await _context.Set<StockCostLayer>()
+            .Where(l => l.StockItemId == stockItemId)
+            .SumAsync(l => (decimal?)l.RemainingQuantity, ct) ?? 0m;
+
+    public async Task AddAsync(StockCostLayer layer, CancellationToken ct = default) =>
+        await _context.Set<StockCostLayer>().AddAsync(layer, ct);
+
+    public void Update(StockCostLayer layer) => _context.Set<StockCostLayer>().Update(layer);
+
+    public async Task AcquireItemLockAsync(Guid productId, Guid warehouseId, Guid? lotId, CancellationToken ct = default)
+    {
+        if (!_context.Database.IsNpgsql())
+        {
+            return;
+        }
+        var key = $"fifo-layer:{productId}:{warehouseId}:{lotId}";
+        await _context.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", ct);
+    }
+}

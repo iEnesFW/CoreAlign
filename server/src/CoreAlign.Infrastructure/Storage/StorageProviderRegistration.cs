@@ -29,6 +29,18 @@ public static class StorageProviderRegistration
 
         var provider = configuration[$"{StorageProviderOptions.SectionName}:Provider"] ?? StorageProviderNames.Local;
 
+        if (string.Equals(provider, StorageProviderNames.S3, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(provider, StorageProviderNames.AzureBlob, StringComparison.OrdinalIgnoreCase))
+        {
+            // S3FileStorage / AzureBlobFileStorage are package-missing stubs that throw on every
+            // call. Fail fast at startup instead of surfacing a NotSupportedException on the first
+            // upload, so the misconfiguration is impossible to miss.
+            throw new InvalidOperationException(
+                $"Storage provider '{provider}' is selected ({StorageProviderOptions.SectionName}:Provider) " +
+                "but is not implemented in this build (its cloud SDK adapter is a stub). " +
+                "Use 'Local' or complete the adapter before enabling it.");
+        }
+
         services.AddScoped<IFileStorage>(sp =>
         {
             IFileStorage inner = provider switch

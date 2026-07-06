@@ -14,13 +14,16 @@ using Microsoft.Extensions.Logging;
 
 namespace CoreAlign.Application.Shipments.EDespatch;
 
+// Idempotency for e-Despatch comes from the FSM guard (an already Queued/Submitted/Accepted
+// shipment is rejected on re-issue) plus Shipment's optimistic-concurrency token (concurrent
+// issues on the same shipment → one wins, the other 409s and rolls back its outbox enqueue),
+// so no client-supplied OperationId is needed.
 public record IssueEDespatchCommand(
     Guid ShipmentId,
     string? CarrierVkn = null,
     string? VehiclePlate = null,
     string? DriverName = null,
-    string? DriverTckn = null,
-    Guid? OperationId = null) : IRequest<ShipmentDto>, ITransactionalRequest;
+    string? DriverTckn = null) : IRequest<ShipmentDto>, ITransactionalRequest;
 
 public class IssueEDespatchCommandValidator : AbstractValidator<IssueEDespatchCommand>
 {

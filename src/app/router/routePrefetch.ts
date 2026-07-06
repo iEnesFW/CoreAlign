@@ -19,6 +19,7 @@ import {
   ReportsPage,
   DuplicateDetectionPage,
   DocumentNumberGapPage,
+  SerialLookupPage,
   StockCountsPage,
   IncomingInvoicesPage,
   PurchaseOrdersPage,
@@ -63,6 +64,7 @@ export const routePreloaders: Record<string, () => Promise<unknown>> = {
   '/dashboard/reports': ReportsPage.preload,
   '/dashboard/reports/duplicates': DuplicateDetectionPage.preload,
   '/dashboard/reports/document-number-gaps': DocumentNumberGapPage.preload,
+  '/dashboard/inventory/serial-lookup': SerialLookupPage.preload,
   '/dashboard/admin/dunning-settings': DunningSettingsPage.preload,
 };
 
