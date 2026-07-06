@@ -274,6 +274,10 @@ public class GLPostingService : IGLPostingService
 
     private async Task<string> NextJournalNumberAsync(DateTime date, CancellationToken cancellationToken)
     {
+        // Serialize concurrent auto-posts on the JournalNumber sequence (same lock ConsumeAsync
+        // takes) so two in-flight GL postings cannot consume the same number → 23505.
+        await _sequences.AcquireLockAsync(DocumentSequenceType.JournalNumber, cancellationToken);
+
         // GetAsync returns a tracked entity; mutating it in-place (instead of the
         // repo's DB-requerying ConsumeAsync) is what lets numbering work inside
         // the domain-event dispatch loop before SaveChanges has run.

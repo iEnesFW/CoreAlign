@@ -59,8 +59,8 @@ public sealed class MrpService : IMrpService
 
         var fromUtc = DateTime.UtcNow.AddDays(-windowDays);
         var demandGroups = await _db.OrderLines
-            .Where(l => l.ProductId == productId && l.QuantityShipped > 0m && l.UpdatedAtUtc >= fromUtc)
-            .GroupBy(l => l.UpdatedAtUtc.Date)
+            .Where(l => l.ProductId == productId && l.QuantityShipped > 0m && l.Order.OrderDate >= fromUtc)
+            .GroupBy(l => l.Order.OrderDate.Date)
             .Select(g => new { Day = g.Key, Qty = g.Sum(x => x.QuantityShipped) })
             .ToListAsync(cancellationToken);
 
@@ -349,7 +349,7 @@ public sealed class MrpService : IMrpService
         var demandRows = await _db.OrderLines.AsNoTracking()
             .Where(l => productIds.Contains(l.ProductId)
                 && l.QuantityShipped > 0m
-                && l.UpdatedAtUtc >= fromUtc)
+                && l.Order.OrderDate >= fromUtc)
             .GroupBy(l => l.ProductId)
             .Select(g => new { ProductId = g.Key, Total = g.Sum(x => x.QuantityShipped) })
             .ToListAsync(ct);

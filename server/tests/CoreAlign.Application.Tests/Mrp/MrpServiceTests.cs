@@ -61,11 +61,17 @@ public class MrpServiceTests
         return product;
     }
 
-    private static OrderLine BuildShippedLine(Guid tenantId, Guid productId, decimal shipped, DateTime atUtc)
+    private static OrderLine BuildShippedLine(MrpDbContextFixture fx, Guid productId, decimal shipped, DateTime atUtc)
     {
-        var line = new OrderLine(productId, "SKU-1", "Widget", shipped, 10m) { TenantId = tenantId };
+        // Demand history now buckets by Order.OrderDate (not the row's UpdatedAtUtc), so a shipped
+        // line must hang off a persisted order dated within the window.
+        var customer = new Customer("MRP-" + Guid.NewGuid().ToString("N")[..8]) { TenantId = fx.TenantId };
+        fx.Db.Set<Customer>().Add(customer);
+        var order = new Order("ORD-" + Guid.NewGuid().ToString("N")[..8], customer.Id, atUtc, "TRY") { TenantId = fx.TenantId };
+        fx.Db.Set<Order>().Add(order);
+        var line = new OrderLine(productId, "SKU-1", "Widget", shipped, 10m) { TenantId = fx.TenantId };
         typeof(OrderLine).GetProperty(nameof(OrderLine.QuantityShipped))!.SetValue(line, shipped);
-        typeof(OrderLine).BaseType!.GetProperty(nameof(OrderLine.UpdatedAtUtc))!.SetValue(line, atUtc);
+        typeof(OrderLine).GetProperty(nameof(OrderLine.OrderId))!.SetValue(line, order.Id);
         return line;
     }
 
@@ -106,8 +112,8 @@ public class MrpServiceTests
         var product = await SeedProductAsync(fx);
 
         var now = DateTime.UtcNow;
-        fx.Db.OrderLines.Add(BuildShippedLine(fx.TenantId, product.Id, 30m, now.AddDays(-10)));
-        fx.Db.OrderLines.Add(BuildShippedLine(fx.TenantId, product.Id, 60m, now.AddDays(-20)));
+        fx.Db.OrderLines.Add(BuildShippedLine(fx, product.Id, 30m, now.AddDays(-10)));
+        fx.Db.OrderLines.Add(BuildShippedLine(fx, product.Id, 60m, now.AddDays(-20)));
         await fx.Db.SaveChangesAsync();
 
         var svc = Build(fx);
@@ -126,7 +132,7 @@ public class MrpServiceTests
         var product = await SeedProductAsync(fx, safetyStock: 5m, leadTimeDays: 7);
 
         var now = DateTime.UtcNow;
-        fx.Db.OrderLines.Add(BuildShippedLine(fx.TenantId, product.Id, 90m, now.AddDays(-15)));
+        fx.Db.OrderLines.Add(BuildShippedLine(fx, product.Id, 90m, now.AddDays(-15)));
         await fx.Db.SaveChangesAsync();
 
         var svc = Build(fx);

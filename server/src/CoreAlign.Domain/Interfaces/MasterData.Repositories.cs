@@ -6,6 +6,7 @@ namespace CoreAlign.Domain.Interfaces;
 public interface IDocumentSequenceRepository
 {
     Task<DocumentSequence?> GetAsync(DocumentSequenceType type, CancellationToken cancellationToken = default);
+    Task AcquireLockAsync(DocumentSequenceType type, CancellationToken cancellationToken = default);
     Task<string> ConsumeAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default);
     Task<string> PeekAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default);
     Task EnsureExistsAsync(DocumentSequenceType type, string prefix, int padLength, int year, CancellationToken cancellationToken = default);
