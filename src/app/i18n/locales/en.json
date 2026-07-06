@@ -1150,7 +1150,6 @@
       },
       "balance": "Balance",
       "noTransactions": "No stock transactions yet.",
-      "warehousesComingSoon": "Warehouse breakdown will land in an upcoming release.",
       "components": {
         "intro": "Composite stock recipe (BOM): define the sub-products and per-unit quantities this product contains. A 'Buy' product works as a phantom kit — its components are deducted from stock automatically on sale. A 'Make' product keeps its own stock — production consumes the components and adds this product; a sale then draws down its own stock.",
         "addNew": "Add component",
@@ -1410,7 +1409,6 @@
         "placeholder": "Write a note about this customer...",
         "added": "Note added."
       },
-      "mailNotice": "Outbound mail is not yet wired to an SMTP provider — this is a preview.",
       "mailTo": "To",
       "mailSubject": "Subject",
       "mailBody": "Body",

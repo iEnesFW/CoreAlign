@@ -846,7 +846,6 @@
       },
       "balance": "Saldo",
       "noTransactions": "Noch keine Bestandsbuchungen vorhanden.",
-      "warehousesComingSoon": "Die Lageraufschlüsselung folgt in einer kommenden Version.",
       "rulesComingSoon": "Stücklistenregeln (BOM) folgen in Kürze.",
       "components": {
         "intro": "Stücklistenartikel: Listen Sie Unterprodukte auf, die dieses Produkt verbraucht. Beim Verkauf werden die aufgeführten Komponenten anstelle des Hauptprodukts vom Bestand abgezogen.",
@@ -1120,7 +1119,6 @@
       "noInvoices": "Noch keine Rechnungen für diesen Kunden.",
       "noTransactions": "Noch keine Buchungen.",
       "noNotes": "Keine Notizen für diesen Kunden.",
-      "mailNotice": "Ausgehende E-Mails sind noch nicht an einen SMTP-Anbieter angebunden — dies ist eine Vorschau.",
       "mailTo": "An",
       "mailSubject": "Betreff",
       "mailBody": "Nachricht",

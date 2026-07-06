@@ -1150,7 +1150,6 @@
       },
       "balance": "Bakiye",
       "noTransactions": "Henüz stok hareketi yok.",
-      "warehousesComingSoon": "Depo bazlı dağılım yakında eklenecek.",
       "components": {
         "intro": "Bileşik stok reçetesi: bu ürünün içerdiği alt ürünleri ve birim başına miktarlarını tanımlayın. Ürün tipi 'Satın alınan' ise reçete fantom set gibi çalışır — satışta bileşenler otomatik stoktan düşülür. Ürün tipi 'Üretilen' ise ürün kendi stoğunu tutar — üretimde bileşenler düşer ve bu ürünün stoğu artar, satışta ise kendi stoğu düşer.",
         "addNew": "Bileşen ekle",
@@ -1333,7 +1332,6 @@
         "placeholder": "Müşteriyle ilgili bir not yazın...",
         "added": "Not eklendi."
       },
-      "mailNotice": "Mail gönderimi henüz bir SMTP sağlayıcıya bağlı değil — önizleme amaçlıdır.",
       "mailTo": "Alıcı",
       "mailSubject": "Konu",
       "mailBody": "İçerik",
