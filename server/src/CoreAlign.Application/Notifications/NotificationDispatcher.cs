@@ -28,6 +28,7 @@ public sealed class NotificationDispatcher : INotificationDispatcher
     private readonly IUserDeviceTokenRepository _deviceTokens;
     private readonly INotificationDeliveryQueue _deliveryQueue;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserConsentRepository _consents;
     private readonly ILogger<NotificationDispatcher> _logger;
 
     public NotificationDispatcher(
@@ -39,6 +40,7 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         IUserDeviceTokenRepository deviceTokens,
         INotificationDeliveryQueue deliveryQueue,
         IUnitOfWork unitOfWork,
+        IUserConsentRepository consents,
         ILogger<NotificationDispatcher> logger)
     {
         _renderer = renderer;
@@ -49,12 +51,23 @@ public sealed class NotificationDispatcher : INotificationDispatcher
         _deviceTokens = deviceTokens;
         _deliveryQueue = deliveryQueue;
         _unitOfWork = unitOfWork;
+        _consents = consents;
         _logger = logger;
     }
 
     public async Task<IReadOnlyList<NotificationSendResult>> DispatchAsync(NotificationRequest request, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        // WHY: KVKK/GDPR — a commercial/marketing message must not be sent without a valid,
+        // non-withdrawn consent for its purpose. Transactional sends leave this null (no gate).
+        if (request.MarketingConsentPurpose is not null && !await HasMarketingConsentAsync(request, ct).ConfigureAwait(false))
+        {
+            _logger.LogInformation(
+                "Marketing notification blocked for user {UserId} / purpose {Purpose} — no valid consent.",
+                request.UserId, request.MarketingConsentPurpose);
+            return new[] { NotificationSendResult.Fail($"Blocked: no marketing consent for '{request.MarketingConsentPurpose}'.") };
+        }
 
         var channels = request.ChannelsOverride ?? DefaultChannels;
         var (recipientEmail, recipientPhone, recipientDeviceToken) = await ResolveRecipientAddressesAsync(request, ct).ConfigureAwait(false);
@@ -291,6 +304,17 @@ public sealed class NotificationDispatcher : INotificationDispatcher
     }
 
     private readonly record struct PushTokenRef(string Token, Guid? TokenId);
+
+    private async Task<bool> HasMarketingConsentAsync(NotificationRequest request, CancellationToken ct)
+    {
+        // No user identity = no consent record to rely on; fail closed for commercial messages.
+        if (!request.UserId.HasValue)
+        {
+            return false;
+        }
+        var consent = await _consents.GetLatestAsync(request.UserId.Value, request.MarketingConsentPurpose!, ct).ConfigureAwait(false);
+        return consent is not null && consent.WithdrawnAtUtc is null;
+    }
 
     private async Task<(string? Email, string? Phone, string? DeviceToken)> ResolveRecipientAddressesAsync(NotificationRequest request, CancellationToken ct)
     {

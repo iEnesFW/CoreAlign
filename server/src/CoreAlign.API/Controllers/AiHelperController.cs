@@ -36,7 +36,6 @@ public sealed class AiHelperController : ControllerBase
     private readonly AiHelperOptions _options;
     private readonly ITenantContext _tenantContext;
     private readonly IPortalScopeService _portalScope;
-    private readonly IHostEnvironment _environment;
     private readonly ILogger<AiHelperController> _logger;
 
     public AiHelperController(
@@ -46,7 +45,6 @@ public sealed class AiHelperController : ControllerBase
         IOptions<AiHelperOptions> options,
         ITenantContext tenantContext,
         IPortalScopeService portalScope,
-        IHostEnvironment environment,
         ILogger<AiHelperController> logger)
     {
         _service = service;
@@ -55,7 +53,6 @@ public sealed class AiHelperController : ControllerBase
         _options = options.Value;
         _tenantContext = tenantContext;
         _portalScope = portalScope;
-        _environment = environment;
         _logger = logger;
     }
 
@@ -140,17 +137,13 @@ public sealed class AiHelperController : ControllerBase
     }
 
     [HttpPost("admin/reindex")]
-    [AllowAnonymous]
+    [Authorize(Roles = "TenantAdmin")]
+    [EnableRateLimiting("ai-helper")]
     public async Task<IActionResult> ReindexAsync(CancellationToken ct)
     {
         if (!_options.Enabled)
         {
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
-        }
-
-        if (!_environment.IsDevelopment() && !User.IsInRole("TenantAdmin"))
-        {
-            return Forbid();
         }
 
         var result = await _ingestion.ReindexAsync(ct);

@@ -20,6 +20,7 @@ public class NotificationDispatcherTests
     private readonly IUserDeviceTokenRepository _deviceTokens = Substitute.For<IUserDeviceTokenRepository>();
     private readonly INotificationDeliveryQueue _deliveryQueue = Substitute.For<INotificationDeliveryQueue>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IUserConsentRepository _consents = Substitute.For<IUserConsentRepository>();
 
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly Guid _userId = Guid.NewGuid();
@@ -34,6 +35,7 @@ public class NotificationDispatcherTests
             _deviceTokens,
             _deliveryQueue,
             _unitOfWork,
+            _consents,
             NullLogger<NotificationDispatcher>.Instance);
 
     private NotificationRequest BuildRequest(IReadOnlyList<NotificationChannel>? channels = null) =>

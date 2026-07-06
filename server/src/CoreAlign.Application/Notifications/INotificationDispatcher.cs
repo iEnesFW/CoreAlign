@@ -21,4 +21,5 @@ public sealed record NotificationRequest(
     string? RecipientPhoneOverride = null,
     string? RecipientDeviceTokenOverride = null,
     string? ReplyToOverride = null,
-    IReadOnlyList<EmailAttachment>? Attachments = null);
+    IReadOnlyList<EmailAttachment>? Attachments = null,
+    string? MarketingConsentPurpose = null);
