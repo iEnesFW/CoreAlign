@@ -207,6 +207,8 @@ public static class InfrastructureServiceRegistration
             CoreAlign.Application.Providers.Payment.Handlers.PaymentWebhookEventHandler>();
         services.AddScoped<CoreAlign.Application.Common.Outbox.IOutboxMessageHandler,
             CoreAlign.Application.Shipments.EDespatch.ShipmentEDespatchOutboxHandler>();
+        services.AddScoped<CoreAlign.Application.Common.Outbox.IOutboxMessageHandler,
+            CoreAlign.Application.Common.Email.EmailQueuedOutboxHandler>();
 
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<IPortalScopeService, PortalScopeService>();
@@ -332,6 +334,7 @@ public static class InfrastructureServiceRegistration
         services.Configure<CoreAlign.Infrastructure.Options.EmailOptions>(
             configuration.GetSection(CoreAlign.Infrastructure.Options.EmailOptions.SectionName));
         services.AddScoped<CoreAlign.Application.Common.Email.IEmailSender, SmtpEmailSender>();
+        services.AddSingleton<CoreAlign.Application.Common.Email.IEmailRenderer, SafeEmailRenderer>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 

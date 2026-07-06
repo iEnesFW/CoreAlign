@@ -41,6 +41,20 @@ public sealed class SmtpEmailSender : IEmailSender
             HtmlBody = message.BodyHtml,
             TextBody = message.BodyText,
         };
+        if (message.Attachments is not null)
+        {
+            foreach (var attachment in message.Attachments)
+            {
+                if (ContentType.TryParse(attachment.ContentType, out var contentType))
+                {
+                    builder.Attachments.Add(attachment.FileName, attachment.Content, contentType);
+                }
+                else
+                {
+                    builder.Attachments.Add(attachment.FileName, attachment.Content);
+                }
+            }
+        }
         mime.Body = builder.ToMessageBody();
 
         using var client = new SmtpClient();

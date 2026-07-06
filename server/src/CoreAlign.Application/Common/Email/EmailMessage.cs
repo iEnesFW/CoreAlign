@@ -6,4 +6,10 @@ public sealed record EmailMessage(
     string BodyHtml,
     string? BodyText,
     string? ReplyTo,
-    Guid TenantId);
+    Guid TenantId,
+    IReadOnlyList<EmailAttachment>? Attachments = null);
+
+public sealed record EmailAttachment(
+    string FileName,
+    string ContentType,
+    byte[] Content);

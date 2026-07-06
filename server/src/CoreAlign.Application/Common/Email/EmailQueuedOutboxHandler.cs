@@ -61,10 +61,34 @@ public sealed class EmailQueuedOutboxHandler : IOutboxMessageHandler
             BodyHtml: body,
             BodyText: null,
             ReplyTo: payload.ReplyTo,
-            TenantId: payload.TenantId);
+            TenantId: payload.TenantId,
+            Attachments: BuildAttachments(payload.Attachment));
 
         await _sender.SendAsync(message, cancellationToken);
         return OutboxHandlerResult.Processed($"Sent:{payload.TemplateCode}");
+    }
+
+    private static IReadOnlyList<EmailAttachment>? BuildAttachments(EmailAttachmentPayload? attachment)
+    {
+        if (attachment is null || string.IsNullOrWhiteSpace(attachment.ContentBase64))
+        {
+            return null;
+        }
+
+        byte[] content;
+        try
+        {
+            content = Convert.FromBase64String(attachment.ContentBase64);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+
+        var contentType = string.IsNullOrWhiteSpace(attachment.ContentType)
+            ? "application/octet-stream"
+            : attachment.ContentType;
+        return new[] { new EmailAttachment(attachment.FileName, contentType, content) };
     }
 
     private static string BuildFallbackBody(string templateCode, IReadOnlyDictionary<string, object?> context)

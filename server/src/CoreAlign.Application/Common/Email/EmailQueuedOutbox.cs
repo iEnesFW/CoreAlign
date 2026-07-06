@@ -11,7 +11,13 @@ public sealed record EmailQueuedPayload(
     string Locale,
     Guid TenantId,
     string? ReplyTo,
-    Dictionary<string, object?> Context);
+    Dictionary<string, object?> Context,
+    EmailAttachmentPayload? Attachment = null);
+
+public sealed record EmailAttachmentPayload(
+    string FileName,
+    string ContentType,
+    string ContentBase64);
 
 public interface IEmailQueuedOutbox
 {

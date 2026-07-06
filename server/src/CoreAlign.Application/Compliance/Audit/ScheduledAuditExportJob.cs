@@ -8,6 +8,7 @@ public sealed class ScheduledAuditExportJob
 {
     public const string EmailTemplateCode = "audit-export-delivery";
     public const string DefaultLocale = "tr-TR";
+    private const int MaxAttachmentBytes = 10 * 1024 * 1024;
 
     private readonly IScheduledAuditExportConfigRepository _configRepository;
     private readonly IAuditLogExportService _exportService;
@@ -116,6 +117,8 @@ public sealed class ScheduledAuditExportJob
 
         var exportResult = await _exportService.ExportAsync(filter, config.Format, cancellationToken);
 
+        var attachment = BuildAttachment(tenantId, exportResult);
+
         foreach (var recipient in config.Recipients)
         {
             if (string.IsNullOrWhiteSpace(recipient)) continue;
@@ -129,6 +132,7 @@ public sealed class ScheduledAuditExportJob
                 ["periodFromUtc"] = filter.FromUtc,
                 ["periodToUtc"] = filter.ToUtc,
                 ["generatedAtUtc"] = nowUtc,
+                ["attached"] = attachment is not null,
             };
             await _emailOutbox.EnqueueAsync(new EmailQueuedPayload(
                 To: recipient,
@@ -136,10 +140,30 @@ public sealed class ScheduledAuditExportJob
                 Locale: DefaultLocale,
                 TenantId: tenantId,
                 ReplyTo: null,
-                Context: context), cancellationToken);
+                Context: context,
+                Attachment: attachment), cancellationToken);
         }
 
         await RecordOutcomeAsync(tenantId, config, nowUtc, "Ok", null, cancellationToken);
+    }
+
+    private EmailAttachmentPayload? BuildAttachment(Guid tenantId, AuditLogExportResult exportResult)
+    {
+        if (exportResult.Content.Length == 0)
+        {
+            return null;
+        }
+        if (exportResult.Content.Length > MaxAttachmentBytes)
+        {
+            _logger.LogWarning(
+                "ScheduledAuditExportJob: tenant {TenantId} export '{FileName}' is {Bytes} bytes (over the {Max}-byte attachment cap); sending notification without the file.",
+                tenantId, exportResult.FileName, exportResult.Content.Length, MaxAttachmentBytes);
+            return null;
+        }
+        return new EmailAttachmentPayload(
+            exportResult.FileName,
+            exportResult.ContentType,
+            Convert.ToBase64String(exportResult.Content));
     }
 
     private async Task RecordOutcomeAsync(

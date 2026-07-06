@@ -105,6 +105,37 @@ public class EmailQueuedOutboxHandlerTests
     }
 
     [Fact]
+    public async Task Decodes_and_attaches_base64_payload_attachment()
+    {
+        _templates.GetByCodeAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns((EmailTemplate?)null);
+
+        EmailMessage? captured = null;
+        await _sender.SendAsync(Arg.Do<EmailMessage>(m => captured = m), Arg.Any<CancellationToken>());
+
+        var content = System.Text.Encoding.UTF8.GetBytes("id,action\n1,Created\n");
+        var payload = new EmailQueuedPayload(
+            To: "ops@example.com",
+            TemplateCode: "audit-export-delivery",
+            Locale: "tr-TR",
+            TenantId: TenantId,
+            ReplyTo: null,
+            Context: new Dictionary<string, object?>(),
+            Attachment: new EmailAttachmentPayload("audit.csv", "text/csv", Convert.ToBase64String(content)));
+        var json = JsonSerializer.Serialize(payload, Json);
+
+        var result = await _sut.HandleAsync(json, default);
+
+        result.Outcome.Should().Be(OutboxHandlerOutcome.Processed);
+        captured.Should().NotBeNull();
+        captured!.Attachments.Should().ContainSingle();
+        var attachment = captured.Attachments![0];
+        attachment.FileName.Should().Be("audit.csv");
+        attachment.ContentType.Should().Be("text/csv");
+        attachment.Content.Should().Equal(content);
+    }
+
+    [Fact]
     public async Task Empty_recipient_short_circuits_without_sending()
     {
         var payload = new EmailQueuedPayload(
