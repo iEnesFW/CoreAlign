@@ -19,4 +19,6 @@ public sealed record UserEraseCascadeResult(
     int LoginAuditRowsHashed,
     int ActivityLogRowsHashed,
     int TokensDeleted,
-    int SessionsHashed);
+    int SessionsHashed,
+    int EmployeesAnonymized = 0,
+    int PayslipsAnonymized = 0);

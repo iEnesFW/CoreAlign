@@ -131,6 +131,13 @@ public class Payslip : TenantEntity, IHasConcurrencyToken
         line.AttachToPayslip(Id);
         DeductionLines.Add(line);
     }
+
+    public void Anonymize(DateTime utcNow)
+    {
+        NationalId = "[silinmiş]";
+        EmployeeFullName = "[silinmiş çalışan]";
+        UpdatedAtUtc = utcNow;
+    }
 }
 
 public class PayslipEarningLine : TenantEntity

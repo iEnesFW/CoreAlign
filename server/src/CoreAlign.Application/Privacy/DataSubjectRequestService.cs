@@ -39,6 +39,11 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         var tenantId = _tenant.RequireTenantId();
         var now = DateTime.UtcNow;
 
+        if (input.RequesterUserId.HasValue)
+        {
+            await EnsureUserInTenantAsync(input.RequesterUserId.Value, tenantId, cancellationToken);
+        }
+
         var usernameHash = !string.IsNullOrWhiteSpace(input.RequesterEmail)
             ? _hasher.Hash(tenantId, input.RequesterEmail)
             : null;
@@ -68,6 +73,7 @@ public class DataSubjectRequestService : IDataSubjectRequestService
 
         if (request.RequesterUserId.HasValue)
         {
+            await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
             _ = await _reader.GetUserOrdersAsync(request.RequesterUserId.Value, cancellationToken);
         }
 
@@ -88,6 +94,7 @@ public class DataSubjectRequestService : IDataSubjectRequestService
 
         if (request.RequesterUserId.HasValue)
         {
+            await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
             await _anonymizer.AnonymizeUserAsync(request.RequesterUserId.Value, keepFinancialTrail, cancellationToken);
         }
         else if (request.RequesterCustomerId.HasValue)
@@ -108,6 +115,12 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         EnsureCanProcess(request, DataSubjectRequestType.Portability);
 
         request.MarkInProgress(DateTime.UtcNow);
+
+        if (request.RequesterUserId.HasValue)
+        {
+            await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
+        }
+
         request.MarkCompleted(DateTime.UtcNow);
         _repository.Update(request);
         return ToDto(request);
@@ -127,6 +140,11 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         {
             var user = await _users.GetByIdAsync(request.RequesterUserId.Value, cancellationToken)
                 ?? throw new PrivacyUserNotFoundException();
+
+            if (user.TenantId != request.TenantId)
+            {
+                throw new PrivacyUserNotFoundException();
+            }
 
             ApplyCorrections(user, corrections);
             _users.Update(user);
@@ -185,6 +203,17 @@ public class DataSubjectRequestService : IDataSubjectRequestService
     {
         return await _repository.GetByIdAsync(requestId, cancellationToken)
             ?? throw new DataSubjectRequestNotFoundException();
+    }
+
+    private async Task EnsureUserInTenantAsync(Guid userId, Guid tenantId, CancellationToken cancellationToken)
+    {
+        // WHY: User is exempt from the global tenant filter, so a forged subject-id could otherwise
+        // export/erase another tenant's user. Bind the subject to the request's tenant explicitly.
+        var user = await _users.GetByIdAsync(userId, cancellationToken);
+        if (user is null || user.TenantId != tenantId)
+        {
+            throw new PrivacyUserNotFoundException();
+        }
     }
 
     private static void EnsureCanProcess(DataSubjectRequest request, DataSubjectRequestType expectedType)

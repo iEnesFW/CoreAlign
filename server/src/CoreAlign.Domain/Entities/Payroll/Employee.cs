@@ -195,6 +195,27 @@ public class Employee : TenantEntity, IHasConcurrencyToken, ISoftDeletable
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    public void Anonymize(DateTime utcNow)
+    {
+        FirstName = "[silinmiş]";
+        LastName = "[çalışan]";
+        // WHY: national_id is char(11) UNIQUE (per tenant, filtered on is_deleted=false); soft-deleting
+        // the erased employee drops it from the active unique index so a constant placeholder is safe.
+        NationalId = "00000000000";
+        SgkRegistrationNo = null;
+        Email = null;
+        Phone = null;
+        Iban = null;
+        BankName = null;
+        if (!IsDeleted)
+        {
+            IsDeleted = true;
+            DeletedAtUtc = utcNow;
+            DeletedReason = "KVKK erasure";
+        }
+        UpdatedAtUtc = utcNow;
+    }
+
     public void AddSalaryComponent(SalaryComponent component)
     {
         component.AttachToEmployee(Id);

@@ -81,12 +81,36 @@ public class PrivacyEraseService : IPrivacyEraseService
             session.DeviceInfo = HashIdentifier(session.DeviceInfo!);
         }
 
+        var employees = await _context.Employees
+            .Where(e => e.UserId == userId)
+            .ToListAsync(cancellationToken);
+        foreach (var employee in employees)
+        {
+            employee.Anonymize(nowUtc);
+        }
+
+        var payslipsAnonymized = 0;
+        if (employees.Count > 0)
+        {
+            var employeeIds = employees.Select(e => e.Id).ToList();
+            var payslips = await _context.Payslips
+                .Where(p => employeeIds.Contains(p.EmployeeId))
+                .ToListAsync(cancellationToken);
+            foreach (var payslip in payslips)
+            {
+                payslip.Anonymize(nowUtc);
+            }
+            payslipsAnonymized = payslips.Count;
+        }
+
         return new UserEraseCascadeResult(
             CustomerContactsAnonymized: customerContactsAnonymized,
             LoginAuditRowsHashed: loginAuditRows.Count,
             ActivityLogRowsHashed: activityRows.Count,
             TokensDeleted: tokensDeleted,
-            SessionsHashed: sessions.Count);
+            SessionsHashed: sessions.Count,
+            EmployeesAnonymized: employees.Count,
+            PayslipsAnonymized: payslipsAnonymized);
     }
 
     public async Task<int> AnonymizeCustomerChildrenAsync(
