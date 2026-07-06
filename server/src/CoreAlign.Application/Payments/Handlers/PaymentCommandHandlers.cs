@@ -332,20 +332,23 @@ public class UnapplyPaymentHandler : IRequestHandler<UnapplyPaymentCommand, Paym
 {
     private readonly IPaymentRepository _payments;
     private readonly IInvoiceRepository _invoices;
-    private readonly IUnitOfWork _uow;
 
-    public UnapplyPaymentHandler(IPaymentRepository payments, IInvoiceRepository invoices, IUnitOfWork uow)
+    public UnapplyPaymentHandler(IPaymentRepository payments, IInvoiceRepository invoices)
     {
         _payments = payments;
         _invoices = invoices;
-        _uow = uow;
     }
 
     public async Task<PaymentDto> Handle(UnapplyPaymentCommand c, CancellationToken ct)
     {
         var payment = await _payments.GetWithApplicationsAsync(c.Id, ct) ?? throw new PaymentNotFoundException();
-        var app = payment.Applications.FirstOrDefault(a => a.Id == c.ApplicationId)
-            ?? throw new PaymentApplicationException("Application not found on payment.");
+        var app = payment.Applications.FirstOrDefault(a => a.Id == c.ApplicationId);
+        if (app is null)
+        {
+            // Idempotent: the application is already unapplied — a retry returns the current state
+            // instead of a 400, so a double-tap/replay is safe.
+            return PaymentMapper.ToDto(payment);
+        }
 
         var invoice = await _invoices.GetByIdAsync(app.InvoiceId, ct);
         if (invoice is not null)
@@ -355,8 +358,9 @@ public class UnapplyPaymentHandler : IRequestHandler<UnapplyPaymentCommand, Paym
         }
         payment.Unapply(c.ApplicationId);
 
+        // Persist via the ITransactionalRequest pipeline (SaveChanges + audit + outbox in one
+        // transaction); the previous manual SaveChangesAsync committed outside that envelope.
         _payments.Update(payment);
-        await _uow.SaveChangesAsync(ct);
         return PaymentMapper.ToDto(payment);
     }
 }
