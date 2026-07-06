@@ -8,8 +8,11 @@ public sealed class PayrollCalculationService : IPayrollCalculationService
     {
         var p = input.Parameters;
         var gross = input.GrossSalary;
+        // SGK base is derived from the SGK gross (SgkExempt components excluded), which is distinct
+        // from the income-tax gross; income tax + stamp tax stay on GrossSalary.
+        var sgkGross = input.SgkGrossSalary ?? input.GrossSalary;
 
-        var sgkBase = Round2(Math.Min(Math.Max(gross, p.SgkFloorMonthly), p.SgkCeilingMonthly));
+        var sgkBase = Round2(Math.Min(Math.Max(sgkGross, p.SgkFloorMonthly), p.SgkCeilingMonthly));
         var sgkEmployee = Round2(sgkBase * p.SgkEmployeeRate);
         var unemploymentEmployee = Round2(sgkBase * p.UnemploymentEmployeeRate);
         var employerRate = input.IsSgkIncentiveEligible ? p.SgkEmployer5PointIncentiveRate : p.SgkEmployerRate;

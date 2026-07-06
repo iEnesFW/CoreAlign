@@ -1,4 +1,5 @@
 using CoreAlign.Application.Catalog.Linker;
+using CoreAlign.Application.Fx;
 using CoreAlign.Application.GlassEnclosure.Services;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Enums;
@@ -17,6 +18,7 @@ public class BomComposerProductLinkTests
     private readonly IGlassEnclosureSettingsRepository _settingsRepo = Substitute.For<IGlassEnclosureSettingsRepository>();
     private readonly IExpressionEvaluator _evaluator = Substitute.For<IExpressionEvaluator>();
     private readonly ICatalogProductLinker _linker = Substitute.For<ICatalogProductLinker>();
+    private readonly IFxRateProvider _fx = Substitute.For<IFxRateProvider>();
 
     public BomComposerProductLinkTests()
     {
@@ -24,11 +26,14 @@ public class BomComposerProductLinkTests
             .Returns(_ => new GlassEnclosureSettings(Guid.NewGuid()));
         _hardwareKitRepo.ListAsync(Arg.Any<bool?>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<HardwareKit>());
+        // Identity conversion (single-currency scenarios stay byte-identical).
+        _fx.ConvertAsync(Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(ci => ci.Arg<decimal>());
     }
 
     private BOMComposer BuildSut() => new(
         _systemRepo, _profileItemRepo, _glassRepo, _colorRepo,
-        _hardwareRepo, _hardwareKitRepo, _settingsRepo, _evaluator, _linker);
+        _hardwareRepo, _hardwareKitRepo, _settingsRepo, _evaluator, _linker, _fx);
 
     [Fact]
     public async Task ComposeAsync_sets_glass_product_id_from_catalog_linkage()

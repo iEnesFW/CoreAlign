@@ -39,6 +39,29 @@ public sealed class PayrollCalculatorTests
     private static readonly IPayrollCalculationService Calculator = new PayrollCalculationService();
 
     [Fact]
+    public void SgkGrossSalary_separates_sgk_base_from_income_tax_gross()
+    {
+        // A 10,000 SgkExempt (but taxable) component: the SGK base excludes it (50k), while the
+        // income-tax gross still includes it (60k). Income tax base = full gross - SGK deductions.
+        var input = new PayrollCalcInput(
+            GrossSalary: 60000m,
+            PriorCumulativeIncomeTaxBase: 150000m,
+            PriorCumulativeMinWageBase: 132628.08m,
+            IsSgkIncentiveEligible: false,
+            OtherDeductions: 0m,
+            Parameters: SeededParameters(),
+            SgkGrossSalary: 50000m);
+
+        var r = Calculator.Calculate(input);
+
+        r.SgkBase.Should().Be(50000.00m);
+        r.SgkEmployee.Should().Be(7000.00m); // 50000 * 0.14
+        r.UnemploymentEmployee.Should().Be(500.00m); // 50000 * 0.01
+        r.IncomeTaxBaseThisPeriod.Should().Be(52500.00m); // 60000 - 7000 - 500
+        r.StampTaxGross.Should().Be(455.40m); // stamp tax still on the full 60k income-tax gross
+    }
+
+    [Fact]
     public void T1_worked_example_matches_every_component_to_two_decimals()
     {
         var input = new PayrollCalcInput(

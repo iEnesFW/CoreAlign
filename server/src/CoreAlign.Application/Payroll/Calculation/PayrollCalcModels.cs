@@ -8,7 +8,10 @@ public sealed record PayrollCalcInput(
     decimal PriorCumulativeMinWageBase,
     bool IsSgkIncentiveEligible,
     decimal OtherDeductions,
-    PayrollParameters Parameters);
+    PayrollParameters Parameters,
+    // SGK base gross (excludes SgkExempt components). Defaults to GrossSalary so a caller that does
+    // not distinguish keeps the prior single-gross behaviour.
+    decimal? SgkGrossSalary = null);
 
 public sealed record PayrollCalcResult(
     decimal SgkBase,

@@ -55,6 +55,7 @@ public class BOMComposer : IBOMComposer
     private readonly IGlassEnclosureSettingsRepository _settingsRepo;
     private readonly IExpressionEvaluator _evaluator;
     private readonly ICatalogProductLinker _linker;
+    private readonly Fx.IFxRateProvider _fx;
 
     public BOMComposer(
         IProfileSystemRepository systemRepo,
@@ -65,7 +66,8 @@ public class BOMComposer : IBOMComposer
         IHardwareKitRepository hardwareKitRepo,
         IGlassEnclosureSettingsRepository settingsRepo,
         IExpressionEvaluator evaluator,
-        ICatalogProductLinker linker)
+        ICatalogProductLinker linker,
+        Fx.IFxRateProvider fx)
     {
         _systemRepo = systemRepo;
         _profileItemRepo = profileItemRepo;
@@ -76,12 +78,16 @@ public class BOMComposer : IBOMComposer
         _settingsRepo = settingsRepo;
         _evaluator = evaluator;
         _linker = linker;
+        _fx = fx;
     }
 
     public async Task<BOMCompositionResult> ComposeAsync(GlassProject project, CancellationToken cancellationToken = default)
     {
         var settings = await _settingsRepo.GetOrCreateForCurrentTenantAsync(cancellationToken);
         var currency = settings.DefaultCurrency;
+        // Catalog items (profile/glass/hardware) may be priced in different currencies; every cost is
+        // converted to the project/base currency before being summed so the subtotal is meaningful.
+        var asOf = DateTime.UtcNow;
         var lines = new List<BOMLineDraft>();
         var sortOrder = 0;
 
@@ -122,7 +128,8 @@ public class BOMComposer : IBOMComposer
                 if (meters <= 0) continue;
                 var representativeProfile = profileItems.FirstOrDefault(p => p.Role == role) ?? profileItems.FirstOrDefault();
                 if (representativeProfile is null) continue;
-                var unitCost = representativeProfile.PricePerKg * priceModifier * representativeProfile.WeightKgPerMeter;
+                var rawUnitCost = representativeProfile.PricePerKg * priceModifier * representativeProfile.WeightKgPerMeter;
+                var unitCost = await _fx.ConvertAsync(rawUnitCost, representativeProfile.Currency, currency, asOf, cancellationToken);
                 var lineCost = meters * unitCost;
                 profileCost += lineCost;
                 totalWeightKg += meters * representativeProfile.WeightKgPerMeter;
@@ -136,7 +143,7 @@ public class BOMComposer : IBOMComposer
                     decimal.Round(meters, 3),
                     "m",
                     decimal.Round(unitCost, 4),
-                    representativeProfile.Currency,
+                    currency,
                     run.Id.ToString(),
                     sortOrder++));
             }
@@ -186,7 +193,8 @@ public class BOMComposer : IBOMComposer
                 totalArea += areaM2;
                 totalPanels += 1;
                 totalWeightKg += areaM2 * glass.WeightKgPerM2;
-                var glassUnitCost = decimal.Round(glass.PricePerM2 * glassCostFactor, 4);
+                var rawGlassUnitCost = glass.PricePerM2 * glassCostFactor;
+                var glassUnitCost = decimal.Round(await _fx.ConvertAsync(rawGlassUnitCost, glass.Currency, currency, asOf, cancellationToken), 4);
                 var lineCost = areaM2 * glassUnitCost;
                 glassCost += lineCost;
                 var glassLinkage = await _linker.EnsureLinkedAsync(glass, CatalogItemKind.Glass, cancellationToken);
@@ -199,7 +207,7 @@ public class BOMComposer : IBOMComposer
                     decimal.Round(areaM2, 3),
                     "m²",
                     glassUnitCost,
-                    glass.Currency,
+                    currency,
                     panel.Id.ToString(),
                     sortOrder++));
             }
@@ -222,7 +230,8 @@ public class BOMComposer : IBOMComposer
                     var qty = _evaluator.EvaluateNumeric(kitItem.QuantityFormula, variables);
                     qty = Math.Max(0, decimal.Ceiling(qty));
                     if (qty <= 0) continue;
-                    var lineCost = qty * hardware.UnitPrice;
+                    var hardwareUnitPrice = await _fx.ConvertAsync(hardware.UnitPrice, hardware.Currency, currency, asOf, cancellationToken);
+                    var lineCost = qty * hardwareUnitPrice;
                     hardwareCost += lineCost;
                     var hardwareLinkage = await _linker.EnsureLinkedAsync(hardware, CatalogItemKind.Hardware, cancellationToken);
                     lines.Add(new BOMLineDraft(
@@ -233,8 +242,8 @@ public class BOMComposer : IBOMComposer
                         $"{run.Label} · {kit.Name} · {hardware.Name}",
                         qty,
                         hardware.Unit,
-                        hardware.UnitPrice,
-                        hardware.Currency,
+                        decimal.Round(hardwareUnitPrice, 4),
+                        currency,
                         run.Id.ToString(),
                         sortOrder++));
                 }

@@ -154,7 +154,8 @@ public class CalculatePayrollRunHandler : IRequestHandler<CalculatePayrollRunCom
                 PriorCumulativeMinWageBase: priorMinWageBase,
                 IsSgkIncentiveEligible: employee.IsSgkIncentiveEligible,
                 OtherDeductions: earnings.OtherDeductionsTotal,
-                Parameters: parameters));
+                Parameters: parameters,
+                SgkGrossSalary: earnings.SgkGross));
 
             var payslipNumber = await _sequences.ConsumeAsync(DocumentSequenceType.PayslipNumber, now, ct);
             var payslip = BuildPayslip(run, employee, payslipNumber, earnings, result, priorIncomeTaxBase, priorMinWageBase);
