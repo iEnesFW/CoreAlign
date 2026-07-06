@@ -17,6 +17,14 @@ public class InvoiceIssuedEInvoiceOutboxHandlerTests
     private readonly ICustomerRepository _customers = Substitute.For<ICustomerRepository>();
     private readonly IElectronicInvoiceGateway _gateway = Substitute.For<IElectronicInvoiceGateway>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly ITenantRepository _tenants = Substitute.For<ITenantRepository>();
+
+    public InvoiceIssuedEInvoiceOutboxHandlerTests()
+    {
+        // A tenant with a configured tax identity so the seller-validity guard passes.
+        _tenants.GetByIdAsync(TenantId, Arg.Any<CancellationToken>())
+            .Returns(new Tenant("Demo Şirket", "demo") { Id = TenantId, TaxNumber = "1234567890", TaxOffice = "Kadıköy" });
+    }
 
     [Fact]
     public async Task Submits_invoice_and_persists_remote_uuid_on_success()
@@ -29,7 +37,7 @@ public class InvoiceIssuedEInvoiceOutboxHandlerTests
         _gateway.SubmitAsync(Arg.Any<EInvoiceSubmissionRequest>(), Arg.Any<CancellationToken>())
             .Returns(new EInvoiceSubmissionResult("STUB-ABC123", "Submitted", null, null));
 
-        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
+        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, _tenants, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
         var payload = JsonSerializer.Serialize(new EInvoiceSubmissionRequestedPayload(TenantId, invoice.Id));
 
         var result = await sut.HandleAsync(payload, default);
@@ -52,7 +60,7 @@ public class InvoiceIssuedEInvoiceOutboxHandlerTests
         _gateway.SubmitAsync(Arg.Any<EInvoiceSubmissionRequest>(), Arg.Any<CancellationToken>())
             .Returns(new EInvoiceSubmissionResult(null, "Failed", "Schema error", null));
 
-        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
+        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, _tenants, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
         var payload = JsonSerializer.Serialize(new EInvoiceSubmissionRequestedPayload(TenantId, invoice.Id));
 
         var result = await sut.HandleAsync(payload, default);
@@ -69,7 +77,7 @@ public class InvoiceIssuedEInvoiceOutboxHandlerTests
         invoice.RegisterEInvoice("EXISTING-UUID", "Submitted", null);
         _invoices.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
 
-        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
+        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, _tenants, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
         var payload = JsonSerializer.Serialize(new EInvoiceSubmissionRequestedPayload(TenantId, invoice.Id));
 
         var result = await sut.HandleAsync(payload, default);
@@ -84,7 +92,7 @@ public class InvoiceIssuedEInvoiceOutboxHandlerTests
     {
         _invoices.GetWithLinesAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Invoice?)null);
 
-        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
+        var sut = new InvoiceIssuedEInvoiceOutboxHandler(_invoices, _customers, _gateway, _unitOfWork, _tenants, NullLogger<InvoiceIssuedEInvoiceOutboxHandler>.Instance);
         var payload = JsonSerializer.Serialize(new EInvoiceSubmissionRequestedPayload(TenantId, Guid.NewGuid()));
 
         var result = await sut.HandleAsync(payload, default);
