@@ -9,11 +9,12 @@ public sealed record SecurityAlertEmailMessage(
     string AlertType,
     DateTime OccurredAtUtc,
     string? IpAddress,
-    string? UserAgent);
+    string? UserAgent,
+    string? Email = null);
 
 public interface ISecurityAlertOutbox
 {
-    Task EnqueueRefreshTokenReuseAsync(Guid userId, DateTime occurredAtUtc, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default);
+    Task EnqueueRefreshTokenReuseAsync(Guid userId, DateTime occurredAtUtc, string? ipAddress, string? userAgent, string? email, CancellationToken cancellationToken = default);
 }
 
 public sealed class SecurityAlertOutbox : ISecurityAlertOutbox
@@ -35,9 +36,9 @@ public sealed class SecurityAlertOutbox : ISecurityAlertOutbox
         _signal = signal;
     }
 
-    public async Task EnqueueRefreshTokenReuseAsync(Guid userId, DateTime occurredAtUtc, string? ipAddress, string? userAgent, CancellationToken cancellationToken = default)
+    public async Task EnqueueRefreshTokenReuseAsync(Guid userId, DateTime occurredAtUtc, string? ipAddress, string? userAgent, string? email, CancellationToken cancellationToken = default)
     {
-        var payload = new SecurityAlertEmailMessage(userId, AlertTypeRefreshTokenReuse, occurredAtUtc, ipAddress, userAgent);
+        var payload = new SecurityAlertEmailMessage(userId, AlertTypeRefreshTokenReuse, occurredAtUtc, ipAddress, userAgent, email);
         var json = JsonSerializer.Serialize(payload, JsonOptions);
         await _outbox.AddAsync(new OutboxMessage(MessageType, json), cancellationToken);
         _signal.MarkPending();

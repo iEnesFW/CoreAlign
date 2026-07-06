@@ -24,7 +24,7 @@ public sealed class SecurityAlertOutboxHandler : IOutboxMessageHandler
         }
 
         await _email.SendSecurityAlertAsync(
-            new SecurityAlertEmailPayload(payload.UserId, payload.AlertType, payload.OccurredAtUtc, payload.IpAddress, payload.UserAgent),
+            new SecurityAlertEmailPayload(payload.UserId, payload.AlertType, payload.OccurredAtUtc, payload.IpAddress, payload.UserAgent, payload.Email),
             cancellationToken);
 
         return OutboxHandlerResult.Processed($"Sent:{payload.AlertType}");

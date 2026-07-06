@@ -329,6 +329,9 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         // Stateless and thread-safe — register as singleton to skip per-request allocation.
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
+        services.Configure<CoreAlign.Infrastructure.Options.EmailOptions>(
+            configuration.GetSection(CoreAlign.Infrastructure.Options.EmailOptions.SectionName));
+        services.AddScoped<CoreAlign.Application.Common.Email.IEmailSender, SmtpEmailSender>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 

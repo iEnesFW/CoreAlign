@@ -98,6 +98,7 @@ public class RefreshTokenReuseDetectionTests
             Arg.Any<DateTime>(),
             "5.5.5.5",
             "agent-x",
+            "alice@example.com",
             Arg.Any<CancellationToken>());
     }
 
@@ -126,7 +127,7 @@ public class RefreshTokenReuseDetectionTests
         await _refreshTokens.DidNotReceive().RevokeManyAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>());
         await _sessions.DidNotReceive().RevokeAllByUserIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
         await _securityAlerts.DidNotReceive().EnqueueRefreshTokenReuseAsync(
-            Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
+            Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<CancellationToken>());
     }
 
     private static (List<RefreshToken> Chain, string TokenAHash) BuildChain(int length)

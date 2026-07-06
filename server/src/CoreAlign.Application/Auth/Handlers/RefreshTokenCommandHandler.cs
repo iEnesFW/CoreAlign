@@ -81,6 +81,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, A
                 DateTime.UtcNow,
                 request.IpAddress,
                 request.DeviceInfo,
+                existingToken.User?.Email,
                 cancellationToken);
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);

@@ -12,6 +12,8 @@ public class EmailOptions : IValidatableObject
     [Range(0, 10)]
     public int MaxRetries { get; set; } = 3;
 
+    public string? AppBaseUrl { get; set; }
+
     public EmailSmtpOptions Smtp { get; set; } = new();
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

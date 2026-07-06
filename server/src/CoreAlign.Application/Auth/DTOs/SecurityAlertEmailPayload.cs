@@ -5,4 +5,5 @@ public sealed record SecurityAlertEmailPayload(
     string AlertType,
     DateTime OccurredAtUtc,
     string? IpAddress,
-    string? UserAgent);
+    string? UserAgent,
+    string? Email = null);
