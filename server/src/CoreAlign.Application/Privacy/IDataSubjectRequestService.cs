@@ -40,6 +40,10 @@ public interface IDataSubjectRequestService
     Task<DataSubjectRequestDto> GetAsync(
         Guid requestId,
         CancellationToken cancellationToken = default);
+
+    Task<PersonalDataExportDto> BuildExportAsync(
+        Guid requestId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record SubmitDataSubjectRequestInput(

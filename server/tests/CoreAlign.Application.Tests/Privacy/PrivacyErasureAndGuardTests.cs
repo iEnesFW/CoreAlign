@@ -76,6 +76,41 @@ public sealed class PrivacyErasureAndGuardTests
     }
 
     [Fact]
+    public async Task BuildExport_returns_real_package_for_same_tenant_subject()
+    {
+        var tenant = Guid.NewGuid();
+        var subjectUserId = Guid.NewGuid();
+        var request = BuildRequest(tenant, DataSubjectRequestType.Access, subjectUserId);
+        _repo.GetByIdAsync(request.Id, Arg.Any<CancellationToken>()).Returns(request);
+        _users.GetByIdAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(BuildUser(tenant, subjectUserId));
+        _reader.GetUserOrdersAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(Array.Empty<PersonalOrderDto>());
+        _reader.GetUserActivityAsync(subjectUserId, Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<PersonalActivityDto>());
+        _reader.GetCustomerMembershipsAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(Array.Empty<PersonalMembershipDto>());
+        _reader.GetDealerMembershipsAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(Array.Empty<PersonalMembershipDto>());
+
+        var package = await BuildService().BuildExportAsync(request.Id);
+
+        package.Profile.Id.Should().Be(subjectUserId);
+        package.Profile.Email.Should().Be("subject@example.com");
+        await _reader.Received(1).GetUserOrdersAsync(subjectUserId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BuildExport_rejects_cross_tenant_subject()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+        var subjectUserId = Guid.NewGuid();
+        var request = BuildRequest(tenantA, DataSubjectRequestType.Access, subjectUserId);
+        _repo.GetByIdAsync(request.Id, Arg.Any<CancellationToken>()).Returns(request);
+        _users.GetByIdAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(BuildUser(tenantB, subjectUserId));
+
+        var act = () => BuildService().BuildExportAsync(request.Id);
+
+        await act.Should().ThrowAsync<PrivacyUserNotFoundException>();
+    }
+
+    [Fact]
     public void Employee_anonymize_clears_pii_and_soft_deletes()
     {
         var employee = new Employee(

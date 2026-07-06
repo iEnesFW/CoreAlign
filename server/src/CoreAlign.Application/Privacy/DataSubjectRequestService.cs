@@ -8,6 +8,7 @@ public class DataSubjectRequestService : IDataSubjectRequestService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
+    private const int ExportActivityRows = 250;
 
     private readonly IDataSubjectRequestRepository _repository;
     private readonly IUserRepository _users;
@@ -74,10 +75,13 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         if (request.RequesterUserId.HasValue)
         {
             await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
-            _ = await _reader.GetUserOrdersAsync(request.RequesterUserId.Value, cancellationToken);
+            request.MarkCompleted(DateTime.UtcNow, Guid.NewGuid());
+        }
+        else
+        {
+            request.MarkCompleted(DateTime.UtcNow);
         }
 
-        request.MarkCompleted(DateTime.UtcNow);
         _repository.Update(request);
         return ToDto(request);
     }
@@ -119,9 +123,13 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         if (request.RequesterUserId.HasValue)
         {
             await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
+            request.MarkCompleted(DateTime.UtcNow, Guid.NewGuid());
+        }
+        else
+        {
+            request.MarkCompleted(DateTime.UtcNow);
         }
 
-        request.MarkCompleted(DateTime.UtcNow);
         _repository.Update(request);
         return ToDto(request);
     }
@@ -197,6 +205,43 @@ public class DataSubjectRequestService : IDataSubjectRequestService
     {
         var request = await LoadAsync(requestId, cancellationToken);
         return ToDto(request);
+    }
+
+    public async Task<PersonalDataExportDto> BuildExportAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        var request = await LoadAsync(requestId, cancellationToken);
+        if (request.RequestType is not (DataSubjectRequestType.Access or DataSubjectRequestType.Portability))
+        {
+            throw new DataSubjectRequestInvalidStateException("Privacy.RequestTypeMismatch");
+        }
+        if (!request.RequesterUserId.HasValue)
+        {
+            throw new PrivacyUserNotFoundException();
+        }
+
+        var user = await _users.GetByIdAsync(request.RequesterUserId.Value, cancellationToken);
+        if (user is null || user.TenantId != request.TenantId)
+        {
+            throw new PrivacyUserNotFoundException();
+        }
+
+        var profile = new PersonalProfileDto(
+            user.Id,
+            user.Username,
+            user.Email,
+            user.FirstName,
+            user.LastName,
+            user.PhoneNumber,
+            user.CreatedAtUtc,
+            user.LastLoginAtUtc,
+            user.UserRoles.Select(ur => ur.Role).Where(r => r is not null).Select(r => r!.Name).ToList());
+
+        var orders = await _reader.GetUserOrdersAsync(user.Id, cancellationToken);
+        var activity = await _reader.GetUserActivityAsync(user.Id, ExportActivityRows, cancellationToken);
+        var customerMemberships = await _reader.GetCustomerMembershipsAsync(user.Id, cancellationToken);
+        var dealerMemberships = await _reader.GetDealerMembershipsAsync(user.Id, cancellationToken);
+
+        return new PersonalDataExportDto(profile, customerMemberships, dealerMemberships, orders, activity, DateTime.UtcNow);
     }
 
     private async Task<DataSubjectRequest> LoadAsync(Guid requestId, CancellationToken cancellationToken)

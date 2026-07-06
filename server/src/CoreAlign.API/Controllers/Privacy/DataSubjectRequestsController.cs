@@ -61,6 +61,16 @@ public class AdminDataSubjectRequestsController : ControllerBase
     public async Task<IActionResult> Get(Guid id, CancellationToken ct) =>
         (await _service.GetAsync(id, ct)).ToOk();
 
+    [HttpGet("{id:guid}/export")]
+    public async Task<IActionResult> DownloadExport(Guid id, CancellationToken ct)
+    {
+        var package = await _service.BuildExportAsync(id, ct);
+        var bytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(
+            package,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        return File(bytes, "application/json", $"dsar-export-{id:N}.json");
+    }
+
     [HttpPost("{id:guid}/process")]
     [Authorization.RequireRecentMfa]
     public async Task<IActionResult> Process(
