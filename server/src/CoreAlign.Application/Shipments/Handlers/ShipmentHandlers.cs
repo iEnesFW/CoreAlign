@@ -234,8 +234,8 @@ public class GetShipmentByIdHandler : IRequestHandler<GetShipmentByIdQuery, Ship
     public GetShipmentByIdHandler(IShipmentRepository shipments) => _shipments = shipments;
     public async Task<ShipmentDto?> Handle(GetShipmentByIdQuery q, CancellationToken ct)
     {
-        var s = await _shipments.GetWithLinesAsync(q.Id, ct);
-        return s is null ? null : ShipmentMapper.ToDto(s);
+        var s = await _shipments.GetWithLinesAsync(q.Id, ct) ?? throw new ShipmentNotFoundException();
+        return ShipmentMapper.ToDto(s);
     }
 }
 

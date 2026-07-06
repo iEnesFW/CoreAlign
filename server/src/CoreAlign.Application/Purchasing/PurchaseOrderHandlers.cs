@@ -655,8 +655,8 @@ public class GetPurchaseOrderByIdHandler : IRequestHandler<GetPurchaseOrderByIdQ
 
     public async Task<PurchaseOrderDto?> Handle(GetPurchaseOrderByIdQuery q, CancellationToken ct)
     {
-        var po = await _orders.GetByIdAsync(q.Id, ct);
-        return po is null ? null : PurchaseOrderMapper.ToDto(po);
+        var po = await _orders.GetByIdAsync(q.Id, ct) ?? throw new PurchaseOrderNotFoundException();
+        return PurchaseOrderMapper.ToDto(po);
     }
 }
 

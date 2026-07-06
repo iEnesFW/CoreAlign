@@ -123,6 +123,23 @@ public class ShipmentDomainTests
     }
 
     [Fact]
+    public void Cancel_rejected_when_dispatched()
+    {
+        // A dispatched shipment has consumed stock + posted COGS — cancelling it would silently lose
+        // that stock/COGS (status-flip only). It must be returned, not cancelled.
+        var s = NewDraft();
+        s.AddLine(NewLine());
+        s.MarkPicked(Guid.NewGuid());
+        s.MarkPacked();
+        s.Dispatch(null, null, null, null);
+
+        var act = () => s.Cancel("too late");
+
+        act.Should().Throw<InvalidShipmentStateException>();
+        s.Status.Should().Be(ShipmentStatus.Dispatched);
+    }
+
+    [Fact]
     public void Cancel_rejected_when_already_delivered()
     {
         var s = NewDraft();

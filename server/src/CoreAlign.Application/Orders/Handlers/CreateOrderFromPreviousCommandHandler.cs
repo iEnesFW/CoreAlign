@@ -32,14 +32,19 @@ public class CreateOrderFromPreviousCommandHandler : IRequestHandler<CreateOrder
                 Quantity: l.Quantity,
                 UnitPrice: l.UnitPrice,
                 LineDiscountPercent: l.LineDiscountPercent,
+                LineDiscountAmount: l.LineDiscountAmount,
                 TaxRatePercent: l.TaxRatePercent,
                 IsTaxInclusive: l.IsTaxInclusive,
                 WithholdingRatePercent: l.WithholdingRatePercent,
                 TaxRateId: l.TaxRateId,
                 UomId: l.UomId,
                 UomCode: l.UomCode,
+                UomConversionFactor: l.UomConversionFactor,
                 WarehouseId: l.WarehouseId,
-                LineNotes: l.LineNotes))
+                LineNotes: l.LineNotes,
+                IsManualPriceOverride: l.IsManualPriceOverride,
+                UnitCostSnapshot: l.UnitCostSnapshot,
+                WithholdingTaxCodeId: l.WithholdingTaxCodeId))
             .ToList();
 
         if (lines.Count == 0)
@@ -63,6 +68,7 @@ public class CreateOrderFromPreviousCommandHandler : IRequestHandler<CreateOrder
             ExchangeRate: previous.ExchangeRate,
             ShippingCost: previous.ShippingCost,
             HeaderDiscountPercent: previous.HeaderDiscountPercent,
+            HeaderDiscountAmount: previous.HeaderDiscountAmount,
             Channel: previous.Channel,
             CustomerNotes: previous.CustomerNotes,
             OriginOrderId: previous.Id);

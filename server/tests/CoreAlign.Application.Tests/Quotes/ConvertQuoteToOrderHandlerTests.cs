@@ -13,6 +13,7 @@ public class ConvertQuoteToOrderHandlerTests
     private readonly IOrderRepository _orders = Substitute.For<IOrderRepository>();
     private readonly ICustomerRepository _customers = Substitute.For<ICustomerRepository>();
     private readonly IDocumentSequenceRepository _sequences = Substitute.For<IDocumentSequenceRepository>();
+    private readonly IProductRepository _products = Substitute.For<IProductRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly ConvertQuoteToOrderCommandHandler _sut;
 
@@ -27,7 +28,9 @@ public class ConvertQuoteToOrderHandlerTests
             .Returns("ORD-TEST-0001");
         _uow.BeginTransactionAsync(Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult<IUnitOfWorkTransaction>(new NoopTransaction()));
-        _sut = new ConvertQuoteToOrderCommandHandler(_quotes, _orders, _customers, _sequences, _uow);
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product>());
+        _sut = new ConvertQuoteToOrderCommandHandler(_quotes, _orders, _customers, _sequences, _products, _uow);
     }
 
     [Fact]
@@ -120,8 +123,11 @@ public class ConvertQuoteToOrderHandlerTests
         var uow = Substitute.For<IUnitOfWork>();
         uow.BeginTransactionAsync(Arg.Any<CancellationToken>())
             .Returns(_ => Task.FromResult<IUnitOfWorkTransaction>(new ReleasingTransaction(serializingRepo)));
+        var products = Substitute.For<IProductRepository>();
+        products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product>());
         var handler = new ConvertQuoteToOrderCommandHandler(
-            serializingRepo, orderRepo, customerRepo, sequences, uow);
+            serializingRepo, orderRepo, customerRepo, sequences, products, uow);
 
         var tasks = Enumerable
             .Range(0, 5)

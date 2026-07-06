@@ -109,10 +109,15 @@ public class Shipment : TenantEntity, IHasConcurrencyToken
 
     public void Cancel(string? reason)
     {
-        if (Status == ShipmentStatus.Delivered)
+        // Single source of truth: the FSM table forbids Dispatched -> Cancelled (a dispatched
+        // shipment has consumed stock + posted COGS, so it must be RETURNED, not cancelled — else
+        // CancelShipmentHandler's status-flip silently loses that stock/COGS). Cancel is only valid
+        // from the pre-dispatch states (Draft/Picked/Packed).
+        if (Status == ShipmentStatus.Cancelled)
         {
-            throw new InvalidShipmentStateException("Delivered shipments cannot be cancelled (use a return).");
+            return;
         }
+        EnsureTransitionAllowed(Status, ShipmentStatus.Cancelled);
         Status = ShipmentStatus.Cancelled;
         CancelReason = reason;
         CancelledAtUtc = DateTime.UtcNow;

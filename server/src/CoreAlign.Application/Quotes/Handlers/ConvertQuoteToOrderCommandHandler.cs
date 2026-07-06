@@ -16,6 +16,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
     private readonly IOrderRepository _orderRepository;
     private readonly ICustomerRepository _customerRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
+    private readonly IProductRepository _productRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public ConvertQuoteToOrderCommandHandler(
@@ -23,12 +24,14 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
         IOrderRepository orderRepository,
         ICustomerRepository customerRepository,
         IDocumentSequenceRepository sequenceRepository,
+        IProductRepository productRepository,
         IUnitOfWork unitOfWork)
     {
         _quoteRepository = quoteRepository;
         _orderRepository = orderRepository;
         _customerRepository = customerRepository;
         _sequenceRepository = sequenceRepository;
+        _productRepository = productRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -102,6 +105,11 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
             order.ApplySnapshots(cs, null, null, quote.PaymentTermsNetDaysSnapshot, null);
         }
 
+        // Snapshot each line's cost from the product's current AverageCost so profit/cost reports
+        // (and ShipmentLine.UnitCostSnapshot) are populated at conversion time rather than 0.
+        var lineProductIds = quote.Lines.Where(l => l.ProductId != Guid.Empty).Select(l => l.ProductId).Distinct().ToList();
+        var lineProducts = await _productRepository.GetByIdsAsync(lineProductIds, cancellationToken);
+
         var orderLines = quote.Lines
             .OrderBy(l => l.LineNumber)
             .Select((ql, idx) =>
@@ -119,7 +127,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
                     taxRateId: ql.TaxRateId,
                     isTaxInclusive: ql.IsTaxInclusive,
                     withholdingRatePercent: ql.WithholdingRatePercent,
-                    unitCostSnapshot: 0m,
+                    unitCostSnapshot: lineProducts.TryGetValue(ql.ProductId, out var lineProduct) ? lineProduct.AverageCost : 0m,
                     uomId: ql.UomId,
                     uomCode: ql.UomCode,
                     uomConversionFactor: ql.UomConversionFactor,
