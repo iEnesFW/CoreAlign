@@ -283,10 +283,7 @@ export interface MrpPlanRun {
 export interface ReleaseResult {
   planRunId: string;
   requisitionIds: string[];
-  productionOrderIds: string[];
   plannedOrdersReleased: number;
-  requisitionsCreated: number;
-  productionOrdersCreated: number;
 }
 
 export interface MrpPreviewParams {

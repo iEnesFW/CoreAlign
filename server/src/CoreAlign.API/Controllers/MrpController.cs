@@ -64,6 +64,7 @@ public class MrpController : ControllerBase
         => (await _mediator.Send(cmd ?? new ClassifyProductsAbcCommand(), ct)).ToOk();
 
     [HttpPost("generate-suggestions")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> GenerateSuggestions(
         [FromBody] GenerateMrpSuggestionsCommand? cmd,
         CancellationToken ct = default)
@@ -87,6 +88,7 @@ public class MrpController : ControllerBase
         => (await _mediator.Send(new GetMrpItemPlanQuery(productId, asOf, bucket, horizon), ct)).ToOk();
 
     [HttpPost("plan/commit")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> CommitPlan(
         [FromBody] CommitMrpPlanCommand cmd,
         CancellationToken ct = default)
@@ -114,6 +116,7 @@ public class MrpController : ControllerBase
             ct)).ToOk();
 
     [HttpPost("action-messages/{id:guid}/dismiss")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> DismissActionMessage(
         Guid id,
         CancellationToken ct = default)
@@ -127,6 +130,7 @@ public class MrpController : ControllerBase
         => (await _mediator.Send(new GetMrpPeggingQuery(planRunId, componentProductId), ct)).ToOk();
 
     [HttpPost("plan/{planRunId:guid}/release")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> ReleasePlannedOrders(
         Guid planRunId,
         [FromBody] ReleasePlannedOrdersRequest body,
@@ -136,6 +140,7 @@ public class MrpController : ControllerBase
             ct)).ToOk();
 
     [HttpPost("planned-orders/{id:guid}/firm")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> FirmPlannedOrder(
         Guid id,
         [FromBody] FirmPlannedOrderRequest body,
