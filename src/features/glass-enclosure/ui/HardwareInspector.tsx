@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { HARDWARE_KINDS } from '../model/hardwareDefaults';
+import { clampHardwareOffsets } from '../model/hardwarePlacement';
 import type { SceneHardwareKind } from '../model/project.types';
 
 export function HardwareInspector() {
@@ -21,7 +22,13 @@ export function HardwareInspector() {
 
   if (!run || !panel || !item) return null;
 
-  const commit = (patch: Partial<typeof item>) => updateHardware(run.id, panel.id, item.id, patch);
+  const commit = (patch: Partial<typeof item>) => {
+    const next = { ...item, ...patch };
+    updateHardware(run.id, panel.id, item.id, {
+      ...patch,
+      ...clampHardwareOffsets(panel.widthMm, run.heightMm, next),
+    });
+  };
   const kindLabel = (kind: SceneHardwareKind) =>
     t(`GlassEnclosure.Hardware.Kind.${kind}` as never, { defaultValue: kind });
 

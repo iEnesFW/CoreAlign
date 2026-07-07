@@ -28,8 +28,7 @@ import type {
   SceneSlabState,
   SceneWallState,
 } from '@/features/glass-enclosure/model/project.types';
-
-const clampMm = (value: number, limit: number) => Math.min(limit, Math.max(-limit, value));
+import { clampHardwareOffsets } from '@/features/glass-enclosure/model/hardwarePlacement';
 
 const solidObstaclesExcept = (excludeIds: Set<string>): PlanFootprint[] => {
   const s = useDesignerStore.getState().scene;
@@ -398,12 +397,9 @@ const HardwareFields = ({
 
   const commit = (patch: Partial<SceneHardwareItem>) => {
     const next = { ...item, ...patch };
-    const edgeX = Math.max(0, panel.widthMm / 2 - next.widthMm / 2);
-    const edgeY = Math.max(0, run.heightMm / 2 - next.heightMm / 2);
     updateHardware(run.id, panel.id, item.id, {
       ...patch,
-      offsetXmm: clampMm(next.offsetXmm, edgeX),
-      offsetYmm: clampMm(next.offsetYmm, edgeY),
+      ...clampHardwareOffsets(panel.widthMm, run.heightMm, next),
     });
   };
 
