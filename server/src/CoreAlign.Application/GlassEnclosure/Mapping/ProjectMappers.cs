@@ -9,7 +9,8 @@ public static class ProjectMappers
         panel.Id, panel.RunId, panel.PanelIndex, panel.WidthMm, panel.OpeningType,
         panel.GlassTypeId, panel.HasHandle, panel.HasLock, panel.HasBrushSeal, panel.Notes,
         panel.HeightMm, panel.TopShape, panel.TopRightHeightMm, panel.ArchRiseMm,
-        ToCornerRadii(panel), panel.ShapeKind, panel.ShapePointsJson);
+        ToCornerRadii(panel), panel.ShapeKind, panel.ShapePointsJson,
+        panel.Hardware.Select(h => new PanelHardwareDto(h.HardwareItemId, h.Quantity)).ToList());
 
     private static PanelCornerRadiiDto? ToCornerRadii(GlassProjectPanel panel) =>
         panel.CornerRadiusTlMm is null && panel.CornerRadiusTrMm is null

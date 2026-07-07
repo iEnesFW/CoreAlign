@@ -61,6 +61,7 @@ public interface IGlassProjectPanelRepository
     Task AddAsync(GlassProjectPanel panel, CancellationToken cancellationToken = default);
     void Update(GlassProjectPanel panel);
     void Remove(GlassProjectPanel panel);
+    Task ReplaceHardwareAsync(Guid panelId, IReadOnlyList<(Guid HardwareItemId, decimal Quantity)> items, CancellationToken cancellationToken = default);
 }
 
 public interface IGlassProjectSceneRepository

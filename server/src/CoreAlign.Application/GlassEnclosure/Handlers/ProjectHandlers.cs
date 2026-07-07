@@ -452,8 +452,17 @@ public class AddPanelCommandHandler : IRequestHandler<AddPanelCommand, GlassProj
             request.Data.CornerRadiiMm?.Br, request.Data.CornerRadiiMm?.Bl,
             request.Data.ShapeKind, request.Data.ShapePointsJson);
         await _panelRepo.AddAsync(panel, cancellationToken);
+        var dto = ProjectMappers.ToDto(panel);
+        if (request.Data.Hardware is not null)
+        {
+            var hardware = request.Data.Hardware
+                .Where(h => h.HardwareItemId != Guid.Empty && h.Quantity > 0m).ToList();
+            await _panelRepo.ReplaceHardwareAsync(
+                panel.Id, hardware.Select(h => (h.HardwareItemId, h.Quantity)).ToList(), cancellationToken);
+            dto = dto with { Hardware = hardware };
+        }
         await _bomStaleSignal.SignalStaleAsync(run.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
-        return ProjectMappers.ToDto(panel);
+        return dto;
     }
 }
 
@@ -482,8 +491,17 @@ public class UpdatePanelCommandHandler : IRequestHandler<UpdatePanelCommand, Gla
             request.Data.CornerRadiiMm?.Br, request.Data.CornerRadiiMm?.Bl,
             request.Data.ShapeKind, request.Data.ShapePointsJson);
         _panelRepo.Update(panel);
+        var dto = ProjectMappers.ToDto(panel);
+        if (request.Data.Hardware is not null)
+        {
+            var hardware = request.Data.Hardware
+                .Where(h => h.HardwareItemId != Guid.Empty && h.Quantity > 0m).ToList();
+            await _panelRepo.ReplaceHardwareAsync(
+                panel.Id, hardware.Select(h => (h.HardwareItemId, h.Quantity)).ToList(), cancellationToken);
+            dto = dto with { Hardware = hardware };
+        }
         await _bomStaleSignal.SignalStaleAsync(request.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
-        return ProjectMappers.ToDto(panel);
+        return dto;
     }
 }
 

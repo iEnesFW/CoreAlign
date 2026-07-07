@@ -4,6 +4,8 @@ namespace CoreAlign.Application.GlassEnclosure.DTOs;
 
 public record PanelCornerRadiiDto(int? Tl, int? Tr, int? Br, int? Bl);
 
+public record PanelHardwareDto(Guid HardwareItemId, decimal Quantity);
+
 public record GlassProjectPanelDto(
     Guid Id,
     Guid RunId,
@@ -21,7 +23,8 @@ public record GlassProjectPanelDto(
     int? ArchRiseMm = null,
     PanelCornerRadiiDto? CornerRadiiMm = null,
     string? ShapeKind = null,
-    string? ShapePointsJson = null);
+    string? ShapePointsJson = null,
+    IReadOnlyList<PanelHardwareDto>? Hardware = null);
 
 public record GlassProjectRunDto(
     Guid Id,
@@ -222,7 +225,8 @@ public record AddPanelDto(
     int? ArchRiseMm = null,
     PanelCornerRadiiDto? CornerRadiiMm = null,
     string? ShapeKind = null,
-    string? ShapePointsJson = null);
+    string? ShapePointsJson = null,
+    IReadOnlyList<PanelHardwareDto>? Hardware = null);
 
 public record UpdatePanelDto(
     int WidthMm,
@@ -238,7 +242,8 @@ public record UpdatePanelDto(
     int? ArchRiseMm = null,
     PanelCornerRadiiDto? CornerRadiiMm = null,
     string? ShapeKind = null,
-    string? ShapePointsJson = null);
+    string? ShapePointsJson = null,
+    IReadOnlyList<PanelHardwareDto>? Hardware = null);
 
 public record BulkRebalancePanelsDto(
     int PanelCount,

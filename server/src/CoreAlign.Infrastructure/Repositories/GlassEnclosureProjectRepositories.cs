@@ -128,6 +128,19 @@ public class GlassProjectPanelRepository : IGlassProjectPanelRepository
         await _context.GlassProjectPanels.AddAsync(panel, cancellationToken);
     public void Update(GlassProjectPanel panel) => _context.GlassProjectPanels.Update(panel);
     public void Remove(GlassProjectPanel panel) => _context.GlassProjectPanels.Remove(panel);
+
+    // WHY: manage children via the child DbSet — adding client-PK children to a tracked/Updated panel flips them Added→Modified and crashes on save (RebalancePanels lesson); no SaveChanges (ITransactionalRequest pipeline persists).
+    public async Task ReplaceHardwareAsync(Guid panelId, IReadOnlyList<(Guid HardwareItemId, decimal Quantity)> items, CancellationToken cancellationToken = default)
+    {
+        var set = _context.Set<GlassProjectPanelHardware>();
+        var existing = await set.Where(h => h.PanelId == panelId).ToListAsync(cancellationToken);
+        if (existing.Count > 0) set.RemoveRange(existing);
+        foreach (var (hardwareItemId, quantity) in items)
+        {
+            if (hardwareItemId == Guid.Empty || quantity <= 0m) continue;
+            await set.AddAsync(new GlassProjectPanelHardware(panelId, hardwareItemId, quantity), cancellationToken);
+        }
+    }
 }
 
 public class GlassProjectSceneRepository : IGlassProjectSceneRepository
