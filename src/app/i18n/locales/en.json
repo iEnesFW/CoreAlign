@@ -2769,6 +2769,8 @@
       "PanelInspector": "Panel inspector",
       "Panel": {
         "Height": "Panel height",
+        "OpeningUnsupported": "This profile system does not support this opening type.",
+        "OverMaxWidth": "Exceeds the profile system's maximum panel width of {{max}} mm.",
         "FullHeight": "Full height (run)",
         "Shape": "Panel shape",
         "Kind": {

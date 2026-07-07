@@ -10,10 +10,12 @@ import type {
   GlassOpeningType,
   GlassTypeDto,
   InspectorSection,
+  ProfileSystemDto,
 } from '../model/glassEnclosure.types';
 
 interface PanelInspectorProps {
   glassTypes: GlassTypeDto[];
+  profileSystems: ProfileSystemDto[];
   sections: InspectorSection[];
 }
 
@@ -26,7 +28,7 @@ const OPENING_KEYS: GlassOpeningType[] = [
   'Guillotine',
 ];
 
-export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
+export function PanelInspector({ glassTypes, profileSystems, sections }: PanelInspectorProps) {
   const { t } = useTranslation();
   const selection = useDesignerStore((s) => s.selection);
   const runs = useDesignerStore((s) => s.scene.runs);
@@ -53,6 +55,11 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
   // Only a single-panel run may be shaped — a triangle/oval/polygon pane next to rectangular
   // siblings is not a real product (industry never does this). Multi-panel runs stay rectangular.
   const canShape = run.panels.length === 1;
+
+  const profile = profileSystems.find((p) => p.id === run.profileSystemId);
+  const supportedOpenings = profile?.supportedOpenings ?? [];
+  const maxWidthMm = profile && profile.maxPanelWidthMm > 0 ? profile.maxPanelWidthMm : 3000;
+  const overWidth = draft.widthMm > maxWidthMm;
 
   const commit = (patch: Partial<typeof panel>) => {
     // Persist the STORE's post-commit state: on an ARC run a width edit is pinned/clamped and
@@ -161,20 +168,36 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
       {show('general') && (
         <Field label={t('GlassEnclosure.Field.OpeningType')}>
           <div className="grid grid-cols-3 gap-1.5">
-            {OPENING_KEYS.map((kind) => (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => commit({ openingType: kind })}
-                className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
-                  draft.openingType === kind
-                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
-                    : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
-                }`}
-              >
-                {t(`GlassEnclosure.Opening.${kind}` as never)}
-              </button>
-            ))}
+            {OPENING_KEYS.map((kind) => {
+              const unsupported =
+                supportedOpenings.length > 0 &&
+                !supportedOpenings.includes(kind) &&
+                draft.openingType !== kind;
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  disabled={unsupported}
+                  title={
+                    unsupported
+                      ? t('GlassEnclosure.Designer.Panel.OpeningUnsupported', {
+                          defaultValue: 'Bu profil sistemi bu açılım tipini desteklemiyor.',
+                        })
+                      : undefined
+                  }
+                  onClick={() => commit({ openingType: kind })}
+                  className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
+                    draft.openingType === kind
+                      ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300'
+                      : unsupported
+                        ? 'cursor-not-allowed border-slate-200 text-slate-300 dark:border-slate-700 dark:text-slate-600'
+                        : 'border-slate-300 text-slate-600 hover:border-slate-400 dark:border-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {t(`GlassEnclosure.Opening.${kind}` as never)}
+                </button>
+              );
+            })}
           </div>
         </Field>
       )}
@@ -185,12 +208,20 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
             <input
               type="number"
               min={100}
-              max={3000}
+              max={maxWidthMm}
               value={draft.widthMm}
               onChange={(e) => setDraft({ ...draft, widthMm: Number(e.target.value) })}
               onBlur={() => commit({ widthMm: draft.widthMm })}
               className={inputClass}
             />
+            {overWidth && (
+              <span className="mt-1 block text-[11px] text-amber-600 dark:text-amber-400">
+                {t('GlassEnclosure.Designer.Panel.OverMaxWidth', {
+                  defaultValue: 'Profil sisteminin en fazla {{max}} mm panel genişliğini aşıyor.',
+                  max: maxWidthMm,
+                })}
+              </span>
+            )}
           </Field>
 
           <Field

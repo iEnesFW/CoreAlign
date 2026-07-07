@@ -2769,6 +2769,8 @@
       "PanelInspector": "Panel denetçisi",
       "Panel": {
         "Height": "Panel yüksekliği",
+        "OpeningUnsupported": "Bu profil sistemi bu açılım tipini desteklemiyor.",
+        "OverMaxWidth": "Profil sisteminin en fazla {{max}} mm panel genişliğini aşıyor.",
         "FullHeight": "Tam yükseklik (hat)",
         "Shape": "Panel şekli",
         "Kind": {

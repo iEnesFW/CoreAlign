@@ -107,7 +107,13 @@ export const InspectorPanel = ({
     if (selection.kind === 'slab') return <SlabInspector />;
     if (selection.kind === 'hardware') return <HardwareInspector />;
     if (selection.kind === 'panel')
-      return <PanelInspector glassTypes={glassTypes} sections={selectionSections} />;
+      return (
+        <PanelInspector
+          glassTypes={glassTypes}
+          profileSystems={profileSystems}
+          sections={selectionSections}
+        />
+      );
     if (selection.kind === 'run')
       return (
         <RunInspector
