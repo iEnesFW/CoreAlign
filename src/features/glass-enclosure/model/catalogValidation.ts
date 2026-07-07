@@ -19,7 +19,19 @@ export const runViolatesCatalog = (
       if (!glass || glass.weightKgPerM2 <= 0) return false;
       return (p.widthMm / 1000) * heightM * glass.weightKgPerM2 > sys.maxPanelWeightKg;
     });
-  return overHeight || overWidth || overWeight;
+  // The brand→profile→glass→opening chain exists in the data model; enforce it: a panel's glass
+  // thickness must be one the profile carries, and its opening must be one the profile supports.
+  // An empty support list means the profile declares no constraint (do not flag).
+  const unsupportedThickness =
+    sys.supportedGlassThicknesses.length > 0 &&
+    run.panels.some((p) => {
+      const glass = glassMap.get(p.glassTypeId);
+      return glass ? !sys.supportedGlassThicknesses.includes(glass.thicknessMm) : false;
+    });
+  const unsupportedOpening =
+    sys.supportedOpenings.length > 0 &&
+    run.panels.some((p) => !sys.supportedOpenings.includes(p.openingType));
+  return overHeight || overWidth || overWeight || unsupportedThickness || unsupportedOpening;
 };
 
 export const countCatalogViolations = (
