@@ -832,6 +832,7 @@ export function GlassProjectDesignerPage() {
         hardwareKits={hardwareKits}
         settings={settings}
         floorNumber={project.floorNumber}
+        projectId={project.id}
       />
       <div className="border-t border-slate-200 pt-3 dark:border-slate-700">
         <ValidationPanel />

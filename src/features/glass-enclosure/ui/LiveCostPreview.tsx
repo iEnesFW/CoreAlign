@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { calculateCost } from '../model/costCalculator';
+import { mapBomSummaryToBreakdown } from '../model/bomPreviewBreakdown';
+import { useBomPreviewQuery } from '../hooks/useBomPreviewQuery';
 import type {
   ColorOptionDto,
   GlassEnclosureSettingsDto,
@@ -20,6 +22,7 @@ interface LiveCostPreviewProps {
   settings: GlassEnclosureSettingsDto | null;
   floorNumber: number | null;
   taxRatePercent?: number;
+  projectId: string | null;
 }
 
 export function LiveCostPreview({
@@ -31,11 +34,17 @@ export function LiveCostPreview({
   settings,
   floorNumber,
   taxRatePercent = 20,
+  projectId,
 }: LiveCostPreviewProps) {
   const { t, i18n } = useTranslation();
   const runs = useDesignerStore((s) => s.scene.runs);
+  const revision = useDesignerStore((s) => s.historyIndex);
 
-  const breakdown = useMemo(
+  // Backend BOM preview is the single source of truth; the local estimate is only a fallback while
+  // the first preview loads (so there is no regression if the endpoint is slow or errors).
+  const preview = useBomPreviewQuery(projectId, revision, runs.length > 0);
+
+  const localBreakdown = useMemo(
     () =>
       calculateCost({
         scene: { runs },
@@ -56,6 +65,8 @@ export function LiveCostPreview({
       taxRatePercent,
     ],
   );
+
+  const breakdown = preview.data ? mapBomSummaryToBreakdown(preview.data) : localBreakdown;
 
   const formatter = useMemo(
     () =>

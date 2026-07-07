@@ -129,6 +129,10 @@ export const glassProjectsApi = {
 
   getBOM: (id: string) => cachedGet<ApiResponse<BOMSummaryDto>>(apiClient, `${BASE}/${id}/bom`),
 
+  // Not HTTP-cached: a live cost preview must re-compose on every settled edit.
+  getBomPreview: (id: string) =>
+    apiClient.get<ApiResponse<BOMSummaryDto>>(`${BASE}/${id}/bom/preview`).then((r) => r.data.data),
+
   overrideBomLinePrice: (id: string, lineId: string, unitPriceOverride: number | null) =>
     put<BOMSummaryDto>(`/${id}/bom/lines/${lineId}/price-override`, { unitPriceOverride }),
 
