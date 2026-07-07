@@ -224,6 +224,7 @@ export interface AddPanelInput {
   cornerRadiiMm?: CornerRadiiMm | null;
   shapeKind?: PanelShapeKind | null;
   shapePointsJson?: string | null;
+  hardware?: PanelHardwareInput[] | null;
 }
 
 export type UpdatePanelInput = AddPanelInput;
@@ -443,6 +444,15 @@ export interface SceneHardwareItem {
   widthMm: number;
   heightMm: number;
   depthMm: number;
+  // Catalog link so the placed object reaches the BOM/quote/cutting (else it is render-only).
+  // Scene-local (rides sceneJson); the structural panel-hardware DTO is derived from these.
+  hardwareItemId?: string | null;
+  quantity?: number;
+}
+
+export interface PanelHardwareInput {
+  hardwareItemId: string;
+  quantity: number;
 }
 
 export interface SceneRunState {

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { useDesignerStore } from '../model/designerStore';
 import { developedLengthMm } from '../model/arcGeometry';
+import { aggregatePanelHardware } from '../model/panelHardware';
 import { createPanelFromTemplate } from '../model/panelDefaults';
 import { enqueuePersist } from '../model/persistQueue';
 import {
@@ -59,6 +60,7 @@ const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelIn
   cornerRadiiMm: panel.cornerRadiiMm ?? null,
   shapeKind: panel.shapeKind ?? null,
   shapePointsJson: panel.shapePointsJson ?? null,
+  hardware: aggregatePanelHardware(panel.hardware),
 });
 
 export const useRunEntityActions = () => {

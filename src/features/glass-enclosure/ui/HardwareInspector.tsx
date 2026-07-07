@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
+import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
 import { HARDWARE_KINDS } from '../model/hardwareDefaults';
 import { clampHardwareOffsets } from '../model/hardwarePlacement';
 import type { SceneHardwareKind } from '../model/project.types';
@@ -12,6 +13,7 @@ export function HardwareInspector() {
   const updateHardware = useDesignerStore((s) => s.updateHardware);
   const removeHardware = useDesignerStore((s) => s.removeHardware);
   const setSelection = useDesignerStore((s) => s.setSelection);
+  const catalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
 
   const { run, panel, item } = useMemo(() => {
     const run = runs.find((r) => r.id === selection.runId);
@@ -71,6 +73,28 @@ export function HardwareInspector() {
           ))}
         </select>
       </Field>
+
+      <Field label={t('GlassEnclosure.Hardware.Field.CatalogItem')}>
+        <select
+          value={item.hardwareItemId ?? ''}
+          onChange={(e) => commit({ hardwareItemId: e.target.value || null })}
+          className={inputClass}
+        >
+          <option value="">{t('GlassEnclosure.Hardware.Field.CatalogNone')}</option>
+          {catalog.map((h) => (
+            <option key={h.id} value={h.id}>
+              {h.code} · {h.name}
+            </option>
+          ))}
+        </select>
+      </Field>
+
+      <NumberField
+        label={t('GlassEnclosure.Hardware.Field.Quantity')}
+        value={item.quantity ?? 1}
+        min={1}
+        onChange={(v) => commit({ quantity: v })}
+      />
 
       <Field label={t('GlassEnclosure.Hardware.Field.Color')}>
         <div className="flex items-center gap-2">

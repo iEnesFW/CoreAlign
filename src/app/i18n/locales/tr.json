@@ -3933,6 +3933,9 @@
       },
       "Field": {
         "Kind": "Tür",
+        "CatalogItem": "Katalog donanımı",
+        "CatalogNone": "— (yalnızca görsel)",
+        "Quantity": "Adet",
         "Color": "Renk",
         "OffsetX": "X (mm)",
         "OffsetY": "Y (mm)",

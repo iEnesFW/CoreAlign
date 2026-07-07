@@ -3933,6 +3933,9 @@
       },
       "Field": {
         "Kind": "Type",
+        "CatalogItem": "Catalog hardware",
+        "CatalogNone": "— (visual only)",
+        "Quantity": "Quantity",
         "Color": "Color",
         "OffsetX": "X (mm)",
         "OffsetY": "Y (mm)",
