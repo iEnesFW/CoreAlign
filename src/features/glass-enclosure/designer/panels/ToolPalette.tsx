@@ -31,6 +31,7 @@ import { cn } from '@/shared/lib/cn';
 import {
   useDesignerStore,
   type DesignerTool,
+  type PenIntent,
   type PlacementKind,
   type WallDrawShape,
 } from '@/features/glass-enclosure/model/designerStore';
@@ -132,6 +133,32 @@ const DRAW_SHAPES: {
   },
 ];
 
+const PEN_INTENTS: {
+  intent: PenIntent;
+  labelKey: string;
+  defaultLabel: string;
+  Icon: typeof Move;
+}[] = [
+  {
+    intent: 'opening',
+    labelKey: 'PenIntentOpening',
+    defaultLabel: 'Açıklık / delik',
+    Icon: Square,
+  },
+  {
+    intent: 'glassPanel',
+    labelKey: 'PenIntentGlassPanel',
+    defaultLabel: 'Cam paneli',
+    Icon: Shapes,
+  },
+  {
+    intent: 'divide',
+    labelKey: 'PenIntentDivide',
+    defaultLabel: 'Panel böl',
+    Icon: SquareSplitHorizontal,
+  },
+];
+
 export function ToolPalette() {
   const { t } = useTranslation();
   const activeTool = useDesignerStore((s) => s.activeTool);
@@ -139,6 +166,8 @@ export function ToolPalette() {
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const drawShape = useDesignerStore((s) => s.drawShape);
+  const penIntent = useDesignerStore((s) => s.penIntent);
+  const setPenIntent = useDesignerStore((s) => s.setPenIntent);
   const stackOnDrop = useDesignerStore((s) => s.stackOnDrop);
   const toggleStackOnDrop = useDesignerStore((s) => s.toggleStackOnDrop);
   const setActiveTool = useDesignerStore((s) => s.setActiveTool);
@@ -230,12 +259,26 @@ export function ToolPalette() {
         </div>
       )}
       {placement === 'pen' && (
-        <span className="pointer-events-auto rounded bg-slate-900/80 px-2 py-0.5 text-[10px] font-medium text-white">
-          {label(
-            'PenHint',
-            'Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal',
-          )}
-        </span>
+        <div className="pointer-events-auto flex flex-col items-center gap-1">
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+            {PEN_INTENTS.map(({ intent, labelKey, defaultLabel, Icon }) => (
+              <PaletteButton
+                key={intent}
+                title={label(labelKey, defaultLabel)}
+                active={penIntent === intent}
+                onClick={() => setPenIntent(intent)}
+              >
+                <Icon size={15} />
+              </PaletteButton>
+            ))}
+          </div>
+          <span className="rounded bg-slate-900/80 px-2 py-0.5 text-[10px] font-medium text-white">
+            {label(
+              'PenHint',
+              'Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal',
+            )}
+          </span>
+        </div>
       )}
       {placement && placement !== 'pen' && (
         <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">

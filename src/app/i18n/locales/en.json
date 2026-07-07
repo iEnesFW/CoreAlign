@@ -3082,7 +3082,10 @@
         "Material_concrete": "Concrete",
         "Material_panel": "Panel",
         "Pen": "Pen (draw surface / layer)",
-        "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels"
+        "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels",
+        "PenIntentOpening": "Opening / hole",
+        "PenIntentGlassPanel": "Glass panel",
+        "PenIntentDivide": "Split panels"
       },
       "Bend": {
         "SplitAction": "Split into two walls",
@@ -3137,7 +3140,12 @@
         "SelfIntersect": "The drawing intersects itself; no valid area could be formed.",
         "TooSmall": "The drawn shape is too small or invalid.",
         "DoesNotFit": "The shape does not fit the surface — draw a little inside the edges.",
-        "ArcNoFeature": "Openings/shapes can't be drawn on a shaped (curved/pitched) surface yet."
+        "ArcNoFeature": "Openings/shapes can't be drawn on a shaped (curved/pitched) surface yet.",
+        "GlassPanelDeferred": "Glass-panel drawing is coming soon — a free shaped-glass object isn't supported yet.",
+        "DivideWallOnly": "Split can only be drawn on a wall that has attached glass.",
+        "DivideNoRun": "No glass run is attached to this wall.",
+        "DivideInvalid": "Can't split here (the panels would be too narrow).",
+        "Divided": "The glass run was split at the drawn line."
       },
       "CollisionBlocked": "This value collides with another object — not applied.",
       "PastePlaceHint": "Paste: click a location · Esc to cancel",

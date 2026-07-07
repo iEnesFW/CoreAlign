@@ -54,7 +54,8 @@ import {
   RUN_PLAN_THICKNESS_MM,
 } from './interaction/planCollision';
 import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
-import { findAttachedWallIds } from '../model/wallAttachment';
+import { findAttachedWallIds, resolveAttachedRunIds } from '../model/wallAttachment';
+import { splitPanelsAtLength } from '../model/panelSplit';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
@@ -324,6 +325,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const addSlabFeature = useDesignerStore((s) => s.addSlabFeature);
   const penFace = useDesignerStore((s) => s.penFace);
   const setPenFace = useDesignerStore((s) => s.setPenFace);
+  const penIntent = useDesignerStore((s) => s.penIntent);
+  const setRunPanels = useDesignerStore((s) => s.setRunPanels);
   const activeTool = useDesignerStore((s) => s.activeTool);
   const placement = useDesignerStore((s) => s.placement);
   const placementShape = useDesignerStore((s) => s.placementShape);
@@ -679,6 +682,67 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         variant: 'warning',
         description: t('GlassEnclosure.Designer.Pen.TooSmall', {
           defaultValue: 'Çizilen şekil çok küçük veya geçersiz.',
+        }),
+      });
+      return;
+    }
+    if (penIntent === 'glassPanel') {
+      queueToast({
+        dedupeKey: 'glass-pen-glasspanel',
+        variant: 'info',
+        description: t('GlassEnclosure.Designer.Pen.GlassPanelDeferred', {
+          defaultValue:
+            'Cam paneli çizimi yakında — henüz şekilli serbest cam nesnesi desteklenmiyor.',
+        }),
+      });
+      return;
+    }
+    if (penIntent === 'divide') {
+      if (session.hostKind !== 'wall') {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-wall-only',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideWallOnly', {
+            defaultValue: 'Bölme yalnızca cam bağlı bir duvara çizilebilir.',
+          }),
+        });
+        return;
+      }
+      const divideWall = (scene.walls ?? []).find((w) => w.id === session.hostId);
+      if (!divideWall) return;
+      const attachedRunIds = resolveAttachedRunIds(divideWall, scene.runs);
+      const hostRun = scene.runs.find((r) => attachedRunIds.includes(r.id));
+      if (!hostRun) {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-no-run',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideNoRun', {
+            defaultValue: 'Bu duvara bağlı bir cam hattı bulunamadı.',
+          }),
+        });
+        return;
+      }
+      const totalWidth = hostRun.panels.reduce((sum, p) => sum + p.widthMm, 0);
+      const fraction = Math.min(1, Math.max(0, offsetMm / Math.max(1, divideWall.lengthMm)));
+      const split = splitPanelsAtLength(hostRun.panels, fraction * totalWidth, () =>
+        crypto.randomUUID(),
+      );
+      if (!split) {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-invalid',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideInvalid', {
+            defaultValue: 'Bu konumda bölme yapılamıyor (paneller çok dar kalır).',
+          }),
+        });
+        return;
+      }
+      setRunPanels(hostRun.id, split);
+      queueToast({
+        dedupeKey: 'glass-pen-divided',
+        variant: 'success',
+        description: t('GlassEnclosure.Designer.Pen.Divided', {
+          defaultValue: 'Cam hattı çizim çizgisinden bölündü.',
         }),
       });
       return;
