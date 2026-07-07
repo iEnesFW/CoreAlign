@@ -60,7 +60,6 @@ const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelIn
   cornerRadiiMm: panel.cornerRadiiMm ?? null,
   shapeKind: panel.shapeKind ?? null,
   shapePointsJson: panel.shapePointsJson ?? null,
-  hardware: aggregatePanelHardware(panel.hardware),
 });
 
 export const useRunEntityActions = () => {
@@ -175,6 +174,24 @@ export const usePanelEntityActions = () => {
     );
   };
 
+  // WHY: hardware persists on a DELIBERATE hardware change only — general panel writes omit it (null = don't touch) so a load-race transient [] can never wipe the structural rows.
+  const persistPanelHardware = async (runId: string, panelId: string) => {
+    if (!projectId) return;
+    const run = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+    const panel = run?.panels.find((p) => p.id === panelId);
+    if (!panel) return;
+    await safeRequestWithNotify(
+      enqueuePersist(() =>
+        updatePanelMutation.mutateAsync({
+          id: projectId,
+          runId,
+          panelId,
+          input: { ...toPanelInput(panel), hardware: aggregatePanelHardware(panel.hardware) },
+        }),
+      ),
+    );
+  };
+
   const deletePanel = async (runId: string, panelId: string) => {
     if (!projectId) return;
     removePanelLocal(runId, panelId);
@@ -189,7 +206,7 @@ export const usePanelEntityActions = () => {
     );
   };
 
-  return { createPanel, createPanelFrom, persistPanel, deletePanel };
+  return { createPanel, createPanelFrom, persistPanel, persistPanelHardware, deletePanel };
 };
 
 export const useDesignerEntityActions = () => ({

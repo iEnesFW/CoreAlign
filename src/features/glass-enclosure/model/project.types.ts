@@ -444,8 +444,7 @@ export interface SceneHardwareItem {
   widthMm: number;
   heightMm: number;
   depthMm: number;
-  // Catalog link so the placed object reaches the BOM/quote/cutting (else it is render-only).
-  // Scene-local (rides sceneJson); the structural panel-hardware DTO is derived from these.
+  // WHY: catalog link (scene-local, rides sceneJson) so the placed object reaches the BOM; unset = render-only.
   hardwareItemId?: string | null;
   quantity?: number;
 }
@@ -476,11 +475,7 @@ export interface SceneRunState {
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
   arcGlassBent?: boolean;
-  // Persistent cam↔host bond: the wall this glass run was filled/attached against. Set on
-  // autofill/hole-fill so the bond survives once the glass drifts out of the geometric attach
-  // band (the old overlap-only derivation lost it). Scene-local (round-trips via sceneJson like
-  // arcGlassBent) — resolveAttachedRunIds/resolveAttachedWallIds honour it, falling back to
-  // geometry when unset. null/undefined = no explicit bond (pure geometric behaviour).
+  // WHY: persistent cam↔host bond (scene-local, rides sceneJson) — resolveAttached* honour it so glass follows its wall after drifting out of the geometric attach band; unset = pure geometry.
   hostWallId?: string | null;
   frameEdges?: RunFrameEdges | null;
   hasMullions?: boolean | null;

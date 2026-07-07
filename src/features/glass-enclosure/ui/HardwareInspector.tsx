@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
+import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
 import { HARDWARE_KINDS } from '../model/hardwareDefaults';
 import { clampHardwareOffsets } from '../model/hardwarePlacement';
 import type { SceneHardwareKind } from '../model/project.types';
@@ -13,6 +14,7 @@ export function HardwareInspector() {
   const updateHardware = useDesignerStore((s) => s.updateHardware);
   const removeHardware = useDesignerStore((s) => s.removeHardware);
   const setSelection = useDesignerStore((s) => s.setSelection);
+  const { persistPanelHardware } = usePanelEntityActions();
   const catalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
 
   const { run, panel, item } = useMemo(() => {
@@ -31,11 +33,13 @@ export function HardwareInspector() {
       ...clampHardwareOffsets(panel.widthMm, run.heightMm, next),
     });
   };
+  const persistHw = () => void persistPanelHardware(run.id, panel.id);
   const kindLabel = (kind: SceneHardwareKind) =>
     t(`GlassEnclosure.Hardware.Kind.${kind}` as never, { defaultValue: kind });
 
   const handleRemove = () => {
     removeHardware(run.id, panel.id, item.id);
+    persistHw();
     setSelection({
       kind: 'panel',
       runId: run.id,
@@ -77,7 +81,10 @@ export function HardwareInspector() {
       <Field label={t('GlassEnclosure.Hardware.Field.CatalogItem')}>
         <select
           value={item.hardwareItemId ?? ''}
-          onChange={(e) => commit({ hardwareItemId: e.target.value || null })}
+          onChange={(e) => {
+            commit({ hardwareItemId: e.target.value || null });
+            persistHw();
+          }}
           className={inputClass}
         >
           <option value="">{t('GlassEnclosure.Hardware.Field.CatalogNone')}</option>
@@ -93,7 +100,10 @@ export function HardwareInspector() {
         label={t('GlassEnclosure.Hardware.Field.Quantity')}
         value={item.quantity ?? 1}
         min={1}
-        onChange={(v) => commit({ quantity: v })}
+        onChange={(v) => {
+          commit({ quantity: v });
+          persistHw();
+        }}
       />
 
       <Field label={t('GlassEnclosure.Hardware.Field.Color')}>

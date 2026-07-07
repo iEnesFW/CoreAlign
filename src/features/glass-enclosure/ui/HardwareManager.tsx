@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
+import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
 import { HARDWARE_KINDS, createHardwareItem } from '../model/hardwareDefaults';
 import type { ScenePanelState, SceneHardwareKind } from '../model/project.types';
 
@@ -14,6 +15,12 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
   const addHardware = useDesignerStore((s) => s.addHardware);
   const removeHardware = useDesignerStore((s) => s.removeHardware);
   const setSelection = useDesignerStore((s) => s.setSelection);
+  const { persistPanelHardware } = usePanelEntityActions();
+
+  const removeAndPersist = (hardwareId: string) => {
+    removeHardware(runId, panel.id, hardwareId);
+    void persistPanelHardware(runId, panel.id);
+  };
 
   const kindLabel = (kind: SceneHardwareKind) =>
     t(`GlassEnclosure.Hardware.Kind.${kind}` as never, { defaultValue: kind });
@@ -70,7 +77,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
               </button>
               <button
                 type="button"
-                onClick={() => removeHardware(runId, panel.id, hw.id)}
+                onClick={() => removeAndPersist(hw.id)}
                 className="text-slate-400 hover:text-danger-500"
                 aria-label={t('Common.Delete')}
               >

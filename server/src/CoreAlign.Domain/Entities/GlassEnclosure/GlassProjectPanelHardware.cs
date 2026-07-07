@@ -2,8 +2,6 @@ using CoreAlign.Domain.Common;
 
 namespace CoreAlign.Domain.Entities.GlassEnclosure;
 
-// A catalog HardwareItem placed on a glass panel. Structural (real FK to HardwareItem) so the item
-// flows into the BOM, quote and cutting list instead of living only in the render-only scene blob.
 public class GlassProjectPanelHardware : TenantEntity
 {
     public Guid PanelId { get; private set; }
