@@ -132,6 +132,28 @@ public class GlassProjectPanelConfiguration : IEntityTypeConfiguration<GlassProj
         builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken();
 
         builder.HasIndex(p => new { p.TenantId, p.RunId, p.PanelIndex });
+
+        builder.HasMany(p => p.Hardware)
+            .WithOne()
+            .HasForeignKey(h => h.PanelId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class GlassProjectPanelHardwareConfiguration : IEntityTypeConfiguration<GlassProjectPanelHardware>
+{
+    public void Configure(EntityTypeBuilder<GlassProjectPanelHardware> builder)
+    {
+        builder.HasKey(h => h.Id);
+        builder.Property(h => h.Quantity).HasColumnType("numeric(12,3)");
+        builder.Property(h => h.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(h => h.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.HasOne<HardwareItem>()
+            .WithMany()
+            .HasForeignKey(h => h.HardwareItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(h => new { h.TenantId, h.PanelId });
+        builder.HasIndex(h => h.HardwareItemId);
     }
 }
 

@@ -32,6 +32,11 @@ public class GlassProjectPanel : TenantEntity, IHasConcurrencyToken
     public string? ShapeKind { get; private set; }
     public string? ShapePointsJson { get; private set; }
 
+    // Catalog hardware placed on this panel in the 3D designer. Structural (FK to HardwareItem) so it
+    // reaches the BOM/quote/cutting — unlike the render-only SceneHardwareItem blob.
+    private readonly List<GlassProjectPanelHardware> _hardware = new();
+    public IReadOnlyCollection<GlassProjectPanelHardware> Hardware => _hardware.AsReadOnly();
+
     public long ConcurrencyToken { get; private set; }
 
     void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
@@ -58,6 +63,18 @@ public class GlassProjectPanel : TenantEntity, IHasConcurrencyToken
         HasLock = hasLock;
         HasBrushSeal = hasBrushSeal;
         Notes = notes;
+    }
+
+    public void ReplaceHardware(IEnumerable<(Guid HardwareItemId, decimal Quantity)> items)
+    {
+        _hardware.Clear();
+        foreach (var (hardwareItemId, quantity) in items)
+        {
+            if (hardwareItemId != Guid.Empty && quantity > 0m)
+            {
+                _hardware.Add(new GlassProjectPanelHardware(Id, hardwareItemId, quantity));
+            }
+        }
     }
 
     public void Update(

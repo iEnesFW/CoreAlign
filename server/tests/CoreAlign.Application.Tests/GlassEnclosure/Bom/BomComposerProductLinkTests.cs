@@ -63,6 +63,60 @@ public class BomComposerProductLinkTests
         result.Lines.Should().Contain(l => l.Kind == GlassBOMLineKind.GlassPiece && l.ProductId == productId);
     }
 
+    [Fact]
+    public async Task ComposeAsync_emits_hardware_piece_line_for_panel_hardware()
+    {
+        var (project, glass, _) = BuildSingleGlassPanelScenario(catalogPreLinked: true);
+        _linker.EnsureLinkedAsync(glass, CatalogItemKind.Glass, Arg.Any<CancellationToken>())
+            .Returns(new LinkageResult(glass.Id, Guid.NewGuid(), "GE-GLASS", false, false));
+
+        var hardwareProductId = Guid.NewGuid();
+        var hardware = new HardwareItem(
+            code: "HW-HINGE",
+            name: "Hinge 90",
+            category: HardwareCategoryKind.Other,
+            brandId: Guid.NewGuid(),
+            unit: "Piece",
+            unitPrice: 25m);
+        _hardwareRepo.GetByIdAsync(hardware.Id, Arg.Any<CancellationToken>()).Returns(hardware);
+        _linker.EnsureLinkedAsync(hardware, CatalogItemKind.Hardware, Arg.Any<CancellationToken>())
+            .Returns(new LinkageResult(hardware.Id, hardwareProductId, "GE-HW", false, false));
+
+        var panel = project.Runs.Single().Panels.Single();
+        panel.ReplaceHardware(new[] { (hardware.Id, 3m) });
+
+        var result = await BuildSut().ComposeAsync(project);
+
+        var hardwareLine = result.Lines.Should()
+            .ContainSingle(l => l.Kind == GlassBOMLineKind.HardwarePiece && l.RefId == hardware.Id).Subject;
+        hardwareLine.ProductId.Should().Be(hardwareProductId);
+        hardwareLine.Quantity.Should().Be(3m);
+        hardwareLine.UnitCost.Should().Be(25m);
+        hardwareLine.IsService.Should().BeFalse();
+        hardwareLine.Source.Should().Be(panel.Id.ToString());
+        result.HardwareCost.Should().Be(75m);
+    }
+
+    [Fact]
+    public async Task ComposeAsync_skips_panel_hardware_when_catalog_item_missing()
+    {
+        var (project, glass, _) = BuildSingleGlassPanelScenario(catalogPreLinked: true);
+        _linker.EnsureLinkedAsync(glass, CatalogItemKind.Glass, Arg.Any<CancellationToken>())
+            .Returns(new LinkageResult(glass.Id, Guid.NewGuid(), "GE-GLASS", false, false));
+
+        // Panel references a hardware id whose catalog item no longer resolves (GetByIdAsync → null).
+        var missingHardwareId = Guid.NewGuid();
+        _hardwareRepo.GetByIdAsync(missingHardwareId, Arg.Any<CancellationToken>()).Returns((HardwareItem?)null);
+
+        var panel = project.Runs.Single().Panels.Single();
+        panel.ReplaceHardware(new[] { (missingHardwareId, 3m) });
+
+        var result = await BuildSut().ComposeAsync(project);
+
+        result.Lines.Should().NotContain(l => l.Kind == GlassBOMLineKind.HardwarePiece);
+        result.HardwareCost.Should().Be(0m);
+    }
+
     private (GlassProject Project, GlassType Glass, Guid ProductId) BuildSingleGlassPanelScenario(bool catalogPreLinked)
     {
         var productId = Guid.NewGuid();

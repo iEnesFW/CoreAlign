@@ -20,7 +20,7 @@ public class GlassProjectRepository : IGlassProjectRepository
             // single JOIN cross-joins them (panels × connections rows). Split into
             // separate queries so a large project doesn't materialize the product.
             .AsSplitQuery()
-            .Include(p => p.Runs).ThenInclude(r => r.Panels)
+            .Include(p => p.Runs).ThenInclude(r => r.Panels).ThenInclude(pl => pl.Hardware)
             .Include(p => p.Connections)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 

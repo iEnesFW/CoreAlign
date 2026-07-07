@@ -210,6 +210,29 @@ public class BOMComposer : IBOMComposer
                     currency,
                     panel.Id.ToString(),
                     sortOrder++));
+
+                // Catalog hardware placed on the panel in the 3D designer — priced from the catalog
+                // (FX-converted, catalog-linked) so it reaches the quote/cutting list.
+                foreach (var panelHardware in panel.Hardware)
+                {
+                    var hardware = await _hardwareRepo.GetByIdAsync(panelHardware.HardwareItemId, cancellationToken);
+                    if (hardware is null || panelHardware.Quantity <= 0m) continue;
+                    var hwUnitPrice = await _fx.ConvertAsync(hardware.UnitPrice, hardware.Currency, currency, asOf, cancellationToken);
+                    hardwareCost += panelHardware.Quantity * hwUnitPrice;
+                    var panelHwLinkage = await _linker.EnsureLinkedAsync(hardware, CatalogItemKind.Hardware, cancellationToken);
+                    lines.Add(new BOMLineDraft(
+                        GlassBOMLineKind.HardwarePiece,
+                        hardware.Id,
+                        panelHwLinkage.ProductId,
+                        false,
+                        $"{run.Label} · Panel {panel.PanelIndex + 1} · {hardware.Name}",
+                        panelHardware.Quantity,
+                        "adet",
+                        decimal.Round(hwUnitPrice, 4),
+                        currency,
+                        panel.Id.ToString(),
+                        sortOrder++));
+                }
             }
 
             var kits = await _hardwareKitRepo.ListAsync(isActive: true, systemId: run.ProfileSystemId, cancellationToken);
