@@ -27,16 +27,20 @@ export interface ArcLayout {
   apex: { x: number; z: number };
 }
 
-const MAX_SWEEP_RAD = Math.PI * 2;
+// Cap at 359°, never a full 360°: at exactly 2π the chord 2r·sin(sweep/2) collapses to 0, the two
+// ends coincide and the body degenerates to zero length. deriveArcFromSweep already clamps to 359°;
+// this keeps every radius+sweep render/derivation path (resolveArc, computeArcLayout, …) in step.
+const MAX_SWEEP_RAD = (359 * Math.PI) / 180;
 const BAR_SEGMENT_STEP_RAD = 0.1;
 const MIN_BAR_SEGMENTS = 12;
 
 // CHORD-INVARIANT model: lengthMm is the CHORD — the straight span between the two FIXED endpoints —
 // and stays FIXED when curving. The arc is stored as (geomArcRadiusMm, geomArcSweepDeg) and bows
 // BETWEEN those fixed ends, so the ends never move. The radius is DERIVED from chord+sweep, and the
-// sweep is free across 1–360° (a minor ≤180° and a major >180° arc share the same two endpoints).
-// The developed glass length (= radius·sweep) is derived. The tightest radius is a half-circle
-// (chord/2, at 180°); a deeper curve comes from a larger sweep, not a smaller radius.
+// sweep is free across 1–359° (a minor ≤180° and a major >180° arc share the same two endpoints;
+// a full 360° is excluded — it collapses the chord to zero). The developed glass length
+// (= radius·sweep) is derived. The tightest radius is a half-circle (chord/2, at 180°); a deeper
+// curve comes from a larger sweep, not a smaller radius.
 export const minArcRadiusMm = (chordMm: number) => Math.max(1, Math.ceil(chordMm / 2));
 
 // A run/wall/slab is a REAL arc only when it has BOTH a radius and a non-negligible sweep. Anything
