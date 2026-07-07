@@ -2753,7 +2753,8 @@
         "ExpandRunsPanel": "Hat panelini genişlet",
         "CollapseRunsPanel": "Hat panelini daralt",
         "ExpandInspectorPanel": "Detay panelini genişlet",
-        "CollapseInspectorPanel": "Detay panelini daralt"
+        "CollapseInspectorPanel": "Detay panelini daralt",
+        "BomTitlePro": "BOM"
       },
       "NewRun": "Yeni hat",
       "Save": "Kaydet",
@@ -2902,7 +2903,8 @@
           "Lasso": "Lasso ile çoklu seçim — Del ile topluca silin",
           "CtrlSelect": "Öğeleri çoklu seçime ekle/çıkar — sağ üstten hizala, uç uca birleştir, eşitle, araları doldur",
           "Pen": "Kalem — serbest çokgen yüzey çiz (köşe tıkla, yapış, Shift düz, kapatınca biter)",
-          "Stack": "Taşırken Alt basılı tutarak objeleri üst üste istifle"
+          "Stack": "Taşırken Alt basılı tutarak objeleri üst üste istifle",
+          "AltStack": "Taşırken Alt basılı tutun: obje çarpışmadan, altındaki objenin üstüne oturur (üst üste yığma). Alt’sız taşıma yan yana hizalar."
         },
         "Draw": {
           "Title": "Yüzeye çizim",
@@ -3156,7 +3158,11 @@
           "arc": "Yay"
         },
         "SkippedCollision": "{{count}} öğe çakışma nedeniyle atlandı.",
-        "NeedTwo": "Bu işlem için en az iki öğe seçin."
+        "NeedTwo": "Bu işlem için en az iki öğe seçin.",
+        "DistributeX": "X eşit dağıt",
+        "DistributeY": "Y eşit dağıt",
+        "Group": "Grupla (birlikte taşınır)",
+        "Ungroup": "Grubu çöz"
       },
       "Corner": {
         "Title": "Köşe ovalliği (mm)",
@@ -3196,7 +3202,14 @@
         "Title": "Çizilen yüzey",
         "Delete": "Yüzeyi sil",
         "Hint": "Taşı aracıyla yüzeyi sürükleyebilir, Boya aracıyla renk/malzeme verebilirsiniz."
-      }
+      },
+      "Array": "Dizi (3×)",
+      "CanvasError": "Görünüm çizilirken bir hata oluştu. Tasarımınız kayıtlı; görünümü yeniden yükleyin.",
+      "CanvasErrorRetry": "Görünümü yeniden yükle",
+      "Lock": "Kilitle",
+      "Mirror": "Yatay aynala",
+      "PanelCountHint": "Bu hattın kaç cam panele bölüneceğini ayarlayın, sonra uygulayın.",
+      "Unlock": "Kilidi aç"
     },
     "Field": {
       "Code": "Kod",
@@ -3275,7 +3288,8 @@
       "BuildingHeight": "Bina yüksekliği (m)",
       "City": "Şehir",
       "Currency": "Para birimi",
-      "ArcRadius": "Kavis yarıçapı"
+      "ArcRadius": "Kavis yarıçapı",
+      "Hardware": "Donanım"
     },
     "FieldExt": {},
     "Engineering": {
@@ -3573,7 +3587,8 @@
         "CreatedAt": "Oluşturulma",
         "Banner": {
           "Action": "İncele",
-          "Simple": "Bu iş emri onay bekliyor"
+          "Simple": "Bu iş emri onay bekliyor",
+          "Pro": "Bu iş emri ilerlemeden önce bloke eden revizyonlar onaylanmalı."
         },
         "Toast": {
           "Approved": "Revizyon onaylandı",
@@ -3632,7 +3647,8 @@
         "PrintExport": "Yazdır / PDF",
         "NoReport": "Henüz yerleşim raporu yok.",
         "AdvancedNesting": "Gelişmiş 2D Nesting",
-        "OpenAdvanced": "Gelişmiş 2D nesting'i aç"
+        "OpenAdvanced": "Gelişmiş 2D nesting'i aç",
+        "AdvancedSubtitle": "Fireyi en aza indirmek için levha yerleşimini optimize edin"
       }
     },
     "Quote": {

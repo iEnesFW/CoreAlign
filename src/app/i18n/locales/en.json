@@ -2753,7 +2753,8 @@
         "ExpandRunsPanel": "Expand runs panel",
         "CollapseRunsPanel": "Collapse runs panel",
         "ExpandInspectorPanel": "Expand inspector panel",
-        "CollapseInspectorPanel": "Collapse inspector panel"
+        "CollapseInspectorPanel": "Collapse inspector panel",
+        "BomTitlePro": "BOM"
       },
       "NewRun": "New run",
       "Save": "Save",
@@ -2902,7 +2903,8 @@
           "Lasso": "Multi-select with the lasso — delete them all with Del",
           "CtrlSelect": "Ctrl+click adds/removes items to the multi-selection — align, join, match and fill from the top-right bar",
           "Pen": "Pen — draw a free polygon surface (click corners, snap, Shift straight, close to finish)",
-          "Stack": "Hold Alt while moving to stack objects on top of each other"
+          "Stack": "Hold Alt while moving to stack objects on top of each other",
+          "AltStack": "Hold Alt while moving: the object stacks on top of the one beneath it instead of colliding. Moving without Alt aligns them side by side."
         },
         "Draw": {
           "Title": "Surface drawing",
@@ -3156,7 +3158,11 @@
           "arc": "Arc"
         },
         "SkippedCollision": "{{count}} items skipped due to collision.",
-        "NeedTwo": "Select at least two items for this action."
+        "NeedTwo": "Select at least two items for this action.",
+        "DistributeX": "Distribute X evenly",
+        "DistributeY": "Distribute Y evenly",
+        "Group": "Group (move together)",
+        "Ungroup": "Ungroup"
       },
       "Corner": {
         "Title": "Corner rounding (mm)",
@@ -3196,7 +3202,14 @@
         "Title": "Drawn surface",
         "Delete": "Delete surface",
         "Hint": "Drag the surface with the Move tool; recolor it with the Paint tool."
-      }
+      },
+      "Array": "Array (3×)",
+      "CanvasError": "An error occurred while drawing the view. Your design is saved; reload the view.",
+      "CanvasErrorRetry": "Reload the view",
+      "Lock": "Lock",
+      "Mirror": "Mirror horizontally",
+      "PanelCountHint": "Set how many glass panels this run splits into, then apply.",
+      "Unlock": "Unlock"
     },
     "Field": {
       "Code": "Code",
@@ -3275,7 +3288,8 @@
       "BuildingHeight": "Building height (m)",
       "City": "City",
       "Currency": "Currency",
-      "ArcRadius": "Arc radius"
+      "ArcRadius": "Arc radius",
+      "Hardware": "Hardware"
     },
     "FieldExt": {},
     "Engineering": {
@@ -3573,7 +3587,8 @@
         "CreatedAt": "Created",
         "Banner": {
           "Action": "Review",
-          "Simple": "This work order is awaiting an approval"
+          "Simple": "This work order is awaiting an approval",
+          "Pro": "Blocking revisions must be approved before this work order can proceed."
         },
         "Toast": {
           "Approved": "Revision approved",
@@ -3632,7 +3647,8 @@
         "PrintExport": "Print / PDF",
         "NoReport": "No nesting report yet.",
         "AdvancedNesting": "Advanced 2D Nesting",
-        "OpenAdvanced": "Open advanced 2D nesting"
+        "OpenAdvanced": "Open advanced 2D nesting",
+        "AdvancedSubtitle": "Optimize sheet layout to minimize waste"
       }
     },
     "Quote": {
