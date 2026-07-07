@@ -3087,7 +3087,9 @@
         "PenHint": "Click on the ground or an object face to add corners · Shift for straight · click first point / double-click / Enter to finish · Esc cancels",
         "PenIntentOpening": "Opening / hole",
         "PenIntentGlassPanel": "Glass panel",
-        "PenIntentDivide": "Split panels"
+        "PenIntentDivide": "Split panels",
+        "PenModeClicked": "Click to place points",
+        "PenModeFreehand": "Freehand (drag)"
       },
       "Bend": {
         "SplitAction": "Split into two walls",

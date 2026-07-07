@@ -326,6 +326,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const penFace = useDesignerStore((s) => s.penFace);
   const setPenFace = useDesignerStore((s) => s.setPenFace);
   const penIntent = useDesignerStore((s) => s.penIntent);
+  const penMode = useDesignerStore((s) => s.penMode);
   const setRunPanels = useDesignerStore((s) => s.setRunPanels);
   const activeTool = useDesignerStore((s) => s.activeTool);
   const placement = useDesignerStore((s) => s.placement);
@@ -1878,7 +1879,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         </group>
         <SnapGuideOverlay />
         {placement === 'pen' && !penFace && (
-          <PenController snapTargets={snapTargets} onFinish={handlePenFinish} />
+          <PenController snapTargets={snapTargets} onFinish={handlePenFinish} mode={penMode} />
         )}
         {placement && placement !== 'pen' && (
           <PlacementController

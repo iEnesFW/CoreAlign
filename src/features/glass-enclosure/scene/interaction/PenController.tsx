@@ -5,15 +5,20 @@ import { useThree } from '@react-three/fiber';
 import { isShiftPressed, snapAngleDeg } from '@/shared/three-engine';
 import { clearSnapGuides, setSnapGuides } from '@/shared/three-engine';
 import { chordBulgeMm, tessellateArc } from './penArc';
+import { simplifyFreePoints } from '../../model/wallFeatureGeometry';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { PlanPoint, PlanSnapTargets } from './planSnap';
+import type { PenMode } from '../../model/designerStore';
 
 interface PenControllerProps {
   snapTargets: PlanSnapTargets;
   onFinish: (pointsMm: PlanPoint[]) => void;
+  mode: PenMode;
 }
 
 const MM = 1000;
+const FREE_STEP_MM = 40;
+const FREE_RDP_TOLERANCE_MM = 30;
 const PLANE_SIZE_M = 400;
 const PEN_Y_M = 0.02;
 const CORNER_SNAP_MM = 200;
@@ -48,11 +53,12 @@ const applyShiftConstraint = (from: PlanPoint, x: number, y: number): PlanPoint 
   return { x: from.x + len * Math.cos(rad), y: from.y + len * Math.sin(rad) };
 };
 
-export function PenController({ snapTargets, onFinish }: PenControllerProps) {
+export function PenController({ snapTargets, onFinish, mode }: PenControllerProps) {
   const pointsRef = useRef<PlanPoint[]>([]);
   const [points, setPoints] = useState<PlanPoint[]>([]);
   const [cursor, setCursor] = useState<PlanPoint | null>(null);
   const arcRef = useRef<{ active: boolean; end: PlanPoint } | null>(null);
+  const freehandRef = useRef(false);
   const suppressClickRef = useRef(false);
   const [arcPreview, setArcPreview] = useState<PlanPoint[] | null>(null);
   const getThree = useThree((s) => s.get);
@@ -137,6 +143,17 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.nativeEvent.button !== 0) return;
+    if (mode === 'freehand' && !isShiftPressed()) {
+      const point = { x: e.point.x * MM, y: e.point.z * MM };
+      freehandRef.current = true;
+      pointsRef.current = [point];
+      setPoints([point]);
+      setCursor(point);
+      setOrbitEnabled(false);
+      suppressClickRef.current = true;
+      (e.target as Element | null)?.setPointerCapture?.(e.pointerId);
+      return;
+    }
     if (isShiftPressed() && pointsRef.current.length >= 1) {
       const { point } = resolve(e.point.x * MM, e.point.z * MM);
       arcRef.current = { active: true, end: point };
@@ -146,6 +163,16 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
   };
 
   const handleMove = (e: ThreeEvent<PointerEvent>) => {
+    if (freehandRef.current) {
+      const point = { x: e.point.x * MM, y: e.point.z * MM };
+      const last = pointsRef.current[pointsRef.current.length - 1];
+      if (!last || Math.hypot(point.x - last.x, point.y - last.y) >= FREE_STEP_MM) {
+        pointsRef.current = [...pointsRef.current, point];
+        setPoints(pointsRef.current);
+      }
+      setCursor(point);
+      return;
+    }
     const { point, onCorner } = resolve(e.point.x * MM, e.point.z * MM);
     const arc = arcRef.current;
     if (arc?.active) {
@@ -162,6 +189,12 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
   };
 
   const cancelArc = () => {
+    if (freehandRef.current) {
+      freehandRef.current = false;
+      pointsRef.current = [];
+      setPoints([]);
+      setCursor(null);
+    }
     arcRef.current = null;
     setArcPreview(null);
     setOrbitEnabled(true);
@@ -172,6 +205,17 @@ export function PenController({ snapTargets, onFinish }: PenControllerProps) {
   });
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+    if (freehandRef.current) {
+      freehandRef.current = false;
+      setOrbitEnabled(true);
+      (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
+      pointsRef.current = simplifyFreePoints(
+        pointsRef.current.map((p) => ({ x: p.x, z: p.y })),
+        FREE_RDP_TOLERANCE_MM,
+      ).map((p) => ({ x: p.x, y: p.z }));
+      finish();
+      return;
+    }
     const arc = arcRef.current;
     arcRef.current = null;
     setArcPreview(null);

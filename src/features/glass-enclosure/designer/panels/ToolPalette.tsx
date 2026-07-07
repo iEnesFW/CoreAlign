@@ -32,6 +32,7 @@ import {
   useDesignerStore,
   type DesignerTool,
   type PenIntent,
+  type PenMode,
   type PlacementKind,
   type WallDrawShape,
 } from '@/features/glass-enclosure/model/designerStore';
@@ -159,6 +160,21 @@ const PEN_INTENTS: {
   },
 ];
 
+const PEN_MODES: {
+  penMode: PenMode;
+  labelKey: string;
+  defaultLabel: string;
+  Icon: typeof Move;
+}[] = [
+  {
+    penMode: 'clicked',
+    labelKey: 'PenModeClicked',
+    defaultLabel: 'Nokta nokta',
+    Icon: MousePointer2,
+  },
+  { penMode: 'freehand', labelKey: 'PenModeFreehand', defaultLabel: 'Serbest çizim', Icon: Spline },
+];
+
 export function ToolPalette() {
   const { t } = useTranslation();
   const activeTool = useDesignerStore((s) => s.activeTool);
@@ -168,6 +184,8 @@ export function ToolPalette() {
   const drawShape = useDesignerStore((s) => s.drawShape);
   const penIntent = useDesignerStore((s) => s.penIntent);
   const setPenIntent = useDesignerStore((s) => s.setPenIntent);
+  const penMode = useDesignerStore((s) => s.penMode);
+  const setPenMode = useDesignerStore((s) => s.setPenMode);
   const stackOnDrop = useDesignerStore((s) => s.stackOnDrop);
   const toggleStackOnDrop = useDesignerStore((s) => s.toggleStackOnDrop);
   const setActiveTool = useDesignerStore((s) => s.setActiveTool);
@@ -267,6 +285,18 @@ export function ToolPalette() {
                 title={label(labelKey, defaultLabel)}
                 active={penIntent === intent}
                 onClick={() => setPenIntent(intent)}
+              >
+                <Icon size={15} />
+              </PaletteButton>
+            ))}
+          </div>
+          <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+            {PEN_MODES.map(({ penMode: m, labelKey, defaultLabel, Icon }) => (
+              <PaletteButton
+                key={m}
+                title={label(labelKey, defaultLabel)}
+                active={penMode === m}
+                onClick={() => setPenMode(m)}
               >
                 <Icon size={15} />
               </PaletteButton>

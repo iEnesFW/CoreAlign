@@ -108,6 +108,8 @@ export interface PenFacePoint {
 
 export type PenIntent = 'opening' | 'glassPanel' | 'divide';
 
+export type PenMode = 'clicked' | 'freehand';
+
 export interface PenFaceSession {
   hostKind: 'wall' | 'slab';
   hostId: string;
@@ -157,6 +159,7 @@ interface DesignerState {
   multiSelection: MultiSelection;
   penFace: PenFaceSession | null;
   penIntent: PenIntent;
+  penMode: PenMode;
   transformHandlesActive: boolean;
   stackOnDrop: boolean;
 
@@ -171,6 +174,7 @@ interface DesignerState {
   setPaintMaterial: (materialKey: string | null) => void;
   setDrawShape: (shape: WallDrawShape) => void;
   setPenIntent: (intent: PenIntent) => void;
+  setPenMode: (mode: PenMode) => void;
   setRunPanels: (runId: string, panels: ScenePanelState[]) => void;
   setCornerFillMode: (mode: CornerFillMode) => void;
   toggleMultiSelect: (kind: MultiSelectKind, id: string) => void;
@@ -614,6 +618,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   multiSelection: EMPTY_MULTI_SELECTION,
   penFace: null,
   penIntent: 'opening',
+  penMode: 'clicked',
   transformHandlesActive: false,
   stackOnDrop: false,
 
@@ -640,6 +645,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   setPaintMaterial: (paintMaterial) => set({ paintMaterial, paintColor: null }),
   setDrawShape: (drawShape) => set({ drawShape }),
   setPenIntent: (penIntent) => set({ penIntent }),
+  setPenMode: (penMode) => set({ penMode }),
   setRunPanels: (runId, panels) => {
     const current = get();
     const next: SceneState = {

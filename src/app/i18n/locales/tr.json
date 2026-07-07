@@ -3087,7 +3087,9 @@
         "PenHint": "Zemine ya da bir obje yüzeyine tıkla → köşe ekle · Shift düz · ilk noktaya tıkla / çift tık / Enter bitir · Esc iptal",
         "PenIntentOpening": "Açıklık / delik",
         "PenIntentGlassPanel": "Cam paneli",
-        "PenIntentDivide": "Panel böl"
+        "PenIntentDivide": "Panel böl",
+        "PenModeClicked": "Nokta nokta çiz",
+        "PenModeFreehand": "Serbest çizim (sürükle)"
       },
       "Bend": {
         "SplitAction": "İkiye ayır",
