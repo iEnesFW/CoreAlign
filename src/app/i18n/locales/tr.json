@@ -3253,6 +3253,7 @@
       "WastePercent": "Fire %",
       "LaborCost": "İşçilik maliyeti",
       "MarginPercent": "Marj %",
+      "TaxRatePercent": "KDV %",
       "ToleranceTop": "Üst tolerans",
       "ToleranceSide": "Yan tolerans",
       "TransportPerKm": "Nakliye / km",

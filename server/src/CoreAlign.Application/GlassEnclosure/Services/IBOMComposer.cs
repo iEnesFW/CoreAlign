@@ -277,8 +277,7 @@ public class BOMComposer : IBOMComposer
         var subtotal = profileCost + glassCost + hardwareCost + wasteCost + laborCost + transportCost + scaffoldingCost + craneCost;
         var marginAmount = subtotal * (settings.DefaultMarginPercent / 100m);
         var afterMargin = subtotal + marginAmount;
-        var taxRate = 0.20m;
-        var taxAmount = afterMargin * taxRate;
+        var taxAmount = afterMargin * (settings.DefaultTaxRatePercent / 100m);
         var grandTotal = afterMargin + taxAmount;
 
         return new BOMCompositionResult(

@@ -8,14 +8,19 @@ public record BomQuoteTotals(decimal Subtotal, decimal MarginAmount, decimal Tax
 
 public static class BomQuoteTotalsCalculator
 {
+    // Kept as the backward-compatible default; the effective rate is the tenant's
+    // GlassEnclosureSettings.DefaultTaxRatePercent, threaded in by the callers.
     public const decimal TaxRate = 0.20m;
 
-    public static BomQuoteTotals Calculate(IEnumerable<GlassProjectBOMLine> lines, decimal marginPercent)
+    public static BomQuoteTotals Calculate(
+        IEnumerable<GlassProjectBOMLine> lines,
+        decimal marginPercent,
+        decimal taxRatePercent = 20m)
     {
         var subtotal = lines.Sum(l => l.LineCost);
         var marginAmount = subtotal * (marginPercent / 100m);
         var afterMargin = subtotal + marginAmount;
-        var taxAmount = afterMargin * TaxRate;
+        var taxAmount = afterMargin * (taxRatePercent / 100m);
         var grandTotal = afterMargin + taxAmount;
         return new BomQuoteTotals(
             decimal.Round(subtotal, 4),

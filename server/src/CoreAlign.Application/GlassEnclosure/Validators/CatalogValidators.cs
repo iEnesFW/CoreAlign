@@ -162,6 +162,7 @@ public class UpdateGlassEnclosureSettingsCoreCommandValidator : AbstractValidato
         RuleFor(x => x.Data.GlassKerfMm).InclusiveBetween(0m, 20m);
         RuleFor(x => x.Data.DefaultWastePercent).InclusiveBetween(0m, 50m);
         RuleFor(x => x.Data.DefaultMarginPercent).InclusiveBetween(0m, 500m);
+        RuleFor(x => x.Data.DefaultTaxRatePercent).InclusiveBetween(0m, 100m);
         RuleFor(x => x.Data.LaborCostPerM2).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Data.BendRailFeePerM).GreaterThanOrEqualTo(0);
         RuleFor(x => x.Data.BentGlassCostFactor).InclusiveBetween(1m, 10m);

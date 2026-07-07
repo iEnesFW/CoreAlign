@@ -77,7 +77,11 @@ public class RecomputeBOMCommandHandler : IRequestHandler<RecomputeBOMCommand, B
         var marginPercent = composition.Subtotal > 0m
             ? composition.MarginAmount / composition.Subtotal * 100m
             : 0m;
-        var totals = BomQuoteTotalsCalculator.Calculate(entities, marginPercent);
+        // Recover the tenant tax rate the composer applied (settings.DefaultTaxRatePercent), the
+        // same way marginPercent is recovered, so the recomputed totals honour the configured rate.
+        var afterMargin = composition.Subtotal + composition.MarginAmount;
+        var taxRatePercent = afterMargin > 0m ? composition.TaxAmount / afterMargin * 100m : 0m;
+        var totals = BomQuoteTotalsCalculator.Calculate(entities, marginPercent, taxRatePercent);
 
         await _lineRepo.ReplaceAllForProjectAsync(project.Id, entities, cancellationToken);
         project.RecordCalculations(
@@ -252,7 +256,11 @@ public class GetBomPreviewQueryHandler : IRequestHandler<GetBomPreviewQuery, BOM
         var marginPercent = composition.Subtotal > 0m
             ? composition.MarginAmount / composition.Subtotal * 100m
             : 0m;
-        var totals = BomQuoteTotalsCalculator.Calculate(entities, marginPercent);
+        // Recover the tenant tax rate the composer applied (settings.DefaultTaxRatePercent), the
+        // same way marginPercent is recovered, so the recomputed totals honour the configured rate.
+        var afterMargin = composition.Subtotal + composition.MarginAmount;
+        var taxRatePercent = afterMargin > 0m ? composition.TaxAmount / afterMargin * 100m : 0m;
+        var totals = BomQuoteTotalsCalculator.Calculate(entities, marginPercent, taxRatePercent);
         return RecomputeBOMCommandHandler.MapSummary(composition, entities, availability: null, totals);
     }
 }

@@ -51,7 +51,8 @@ export function LiveCostPreview({
         catalog: { profileSystems, glassTypes, colors, hardwareItems, hardwareKits },
         settings,
         floorNumber,
-        taxRatePercent,
+        // Fallback estimate honours the tenant's configured VAT (same source the backend uses).
+        taxRatePercent: settings?.defaultTaxRatePercent ?? taxRatePercent,
       }),
     [
       runs,

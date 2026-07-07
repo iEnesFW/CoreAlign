@@ -309,11 +309,12 @@ public class ConvertProjectToOrderCommandHandler : IRequestHandler<ConvertProjec
             ? new Dictionary<Guid, Product>()
             : await _productRepo.GetByIdsAsync(stockProductIds, cancellationToken);
 
-        var marginPercent = _settingsRepo is null
-            ? 0m
-            : (await _settingsRepo.GetOrCreateForCurrentTenantAsync(cancellationToken)).DefaultMarginPercent;
+        var settings = _settingsRepo is null
+            ? null
+            : await _settingsRepo.GetOrCreateForCurrentTenantAsync(cancellationToken);
+        var marginPercent = settings?.DefaultMarginPercent ?? 0m;
         var marginMultiplier = 1m + (marginPercent / 100m);
-        var taxRatePercent = DefaultTaxRatePercent;
+        var taxRatePercent = settings?.DefaultTaxRatePercent ?? DefaultTaxRatePercent;
 
         await _sequenceRepo.EnsureExistsAsync(DocumentSequenceType.OrderNumber, prefix: "SO", padLength: 6, year: DateTime.UtcNow.Year, cancellationToken);
         var orderNumber = await _sequenceRepo.ConsumeAsync(DocumentSequenceType.OrderNumber, DateTime.UtcNow, cancellationToken);

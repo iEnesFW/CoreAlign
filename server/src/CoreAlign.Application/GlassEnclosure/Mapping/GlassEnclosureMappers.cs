@@ -84,7 +84,7 @@ public static class GlassEnclosureMappers
     public static GlassEnclosureSettingsDto ToDto(GlassEnclosureSettings s) => new(
         s.DefaultStockBarLengthMm, s.DefaultJumboGlassWidthMm, s.DefaultJumboGlassHeightMm,
         s.SawKerfMm, s.GlassKerfMm, s.GuillotineRequired, s.DefaultWastePercent,
-        s.LaborCostPerM2, s.DefaultMarginPercent,
+        s.LaborCostPerM2, s.DefaultMarginPercent, s.DefaultTaxRatePercent,
         s.BendRailFeePerM, s.BentGlassCostFactor,
         s.FieldToleranceTopMm, s.FieldToleranceSideMm,
         s.TransportRatePerKm, s.TransportRatePerKg,

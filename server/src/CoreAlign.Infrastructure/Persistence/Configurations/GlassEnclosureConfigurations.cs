@@ -268,6 +268,7 @@ public class GlassEnclosureSettingsConfiguration : IEntityTypeConfiguration<Glas
         builder.Property(s => s.DefaultWastePercent).HasColumnType("numeric(6,3)");
         builder.Property(s => s.LaborCostPerM2).HasColumnType("numeric(18,4)");
         builder.Property(s => s.DefaultMarginPercent).HasColumnType("numeric(6,3)");
+        builder.Property(s => s.DefaultTaxRatePercent).HasColumnType("numeric(6,3)").HasDefaultValue(20m);
         builder.Property(s => s.BendRailFeePerM).HasColumnType("numeric(18,4)").HasDefaultValue(150m);
         builder.Property(s => s.BentGlassCostFactor).HasColumnType("numeric(6,3)").HasDefaultValue(2.75m);
         builder.Property(s => s.TransportRatePerKm).HasColumnType("numeric(18,4)");

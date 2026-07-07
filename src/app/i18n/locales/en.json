@@ -3253,6 +3253,7 @@
       "WastePercent": "Waste %",
       "LaborCost": "Labor cost",
       "MarginPercent": "Margin %",
+      "TaxRatePercent": "VAT %",
       "ToleranceTop": "Top tolerance",
       "ToleranceSide": "Side tolerance",
       "TransportPerKm": "Transport / km",

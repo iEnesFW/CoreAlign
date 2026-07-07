@@ -450,6 +450,7 @@ export interface GlassEnclosureSettingsDto {
   defaultWastePercent: number;
   laborCostPerM2: number;
   defaultMarginPercent: number;
+  defaultTaxRatePercent: number;
   fieldToleranceTopMm: number;
   fieldToleranceSideMm: number;
   transportRatePerKm: number;
@@ -479,6 +480,7 @@ export interface UpdateSettingsCoreInput {
   defaultWastePercent: number;
   laborCostPerM2: number;
   defaultMarginPercent: number;
+  defaultTaxRatePercent: number;
 }
 
 export interface UpdateSettingsFieldInput {

@@ -422,6 +422,7 @@ public record GlassEnclosureSettingsDto(
     decimal DefaultWastePercent,
     decimal LaborCostPerM2,
     decimal DefaultMarginPercent,
+    decimal DefaultTaxRatePercent,
     decimal BendRailFeePerM,
     decimal BentGlassCostFactor,
     int FieldToleranceTopMm,
@@ -453,7 +454,8 @@ public record UpdateGlassEnclosureSettingsCoreDto(
     decimal LaborCostPerM2,
     decimal DefaultMarginPercent,
     decimal BendRailFeePerM = 150m,
-    decimal BentGlassCostFactor = 2.75m);
+    decimal BentGlassCostFactor = 2.75m,
+    decimal DefaultTaxRatePercent = 20m);
 
 public record UpdateGlassEnclosureSettingsFieldDto(
     int FieldToleranceTopMm,

@@ -198,7 +198,8 @@ internal static class BomTotalsRecorder
         CancellationToken cancellationToken)
     {
         var settings = await settingsRepo.GetOrCreateForCurrentTenantAsync(cancellationToken);
-        var totals = BomQuoteTotalsCalculator.Calculate(lines, settings.DefaultMarginPercent);
+        var totals = BomQuoteTotalsCalculator.Calculate(
+            lines, settings.DefaultMarginPercent, settings.DefaultTaxRatePercent);
         project.RecordTotals(totals.Subtotal, 0m, totals.TaxAmount, totals.GrandTotal);
         projectRepo.Update(project);
     }

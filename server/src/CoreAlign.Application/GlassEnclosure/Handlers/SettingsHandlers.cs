@@ -38,7 +38,8 @@ public class UpdateGlassEnclosureSettingsCoreCommandHandler : IRequestHandler<Up
             request.Data.LaborCostPerM2,
             request.Data.DefaultMarginPercent,
             request.Data.BendRailFeePerM,
-            request.Data.BentGlassCostFactor);
+            request.Data.BentGlassCostFactor,
+            request.Data.DefaultTaxRatePercent);
         _repository.Update(settings);
         return GlassEnclosureMappers.ToDto(settings);
     }

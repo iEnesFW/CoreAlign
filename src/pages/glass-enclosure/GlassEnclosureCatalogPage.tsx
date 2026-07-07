@@ -365,6 +365,10 @@ const SettingsPanel = () => {
           value={`${s.laborCostPerM2.toFixed(2)} ${s.defaultCurrency}/m²`}
         />
         <KV label={t('GlassEnclosure.Field.MarginPercent')} value={`${s.defaultMarginPercent}%`} />
+        <KV
+          label={t('GlassEnclosure.Field.TaxRatePercent')}
+          value={`${s.defaultTaxRatePercent}%`}
+        />
       </SettingsCard>
       <SettingsCard title={t('GlassEnclosure.Settings.Field')}>
         <KV label={t('GlassEnclosure.Field.ToleranceTop')} value={`${s.fieldToleranceTopMm} mm`} />

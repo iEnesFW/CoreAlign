@@ -13,6 +13,7 @@ public class GlassEnclosureSettings : TenantEntity
     public decimal DefaultWastePercent { get; private set; } = 5m;
     public decimal LaborCostPerM2 { get; private set; }
     public decimal DefaultMarginPercent { get; private set; } = 20m;
+    public decimal DefaultTaxRatePercent { get; private set; } = 20m;
     public decimal BendRailFeePerM { get; private set; } = 150m;
     public decimal BentGlassCostFactor { get; private set; } = 2.75m;
     public int FieldToleranceTopMm { get; private set; } = 10;
@@ -52,7 +53,8 @@ public class GlassEnclosureSettings : TenantEntity
         decimal laborCostPerM2,
         decimal defaultMarginPercent,
         decimal bendRailFeePerM = 150m,
-        decimal bentGlassCostFactor = 2.75m)
+        decimal bentGlassCostFactor = 2.75m,
+        decimal defaultTaxRatePercent = 20m)
     {
         DefaultStockBarLengthMm = defaultStockBarLengthMm;
         DefaultJumboGlassWidthMm = defaultJumboGlassWidthMm;
@@ -65,6 +67,7 @@ public class GlassEnclosureSettings : TenantEntity
         DefaultMarginPercent = defaultMarginPercent;
         BendRailFeePerM = bendRailFeePerM;
         BentGlassCostFactor = bentGlassCostFactor;
+        DefaultTaxRatePercent = Math.Clamp(defaultTaxRatePercent, 0m, 100m);
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
