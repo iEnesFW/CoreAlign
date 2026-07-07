@@ -1765,14 +1765,14 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const pasteHint =
     clipboard?.kind === 'hardware'
       ? t('GlassEnclosure.Designer.PasteHardwareHint', {
-          defaultValue: 'YapÄ±ÅŸtÄ±r: hedef panele tÄ±kla Â· Esc iptal',
+          defaultValue: 'Yapıştır: hedef panele tıkla · Esc iptal',
         })
       : clipboard?.kind === 'panel'
         ? t('GlassEnclosure.Designer.PastePanelHint', {
-            defaultValue: 'YapÄ±ÅŸtÄ±r: hedef hatta veya panele tÄ±kla Â· Esc iptal',
+            defaultValue: 'Yapıştır: hedef hatta veya panele tıkla · Esc iptal',
           })
         : t('GlassEnclosure.Designer.PastePlaceHint', {
-            defaultValue: 'YapÄ±ÅŸtÄ±r: konuma tÄ±kla Â· Esc iptal',
+            defaultValue: 'Yapıştır: konuma tıkla · Esc iptal',
           });
 
   const cursorClass = pasteArmed
