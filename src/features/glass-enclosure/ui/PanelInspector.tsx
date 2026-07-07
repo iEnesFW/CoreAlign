@@ -426,13 +426,15 @@ export function PanelInspector({ glassTypes, sections }: PanelInspectorProps) {
             onChange={(e) => commit({ glassTypeId: e.target.value })}
             className={inputClass}
           >
-            {glassTypes.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name} · {g.thicknessMm}mm
-                {g.uValue > 0 ? ` · U${g.uValue}` : ''}
-                {g.soundDb > 0 ? ` · ${g.soundDb}dB` : ''}
-              </option>
-            ))}
+            {glassTypes
+              .filter((g) => g.isActive || g.id === draft.glassTypeId)
+              .map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name} · {g.thicknessMm}mm
+                  {g.uValue > 0 ? ` · U${g.uValue}` : ''}
+                  {g.soundDb > 0 ? ` · ${g.soundDb}dB` : ''}
+                </option>
+              ))}
           </select>
         </Field>
       )}
