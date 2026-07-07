@@ -15,5 +15,5 @@ public class GetProjectStockAvailabilityHandler
     public Task<IReadOnlyList<StockAvailabilityRow>> Handle(
         GetProjectStockAvailabilityQuery request,
         CancellationToken cancellationToken)
-        => _availability.CheckAsync(request.ProjectId, request.WarehouseId, cancellationToken);
+        => _availability.CheckAsync(request.ProjectId, request.WarehouseId, cancellationToken: cancellationToken);
 }

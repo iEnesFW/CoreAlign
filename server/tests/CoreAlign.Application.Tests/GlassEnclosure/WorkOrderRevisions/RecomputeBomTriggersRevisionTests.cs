@@ -78,7 +78,7 @@ public class RecomputeBomTriggersRevisionTests
         var project = BuildProject();
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition());
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
         _workOrderRepo.ListReleasableByProjectAsync(project.Id, Arg.Any<CancellationToken>())
             .Returns(Array.Empty<GlassWorkOrder>());
@@ -97,7 +97,7 @@ public class RecomputeBomTriggersRevisionTests
         var project = BuildProject();
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition());
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         _workOrderRepo.ListReleasableByProjectAsync(project.Id, Arg.Any<CancellationToken>())
@@ -118,7 +118,7 @@ public class RecomputeBomTriggersRevisionTests
         var composition = BuildComposition(1000m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var releasedWorkOrder = new GlassWorkOrder(
@@ -152,7 +152,7 @@ public class RecomputeBomTriggersRevisionTests
         var composition = BuildComposition(1041.6667m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var pendingWithSnapshot = new GlassWorkOrder(
@@ -186,7 +186,7 @@ public class RecomputeBomTriggersRevisionTests
         var composition = BuildComposition(1250m);
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var wo1 = new GlassWorkOrder(project.Id, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(2), workloadM2: 10m);
@@ -222,7 +222,7 @@ public class RecomputeBomTriggersRevisionTests
         var project = BuildProject();
         _projectRepo.GetByIdWithRunsAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(BuildComposition(1500m));
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var noSnapshot = new GlassWorkOrder(

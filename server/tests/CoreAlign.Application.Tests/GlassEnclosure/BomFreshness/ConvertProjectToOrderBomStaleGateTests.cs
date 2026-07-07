@@ -30,7 +30,7 @@ public class ConvertProjectToOrderBomStaleGateTests
         _sequenceRepo.ConsumeAsync(Arg.Any<DocumentSequenceType>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns("SO-000001");
         _currentUser.UserId.Returns(Guid.NewGuid());
-        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         _sut = new ConvertProjectToOrderCommandHandler(

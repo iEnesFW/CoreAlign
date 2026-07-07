@@ -30,7 +30,7 @@ public class ConvertProjectToOrderTests
             .Returns("SO-000001");
         _currentUser.UserId.Returns(Guid.NewGuid());
 
-        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         _sut = new ConvertProjectToOrderCommandHandler(

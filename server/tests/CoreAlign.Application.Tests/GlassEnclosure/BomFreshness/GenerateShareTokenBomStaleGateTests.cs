@@ -31,7 +31,7 @@ public class GenerateShareTokenBomStaleGateTests
             .Returns(new GlassEnclosureSettings(Guid.NewGuid()));
         _generator.GenerateToken().Returns("token-abc-123");
         _currentUser.UserId.Returns(Guid.NewGuid());
-        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         _sut = new GenerateShareTokenCommandHandler(

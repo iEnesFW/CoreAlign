@@ -351,6 +351,35 @@ public class GlassProjectOrderLinkRepository : IGlassProjectOrderLinkRepository
 
     public async Task AddAsync(GlassProjectOrderLink link, CancellationToken cancellationToken = default) =>
         await _context.GlassProjectOrderLinks.AddAsync(link, cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, decimal>> SumPendingOrderDemandByProductsAsync(
+        IReadOnlyCollection<Guid> productIds,
+        Guid excludeProjectId,
+        IReadOnlyCollection<OrderStatus> pendingStatuses,
+        CancellationToken cancellationToken = default)
+    {
+        if (productIds.Count == 0 || pendingStatuses.Count == 0)
+        {
+            return new Dictionary<Guid, decimal>();
+        }
+
+        var productIdList = productIds.Distinct().ToList();
+        var statusList = pendingStatuses.Distinct().ToList();
+
+        // Tenant isolation comes for free: links, orders and lines are all tenant-scoped, so the
+        // global query filter confines the join to the current tenant.
+        var rows = await (
+            from link in _context.GlassProjectOrderLinks
+            where link.ProjectId != excludeProjectId
+            join order in _context.Orders on link.OrderId equals order.Id
+            where statusList.Contains(order.Status)
+            join orderLine in _context.OrderLines on order.Id equals orderLine.OrderId
+            where !orderLine.IsService && productIdList.Contains(orderLine.ProductId)
+            group orderLine.Quantity by orderLine.ProductId into grouped
+            select new { ProductId = grouped.Key, Quantity = grouped.Sum() }).ToListAsync(cancellationToken);
+
+        return rows.ToDictionary(r => r.ProductId, r => r.Quantity);
+    }
 }
 
 public class GlassNotificationLogRepository : IGlassNotificationLogRepository

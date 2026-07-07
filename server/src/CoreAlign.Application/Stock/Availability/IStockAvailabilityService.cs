@@ -5,6 +5,7 @@ public interface IStockAvailabilityService
     Task<IReadOnlyList<StockAvailabilityRow>> CheckAsync(
         Guid projectId,
         Guid? warehouseId,
+        bool accountForPendingDemand = false,
         CancellationToken cancellationToken = default);
 }
 

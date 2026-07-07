@@ -32,7 +32,7 @@ public class ConvertProjectToOrderPricingTests
         _sequenceRepo.ConsumeAsync(Arg.Any<DocumentSequenceType>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns("SO-000099");
         _currentUser.UserId.Returns(Guid.NewGuid());
-        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(Arg.Any<Guid>(), Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var settings = new GlassEnclosureSettings(TenantId);

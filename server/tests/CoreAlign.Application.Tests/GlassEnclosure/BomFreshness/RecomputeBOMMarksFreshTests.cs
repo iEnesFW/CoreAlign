@@ -48,7 +48,7 @@ public class RecomputeBOMMarksFreshTests
             Currency: "TRY",
             Lines: Array.Empty<BOMLineDraft>());
         _composer.ComposeAsync(project, Arg.Any<CancellationToken>()).Returns(composition);
-        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+        _availabilityService.CheckAsync(project.Id, Arg.Any<Guid?>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
             .Returns(Array.Empty<StockAvailabilityRow>());
 
         var handler = new RecomputeBOMCommandHandler(_projectRepo, _composer, _lineRepo, _availabilityService, _bomStaleSignal, _workOrderRepo, _workOrderRevisionService);

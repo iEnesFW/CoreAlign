@@ -14,8 +14,10 @@ public class StockAvailabilityServiceTests
     private readonly IStockItemRepository _stockItems = NSubSubstitute.For<IStockItemRepository>();
     private readonly IProductRepository _products = NSubSubstitute.For<IProductRepository>();
     private readonly IProductSubstituteResolver _resolver = NSubSubstitute.For<IProductSubstituteResolver>();
+    private readonly IGlassProjectOrderLinkRepository _orderLinks = NSubSubstitute.For<IGlassProjectOrderLinkRepository>();
 
-    private StockAvailabilityService BuildSut() => new(_bomLines, _stockItems, _products, _resolver);
+    private StockAvailabilityService BuildSut() =>
+        new(_bomLines, _stockItems, _products, _resolver, _orderLinks);
 
     [Fact]
     public async Task CheckAsync_returns_empty_when_project_has_no_bom_lines()
@@ -230,6 +232,65 @@ public class StockAvailabilityServiceTests
         rows[0].WarehouseId.Should().Be(targetWarehouseId);
         rows[0].AvailableQty.Should().Be(4m);
         rows[0].HasShortage.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CheckAsync_subtracts_pending_glass_demand_from_other_projects_when_opted_in()
+    {
+        var projectId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+
+        var line = new GlassProjectBOMLine(
+            projectId, GlassBOMLineKind.GlassPiece, "Glass", quantity: 8m,
+            unit: "m²", unitCost: 100m, currency: "TRY", productId: productId);
+        _bomLines.ListByProjectAsync(projectId, Arg.Any<CancellationToken>())
+            .Returns(new[] { line });
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [productId] = BuildProduct(productId, "GLASS", "Glass") });
+        _stockItems.SumOnHandAndReservedByProductsAsync(
+                Arg.Any<IEnumerable<Guid>>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, (decimal OnHand, decimal Reserved)> { [productId] = (10m, 0m) });
+        // 6 units already committed by OTHER projects' pending (Draft/Submitted/Approved) glass orders.
+        _orderLinks.SumPendingOrderDemandByProductsAsync(
+                Arg.Any<IReadOnlyCollection<Guid>>(), projectId,
+                Arg.Any<IReadOnlyCollection<OrderStatus>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, decimal> { [productId] = 6m });
+
+        var rows = await BuildSut().CheckAsync(projectId, warehouseId: null, accountForPendingDemand: true);
+
+        rows.Should().HaveCount(1);
+        rows[0].AvailableQty.Should().Be(4m); // 10 on-hand − 6 pending = 4
+        rows[0].HasShortage.Should().BeTrue(); // needs 8, only 4 available after pending demand
+        rows[0].ShortageQty.Should().Be(4m);
+        await _orderLinks.Received(1).SumPendingOrderDemandByProductsAsync(
+            Arg.Any<IReadOnlyCollection<Guid>>(), projectId,
+            Arg.Any<IReadOnlyCollection<OrderStatus>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CheckAsync_ignores_pending_glass_demand_and_does_not_query_links_by_default()
+    {
+        var projectId = Guid.NewGuid();
+        var productId = Guid.NewGuid();
+
+        var line = new GlassProjectBOMLine(
+            projectId, GlassBOMLineKind.GlassPiece, "Glass", quantity: 8m,
+            unit: "m²", unitCost: 100m, currency: "TRY", productId: productId);
+        _bomLines.ListByProjectAsync(projectId, Arg.Any<CancellationToken>())
+            .Returns(new[] { line });
+        _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [productId] = BuildProduct(productId, "GLASS", "Glass") });
+        _stockItems.SumOnHandAndReservedByProductsAsync(
+                Arg.Any<IEnumerable<Guid>>(), Arg.Any<Guid?>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, (decimal OnHand, decimal Reserved)> { [productId] = (10m, 0m) });
+
+        var rows = await BuildSut().CheckAsync(projectId, warehouseId: null);
+
+        rows.Should().HaveCount(1);
+        rows[0].AvailableQty.Should().Be(10m); // pending demand ignored → full on-hand
+        rows[0].HasShortage.Should().BeFalse();
+        await _orderLinks.DidNotReceiveWithAnyArgs()
+            .SumPendingOrderDemandByProductsAsync(default!, default, default!, default);
     }
 
     private static Product BuildProduct(Guid id, string sku, string name)

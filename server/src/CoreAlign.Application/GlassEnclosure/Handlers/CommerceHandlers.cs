@@ -64,7 +64,8 @@ public class GenerateShareTokenCommandHandler : IRequestHandler<GenerateShareTok
 
         if (!request.ForceWithShortage)
         {
-            var availability = await _availabilityService.CheckAsync(project.Id, warehouseId: null, cancellationToken);
+            var availability = await _availabilityService.CheckAsync(
+                project.Id, warehouseId: null, cancellationToken: cancellationToken);
             var shortageLineIds = availability
                 .Where(a => a.HasShortage)
                 .Select(a => a.BomLineId)
@@ -286,7 +287,8 @@ public class ConvertProjectToOrderCommandHandler : IRequestHandler<ConvertProjec
 
         if (!request.ForceConvertWithShortage)
         {
-            var availability = await _availabilityService.CheckAsync(project.Id, warehouseId: null, cancellationToken);
+            var availability = await _availabilityService.CheckAsync(
+                project.Id, warehouseId: null, accountForPendingDemand: true, cancellationToken);
             var shortageLineIds = availability
                 .Where(a => a.HasShortage)
                 .Select(a => a.BomLineId)

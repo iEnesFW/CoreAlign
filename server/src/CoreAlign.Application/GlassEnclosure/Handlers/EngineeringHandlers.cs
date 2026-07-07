@@ -93,7 +93,8 @@ public class RecomputeBOMCommandHandler : IRequestHandler<RecomputeBOMCommand, B
 
         await TriggerWorkOrderRevisionIfReleasedAsync(project.Id, composition, totals.GrandTotal, cancellationToken);
 
-        var availability = await _availabilityService.CheckAsync(project.Id, warehouseId: null, cancellationToken);
+        var availability = await _availabilityService.CheckAsync(
+            project.Id, warehouseId: null, cancellationToken: cancellationToken);
         return MapSummary(composition, entities, availability, totals);
     }
 

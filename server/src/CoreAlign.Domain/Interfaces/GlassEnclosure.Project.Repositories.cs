@@ -144,6 +144,15 @@ public interface IGlassProjectOrderLinkRepository
 {
     Task<GlassProjectOrderLink?> GetByProjectAsync(Guid projectId, CancellationToken cancellationToken = default);
     Task AddAsync(GlassProjectOrderLink link, CancellationToken cancellationToken = default);
+
+    // Per-product quantity already committed by OTHER glass projects' linked orders that are still in
+    // a pre-stock-effect status (nothing reserved or decremented yet) — used to keep the convert-time
+    // availability check accurate across concurrent projects without a hard reservation.
+    Task<IReadOnlyDictionary<Guid, decimal>> SumPendingOrderDemandByProductsAsync(
+        IReadOnlyCollection<Guid> productIds,
+        Guid excludeProjectId,
+        IReadOnlyCollection<OrderStatus> pendingStatuses,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IGlassNotificationLogRepository
