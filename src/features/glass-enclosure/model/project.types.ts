@@ -235,6 +235,17 @@ export interface BulkRebalancePanelsInput {
   defaultGlassTypeId: string;
 }
 
+export interface PanelSpecInput {
+  id: string;
+  widthMm: number;
+  openingType: GlassOpeningType;
+  glassTypeId: string;
+}
+
+export interface SetRunPanelsInput {
+  panels: PanelSpecInput[];
+}
+
 export interface AddRunConnectionInput {
   runAId: string;
   runBId: string;

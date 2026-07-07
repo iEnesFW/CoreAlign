@@ -175,6 +175,23 @@ export const useRebalancePanelsMutation = () => {
   });
 };
 
+export const useSetRunPanelsMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      runId,
+      input,
+    }: {
+      id: string;
+      runId: string;
+      input: Parameters<typeof glassProjectsApi.setRunPanels>[2];
+    }) => glassProjectsApi.setRunPanels(id, runId, input),
+    onSuccess: (_, vars) => invalidateProject(qc, vars.id),
+    onError: (error, vars) => healOn404(qc, error, vars.id),
+  });
+};
+
 export const useAddPanelMutation = () => {
   const qc = useQueryClient();
   return useMutation({

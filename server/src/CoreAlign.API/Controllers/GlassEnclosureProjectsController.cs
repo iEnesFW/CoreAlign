@@ -127,6 +127,11 @@ public class GlassEnclosureProjectsController : ControllerBase
     public async Task<IActionResult> RebalancePanels(Guid id, Guid runId, [FromBody] BulkRebalancePanelsDto data, CancellationToken ct) =>
         (await _mediator.Send(new BulkRebalancePanelsCommand(id, runId, data), ct)).ToOk();
 
+    [HttpPost("{id:guid}/runs/{runId:guid}/set-panels")]
+    [Authorize(Policy = GlassEnclosurePolicies.ProjectUpdate)]
+    public async Task<IActionResult> SetRunPanels(Guid id, Guid runId, [FromBody] SetRunPanelsDto data, CancellationToken ct) =>
+        (await _mediator.Send(new SetRunPanelsCommand(id, runId, data), ct)).ToOk();
+
     [HttpPost("{id:guid}/runs/{runId:guid}/panels")]
     [Authorize(Policy = GlassEnclosurePolicies.ProjectUpdate)]
     public async Task<IActionResult> AddPanel(Guid id, Guid runId, [FromBody] AddPanelDto data, CancellationToken ct) =>

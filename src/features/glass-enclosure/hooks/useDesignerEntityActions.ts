@@ -11,6 +11,7 @@ import {
   useRebalancePanelsMutation,
   useRemovePanelMutation,
   useRemoveRunMutation,
+  useSetRunPanelsMutation,
   useUpdatePanelMutation,
   useUpdateRunMutation,
 } from './useGlassProjectQueries';
@@ -18,6 +19,7 @@ import type {
   ScenePanelState,
   SceneRunState,
   SceneWallState,
+  SetRunPanelsInput,
   UpdatePanelInput,
   UpdateRunInput,
 } from '../model/project.types';
@@ -127,6 +129,7 @@ export const usePanelEntityActions = () => {
   const addPanelMutation = useAddPanelMutation();
   const updatePanelMutation = useUpdatePanelMutation();
   const removePanelMutation = useRemovePanelMutation();
+  const setRunPanelsMutation = useSetRunPanelsMutation();
 
   const createPanelFrom = async (runId: string, source: Omit<ScenePanelState, 'panelIndex'>) => {
     if (!projectId) return null;
@@ -176,6 +179,25 @@ export const usePanelEntityActions = () => {
     );
   };
 
+  // WHY: divide adds a panel mid-array — the append-only AddPanel can't; this reconciles the run's
+  // whole panel set by id (keeps existing ids + their hardware, adds the new split half, reindexes).
+  const persistRunPanels = async (runId: string) => {
+    if (!projectId) return;
+    const run = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+    if (!run) return;
+    const input: SetRunPanelsInput = {
+      panels: run.panels.map((p) => ({
+        id: p.id,
+        widthMm: p.widthMm,
+        openingType: p.openingType,
+        glassTypeId: p.glassTypeId,
+      })),
+    };
+    await safeRequestWithNotify(
+      enqueuePersist(() => setRunPanelsMutation.mutateAsync({ id: projectId, runId, input })),
+    );
+  };
+
   // WHY: hardware persists on a DELIBERATE hardware change only — general panel writes omit it (null = don't touch) so a load-race transient [] can never wipe the structural rows.
   const persistPanelHardware = async (runId: string, panelId: string) => {
     if (!projectId) return;
@@ -208,7 +230,14 @@ export const usePanelEntityActions = () => {
     );
   };
 
-  return { createPanel, createPanelFrom, persistPanel, persistPanelHardware, deletePanel };
+  return {
+    createPanel,
+    createPanelFrom,
+    persistPanel,
+    persistPanelHardware,
+    persistRunPanels,
+    deletePanel,
+  };
 };
 
 export const useWallEntityActions = () => {

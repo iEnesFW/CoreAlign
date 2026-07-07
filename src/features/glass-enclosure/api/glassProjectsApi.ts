@@ -18,6 +18,7 @@ import type {
   ProjectsListParams,
   RunConnectionDto,
   SaveSceneInput,
+  SetRunPanelsInput,
   SceneLatestDto,
   SceneVersionDto,
   TransitionProjectStatusInput,
@@ -88,6 +89,8 @@ export const glassProjectsApi = {
 
   rebalancePanels: (id: string, runId: string, input: BulkRebalancePanelsInput) =>
     post<GlassProjectRunDto>(`/${id}/runs/${runId}/rebalance-panels`, input),
+  setRunPanels: (id: string, runId: string, input: SetRunPanelsInput) =>
+    post<GlassProjectRunDto>(`/${id}/runs/${runId}/set-panels`, input),
 
   addPanel: (id: string, runId: string, input: AddPanelInput) =>
     post<GlassProjectPanelDto>(`/${id}/runs/${runId}/panels`, input),

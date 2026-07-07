@@ -250,6 +250,10 @@ public record BulkRebalancePanelsDto(
     GlassOpeningType DefaultOpeningType,
     Guid DefaultGlassTypeId);
 
+public record PanelSpecDto(Guid Id, int WidthMm, GlassOpeningType OpeningType, Guid GlassTypeId);
+
+public record SetRunPanelsDto(IReadOnlyList<PanelSpecDto> Panels);
+
 public record AddRunConnectionDto(
     Guid RunAId,
     Guid RunBId,

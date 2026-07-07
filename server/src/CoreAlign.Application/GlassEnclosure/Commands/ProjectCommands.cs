@@ -17,6 +17,7 @@ public record AddRunCommand(Guid ProjectId, AddRunDto Data) : IRequest<GlassProj
 public record UpdateRunCommand(Guid ProjectId, Guid RunId, UpdateRunDto Data) : IRequest<GlassProjectRunDto>, ITransactionalRequest;
 public record RemoveRunCommand(Guid ProjectId, Guid RunId) : IRequest<Unit>, ITransactionalRequest;
 public record BulkRebalancePanelsCommand(Guid ProjectId, Guid RunId, BulkRebalancePanelsDto Data) : IRequest<GlassProjectRunDto>, ITransactionalRequest;
+public record SetRunPanelsCommand(Guid ProjectId, Guid RunId, SetRunPanelsDto Data) : IRequest<GlassProjectRunDto>, ITransactionalRequest;
 
 public record AddRunConnectionCommand(Guid ProjectId, AddRunConnectionDto Data) : IRequest<RunConnectionDto>, ITransactionalRequest;
 public record UpdateRunConnectionCommand(Guid ProjectId, Guid ConnectionId, UpdateRunConnectionDto Data) : IRequest<RunConnectionDto>, ITransactionalRequest;

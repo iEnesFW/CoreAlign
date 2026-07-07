@@ -423,6 +423,62 @@ public class BulkRebalancePanelsCommandHandler : IRequestHandler<BulkRebalancePa
     }
 }
 
+public class SetRunPanelsCommandHandler : IRequestHandler<SetRunPanelsCommand, GlassProjectRunDto>
+{
+    private readonly IGlassProjectRunRepository _runRepo;
+    private readonly IGlassProjectPanelRepository _panelRepo;
+    private readonly IBomStaleSignal _bomStaleSignal;
+    public SetRunPanelsCommandHandler(IGlassProjectRunRepository runRepo, IGlassProjectPanelRepository panelRepo, IBomStaleSignal bomStaleSignal)
+    {
+        _runRepo = runRepo;
+        _panelRepo = panelRepo;
+        _bomStaleSignal = bomStaleSignal;
+    }
+
+    public async Task<GlassProjectRunDto> Handle(SetRunPanelsCommand request, CancellationToken cancellationToken)
+    {
+        var run = await _runRepo.GetByIdWithPanelsAsync(request.RunId, cancellationToken)
+            ?? throw new GlassEnclosureNotFoundException("ProjectRun");
+        if (run.ProjectId != request.ProjectId) throw new CrossTenantAccessException();
+        // WHY: never wipe a run to zero panels — an empty request is a no-op, not a delete-all.
+        if (request.Data.Panels.Count == 0) return ProjectMappers.ToDto(run);
+
+        // WHY: mutate the collection INCREMENTALLY (update kept in-place, add/remove the deltas) —
+        // ReplacePanels' Clear()+AddRange re-adds a Modified kept panel and churns EF into a phantom
+        // 0-row UPDATE. A kept panel keeps its id (and its hardware rows, keyed by panel id).
+        var originalPanels = run.Panels.ToList();
+        var existing = originalPanels.ToDictionary(p => p.Id);
+        var keptIds = new HashSet<Guid>();
+        for (var i = 0; i < request.Data.Panels.Count; i++)
+        {
+            var spec = request.Data.Panels[i];
+            var widthMm = Math.Max(1, spec.WidthMm);
+            if (spec.Id != Guid.Empty && existing.TryGetValue(spec.Id, out var panel))
+            {
+                panel.Update(widthMm, spec.OpeningType, spec.GlassTypeId,
+                    panel.HasHandle, panel.HasLock, panel.HasBrushSeal, panel.Notes);
+                panel.Reindex(i);
+                keptIds.Add(spec.Id);
+            }
+            else
+            {
+                var created = new GlassProjectPanel(run.Id, i, widthMm, spec.OpeningType, spec.GlassTypeId);
+                if (spec.Id != Guid.Empty) created.Id = spec.Id;
+                await _panelRepo.AddAsync(created, cancellationToken);
+                run.AddPanel(created);
+            }
+        }
+        foreach (var panel in originalPanels)
+        {
+            if (keptIds.Contains(panel.Id)) continue;
+            _panelRepo.Remove(panel);
+            run.RemovePanel(panel.Id);
+        }
+        await _bomStaleSignal.SignalStaleAsync(run.ProjectId, BomStaleReason.PanelChanged, cancellationToken);
+        return ProjectMappers.ToDto(run);
+    }
+}
+
 public class AddPanelCommandHandler : IRequestHandler<AddPanelCommand, GlassProjectPanelDto>
 {
     private readonly IGlassProjectRunRepository _runRepo;

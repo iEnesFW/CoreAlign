@@ -339,7 +339,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setPlacement = useDesignerStore((s) => s.setPlacement);
   const onPenFaceFinishRef = useRef<() => void>(() => {});
   const { appearance } = useViewerAppearance();
-  const { createPanelFrom, persistPanel, deletePanel } = usePanelEntityActions();
+  const { createPanelFrom, persistPanel, persistRunPanels, deletePanel } = usePanelEntityActions();
   const { persistRun, deleteRun } = useRunEntityActions();
   const addRunMutation = useAddRunMutation();
 
@@ -739,6 +739,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         return;
       }
       setRunPanels(hostRun.id, split);
+      void persistRunPanels(hostRun.id);
       queueToast({
         dedupeKey: 'glass-pen-divided',
         variant: 'success',
