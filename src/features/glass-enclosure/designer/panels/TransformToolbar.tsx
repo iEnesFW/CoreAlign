@@ -5,6 +5,7 @@ import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore
 import {
   usePanelEntityActions,
   useRunEntityActions,
+  useWallEntityActions,
 } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { snapAngleDeg } from '@/features/glass-enclosure/model/angleSnap';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -230,7 +231,7 @@ const PanelFields = ({ run, panel }: { run: SceneRunState; panel: ScenePanelStat
 
 const WallFields = ({ wall }: { wall: SceneWallState }) => {
   const { t } = useTranslation();
-  const updateWall = useDesignerStore((s) => s.updateWall);
+  const { commitWallPatch } = useWallEntityActions();
 
   const commit = (patch: Partial<SceneWallState>) => {
     const candidate = { ...wall, ...patch };
@@ -262,7 +263,7 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
     ) {
       return;
     }
-    updateWall(wall.id, patch);
+    commitWallPatch(wall, patch);
   };
 
   return (

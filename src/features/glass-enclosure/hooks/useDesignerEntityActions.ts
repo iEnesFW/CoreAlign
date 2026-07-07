@@ -4,6 +4,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { developedLengthMm } from '../model/arcGeometry';
 import { aggregatePanelHardware } from '../model/panelHardware';
 import { createPanelFromTemplate } from '../model/panelDefaults';
+import { moveWallWithAttachments, resolveAttachedRunIds } from '../model/wallAttachment';
 import { enqueuePersist } from '../model/persistQueue';
 import {
   useAddPanelMutation,
@@ -16,6 +17,7 @@ import {
 import type {
   ScenePanelState,
   SceneRunState,
+  SceneWallState,
   UpdatePanelInput,
   UpdateRunInput,
 } from '../model/project.types';
@@ -207,6 +209,43 @@ export const usePanelEntityActions = () => {
   };
 
   return { createPanel, createPanelFrom, persistPanel, persistPanelHardware, deletePanel };
+};
+
+export const useWallEntityActions = () => {
+  const { persistRun } = useRunEntityActions();
+
+  // WHY: numeric/inspector wall edits must co-move + persist attached glass exactly like the drag path (onCommitWallMove) — otherwise the glass is left behind (audit §2b) or snaps back on refetch.
+  const commitWallPatch = (wall: SceneWallState, patch: Partial<SceneWallState>) => {
+    const store = useDesignerStore.getState();
+    const after = { ...wall, ...patch };
+    const poseChanged =
+      after.originX !== wall.originX ||
+      after.originY !== wall.originY ||
+      after.rotationDeg !== wall.rotationDeg;
+    if (!poseChanged) {
+      store.updateWall(wall.id, patch);
+      return;
+    }
+    const attachedIds = new Set(resolveAttachedRunIds(wall, store.scene.runs));
+    const movedById = new Map(
+      moveWallWithAttachments(
+        wall,
+        after,
+        store.scene.runs.filter((r) => attachedIds.has(r.id)),
+      ).map((r) => [r.id, r] as const),
+    );
+    store.applyScenePatch((s) => ({
+      ...s,
+      walls: (s.walls ?? []).map((w) => (w.id === wall.id ? { ...w, ...patch } : w)),
+      runs: s.runs.map((r) => movedById.get(r.id) ?? r),
+    }));
+    for (const id of attachedIds) {
+      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === id);
+      if (fresh) void persistRun(fresh);
+    }
+  };
+
+  return { commitWallPatch };
 };
 
 export const useDesignerEntityActions = () => ({

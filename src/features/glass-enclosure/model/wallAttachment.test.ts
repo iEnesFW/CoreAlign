@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   findAttachedRunIds,
   findAttachedWallIds,
+  moveWallWithAttachments,
   resolveAttachedRunIds,
   resolveAttachedWallIds,
 } from './wallAttachment';
@@ -136,5 +137,43 @@ describe('resolveAttachedWallIds (persistent host bond)', () => {
     const w = wall({ id: 'w' });
     const fill: SceneRunState = { ...run(800, 0, 0, 1000), hostWallId: 'w' };
     expect(resolveAttachedWallIds(fill, [w])).toEqual(['w']);
+  });
+});
+
+describe('moveWallWithAttachments (rigid co-move)', () => {
+  it('translates attached runs by the origin delta, rotation unchanged', () => {
+    const before = { originX: 0, originY: 0, rotationDeg: 0 };
+    const after = { originX: 500, originY: -200, rotationDeg: 0 };
+    const [moved] = moveWallWithAttachments(before, after, [run(1000, 500, 30, 800)]);
+    expect(moved.originX).toBe(1500);
+    expect(moved.originY).toBe(300);
+    expect(moved.rotationDeg).toBe(30);
+  });
+
+  it('rotates attached runs about the wall origin and advances their rotation', () => {
+    const before = { originX: 0, originY: 0, rotationDeg: 0 };
+    const after = { originX: 0, originY: 0, rotationDeg: 90 };
+    const [moved] = moveWallWithAttachments(before, after, [run(2000, 0, 10, 800)]);
+    expect(moved.originX).toBe(0);
+    expect(moved.originY).toBe(2000);
+    expect(moved.rotationDeg).toBe(100);
+  });
+
+  it('combines translation and rotation', () => {
+    const before = { originX: 0, originY: 0, rotationDeg: 0 };
+    const after = { originX: 1000, originY: 0, rotationDeg: 90 };
+    const [moved] = moveWallWithAttachments(before, after, [run(2000, 0, 0, 800)]);
+    expect(moved.originX).toBe(1000);
+    expect(moved.originY).toBe(2000);
+    expect(moved.rotationDeg).toBe(90);
+  });
+
+  it('is identity when the pose is unchanged', () => {
+    const pose = { originX: 300, originY: 400, rotationDeg: 45 };
+    const r = run(1000, 500, 20, 800);
+    const [moved] = moveWallWithAttachments(pose, pose, [r]);
+    expect(moved.originX).toBe(r.originX);
+    expect(moved.originY).toBe(r.originY);
+    expect(moved.rotationDeg).toBe(r.rotationDeg);
   });
 });

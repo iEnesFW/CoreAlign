@@ -78,13 +78,7 @@ export const findAttachedWallIds = (run: SceneRunState, walls: SceneWallState[])
   return attached;
 };
 
-// PERSISTENT cam↔host bond resolvers. The geometric derivation above only catches a run while both
-// its endpoints sit inside the wall's attach band; once the glass drifts out (a mis-tracked move,
-// an inspector edit) the bond is lost forever. When a run carries an explicit hostWallId (set on
-// autofill/hole-fill) we honour it in ADDITION to geometry, so a bonded run travels with its host
-// even after drifting. Both are pure — no store/three access — so they are unit-testable and a
-// drop-in for the geometric variants (identical output until hostWallId is populated).
-
+// WHY: geometry ∪ explicit hostWallId — a bonded run stays attached after drifting out of the band (the overlap-only derivation lost it); pure, so a drop-in for the geometric variants until hostWallId is set.
 export const resolveAttachedRunIds = (wall: SceneWallState, runs: SceneRunState[]): string[] => {
   const ids = new Set<string>(findAttachedRunIds(wall, runs));
   for (const run of runs) {
@@ -100,4 +94,32 @@ export const resolveAttachedWallIds = (run: SceneRunState, walls: SceneWallState
     return geometric.includes(run.hostWallId) ? geometric : [run.hostWallId, ...geometric];
   }
   return geometric;
+};
+
+export interface WallPose {
+  originX: number;
+  originY: number;
+  rotationDeg: number;
+}
+
+// WHY: rigid co-move so glass follows its host on inspector edits — rotate each run about the wall's OLD origin by the rotation delta, then translate by the origin delta (arc shape rides the run frame, no special case).
+export const moveWallWithAttachments = (
+  before: WallPose,
+  after: WallPose,
+  runs: SceneRunState[],
+): SceneRunState[] => {
+  const deltaDeg = after.rotationDeg - before.rotationDeg;
+  const rad = (deltaDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return runs.map((run) => {
+    const dx = run.originX - before.originX;
+    const dy = run.originY - before.originY;
+    return {
+      ...run,
+      originX: Math.round(after.originX + dx * cos - dy * sin),
+      originY: Math.round(after.originY + dx * sin + dy * cos),
+      rotationDeg: run.rotationDeg + deltaDeg,
+    };
+  });
 };

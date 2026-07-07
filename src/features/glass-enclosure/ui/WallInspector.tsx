@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { DoorOpen, RectangleHorizontal, Trash2, Wand2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
+import { useWallEntityActions } from '../hooks/useDesignerEntityActions';
 import {
   deriveArcFromRadius,
   deriveArcFromSweep,
@@ -27,6 +28,7 @@ export function WallInspector() {
   const selection = useDesignerStore((s) => s.selection);
   const walls = useDesignerStore((s) => s.scene.walls ?? []);
   const updateWall = useDesignerStore((s) => s.updateWall);
+  const { commitWallPatch } = useWallEntityActions();
   const removeWall = useDesignerStore((s) => s.removeWall);
   const addWallOpening = useDesignerStore((s) => s.addWallOpening);
   const updateWallOpening = useDesignerStore((s) => s.updateWallOpening);
@@ -93,7 +95,7 @@ export function WallInspector() {
       setDraft(wall);
       return;
     }
-    updateWall(wall.id, patch);
+    commitWallPatch(wall, patch);
   };
 
   const edgeNotches = wall.edgeNotchMm ?? [];
