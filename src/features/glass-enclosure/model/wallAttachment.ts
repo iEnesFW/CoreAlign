@@ -77,3 +77,27 @@ export const findAttachedWallIds = (run: SceneRunState, walls: SceneWallState[])
   }
   return attached;
 };
+
+// PERSISTENT cam↔host bond resolvers. The geometric derivation above only catches a run while both
+// its endpoints sit inside the wall's attach band; once the glass drifts out (a mis-tracked move,
+// an inspector edit) the bond is lost forever. When a run carries an explicit hostWallId (set on
+// autofill/hole-fill) we honour it in ADDITION to geometry, so a bonded run travels with its host
+// even after drifting. Both are pure — no store/three access — so they are unit-testable and a
+// drop-in for the geometric variants (identical output until hostWallId is populated).
+
+export const resolveAttachedRunIds = (wall: SceneWallState, runs: SceneRunState[]): string[] => {
+  const ids = new Set<string>(findAttachedRunIds(wall, runs));
+  for (const run of runs) {
+    if (run.hostWallId === wall.id) ids.add(run.id);
+  }
+  return [...ids];
+};
+
+export const resolveAttachedWallIds = (run: SceneRunState, walls: SceneWallState[]): string[] => {
+  const geometric = findAttachedWallIds(run, walls);
+  // Only honour an explicit host that still exists (a deleted wall must fall back to geometry).
+  if (run.hostWallId && walls.some((w) => w.id === run.hostWallId)) {
+    return geometric.includes(run.hostWallId) ? geometric : [run.hostWallId, ...geometric];
+  }
+  return geometric;
+};

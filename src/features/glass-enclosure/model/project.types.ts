@@ -466,6 +466,12 @@ export interface SceneRunState {
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
   arcGlassBent?: boolean;
+  // Persistent cam↔host bond: the wall this glass run was filled/attached against. Set on
+  // autofill/hole-fill so the bond survives once the glass drifts out of the geometric attach
+  // band (the old overlap-only derivation lost it). Scene-local (round-trips via sceneJson like
+  // arcGlassBent) — resolveAttachedRunIds/resolveAttachedWallIds honour it, falling back to
+  // geometry when unset. null/undefined = no explicit bond (pure geometric behaviour).
+  hostWallId?: string | null;
   frameEdges?: RunFrameEdges | null;
   hasMullions?: boolean | null;
   locked?: boolean;

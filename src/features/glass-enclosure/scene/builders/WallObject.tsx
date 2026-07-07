@@ -81,7 +81,7 @@ import {
   radiusFromChordSweep,
   resolveArc,
 } from '../../model/arcGeometry';
-import { findAttachedRunIds } from '../../model/wallAttachment';
+import { resolveAttachedRunIds } from '../../model/wallAttachment';
 import {
   FEATURE_EDGE_MARGIN_MM,
   FREE_SAMPLE_STEP_MM,
@@ -592,9 +592,9 @@ export function WallObject({
     const groupWalls = wall.groupId
       ? sceneWalls.filter((w) => w.groupId === wall.groupId && w.id !== wall.id)
       : [];
-    const runIds = new Set<string>(findAttachedRunIds(wall, sceneRuns));
+    const runIds = new Set<string>(resolveAttachedRunIds(wall, sceneRuns));
     for (const member of groupWalls) {
-      for (const id of findAttachedRunIds(member, sceneRuns)) runIds.add(id);
+      for (const id of resolveAttachedRunIds(member, sceneRuns)) runIds.add(id);
     }
     const runs = sceneRuns.filter((r) => runIds.has(r.id));
     return { groupWalls, runs };

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { findAttachedRunIds } from './wallAttachment';
+import {
+  findAttachedRunIds,
+  findAttachedWallIds,
+  resolveAttachedRunIds,
+  resolveAttachedWallIds,
+} from './wallAttachment';
 import { arcPointAt, radiusFromChordSweep } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
@@ -76,5 +81,60 @@ describe('findAttachedRunIds', () => {
     const w = wall({ geomArcRadiusMm: 2000, geomArcSweepDeg: null });
     const fill = run(800, 0, 0, 1000);
     expect(findAttachedRunIds(w, [fill])).toEqual(['run-1']);
+  });
+});
+
+describe('resolveAttachedRunIds (persistent host bond)', () => {
+  it('matches geometry when no run carries a host bond', () => {
+    const w = wall();
+    const fill = run(800, 0, 0, 1000);
+    expect(resolveAttachedRunIds(w, [fill])).toEqual(findAttachedRunIds(w, [fill]));
+  });
+
+  it('keeps a bonded run that has DRIFTED out of the attach band', () => {
+    const w = wall();
+    // Far from the wall — geometry alone would drop it (the "once broken, never re-caught" bug).
+    const drifted: SceneRunState = { ...run(9000, 9000, 0, 1000), hostWallId: 'w' };
+    expect(findAttachedRunIds(w, [drifted])).toEqual([]);
+    expect(resolveAttachedRunIds(w, [drifted])).toEqual(['run-1']);
+  });
+
+  it('does not claim a drifted run bonded to a different wall', () => {
+    const w = wall({ id: 'w' });
+    const other: SceneRunState = { ...run(9000, 9000, 0, 1000), hostWallId: 'other-wall' };
+    expect(resolveAttachedRunIds(w, [other])).toEqual([]);
+  });
+
+  it('does not double-count a run that is both bonded and geometrically attached', () => {
+    const w = wall();
+    const both: SceneRunState = { ...run(800, 0, 0, 1000), hostWallId: 'w' };
+    expect(resolveAttachedRunIds(w, [both])).toEqual(['run-1']);
+  });
+});
+
+describe('resolveAttachedWallIds (persistent host bond)', () => {
+  it('matches geometry when the run carries no host bond', () => {
+    const w = wall({ id: 'w' });
+    const fill = run(800, 0, 0, 1000);
+    expect(resolveAttachedWallIds(fill, [w])).toEqual(findAttachedWallIds(fill, [w]));
+  });
+
+  it('returns the explicit host first even when the run has drifted off it', () => {
+    const host = wall({ id: 'host' });
+    const drifted: SceneRunState = { ...run(9000, 9000, 0, 1000), hostWallId: 'host' };
+    expect(findAttachedWallIds(drifted, [host])).toEqual([]);
+    expect(resolveAttachedWallIds(drifted, [host])).toEqual(['host']);
+  });
+
+  it('falls back to geometry when the host wall no longer exists', () => {
+    const w = wall({ id: 'w' });
+    const fill: SceneRunState = { ...run(800, 0, 0, 1000), hostWallId: 'deleted-wall' };
+    expect(resolveAttachedWallIds(fill, [w])).toEqual(['w']);
+  });
+
+  it('does not duplicate the host when geometry already reports it', () => {
+    const w = wall({ id: 'w' });
+    const fill: SceneRunState = { ...run(800, 0, 0, 1000), hostWallId: 'w' };
+    expect(resolveAttachedWallIds(fill, [w])).toEqual(['w']);
   });
 });
