@@ -189,7 +189,8 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={fontSize}
-                fill="#0c1f4a"
+                fill="currentColor"
+                className="text-slate-900 dark:text-slate-100"
                 fontFamily="ui-monospace, monospace"
               >
                 {p.widthMm}×{p.heightMm}
@@ -202,7 +203,8 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize={fontSize * 0.8}
-                  fill="#0c1f4a"
+                  fill="currentColor"
+                  className="text-slate-900 dark:text-slate-100"
                   fontFamily="ui-monospace, monospace"
                 >
                   {t(SHAPE_KEY[token])}
