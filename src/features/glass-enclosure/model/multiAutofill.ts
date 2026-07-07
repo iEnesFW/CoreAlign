@@ -569,3 +569,35 @@ export const computeMultiWallGapRuns = (
   }
   return edges;
 };
+
+export type TwoWallGapFailure = 'joined' | 'tooClose' | 'tooFar' | 'direction' | 'blocked';
+
+export const describeTwoWallGapFailure = (
+  selectedWalls: SceneWallState[],
+  allWalls: SceneWallState[],
+): TwoWallGapFailure => {
+  const allEndpoints = allWalls.flatMap(wallEndpoints);
+  const free = selectedWalls
+    .flatMap(wallEndpoints)
+    .filter(
+      (point) =>
+        !allEndpoints.some(
+          (other) =>
+            other.wall.id !== point.wall.id &&
+            Math.hypot(other.x - point.x, other.y - point.y) <= ENDPOINT_JOIN_TOLERANCE_MM,
+        ),
+    );
+  let nearest: { a: WallEndpoint; b: WallEndpoint; distance: number } | null = null;
+  for (let i = 0; i < free.length; i += 1) {
+    for (let j = i + 1; j < free.length; j += 1) {
+      if (free[j].wall.id === free[i].wall.id) continue;
+      const distance = Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y);
+      if (!nearest || distance < nearest.distance) nearest = { a: free[i], b: free[j], distance };
+    }
+  }
+  if (!nearest) return 'joined';
+  if (nearest.distance < MIN_GAP_MM) return 'tooClose';
+  if (nearest.distance > MAX_GAP_MM) return 'tooFar';
+  if (!connectorLeavesOutward(nearest.a, nearest.b)) return 'direction';
+  return 'blocked';
+};

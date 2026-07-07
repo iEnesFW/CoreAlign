@@ -5,7 +5,7 @@ import { glassProjectsApi } from '../api/glassProjectsApi';
 import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
-import { computeMultiWallGapRuns } from '../model/multiAutofill';
+import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
 import { developedLengthMm } from '../model/arcGeometry';
 import {
   useAddConnectionMutation,
@@ -13,15 +13,47 @@ import {
   useUpdatePanelMutation,
 } from './useGlassProjectQueries';
 import { useColorOptionsQuery, useProfileSystemsQuery } from './useGlassEnclosureQueries';
-import type { GapEdge } from '../model/multiAutofill';
+import type { GapEdge, TwoWallGapFailure } from '../model/multiAutofill';
 import type { OpenEdge } from '../model/wallAutofill';
 import type { SceneState } from '../model/project.types';
+import type { TFunction } from 'i18next';
 
 const DEFAULT_RUN_HEIGHT_MM = 2400;
 
 const angleDiffDeg = (a: number, b: number) => {
   const d = Math.abs((((a - b) % 180) + 180) % 180);
   return Math.min(d, 180 - d);
+};
+
+const twoWallGapFailureMessage = (reason: TwoWallGapFailure, t: TFunction): string => {
+  switch (reason) {
+    case 'joined':
+      return t('GlassEnclosure.Designer.Wall.AutofillGapJoined', {
+        defaultValue:
+          'Seçili duvarların serbest ucu yok (zaten bağlılar) — aralarında doldurulacak boşluk yok.',
+      });
+    case 'tooClose':
+      return t('GlassEnclosure.Designer.Wall.AutofillGapTooClose', {
+        defaultValue:
+          'Seçili iki duvarın uçları birbirine çok yakın — aralarında en az 30 cm boşluk olmalı.',
+      });
+    case 'tooFar':
+      return t('GlassEnclosure.Designer.Wall.AutofillGapTooFar', {
+        defaultValue:
+          'Seçili iki duvarın uçları çok uzak — en fazla 60 m aralık camla doldurulabilir.',
+      });
+    case 'direction':
+      return t('GlassEnclosure.Designer.Wall.AutofillGapDirection', {
+        defaultValue:
+          'Seçili iki duvar birbirine ters yönde bakıyor — açık uçlarını boşluğa bakacak şekilde konumlandırın.',
+      });
+    case 'blocked':
+    default:
+      return t('GlassEnclosure.Designer.Wall.AutofillGapBlocked', {
+        defaultValue:
+          'Aradaki cam başka bir gövdeyle kesişiyor — duvarları biraz ayırın veya aradaki engeli kaldırın.',
+      });
+  }
 };
 
 export const useWallAutofill = () => {
@@ -175,10 +207,13 @@ export const useWallAutofill = () => {
         queueToast({
           dedupeKey: 'glass-autofill-no-gaps',
           variant: 'info',
-          description: t('GlassEnclosure.Designer.Wall.AutofillNoGaps', {
-            defaultValue:
-              'Seçili duvarlar arasında doldurulabilir boşluk bulunamadı — serbest duvar uçları arasında 30 cm - 12 m aralık olmalı.',
-          }),
+          description:
+            selectedWalls.length === 2
+              ? twoWallGapFailureMessage(describeTwoWallGapFailure(selectedWalls, walls), t)
+              : t('GlassEnclosure.Designer.Wall.AutofillNoGaps', {
+                  defaultValue:
+                    'Seçili duvarlar arasında doldurulabilir boşluk bulunamadı — en az iki serbest duvar ucu olan duvarlar seçin.',
+                }),
         });
         return 0;
       }

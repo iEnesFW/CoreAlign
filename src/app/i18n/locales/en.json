@@ -2994,7 +2994,12 @@
         "OpeningSill": "Bottom",
         "NoRoomForOpening": "No room for a new opening — shrink existing ones or extend the wall.",
         "AutofillSelectWall": "Select a wall to fill its openings, or multi-select several walls to fill the gaps between them.",
-        "AutofillNoGaps": "No fillable gap found — select walls that have at least two free ends."
+        "AutofillNoGaps": "No fillable gap found — select walls that have at least two free ends.",
+        "AutofillGapJoined": "The selected walls have no free ends (already joined) — there is no gap to fill between them.",
+        "AutofillGapTooClose": "The two walls' ends are too close together — leave at least 30 cm of gap between them.",
+        "AutofillGapTooFar": "The two walls' ends are too far apart — gaps up to 60 m can be filled with glass.",
+        "AutofillGapDirection": "The two walls face away from each other — position them so their open ends face across the gap to fill it.",
+        "AutofillGapBlocked": "The infill glass would cross another body — move the walls apart or clear the obstacle between them."
       },
       "Slab": {
         "Floor": "Floor",

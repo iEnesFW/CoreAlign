@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeMultiWallGapRuns } from './multiAutofill';
+import { computeMultiWallGapRuns, describeTwoWallGapFailure } from './multiAutofill';
 import { arcEndLocal, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
@@ -298,5 +298,39 @@ describe('computeMultiWallGapRuns', () => {
     const legB = edges.find((e) => Math.round(e.rotationDeg) % 180 === 90);
     expect(legA?.heightMm).toBe(2400);
     expect(legB?.heightMm).toBe(2000);
+  });
+});
+
+describe('describeTwoWallGapFailure', () => {
+  it("reports 'joined' when the two walls share every endpoint (nothing free to bridge)", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 0, 0, 2000, 0);
+    expect(describeTwoWallGapFailure([a, b], [a, b])).toBe('joined');
+  });
+
+  it("reports 'tooClose' when the nearest free ends are under the 300mm minimum", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 2200, 0, 2000, 0); // 200mm collinear gap
+    expect(describeTwoWallGapFailure([a, b], [a, b])).toBe('tooClose');
+  });
+
+  it("reports 'tooFar' when the nearest free ends exceed the 60m maximum", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 70000, 0, 2000, 0); // 68m collinear gap
+    expect(describeTwoWallGapFailure([a, b], [a, b])).toBe('tooFar');
+  });
+
+  it("reports 'direction' when the nearest free ends face away from the connector", () => {
+    // Two overlapping/crossing walls: the nearest free-end pair's connector opposes an outward
+    // direction, so the gap cannot be bridged until the walls are repositioned.
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 1500, 0, 2000, 180); // runs back over 'a'
+    expect(describeTwoWallGapFailure([a, b], [a, b])).toBe('direction');
+  });
+
+  it("reports 'blocked' when a valid in-range outward gap exists but produced no run", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 3000, 0, 2000, 0); // clean 1m collinear gap
+    expect(describeTwoWallGapFailure([a, b], [a, b])).toBe('blocked');
   });
 });

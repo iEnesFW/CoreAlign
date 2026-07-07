@@ -2994,7 +2994,12 @@
         "OpeningSill": "Alt",
         "NoRoomForOpening": "Duvarda yeni boşluk için yer yok — mevcutları daraltın veya duvarı uzatın.",
         "AutofillSelectWall": "Camla doldurmak için bir duvar seçin (boşluk/delik doldurma) veya birden fazla duvarı çoklu seçin (aralarını doldurma).",
-        "AutofillNoGaps": "Doldurulabilir boşluk bulunamadı — en az iki serbest duvar ucu olan duvarlar seçin."
+        "AutofillNoGaps": "Doldurulabilir boşluk bulunamadı — en az iki serbest duvar ucu olan duvarlar seçin.",
+        "AutofillGapJoined": "Seçili duvarların serbest ucu yok (zaten bağlılar) — aralarında doldurulacak boşluk yok.",
+        "AutofillGapTooClose": "Seçili iki duvarın uçları birbirine çok yakın — aralarında en az 30 cm boşluk olmalı.",
+        "AutofillGapTooFar": "Seçili iki duvarın uçları çok uzak — en fazla 60 m aralık camla doldurulabilir.",
+        "AutofillGapDirection": "Seçili iki duvar birbirine ters yönde bakıyor — açık uçlarını boşluğa bakacak şekilde konumlandırın.",
+        "AutofillGapBlocked": "Aradaki cam başka bir gövdeyle kesişiyor — duvarları biraz ayırın veya aradaki engeli kaldırın."
       },
       "Slab": {
         "Floor": "Zemin",
