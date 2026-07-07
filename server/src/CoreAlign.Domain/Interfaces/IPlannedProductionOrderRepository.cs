@@ -16,4 +16,9 @@ public interface IPlannedProductionOrderRepository
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<PlannedProductionOrder>> ListByRunAsync(
+        Guid planRunId,
+        PlannedProductionOrderStatus? status,
+        CancellationToken cancellationToken = default);
 }

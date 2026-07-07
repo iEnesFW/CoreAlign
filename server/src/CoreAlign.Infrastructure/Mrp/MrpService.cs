@@ -19,6 +19,11 @@ public sealed class MrpService : IMrpService
     public const int DefaultForecastWindowDays = 90;
     public const int DefaultProjectionDaysAhead = 30;
 
+    // Products are streamed through the candidate evaluation in bounded keyset batches so a
+    // large catalog is never materialized at once (and the per-batch `productIds.Contains`
+    // lookups stay within the parameter/IN-list limit). §4.11/§11.1.
+    private const int CandidateBatchSize = 500;
+
     private readonly CoreAlignDbContext _db;
     private readonly IStockItemRepository _stockItems;
     private readonly IPurchaseRequisitionRepository _requisitions;
@@ -156,14 +161,10 @@ public sealed class MrpService : IMrpService
 
     public async Task<MrpSuggestionResultDto> GenerateRequisitionSuggestionsAsync(DateTime asOfDateUtc, CancellationToken cancellationToken = default)
     {
-        var products = await _db.Products
-            .Where(p => p.IsStockTracked && p.Status == ProductStatus.Active)
-            .ToListAsync(cancellationToken);
-
-        var candidates = await BuildCandidatesAsync(products, cancellationToken);
+        var (candidates, totalProducts, candidateRows) = await StreamCandidatesAsync(cancellationToken);
         if (candidates.Count == 0)
         {
-            return new MrpSuggestionResultDto(products.Count, 0, 0, Array.Empty<Guid>(), asOfDateUtc);
+            return new MrpSuggestionResultDto(totalProducts, 0, 0, Array.Empty<Guid>(), asOfDateUtc);
         }
 
         var grouped = candidates.GroupBy(c => c.PreferredSupplierId).ToList();
@@ -191,7 +192,7 @@ public sealed class MrpService : IMrpService
                 .Where(c => c.SuggestedOrderQuantity > 0m)
                 .Select(c =>
                 {
-                    var product = products.First(p => p.Id == c.ProductId);
+                    var product = candidateRows[c.ProductId];
                     var expectedDelivery = product.LeadTimeDays > 0
                         ? (DateTime?)asOfDateUtc.AddDays(product.LeadTimeDays)
                         : null;
@@ -239,11 +240,7 @@ public sealed class MrpService : IMrpService
     public async Task<MrpDashboardDto> GetDashboardAsync(int topN, CancellationToken cancellationToken = default)
     {
         if (topN <= 0) topN = 20;
-        var products = await _db.Products
-            .Where(p => p.IsStockTracked && p.Status == ProductStatus.Active)
-            .ToListAsync(cancellationToken);
-
-        var candidates = await BuildCandidatesAsync(products, cancellationToken);
+        var (candidates, totalProducts, _) = await StreamCandidatesAsync(cancellationToken);
 
         var pending = await _db.PurchaseRequisitions
             .Where(r => r.Status == PurchaseRequisitionStatus.Submitted || r.Status == PurchaseRequisitionStatus.Approved)
@@ -260,10 +257,55 @@ public sealed class MrpService : IMrpService
             .Take(topN)
             .ToList();
 
-        return new MrpDashboardDto(products.Count, candidates.Count, pending, openPos, top, DateTime.UtcNow);
+        return new MrpDashboardDto(totalProducts, candidates.Count, pending, openPos, top, DateTime.UtcNow);
     }
 
-    private async Task<List<MrpReorderCandidateDto>> BuildCandidatesAsync(List<Product> products, CancellationToken cancellationToken)
+    // Keyset-streams every active, stock-tracked product through the candidate evaluation in
+    // bounded batches, accumulating only the (small) reorder-candidate set plus a slim row for
+    // each candidate (needed to build requisition lines). Peak memory is O(batch), not O(catalog),
+    // and the result is byte-identical to evaluating the whole catalog at once — each product's
+    // candidacy depends only on its own stock/demand, never on the batch it lands in.
+    private async Task<(List<MrpReorderCandidateDto> Candidates, int TotalProducts, Dictionary<Guid, MrpProductRow> CandidateRows)>
+        StreamCandidatesAsync(CancellationToken cancellationToken)
+    {
+        var candidates = new List<MrpReorderCandidateDto>();
+        var candidateRows = new Dictionary<Guid, MrpProductRow>();
+        var totalProducts = 0;
+        var cursor = Guid.Empty;
+
+        while (true)
+        {
+            var chunk = await _db.Products.AsNoTracking()
+                .Where(p => p.IsStockTracked && p.Status == ProductStatus.Active && p.Id > cursor)
+                .OrderBy(p => p.Id)
+                .Take(CandidateBatchSize)
+                .Select(p => new MrpProductRow(
+                    p.Id, p.Sku, p.Name, p.ReorderPoint, p.SafetyStock, p.LeadTimeDays,
+                    p.MaxStock, p.PreferredSupplierId, p.LastPurchaseCost, p.StandardCost))
+                .ToListAsync(cancellationToken);
+
+            if (chunk.Count == 0) break;
+            totalProducts += chunk.Count;
+            cursor = chunk[^1].Id;
+
+            var chunkCandidates = await BuildCandidatesAsync(chunk, cancellationToken);
+            if (chunkCandidates.Count > 0)
+            {
+                var candidateIds = chunkCandidates.Select(c => c.ProductId).ToHashSet();
+                candidates.AddRange(chunkCandidates);
+                foreach (var row in chunk)
+                {
+                    if (candidateIds.Contains(row.Id)) candidateRows[row.Id] = row;
+                }
+            }
+
+            if (chunk.Count < CandidateBatchSize) break;
+        }
+
+        return (candidates, totalProducts, candidateRows);
+    }
+
+    private async Task<List<MrpReorderCandidateDto>> BuildCandidatesAsync(IReadOnlyList<MrpProductRow> products, CancellationToken cancellationToken)
     {
         if (products.Count == 0) return new List<MrpReorderCandidateDto>();
 
@@ -310,6 +352,18 @@ public sealed class MrpService : IMrpService
         }
         return candidates;
     }
+
+    private sealed record MrpProductRow(
+        Guid Id,
+        string Sku,
+        string Name,
+        decimal ReorderPoint,
+        decimal SafetyStock,
+        int LeadTimeDays,
+        decimal MaxStock,
+        Guid? PreferredSupplierId,
+        decimal LastPurchaseCost,
+        decimal StandardCost);
 
     private sealed record CandidateBatchData(
         IReadOnlyDictionary<Guid, (decimal OnHand, decimal Reserved)> StockMap,

@@ -48,7 +48,7 @@ public class RunMrpPreviewHandler : IRequestHandler<RunMrpPreviewQuery, MrpPlanR
             .GroupBy(o => o.ProductId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<MrpPlannedOrder>)g.ToList());
 
-        var (makeOrders, _) = await _productionOrders.SearchAsync(run.Id, null, null, 1, int.MaxValue, ct);
+        var makeOrders = await _productionOrders.ListByRunAsync(run.Id, null, ct);
         var makeByProduct = (makeOrders ?? Array.Empty<PlannedProductionOrder>())
             .GroupBy(o => o.ProductId)
             .ToDictionary(g => g.Key, g => (IReadOnlyList<PlannedProductionOrder>)g.ToList());

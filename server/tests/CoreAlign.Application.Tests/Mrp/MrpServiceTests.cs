@@ -61,6 +61,50 @@ public class MrpServiceTests
         return product;
     }
 
+    private static Product BuildStockTrackedProduct(Guid tenantId, string sku, decimal reorderPoint)
+    {
+        var product = new Product(sku, sku, "pcs", 10m, "TRY") { TenantId = tenantId };
+        product.Update(
+            sku: sku, barcode: null, mpn: null, name: sku,
+            shortDescription: null, description: null, slug: null,
+            brandId: null, categoryId: null, parentProductId: null,
+            variantAttributesJson: null, tagsJson: null,
+            unit: "pcs", baseUomId: null, purchaseUomId: null, salesUomId: null,
+            listPrice: 10m, price: 10m, minSellingPrice: 0m,
+            standardCost: 5m, currency: "TRY", taxRateId: null, isPriceTaxInclusive: false,
+            isStockTracked: true, isLotTracked: false, isSerialTracked: false,
+            minStock: 0m, maxStock: 0m, reorderPoint: reorderPoint,
+            safetyStock: 0m, leadTimeDays: 0,
+            weightKg: null, widthCm: null, heightCm: null, depthCm: null, volumeM3: null,
+            status: ProductStatus.Active, launchDate: null, endOfLifeDate: null);
+        return product;
+    }
+
+    [Fact]
+    public async Task GetDashboard_streams_candidates_across_the_keyset_batch_boundary()
+    {
+        await using var fx = await MrpDbContextFixture.CreateAsync();
+
+        // More than one keyset batch (500) of non-candidates (reorderPoint 0 → available 0, not < 0),
+        // plus candidates (reorderPoint 5, no stock → available 0 < 5). The stream must iterate past
+        // the first batch and accumulate every candidate — regardless of which batch each id lands in.
+        var noncandidates = Enumerable.Range(0, 520)
+            .Select(i => BuildStockTrackedProduct(fx.TenantId, $"NC-{i:D4}", reorderPoint: 0m))
+            .ToList();
+        fx.Db.Products.AddRange(noncandidates);
+        var candidates = Enumerable.Range(0, 3)
+            .Select(i => BuildStockTrackedProduct(fx.TenantId, $"CAND-{i}", reorderPoint: 5m))
+            .ToList();
+        fx.Db.Products.AddRange(candidates);
+        await fx.Db.SaveChangesAsync();
+
+        var dto = await Build(fx).GetDashboardAsync(topN: 50);
+
+        dto.TotalProductsTracked.Should().Be(523);
+        dto.ReorderCandidateCount.Should().Be(3);
+        dto.TopCandidates.Should().HaveCount(3);
+    }
+
     private static OrderLine BuildShippedLine(MrpDbContextFixture fx, Guid productId, decimal shipped, DateTime atUtc)
     {
         // Demand history now buckets by Order.OrderDate (not the row's UpdatedAtUtc), so a shipped

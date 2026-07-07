@@ -48,4 +48,35 @@ public class PlannedProductionOrderRepository : IPlannedProductionOrderRepositor
             .ToListAsync(cancellationToken);
         return (items, total);
     }
+
+    // Loads every production order of a plan run (optionally filtered by status) in bounded keyset
+    // batches — callers that need the full set (preview overlay, firmed carry-forward) previously
+    // passed pageSize=int.MaxValue, an unbounded Take. §11.1.
+    public async Task<IReadOnlyList<PlannedProductionOrder>> ListByRunAsync(
+        Guid planRunId,
+        PlannedProductionOrderStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        const int batchSize = 500;
+        var results = new List<PlannedProductionOrder>();
+        var cursor = Guid.Empty;
+
+        while (true)
+        {
+            var query = Orders.AsNoTracking().Where(o => o.SourcePlanRunId == planRunId && o.Id > cursor);
+            if (status.HasValue) query = query.Where(o => o.Status == status.Value);
+
+            var chunk = await query
+                .OrderBy(o => o.Id)
+                .Take(batchSize)
+                .ToListAsync(cancellationToken);
+
+            if (chunk.Count == 0) break;
+            results.AddRange(chunk);
+            cursor = chunk[^1].Id;
+            if (chunk.Count < batchSize) break;
+        }
+
+        return results;
+    }
 }

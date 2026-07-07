@@ -201,8 +201,8 @@ public sealed class MrpPlanningService : IMrpPlanningService, IMrpWorkbenchServi
             }
         }
 
-        var (priorProduction, _) = await _productionOrders.SearchAsync(
-            latest[0].Id, productId: null, status: PlannedProductionOrderStatus.Firm, page: 1, pageSize: int.MaxValue, cancellationToken);
+        var priorProduction = await _productionOrders.ListByRunAsync(
+            latest[0].Id, PlannedProductionOrderStatus.Firm, cancellationToken);
         foreach (var firmed in priorProduction)
         {
             productionOrders.Add(firmed.CloneFirmForRun(run.Id));
