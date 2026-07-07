@@ -19,6 +19,11 @@ public record Optimize2DNestingCommand(
 
 public record GetProjectBOMQuery(Guid ProjectId) : IRequest<BOMSummaryDto>;
 
+// Read-only, always-live BOM compose of the current (autosaved) scene — the single source of truth
+// for the designer's live cost preview. Unlike GetProjectBOMQuery it never returns stale persisted
+// lines and never persists (a query never triggers SaveChanges), so it is safe to call on every edit.
+public record GetBomPreviewQuery(Guid ProjectId) : IRequest<BOMSummaryDto>;
+
 public record GetCuttingReportQuery(Guid ProjectId) : IRequest<CuttingReportDto?>;
 
 public record GetTechnicalSummaryQuery(Guid ProjectId) : IRequest<TechnicalSummaryDto>;

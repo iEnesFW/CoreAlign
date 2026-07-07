@@ -215,6 +215,48 @@ public class GetProjectBOMQueryHandler : IRequestHandler<GetProjectBOMQuery, BOM
     }
 }
 
+public class GetBomPreviewQueryHandler : IRequestHandler<GetBomPreviewQuery, BOMSummaryDto>
+{
+    private readonly IGlassProjectRepository _projectRepo;
+    private readonly IBOMComposer _composer;
+
+    public GetBomPreviewQueryHandler(IGlassProjectRepository projectRepo, IBOMComposer composer)
+    {
+        _projectRepo = projectRepo;
+        _composer = composer;
+    }
+
+    public async Task<BOMSummaryDto> Handle(GetBomPreviewQuery request, CancellationToken cancellationToken)
+    {
+        var project = await _projectRepo.GetByIdWithRunsAsync(request.ProjectId, cancellationToken)
+            ?? throw new GlassProjectNotFoundException();
+        // Live compose of the current scene. This is a query, so the pipeline never calls
+        // SaveChanges — the catalog-product links ComposeAsync may create stay in the change
+        // tracker and are discarded, keeping this endpoint side-effect-free.
+        var composition = await _composer.ComposeAsync(project, cancellationToken);
+        var entities = composition.Lines
+            .Select(line => new GlassProjectBOMLine(
+                project.Id,
+                line.Kind,
+                line.Description,
+                line.Quantity,
+                line.Unit,
+                line.UnitCost,
+                line.Currency,
+                line.RefId,
+                line.Source,
+                line.SortOrder,
+                line.ProductId,
+                line.IsService))
+            .ToList();
+        var marginPercent = composition.Subtotal > 0m
+            ? composition.MarginAmount / composition.Subtotal * 100m
+            : 0m;
+        var totals = BomQuoteTotalsCalculator.Calculate(entities, marginPercent);
+        return RecomputeBOMCommandHandler.MapSummary(composition, entities, availability: null, totals);
+    }
+}
+
 public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCuttingPlanCommand, CuttingReportDto>
 {
     private readonly IGlassProjectRepository _projectRepo;

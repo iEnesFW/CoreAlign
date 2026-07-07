@@ -198,6 +198,11 @@ public class GlassEnclosureProjectsController : ControllerBase
     public async Task<IActionResult> GetBOM(Guid id, CancellationToken ct) =>
         (await _mediator.Send(new GetProjectBOMQuery(id), ct)).ToOk();
 
+    [HttpGet("{id:guid}/bom/preview")]
+    [Authorize(Policy = GlassEnclosurePolicies.DesignerPriceVisible)]
+    public async Task<IActionResult> GetBomPreview(Guid id, CancellationToken ct) =>
+        (await _mediator.Send(new GetBomPreviewQuery(id), ct)).ToOk();
+
     [HttpPut("{id:guid}/bom/lines/{lineId:guid}/price-override")]
     [Authorize(Policy = GlassEnclosurePolicies.ProjectUpdate)]
     public async Task<IActionResult> OverrideBomLinePrice(Guid id, Guid lineId, [FromBody] OverrideBomLinePriceBody body, CancellationToken ct) =>
