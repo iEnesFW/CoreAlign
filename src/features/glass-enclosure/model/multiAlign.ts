@@ -1,3 +1,4 @@
+import { arcEndLocal, isRealArc, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneSlabState, SceneWallState } from './project.types';
 
 export type AlignTarget =
@@ -11,6 +12,26 @@ export interface PlanXY {
 }
 
 const DEG2RAD = Math.PI / 180;
+
+// The far end of a run/wall. For a real arc, rotationDeg is the ROLLED START TANGENT (not the
+// chord direction), so `origin + length·dir(rotationDeg)` is the phantom straight end — the real
+// end is arcEndLocal rotated into world (same transform wallAttachment/multiAutofill use). Aligning
+// or end-to-end merging arc parts off the phantom end drifts them by ~0.3·R.
+const lineEndXY = (line: SceneRunState | SceneWallState): PlanXY => {
+  const rad = line.rotationDeg * DEG2RAD;
+  if (isRealArc(line.geomArcRadiusMm, line.geomArcSweepDeg)) {
+    const resolved = resolveArc(line.geomArcRadiusMm ?? 0, line.geomArcSweepDeg ?? 1);
+    const e = arcEndLocal(resolved.radiusMm, line.geomArcSweepDeg ?? 1);
+    return {
+      x: line.originX + e.xMm * Math.cos(rad) - e.yMm * Math.sin(rad),
+      y: line.originY + e.xMm * Math.sin(rad) + e.yMm * Math.cos(rad),
+    };
+  }
+  return {
+    x: line.originX + line.lengthMm * Math.cos(rad),
+    y: line.originY + line.lengthMm * Math.sin(rad),
+  };
+};
 
 export const alignTargetId = (target: AlignTarget): string => {
   if (target.kind === 'run') return target.run.id;
@@ -30,10 +51,10 @@ export const alignTargetCenter = (target: AlignTarget): PlanXY => {
     };
   }
   const line = target.kind === 'run' ? target.run : target.wall;
-  const rad = line.rotationDeg * DEG2RAD;
+  const end = lineEndXY(line);
   return {
-    x: line.originX + (line.lengthMm / 2) * Math.cos(rad),
-    y: line.originY + (line.lengthMm / 2) * Math.sin(rad),
+    x: (line.originX + end.x) / 2,
+    y: (line.originY + end.y) / 2,
   };
 };
 
@@ -42,13 +63,9 @@ export const alignTargetEndpoints = (
 ): { start: PlanXY; end: PlanXY } | null => {
   if (target.kind === 'slab') return null;
   const line = target.kind === 'run' ? target.run : target.wall;
-  const rad = line.rotationDeg * DEG2RAD;
   return {
     start: { x: line.originX, y: line.originY },
-    end: {
-      x: line.originX + line.lengthMm * Math.cos(rad),
-      y: line.originY + line.lengthMm * Math.sin(rad),
-    },
+    end: lineEndXY(line),
   };
 };
 
