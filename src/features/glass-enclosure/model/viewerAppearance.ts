@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { usePersistedState } from '@/shared/hooks/usePersistedState';
 import type { ViewportAppearance } from '@/shared/three-engine';
 
@@ -95,15 +96,12 @@ export function useViewerAppearance() {
     DEFAULT_PRESET,
   );
   const preset = VIEWER_APPEARANCE_PRESETS[stored] ? stored : DEFAULT_PRESET;
-  const { environment, background, ground, groundTexture, sky, sunPosition } =
-    VIEWER_APPEARANCE_PRESETS[preset];
-  const appearance: ViewportAppearance = {
-    environment,
-    background,
-    ground,
-    groundTexture,
-    sky,
-    sunPosition,
-  };
+  // WHY: a fresh appearance object every render makes DesignerCanvas reconcile
+  // <Sky>/<Environment>/GroundPlane on every unrelated edit (flicker). Pin it to the preset.
+  const appearance = useMemo<ViewportAppearance>(() => {
+    const { environment, background, ground, groundTexture, sky, sunPosition } =
+      VIEWER_APPEARANCE_PRESETS[preset];
+    return { environment, background, ground, groundTexture, sky, sunPosition };
+  }, [preset]);
   return { preset, setPreset, appearance };
 }

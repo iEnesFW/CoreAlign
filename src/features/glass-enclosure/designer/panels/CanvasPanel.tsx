@@ -207,7 +207,6 @@ export const CanvasPanel = ({
               })}
             >
               <DesignerCanvas
-                key={view}
                 profileSystems={profileSystems}
                 glassTypes={glassTypes}
                 colors={colors}
