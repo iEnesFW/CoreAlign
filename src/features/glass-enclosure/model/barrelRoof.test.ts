@@ -28,6 +28,17 @@ describe('barrelArcProfilePoints', () => {
     }
   });
 
+  it('caps the rise at a semicircle so the barrel never floats off its eaves', () => {
+    // rise 3000 on a 4000 span (> length/2) previously lifted cy positive and the eaves to ~1667.
+    const pts = barrelArcProfilePoints(4000, 3000, 24);
+    expect(pts[0].y).toBeCloseTo(0, 6);
+    expect(pts[pts.length - 1].y).toBeCloseTo(0, 6);
+    // Clamped to a half-circle: peak equals length/2, not the requested 3000.
+    const mid = pts[12];
+    expect(mid.x).toBe(2000);
+    expect(mid.y).toBeCloseTo(2000, 6);
+  });
+
   it('stays within the bounding box (0..length, 0..rise)', () => {
     const pts = barrelArcProfilePoints(1500, 400, 32);
     for (const p of pts) {

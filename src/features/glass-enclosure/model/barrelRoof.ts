@@ -11,7 +11,10 @@ export const barrelArcProfilePoints = (
   segments = 24,
 ): BarrelPoint[] => {
   const length = Math.max(1, lengthMm);
-  const rise = Math.max(0, riseMm);
+  // WHY: the chord/sagitta circle only meets the eaves at y=0 up to a semicircle. Past rise=length/2
+  // the centre cy=rise-radius goes positive and the whole barrel lifts off its eaves and floats.
+  // Cap the rise at a half-circle so a barrel can go as deep as a semicircle but never detach.
+  const rise = Math.min(Math.max(0, riseMm), length / 2);
   if (rise <= 0) {
     return [
       { x: 0, y: 0 },

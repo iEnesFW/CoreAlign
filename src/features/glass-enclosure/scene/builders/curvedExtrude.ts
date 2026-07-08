@@ -42,27 +42,6 @@ export interface OutlinePointMm {
   y: number;
 }
 
-const SHAPED_COL_STEP_RAD = 0.05;
-
-// Vertical [low, high] extent of a (simple) silhouette polygon at a given x, from the y-values
-// where its edges cross the vertical line. Convex panel shapes cross exactly twice; null if the
-// line misses the polygon. Width-spanning shapes (the panel fills its cell) cross across x.
-const spanAtX = (outline: OutlinePointMm[], x: number): [number, number] | null => {
-  const ys: number[] = [];
-  for (let i = 0; i < outline.length; i += 1) {
-    const p1 = outline[i];
-    const p2 = outline[(i + 1) % outline.length];
-    const d1 = p1.x - x;
-    const d2 = p2.x - x;
-    if ((d1 <= 0 && d2 > 0) || (d2 <= 0 && d1 > 0)) {
-      const t = (x - p1.x) / (p2.x - p1.x);
-      ys.push(p1.y + t * (p2.y - p1.y));
-    }
-  }
-  if (ys.length < 2) return null;
-  return [Math.min(...ys), Math.max(...ys)];
-};
-
 // Build a SHAPED glass pane that follows an arc, sampled directly into cylindrical coordinates
 // so the curve is smooth (no faceting). Same local frame as buildCurvedBandGeometry: x→angle
 // across [phiStart,phiEnd], height→the extrude/Z axis the caller's [-π/2,0,0] mesh lifts up,
@@ -90,25 +69,25 @@ export const buildCurvedShapedGeometry = (
     return [Math.cos(a) * r, centerY + Math.sin(a) * r, yMm / 1000];
   };
 
-  let minX = Infinity;
-  let maxX = -Infinity;
-  for (const p of outlineMm) {
-    if (p.x < minX) minX = p.x;
-    if (p.x > maxX) maxX = p.x;
+  if (outlineMm.length < 3) return new BufferGeometry();
+  // WHY: earcut-triangulate the silhouette and map every triangle through cyl(), instead of the old
+  // spanAtX column scan that kept only the outer [min,max] y per column — a CONCAVE hole-fill (an
+  // L/notched pane) then rendered as its convex hull, not matching the hole the CSG cutter made.
+  // This mirrors buildCurvedWallFeatureSolid's cap tessellation (densify → earcut → emitCap on the
+  // cylinder), so the fill glass follows the exact silhouette on the curve.
+  const maxSegMm = Math.max(5, (CURVE_STEP_RAD / span) * w);
+  const dense: OutlinePointMm[] = [];
+  for (let i = 0; i < outlineMm.length; i += 1) {
+    const p = outlineMm[i];
+    const q = outlineMm[(i + 1) % outlineMm.length];
+    dense.push(p);
+    const segs = Math.max(1, Math.ceil(Math.abs(q.x - p.x) / maxSegMm));
+    for (let k = 1; k < segs; k += 1) {
+      const s = k / segs;
+      dense.push({ x: p.x + (q.x - p.x) * s, y: p.y + (q.y - p.y) * s });
+    }
   }
-  const cols = Math.max(24, Math.ceil(span / SHAPED_COL_STEP_RAD));
-  const columns: { x: number; lo: number; hi: number }[] = [];
-  // WHY: spanAtX is half-open (needs an endpoint strictly > x), so sampling exactly at minX/maxX
-  // misses the edge crossing and drops that column — truncating the pane's leading/trailing edge.
-  // Nudge the extreme samples just inside the silhouette so both edge columns register.
-  const edgeEps = (maxX - minX) * 1e-4 + 1e-3;
-  for (let i = 0; i <= cols; i += 1) {
-    let x = minX + ((maxX - minX) * i) / cols;
-    if (i === 0) x = minX + edgeEps;
-    else if (i === cols) x = maxX - edgeEps;
-    const s = spanAtX(outlineMm, x);
-    if (s && s[1] - s[0] > 0.5) columns.push({ x, lo: s[0], hi: s[1] });
-  }
+  if (dense.length < 3) return new BufferGeometry();
 
   const pos: number[] = [];
   const tri = (a: number[], b: number[], c: number[]) => pos.push(...a, ...b, ...c);
@@ -116,36 +95,66 @@ export const buildCurvedShapedGeometry = (
     tri(a, b, c);
     tri(a, c, d);
   };
-  for (let i = 0; i < columns.length - 1; i += 1) {
-    const c0 = columns[i];
-    const c1 = columns[i + 1];
-    const fb0 = cyl(c0.x, c0.lo, outerR);
-    const ft0 = cyl(c0.x, c0.hi, outerR);
-    const fb1 = cyl(c1.x, c1.lo, outerR);
-    const ft1 = cyl(c1.x, c1.hi, outerR);
-    const bb0 = cyl(c0.x, c0.lo, innerR);
-    const bt0 = cyl(c0.x, c0.hi, innerR);
-    const bb1 = cyl(c1.x, c1.lo, innerR);
-    const bt1 = cyl(c1.x, c1.hi, innerR);
-    quad(fb0, fb1, ft1, ft0); // front face
-    quad(bb1, bb0, bt0, bt1); // back face
-    quad(ft0, ft1, bt1, bt0); // top rim (follows the silhouette top)
-    quad(bb0, bb1, fb1, fb0); // bottom rim
+  // Flat cap triangles sit on the cylinder — a triangle spanning more arc than the step sags below
+  // the shell, so subdivide by x (arc) until each stays within maxSegMm, then map through cyl().
+  const emitCap = (
+    a: OutlinePointMm,
+    b: OutlinePointMm,
+    c: OutlinePointMm,
+    r: number,
+    reversed: boolean,
+  ) => {
+    const dab = Math.abs(a.x - b.x);
+    const dbc = Math.abs(b.x - c.x);
+    const dca = Math.abs(c.x - a.x);
+    if (Math.max(dab, dbc, dca) > maxSegMm) {
+      if (dab >= dbc && dab >= dca) {
+        const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        emitCap(a, m, c, r, reversed);
+        emitCap(m, b, c, r, reversed);
+      } else if (dbc >= dca) {
+        const m = { x: (b.x + c.x) / 2, y: (b.y + c.y) / 2 };
+        emitCap(a, b, m, r, reversed);
+        emitCap(a, m, c, r, reversed);
+      } else {
+        const m = { x: (c.x + a.x) / 2, y: (c.y + a.y) / 2 };
+        emitCap(a, b, m, r, reversed);
+        emitCap(m, b, c, r, reversed);
+      }
+      return;
+    }
+    const pa = cyl(a.x, a.y, r);
+    const pb = cyl(b.x, b.y, r);
+    const pc = cyl(c.x, c.y, r);
+    if (reversed) tri(pa, pc, pb);
+    else tri(pa, pb, pc);
+  };
+
+  const contour = dense.map((p) => new Vector2(p.x, p.y));
+  const faces = ShapeUtils.triangulateShape(contour, []);
+  for (const face of faces) {
+    const i0 = face[0];
+    let i1 = face[1];
+    let i2 = face[2];
+    const a = contour[i0];
+    const b = contour[i1];
+    const c = contour[i2];
+    if ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) < 0) {
+      const swap = i1;
+      i1 = i2;
+      i2 = swap;
+    }
+    emitCap(dense[i0], dense[i1], dense[i2], outerR, false); // front glass face
+    emitCap(dense[i0], dense[i1], dense[i2], innerR, true); // back glass face
   }
-  if (columns.length > 0) {
-    const first = columns[0];
+  for (let i = 0; i < dense.length; i += 1) {
+    const a = dense[i];
+    const b = dense[(i + 1) % dense.length];
     quad(
-      cyl(first.x, first.lo, outerR),
-      cyl(first.x, first.hi, outerR),
-      cyl(first.x, first.hi, innerR),
-      cyl(first.x, first.lo, innerR),
-    );
-    const last = columns[columns.length - 1];
-    quad(
-      cyl(last.x, last.lo, innerR),
-      cyl(last.x, last.hi, innerR),
-      cyl(last.x, last.hi, outerR),
-      cyl(last.x, last.lo, outerR),
+      cyl(a.x, a.y, innerR),
+      cyl(b.x, b.y, innerR),
+      cyl(b.x, b.y, outerR),
+      cyl(a.x, a.y, outerR),
     );
   }
 

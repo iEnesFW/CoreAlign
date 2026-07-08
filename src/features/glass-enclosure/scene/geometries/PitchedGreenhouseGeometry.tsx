@@ -56,10 +56,17 @@ const computeFootprint = (
   const lengthM = lengthMm / 1000;
   const widthM = widthMm / 1000;
   const eaveM = eaveHeightMm / 1000;
-  const ridgeM = ridgeHeightMm / 1000;
   const halfWidthM = widthM / 2;
-  const pitchRad = (roofPitchDeg * Math.PI) / 180;
+  // WHY: the roof PANELS were rotated by the user's roofPitchDeg while their length/position came
+  // from ridge/eave/width — two different slopes, so a panel clipped through or floated above the
+  // gable. Reconcile: when a pitch is set it drives the ridge (gable+slope+panels then share ONE
+  // slope); then derive pitchRad from the actual rise so the panel rotation always matches the gable.
+  const ridgeM =
+    roofPitchDeg > 0
+      ? eaveM + halfWidthM * Math.tan((roofPitchDeg * Math.PI) / 180)
+      : ridgeHeightMm / 1000;
   const verticalRise = Math.max(0.01, ridgeM - eaveM);
+  const pitchRad = Math.atan2(verticalRise, halfWidthM);
   const slopeLengthM = Math.sqrt(halfWidthM * halfWidthM + verticalRise * verticalRise);
   return { lengthM, widthM, eaveM, ridgeM, halfWidthM, slopeLengthM, pitchRad };
 };

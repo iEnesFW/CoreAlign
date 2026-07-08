@@ -116,12 +116,61 @@ describe('buildCurvedShapedGeometry', () => {
     );
     const pc = gc.attributes.position;
     const pd = gd.attributes.position;
-    expect(pc.count).toBe(pd.count);
-    let maxDiff = 0;
-    for (let i = 0; i < pc.array.length; i += 1) {
-      maxDiff = Math.max(maxDiff, Math.abs(pc.array[i] - pd.array[i]));
+    // Earcut triangulation is aspect-dependent, so the triangle count can differ between chord and
+    // developed — but the mapped arc SURFACE must be identical: cyl() de-normalizes by the same
+    // widthMm, so both occupy the same 3D bounding region. Assert bbox equality (the real invariant).
+    const bounds = (p: typeof pc) => {
+      const lo = [Infinity, Infinity, Infinity];
+      const hi = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i < p.count; i += 1) {
+        for (let a = 0; a < 3; a += 1) {
+          const v = p.array[i * 3 + a];
+          lo[a] = Math.min(lo[a], v);
+          hi[a] = Math.max(hi[a], v);
+        }
+      }
+      return { lo, hi };
+    };
+    const bc = bounds(pc);
+    const bd = bounds(pd);
+    for (let a = 0; a < 3; a += 1) {
+      expect(bc.lo[a]).toBeCloseTo(bd.lo[a], 5);
+      expect(bc.hi[a]).toBeCloseTo(bd.hi[a], 5);
     }
-    expect(maxDiff).toBeLessThan(1e-6);
+  });
+
+  it('follows a CONCAVE silhouette (an inward notch is NOT filled in — earcut, not convex hull)', () => {
+    // An L / notched pane: the old spanAtX column scan filled the notch (convex hull). The earcut
+    // fill must leave the notch empty — assert no front-face vertex lands inside the removed corner.
+    const notch = [
+      { x: -500, y: 0 },
+      { x: 500, y: 0 },
+      { x: 500, y: 2000 },
+      { x: 0, y: 2000 },
+      { x: 0, y: 1000 },
+      { x: -500, y: 1000 },
+    ];
+    const g = buildCurvedShapedGeometry(notch, 1000, 2, 1, 0, Math.PI / 4, 0.02);
+    const p = g.attributes.position;
+    expect(p.count).toBeGreaterThan(0);
+    // The polygon fills the whole lower half plus the RIGHT column above y=1000; the removed corner
+    // (empty notch) is the top-LEFT region x∈(-500,0), y∈(1000,2000), centre (-250,1500). Map it
+    // through the same cyl() the builder uses and confirm no emitted vertex sits at that surface point.
+    const span = Math.PI / 4;
+    const w = 1000;
+    const centerY = -2;
+    const cyl = (xMm: number, yMm: number, r: number) => {
+      const phi = ((xMm + w / 2) / w) * span;
+      const a = Math.PI / 2 - phi;
+      return [Math.cos(a) * r, centerY + Math.sin(a) * r, yMm / 1000];
+    };
+    const [hx, hy, hz] = cyl(-250, 1500, 2 + 0.01);
+    let minDist = Infinity;
+    for (let i = 0; i < p.count; i += 1) {
+      minDist = Math.min(minDist, Math.hypot(p.getX(i) - hx, p.getY(i) - hy, p.getZ(i) - hz));
+    }
+    // No vertex near the notch centre — the surface does not cover the removed corner.
+    expect(minDist).toBeGreaterThan(0.1);
   });
 });
 
