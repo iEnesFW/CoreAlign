@@ -2,7 +2,6 @@ import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CanvasPanel } from '../designer/panels';
 import { useDesignerStore } from '../model/designerStore';
-import { useViewerAppearance } from '../model/viewerAppearance';
 import { SceneDataExporter } from './SceneDataExporter';
 import {
   DEFAULT_FIXTURE,
@@ -23,8 +22,6 @@ export function GlassFixturePlayground() {
   const [params] = useSearchParams();
   const sceneKey = params.get('scene') ?? DEFAULT_FIXTURE;
   const applyScene = useDesignerStore((s) => s.applyScene);
-  const setQuality = useDesignerStore((s) => s.setQuality);
-  const { setPreset } = useViewerAppearance();
 
   const scene = useMemo(
     () => FIXTURE_SCENES[sceneKey] ?? FIXTURE_SCENES[DEFAULT_FIXTURE],
@@ -32,13 +29,10 @@ export function GlassFixturePlayground() {
   );
 
   useEffect(() => {
-    // WHY: software WebGL (SwiftShader, headless capture) loses its context under shadows + an
-    // Environment HDR fetch. The 'low' preset drops shadows/AA and 'plain' sets environment:'none',
-    // so the deterministic-capture render stays lightweight and stable.
-    setQuality('low');
-    setPreset('plain');
+    // Render exactly like the real designer (default quality + appearance) so the glass reads the
+    // same way the user sees it — a real browser captures it fine.
     applyScene(scene);
-  }, [applyScene, scene, setQuality, setPreset]);
+  }, [applyScene, scene]);
 
   return (
     <div className="fixed inset-0 bg-white dark:bg-slate-950">

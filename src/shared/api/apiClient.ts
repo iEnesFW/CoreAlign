@@ -174,7 +174,15 @@ apiClient.interceptors.response.use(
         drainQueue(refreshError);
         authBridge.signOut();
         broadcastRefresh({ type: 'signed-out', at: Date.now() });
-        window.location.href = '/login';
+        // WHY: the dev-only /dev/* pages (e.g. the glass fixture playground) render backend-free and
+        // must not be bounced to /login by a background 401 from the app shell. Dev-gated only.
+        const onDevRoute =
+          import.meta.env.DEV &&
+          typeof window !== 'undefined' &&
+          window.location.pathname.startsWith('/dev/');
+        if (!onDevRoute) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
