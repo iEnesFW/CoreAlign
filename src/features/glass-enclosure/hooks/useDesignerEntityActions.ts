@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { safeRequest, safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { glassProjectsApi } from '../api/glassProjectsApi';
 import { useDesignerStore } from '../model/designerStore';
 import { developedLengthMm } from '../model/arcGeometry';
 import { combinePanelHardware } from '../model/panelHardware';
@@ -17,6 +18,7 @@ import {
 } from './useGlassProjectQueries';
 import { useHardwareItemsQuery } from './useGlassEnclosureQueries';
 import type {
+  SceneHardwareItem,
   ScenePanelState,
   SceneRunState,
   SceneWallState,
@@ -72,9 +74,12 @@ export const useRunEntityActions = () => {
   const projectId = useDesignerStore((s) => s.projectId);
   const removeRunLocal = useDesignerStore((s) => s.removeRun);
   const rebalancePanelsLocal = useDesignerStore((s) => s.rebalancePanels);
+  const addHardware = useDesignerStore((s) => s.addHardware);
   const updateRunMutation = useUpdateRunMutation();
   const removeRunMutation = useRemoveRunMutation();
   const rebalanceMutation = useRebalancePanelsMutation();
+  const updatePanelMutation = useUpdatePanelMutation();
+  const hardwareCatalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
 
   const persistRun = async (run: SceneRunState) => {
     if (!projectId) return;
@@ -104,6 +109,22 @@ export const useRunEntityActions = () => {
     glassTypeId: string,
   ) => {
     if (!projectId) return;
+    // WHY(C3-full): the server rebalance rebuilds the run's panels with fresh ids and no hardware,
+    // and the refetch overwrites any local re-map — so capture each hardware item's ABSOLUTE position
+    // along the run BEFORE the rebalance, and after the server round-trip re-map it onto the new
+    // panels by position and persist. Everything is best-effort: on any missing data it bails (the
+    // hardware is simply not restored — the RunInspector already confirmed the discard with the user).
+    const oldRun = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+    const carried: { absX: number; item: SceneHardwareItem }[] = [];
+    if (oldRun) {
+      let acc = 0;
+      for (const p of oldRun.panels) {
+        const center = acc + p.widthMm / 2;
+        for (const hw of p.hardware) carried.push({ absX: center + hw.offsetXmm, item: hw });
+        acc += p.widthMm;
+      }
+    }
+
     rebalancePanelsLocal(runId, count, openingType, glassTypeId);
     await safeRequestWithNotify(
       enqueuePersist(() =>
@@ -118,6 +139,54 @@ export const useRunEntityActions = () => {
         }),
       ),
     );
+    if (carried.length === 0) return;
+
+    const [resp] = await safeRequest(glassProjectsApi.getById(projectId));
+    const fresh = resp?.data;
+    const freshRun = fresh?.runs.find((r) => r.id === runId);
+    if (!fresh || !freshRun || freshRun.panels.length === 0) return;
+    useDesignerStore.getState().loadProject(fresh);
+
+    // Map absolute positions to the NEW panel spans, clamp the offset into each pane, re-add + persist.
+    let acc = 0;
+    const spans = freshRun.panels.map((p) => {
+      const start = acc;
+      acc += p.widthMm;
+      return { id: p.id, start, end: acc, center: start + p.widthMm / 2, width: p.widthMm };
+    });
+    const touched = new Set<string>();
+    for (const c of carried) {
+      const span =
+        spans.find((s) => c.absX >= s.start && c.absX < s.end) ??
+        (c.absX < spans[0].start ? spans[0] : spans[spans.length - 1]);
+      const half = Math.max(0, span.width / 2 - c.item.widthMm / 2);
+      addHardware(runId, span.id, {
+        ...c.item,
+        id: crypto.randomUUID(),
+        offsetXmm: Math.max(-half, Math.min(c.absX - span.center, half)),
+      });
+      touched.add(span.id);
+    }
+    for (const panelId of touched) {
+      const panel = useDesignerStore
+        .getState()
+        .scene.runs.find((r) => r.id === runId)
+        ?.panels.find((p) => p.id === panelId);
+      if (!panel) continue;
+      await safeRequestWithNotify(
+        enqueuePersist(() =>
+          updatePanelMutation.mutateAsync({
+            id: projectId,
+            runId,
+            panelId,
+            input: {
+              ...toPanelInput(panel),
+              hardware: combinePanelHardware(panel, hardwareCatalog),
+            },
+          }),
+        ),
+      );
+    }
   };
 
   return { persistRun, deleteRun, rebalance };

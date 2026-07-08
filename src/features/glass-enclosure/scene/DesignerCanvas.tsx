@@ -390,8 +390,21 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   }, [placement, setPlacement]);
 
   useEffect(() => {
-    if (placement !== 'pen') useDesignerStore.getState().setPenFace(null);
-  }, [placement]);
+    if (placement === 'pen') return;
+    // WHY(H4): switching tools silently discarded an in-progress pen polygon — tell the user it was
+    // cancelled (only when there was actually a partial drawing).
+    const session = useDesignerStore.getState().penFace;
+    useDesignerStore.getState().setPenFace(null);
+    if (session && session.points.length >= 2) {
+      queueToast({
+        dedupeKey: 'glass-pen-cancelled',
+        variant: 'info',
+        description: t('GlassEnclosure.Designer.Pen.Cancelled', {
+          defaultValue: 'Kalem çizimi iptal edildi.',
+        }),
+      });
+    }
+  }, [placement, t]);
 
   // The pen draw readout is set live in WallObject/SlabObject while a face session is open;
   // clear it once the session ends (committed, finished, or tool switched away).

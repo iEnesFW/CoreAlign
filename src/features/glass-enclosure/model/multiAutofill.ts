@@ -598,17 +598,27 @@ export const describeTwoWallGapFailure = (
             Math.hypot(other.x - point.x, other.y - point.y) <= ENDPOINT_JOIN_TOLERANCE_MM,
         ),
     );
-  let nearest: { a: WallEndpoint; b: WallEndpoint; distance: number } | null = null;
+  const pairs: { a: WallEndpoint; b: WallEndpoint; distance: number }[] = [];
   for (let i = 0; i < free.length; i += 1) {
     for (let j = i + 1; j < free.length; j += 1) {
       if (free[j].wall.id === free[i].wall.id) continue;
-      const distance = Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y);
-      if (!nearest || distance < nearest.distance) nearest = { a: free[i], b: free[j], distance };
+      pairs.push({
+        a: free[i],
+        b: free[j],
+        distance: Math.hypot(free[j].x - free[i].x, free[j].y - free[i].y),
+      });
     }
   }
-  if (!nearest) return 'joined';
+  if (pairs.length === 0) return 'joined';
+  // WHY(A4): if ANY pair the fill routine would have tried (within the gap window AND facing outward)
+  // exists yet nothing filled, the real reason is a collision — describe that, not the globally-
+  // nearest pair's distance/direction (which may be a different, non-chosen pair).
+  const viable = pairs.some(
+    (p) => p.distance >= MIN_GAP_MM && p.distance <= MAX_GAP_MM && connectorLeavesOutward(p.a, p.b),
+  );
+  if (viable) return 'blocked';
+  const nearest = pairs.reduce((best, p) => (p.distance < best.distance ? p : best), pairs[0]);
   if (nearest.distance < MIN_GAP_MM) return 'tooClose';
   if (nearest.distance > MAX_GAP_MM) return 'tooFar';
-  if (!connectorLeavesOutward(nearest.a, nearest.b)) return 'direction';
-  return 'blocked';
+  return 'direction';
 };

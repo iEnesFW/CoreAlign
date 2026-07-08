@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { queueToast } from '@/shared/api/toastQueue';
-import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import { arcFromCornerResize, isRealArc, minArcRadiusMm } from '../model/arcGeometry';
 import { RunArcSection } from './RunArcSection';
 import type {
@@ -28,7 +27,6 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   const setRunFrame = useDesignerStore((s) => s.setRunFrame);
   const { persistRun, deleteRun, rebalance } = useRunEntityActions();
   const { persistPanel } = usePanelEntityActions();
-  const confirm = useConfirm();
 
   const run = useMemo(() => runs.find((r) => r.id === selection.runId), [runs, selection.runId]);
   const [draft, setDraft] = useState<typeof run>(run);
@@ -200,30 +198,9 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
                   const firstPanel = run.panels[0];
                   const glassTypeId = firstPanel?.glassTypeId ?? defaultGlassTypeId;
                   const openingType = firstPanel?.openingType ?? 'Fixed';
-                  if (!glassTypeId) return;
-                  // WHY: rebalancing rebuilds the panels from scratch, dropping any placed hardware
-                  // — confirm first so the loss is never silent.
-                  const hasHardware = run.panels.some((p) => p.hardware.length > 0);
-                  void (async () => {
-                    if (
-                      hasHardware &&
-                      !(await confirm({
-                        title: t('GlassEnclosure.Designer.Run.RebalanceTitle', {
-                          defaultValue: 'Panelleri yeniden böl',
-                        }),
-                        message: t('GlassEnclosure.Designer.Run.RebalanceHardwareWarning', {
-                          defaultValue:
-                            'Bu işlem panelleri sıfırdan böler ve yerleştirilmiş donanımları kaldırır. Devam edilsin mi?',
-                        }),
-                        confirmLabel: t('Common.Continue', { defaultValue: 'Devam et' }),
-                        cancelLabel: t('Common.Cancel', { defaultValue: 'İptal' }),
-                        tone: 'danger',
-                      }))
-                    ) {
-                      return;
-                    }
-                    await rebalance(run.id, panelCount, openingType, glassTypeId);
-                  })();
+                  // WHY(C3-full): rebalance now re-maps placed hardware onto the new panels by
+                  // position (see useRunEntityActions.rebalance), so no confirm/loss warning is needed.
+                  if (glassTypeId) void rebalance(run.id, panelCount, openingType, glassTypeId);
                 }}
                 className="shrink-0 rounded bg-primary-600 px-3 py-1 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
               >

@@ -6,7 +6,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
-import { developedLengthMm } from '../model/arcGeometry';
+import { arcEndLocal, developedLengthMm } from '../model/arcGeometry';
 import {
   useAddConnectionMutation,
   useAddRunMutation,
@@ -19,6 +19,32 @@ import type { SceneState } from '../model/project.types';
 import type { TFunction } from 'i18next';
 
 const DEFAULT_RUN_HEIGHT_MM = 2400;
+const CORNER_SEAM_TOLERANCE_MM = 60;
+const MIN_SEAM_ANGLE_DEG = 10;
+
+// The two world endpoints of a created gap run (start + arc/straight end), for detecting where two
+// runs meet at a shared corner.
+const edgeEndpoints = (edge: GapEdge): { x: number; y: number }[] => {
+  const rad = (edge.rotationDeg * Math.PI) / 180;
+  const start = { x: edge.originX, y: edge.originY };
+  if (edge.geomArcRadiusMm && edge.geomArcSweepDeg) {
+    const e = arcEndLocal(edge.geomArcRadiusMm, edge.geomArcSweepDeg);
+    return [
+      start,
+      {
+        x: edge.originX + e.xMm * Math.cos(rad) - e.yMm * Math.sin(rad),
+        y: edge.originY + e.xMm * Math.sin(rad) + e.yMm * Math.cos(rad),
+      },
+    ];
+  }
+  return [
+    start,
+    {
+      x: edge.originX + edge.lengthMm * Math.cos(rad),
+      y: edge.originY + edge.lengthMm * Math.sin(rad),
+    },
+  ];
+};
 
 const angleDiffDeg = (a: number, b: number) => {
   const d = Math.abs((((a - b) % 180) + 180) % 180);
@@ -69,6 +95,7 @@ export const useWallAutofill = () => {
     profileSystemId: string,
     maxPanelWidthMm: number | undefined,
     edges: OpenEdge[],
+    fillGlassTypeId: string | null,
   ): Promise<{ id: string; edge: OpenEdge }[]> => {
     const state = useDesignerStore.getState();
     const runPrefix = t('GlassEnclosure.Designer.DefaultRunLabel', { defaultValue: 'Hat' });
@@ -111,10 +138,15 @@ export const useWallAutofill = () => {
       if (!response?.data) continue;
       const runData = response.data;
       created.push({ id: runData.id, edge });
-      // Shape the glazing panel to the hole silhouette so it fills the opening
-      // instead of overflowing the wall as a rectangle.
-      const panel = runData.panels[0];
-      if (edge.shapeKind && panel) {
+      // WHY(B4): make the fill glass match the enclosure's glass (resolved from an existing run),
+      // not the backend's fresh-panel default; AND shape the first pane to the hole silhouette so it
+      // fills the opening instead of overflowing the wall as a rectangle. Only panels that actually
+      // need a change (a shape, or a different glass) are persisted — no redundant round-trips.
+      for (let i = 0; i < runData.panels.length; i += 1) {
+        const panel = runData.panels[i];
+        const isShapePanel = i === 0 && Boolean(edge.shapeKind);
+        const glassTypeId = fillGlassTypeId ?? panel.glassTypeId;
+        if (!isShapePanel && glassTypeId === panel.glassTypeId) continue;
         await safeRequestWithNotify(
           enqueuePersist(() =>
             updatePanelMutation.mutateAsync({
@@ -124,13 +156,15 @@ export const useWallAutofill = () => {
               input: {
                 widthMm: panel.widthMm,
                 openingType: panel.openingType,
-                glassTypeId: panel.glassTypeId,
+                glassTypeId,
                 hasHandle: panel.hasHandle,
                 hasLock: panel.hasLock,
                 hasBrushSeal: panel.hasBrushSeal,
                 heightMm: panel.heightMm ?? null,
-                shapeKind: edge.shapeKind,
-                shapePointsJson: edge.shapePointsJson ?? null,
+                shapeKind: isShapePanel ? edge.shapeKind : (panel.shapeKind ?? null),
+                shapePointsJson: isShapePanel
+                  ? (edge.shapePointsJson ?? null)
+                  : (panel.shapePointsJson ?? null),
               },
             }),
           ),
@@ -142,25 +176,18 @@ export const useWallAutofill = () => {
   };
 
   const connectCornerRuns = async (projectId: string, created: { id: string; edge: GapEdge }[]) => {
-    const groups = new Map<number, { id: string; edge: GapEdge }[]>();
-    for (const item of created) {
-      if (item.edge.cornerGroup === undefined) continue;
-      const list = groups.get(item.edge.cornerGroup) ?? [];
-      list.push(item);
-      groups.set(item.edge.cornerGroup, list);
-    }
-    for (const members of groups.values()) {
-      if (members.length !== 2) continue;
-      const jointAngleDeg = Math.round(
-        angleDiffDeg(members[0].edge.rotationDeg, members[1].edge.rotationDeg),
-      );
+    const joined = new Set<string>();
+    const emit = async (aId: string, bId: string, jointAngleDeg: number) => {
+      const key = aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
+      if (joined.has(key)) return;
+      joined.add(key);
       await safeRequestWithNotify(
         enqueuePersist(() =>
           addConnectionMutation.mutateAsync({
             id: projectId,
             input: {
-              runAId: members[0].id,
-              runBId: members[1].id,
+              runAId: aId,
+              runBId: bId,
               jointAngleDeg,
               mitreCutDeg: Math.round(jointAngleDeg / 2),
               usesCornerPost: false,
@@ -170,6 +197,43 @@ export const useWallAutofill = () => {
         ),
         { showSuccessNotification: false },
       );
+    };
+
+    // 1) The two legs of a single L corner (same cornerGroup).
+    const groups = new Map<number, { id: string; edge: GapEdge }[]>();
+    for (const item of created) {
+      if (item.edge.cornerGroup === undefined) continue;
+      const list = groups.get(item.edge.cornerGroup) ?? [];
+      list.push(item);
+      groups.set(item.edge.cornerGroup, list);
+    }
+    for (const members of groups.values()) {
+      if (members.length !== 2) continue;
+      await emit(
+        members[0].id,
+        members[1].id,
+        Math.round(angleDiffDeg(members[0].edge.rotationDeg, members[1].edge.rotationDeg)),
+      );
+    }
+
+    // 2) (A3) Runs from DIFFERENT pairs that meet at a shared corner — coincident endpoints + a real
+    // angle. The per-pair cornerGroup misses these cross-pair seams, so they had no mitre/joint. The
+    // `joined` set dedupes against the same-L joins above.
+    const withPts = created.map((c) => ({ ...c, pts: edgeEndpoints(c.edge) }));
+    for (let i = 0; i < withPts.length; i += 1) {
+      for (let j = i + 1; j < withPts.length; j += 1) {
+        const a = withPts[i];
+        const b = withPts[j];
+        const coincide = a.pts.some((pa) =>
+          b.pts.some((pb) => Math.hypot(pa.x - pb.x, pa.y - pb.y) <= CORNER_SEAM_TOLERANCE_MM),
+        );
+        if (!coincide) continue;
+        const jointAngleDeg = Math.round(angleDiffDeg(a.edge.rotationDeg, b.edge.rotationDeg));
+        // Only real corners (skip near-collinear butt joints that need no mitre).
+        if (jointAngleDeg < MIN_SEAM_ANGLE_DEG || jointAngleDeg > 180 - MIN_SEAM_ANGLE_DEG)
+          continue;
+        await emit(a.id, b.id, jointAngleDeg);
+      }
     }
   };
 
@@ -210,6 +274,13 @@ export const useWallAutofill = () => {
       return 0;
     }
     const before = structuredClone(state.scene);
+    // WHY(B4): glaze the fill with the enclosure's existing glass (first run's first pane) so a hole
+    // in a 10mm laminated enclosure isn't filled with the backend's default; null → server default.
+    const fillGlassTypeId =
+      state.scene.runs
+        .flatMap((r) => r.panels)
+        .map((p) => p.glassTypeId)
+        .find(Boolean) ?? null;
 
     const multiWallIds = state.multiSelection.wallIds;
     if (multiWallIds.length >= 2) {
@@ -234,7 +305,13 @@ export const useWallAutofill = () => {
         });
         return 0;
       }
-      const created = (await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges)) as {
+      const created = (await createRuns(
+        projectId,
+        profileSystemId,
+        maxPanelWidthMm,
+        edges,
+        fillGlassTypeId,
+      )) as {
         id: string;
         edge: GapEdge;
       }[];
@@ -273,7 +350,13 @@ export const useWallAutofill = () => {
       });
       return 0;
     }
-    const created = await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges);
+    const created = await createRuns(
+      projectId,
+      profileSystemId,
+      maxPanelWidthMm,
+      edges,
+      fillGlassTypeId,
+    );
     if (created.length > 0) await recordAutofillHistory(projectId, before);
     return created.length;
   };

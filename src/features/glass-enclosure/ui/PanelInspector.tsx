@@ -62,15 +62,24 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
   const overWidth = draft.widthMm > maxWidthMm;
 
   const commit = (patch: Partial<typeof panel>) => {
+    // WHY(D5): never persist a pane wider than the profile system physically supports — clamp the
+    // committed width to maxPanelWidthMm (the amber over-width warning already flags it on the draft).
+    const clampedPatch =
+      patch.widthMm !== undefined
+        ? { ...patch, widthMm: Math.min(Math.round(patch.widthMm), maxWidthMm) }
+        : patch;
+    if (clampedPatch.widthMm !== undefined && clampedPatch.widthMm !== draft.widthMm) {
+      setDraft({ ...draft, widthMm: clampedPatch.widthMm });
+    }
     // Persist the STORE's post-commit state: on an ARC run a width edit is pinned/clamped and
     // REDISTRIBUTES the sibling widths (pinPanelWidth) — persisting the raw patch would leave the
     // server with the unclamped value and stale siblings (Σ ≠ the developed length).
     const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
-    updatePanel(run.id, panel.id, patch);
+    updatePanel(run.id, panel.id, clampedPatch);
     const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
     const freshPanel = freshRun?.panels.find((p) => p.id === panel.id);
-    void persistPanel(run.id, freshPanel ?? { ...panel, ...patch });
-    if (patch.widthMm !== undefined && freshRun) {
+    void persistPanel(run.id, freshPanel ?? { ...panel, ...clampedPatch });
+    if (clampedPatch.widthMm !== undefined && freshRun) {
       freshRun.panels.forEach((p) => {
         if (p.id !== panel.id && beforeWidths.get(p.id) !== p.widthMm) {
           void persistPanel(run.id, p);
@@ -80,7 +89,11 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
     }
     // WHY: a fitting bool (has*) only reaches the quote via the structural hardware rows, which
     // the plain persistPanel omits (hardware=null) — persist them so a toggled handle/lock is quoted.
-    if ('hasHandle' in patch || 'hasLock' in patch || 'hasBrushSeal' in patch) {
+    if (
+      'hasHandle' in clampedPatch ||
+      'hasLock' in clampedPatch ||
+      'hasBrushSeal' in clampedPatch
+    ) {
       void persistPanelHardware(run.id, panel.id);
     }
   };
