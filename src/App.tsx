@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/shared/query/queryClient';
@@ -113,6 +113,14 @@ import {
   LandingPage,
 } from '@/app/router/routes';
 
+// Dev-only visual-verification playground (backend/auth-free fixture render). Registered ONLY under
+// import.meta.env.DEV so it never reaches a production bundle route.
+const GlassFixturePlayground = lazy(() =>
+  import('@/features/glass-enclosure/dev/GlassFixturePlayground').then((m) => ({
+    default: m.GlassFixturePlayground,
+  })),
+);
+
 const RecaptchaWrapper = () => (
   <GoogleReCaptchaProvider
     reCaptchaKey={env.VITE_RECAPTCHA_SITE_KEY}
@@ -139,6 +147,9 @@ function App() {
                   <ConfirmDialogProvider>
                     <Suspense fallback={<RouteFallback />}>
                       <Routes>
+                        {import.meta.env.DEV && (
+                          <Route path="/dev/glass-fixture" element={<GlassFixturePlayground />} />
+                        )}
                         <Route element={<RecaptchaWrapper />}>
                           <Route path="/" element={<LandingPage />} />
                           <Route path="/about" element={<LandingPage />} />

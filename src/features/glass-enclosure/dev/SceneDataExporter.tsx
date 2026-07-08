@@ -30,6 +30,7 @@ export function SceneDataExporter() {
       return {
         schemaVersion: scene.metadata?.schemaVersion ?? null,
         projectId: state.projectId,
+        quality: state.quality,
         runCount: runs.length,
         wallCount: walls.length,
         // Full authored geometry — consumers read exactly what they assert on.
