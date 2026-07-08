@@ -1,10 +1,15 @@
 import { useEffect, useMemo } from 'react';
+import { DoubleSide } from 'three';
 import { Billboard, Edges, Text } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
-import { buildCurvedBandGeometry, buildCurvedShapedGeometry } from './curvedExtrude';
+import {
+  buildCurvedBandGeometry,
+  buildCurvedShapedFrameGeometry,
+  buildCurvedShapedGeometry,
+} from './curvedExtrude';
 import type { PanelGlassSpec } from './panelGeometry';
 import { panelIsShaped, panelOutlinePointsMm } from '../../model/panelOutline';
 import { arcPointAt, type ArcChord } from '../../model/arcGeometry';
@@ -37,6 +42,8 @@ interface CurvedPanelMeshProps {
   isSelected: boolean;
   onSelect: () => void;
   shapeSpec?: PanelGlassSpec | null;
+  frameColor?: string;
+  showFrameBand?: boolean;
 }
 
 const OPENING_SYMBOL: Record<GlassOpeningType, string> = {
@@ -72,6 +79,8 @@ export function CurvedPanelMesh({
   isSelected,
   onSelect,
   shapeSpec,
+  frameColor,
+  showFrameBand = false,
 }: CurvedPanelMeshProps) {
   const material = useGlassMaterial({
     quality,
@@ -94,51 +103,54 @@ export function CurvedPanelMesh({
   const sn = shapeSpec?.cornerNotchMm ?? null;
   const sk = shapeSpec?.shapeKind ?? null;
   const sp = shapeSpec?.points ?? null;
+  const outline = useMemo(() => {
+    if (!shaped || sw === undefined || sh === undefined) return null;
+    const o = panelOutlinePointsMm({
+      widthMm: sw,
+      heightMm: sh,
+      topShape: st,
+      topRightHeightMm: str,
+      archRiseMm: sa,
+      cornerRadiiMm: sc,
+      cornerNotchMm: sn,
+      shapeKind: sk,
+      points: sp,
+    });
+    return o.length >= 3 ? o : null;
+  }, [shaped, sw, sh, st, str, sa, sc, sn, sk, sp]);
+
   const geometry = useMemo(() => {
-    if (shaped && sw !== undefined && sh !== undefined) {
-      const outline = panelOutlinePointsMm({
-        widthMm: sw,
-        heightMm: sh,
-        topShape: st,
-        topRightHeightMm: str,
-        archRiseMm: sa,
-        cornerRadiiMm: sc,
-        cornerNotchMm: sn,
-        shapeKind: sk,
-        points: sp,
-      });
-      if (outline.length >= 3) {
-        return buildCurvedShapedGeometry(
-          outline,
-          sw,
-          radiusM,
-          direction,
-          phiStart,
-          phiEnd,
-          thicknessM,
-        );
-      }
+    if (outline && sw !== undefined) {
+      return buildCurvedShapedGeometry(
+        outline,
+        sw,
+        radiusM,
+        direction,
+        phiStart,
+        phiEnd,
+        thicknessM,
+      );
     }
     return buildCurvedBandGeometry(radiusM, direction, phiStart, phiEnd, thicknessM, heightM);
-  }, [
-    shaped,
-    sw,
-    sh,
-    st,
-    str,
-    sa,
-    sc,
-    sn,
-    sk,
-    sp,
-    radiusM,
-    direction,
-    phiStart,
-    phiEnd,
-    thicknessM,
-    heightM,
-  ]);
+  }, [outline, sw, radiusM, direction, phiStart, phiEnd, thicknessM, heightM]);
   useEffect(() => () => geometry.dispose(), [geometry]);
+
+  // Silhouette-hugging frame for a single shaped pane (its rails are suppressed upstream, like the
+  // flat PanelMesh path) — otherwise a shaped arc hole-fill reads as bare frameless glass.
+  const frameGeometry = useMemo(() => {
+    if (!showFrameBand || !outline || sw === undefined) return null;
+    return buildCurvedShapedFrameGeometry(
+      outline,
+      sw,
+      radiusM,
+      direction,
+      phiStart,
+      phiEnd,
+      Math.max(thicknessM * 1.6, 0.02),
+      35,
+    );
+  }, [showFrameBand, outline, sw, radiusM, direction, phiStart, phiEnd, thicknessM]);
+  useEffect(() => () => frameGeometry?.dispose(), [frameGeometry]);
 
   const annotationAnchor = useMemo(
     () => arcPointAt(radiusM, direction, (phiStart + phiEnd) / 2),
@@ -179,6 +191,23 @@ export function CurvedPanelMesh({
       >
         <Edges color={isSelected ? '#2563eb' : '#9aacb5'} threshold={15} />
       </mesh>
+
+      {frameGeometry && (
+        <mesh
+          geometry={frameGeometry}
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, baseY, 0]}
+          castShadow
+          receiveShadow
+        >
+          <meshStandardMaterial
+            color={isSelected ? '#3b82f6' : (frameColor ?? '#aab4ba')}
+            metalness={0.5}
+            roughness={0.5}
+            side={DoubleSide}
+          />
+        </mesh>
+      )}
 
       <group
         position={[surfaceAnchor(phiMid).x, baseY + heightM / 2, surfaceAnchor(phiMid).z]}

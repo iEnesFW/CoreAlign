@@ -566,6 +566,8 @@ export function ArcRunGroup({
                   isSelected={selectedPanelId === panel.id}
                   onSelect={() => onSelectPanel(run.id, panel.id)}
                   shapeSpec={shapeSpec}
+                  frameColor={profileColor}
+                  showFrameBand={isSingleShapedPanel}
                 />
               );
             }

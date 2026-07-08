@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildCurvedShapedFrameGeometry,
   buildCurvedShapedGeometry,
   buildCurvedWallFeatureSolid,
   curvedWallPickUv,
 } from './curvedExtrude';
+import { panelOutlinePointsMm } from '../../model/panelOutline';
 import { outlineSelfIntersects, sanitizeFreeOutline } from '../../model/wallFeatureGeometry';
 
 const signedVolume = (positions: ArrayLike<number>) => {
@@ -80,6 +82,147 @@ describe('buildCurvedShapedGeometry', () => {
     for (let i = 0; i < p.count; i += 1) maxZ = Math.max(maxZ, p.getZ(i));
     expect(maxZ).toBeGreaterThan(1.5); // the apex reaches near the top
     expect(p.count).toBeGreaterThan(100);
+  });
+
+  it('maps a polygon IDENTICALLY for chord vs developed widthMm (the bbox-rescale ↔ cyl de-normalize cancel)', () => {
+    // The autofill polygon is bbox-rescaled to widthMm by panelOutlinePointsMm, then cyl()
+    // de-normalizes by the SAME widthMm — so a triangle maps onto [phiStart,phiEnd] regardless of
+    // whether widthMm is the chord or the developed span (guards the deferred widthMm semantic change).
+    const points = [
+      { x: -400, y: 0 },
+      { x: 400, y: 0 },
+      { x: 0, y: 1800 },
+    ];
+    const spec = { widthMm: 0, heightMm: 1800, shapeKind: 'polygon' as const, points };
+    const chord = 900;
+    const developed = 1400;
+    const gc = buildCurvedShapedGeometry(
+      panelOutlinePointsMm({ ...spec, widthMm: chord }),
+      chord,
+      R,
+      1,
+      0,
+      Math.PI / 3,
+      t,
+    );
+    const gd = buildCurvedShapedGeometry(
+      panelOutlinePointsMm({ ...spec, widthMm: developed }),
+      developed,
+      R,
+      1,
+      0,
+      Math.PI / 3,
+      t,
+    );
+    const pc = gc.attributes.position;
+    const pd = gd.attributes.position;
+    expect(pc.count).toBe(pd.count);
+    let maxDiff = 0;
+    for (let i = 0; i < pc.array.length; i += 1) {
+      maxDiff = Math.max(maxDiff, Math.abs(pc.array[i] - pd.array[i]));
+    }
+    expect(maxDiff).toBeLessThan(1e-6);
+  });
+});
+
+describe('buildCurvedShapedFrameGeometry', () => {
+  const R = 2;
+  const w = 1000;
+  const h = 2000;
+  const frameDepth = 0.03;
+  const tri = [
+    { x: -w / 2, y: 0 },
+    { x: w / 2, y: 0 },
+    { x: 0, y: h },
+  ];
+
+  it('builds a non-empty ring that hugs the cylinder band (radius ± half frame depth)', () => {
+    const g = buildCurvedShapedFrameGeometry(tri, w, R, 1, 0, Math.PI / 4, frameDepth, 35);
+    const p = g.attributes.position;
+    expect(p.count).toBeGreaterThan(0);
+    const centerY = -R;
+    for (let i = 0; i < p.count; i += 1) {
+      const radial = Math.hypot(p.getX(i), p.getY(i) - centerY);
+      expect(radial).toBeGreaterThanOrEqual(R - frameDepth / 2 - 1e-4);
+      expect(radial).toBeLessThanOrEqual(R + frameDepth / 2 + 1e-4);
+    }
+  });
+
+  it('keeps the frame within the panel arc span and height (no overflow past the hole)', () => {
+    const span = Math.PI / 4;
+    const g = buildCurvedShapedFrameGeometry(tri, w, R, 1, 0, span, frameDepth, 35);
+    const p = g.attributes.position;
+    const centerY = -R;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
+    let minPhi = Infinity;
+    let maxPhi = -Infinity;
+    for (let i = 0; i < p.count; i += 1) {
+      minZ = Math.min(minZ, p.getZ(i));
+      maxZ = Math.max(maxZ, p.getZ(i));
+      const phi = Math.PI / 2 - Math.atan2(p.getY(i) - centerY, p.getX(i));
+      minPhi = Math.min(minPhi, phi);
+      maxPhi = Math.max(maxPhi, phi);
+    }
+    expect(minZ).toBeGreaterThanOrEqual(-1e-4);
+    expect(maxZ).toBeLessThanOrEqual(h / 1000 + 1e-4);
+    expect(minPhi).toBeGreaterThanOrEqual(-1e-3);
+    expect(maxPhi).toBeLessThanOrEqual(span + 1e-3);
+  });
+
+  it('leaves a hollow centre (the inset is punched out — a frame, not a filled pane)', () => {
+    const g = buildCurvedShapedFrameGeometry(tri, w, R, 1, 0, Math.PI / 4, frameDepth, 35);
+    // The centroid of the triangle at mid-radius must NOT be covered: the nearest frame vertex to
+    // the pane centre stays a frame-width away (no vertex sits at the deep interior).
+    const p = g.attributes.position;
+    const centerY = -R;
+    const midPhi = Math.PI / 8;
+    const a = Math.PI / 2 - midPhi;
+    const cxWorld = Math.cos(a) * R;
+    const cyWorld = centerY + Math.sin(a) * R;
+    const czWorld = h / 3 / 1000; // triangle centroid height
+    let nearest = Infinity;
+    for (let i = 0; i < p.count; i += 1) {
+      nearest = Math.min(
+        nearest,
+        Math.hypot(p.getX(i) - cxWorld, p.getY(i) - cyWorld, p.getZ(i) - czWorld),
+      );
+    }
+    expect(nearest).toBeGreaterThan(0.05);
+  });
+
+  it('degenerates safely to empty geometry for <3 points or a zero-area outline', () => {
+    expect(
+      buildCurvedShapedFrameGeometry(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+        ],
+        w,
+        R,
+        1,
+        0,
+        Math.PI / 4,
+        frameDepth,
+        35,
+      ).attributes.position?.count ?? 0,
+    ).toBe(0);
+    expect(
+      buildCurvedShapedFrameGeometry(
+        [
+          { x: 0, y: 0 },
+          { x: 0, y: 100 },
+          { x: 0, y: 200 },
+        ],
+        w,
+        R,
+        1,
+        0,
+        Math.PI / 4,
+        frameDepth,
+        35,
+      ).attributes.position?.count ?? 0,
+    ).toBe(0);
   });
 });
 

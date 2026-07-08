@@ -155,6 +155,119 @@ export const buildCurvedShapedGeometry = (
   return geometry;
 };
 
+// Build a silhouette-following FRAME ring for a shaped pane on an arc — the curved analogue of
+// buildPanelFrameGeometry. The outline (panel-local mm, x∈[-w/2,w/2], y∈[0,h]) and an inset copy
+// (scaled toward the centroid by frameWidthMm, exactly as the flat frame) are BOTH mapped through
+// the same cyl() as the glass, so the border hugs the glass edge on the curve. Emitted as a closed
+// ribbon (front/back radial faces + outer/inner silhouette walls), densified so a straight outline
+// edge follows the arc instead of chording across it.
+export const buildCurvedShapedFrameGeometry = (
+  outlineMm: OutlinePointMm[],
+  widthMm: number,
+  radiusM: number,
+  direction: 1 | -1,
+  phiStart: number,
+  phiEnd: number,
+  frameDepthM: number,
+  frameWidthMm: number,
+): BufferGeometry => {
+  const geometry = new BufferGeometry();
+  if (outlineMm.length < 3) return geometry;
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  for (const p of outlineMm) {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const bw = maxX - minX;
+  const bh = maxY - minY;
+  if (bw <= 0 || bh <= 0) return geometry;
+  const fw = Math.min(frameWidthMm, Math.min(bw, bh) / 3);
+  const sx = (bw - 2 * fw) / bw;
+  const sy = (bh - 2 * fw) / bh;
+  if (sx <= 0 || sy <= 0) return geometry;
+  const cx = (minX + maxX) / 2;
+  const cy = (minY + maxY) / 2;
+  const inner = outlineMm.map((p) => ({ x: cx + (p.x - cx) * sx, y: cy + (p.y - cy) * sy }));
+
+  const radius = Math.max(0.001, Number.isFinite(radiusM) ? radiusM : 0.001);
+  const span = Math.max(1e-4, phiEnd - phiStart);
+  const centerY = -direction * radius;
+  const w = Math.max(1, widthMm);
+  const halfDepth = Math.max(0.001, frameDepthM) / 2;
+  const outerR = radius + halfDepth;
+  const innerR = Math.max(0.001, radius - halfDepth);
+  const toAngle = (phi: number) => (direction === 1 ? Math.PI / 2 - phi : phi - Math.PI / 2);
+  const cyl = (xMm: number, yMm: number, r: number): number[] => {
+    const phi = phiStart + ((xMm + w / 2) / w) * span;
+    const a = toAngle(phi);
+    return [Math.cos(a) * r, centerY + Math.sin(a) * r, yMm / 1000];
+  };
+  const maxSegMm = Math.max(5, (CURVE_STEP_RAD / span) * w);
+
+  const pos: number[] = [];
+  // Same reflection handling as buildCurvedWallFeatureSolid: direction === +1 flips cyl()'s winding.
+  const flip = direction === 1;
+  const tri = (a: number[], b: number[], c: number[]) =>
+    flip ? pos.push(...a, ...c, ...b) : pos.push(...a, ...b, ...c);
+  const quad = (a: number[], b: number[], c: number[], d: number[]) => {
+    tri(a, b, c);
+    tri(a, c, d);
+  };
+
+  const n = outlineMm.length;
+  for (let i = 0; i < n; i += 1) {
+    const Oa = outlineMm[i];
+    const Ob = outlineMm[(i + 1) % n];
+    const Ia = inner[i];
+    const Ib = inner[(i + 1) % n];
+    const segs = Math.max(1, Math.ceil(Math.abs(Ob.x - Oa.x) / maxSegMm));
+    for (let k = 0; k < segs; k += 1) {
+      const t0 = k / segs;
+      const t1 = (k + 1) / segs;
+      const oax = Oa.x + (Ob.x - Oa.x) * t0;
+      const oay = Oa.y + (Ob.y - Oa.y) * t0;
+      const obx = Oa.x + (Ob.x - Oa.x) * t1;
+      const oby = Oa.y + (Ob.y - Oa.y) * t1;
+      const iax = Ia.x + (Ib.x - Ia.x) * t0;
+      const iay = Ia.y + (Ib.y - Ia.y) * t0;
+      const ibx = Ia.x + (Ib.x - Ia.x) * t1;
+      const iby = Ia.y + (Ib.y - Ia.y) * t1;
+      quad(
+        cyl(oax, oay, outerR),
+        cyl(obx, oby, outerR),
+        cyl(ibx, iby, outerR),
+        cyl(iax, iay, outerR),
+      );
+      quad(
+        cyl(iax, iay, innerR),
+        cyl(ibx, iby, innerR),
+        cyl(obx, oby, innerR),
+        cyl(oax, oay, innerR),
+      );
+      quad(
+        cyl(oax, oay, innerR),
+        cyl(obx, oby, innerR),
+        cyl(obx, oby, outerR),
+        cyl(oax, oay, outerR),
+      );
+      quad(
+        cyl(iax, iay, outerR),
+        cyl(ibx, iby, outerR),
+        cyl(ibx, iby, innerR),
+        cyl(iax, iay, innerR),
+      );
+    }
+  }
+  geometry.setAttribute('position', new Float32BufferAttribute(pos, 3));
+  geometry.computeVertexNormals();
+  return geometry;
+};
+
 // Invert the curved-wall surface: a pick point in the wall GROUP's local frame (after worldToLocal,
 // i.e. the band mesh's parent frame — the band is the pre-rotation cyl() solid rotated [-π/2,0,0],
 // which maps band (x,y,z) → group-local (x, z, -y)) back to (offset along the developed wall,
