@@ -29,7 +29,10 @@ import type {
   SceneSlabState,
   SceneWallState,
 } from '@/features/glass-enclosure/model/project.types';
-import { clampHardwareOffsets } from '@/features/glass-enclosure/model/hardwarePlacement';
+import {
+  clampHardwareOffsets,
+  glassClampHeightMm,
+} from '@/features/glass-enclosure/model/hardwarePlacement';
 
 const solidObstaclesExcept = (excludeIds: Set<string>): PlanFootprint[] => {
   const s = useDesignerStore.getState().scene;
@@ -400,7 +403,11 @@ const HardwareFields = ({
     const next = { ...item, ...patch };
     updateHardware(run.id, panel.id, item.id, {
       ...patch,
-      ...clampHardwareOffsets(panel.widthMm, run.heightMm, next),
+      ...clampHardwareOffsets(
+        panel.widthMm,
+        glassClampHeightMm(panel.heightMm, run.heightMm),
+        next,
+      ),
     });
   };
 

@@ -23,6 +23,9 @@ export function WallOpeningFrames({ frames, thicknessMm, quality }: WallOpeningF
         const cx = (f.x0 + f.x1) / 2;
         const yMid = (f.y0 + f.y1) / 2;
         const spanW = Math.max(0.001, w - SECTION_M);
+        // WHY: for an opening narrower than the profile section the two jambs already span the full
+        // width, so a horizontal top/sill bar degenerates to a ~1mm sliver — omit it.
+        const showHorizontals = w > SECTION_M;
         return (
           <group key={i}>
             <ProfileBar
@@ -43,15 +46,17 @@ export function WallOpeningFrames({ frames, thicknessMm, quality }: WallOpeningF
               position={[f.x1, yMid, 0]}
               rotation={[0, 0, Math.PI / 2]}
             />
-            <ProfileBar
-              lengthM={spanW}
-              crossSectionMm={section}
-              hexColor={FRAME_COLOR}
-              finish="Anodized"
-              quality={quality}
-              position={[cx, f.y1, 0]}
-            />
-            {f.hasSill && (
+            {showHorizontals && (
+              <ProfileBar
+                lengthM={spanW}
+                crossSectionMm={section}
+                hexColor={FRAME_COLOR}
+                finish="Anodized"
+                quality={quality}
+                position={[cx, f.y1, 0]}
+              />
+            )}
+            {showHorizontals && f.hasSill && (
               <ProfileBar
                 lengthM={spanW}
                 crossSectionMm={section}

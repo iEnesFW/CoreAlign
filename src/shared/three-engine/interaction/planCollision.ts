@@ -138,7 +138,11 @@ const obbOverlapExtent = (ca: Vec[], cb: Vec[]): number => {
   let maxOverlap = 0;
   for (const axis of axes) {
     const overlap = projectOverlap(ca, cb, axis.x, axis.y);
-    if (overlap <= 0) return 0;
+    // WHY: two boxes that butt exactly should separate on the shared-edge normal (overlap 0), but at
+    // arbitrary rotations cos/sin leave a ~±1e-12 residue; a tiny POSITIVE residue skipped the `<= 0`
+    // early-exit and returned the large shared-edge overlap → a flush butt read as a collision. Treat
+    // a sub-epsilon overlap (< CONTACT_EPS_MM) as separated.
+    if (overlap <= CONTACT_EPS_MM) return 0;
     if (overlap > maxOverlap) maxOverlap = overlap;
   }
   return maxOverlap;

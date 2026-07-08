@@ -261,6 +261,18 @@ export const useWallAutofill = () => {
       return 0;
     }
     const edges = computeOpeningEdges([selectedWall], state.scene.runs);
+    if (edges.length === 0) {
+      // WHY: a single solid wall (no openings/holes) returned 0 with no feedback — tell the user.
+      queueToast({
+        dedupeKey: 'glass-autofill-no-openings',
+        variant: 'info',
+        description: t('GlassEnclosure.Designer.Wall.AutofillNoOpenings', {
+          defaultValue:
+            'Bu duvarda doldurulacak açıklık veya delik yok — önce bir açıklık/delik ekleyin ya da birden fazla duvar seçin.',
+        }),
+      });
+      return 0;
+    }
     const created = await createRuns(projectId, profileSystemId, maxPanelWidthMm, edges);
     if (created.length > 0) await recordAutofillHistory(projectId, before);
     return created.length;

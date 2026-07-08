@@ -49,5 +49,14 @@ export const polygonEdges = (vertices: PolygonVertex[]): PolygonEdge[] => {
 
 export const polygonIsClosedValid = (vertices: PolygonVertex[]): boolean => {
   const edges = polygonEdges(vertices);
-  return edges.length >= MIN_VERTEX_COUNT && edges.every((edge) => edge.lengthMm > 0);
+  if (edges.length < MIN_VERTEX_COUNT || !edges.every((edge) => edge.lengthMm > 0)) return false;
+  // WHY: every edge can be non-zero yet the loop enclose NO area (e.g. 3 collinear points), which
+  // renders overlapping flat facade segments — require a real signed area.
+  let area2 = 0;
+  for (let i = 0; i < vertices.length; i += 1) {
+    const a = vertices[i];
+    const b = vertices[(i + 1) % vertices.length];
+    area2 += a.xMm * b.yMm - b.xMm * a.yMm;
+  }
+  return Math.abs(area2) > 1;
 };

@@ -1,5 +1,5 @@
 import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine';
-import { isRealArc, resolveArc } from '../../model/arcGeometry';
+import { isRealArc, radiusFromChordSweep, resolveArc } from '../../model/arcGeometry';
 import { curvedSlabPlanOutlineMm } from '../builders/curvedSlabGeometry';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
@@ -42,8 +42,13 @@ const buildArcWallFootprint = (
 ): PlanFootprint => {
   const zMin = wall.geomZ ?? 0;
   const zMax = zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
-  // CHORD-INVARIANT: render straight from the stored (radius, sweep); the ends are fixed.
-  const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+  // CHORD-INVARIANT: derive the radius from the AUTHORITATIVE chord (lengthMm) + stored sweep, exactly
+  // as the renderer does (radiusFromChordSweep) — reading the integer-rounded/legacy-drifted stored
+  // radius directly made the collision band diverge from the visible glass on drifted rows.
+  const resolved = resolveArc(
+    radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+    wall.geomArcSweepDeg ?? 1,
+  );
   const radius = resolved.radiusMm;
   const direction = resolved.direction;
   const sweep = resolved.sweepRad;
@@ -102,8 +107,12 @@ const buildArcRunFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const zMin = run.geomZ ?? 0;
-  // CHORD-INVARIANT: render straight from the stored (radius, sweep); the ends are fixed.
-  const resolved = resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  // CHORD-INVARIANT: derive the radius from the AUTHORITATIVE chord (lengthMm) + stored sweep like the
+  // renderer (radiusFromChordSweep), so the collision band matches the visible glass on drifted rows.
+  const resolved = resolveArc(
+    radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
+    run.geomArcSweepDeg ?? 1,
+  );
   const radius = resolved.radiusMm;
   const direction = resolved.direction;
   const sweep = resolved.sweepRad;

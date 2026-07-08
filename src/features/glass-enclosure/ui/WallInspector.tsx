@@ -515,8 +515,9 @@ export function WallInspector() {
             value={draft.geomArcRadiusMm ?? draft.lengthMm}
             min={minArcRadiusMm(draft.lengthMm)}
             onCommit={(v) => {
-              // Setting the radius keeps the glass length (lengthMm) fixed and re-derives the sweep
-              // (= arcLength/radius); the tightest radius is a full circle (arcLength/2π). Sign kept.
+              // CHORD-INVARIANT: setting the radius keeps the CHORD (lengthMm, the fixed span) and
+              // re-derives the sweep (= 2·asin(chord/2r)); the tightest radius is a half-circle
+              // (chord/2). Sign kept. (deriveArcFromRadius clamps to the floor.)
               const sign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
               const next = deriveArcFromRadius(
                 draft.lengthMm,

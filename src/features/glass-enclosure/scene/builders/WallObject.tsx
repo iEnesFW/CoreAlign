@@ -206,8 +206,15 @@ const clampedOpeningRectM = (
   if (x1 - x0 < MIN_HOLE_M) return null;
   const slope = lengthM > 0 ? (heightEndM - heightStartM) / lengthM : 0;
   const topLimit = Math.min(heightStartM + slope * x0, heightStartM + slope * x1) - TOP_MARGIN_M;
-  const y0 = Math.max(BOTTOM_MARGIN_M, opening.sillMm / 1000);
-  const y1 = Math.min(topLimit, (opening.sillMm + opening.heightMm) / 1000);
+  let y0 = Math.max(BOTTOM_MARGIN_M, opening.sillMm / 1000);
+  let y1 = Math.min(topLimit, (opening.sillMm + opening.heightMm) / 1000);
+  // WHY: on a sloped wall a thickness/length edit can push the opening's top above the local roofline
+  // — rather than DROP it (the "my window vanished" case), slide the sill down so it still fits under
+  // the sloped top. Only return null when the wall is genuinely too short at this offset.
+  if (y1 - y0 < MIN_HOLE_M) {
+    y0 = Math.max(BOTTOM_MARGIN_M, topLimit - opening.heightMm / 1000);
+    y1 = Math.min(topLimit, y0 + opening.heightMm / 1000);
+  }
   if (y1 - y0 < MIN_HOLE_M) return null;
   return { x0, x1, y0, y1, hasSill: opening.sillMm > 0 };
 };

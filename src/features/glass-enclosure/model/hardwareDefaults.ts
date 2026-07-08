@@ -39,7 +39,14 @@ const DEFAULTS: Record<SceneHardwareKind, HardwareDefault> = {
   Accessory: { colorHex: '#94a3b8', widthMm: 60, heightMm: 60, depthMm: 40 },
 };
 
-export const createHardwareItem = (kind: SceneHardwareKind): SceneHardwareItem => {
+// Size/colour defaults for a hardware kind — used to seed a new item AND to reset dimensions when
+// the user changes an existing item's kind (otherwise it kept the old kind's size).
+export const hardwareKindDefault = (kind: SceneHardwareKind): HardwareDefault => DEFAULTS[kind];
+
+export const createHardwareItem = (
+  kind: SceneHardwareKind,
+  glassThicknessMm = 8,
+): SceneHardwareItem => {
   const def = DEFAULTS[kind];
   return {
     id: crypto.randomUUID(),
@@ -47,7 +54,8 @@ export const createHardwareItem = (kind: SceneHardwareKind): SceneHardwareItem =
     colorHex: def.colorHex,
     offsetXmm: 0,
     offsetYmm: 0,
-    offsetZmm: def.depthMm / 2,
+    // WHY: sit the piece ON the glass face (centre-plane + half glass), not half-embedded at z=0.
+    offsetZmm: def.depthMm / 2 + glassThicknessMm / 2,
     widthMm: def.widthMm,
     heightMm: def.heightMm,
     depthMm: def.depthMm,

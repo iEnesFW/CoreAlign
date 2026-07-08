@@ -30,6 +30,7 @@ import {
   arcPointAt,
   developedLengthMm,
   isRealArc,
+  radiusFromChordSweep,
   resolveArc,
 } from '../model/arcGeometry';
 import { curvedSlabFrame, curvedSlabPlanColumnsMm } from './builders/curvedSlabGeometry';
@@ -57,7 +58,7 @@ import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
 import { findAttachedWallIds, resolveAttachedRunIds } from '../model/wallAttachment';
 import { splitPanelsAtLength } from '../model/panelSplit';
 import { panelIsShaped } from '../model/panelOutline';
-import { clampHardwareOffsets } from '../model/hardwarePlacement';
+import { clampHardwareOffsets, glassClampHeightMm } from '../model/hardwarePlacement';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
@@ -188,7 +189,7 @@ const buildPlanSnapTargets = (
         wall.originX,
         wall.originY,
         wall.rotationDeg,
-        wall.geomArcRadiusMm ?? 0,
+        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
         wall.geomArcSweepDeg ?? 1,
       );
       continue;
@@ -209,7 +210,7 @@ const buildPlanSnapTargets = (
         run.originX,
         run.originY,
         run.rotationDeg,
-        run.geomArcRadiusMm ?? 0,
+        radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
         run.geomArcSweepDeg ?? 1,
       );
       continue;
@@ -535,7 +536,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       ...clipboard.item,
       id: crypto.randomUUID(),
       offsetXmm: clampMm(clipboard.item.offsetXmm, panel.widthMm / 2),
-      offsetYmm: clampMm(clipboard.item.offsetYmm, run.heightMm / 2),
+      offsetYmm: clampMm(
+        clipboard.item.offsetYmm,
+        glassClampHeightMm(panel.heightMm, run.heightMm) / 2,
+      ),
     };
     addHardware(runId, panelId, clone);
     void persistPanelHardware(runId, panelId);
@@ -755,6 +759,19 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           description: t('GlassEnclosure.Designer.Pen.DivideShaped', {
             defaultValue:
               'Şekilli / boşluk-dolgu cam bölünemez — yalnız düz dikdörtgen hatlar bölünebilir.',
+          }),
+        });
+        return;
+      }
+      // WHY: fraction = offsetMm/lengthMm uses the CHORD while totalWidth is the DEVELOPED length —
+      // on an arc run the cut would land at the wrong physical position. Reject (latent: today the
+      // divide host resolves via a straight wall, but guard explicitly).
+      if (isRealArc(hostRun.geomArcRadiusMm, hostRun.geomArcSweepDeg)) {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-arc',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideArc', {
+            defaultValue: 'Kavisli hat bölünemez — yalnız düz hatlar bölünebilir.',
           }),
         });
         return;
@@ -1073,7 +1090,11 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       // each item's offset to the new width (and persist the hardware, not just the panel width).
       let hardwareClamped = false;
       for (const hw of p.hardware) {
-        const clamped = clampHardwareOffsets(p.widthMm, run.heightMm, hw);
+        const clamped = clampHardwareOffsets(
+          p.widthMm,
+          glassClampHeightMm(p.heightMm, run.heightMm),
+          hw,
+        );
         if (clamped.offsetXmm !== hw.offsetXmm || clamped.offsetYmm !== hw.offsetYmm) {
           updateHardware(runId, p.id, hw.id, clamped);
           hardwareClamped = true;
@@ -1706,7 +1727,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const item = panel?.hardware.find((h) => h.id === hardwareId);
     if (!run || !panel || !item) return;
     const edgeX = Math.max(0, panel.widthMm / 2 - item.widthMm / 2);
-    const edgeY = Math.max(0, run.heightMm / 2 - item.heightMm / 2);
+    const edgeY = Math.max(
+      0,
+      glassClampHeightMm(panel.heightMm, run.heightMm) / 2 - item.heightMm / 2,
+    );
     let offsetXmm = stickyMm(snapMm(item.offsetXmm + delta.dx), [0, edgeX, -edgeX]);
     let offsetYmm = stickyMm(snapMm(item.offsetYmm + delta.dy), [0, edgeY, -edgeY]);
     for (const cornerX of [edgeX, -edgeX]) {
@@ -1745,7 +1769,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     );
     // A larger item must still fit centred within the panel, so re-clamp the offset to the new edge.
     const edgeX = Math.max(0, panel.widthMm / 2 - nextW / 2);
-    const edgeY = Math.max(0, run.heightMm / 2 - nextH / 2);
+    const edgeY = Math.max(0, glassClampHeightMm(panel.heightMm, run.heightMm) / 2 - nextH / 2);
     updateHardware(runId, panelId, hardwareId, {
       widthMm: nextW,
       heightMm: nextH,

@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
 import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
-import { HARDWARE_KINDS } from '../model/hardwareDefaults';
-import { clampHardwareOffsets } from '../model/hardwarePlacement';
+import { HARDWARE_KINDS, hardwareKindDefault } from '../model/hardwareDefaults';
+import { clampHardwareOffsets, glassClampHeightMm } from '../model/hardwarePlacement';
 import type { SceneHardwareKind } from '../model/project.types';
 
 export function HardwareInspector() {
@@ -30,7 +30,11 @@ export function HardwareInspector() {
     const next = { ...item, ...patch };
     updateHardware(run.id, panel.id, item.id, {
       ...patch,
-      ...clampHardwareOffsets(panel.widthMm, run.heightMm, next),
+      ...clampHardwareOffsets(
+        panel.widthMm,
+        glassClampHeightMm(panel.heightMm, run.heightMm),
+        next,
+      ),
     });
   };
   const persistHw = () => void persistPanelHardware(run.id, panel.id);
@@ -67,7 +71,19 @@ export function HardwareInspector() {
       <Field label={t('GlassEnclosure.Hardware.Field.Kind')}>
         <select
           value={item.kind}
-          onChange={(e) => commit({ kind: e.target.value as SceneHardwareKind })}
+          onChange={(e) => {
+            // WHY: changing the kind must reset the size/colour to the new kind's defaults —
+            // otherwise a Lock→Handle switch kept 44×44 and rendered with wrong proportions.
+            const kind = e.target.value as SceneHardwareKind;
+            const def = hardwareKindDefault(kind);
+            commit({
+              kind,
+              colorHex: def.colorHex,
+              widthMm: def.widthMm,
+              heightMm: def.heightMm,
+              depthMm: def.depthMm,
+            });
+          }}
           className={inputClass}
         >
           {HARDWARE_KINDS.map((kind) => (
