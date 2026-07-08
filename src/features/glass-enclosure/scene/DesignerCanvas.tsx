@@ -723,6 +723,27 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         });
         return;
       }
+      // Divide only makes sense for a straight run of rectangular panes — a shaped/hole-fill pane
+      // (triangle, arch, free outline) can't be cut into two rectangles without destroying its shape.
+      if (
+        hostRun.panels.some(
+          (p) =>
+            p.shapeKind ||
+            p.shapePointsJson ||
+            (p.topShape && p.topShape !== 'flat') ||
+            (p.archRiseMm ?? 0) > 0,
+        )
+      ) {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-shaped',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideShaped', {
+            defaultValue:
+              'Şekilli / boşluk-dolgu cam bölünemez — yalnız düz dikdörtgen hatlar bölünebilir.',
+          }),
+        });
+        return;
+      }
       const totalWidth = hostRun.panels.reduce((sum, p) => sum + p.widthMm, 0);
       const fraction = Math.min(1, Math.max(0, offsetMm / Math.max(1, divideWall.lengthMm)));
       const split = splitPanelsAtLength(hostRun.panels, fraction * totalWidth, () =>

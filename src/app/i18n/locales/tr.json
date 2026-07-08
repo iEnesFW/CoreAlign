@@ -3149,7 +3149,8 @@
         "DivideWallOnly": "Bölme yalnızca cam bağlı bir duvara çizilebilir.",
         "DivideNoRun": "Bu duvara bağlı bir cam hattı bulunamadı.",
         "DivideInvalid": "Bu konumda bölme yapılamıyor (paneller çok dar kalır).",
-        "Divided": "Cam hattı çizim çizgisinden bölündü."
+        "Divided": "Cam hattı çizim çizgisinden bölündü.",
+        "DivideShaped": "Şekilli / boşluk-dolgu cam bölünemez — yalnız düz dikdörtgen hatlar bölünebilir."
       },
       "CollisionBlocked": "Bu değer başka bir nesneyle çakışıyor — uygulanmadı.",
       "PastePlaceHint": "Yapıştır: konuma tıkla · Esc iptal",
