@@ -650,6 +650,9 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set((s) => ({
       activeTool,
       placement: null,
+      // WHY: switching tools cancels a pending paste — otherwise pasteArmed stays true and
+      // interactionsEnabled (= !pasteArmed && !placement) silently disables the new tool's gestures.
+      pasteArmed: false,
       multiSelection:
         activeTool === 'multiselect' ||
         activeTool === 'move' ||
@@ -1144,7 +1147,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   // (syncSceneToServer) removes the created runs; redo replays `after` and re-creates them.
   commitAutofillTransaction: (before, freshProject) => {
     const current = get();
-    const after = projectToScene(freshProject, before);
+    // WHY: carry blob-only state (walls/slabs/hardware) from the CURRENT live scene, not the stale
+    // `before` snapshot — otherwise a wall/slab the user edited while the autofill getById was in
+    // flight is silently dropped when this commit overwrites the scene.
+    const after = projectToScene(freshProject, current.scene);
     const trimmed =
       current.historyIndex >= 0 ? current.history.slice(0, current.historyIndex + 1) : [];
     const withBaseline =

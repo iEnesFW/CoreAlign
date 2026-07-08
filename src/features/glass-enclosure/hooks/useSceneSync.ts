@@ -134,6 +134,10 @@ export const useSceneSync = () => {
         const [freshResp] = await safeRequest(glassProjectsApi.getById(id));
         const server = freshResp?.data ?? project;
         const idMap = new Map<string, string>();
+        // WHY: the server mints fresh ids for BOTH recreated runs and panels added to an existing
+        // run. idMap only tracks run recreations, so a panel-only add used to skip the final id
+        // reconcile and leave a client-only panel id that 404s on the next edit. Track any create.
+        let changed = false;
         const mapRunId = (runId: string) => idMap.get(runId) ?? runId;
         const targetRuns = new Map(target.runs.map((r) => [r.id, r]));
         const serverRuns = new Map(server.runs.map((r) => [r.id, r]));
@@ -182,6 +186,7 @@ export const useSceneSync = () => {
                 runId: serverRun.id,
                 input: toPanelInput(targetPanel),
               });
+              changed = true;
             } else if (panelDiffers(serverPanel, targetPanel)) {
               await updatePanelMutation.mutateAsync({
                 id,
@@ -202,6 +207,7 @@ export const useSceneSync = () => {
           const createdId = response?.data?.id;
           if (!createdId) continue;
           idMap.set(targetRun.id, createdId);
+          changed = true;
           for (const targetPanel of targetRun.panels) {
             await addPanelMutation.mutateAsync({
               id,
@@ -242,7 +248,7 @@ export const useSceneSync = () => {
         // Runs re-created on redo get NEW server ids — the store scene must adopt them or every
         // later persist against the old id 404s. Reconcile from server truth, guarded to the same
         // scene reference so a newer local edit queued behind this task is never clobbered.
-        if (idMap.size > 0) {
+        if (changed) {
           const [reconciled] = await safeRequest(glassProjectsApi.getById(id));
           const store = useDesignerStore.getState();
           if (reconciled?.data && store.scene === target) store.loadProject(reconciled.data);

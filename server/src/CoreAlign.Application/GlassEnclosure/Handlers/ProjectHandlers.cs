@@ -23,7 +23,11 @@ public static class GlassRunPanelMath
     {
         if (arcRadiusMm is > 0 && arcSweepDeg is not null && Math.Abs(arcSweepDeg.Value) >= 0.1m)
         {
-            var sweepRad = Math.Min((double)Math.Abs(arcSweepDeg.Value) * Math.PI / 180.0, Math.PI * 2);
+            // Cap at 359° to match the client's MAX_SWEEP_RAD (arcGeometry.ts) — a 360° cap here made
+            // the developed length (and thus the rebalanced panel widths) diverge from the client for
+            // a sweep in (359°, 360°].
+            const double maxSweepRad = 359.0 * Math.PI / 180.0;
+            var sweepRad = Math.Min((double)Math.Abs(arcSweepDeg.Value) * Math.PI / 180.0, maxSweepRad);
             return Math.Max(1, (int)Math.Round(arcRadiusMm.Value * sweepRad));
         }
         return lengthMm;

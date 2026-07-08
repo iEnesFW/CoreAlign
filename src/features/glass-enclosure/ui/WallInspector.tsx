@@ -75,7 +75,19 @@ export function WallInspector() {
   const isArc = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg);
 
   const commit = (patch: Partial<typeof wall>) => {
-    const candidate: SceneWallState = { ...wall, ...patch };
+    // WHY: the inspector trusted the NumberField DOM `min` (advisory only) — a programmatic/pasted/
+    // scrolled value could store a sub-floor length/height/thickness that the drag handle clamps in
+    // code. Enforce the same floors here so both edit paths agree.
+    const clampedPatch: Partial<typeof wall> = { ...patch };
+    if (typeof clampedPatch.lengthMm === 'number')
+      clampedPatch.lengthMm = Math.max(100, Math.round(clampedPatch.lengthMm));
+    if (typeof clampedPatch.heightMm === 'number')
+      clampedPatch.heightMm = Math.max(100, Math.round(clampedPatch.heightMm));
+    if (typeof clampedPatch.thicknessMm === 'number')
+      clampedPatch.thicknessMm = Math.max(50, Math.round(clampedPatch.thicknessMm));
+    if (typeof clampedPatch.heightEndMm === 'number')
+      clampedPatch.heightEndMm = Math.max(100, Math.round(clampedPatch.heightEndMm));
+    const candidate: SceneWallState = { ...wall, ...clampedPatch };
     const alreadyColliding = penetratesAny(
       buildWallFootprint(wall, 0, 0, wall.rotationDeg),
       obstacles,
@@ -95,7 +107,7 @@ export function WallInspector() {
       setDraft(wall);
       return;
     }
-    commitWallPatch(wall, patch);
+    commitWallPatch(wall, clampedPatch);
   };
 
   const edgeNotches = wall.edgeNotchMm ?? [];

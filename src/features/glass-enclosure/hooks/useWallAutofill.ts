@@ -188,10 +188,27 @@ export const useWallAutofill = () => {
     const state = useDesignerStore.getState();
     const projectId = state.projectId;
     const walls = state.scene.walls ?? [];
-    const profileSystem = profileSystemsQuery.data?.data?.[0];
+    const catalog = profileSystemsQuery.data?.data ?? [];
+    // Prefer the profile an existing run already uses (so the fill matches neighbouring glass and its
+    // max-panel-width cap), not blindly catalog[0]; fall back to the first catalog entry.
+    const existingProfileId = state.scene.runs.find((r) => r.profileSystemId)?.profileSystemId;
+    const profileSystem = catalog.find((p) => p.id === existingProfileId) ?? catalog[0];
     const profileSystemId = profileSystem?.id;
     const maxPanelWidthMm = profileSystem?.maxPanelWidthMm;
-    if (!projectId || !profileSystemId || walls.length === 0) return 0;
+    if (!projectId || walls.length === 0) return 0;
+    if (!profileSystemId) {
+      // WHY: an empty catalog used to make autofill silently return 0 (indistinguishable from
+      // "no gaps") — tell the user the real reason instead.
+      queueToast({
+        dedupeKey: 'glass-autofill-no-profile',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Wall.AutofillNoProfile', {
+          defaultValue:
+            'Profil sistemi kataloğu boş — camla doldurmadan önce bir profil sistemi tanımlayın.',
+        }),
+      });
+      return 0;
+    }
     const before = structuredClone(state.scene);
 
     const multiWallIds = state.multiSelection.wallIds;

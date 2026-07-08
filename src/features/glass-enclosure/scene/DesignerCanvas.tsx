@@ -57,6 +57,7 @@ import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
 import { findAttachedWallIds, resolveAttachedRunIds } from '../model/wallAttachment';
 import { splitPanelsAtLength } from '../model/panelSplit';
 import { panelIsShaped } from '../model/panelOutline';
+import { clampHardwareOffsets } from '../model/hardwarePlacement';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
@@ -1067,7 +1068,19 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     resizePanelEdge(runId, panelId, neighbor.id, snapMm(deltaMm));
     const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
     for (const p of freshRun?.panels ?? []) {
-      if (before.get(p.id) !== p.widthMm) void persistPanel(runId, p);
+      if (before.get(p.id) === p.widthMm) continue;
+      // WHY: a narrowed pane leaves hardware placed near the old edge overhanging the glass — re-clamp
+      // each item's offset to the new width (and persist the hardware, not just the panel width).
+      let hardwareClamped = false;
+      for (const hw of p.hardware) {
+        const clamped = clampHardwareOffsets(p.widthMm, run.heightMm, hw);
+        if (clamped.offsetXmm !== hw.offsetXmm || clamped.offsetYmm !== hw.offsetYmm) {
+          updateHardware(runId, p.id, hw.id, clamped);
+          hardwareClamped = true;
+        }
+      }
+      void persistPanel(runId, p);
+      if (hardwareClamped) void persistPanelHardware(runId, p.id);
     }
   };
 
@@ -1327,8 +1340,16 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const endHalfY = (wall.lengthMm * Math.sin(halfSweepRad)) / 2;
     const pivotX = wall.originX + endHalfX * Math.cos(rad) - endHalfY * Math.sin(rad);
     const pivotY = wall.originY + endHalfX * Math.sin(rad) + endHalfY * Math.cos(rad);
-    const groupIds = new Set(groupWallIds);
-    const movingRunIds = new Set(attachedRunIds);
+    // WHY: a multi-selection rotate previews every sibling orbiting the pivot, but the commit only
+    // rotated group-walls + attached runs — the rest snapped back. When the pivot wall is part of the
+    // multi-selection, rotate the selected walls/runs/slabs too so relative poses are preserved for
+    // rotation exactly like commitGroupMove preserves them for translation.
+    const ms = state.multiSelection;
+    const isMulti = multiSelectionHas(ms, 'wall', wallId);
+    const groupIds = new Set([...groupWallIds, ...(isMulti ? ms.wallIds : [])]);
+    groupIds.delete(wallId);
+    const movingRunIds = new Set([...attachedRunIds, ...(isMulti ? ms.runIds : [])]);
+    const movingSlabIds = new Set(isMulti ? ms.slabIds : []);
     state.applyScenePatch((sceneState) => ({
       ...sceneState,
       walls: (sceneState.walls ?? []).map((w) => {
@@ -1359,8 +1380,18 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           rotationDeg: normalizePlanAngleDeg(r.rotationDeg + commit.sweepDeg),
         };
       }),
+      slabs: (sceneState.slabs ?? []).map((sl) => {
+        if (!movingSlabIds.has(sl.id)) return sl;
+        const origin = rotatePlanPointDeg(sl.originX, sl.originY, pivotX, pivotY, commit.sweepDeg);
+        return {
+          ...sl,
+          originX: Math.round(origin.x),
+          originY: Math.round(origin.y),
+          rotationDeg: normalizePlanAngleDeg((sl.rotationDeg ?? 0) + commit.sweepDeg),
+        };
+      }),
     }));
-    for (const runId of attachedRunIds) persistFreshRun(runId);
+    for (const runId of movingRunIds) persistFreshRun(runId);
   };
 
   // Membership centre of a straight OR arc body: for an arc the straight-line midpoint is a

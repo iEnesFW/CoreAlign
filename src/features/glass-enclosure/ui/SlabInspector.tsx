@@ -137,7 +137,21 @@ export function SlabInspector() {
   // Plan arc (curves like a wall) — mutually exclusive with barrel/pitch (the up-curve). Radius/
   // sweep set the curve while the bent axis' two ends stay fixed (symmetric, no rotation).
   // Features SURVIVE (#6b): the arc branch carves + renders them in the developed (s,c) frame.
+  // WHY: the drag path guards a sub-100mm arc radius, but the inspector numeric commits didn't — a
+  // tight sweep on a short chord could persist a degenerate ~50mm band. Reject + toast, like the drag.
+  const arcRadiusTooSmall = (radiusMm: number): boolean => {
+    if (radiusMm >= 100) return false;
+    queueToast({
+      dedupeKey: 'glass-arc-radius-too-small',
+      variant: 'warning',
+      description: t('GlassEnclosure.Designer.ArcRadiusTooSmall', {
+        defaultValue: 'Yarıçap 100 mm altına inemez — daha geniş bir açı veya uzunluk seçin.',
+      }),
+    });
+    return true;
+  };
   const planArcPatch = (radiusMm: number, sweepDeg: number) => {
+    if (arcRadiusTooSmall(radiusMm)) return;
     commit({
       geomArcRadiusMm: radiusMm,
       geomArcSweepDeg: planArcSign * Math.abs(Math.round(sweepDeg * 10) / 10),
@@ -201,6 +215,7 @@ export function SlabInspector() {
     const dimAxis = dim === 'lengthMm' ? 'length' : 'depth';
     if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) && planArcAxis === dimAxis) {
       const next = deriveArcFromSweep(v, Math.abs(draft.geomArcSweepDeg ?? 90));
+      if (arcRadiusTooSmall(next.radiusMm)) return;
       commit({ [dim]: v, geomArcRadiusMm: next.radiusMm });
       return;
     }
