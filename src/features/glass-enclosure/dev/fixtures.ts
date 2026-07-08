@@ -1,73 +1,18 @@
-import type { ColorOptionDto, GlassTypeDto, ProfileSystemDto } from '../model/glassEnclosure.types';
 import type { SceneState } from '../model/project.types';
 
-// WHY: deterministic, backend-free fixtures for the dev visual-verification playground. Fixed ids
-// (not random) so screenshots + window.__CAD_SCENE__() are reproducible across runs.
+// WHY: deterministic, reproducible fixture scenes for the dev visual-verification playground. The
+// catalog ids (profile system / glass type / color) are injected from the REAL catalogs fetched
+// after the dev auto-login, so the glass renders exactly like the normal designer (mock catalog ids
+// did not resolve to a renderable material). Fixed geometry + fixed run/panel ids keep captures and
+// window.__CAD_SCENE__() reproducible.
 
-export const FIXTURE_PROFILE_ID = 'fixture-profile-standard';
-export const FIXTURE_GLASS_ID = 'fixture-glass-8mm';
-export const FIXTURE_COLOR_ID = 'fixture-color-anodized';
+export interface FixtureCatalogIds {
+  profileSystemId: string;
+  glassTypeId: string;
+  colorId: string | null;
+}
 
-export const fixtureProfileSystems: ProfileSystemDto[] = [
-  {
-    id: FIXTURE_PROFILE_ID,
-    code: 'FX-STD',
-    name: 'Fixture Standard System',
-    brandId: 'fixture-brand',
-    brandName: 'Fixture',
-    systemType: 'Fixed',
-    maxPanelWidthMm: 3000,
-    maxPanelHeightMm: 3000,
-    maxPanelWeightKg: 200,
-    supportedGlassThicknesses: [8, 10, 12],
-    supportedOpenings: ['Fixed', 'SlidingLeft', 'SlidingRight', 'Folding', 'Hinged', 'Guillotine'],
-    certificationClass: null,
-    fireClass: null,
-    thermalUValue: null,
-    thermalBreakFactor: 1,
-    description: null,
-    isActive: true,
-    items: [],
-  },
-];
-
-export const fixtureGlassTypes: GlassTypeDto[] = [
-  {
-    id: FIXTURE_GLASS_ID,
-    code: 'FX-8T',
-    name: 'Fixture 8mm Tempered',
-    thicknessMm: 8,
-    structure: 'Tempered',
-    glassLayers: [8],
-    uValue: 5.8,
-    soundDb: 32,
-    maxPanelAreaM2: 6,
-    allowablePressurePa: 1200,
-    weightKgPerM2: 20,
-    pricePerM2: 100,
-    currency: 'USD',
-    linkedProductId: null,
-    isActive: true,
-  },
-];
-
-export const fixtureColors: ColorOptionDto[] = [
-  {
-    id: FIXTURE_COLOR_ID,
-    code: 'FX-ANO',
-    name: 'Fixture Anodized',
-    ralCode: null,
-    hexColor: '#9aa5ad',
-    finishType: 'Anodized',
-    priceModifierPercent: 0,
-    sortOrder: 0,
-    isActive: true,
-  },
-];
-
-const metadata = { schemaVersion: 3, savedAt: '2026-01-01T00:00:00.000Z' };
-
-const emptySceneBase = (): Pick<
+const base = (): Pick<
   SceneState,
   'connections' | 'walls' | 'slabs' | 'surfaces' | 'camera' | 'metadata'
 > => ({
@@ -76,14 +21,13 @@ const emptySceneBase = (): Pick<
   slabs: [],
   surfaces: [],
   camera: null,
-  metadata: { ...metadata },
+  metadata: { schemaVersion: 3, savedAt: '2026-01-01T00:00:00.000Z' },
 });
 
-// A single arc-bent run whose one pane is a triangle polygon — reproduces the arc shaped hole-fill
-// result so the silhouette FRAME (buildCurvedShapedFrameGeometry) can be visually + numerically
-// verified. radius 3000mm, sweep 40° → chord ≈ 2052mm; the triangle fills the 2052×2200 cell.
-const arcHolefillTriangle: SceneState = {
-  ...emptySceneBase(),
+// WHY: arc-bent run with one triangle-polygon pane — reproduces the arc shaped hole-fill so the
+// silhouette frame (buildCurvedShapedFrameGeometry) can be visually verified.
+const arcHolefillTriangle = (ids: FixtureCatalogIds): SceneState => ({
+  ...base(),
   runs: [
     {
       id: 'fixture-run-arc-tri',
@@ -94,8 +38,8 @@ const arcHolefillTriangle: SceneState = {
       originX: 0,
       originY: 0,
       rotationDeg: 0,
-      profileSystemId: FIXTURE_PROFILE_ID,
-      colorId: FIXTURE_COLOR_ID,
+      profileSystemId: ids.profileSystemId,
+      colorId: ids.colorId,
       hasTopDrip: true,
       hasBottomThreshold: false,
       geomArcRadiusMm: 3000,
@@ -107,7 +51,7 @@ const arcHolefillTriangle: SceneState = {
           panelIndex: 0,
           widthMm: 2052,
           openingType: 'Fixed',
-          glassTypeId: FIXTURE_GLASS_ID,
+          glassTypeId: ids.glassTypeId,
           hasHandle: false,
           hasLock: false,
           hasBrushSeal: false,
@@ -123,11 +67,12 @@ const arcHolefillTriangle: SceneState = {
       ],
     },
   ],
-};
+});
 
-// A plain straight run with three rectangular panes — the baseline sanity render (no arc, no shape).
-const straightRun: SceneState = {
-  ...emptySceneBase(),
+// WHY: baseline sanity render — three rectangular panes; the middle pane carries a handle + lock so
+// hardware rendering is visible too.
+const straightRun = (ids: FixtureCatalogIds): SceneState => ({
+  ...base(),
   runs: [
     {
       id: 'fixture-run-straight',
@@ -138,8 +83,8 @@ const straightRun: SceneState = {
       originX: 0,
       originY: 0,
       rotationDeg: 0,
-      profileSystemId: FIXTURE_PROFILE_ID,
-      colorId: FIXTURE_COLOR_ID,
+      profileSystemId: ids.profileSystemId,
+      colorId: ids.colorId,
       hasTopDrip: true,
       hasBottomThreshold: false,
       panels: [0, 1, 2].map((i) => ({
@@ -147,19 +92,23 @@ const straightRun: SceneState = {
         panelIndex: i,
         widthMm: 1000,
         openingType: 'Fixed' as const,
-        glassTypeId: FIXTURE_GLASS_ID,
-        hasHandle: false,
-        hasLock: false,
+        glassTypeId: ids.glassTypeId,
+        hasHandle: i === 1,
+        hasLock: i === 1,
         hasBrushSeal: false,
         hardware: [],
       })),
     },
   ],
-};
+});
 
-export const FIXTURE_SCENES: Record<string, SceneState> = {
+const BUILDERS: Record<string, (ids: FixtureCatalogIds) => SceneState> = {
   'arc-holefill-triangle': arcHolefillTriangle,
   'straight-run': straightRun,
 };
 
+export const FIXTURE_KEYS = Object.keys(BUILDERS);
 export const DEFAULT_FIXTURE = 'arc-holefill-triangle';
+
+export const buildFixtureScene = (key: string, ids: FixtureCatalogIds): SceneState =>
+  (BUILDERS[key] ?? BUILDERS[DEFAULT_FIXTURE])(ids);

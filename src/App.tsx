@@ -113,13 +113,16 @@ import {
   LandingPage,
 } from '@/app/router/routes';
 
-// Dev-only visual-verification playground (backend/auth-free fixture render). Registered ONLY under
-// import.meta.env.DEV so it never reaches a production bundle route.
-const GlassFixturePlayground = lazy(() =>
-  import('@/features/glass-enclosure/dev/GlassFixturePlayground').then((m) => ({
-    default: m.GlassFixturePlayground,
-  })),
-);
+// Dev-only visual-verification playground (login-free fixture render against the real catalogs).
+// The dynamic import is gated on import.meta.env.DEV so Rollup dead-code-eliminates the whole chunk
+// (and the demo credentials it references) from production builds — not just the route registration.
+const GlassFixturePlayground = import.meta.env.DEV
+  ? lazy(() =>
+      import('@/features/glass-enclosure/dev/GlassFixturePlayground').then((m) => ({
+        default: m.GlassFixturePlayground,
+      })),
+    )
+  : null;
 
 const RecaptchaWrapper = () => (
   <GoogleReCaptchaProvider
@@ -147,7 +150,7 @@ function App() {
                   <ConfirmDialogProvider>
                     <Suspense fallback={<RouteFallback />}>
                       <Routes>
-                        {import.meta.env.DEV && (
+                        {import.meta.env.DEV && GlassFixturePlayground && (
                           <Route path="/dev/glass-fixture" element={<GlassFixturePlayground />} />
                         )}
                         <Route element={<RecaptchaWrapper />}>

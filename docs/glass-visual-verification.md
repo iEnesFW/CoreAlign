@@ -15,10 +15,14 @@ This is the concrete implementation of the three-tier verification approach (see
 ## Pieces
 
 - **`/dev/glass-fixture` route** — registered only under `import.meta.env.DEV` (never in production),
-  outside auth. Injects a named fixture scene into the designer store and renders the real
-  `CanvasPanel` with mock catalogs + low quality. Query params:
+  outside `ProtectedRoute`. **Login-free**: when the session isn't authenticated it auto-signs-in with
+  the public demo credentials (`admin@demo.local` / `Demo!2345`, from `DemoDataSeeder`) so you never
+  get an id/pw prompt; the refresh cookie then persists the session. It fetches the **real** catalogs
+  (profile systems / glass types / colors) and injects a named fixture scene into the designer store,
+  rendering the real `CanvasPanel` exactly like the normal designer (so the glass renders identically).
+  Requires the backend up (port 5178) for the catalogs. Query params:
   - `?scene=<key>` — a fixture from `src/features/glass-enclosure/dev/fixtures.ts`
-    (`arc-holefill-triangle`, `straight-run`, …). Add more there.
+    (`arc-holefill-triangle`, `straight-run`, …). Add more there via `buildFixtureScene(key, ids)`.
 - **`SceneDataExporter`** (`src/features/glass-enclosure/dev/`) — exposes `window.__CAD_SCENE__()`
   (the exact store scene + derived arc math). Dev/E2E-gated. This is a STORE export (mm-precise),
   deliberately not a lossy `THREE.Box3` readback.
@@ -27,8 +31,10 @@ This is the concrete implementation of the three-tier verification approach (see
 ## Usage
 
 ```bash
-npm run dev                 # Vite on :5273 (no backend needed for /dev/glass-fixture)
-# open in a NORMAL browser to SEE the render:
+# backend must be up (the route fetches the real catalogs):
+dotnet run --project server/src/CoreAlign.API   # API on :5178
+npm run dev                                      # Vite on :5273
+# open in a NORMAL browser to SEE the render (auto-logs-in, no id/pw prompt):
 #   http://localhost:5273/dev/glass-fixture?scene=arc-holefill-triangle
 # or read exact geometry autonomously:
 npm run e2e:install         # once, for Playwright chromium
