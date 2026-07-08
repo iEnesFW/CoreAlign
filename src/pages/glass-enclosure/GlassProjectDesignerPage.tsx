@@ -20,6 +20,7 @@ import { CommercePanel } from '@/features/glass-enclosure/ui/CommercePanel';
 import { FieldSurveyForm } from '@/features/glass-enclosure/ui/FieldSurveyForm';
 import { ExportMenu } from '@/features/glass-enclosure/ui/ExportMenu';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
+import { SceneDataExporter } from '@/features/glass-enclosure/dev/SceneDataExporter';
 import { DesignerShell } from '@/features/glass-enclosure/designer/layout';
 import {
   RunsPanel,
@@ -944,18 +945,21 @@ export function GlassProjectDesignerPage() {
   );
 
   return (
-    <DesignerShell
-      headerTitle={project.projectName}
-      headerSubtitle={headerSubtitle}
-      headerRight={headerRight}
-      toolbarSlot={toolbarSlot}
-      onBack={handleBack}
-      runsSlot={runsSlot}
-      canvasSlot={canvasSlot}
-      inspectorSlot={inspectorSlot}
-      bomSlot={bomSlot}
-      sidePanelsDefaultCollapsed={isReportMode}
-    />
+    <>
+      <SceneDataExporter />
+      <DesignerShell
+        headerTitle={project.projectName}
+        headerSubtitle={headerSubtitle}
+        headerRight={headerRight}
+        toolbarSlot={toolbarSlot}
+        onBack={handleBack}
+        runsSlot={runsSlot}
+        canvasSlot={canvasSlot}
+        inspectorSlot={inspectorSlot}
+        bomSlot={bomSlot}
+        sidePanelsDefaultCollapsed={isReportMode}
+      />
+    </>
   );
 }
 
