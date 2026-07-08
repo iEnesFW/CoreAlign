@@ -46,3 +46,20 @@ PNG is therefore usually blank.
 The route renders **correctly in a normal browser** (the app itself works). So the visual workflow is:
 open `/dev/glass-fixture?scene=…` in a real browser and eyeball / screenshot it; use
 `__CAD_SCENE__()` (via the script) for the autonomous numerical checks.
+
+**Exhaustively tested (do not re-litigate):** Playwright chromium (headless / headed / real-GPU /
+SwiftShader), Firefox, and WebKit all emit `Context Lost` → blank. Driving a **real Chrome via the
+claude-in-chrome extension** DOES render a first frame (better than Playwright), but a repeated
+CDP `Page.captureScreenshot` then freezes the WebGL renderer, and a heavy CSG scene (arc frame)
+freezes it on mount. So **programmatic pixel capture of this WebGL canvas is unreliable in every
+tested automation**; treat autonomous verification as NUMERICAL (`__CAD_SCENE__` + vitest) and do
+visual checks by opening the route in a human browser.
+
+## Recommended verification recipe (any bug/feature, incl. future ones)
+
+1. Build the END-STATE as a fixture in `fixtures.ts` (a scene with the objects/shape/hardware/hole
+   already in place — you do not simulate the drawing tools).
+2. `node scripts/glass-fixture-verify.mjs <sceneKey>` → assert the geometry numerically.
+3. Open `/dev/glass-fixture?scene=<sceneKey>` in a real browser to eyeball the render.
+4. Tool/interaction LOGIC (divide, autofill, hole-fill, hardware placement) is covered by the pure
+   unit tests (`*.test.ts`); the fixture shows the resulting state.
