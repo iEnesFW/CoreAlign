@@ -167,6 +167,7 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
         private readonly decimal _edgeMargin;
         private readonly List<FreeRect> _freeRects;
         private readonly List<PlacedPanel> _placements = new();
+        private decimal _usedNetAreaMm2;
 
         public MaxRectsSheet(
             Guid sheetId,
@@ -199,6 +200,12 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
                 item.PanelId, item.Label, bestRect.X, bestRect.Y, bestWidth, bestHeight, rotated,
                 item.Shape, item.NominalHeightMm);
             _placements.Add(placed);
+            // Utilization/waste must credit the NET glass silhouette, not the rectangular blank — a
+            // triangle/arch/trapezoid still occupies its bbox on the sheet (packing is unchanged),
+            // but the offcut cut away inside that blank is real waste (§4 fire). Rotation-invariant,
+            // so the original authoring (width, nominal height) is used, not the placed dims.
+            _usedNetAreaMm2 += PanelCutGeometry.NetAreaMm2(
+                item.Width, item.NominalHeightMm ?? item.Height, item.Shape);
 
             if (guillotineOnly)
             {
@@ -214,7 +221,7 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
 
         public PlacedSheet ToPlacedSheet()
         {
-            var used = _placements.Sum(p => p.WidthMm * p.HeightMm);
+            var used = _usedNetAreaMm2;
             var capacity = _sheetWidth * _sheetHeight;
             var waste = capacity - used;
             var util = capacity == 0m ? 0m : decimal.Round(used * 100m / capacity, 3);
