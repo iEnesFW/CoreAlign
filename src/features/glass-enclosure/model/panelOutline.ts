@@ -1,4 +1,5 @@
 import type { CornerRadiiMm, PanelShapeKind, PanelTopShape } from './project.types';
+import { panelPolygonAreaMm2 } from './panelPolygon';
 
 export interface PanelOutlineSpec {
   widthMm: number;
@@ -186,4 +187,15 @@ export const panelIsShaped = (spec: {
   if (shape === 'raked') return true;
   if (shape === 'arched' && (spec.archRiseMm ?? 0) > 0) return true;
   return hasCornerValue(spec.cornerRadiiMm) || hasCornerValue(spec.cornerNotchMm);
+};
+
+// Net glass area (mm²) of a panel silhouette — shoelace of the SAME outline the renderer draws
+// (and the server PanelCutGeometry.NetAreaMm2 mirrors), so a triangle/arch/raked/ellipse pane is
+// credited its true area, not its rectangular bounding box. A plain rectangle short-circuits to w×h.
+export const panelNetAreaMm2 = (spec: PanelOutlineSpec): number => {
+  const w = Math.max(1, spec.widthMm);
+  const h = Math.max(1, spec.heightMm);
+  if (!panelIsShaped(spec)) return w * h;
+  const outline = panelOutlinePointsMm(spec);
+  return outline.length >= 3 ? panelPolygonAreaMm2(outline) : w * h;
 };

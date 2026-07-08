@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { panelIsShaped, panelOutlinePointsMm } from './panelOutline';
+import { panelIsShaped, panelNetAreaMm2, panelOutlinePointsMm } from './panelOutline';
 
 describe('panelOutlinePointsMm', () => {
   it('a flat head is a plain bottom-centred rectangle', () => {
@@ -190,5 +190,41 @@ describe('panelIsShaped', () => {
     expect(panelIsShaped({ topShape: 'arched', archRiseMm: 200 })).toBe(true);
     expect(panelIsShaped({ cornerRadiiMm: { tl: 50 } })).toBe(true);
     expect(panelIsShaped({ cornerNotchMm: { br: 80 } })).toBe(true);
+  });
+});
+
+describe('panelNetAreaMm2', () => {
+  it('a plain rectangle is width × height (no shape overhead)', () => {
+    expect(panelNetAreaMm2({ widthMm: 1000, heightMm: 2000 })).toBe(2_000_000);
+  });
+
+  it('a triangle polygon is half its bounding box, not the full box', () => {
+    const tri = [
+      { x: -500, y: 0 },
+      { x: 500, y: 0 },
+      { x: 0, y: 2000 },
+    ];
+    expect(
+      panelNetAreaMm2({ widthMm: 1000, heightMm: 2000, shapeKind: 'polygon', points: tri }),
+    ).toBe(1_000_000);
+  });
+
+  it('an ellipse is about π·w·h/4 (inscribed), well under the bounding box', () => {
+    const area = panelNetAreaMm2({ widthMm: 1000, heightMm: 2000, shapeKind: 'ellipse' });
+    const analytic = (Math.PI * 1000 * 2000) / 4;
+    expect(area).toBeGreaterThan(analytic * 0.97);
+    expect(area).toBeLessThanOrEqual(analytic);
+    expect(area).toBeLessThan(2_000_000 * 0.82);
+  });
+
+  it('a raked (trapezoid) top is the average-height trapezoid area', () => {
+    // hL = 2000, hR = 1000 → area = w·(hL+hR)/2 = 1000·1500 = 1,500,000
+    const area = panelNetAreaMm2({
+      widthMm: 1000,
+      heightMm: 2000,
+      topShape: 'raked',
+      topRightHeightMm: 1000,
+    });
+    expect(area).toBeCloseTo(1_500_000, -1);
   });
 });

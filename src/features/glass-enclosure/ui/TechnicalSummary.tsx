@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
 import { isRealArc, resolveArc } from '../model/arcGeometry';
+import { panelNetAreaMm2 } from '../model/panelOutline';
+import { parsePanelPolygonPoints } from '../model/panelPolygon';
 import type { GlassTypeDto, ProfileSystemDto } from '../model/glassEnclosure.types';
 
 interface TechnicalSummaryProps {
@@ -28,7 +30,21 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
     for (const run of runs) {
       if (run.profileSystemId) systemsUsed.add(run.profileSystemId);
       for (const panel of run.panels) {
-        const areaM2 = (panel.widthMm * run.heightMm) / 1_000_000;
+        // Net silhouette area (arc panels already carry developed widthMm; shaped panels no longer
+        // over-count as their bounding box), matching the rendered glass and the server BOM m²/kg.
+        const areaM2 =
+          panelNetAreaMm2({
+            widthMm: panel.widthMm,
+            heightMm: panel.heightMm ?? run.heightMm,
+            topShape: panel.topShape,
+            topRightHeightMm: panel.topRightHeightMm,
+            archRiseMm: panel.archRiseMm,
+            cornerRadiiMm: panel.cornerRadiiMm,
+            cornerNotchMm: panel.cornerNotchMm,
+            shapeKind: panel.shapeKind,
+            points:
+              panel.shapeKind === 'polygon' ? parsePanelPolygonPoints(panel.shapePointsJson) : null,
+          }) / 1_000_000;
         totalAreaM2 += areaM2;
         panelCount += 1;
         const glass = glassMap.get(panel.glassTypeId);
