@@ -56,6 +56,7 @@ import {
 import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
 import { findAttachedWallIds, resolveAttachedRunIds } from '../model/wallAttachment';
 import { splitPanelsAtLength } from '../model/panelSplit';
+import { panelIsShaped } from '../model/panelOutline';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
@@ -488,6 +489,18 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   };
 
   const paintRun = (runId: string) => {
+    // WHY: a glass run carries only a catalog colorId — it has no material-texture target (unlike
+    // walls/slabs). Painting a MATERIAL onto glass was a silent no-op; tell the user instead.
+    if (paintMaterial) {
+      queueToast({
+        dedupeKey: 'glass-paint-run-material',
+        variant: 'info',
+        description: t('GlassEnclosure.Designer.Paint.MaterialNotOnGlass', {
+          defaultValue: 'Malzeme dokusu cama uygulanamaz — cam için bir renk seçin.',
+        }),
+      });
+      return;
+    }
     if (!paintColor) return;
     updateRun(runId, { colorId: paintColor.id });
     persistFreshRun(runId);
@@ -734,15 +747,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       }
       // Divide only makes sense for a straight run of rectangular panes — a shaped/hole-fill pane
       // (triangle, arch, free outline) can't be cut into two rectangles without destroying its shape.
-      if (
-        hostRun.panels.some(
-          (p) =>
-            p.shapeKind ||
-            p.shapePointsJson ||
-            (p.topShape && p.topShape !== 'flat') ||
-            (p.archRiseMm ?? 0) > 0,
-        )
-      ) {
+      if (hostRun.panels.some((p) => panelIsShaped(p) || Boolean(p.shapePointsJson))) {
         queueToast({
           dedupeKey: 'glass-pen-divide-shaped',
           variant: 'warning',

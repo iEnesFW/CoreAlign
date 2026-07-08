@@ -1210,6 +1210,16 @@ export function WallObject({
     if (gestures.consumeClick() || drawDrag.consumeClick()) return;
     if (drawActive) {
       if (drawIsSplit) {
+        if (isArcWall) {
+          queueToast({
+            dedupeKey: 'glass-wall-split-arc',
+            variant: 'warning',
+            description: t('GlassEnclosure.Designer.Wall.SplitArcUnsupported', {
+              defaultValue: 'Kavisli duvar bölünemez — önce düz bir duvara dönüştürün.',
+            }),
+          });
+          return;
+        }
         const local = localPointMm(event.point);
         if (local) splitWall(wall.id, local.x);
       }

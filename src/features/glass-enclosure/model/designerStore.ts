@@ -283,6 +283,30 @@ interface DesignerState {
 const SCHEMA_VERSION = 1;
 const HISTORY_LIMIT = 100;
 const MIN_SPLIT_SEGMENT_MM = 100;
+const OPENING_MIN_MM = 100;
+const OPENING_EDGE_MM = 20;
+
+// WHY: opening edits (inspector fields) were previously stored verbatim — a negative/oversized
+// offset/width/sill/height made the opening fall outside the wall face and silently vanish from the
+// 3D body (clampedOpeningRectM returns null) while lingering in the model. Clamp every opening
+// mutation to the wall face so an entered value is honoured (bounded), never dropped without a trace.
+const clampWallOpening = (wall: SceneWallState, opening: SceneWallOpening): SceneWallOpening => {
+  const faceLen = developedLengthMm(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg);
+  const topLimit = Math.max(1, Math.min(wall.heightMm, wall.heightEndMm ?? wall.heightMm));
+  const widthCap = Math.max(OPENING_MIN_MM, faceLen - 2 * OPENING_EDGE_MM);
+  const widthMm = Math.max(OPENING_MIN_MM, Math.min(opening.widthMm, widthCap));
+  const halfW = widthMm / 2;
+  const offsetMm = Math.min(Math.max(opening.offsetMm, halfW), Math.max(halfW, faceLen - halfW));
+  const heightMm = Math.max(OPENING_MIN_MM, Math.min(opening.heightMm, topLimit));
+  const sillMm = Math.min(Math.max(0, opening.sillMm), Math.max(0, topLimit - heightMm));
+  return {
+    ...opening,
+    offsetMm: Math.round(offsetMm),
+    widthMm: Math.round(widthMm),
+    sillMm: Math.round(sillMm),
+    heightMm: Math.round(heightMm),
+  };
+};
 
 const emptyScene = (): SceneState => ({
   runs: [],
@@ -786,7 +810,9 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
           ? {
               ...wall,
               openings: (wall.openings ?? []).map((opening) =>
-                opening.id === openingId ? { ...opening, ...patch } : opening,
+                opening.id === openingId
+                  ? clampWallOpening(wall, { ...opening, ...patch })
+                  : opening,
               ),
             }
           : wall,
@@ -855,6 +881,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const walls = current.scene.walls ?? [];
     const wall = walls.find((w) => w.id === wallId);
     if (!wall) return;
+    // WHY: splitting spreads ...wall into both legs, so an arc's radius/sweep would be copied whole
+    // and each leg would render the FULL original arc. `alongMm` is also a chord offset, meaningless
+    // on a curved body. Reject arc-wall splits (callers surface a toast); proper sub-arc split TBD.
+    if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) return;
     const along = Math.round(alongMm);
     if (along < MIN_SPLIT_SEGMENT_MM || along > wall.lengthMm - MIN_SPLIT_SEGMENT_MM) return;
     if (wallSplitCrossesOpening(wall, along)) return;
