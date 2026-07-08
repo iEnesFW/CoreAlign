@@ -34,7 +34,7 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
   const runs = useDesignerStore((s) => s.scene.runs);
   const updatePanel = useDesignerStore((s) => s.updatePanel);
   const setSelection = useDesignerStore((s) => s.setSelection);
-  const { createPanel, persistPanel, deletePanel } = usePanelEntityActions();
+  const { createPanel, persistPanel, persistPanelHardware, deletePanel } = usePanelEntityActions();
   const { persistRun } = useRunEntityActions();
 
   const { run, panel } = useMemo(() => {
@@ -77,6 +77,11 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
         }
       });
       void persistRun(freshRun);
+    }
+    // WHY: a fitting bool (has*) only reaches the quote via the structural hardware rows, which
+    // the plain persistPanel omits (hardware=null) — persist them so a toggled handle/lock is quoted.
+    if ('hasHandle' in patch || 'hasLock' in patch || 'hasBrushSeal' in patch) {
+      void persistPanelHardware(run.id, panel.id);
     }
   };
   const show = (section: InspectorSection) => (sections ?? []).includes(section);

@@ -33,3 +33,56 @@ export const aggregatePanelHardware = (items: SceneHardwareItem[]): PanelHardwar
   }
   return [...totals].map(([hardwareItemId, quantity]) => ({ hardwareItemId, quantity }));
 };
+
+interface CatalogHardwareRef {
+  id: string;
+  category: HardwareCategoryKind;
+}
+
+interface PanelHardwareSource {
+  hardware: SceneHardwareItem[];
+  hasHandle?: boolean;
+  hasLock?: boolean;
+  hasBrushSeal?: boolean;
+}
+
+type PanelHardwareBoolKey = 'hasHandle' | 'hasLock' | 'hasBrushSeal';
+
+const BOOL_HARDWARE_KINDS: ReadonlyArray<readonly [PanelHardwareBoolKey, SceneHardwareKind]> = [
+  ['hasHandle', 'Handle'],
+  ['hasLock', 'Lock'],
+  ['hasBrushSeal', 'GasketStrip'],
+];
+
+// WHY: panel hardware reaches the BOM from two models — explicit SceneHardwareItem objects AND
+// the quick has* fitting bools (render-only, never catalog-linked → never quoted). Fold each true
+// bool into a quoted piece via its category's first catalog item, skipping it when an explicit
+// object of that same category is already quoted (a handle placed both ways is one handle, not two).
+export const combinePanelHardware = (
+  panel: PanelHardwareSource,
+  catalog: readonly CatalogHardwareRef[],
+): PanelHardwareInput[] => {
+  const categoryById = new Map(catalog.map((h) => [h.id, h.category]));
+  const totals = new Map<string, number>();
+  for (const item of panel.hardware) {
+    const id = item.hardwareItemId;
+    if (!id) continue;
+    const quantity = item.quantity ?? 1;
+    if (quantity <= 0) continue;
+    totals.set(id, (totals.get(id) ?? 0) + quantity);
+  }
+  const quotedCategories = new Set<HardwareCategoryKind>();
+  for (const id of totals.keys()) {
+    const category = categoryById.get(id);
+    if (category) quotedCategories.add(category);
+  }
+  for (const [flag, kind] of BOOL_HARDWARE_KINDS) {
+    if (!panel[flag]) continue;
+    const category = sceneHardwareKindToCategory(kind);
+    if (quotedCategories.has(category)) continue;
+    const match = catalog.find((h) => h.category === category);
+    if (!match) continue;
+    totals.set(match.id, 1);
+  }
+  return [...totals].map(([hardwareItemId, quantity]) => ({ hardwareItemId, quantity }));
+};

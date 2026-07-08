@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { useDesignerStore } from '../model/designerStore';
 import { developedLengthMm } from '../model/arcGeometry';
-import { aggregatePanelHardware } from '../model/panelHardware';
+import { combinePanelHardware } from '../model/panelHardware';
 import { createPanelFromTemplate } from '../model/panelDefaults';
 import { moveWallWithAttachments, resolveAttachedRunIds } from '../model/wallAttachment';
 import { enqueuePersist } from '../model/persistQueue';
@@ -15,6 +15,7 @@ import {
   useUpdatePanelMutation,
   useUpdateRunMutation,
 } from './useGlassProjectQueries';
+import { useHardwareItemsQuery } from './useGlassEnclosureQueries';
 import type {
   ScenePanelState,
   SceneRunState,
@@ -130,6 +131,7 @@ export const usePanelEntityActions = () => {
   const updatePanelMutation = useUpdatePanelMutation();
   const removePanelMutation = useRemovePanelMutation();
   const setRunPanelsMutation = useSetRunPanelsMutation();
+  const hardwareCatalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
 
   const createPanelFrom = async (runId: string, source: Omit<ScenePanelState, 'panelIndex'>) => {
     if (!projectId) return null;
@@ -210,7 +212,7 @@ export const usePanelEntityActions = () => {
           id: projectId,
           runId,
           panelId,
-          input: { ...toPanelInput(panel), hardware: aggregatePanelHardware(panel.hardware) },
+          input: { ...toPanelInput(panel), hardware: combinePanelHardware(panel, hardwareCatalog) },
         }),
       ),
     );

@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { aggregatePanelHardware, sceneHardwareKindToCategory } from './panelHardware';
+import {
+  aggregatePanelHardware,
+  combinePanelHardware,
+  sceneHardwareKindToCategory,
+} from './panelHardware';
+import type { HardwareCategoryKind } from './glassEnclosure.types';
 import type { SceneHardwareItem } from './project.types';
+
+const CATALOG: { id: string; category: HardwareCategoryKind }[] = [
+  { id: 'handle-1', category: 'Handle' },
+  { id: 'handle-2', category: 'Handle' },
+  { id: 'lock-1', category: 'Lock' },
+  { id: 'gasket-1', category: 'Gasket' },
+];
 
 const hw = (overrides: Partial<SceneHardwareItem>): SceneHardwareItem => ({
   id: crypto.randomUUID(),
@@ -41,6 +53,54 @@ describe('aggregatePanelHardware', () => {
   it('skips non-positive quantities', () => {
     expect(aggregatePanelHardware([hw({ hardwareItemId: 'A', quantity: 0 })])).toEqual([]);
     expect(aggregatePanelHardware([hw({ hardwareItemId: 'A', quantity: -2 })])).toEqual([]);
+  });
+});
+
+describe('combinePanelHardware', () => {
+  it('folds a true has* bool into a quoted piece via its category catalog item', () => {
+    const result = combinePanelHardware({ hardware: [], hasHandle: true }, CATALOG);
+    expect(result).toEqual([{ hardwareItemId: 'handle-1', quantity: 1 }]);
+  });
+
+  it('maps each bool to its own category (handle/lock/gasket)', () => {
+    const result = combinePanelHardware(
+      { hardware: [], hasHandle: true, hasLock: true, hasBrushSeal: true },
+      CATALOG,
+    );
+    expect(result).toEqual([
+      { hardwareItemId: 'handle-1', quantity: 1 },
+      { hardwareItemId: 'lock-1', quantity: 1 },
+      { hardwareItemId: 'gasket-1', quantity: 1 },
+    ]);
+  });
+
+  it('suppresses the bool when the exact catalog item is already an explicit object', () => {
+    const result = combinePanelHardware(
+      { hardware: [hw({ hardwareItemId: 'handle-1' })], hasHandle: true },
+      CATALOG,
+    );
+    expect(result).toEqual([{ hardwareItemId: 'handle-1', quantity: 1 }]);
+  });
+
+  it('suppresses the bool when a DIFFERENT catalog item of the same category is quoted (no double)', () => {
+    const result = combinePanelHardware(
+      { hardware: [hw({ hardwareItemId: 'handle-2' })], hasHandle: true },
+      CATALOG,
+    );
+    expect(result).toEqual([{ hardwareItemId: 'handle-2', quantity: 1 }]);
+  });
+
+  it('does not let a render-only (unquoted) object suppress the bool', () => {
+    const result = combinePanelHardware(
+      { hardware: [hw({ kind: 'Handle', hardwareItemId: null })], hasHandle: true },
+      CATALOG,
+    );
+    expect(result).toEqual([{ hardwareItemId: 'handle-1', quantity: 1 }]);
+  });
+
+  it('skips false bools and bools with no catalog match', () => {
+    expect(combinePanelHardware({ hardware: [], hasHandle: false }, CATALOG)).toEqual([]);
+    expect(combinePanelHardware({ hardware: [], hasLock: true }, [])).toEqual([]);
   });
 });
 
