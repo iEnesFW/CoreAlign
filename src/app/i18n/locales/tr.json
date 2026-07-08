@@ -3929,6 +3929,7 @@
       "Title": "Donanım",
       "Objects": "Donanım nesneleri",
       "Empty": "Henüz donanım eklenmedi",
+      "NotQuoted": "(teklife girmez)",
       "Kind": {
         "Handle": "Kulp",
         "Lock": "Kilit",

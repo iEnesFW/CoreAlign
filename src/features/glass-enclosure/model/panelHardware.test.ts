@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregatePanelHardware } from './panelHardware';
+import { aggregatePanelHardware, sceneHardwareKindToCategory } from './panelHardware';
 import type { SceneHardwareItem } from './project.types';
 
 const hw = (overrides: Partial<SceneHardwareItem>): SceneHardwareItem => ({
@@ -41,5 +41,16 @@ describe('aggregatePanelHardware', () => {
   it('skips non-positive quantities', () => {
     expect(aggregatePanelHardware([hw({ hardwareItemId: 'A', quantity: 0 })])).toEqual([]);
     expect(aggregatePanelHardware([hw({ hardwareItemId: 'A', quantity: -2 })])).toEqual([]);
+  });
+});
+
+describe('sceneHardwareKindToCategory', () => {
+  it('maps render kinds to catalog categories for auto-linking', () => {
+    expect(sceneHardwareKindToCategory('Handle')).toBe('Handle');
+    expect(sceneHardwareKindToCategory('PullHandle')).toBe('Handle');
+    expect(sceneHardwareKindToCategory('GasketStrip')).toBe('Gasket');
+    expect(sceneHardwareKindToCategory('CornerJoint')).toBe('CornerPost');
+    expect(sceneHardwareKindToCategory('DripProfile')).toBe('DripCap');
+    expect(sceneHardwareKindToCategory('Accessory')).toBe('Other');
   });
 });

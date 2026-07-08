@@ -2,6 +2,8 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
+import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
+import { sceneHardwareKindToCategory } from '../model/panelHardware';
 import { HARDWARE_KINDS, createHardwareItem } from '../model/hardwareDefaults';
 import type { ScenePanelState, SceneHardwareKind } from '../model/project.types';
 
@@ -16,6 +18,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
   const removeHardware = useDesignerStore((s) => s.removeHardware);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { persistPanelHardware } = usePanelEntityActions();
+  const catalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
 
   const removeAndPersist = (hardwareId: string) => {
     removeHardware(runId, panel.id, hardwareId);
@@ -29,9 +32,14 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
     setSelection({ kind: 'hardware', runId, panelId: panel.id, connectionId: null, hardwareId });
 
   const handleAdd = (kind: SceneHardwareKind) => {
-    const item = createHardwareItem(kind);
+    const base = createHardwareItem(kind);
+    // Auto-link the first catalog item of the matching category so the piece is quoted immediately;
+    // the exact item is refined in the inspector. Unmatched kinds stay render-only until linked.
+    const match = catalog.find((h) => h.category === sceneHardwareKindToCategory(kind));
+    const item = match ? { ...base, hardwareItemId: match.id, quantity: 1 } : base;
     addHardware(runId, panel.id, item);
     selectHardware(item.id);
+    if (match) void persistPanelHardware(runId, panel.id);
   };
 
   return (
@@ -74,6 +82,11 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
                   style={{ backgroundColor: hw.colorHex }}
                 />
                 {kindLabel(hw.kind)}
+                {!hw.hardwareItemId && (
+                  <span className="text-[10px] text-amber-500 dark:text-amber-400">
+                    {t('GlassEnclosure.Hardware.NotQuoted', { defaultValue: '(teklife girmez)' })}
+                  </span>
+                )}
               </button>
               <button
                 type="button"

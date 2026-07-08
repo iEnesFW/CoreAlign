@@ -3929,6 +3929,7 @@
       "Title": "Hardware",
       "Objects": "Hardware objects",
       "Empty": "No hardware added yet",
+      "NotQuoted": "(not quoted)",
       "Kind": {
         "Handle": "Handle",
         "Lock": "Lock",
