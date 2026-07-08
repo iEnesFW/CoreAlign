@@ -66,7 +66,7 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const updateSlab = useDesignerStore((s) => s.updateSlab);
   const updateSurface = useDesignerStore((s) => s.updateSurface);
   const setSelection = useDesignerStore((s) => s.setSelection);
-  const { createPanel, deletePanel, deleteRun } = useDesignerEntityActions();
+  const { createPanel, deletePanel, deleteRun, persistPanelHardware } = useDesignerEntityActions();
   const { autofill } = useWallAutofill();
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const cornerFillMode = useDesignerStore((s) => s.cornerFillMode);
@@ -353,6 +353,7 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
               if (!panel || !item) return;
               const clone = { ...item, id: crypto.randomUUID(), offsetXmm: item.offsetXmm + 30 };
               addHardware(run.id, panel.id, clone);
+              void persistPanelHardware(run.id, panel.id);
               setSelection({
                 kind: 'hardware',
                 runId: run.id,

@@ -464,24 +464,35 @@ export const computeMultiWallGapRuns = (
     const b = refineEndpointToFace(free[pair.j], free[pair.i]);
 
     if (mode === 'arc') {
-      // A bent-glass run rounding the corner; bulge sits in empty space outside the
-      // walls, so it is placed directly (no trim) and blocked by its straight chord.
+      // A bent-glass run rounding the corner; bulge sits in empty space outside the walls.
       const arcEdge = arcCornerEdge(a, b);
       if (!arcEdge) continue;
+      // WHY: re-running arc fill must be idempotent. Build the candidate footprint through the SAME
+      // runBlocker path an existing run gets (an ARC band, not a chord capsule) — a chord capsule is
+      // offset from the placed run's band by the sagitta and would miss the overlap on re-click.
+      const arcPseudoRun: SceneRunState = {
+        id: `gap-run-${edges.length}`,
+        orderIndex: 0,
+        label: '',
+        lengthMm: arcEdge.lengthMm,
+        heightMm: arcEdge.heightMm ?? 1,
+        originX: arcEdge.originX,
+        originY: arcEdge.originY,
+        rotationDeg: arcEdge.rotationDeg,
+        profileSystemId: '',
+        colorId: null,
+        hasTopDrip: false,
+        hasBottomThreshold: false,
+        geomZ: arcEdge.geomZ ?? 0,
+        geomArcRadiusMm: arcEdge.geomArcRadiusMm ?? null,
+        geomArcSweepDeg: arcEdge.geomArcSweepDeg ?? null,
+        panels: [],
+      };
+      const arcFootprint = runBlocker(arcPseudoRun);
+      if (penetratesAny(arcFootprint, gapRunBlockers)) continue;
       used.add(pair.i);
       used.add(pair.j);
-      gapRunBlockers.push(
-        capsuleFootprint(
-          `gap-run-${edges.length}`,
-          a.x,
-          a.y,
-          Math.hypot(b.x - a.x, b.y - a.y),
-          normalizeDeg(Math.atan2(b.y - a.y, b.x - a.x) * RAD2DEG),
-          RUN_PLAN_THICKNESS_MM / 2,
-          arcEdge.geomZ ?? 0,
-          (arcEdge.geomZ ?? 0) + Math.max(1, arcEdge.heightMm ?? 1),
-        ),
-      );
+      gapRunBlockers.push(arcFootprint);
       edges.push(arcEdge);
       continue;
     }

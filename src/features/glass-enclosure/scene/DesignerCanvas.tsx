@@ -63,6 +63,7 @@ import {
   featureFitsWall,
   featureOutlineMm,
   outlineFitsRect,
+  sanitizeFreeOutline,
 } from '../model/wallFeatureGeometry';
 import type { PlanFootprint } from './interaction/planCollision';
 import type {
@@ -339,7 +340,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setPlacement = useDesignerStore((s) => s.setPlacement);
   const onPenFaceFinishRef = useRef<() => void>(() => {});
   const { appearance } = useViewerAppearance();
-  const { createPanelFrom, persistPanel, persistRunPanels, deletePanel } = usePanelEntityActions();
+  const { createPanelFrom, persistPanel, persistRunPanels, persistPanelHardware, deletePanel } =
+    usePanelEntityActions();
   const { persistRun, deleteRun } = useRunEntityActions();
   const addRunMutation = useAddRunMutation();
 
@@ -358,7 +360,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     if (!panel) return;
     pendingHardwareRef.current = null;
     for (const item of pending.items) addHardware(pending.runId, pending.panelId, item);
-  }, [scene, addHardware]);
+    void persistPanelHardware(pending.runId, pending.panelId);
+  }, [scene, addHardware, persistPanelHardware]);
 
   useEffect(() => {
     if (!placement) return;
@@ -521,6 +524,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       offsetYmm: clampMm(clipboard.item.offsetYmm, run.heightMm / 2),
     };
     addHardware(runId, panelId, clone);
+    void persistPanelHardware(runId, panelId);
     setSelection({ kind: 'hardware', runId, panelId, connectionId: null, hardwareId: clone.id });
   };
 
@@ -657,7 +661,11 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
       return;
     }
-    if (polygonSelfIntersects(pts.map((p) => ({ x: p.x, y: p.z })))) {
+    // WHY: same strong repair the drag-draw path uses (collinear/vertex-touch aware + tail/head trim)
+    // — the weak polygonSelfIntersects missed pinched-vertex loops and let a non-manifold outline
+    // reach the CSG cutter. Bounds below are derived from the SANITIZED outline, not the raw points.
+    const sanitized = sanitizeFreeOutline(pts);
+    if (!sanitized) {
       queueToast({
         dedupeKey: 'glass-pen-self-intersect',
         variant: 'warning',
@@ -667,6 +675,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
       return;
     }
+    pts = sanitized;
     const xs = pts.map((p) => p.x);
     const zs = pts.map((p) => p.z);
     const minX = Math.min(...xs);

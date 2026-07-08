@@ -255,6 +255,21 @@ describe('computeMultiWallGapRuns', () => {
     expect(Math.hypot(endX - edge.originX, endY - edge.originY)).toBeGreaterThan(100);
   });
 
+  it("'arc' mode is idempotent — an existing run over the corner blocks a duplicate fill", () => {
+    const a = wall('a', 0, 0, 2000, 0);
+    const b = wall('b', 2500, 500, 2000, 90);
+    const first = computeMultiWallGapRuns([a, b], [a, b], [], 'arc');
+    expect(first).toHaveLength(1);
+    const placed: SceneRunState = {
+      ...run('placed', first[0].originX, first[0].originY, first[0].lengthMm, first[0].rotationDeg),
+      geomArcRadiusMm: first[0].geomArcRadiusMm ?? null,
+      geomArcSweepDeg: first[0].geomArcSweepDeg ?? null,
+    };
+    // Re-running with the just-placed run present must NOT stack a second curved run.
+    const second = computeMultiWallGapRuns([a, b], [a, b], [placed], 'arc');
+    expect(second).toHaveLength(0);
+  });
+
   it("'arc' mode bulges toward the outside corner, not into the room", () => {
     const a = wall('a', 0, 0, 2000, 0);
     const b = wall('b', 2500, 500, 2000, 90);
