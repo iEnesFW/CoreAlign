@@ -948,7 +948,7 @@ function TopHeadline() {
     <div
       style={{
         position: 'absolute',
-        top: 168,
+        top: 240,
         left: '50%',
         transform: `translate(-50%, ${(1 - clamp(op, 0, 1)) * -10}px)`,
         textAlign: 'center',

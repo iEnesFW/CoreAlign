@@ -97,6 +97,7 @@ public static class InfrastructureServiceRegistration
 
         void ConfigureDb(IServiceProvider sp, DbContextOptionsBuilder options)
         {
+            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             if (isSqlite)
             {
                 var sqliteConn = string.IsNullOrWhiteSpace(connection) || !connection.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase)
