@@ -124,7 +124,7 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
               <h3 className="font-medium">{t('ProductionJobs.ready_to_complete_title')}</h3>
               <p className="text-sm text-slate-500">{t('ProductionJobs.ready_to_complete_desc')}</p>
             </div>
-            <Button onClick={handleComplete} variant="success">
+            <Button onClick={handleComplete} variant="primary">
               <CheckCircle2 className="h-4 w-4" /> {t('ProductionJobs.actions.complete_job')}
             </Button>
           </div>
@@ -151,6 +151,7 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
   );
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const StepCard = ({ job, step }: { job: Record<string, any>; step: Record<string, any> }) => {
   const { t } = useTranslation();
   const [operatorId, setOperatorId] = useState('');
@@ -296,7 +297,7 @@ const StepCard = ({ job, step }: { job: Record<string, any>; step: Record<string
                 onChange={(e) => setScrappedQty(Number(e.target.value))}
               />
             </div>
-            <Button size="sm" onClick={handleFinish} variant="success" className="w-full">
+            <Button size="sm" onClick={handleFinish} variant="primary" className="w-full">
               <CheckCircle2 className="w-4 h-4" /> {t('ProductionJobs.actions.finish')}
             </Button>
           </div>

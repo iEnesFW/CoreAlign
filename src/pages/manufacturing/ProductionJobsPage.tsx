@@ -121,7 +121,7 @@ export const ProductionJobsPage = () => {
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {jobs.map((job) => (
+          {jobs?.map((job) => (
             <Card
               key={job.id}
               className="flex flex-col p-5 hover:border-primary-300 transition-colors cursor-pointer"

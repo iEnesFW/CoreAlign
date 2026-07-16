@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { useQuery } from '@tanstack/react-query';
+import type { KioskStepDto } from '@/features/manufacturing/api/manufacturingApi';
 import { kioskApi } from '@/features/manufacturing/api/manufacturingApi';
-import { useStartJobStep, useFinishJobStep } from '@/features/manufacturing/hooks/useManufacturingQueries';
+import {
+  useStartJobStep,
+  useFinishJobStep,
+} from '@/features/manufacturing/hooks/useManufacturingQueries';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 
 export const ManufacturingKioskPage: React.FC = () => {
@@ -11,6 +15,7 @@ export const ManufacturingKioskPage: React.FC = () => {
   const [operatorId, setOperatorId] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [workCenterId, setWorkCenterId] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
 
   const { data: activeSteps } = useQuery({
     queryKey: ['kiosk-active-steps', workCenterId],
@@ -26,36 +31,40 @@ export const ManufacturingKioskPage: React.FC = () => {
     if (response?.isSuccess && response.data?.workCenterId) {
       setIsAuthenticated(true);
       setWorkCenterId(response.data.workCenterId);
+      setEmployeeId(response.data.employeeId);
     }
   };
 
-  const handleStart = async (step: Record<string, unknown>) => {
+  const handleStart = async (step: KioskStepDto) => {
     await safeRequestWithNotify(
       startStep({
-        id: step.jobId as string,
-        stepNumber: step.stepNumber as number,
-        input: { operatorId }
+        id: step.jobId,
+        stepNumber: step.stepNumber,
+        input: { operatorId: employeeId },
       }),
-      { successMessage: 'Step Started!' }
+      { successMessage: 'Step Started!' },
     );
   };
 
-  const handleFinish = async (step: Record<string, unknown>) => {
-    const goodStr = window.prompt(`Enter Good Quantity (Max ${step.inputQuantity}):`, String(step.inputQuantity));
+  const handleFinish = async (step: KioskStepDto) => {
+    const goodStr = window.prompt(
+      `Enter Good Quantity (Max ${step.inputQuantity}):`,
+      String(step.inputQuantity),
+    );
     if (goodStr === null) return;
     const goodQty = Number(goodStr) || 0;
-    
+
     const scrapStr = window.prompt(`Enter Scrapped Quantity:`, '0');
     if (scrapStr === null) return;
     const scrapQty = Number(scrapStr) || 0;
 
     await safeRequestWithNotify(
       finishStep({
-        id: step.jobId as string,
-        stepNumber: step.stepNumber as number,
-        input: { operatorId, goodQuantity: goodQty, scrappedQuantity: scrapQty }
+        id: step.jobId,
+        stepNumber: step.stepNumber,
+        input: { operatorId: employeeId, goodQuantity: goodQty, scrappedQuantity: scrapQty },
       }),
-      { successMessage: 'Step Finished!' }
+      { successMessage: 'Step Finished!' },
     );
   };
 
@@ -117,7 +126,7 @@ export const ManufacturingKioskPage: React.FC = () => {
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-6">Active Jobs at Work Center</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activeSteps?.data?.map((step: Record<string, unknown>) => (
+        {activeSteps?.data?.map((step) => (
           <div
             key={`${step.jobId}-${step.stepNumber}`}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
@@ -131,17 +140,17 @@ export const ManufacturingKioskPage: React.FC = () => {
                     : 'bg-yellow-100 text-yellow-800'
                 }`}
               >
-                {step.status as string}
+                {step.status}
               </span>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-2">
-              <strong>Product:</strong> {step.productName as string}
+              <strong>Product:</strong> {step.productName}
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-2">
-              <strong>Operation:</strong> {step.operationName as string}
+              <strong>Operation:</strong> {step.operationName}
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong>Input Qty:</strong> {step.inputQuantity as string}
+              <strong>Input Qty:</strong> {step.inputQuantity}
             </p>
 
             <div className="flex space-x-3">

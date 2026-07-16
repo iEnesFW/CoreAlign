@@ -206,25 +206,41 @@ export const productionJobsApi = {
     }),
 };
 
+export interface KioskStepDto {
+  jobId: string;
+  jobNumber: string;
+  productName: string;
+  stepNumber: number;
+  operationName: string;
+  inputQuantity: number;
+  status: string;
+  startedAtUtc: string | null;
+  assignedOperatorId: string | null;
+}
+
 export const kioskApi = {
-    verifyPin: (operatorId: string, pinCode: string) =>
-      apiClient
-        .post<
-          ApiResponse<{ success: boolean; workCenterId: string }>
-        >(`/kiosk/manufacturing/verify-pin`, { operatorId, pinCode })
-        .then((r) => r.data),
+  verifyPin: (operatorId: string, pinCode: string) =>
+    apiClient
+      .post<ApiResponse<{ workCenterId: string; employeeId: string }>>(
+        '/kiosk/manufacturing/verify-pin',
+        {
+          operatorId,
+          pinCode,
+        },
+      )
+      .then((r) => r.data),
 
   getActiveSteps: (workCenterId: string) =>
     apiClient
-      .get<ApiResponse<unknown[]>>(`/kiosk/manufacturing/work-centers/${workCenterId}/active-steps`)
+      .get<
+        ApiResponse<KioskStepDto[]>
+      >(`/kiosk/manufacturing/work-centers/${workCenterId}/active-steps`)
       .then((r) => r.data),
 };
 
 export const dashboardApi = {
-  getKpis: (startDateUtc: string, endDateUtc: string) =>
-    apiClient
-      .get<
-        ApiResponse<unknown>
-      >(`/manufacturing/dashboard/kpis`, { params: { startDateUtc, endDateUtc } })
-      .then((r) => r.data),
+  getKpis: (startDate: string, endDate: string) =>
+    cachedGet<ApiResponse<unknown>>(apiClient, '/manufacturing-dashboard/kpis', {
+      params: { startDateUtc: startDate, endDateUtc: endDate },
+    }),
 };

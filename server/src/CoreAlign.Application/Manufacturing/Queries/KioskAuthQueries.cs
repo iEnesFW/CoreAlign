@@ -3,8 +3,9 @@ using MediatR;
 
 namespace CoreAlign.Application.Manufacturing.Queries;
 
-public record VerifyOperatorPinQuery(Guid OperatorId, string PinCode) : IRequest<Guid?>;
+public record KioskAuthResult(Guid WorkCenterId, Guid EmployeeId);
 
+public record VerifyOperatorPinQuery(Guid OperatorId, string PinCode) : IRequest<KioskAuthResult?>;
 public record GetActiveKioskStepsQuery(Guid WorkCenterId) : IRequest<IReadOnlyList<KioskStepDto>>;
 
 public record KioskStepDto(
