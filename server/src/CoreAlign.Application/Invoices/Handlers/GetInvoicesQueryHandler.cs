@@ -20,7 +20,15 @@ public class GetInvoicesQueryHandler : IRequestHandler<GetInvoicesQuery, PagedRe
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
-        var (items, total) = await _invoiceRepository.SearchAsync(request.Search, request.CustomerId, page, pageSize, cancellationToken);
+        var (items, total) = await _invoiceRepository.SearchAsync(
+            request.Search,
+            request.CustomerId,
+            page,
+            pageSize,
+            request.StatusBucket,
+            request.DueSoonOnly,
+            DateTime.UtcNow,
+            cancellationToken);
         var dtos = items.Select(InvoiceMapper.ToSummaryDto).ToList();
 
         return new PagedResult<InvoiceSummaryDto>

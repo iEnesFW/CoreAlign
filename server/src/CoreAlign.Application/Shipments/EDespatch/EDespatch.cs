@@ -133,6 +133,7 @@ public sealed class ShipmentEDespatchOutboxHandler : IOutboxMessageHandler
 
     private readonly IShipmentRepository _shipments;
     private readonly ICustomerRepository _customers;
+    private readonly ITenantRepository _tenants;
     private readonly IElectronicInvoiceGateway _gateway;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ShipmentEDespatchOutboxHandler> _logger;
@@ -140,12 +141,14 @@ public sealed class ShipmentEDespatchOutboxHandler : IOutboxMessageHandler
     public ShipmentEDespatchOutboxHandler(
         IShipmentRepository shipments,
         ICustomerRepository customers,
+        ITenantRepository tenants,
         IElectronicInvoiceGateway gateway,
         IUnitOfWork unitOfWork,
         ILogger<ShipmentEDespatchOutboxHandler> logger)
     {
         _shipments = shipments;
         _customers = customers;
+        _tenants = tenants;
         _gateway = gateway;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -164,9 +167,21 @@ public sealed class ShipmentEDespatchOutboxHandler : IOutboxMessageHandler
             return OutboxHandlerResult.Processed("AlreadySubmitted");
         }
 
+        var tenant = await _tenants.GetByIdAsync(shipment.TenantId, cancellationToken);
+        if (tenant is null || !SellerPartyFactory.HasTaxIdentity(tenant))
+        {
+            shipment.RegisterEDespatch(null, EInvoiceStatuses.Failed);
+            _shipments.Update(shipment);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            _logger.LogWarning(
+                "e-Despatch not submitted for shipment {ShipmentId}: seller (tenant {TenantId}) has no tax number / national id configured.",
+                shipment.Id, shipment.TenantId);
+            return OutboxHandlerResult.Failed("Seller tax identity is not configured for this tenant.");
+        }
+
         var customer = await _customers.GetByIdAsync(shipment.CustomerId, cancellationToken);
         var addr = shipment.ShippingAddressSnapshot;
-        var seller = new SellerParty("Tenant Seller", null, null, null, null, null, null, "Türkiye");
+        var seller = SellerPartyFactory.FromTenant(tenant);
         var buyer = new BuyerParty(
             Name: customer?.Name ?? addr?.RecipientName ?? "Alıcı",
             TaxNumber: customer?.TaxNumber,

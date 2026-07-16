@@ -135,6 +135,8 @@ public class PriceListConfiguration : IEntityTypeConfiguration<PriceList>
 
         builder.HasIndex(p => new { p.TenantId, p.Code }).IsUnique();
         builder.HasIndex(p => new { p.TenantId, p.IsDefault });
+
+        builder.Property(p => p.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
     }
 }
 
@@ -156,6 +158,8 @@ public class PriceListItemConfiguration : IEntityTypeConfiguration<PriceListItem
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(i => new { i.TenantId, i.PriceListId, i.ProductId });
+
+        builder.Property(i => i.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
     }
 }
 

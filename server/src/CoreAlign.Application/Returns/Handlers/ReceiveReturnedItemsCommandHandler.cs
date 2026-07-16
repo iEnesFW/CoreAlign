@@ -3,6 +3,7 @@ using CoreAlign.Application.Invoices.Commands;
 using CoreAlign.Application.Returns.Commands;
 using CoreAlign.Application.Returns.DTOs;
 using CoreAlign.Application.Returns.Mapping;
+using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 using MediatR;
@@ -49,7 +50,7 @@ public class ReceiveReturnedItemsCommandHandler : IRequestHandler<ReceiveReturne
         var warehouse = await _warehouseRepository.GetByIdAsync(request.WarehouseId, cancellationToken)
             ?? throw new InvalidReturnRequestStateException("Warehouse not found.");
 
-        var order = await _orderRepository.GetWithLinesAsync(entity.OrderId, cancellationToken)
+        var order = await _orderRepository.GetWithLinesAndShipmentsAsync(entity.OrderId, cancellationToken)
             ?? throw new OrderNotFoundException();
 
         var receivedByUserId = _currentUser.UserIdOrThrow();
@@ -62,6 +63,19 @@ public class ReceiveReturnedItemsCommandHandler : IRequestHandler<ReceiveReturne
                     $"Order line {line.OrderLineId} not found on order {order.OrderNumber}.");
             orderLine.RecordReturn(line.QuantityReturned);
         }
+
+        var shippedLines = order.Lines.Where(l => l.QuantityShipped > 0m).ToList();
+        if (shippedLines.Count > 0 && shippedLines.All(l => l.QuantityReturned >= l.QuantityShipped))
+        {
+            foreach (var shipment in order.Shipments)
+            {
+                if (shipment.Status is ShipmentStatus.Dispatched or ShipmentStatus.Delivered)
+                {
+                    shipment.MarkReturned();
+                }
+            }
+        }
+
         _orderRepository.Update(order);
         _repository.Update(entity);
 

@@ -33,7 +33,8 @@ export type StockReasonCategory =
   | 'CycleCount'
   | 'Return'
   | 'DamageWriteOff'
-  | 'Expired';
+  | 'Expired'
+  | 'Scrap';
 
 export type AllocationStatus = 'Active' | 'PartiallyConsumed' | 'Consumed' | 'Released';
 

@@ -28,9 +28,23 @@ public class InvoicesController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] Guid? customerId = null,
+        [FromQuery] string? statusBucket = null,
+        [FromQuery] bool dueSoonOnly = false,
         CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetInvoicesQuery(page, pageSize, search, customerId), cancellationToken);
+        var result = await _mediator.Send(
+            new GetInvoicesQuery(page, pageSize, search, customerId, statusBucket, dueSoonOnly),
+            cancellationToken);
+        return result.ToOk();
+    }
+
+    [HttpGet("aggregates")]
+    public async Task<IActionResult> GetInvoiceAggregatesAsync(
+        [FromQuery] string? search = null,
+        [FromQuery] Guid? customerId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(new GetInvoiceAggregatesQuery(search, customerId), cancellationToken);
         return result.ToOk();
     }
 

@@ -258,6 +258,7 @@ public class CoreAlignDbContext : DbContext
     public DbSet<GlassProjectQuoteSnapshot> GlassProjectQuoteSnapshots => Set<GlassProjectQuoteSnapshot>();
     public DbSet<GlassProjectRun> GlassProjectRuns => Set<GlassProjectRun>();
     public DbSet<GlassProjectScene> GlassProjectScenes => Set<GlassProjectScene>();
+    public DbSet<GlassProjectTemplate> GlassProjectTemplates => Set<GlassProjectTemplate>();
     public DbSet<GlassProjectShareToken> GlassProjectShareTokens => Set<GlassProjectShareToken>();
     public DbSet<GlassType> GlassTypes => Set<GlassType>();
     public DbSet<GlassWorkOrder> GlassWorkOrders => Set<GlassWorkOrder>();

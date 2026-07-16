@@ -62,7 +62,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
 
         order.UpdateDetails(
             type: OrderType.Standard,
-            source: OrderSource.Manual,
+            source: OrderSource.Quote,
             requestedDeliveryDate: null,
             promisedDeliveryDate: null,
             billingAddressId: quote.BillingAddressId,

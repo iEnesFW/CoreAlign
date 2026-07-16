@@ -125,3 +125,17 @@ public class InvoiceSummaryDto
     public bool IsOverdue { get; set; }
     public string? OrderNumber { get; set; }
 }
+
+public class InvoiceAggregatesDto
+{
+    public int TotalCount { get; set; }
+    public int OpenCount { get; set; }
+    public int PartiallyPaidCount { get; set; }
+    public int OverdueCount { get; set; }
+    public int PaidCount { get; set; }
+    public int CancelledCount { get; set; }
+    public int DueSoonCount { get; set; }
+    public decimal OutstandingTotal { get; set; }
+    public decimal PaidTotal { get; set; }
+    public decimal OverdueTotal { get; set; }
+}

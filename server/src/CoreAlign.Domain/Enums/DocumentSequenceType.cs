@@ -24,4 +24,5 @@ public enum DocumentSequenceType
     EmployeeNumber = 19,
     PayrollRunNumber = 20,
     PayslipNumber = 21,
+    ProductionJobNumber = 22,
 }

@@ -37,6 +37,13 @@ export interface Product {
   isStockTracked: boolean;
   isLotTracked: boolean;
   isSerialTracked: boolean;
+  isPlateTracked?: boolean;
+  minRemnantAreaMm2?: number | null;
+  minRemnantWidthMm?: number | null;
+  minRemnantHeightMm?: number | null;
+  minPlateCount?: number | null;
+  standardWidthMm?: number | null;
+  standardHeightMm?: number | null;
   minStock: number;
   maxStock: number;
   reorderPoint: number;
@@ -55,4 +62,5 @@ export interface Product {
   isActive: boolean;
   createdAtUtc: string;
   updatedAtUtc: string;
+  concurrencyToken: number;
 }

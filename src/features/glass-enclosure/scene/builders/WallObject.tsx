@@ -14,6 +14,7 @@ import {
 } from 'three';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { hasEdgeNotch, hasWallNotch, wallProfileOutlineMm } from '../../model/wallOutline';
+import { edgeArcOutline, hasEdgeArc } from '../../model/edgeArcOutline';
 import {
   buildCurvedBandGeometry,
   curvedWallPickUv,
@@ -82,6 +83,7 @@ import {
   resolveArc,
 } from '../../model/arcGeometry';
 import { resolveAttachedRunIds } from '../../model/wallAttachment';
+import { useWallEntityActions } from '../../hooks/useDesignerEntityActions';
 import {
   FEATURE_EDGE_MARGIN_MM,
   FREE_SAMPLE_STEP_MM,
@@ -295,8 +297,14 @@ const buildWallGeometries = (
   // boundary cut (visible from the front/back face and the edge face), not a hole. Notches and
   // fillet radii don't combine, so a notched wall uses sharp corners; plain walls keep the
   // filleted-rectangle path.
-  const shape =
-    hasWallNotch(wall.cornerNotchMm) || hasEdgeNotch(wall.edgeNotchMm)
+  const shape = hasEdgeArc(wall.geomEdgeArc)
+    ? outlineToShape(
+        edgeArcOutline(wall.lengthMm, wall.heightMm, wall.geomEdgeArc ?? {}).map((p) => ({
+          x: p.x,
+          z: p.y,
+        })),
+      )
+    : hasWallNotch(wall.cornerNotchMm) || hasEdgeNotch(wall.edgeNotchMm)
       ? outlineToShape(
           wallProfileOutlineMm(
             wall.lengthMm,
@@ -456,6 +464,7 @@ export function WallObject({
   const sceneRuns = useDesignerStore((s) => s.scene.runs);
   const sceneWalls = useDesignerStore((s) => s.scene.walls ?? []);
   const updateWall = useDesignerStore((s) => s.updateWall);
+  const { commitWallPatch } = useWallEntityActions();
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const addWallFeature = useDesignerStore((s) => s.addWallFeature);
@@ -506,8 +515,11 @@ export function WallObject({
         wall.geomArcSweepDeg ?? 0,
       )
     : 0;
-  // The bend handle initiates/re-adjusts an L on a straight or already-bent wall (never an arc wall).
-  const bendEditActive = transformActive && isSelected && interactive && !wall.locked && !isArcWall;
+  // The bend handle turns a STANDALONE straight wall into an L (never an arc wall). Once bent, the
+  // wall becomes two grouped legs; re-bending a leg (or any grouped wall) re-fragments it into more
+  // legs sharing the same groupId, so gate the handle on an ungrouped wall — bend once, cleanly.
+  const bendEditActive =
+    transformActive && isSelected && interactive && !wall.locked && !isArcWall && !wall.groupId;
   // WHY: always cut the features (don't suppress while stretching) — the depth handle that
   // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
   // hid the result on every face until the user happened to leave the tool. Depth commits on
@@ -1463,7 +1475,8 @@ export function WallObject({
       resetBody();
       return;
     }
-    updateWall(wall.id, {
+    // WHY: fromStart moves the arc origin — commitWallPatch co-moves attached glass (no-ops to plain updateWall when the origin is unchanged).
+    commitWallPatch(wall, {
       originX,
       originY,
       lengthMm: scaled.lengthMm,
@@ -1504,7 +1517,8 @@ export function WallObject({
       return;
     }
     const shift = next - wall.lengthMm;
-    updateWall(wall.id, {
+    // WHY: stretching from the START moves the origin — commitWallPatch co-moves+persists attached glass (raw updateWall leaves it behind).
+    commitWallPatch(wall, {
       lengthMm: next,
       originX: Math.round(wall.originX - shift * dirX),
       originY: Math.round(wall.originY - shift * dirY),
@@ -1564,7 +1578,8 @@ export function WallObject({
       resetBody();
       return;
     }
-    updateWall(wall.id, {
+    // WHY: thickening from one face shifts the centreline (origin) — co-move + persist attached glass.
+    commitWallPatch(wall, {
       thicknessMm: next,
       originX: Math.round(wall.originX + sign * (shift / 2) * normalX),
       originY: Math.round(wall.originY + sign * (shift / 2) * normalY),

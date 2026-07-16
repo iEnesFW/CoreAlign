@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import { useDesignerUxMode } from '@/shared/lib/persona';
 
@@ -26,13 +27,14 @@ export const DesignerTabBar = ({
   orientation = 'horizontal',
   className,
 }: DesignerTabBarProps) => {
+  const { t } = useTranslation();
   const mode = useDesignerUxMode();
   const isSimple = mode === 'Simple';
   const isVertical = orientation === 'vertical';
 
   return (
     <nav
-      aria-label="Designer tabs"
+      aria-label={t('GlassEnclosure.Designer.TabsAriaLabel', { defaultValue: 'Designer tabs' })}
       role="tablist"
       aria-orientation={isVertical ? 'vertical' : 'horizontal'}
       className={cn(

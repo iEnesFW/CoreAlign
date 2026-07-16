@@ -34,6 +34,7 @@ public class AdjustStockHandler : IRequestHandler<AdjustStockCommand, StockMovem
         StockReasonCategory.DamageWriteOff,
         StockReasonCategory.Expired,
         StockReasonCategory.Loss,
+        StockReasonCategory.Scrap,
     };
 
     public async Task<StockMovementDto> Handle(AdjustStockCommand c, CancellationToken ct)

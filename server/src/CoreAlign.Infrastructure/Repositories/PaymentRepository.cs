@@ -172,8 +172,8 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
-                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.AmountInBase : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.AmountInBase : 0m),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -205,8 +205,8 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
-                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.AmountInBase : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.AmountInBase : 0m),
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -226,8 +226,8 @@ public class CustomerLedgerRepository : ICustomerLedgerRepository
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.Amount : 0m),
-                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.Amount : 0m),
+                Debit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Debit ? e.AmountInBase : 0m),
+                Credit = g.Sum(e => e.EntryType == Domain.Enums.LedgerEntryType.Credit ? e.AmountInBase : 0m),
             })
             .FirstOrDefaultAsync(cancellationToken);
 

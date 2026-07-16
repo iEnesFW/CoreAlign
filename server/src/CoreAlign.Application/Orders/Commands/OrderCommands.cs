@@ -92,3 +92,8 @@ public record AllocateOrderCommand(Guid Id, Guid? PreferredWarehouseId = null) :
 public record CancelOrderCommand(Guid Id, string? Reason = null) : IRequest<OrderDto>, ITransactionalRequest;
 public record DeliverOrderCommand(Guid Id, DateTime? DeliveredAtUtc = null) : IRequest<OrderDto>, ITransactionalRequest;
 public record CloseOrderCommand(Guid Id) : IRequest<OrderDto>, ITransactionalRequest;
+public record ScrapOrderLineCommand(
+    Guid OrderId,
+    Guid OrderLineId,
+    decimal Quantity,
+    string? Notes = null) : IRequest<OrderDto>, ITransactionalRequest;

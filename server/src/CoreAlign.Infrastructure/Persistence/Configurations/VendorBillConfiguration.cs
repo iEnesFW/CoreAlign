@@ -20,6 +20,7 @@ public class VendorBillConfiguration : IEntityTypeConfiguration<VendorBill>
         builder.Property(b => b.AmountPaid).HasColumnType("numeric(18,4)");
         builder.Property(b => b.Notes).HasMaxLength(2000);
         builder.Property(b => b.HoldReason).HasMaxLength(500);
+        builder.Property(b => b.WithholdingCode).HasMaxLength(16);
         builder.Property(b => b.BillDate).HasColumnType("timestamp with time zone");
         builder.Property(b => b.DueDate).HasColumnType("timestamp with time zone");
         builder.Property(b => b.PostedAtUtc).HasColumnType("timestamp with time zone");
@@ -37,6 +38,8 @@ public class VendorBillConfiguration : IEntityTypeConfiguration<VendorBill>
         builder.HasIndex(b => new { b.TenantId, b.Status });
 
         builder.Ignore(b => b.AmountDue);
+        builder.Ignore(b => b.WithholdingAmount);
+        builder.Ignore(b => b.PayableAmount);
     }
 }
 

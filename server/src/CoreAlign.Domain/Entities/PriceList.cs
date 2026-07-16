@@ -2,8 +2,11 @@ using CoreAlign.Domain.Common;
 
 namespace CoreAlign.Domain.Entities;
 
-public class PriceList : TenantEntity
+public class PriceList : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string Currency { get; private set; } = "TRY";

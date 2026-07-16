@@ -153,8 +153,18 @@ export const RevisionsPanel = ({ workOrderId, className }: RevisionsPanelProps) 
                 <th className="px-3 py-2 font-semibold">
                   {t('GlassEnclosure.WorkOrder.Revision.CreatedAt')}
                 </th>
-                <th className="px-3 py-2 font-semibold" aria-label="status" />
-                <th className="px-3 py-2 font-semibold" aria-label="actions" />
+                <th
+                  className="px-3 py-2 font-semibold"
+                  aria-label={t('GlassEnclosure.WorkOrder.Revision.StatusColumn', {
+                    defaultValue: 'Status',
+                  })}
+                />
+                <th
+                  className="px-3 py-2 font-semibold"
+                  aria-label={t('GlassEnclosure.WorkOrder.Revision.ActionsColumn', {
+                    defaultValue: 'Actions',
+                  })}
+                />
               </tr>
             </thead>
             <tbody>

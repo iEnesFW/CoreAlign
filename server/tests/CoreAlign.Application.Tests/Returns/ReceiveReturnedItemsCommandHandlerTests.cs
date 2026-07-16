@@ -45,7 +45,7 @@ public class ReceiveReturnedItemsCommandHandlerTests
     {
         var (entity, order) = BuildApprovedReturnAndOrder();
         _returns.GetWithLinesAsync(entity.Id, Arg.Any<CancellationToken>()).Returns(entity);
-        _orders.GetWithLinesAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
+        _orders.GetWithLinesAndShipmentsAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
         _warehouses.GetByIdAsync(WarehouseId, Arg.Any<CancellationToken>())
             .Returns(new Warehouse("WH-1", "Main") { Id = WarehouseId, TenantId = TenantId });
 
@@ -66,7 +66,7 @@ public class ReceiveReturnedItemsCommandHandlerTests
         var (entity, order) = BuildApprovedReturnAndOrder(withSourceInvoice: true);
         var sourceInvoice = BuildSourceInvoice(order);
         _returns.GetWithLinesAsync(entity.Id, Arg.Any<CancellationToken>()).Returns(entity);
-        _orders.GetWithLinesAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
+        _orders.GetWithLinesAndShipmentsAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
         _warehouses.GetByIdAsync(WarehouseId, Arg.Any<CancellationToken>())
             .Returns(new Warehouse("WH-1", "Main") { Id = WarehouseId, TenantId = TenantId });
         _invoices.GetWithLinesAsync(InvoiceId, Arg.Any<CancellationToken>()).Returns(sourceInvoice);
@@ -91,7 +91,7 @@ public class ReceiveReturnedItemsCommandHandlerTests
     {
         var (entity, order) = BuildApprovedReturnAndOrder();
         _returns.GetWithLinesAsync(entity.Id, Arg.Any<CancellationToken>()).Returns(entity);
-        _orders.GetWithLinesAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
+        _orders.GetWithLinesAndShipmentsAsync(OrderId, Arg.Any<CancellationToken>()).Returns(order);
         _warehouses.GetByIdAsync(WarehouseId, Arg.Any<CancellationToken>()).Returns((Warehouse?)null);
 
         Func<Task> act = () => _sut.Handle(

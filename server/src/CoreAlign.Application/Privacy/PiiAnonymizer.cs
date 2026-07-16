@@ -27,7 +27,6 @@ public class PiiAnonymizer : IPiiAnonymizer
 
     public async Task<PiiAnonymizationResult> AnonymizeUserAsync(
         Guid userId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default)
     {
         var user = await _users.GetByIdAsync(userId, cancellationToken)
@@ -42,12 +41,11 @@ public class PiiAnonymizer : IPiiAnonymizer
             SubjectTypeUser,
             anonymizedFields,
             now,
-            keepFinancialTrail);
+            FinancialTrailPreserved: true);
     }
 
     public async Task<PiiAnonymizationResult> AnonymizeCustomerAsync(
         Guid customerId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default)
     {
         var customer = await _customers.GetByIdAsync(customerId, cancellationToken)
@@ -66,6 +64,6 @@ public class PiiAnonymizer : IPiiAnonymizer
             SubjectTypeCustomer,
             anonymizedFields,
             now,
-            keepFinancialTrail);
+            FinancialTrailPreserved: true);
     }
 }

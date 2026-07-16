@@ -75,12 +75,8 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         if (request.RequesterUserId.HasValue)
         {
             await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
-            request.MarkCompleted(DateTime.UtcNow, Guid.NewGuid());
         }
-        else
-        {
-            request.MarkCompleted(DateTime.UtcNow);
-        }
+        request.MarkCompleted(DateTime.UtcNow);
 
         _repository.Update(request);
         return ToDto(request);
@@ -88,7 +84,6 @@ public class DataSubjectRequestService : IDataSubjectRequestService
 
     public async Task<DataSubjectRequestDto> ProcessErasureRequestAsync(
         Guid requestId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default)
     {
         var request = await LoadAsync(requestId, cancellationToken);
@@ -99,11 +94,11 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         if (request.RequesterUserId.HasValue)
         {
             await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
-            await _anonymizer.AnonymizeUserAsync(request.RequesterUserId.Value, keepFinancialTrail, cancellationToken);
+            await _anonymizer.AnonymizeUserAsync(request.RequesterUserId.Value, cancellationToken);
         }
         else if (request.RequesterCustomerId.HasValue)
         {
-            await _anonymizer.AnonymizeCustomerAsync(request.RequesterCustomerId.Value, keepFinancialTrail, cancellationToken);
+            await _anonymizer.AnonymizeCustomerAsync(request.RequesterCustomerId.Value, cancellationToken);
         }
 
         request.MarkCompleted(DateTime.UtcNow);
@@ -123,12 +118,8 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         if (request.RequesterUserId.HasValue)
         {
             await EnsureUserInTenantAsync(request.RequesterUserId.Value, request.TenantId, cancellationToken);
-            request.MarkCompleted(DateTime.UtcNow, Guid.NewGuid());
         }
-        else
-        {
-            request.MarkCompleted(DateTime.UtcNow);
-        }
+        request.MarkCompleted(DateTime.UtcNow);
 
         _repository.Update(request);
         return ToDto(request);
@@ -204,6 +195,19 @@ public class DataSubjectRequestService : IDataSubjectRequestService
         CancellationToken cancellationToken = default)
     {
         var request = await LoadAsync(requestId, cancellationToken);
+        return ToDto(request);
+    }
+
+    public async Task<DataSubjectRequestDto> GetForRequesterAsync(
+        Guid requestId,
+        Guid requesterUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await LoadAsync(requestId, cancellationToken);
+        if (request.RequesterUserId != requesterUserId)
+        {
+            throw new DataSubjectRequestNotFoundException();
+        }
         return ToDto(request);
     }
 

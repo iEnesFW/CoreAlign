@@ -17,6 +17,7 @@ internal static class LedgerPostingHelpers
         LedgerEntryType entryType,
         decimal amount,
         string currency,
+        decimal exchangeRate,
         LedgerSourceType sourceType,
         Guid? sourceDocumentId,
         string? sourceDocumentNumber,
@@ -25,7 +26,6 @@ internal static class LedgerPostingHelpers
     {
         await ledger.AcquireAppendLockAsync(customerId, cancellationToken);
         var lastBalance = await ledger.GetLastRunningBalanceAsync(customerId, cancellationToken);
-        var signed = entryType == LedgerEntryType.Debit ? Math.Abs(amount) : -Math.Abs(amount);
         var entry = new CustomerLedgerEntry(
             customerId,
             occurredAtUtc,
@@ -33,7 +33,7 @@ internal static class LedgerPostingHelpers
             entryType,
             amount,
             currency,
-            1m,
+            exchangeRate,
             sourceType,
             sourceDocumentId,
             sourceDocumentNumber,
@@ -41,7 +41,8 @@ internal static class LedgerPostingHelpers
         {
             TenantId = tenantId,
         };
-        entry.SetRunningBalance(lastBalance + signed);
+        var signedBase = entry.EntryType == LedgerEntryType.Debit ? entry.AmountInBase : -entry.AmountInBase;
+        entry.SetRunningBalance(lastBalance + signedBase);
         await ledger.AddAsync(entry, cancellationToken);
     }
 }
@@ -66,7 +67,7 @@ public class InvoiceIssuedLedgerHandler : INotificationHandler<InvoiceIssuedEven
         await LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            entryType, notification.Amount, notification.Currency,
+            entryType, notification.Amount, notification.Currency, notification.ExchangeRate,
             sourceType, notification.InvoiceId, notification.InvoiceNumber,
             notification.Type == InvoiceType.CreditNote ? "Credit note issued" : "Invoice issued",
             cancellationToken);
@@ -86,22 +87,6 @@ public class InvoiceIssuedLedgerHandler : INotificationHandler<InvoiceIssuedEven
         };
         await _customerTransactionRepository.AddAsync(legacy, cancellationToken);
     }
-}
-
-public class InvoicePartiallyPaidLedgerHandler : INotificationHandler<InvoicePartiallyPaidEvent>
-{
-    private readonly ICustomerLedgerRepository _ledger;
-
-    public InvoicePartiallyPaidLedgerHandler(ICustomerLedgerRepository ledger) => _ledger = ledger;
-
-    public Task Handle(InvoicePartiallyPaidEvent notification, CancellationToken cancellationToken) =>
-        LedgerPostingHelpers.PostAsync(
-            _ledger, notification.TenantId, notification.CustomerId,
-            notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Credit, notification.AmountApplied, notification.Currency,
-            LedgerSourceType.Payment, notification.InvoiceId, notification.InvoiceNumber,
-            $"Partial payment applied ({notification.Remaining} remaining)",
-            cancellationToken);
 }
 
 public class InvoicePaidLedgerHandler : INotificationHandler<InvoicePaidEvent>
@@ -144,7 +129,7 @@ public class InvoiceVoidedLedgerHandler : INotificationHandler<InvoiceVoidedEven
         LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Credit, notification.Amount, notification.Currency,
+            LedgerEntryType.Credit, notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.InvoiceVoid, notification.InvoiceId, notification.InvoiceNumber,
             $"Invoice voided{(string.IsNullOrEmpty(notification.Reason) ? string.Empty : $": {notification.Reason}")}",
             cancellationToken);
@@ -159,7 +144,7 @@ public class InvoiceWrittenOffLedgerHandler : INotificationHandler<InvoiceWritte
         LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Credit, notification.Amount, notification.Currency,
+            LedgerEntryType.Credit, notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.WriteOff, notification.InvoiceId, notification.InvoiceNumber,
             $"Invoice written off{(string.IsNullOrEmpty(notification.Reason) ? string.Empty : $": {notification.Reason}")}",
             cancellationToken);
@@ -185,7 +170,7 @@ public class InvoiceCancelledLedgerHandler : INotificationHandler<InvoiceCancell
         await LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Credit, notification.Amount, notification.Currency,
+            LedgerEntryType.Credit, notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.InvoiceVoid, notification.InvoiceId, notification.InvoiceNumber,
             "Invoice cancelled (reversal)",
             cancellationToken);
@@ -224,7 +209,7 @@ public class PaymentConfirmedLedgerHandler : INotificationHandler<PaymentConfirm
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
             isReceipt ? LedgerEntryType.Credit : LedgerEntryType.Debit,
-            notification.Amount, notification.Currency,
+            notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.Payment, notification.PaymentId, notification.PaymentNumber,
             isReceipt ? "Payment received" : "Refund issued",
             cancellationToken);
@@ -253,7 +238,7 @@ public class PaymentVoidedLedgerHandler : INotificationHandler<PaymentVoidedEven
         LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Debit, notification.Amount, notification.Currency,
+            LedgerEntryType.Debit, notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.PaymentReversal, notification.PaymentId, notification.PaymentNumber,
             "Payment voided (reversal)",
             cancellationToken);

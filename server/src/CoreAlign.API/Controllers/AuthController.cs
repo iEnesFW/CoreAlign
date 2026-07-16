@@ -93,6 +93,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("verify-email")]
+    [EnableRateLimiting("auth")]
     public async Task<IActionResult> VerifyEmailAsync([FromBody] VerifyEmailCommand command, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(command, cancellationToken);

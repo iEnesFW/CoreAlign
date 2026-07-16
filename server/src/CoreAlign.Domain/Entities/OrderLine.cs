@@ -228,6 +228,15 @@ public class OrderLine : TenantEntity
 
     public void RecordShipment(decimal qty)
     {
+        if (qty <= 0m)
+        {
+            throw new InvalidOrderLineException("Shipment quantity must be positive.");
+        }
+        if (qty > QuantityRemainingToShip)
+        {
+            throw new InvalidOrderLineException(
+                $"Shipment quantity {qty} exceeds remaining-to-ship {QuantityRemainingToShip} for line {Id}.");
+        }
         QuantityShipped += qty;
         if (QuantityShipped + QuantityCancelled >= Quantity)
         {

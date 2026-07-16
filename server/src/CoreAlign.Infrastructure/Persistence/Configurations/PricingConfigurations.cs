@@ -25,6 +25,8 @@ public class PricingDiscountRuleConfiguration : IEntityTypeConfiguration<Discoun
         builder.HasIndex(r => new { r.TenantId, r.Code }).IsUnique();
         builder.HasIndex(r => new { r.TenantId, r.IsActive });
         builder.HasIndex(r => new { r.TenantId, r.Scope });
+
+        builder.Property(r => r.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
     }
 }
 
@@ -49,5 +51,7 @@ public class TaxRuleConfiguration : IEntityTypeConfiguration<TaxRule>
         builder.HasIndex(r => new { r.TenantId, r.Code }).IsUnique();
         builder.HasIndex(r => new { r.TenantId, r.IsActive });
         builder.HasIndex(r => new { r.TenantId, r.Scope });
+
+        builder.Property(r => r.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
     }
 }

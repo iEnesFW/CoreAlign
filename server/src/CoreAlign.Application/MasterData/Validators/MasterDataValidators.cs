@@ -3,6 +3,40 @@ using FluentValidation;
 
 namespace CoreAlign.Application.MasterData.Validators;
 
+internal static class IbanValidation
+{
+    public static bool IsValidChecksum(string? iban)
+    {
+        if (string.IsNullOrWhiteSpace(iban))
+        {
+            return true;
+        }
+        var cleaned = iban.Replace(" ", string.Empty).ToUpperInvariant();
+        if (cleaned.Length is < 5 or > 34)
+        {
+            return false;
+        }
+        var rearranged = cleaned[4..] + cleaned[..4];
+        var remainder = 0;
+        foreach (var ch in rearranged)
+        {
+            if (ch is >= '0' and <= '9')
+            {
+                remainder = (remainder * 10 + (ch - '0')) % 97;
+            }
+            else if (ch is >= 'A' and <= 'Z')
+            {
+                remainder = (remainder * 100 + (ch - 'A' + 10)) % 97;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return remainder == 1;
+    }
+}
+
 public class CreateBrandCommandValidator : AbstractValidator<CreateBrandCommand>
 {
     public CreateBrandCommandValidator()
@@ -194,7 +228,8 @@ public class CreateBankAccountCommandValidator : AbstractValidator<CreateBankAcc
         RuleFor(x => x.BankName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.BranchName).MaximumLength(100);
         RuleFor(x => x.Iban).NotEmpty().MaximumLength(42)
-            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid");
+            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid")
+            .Must(IbanValidation.IsValidChecksum).WithMessage("Validation.IbanInvalid");
         RuleFor(x => x.Swift).MaximumLength(11);
         RuleFor(x => x.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Notes).MaximumLength(1000);
@@ -210,7 +245,8 @@ public class UpdateBankAccountCommandValidator : AbstractValidator<UpdateBankAcc
         RuleFor(x => x.BankName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.BranchName).MaximumLength(100);
         RuleFor(x => x.Iban).NotEmpty().MaximumLength(42)
-            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid");
+            .Matches("^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]{1,38}$").WithMessage("Validation.IbanInvalid")
+            .Must(IbanValidation.IsValidChecksum).WithMessage("Validation.IbanInvalid");
         RuleFor(x => x.Swift).MaximumLength(11);
         RuleFor(x => x.Currency).NotEmpty().Length(3);
         RuleFor(x => x.Notes).MaximumLength(1000);

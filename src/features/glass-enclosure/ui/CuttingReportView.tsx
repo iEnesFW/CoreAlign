@@ -153,7 +153,7 @@ const GlassSection = ({ report }: { report: CuttingReportDto }) => {
           {t('GlassEnclosure.Cutting.Glass2D')}
           {r.guillotineOnly && (
             <span className="ml-2 rounded bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-medium text-purple-700 dark:bg-purple-500/20 dark:text-purple-300">
-              Guillotine
+              {t('GlassEnclosure.Cutting.Guillotine', { defaultValue: 'Guillotine' })}
             </span>
           )}
         </h3>

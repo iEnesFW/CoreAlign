@@ -74,6 +74,22 @@ public class GlassProjectConfiguration : IEntityTypeConfiguration<GlassProject>
     }
 }
 
+public class GlassProjectTemplateConfiguration : IEntityTypeConfiguration<GlassProjectTemplate>
+{
+    public void Configure(EntityTypeBuilder<GlassProjectTemplate> builder)
+    {
+        builder.HasKey(t => t.Id);
+        builder.Property(t => t.Name).HasMaxLength(200).IsRequired();
+        builder.Property(t => t.PayloadJson).HasColumnType("jsonb").IsRequired();
+        builder.Property(t => t.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(t => t.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(t => t.ConcurrencyToken).IsConcurrencyToken();
+
+        builder.HasIndex(t => new { t.TenantId, t.CreatedByUserId, t.UpdatedAtUtc })
+            .HasDatabaseName("ix_glass_project_templates_tenant_user_updated");
+    }
+}
+
 public class GlassProjectRunConfiguration : IEntityTypeConfiguration<GlassProjectRun>
 {
     public void Configure(EntityTypeBuilder<GlassProjectRun> builder)
@@ -148,6 +164,7 @@ public class GlassProjectPanelHardwareConfiguration : IEntityTypeConfiguration<G
         builder.Property(h => h.Quantity).HasColumnType("numeric(12,3)");
         builder.Property(h => h.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(h => h.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(h => h.ConcurrencyToken).IsConcurrencyToken();
         builder.HasOne<HardwareItem>()
             .WithMany()
             .HasForeignKey(h => h.HardwareItemId)

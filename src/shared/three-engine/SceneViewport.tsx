@@ -239,15 +239,15 @@ export function SceneViewport({
 
           {!presentation && (
             <Grid
-              args={[40, 40]}
+              args={[60, 60]}
               cellSize={0.5}
-              cellThickness={0.5}
-              cellColor="#cbd5e1"
+              cellThickness={0.7}
+              cellColor="#94a3b8"
               sectionSize={2}
-              sectionThickness={1}
-              sectionColor="#94a3b8"
-              fadeDistance={32}
-              fadeStrength={1}
+              sectionThickness={1.3}
+              sectionColor="#475569"
+              fadeDistance={60}
+              fadeStrength={1.5}
               followCamera={false}
               infiniteGrid={false}
               position={[0, 0, 0]}

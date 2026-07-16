@@ -20,18 +20,14 @@ describe('buildGlassTemplate', () => {
     expect(tpl.walls[2]).toMatchObject({ originX: W, originY: D, rotationDeg: -90, lengthMm: D });
   });
 
-  it('room-door centers a door opening on the front wall', () => {
-    const tpl = buildGlassTemplate('room-door');
+  it('room builds four end-to-end walls forming a closed box with no openings', () => {
+    const tpl = buildGlassTemplate('room');
     expect(tpl.walls).toHaveLength(4);
-    const openings = tpl.walls[0].openings ?? [];
-    expect(openings).toHaveLength(1);
-    expect(openings[0]).toMatchObject({
-      kind: 'door',
-      offsetMm: Math.round(W / 2),
-      widthMm: 900,
-      heightMm: 2050,
-    });
-    expect(tpl.walls.slice(1).every((w) => (w.openings ?? []).length === 0)).toBe(true);
+    expect(tpl.walls.every((w) => (w.openings ?? []).length === 0)).toBe(true);
+    expect(tpl.walls[0]).toMatchObject({ originX: 0, originY: 0, rotationDeg: 0, lengthMm: W });
+    expect(tpl.walls[1]).toMatchObject({ originX: 0, originY: 0, rotationDeg: 90, lengthMm: D });
+    expect(tpl.walls[2]).toMatchObject({ originX: 0, originY: D, rotationDeg: 0, lengthMm: W });
+    expect(tpl.walls[3]).toMatchObject({ originX: W, originY: 0, rotationDeg: 90, lengthMm: D });
   });
 
   it('roof templates elevate the slab and carry their shape fields', () => {

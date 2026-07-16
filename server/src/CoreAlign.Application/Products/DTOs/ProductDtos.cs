@@ -37,6 +37,13 @@ public class ProductDto
     public bool IsLotTracked { get; set; }
     public bool IsSerialTracked { get; set; }
     public bool RequiresInspection { get; set; }
+    public bool IsPlateTracked { get; set; }
+    public decimal? MinRemnantAreaMm2 { get; set; }
+    public decimal? MinRemnantWidthMm { get; set; }
+    public decimal? MinRemnantHeightMm { get; set; }
+    public int? MinPlateCount { get; set; }
+    public decimal? StandardWidthMm { get; set; }
+    public decimal? StandardHeightMm { get; set; }
     public decimal MinStock { get; set; }
     public decimal MaxStock { get; set; }
     public decimal ReorderPoint { get; set; }
@@ -56,4 +63,5 @@ public class ProductDto
     public bool IsActive { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
+    public long ConcurrencyToken { get; set; }
 }

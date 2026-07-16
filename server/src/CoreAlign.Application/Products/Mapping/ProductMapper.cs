@@ -40,6 +40,13 @@ public static class ProductMapper
         IsLotTracked = product.IsLotTracked,
         IsSerialTracked = product.IsSerialTracked,
         RequiresInspection = product.RequiresInspection,
+        IsPlateTracked = product.IsPlateTracked,
+        MinRemnantAreaMm2 = product.MinRemnantAreaMm2,
+        MinRemnantWidthMm = product.MinRemnantWidthMm,
+        MinRemnantHeightMm = product.MinRemnantHeightMm,
+        MinPlateCount = product.MinPlateCount,
+        StandardWidthMm = product.StandardWidthMm,
+        StandardHeightMm = product.StandardHeightMm,
         MinStock = product.MinStock,
         MaxStock = product.MaxStock,
         ReorderPoint = product.ReorderPoint,
@@ -57,6 +64,7 @@ public static class ProductMapper
         EndOfLifeDate = product.EndOfLifeDate,
         IsActive = product.IsActive,
         CreatedAtUtc = product.CreatedAtUtc,
-        UpdatedAtUtc = product.UpdatedAtUtc
+        UpdatedAtUtc = product.UpdatedAtUtc,
+        ConcurrencyToken = product.ConcurrencyToken
     };
 }

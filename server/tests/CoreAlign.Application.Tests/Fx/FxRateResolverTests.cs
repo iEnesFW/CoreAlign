@@ -18,7 +18,7 @@ public class FxRateResolverTests
     [Fact]
     public async Task Tenant_override_wins_over_preferred_source_and_global()
     {
-        _exchangeRates.GetLatestPerCurrencyOnOrBeforeAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+        _exchangeRates.GetLatestTenantOverridesOnOrBeforeAsync(Arg.Any<Guid>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(new List<ExchangeRate>
             {
                 new()

@@ -48,10 +48,15 @@ interface PanelHardwareSource {
 
 type PanelHardwareBoolKey = 'hasHandle' | 'hasLock' | 'hasBrushSeal';
 
-const BOOL_HARDWARE_KINDS: ReadonlyArray<readonly [PanelHardwareBoolKey, SceneHardwareKind]> = [
+// WHY: map each fitting bool straight to its catalog CATEGORY — a brush seal is category 'Brush',
+// distinct from a gasket strip's 'Gasket'; routing hasBrushSeal through the GasketStrip kind collapsed
+// both into the Gasket bucket, so a panel with a gasket strip silently dropped its brush seal.
+const BOOL_HARDWARE_CATEGORIES: ReadonlyArray<
+  readonly [PanelHardwareBoolKey, HardwareCategoryKind]
+> = [
   ['hasHandle', 'Handle'],
   ['hasLock', 'Lock'],
-  ['hasBrushSeal', 'GasketStrip'],
+  ['hasBrushSeal', 'Brush'],
 ];
 
 // WHY: panel hardware reaches the BOM from two models — explicit SceneHardwareItem objects AND
@@ -76,9 +81,8 @@ export const combinePanelHardware = (
     const category = categoryById.get(id);
     if (category) quotedCategories.add(category);
   }
-  for (const [flag, kind] of BOOL_HARDWARE_KINDS) {
+  for (const [flag, category] of BOOL_HARDWARE_CATEGORIES) {
     if (!panel[flag]) continue;
-    const category = sceneHardwareKindToCategory(kind);
     if (quotedCategories.has(category)) continue;
     const match = catalog.find((h) => h.category === category);
     if (!match) continue;

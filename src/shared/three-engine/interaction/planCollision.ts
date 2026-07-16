@@ -271,7 +271,7 @@ export const footprintsPenetrate = (a: PlanFootprint, b: PlanFootprint) => {
   return extent > jointToleranceMm(a, b);
 };
 
-const footprintsOverlapXY = (a: PlanFootprint, b: PlanFootprint): boolean => {
+export const footprintsOverlapXY = (a: PlanFootprint, b: PlanFootprint): boolean => {
   if (aabbSeparated(a, b)) return false;
   if (a.polygon || b.polygon) return polygonsOverlap(footprintOutline(a), footprintOutline(b));
   return obbOverlapExtent(footprintCorners(a), footprintCorners(b)) > CONTACT_EPS_MM;

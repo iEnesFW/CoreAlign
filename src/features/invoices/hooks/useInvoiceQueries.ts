@@ -17,6 +17,13 @@ export const useInvoicesQuery = (params: InvoiceListParams, options?: { enabled?
     enabled: options?.enabled ?? true,
   });
 
+export const useInvoiceAggregatesQuery = (search?: string) =>
+  useQuery({
+    queryKey: invoiceKeys.aggregates(search),
+    queryFn: () => invoicesApi.aggregates(search),
+    placeholderData: (previous) => previous,
+  });
+
 export const useInvoiceQuery = (id: string | null) =>
   useQuery({
     queryKey: invoiceKeys.detail(id),

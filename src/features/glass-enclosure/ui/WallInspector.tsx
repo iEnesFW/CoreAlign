@@ -20,7 +20,13 @@ import {
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
 import { newOperationId } from '@/shared/lib/operationId';
-import type { SceneWallOpening, SceneWallState, WallEdge } from '../model/project.types';
+import type {
+  EdgeArcKey,
+  EdgeArcMap,
+  SceneWallOpening,
+  SceneWallState,
+  WallEdge,
+} from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
 export function WallInspector() {
@@ -152,6 +158,21 @@ export function WallInspector() {
         }),
       });
     }
+  };
+
+  // Single-edge arc bows one edge of the wall face (e.g. an arched top); keeps openings, unlike the
+  // whole-body arc. Mutually exclusive with the plan arc / bend so the render can't split-brain.
+  const commitWallEdgeArc = (edge: EdgeArcKey, sagittaMm: number) => {
+    const base: EdgeArcMap = { ...(wall.geomEdgeArc ?? {}) };
+    if (Math.abs(sagittaMm) < 1) delete base[edge];
+    else base[edge] = Math.round(sagittaMm);
+    const hasAny = Object.values(base).some((s) => typeof s === 'number' && Math.abs(s) >= 1);
+    commit({
+      geomEdgeArc: hasAny ? base : null,
+      ...(hasAny
+        ? { geomArcRadiusMm: null, geomArcSweepDeg: null, bendAngleDeg: null, bendAtMm: null }
+        : {}),
+    });
   };
 
   const handleDelete = () => {
@@ -312,6 +333,49 @@ export function WallInspector() {
           band where they aren't applied yet, so hide them (like the edge-notch gate below). */}
       {!isArc && (
         <>
+          <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {t('GlassEnclosure.Designer.Wall.EdgeArcTitle', { defaultValue: 'Tek kenar kavis' })}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  [
+                    'back',
+                    t('GlassEnclosure.Designer.Wall.EdgeTop', { defaultValue: 'Üst kenar' }),
+                  ],
+                  [
+                    'front',
+                    t('GlassEnclosure.Designer.Wall.EdgeBottom', { defaultValue: 'Alt kenar' }),
+                  ],
+                  [
+                    'left',
+                    t('GlassEnclosure.Designer.Wall.EdgeLeft', { defaultValue: 'Sol kenar' }),
+                  ],
+                  [
+                    'right',
+                    t('GlassEnclosure.Designer.Wall.EdgeRight', { defaultValue: 'Sağ kenar' }),
+                  ],
+                ] as const
+              ).map(([edge, edgeLabel]) => (
+                <NumberField
+                  key={edge}
+                  label={`${edgeLabel} (mm)`}
+                  value={draft.geomEdgeArc?.[edge] ?? 0}
+                  onCommit={(v) => commitWallEdgeArc(edge, v)}
+                  onDraft={(v) =>
+                    setDraft({ ...draft, geomEdgeArc: { ...(draft.geomEdgeArc ?? {}), [edge]: v } })
+                  }
+                />
+              ))}
+            </div>
+            <p className="text-[11px] text-slate-400">
+              {t('GlassEnclosure.Designer.Wall.EdgeArcInfo', {
+                defaultValue:
+                  'Bir kenara ok (sagitta) girin; sadece o kenar kavislenir (kemerli üst).',
+              })}
+            </p>
+          </div>
           <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t('GlassEnclosure.Designer.Corner.Title', { defaultValue: 'Köşe ovalliği (mm)' })}

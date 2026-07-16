@@ -789,6 +789,17 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         });
         return;
       }
+      // WHY: a bent (L) wall turns mid-span, so offsetMm/lengthMm → developed-length maps non-linearly across the bend; the split would land at the wrong physical panel.
+      if (divideWall.bendAngleDeg && Math.abs(divideWall.bendAngleDeg) >= 1) {
+        queueToast({
+          dedupeKey: 'glass-pen-divide-bent',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.DivideBent', {
+            defaultValue: 'Kırık (L) duvar bölünemez — yalnız düz hatlar bölünebilir.',
+          }),
+        });
+        return;
+      }
       const totalWidth = hostRun.panels.reduce((sum, p) => sum + p.widthMm, 0);
       const fraction = Math.min(1, Math.max(0, offsetMm / Math.max(1, divideWall.lengthMm)));
       const split = splitPanelsAtLength(hostRun.panels, fraction * totalWidth, () =>

@@ -129,7 +129,7 @@ public class CustomerPortalHandlerTests
 
         _orders.SearchAsync(null, customerId, 1, 5, Arg.Any<CancellationToken>())
             .Returns((Array.Empty<OrderSearchRow>(), 0));
-        _invoices.SearchAsync(null, customerId, 1, 5, Arg.Any<CancellationToken>())
+        _invoices.SearchAsync(null, customerId, 1, 5, null, false, null, Arg.Any<CancellationToken>())
             .Returns((Array.Empty<InvoiceSearchRow>(), 0));
 
         var customer = new Customer("Acme Holding") { Id = customerId, TenantId = TenantId };

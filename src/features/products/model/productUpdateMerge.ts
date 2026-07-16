@@ -46,5 +46,6 @@ export const buildProductUpdateInput = (
   status: product.status,
   launchDate: product.launchDate,
   endOfLifeDate: product.endOfLifeDate,
+  expectedConcurrencyToken: product.concurrencyToken,
   ...overrides,
 });

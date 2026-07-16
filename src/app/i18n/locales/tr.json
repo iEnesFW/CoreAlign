@@ -91,6 +91,7 @@
       "stock": "Stok",
       "mrp": "MRP",
       "mrpWorkbench": "MRP Çalışma Alanı",
+      "productionRoutings": "Üretim Rotaları",
       "warranty": "Garanti",
       "installation": "Montaj",
       "accounting": "Muhasebe",
@@ -98,6 +99,7 @@
       "duplicateDetection": "Yinelenen Kayıtlar",
       "documentNumberGap": "Numara Boşlukları",
       "serialLookup": "Seri No Sorgula",
+      "glassPlates": "Cam Levhalar",
       "activityLog": "Etkinlik Günlüğü",
       "settings": "Ayarlar",
       "providers": "Sağlayıcılar",
@@ -388,6 +390,22 @@
     "reorder": {
       "button": "Tekrarla",
       "created": "Yeni taslak oluşturuldu: {{number}}"
+    },
+    "scrap": {
+      "done": "Fire kaydedildi.",
+      "exceeds": "Fire miktarı kalan miktarı aşamaz ({{max}}).",
+      "invalid": "Satır, depo ve geçerli bir miktar girin.",
+      "line": "Satır",
+      "max": "Maksimum",
+      "noLines": "Fire kaydı için uygun satır yok.",
+      "notes": "Fire nedeni / notlar",
+      "notesPlaceholder": "Örn. üretim hatası, hasar…",
+      "quantity": "Fire miktarı",
+      "remaining": "Kalan",
+      "selectWarehouse": "Seçin…",
+      "submit": "Fireyi kaydet",
+      "title": "Fire Kaydet",
+      "warehouse": "Depo"
     },
     "bulk": {
       "selected": "{{count}} seçili",
@@ -726,22 +744,6 @@
       "open": "Açık"
     },
     "resultCountLabel": "sipariş",
-    "scrap": {
-      "done": "Fire kaydedildi.",
-      "exceeds": "Fire miktarı kalan miktarı aşamaz ({{max}}).",
-      "invalid": "Satır, depo ve geçerli bir miktar girin.",
-      "line": "Satır",
-      "max": "Maksimum",
-      "noLines": "Fire kaydı için uygun satır yok.",
-      "notes": "Fire nedeni / notlar",
-      "notesPlaceholder": "Örn. üretim hatası, hasar…",
-      "quantity": "Fire miktarı",
-      "remaining": "Kalan",
-      "selectWarehouse": "Seçin…",
-      "submit": "Fireyi kaydet",
-      "title": "Fire Kaydet",
-      "warehouse": "Depo"
-    },
     "stats": {
       "avg": "Ort.",
       "drafts": "Bekleyen taslaklar",
@@ -1833,7 +1835,12 @@
           "subtitle": "B2B sipariş, sanal POS ve muhasebe aynı çatı altında — manuel aktarım yok."
         }
       ],
-      "pipeline": ["Tasarım", "Teklif", "Üretim", "Muhasebe"],
+      "pipeline": [
+        "Tasarım",
+        "Teklif",
+        "Üretim",
+        "Muhasebe"
+      ],
       "stats": [
         {
           "value": "%98,8",
@@ -1848,7 +1855,11 @@
           "label": "bulut erişimi"
         }
       ],
-      "trust": ["ISO 27001", "KVKK & GDPR", "%99,9 uptime"]
+      "trust": [
+        "ISO 27001",
+        "KVKK & GDPR",
+        "%99,9 uptime"
+      ]
     }
   },
   "LandingPage": {
@@ -2829,7 +2840,10 @@
       "ViewPlan": "Plan (2D)",
       "View3D": "3D",
       "LiveCost": "Canlı maliyet",
-      "LivePreview": "Önizleme",
+      "LivePreview": "Canlı",
+      "TabsAriaLabel": "Tasarımcı sekmeleri",
+      "CostEstimate": "Tahmini",
+      "CostPreviewError": "Canlı fiyatlandırma kullanılamıyor — tarayıcı içi tahmin gösteriliyor.",
       "NoCostYet": "Maliyeti görmek için hat ve panel ekleyin.",
       "LiveCostDisclaimer": "Tarayıcı içi tahmindir. Resmi kayıt sunucu raporudur.",
       "ViewCutting": "Kesim",
@@ -2981,6 +2995,12 @@
         "ArcTitle": "Kavis (yay)",
         "ArcRadius": "Kavis yarıçapı",
         "ArcDropsFeatures": "Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.",
+        "EdgeArcTitle": "Tek kenar kavis",
+        "EdgeTop": "Üst kenar",
+        "EdgeBottom": "Alt kenar",
+        "EdgeLeft": "Sol kenar",
+        "EdgeRight": "Sağ kenar",
+        "EdgeArcInfo": "Bir kenara ok (sagitta) girin; sadece o kenar kavislenir (kemerli üst).",
         "Arc": {
           "straight": "Düz",
           "left": "Sol kavis",
@@ -3015,6 +3035,12 @@
         "Rotation": "Dönüş",
         "DeleteFloor": "Zemini sil",
         "DeleteRoof": "Çatıyı sil",
+        "EdgeArcTitle": "Tek kenar kavis",
+        "EdgeFront": "Ön kenar",
+        "EdgeBack": "Arka kenar",
+        "EdgeLeft": "Sol kenar",
+        "EdgeRight": "Sağ kenar",
+        "EdgeArcInfo": "Bir kenara ok (sagitta) girin; sadece o kenar dışa kavislenir.",
         "PlanArcTitle": "Planda kavis (duvar gibi)",
         "PlanArcAxisLength": "Uzunluk ekseni",
         "PlanArcAxisDepth": "Derinlik ekseni",
@@ -3101,13 +3127,19 @@
         "Title": "Şablonlar — tek tıkla hazır kompozisyon ekle",
         "LWalls": "L duvar",
         "UWalls": "U üç duvar",
-        "RoomDoor": "Dört duvar + kapı boşluğu",
+        "Room": "Dört duvar (kapalı kutu)",
         "GableRoof": "Beşik çatı",
         "BarrelRoof": "Tonoz çatı",
         "ArcRoof": "Kavisli çatı (plan arc)",
         "ArcRun": "Kavisli cam hattı",
         "NoSystem": "Şablon için önce bir profil sistemi tanımlı olmalı.",
-        "Inserted": "Şablon sahneye eklendi."
+        "Inserted": "Şablon sahneye eklendi.",
+        "Mine": "Şablonlarım",
+        "SaveCurrent": "Bu çizimi şablon kaydet",
+        "NamePlaceholder": "Şablon adı",
+        "Saved": "Şablon kaydedildi.",
+        "SaveEmpty": "Boş çizim veya boş isim şablon olarak kaydedilemez.",
+        "Delete": "Şablonu sil"
       },
       "WallFeature": {
         "Title": "Duvar katmanı",
@@ -3175,7 +3207,9 @@
         "DistributeX": "X eşit dağıt",
         "DistributeY": "Y eşit dağıt",
         "Group": "Grupla (birlikte taşınır)",
-        "Ungroup": "Grubu çöz"
+        "Ungroup": "Grubu çöz",
+        "RoofOverSelection": "Seçime çatı ekle",
+        "RoofNeedsWalls": "Çatı için en az üç duvar seçin."
       },
       "Corner": {
         "Title": "Köşe ovalliği (mm)",
@@ -3599,6 +3633,8 @@
         "Banner.Pro": "Bekleyen engelleyici revizyon",
         "Banner.Action": "İncele",
         "CreatedAt": "Oluşturulma",
+        "StatusColumn": "Durum",
+        "ActionsColumn": "İşlemler",
         "Banner": {
           "Action": "İncele",
           "Simple": "Bu iş emri onay bekliyor",
@@ -3623,6 +3659,7 @@
       "Title": "Kesim Raporu",
       "Profile1D": "Profil kesimi (1D)",
       "Glass2D": "Cam kesimi (2D)",
+      "Guillotine": "Giyotin",
       "StockBar": "Boy",
       "Bars": "Boylar",
       "Cuts": "Kesimler",
@@ -3958,6 +3995,307 @@
         "Height": "Yükseklik (mm)",
         "Depth": "Derinlik (mm)"
       }
+    }
+  },
+  "GlassPlates": {
+    "title": "Cam Levhalar",
+    "subtitle": "Levha envanteri, artan takibi ve raf konumları",
+    "tabs": {
+      "plates": "Levhalar",
+      "usable": "Kesime uygun",
+      "locations": "Konumlar",
+      "lowStock": "Kritik stok",
+      "definitions": "Plaka Tanımları"
+    },
+    "plates": {
+      "empty": "Kayıtlı levha yok",
+      "number": "Levha no",
+      "kind": "Tür",
+      "status": "Durum",
+      "size": "Ölçü (mm)",
+      "remaining": "Kalan",
+      "utilization": "Kullanım",
+      "location": "Konum",
+      "actions": "İşlem"
+    },
+    "kind": {
+      "Fresh": "Tam levha",
+      "Remnant": "Artan"
+    },
+    "status": {
+      "Available": "Uygun",
+      "Reserved": "Rezerve",
+      "InUse": "Kullanımda",
+      "Consumed": "Tüketildi",
+      "Scrapped": "Fire"
+    },
+    "usable": {
+      "productId": "Ürün no",
+      "productIdPlaceholder": "Ürün kimliği girin",
+      "width": "Genişlik (mm)",
+      "height": "Yükseklik (mm)",
+      "prompt": "Kesime uygun levhaları görmek için ürün ve ölçü girin",
+      "none": "Bu ölçüye uygun levha bulunamadı"
+    },
+    "locations": {
+      "empty": "Tanımlı konum yok",
+      "code": "Kod",
+      "name": "Ad",
+      "kind": "Tür",
+      "active": "Aktif"
+    },
+    "locationKind": {
+      "Rack": "Raf sistemi",
+      "Shelf": "Raf",
+      "Pallet": "Palet",
+      "Floor": "Zemin",
+      "Zone": "Bölge"
+    },
+    "lowStock": {
+      "empty": "Kritik stokta levha yok",
+      "sku": "Stok kodu",
+      "product": "Ürün",
+      "available": "Uygun adet",
+      "threshold": "Eşik",
+      "replenish": "İkmal Et"
+    },
+    "actions": {
+      "receive": "Levha Girişi",
+      "newLocation": "Yeni Konum",
+      "cancel": "İptal",
+      "save": "Kaydet",
+      "remove": "Kaldır",
+      "consume": "Kes / Kullan",
+      "scrap": "Fire",
+      "warehouseAccess": "Depo Yetkileri"
+    },
+    "locationForm": {
+      "title": "Yeni Depo Konumu",
+      "warehouse": "Depo",
+      "selectWarehouse": "Seçiniz…",
+      "warehouseRequired": "Depo seçiniz.",
+      "codeNameRequired": "Kod ve ad zorunludur.",
+      "notes": "Açıklama",
+      "created": "Konum oluşturuldu.",
+      "createFailed": "Konum oluşturulamadı."
+    },
+    "receiveForm": {
+      "title": "Levha Girişi",
+      "product": "Ürün",
+      "productRequired": "Ürün seçiniz.",
+      "warehouse": "Depo",
+      "warehouseRequired": "Depo seçiniz.",
+      "location": "Konum",
+      "noLocation": "Konum yok",
+      "unitCostPerM2": "Birim maliyet (m²)",
+      "plateNumber": "Levha no",
+      "width": "Genişlik",
+      "height": "Yükseklik",
+      "thickness": "Kalınlık",
+      "linesRequired": "En az bir geçerli levha satırı ekleyin.",
+      "addPlate": "Levha ekle",
+      "notes": "Açıklama",
+      "received": "{{count}} levha girişi yapıldı.",
+      "failed": "Levha girişi başarısız."
+    },
+    "definitions": {
+      "empty": "Plaka takipli ürün tanımlı değil",
+      "standardSize": "Standart ölçü",
+      "minPlateCount": "Min. levha",
+      "minRemnantArea": "Min. artan"
+    },
+    "trackingForm": {
+      "title": "Plaka Takip Tanımı",
+      "newDefinition": "Yeni Tanım",
+      "product": "Ürün",
+      "productRequired": "Ürün seçiniz.",
+      "isPlateTracked": "Plaka olarak takip et",
+      "remnantSection": "Artan (offcut) eşikleri",
+      "stockSection": "Stok ve standart ölçü",
+      "minRemnantArea": "Min. artan alan (mm²)",
+      "minRemnantWidth": "Min. artan genişlik (mm)",
+      "minRemnantHeight": "Min. artan yükseklik (mm)",
+      "minPlateCount": "Min. levha adedi",
+      "standardWidth": "Standart genişlik (mm)",
+      "standardHeight": "Standart yükseklik (mm)",
+      "saved": "Tanım kaydedildi.",
+      "failed": "Tanım kaydedilemedi."
+    },
+    "consumeForm": {
+      "title": "Levha Kesimi — {{plate}}",
+      "remaining": "Kalan",
+      "cutSection": "Kesilen parça",
+      "cutWidth": "Genişlik (mm)",
+      "cutHeight": "Yükseklik (mm)",
+      "pieces": "Adet",
+      "cutArea": "Kesilen alan (mm²)",
+      "willConsume": "{{area}} m² tüketilecek",
+      "remnantSection": "Oluşan artan (opsiyonel)",
+      "remnantWidth": "Artan genişlik (mm)",
+      "remnantHeight": "Artan yükseklik (mm)",
+      "remnantPlateNumber": "Artan levha no",
+      "areaRequired": "Kesilecek alan giriniz.",
+      "areaExceeds": "Kesilen alan kalan alanı aşıyor.",
+      "consumed": "Levha kesildi.",
+      "consumedWithRemnant": "Levha kesildi, artan oluşturuldu.",
+      "failed": "Kesim başarısız."
+    },
+    "scrapForm": {
+      "title": "Fire Girişi — {{plate}}",
+      "mode": "Fire türü",
+      "modeCount": "Tüm levha (adet)",
+      "modeArea": "Kısmi (alan)",
+      "area": "Fire alanı (mm²)",
+      "reason": "Fire nedeni",
+      "selectReason": "Neden seçiniz…",
+      "reasonRequired": "Fire nedeni seçiniz.",
+      "areaRequired": "Fire alanı giriniz.",
+      "areaExceeds": "Fire alanı kalan alanı aşıyor.",
+      "notes": "Açıklama",
+      "confirm": "Fire Kaydet",
+      "scrapped": "Fire kaydedildi.",
+      "failed": "Fire kaydı başarısız."
+    },
+    "access": {
+      "title": "Depo Yetkileri",
+      "user": "Kullanıcı",
+      "selectUser": "Kullanıcı seçiniz…",
+      "userRequired": "Kullanıcı seçiniz.",
+      "warehouses": "Erişebileceği depolar",
+      "hint": "Seçili depolar dışındaki depolar bu kullanıcıya gizlenir (yöneticiler tümünü görür).",
+      "noWarehouses": "Tanımlı depo yok",
+      "emptyMeansNone": "Bu kullanıcı hiçbir depoya erişemeyecek.",
+      "saved": "Depo yetkileri güncellendi."
+    }
+  },
+  "Manufacturing": {
+    "title": "Üretim Rotaları",
+    "subtitle": "Tezgahlar, operatör atamaları ve ürün üretim rotaları",
+    "tabs": {
+      "routings": "Rotalar",
+      "workCenters": "Tezgahlar",
+      "operators": "Operatörler"
+    },
+    "common": {
+      "yes": "Evet",
+      "no": "Hayır"
+    },
+    "actions": {
+      "cancel": "İptal",
+      "save": "Kaydet",
+      "remove": "Kaldır",
+      "actions": "İşlem",
+      "edit": "Düzenle",
+      "steps": "Adımlar",
+      "activate": "Aktifleştir",
+      "archive": "Arşivle",
+      "restore": "Taslağa Al",
+      "delete": "Sil",
+      "deactivate": "Pasifleştir",
+      "new_routings": "Yeni Rota",
+      "new_workCenters": "Yeni Tezgah",
+      "new_operators": "Yeni Atama"
+    },
+    "routing": {
+      "code": "Kod",
+      "name": "Ad",
+      "description": "Açıklama",
+      "status": "Durum",
+      "stepCount": "Adım"
+    },
+    "routingStatus": {
+      "Draft": "Taslak",
+      "Active": "Aktif",
+      "Archived": "Arşiv"
+    },
+    "routings": {
+      "empty": "Tanımlı rota yok",
+      "transitioned": "Rota durumu güncellendi.",
+      "actionFailed": "İşlem başarısız.",
+      "deleteTitle": "Rotayı Sil",
+      "deleteMessage": "{{code}} rotası silinsin mi?",
+      "deleted": "Rota silindi."
+    },
+    "routingForm": {
+      "title": "Yeni Rota",
+      "editTitle": "Rotayı Düzenle",
+      "codeNameRequired": "Kod ve ad zorunludur.",
+      "saved": "Rota kaydedildi.",
+      "failed": "Rota kaydedilemedi.",
+      "editHint": "Adımları düzenlemek için satırdaki Adımlar butonunu kullanın (yalnız Taslak)."
+    },
+    "stepsForm": {
+      "title": "Rota Adımları — {{code}}",
+      "addStep": "Adım ekle",
+      "rowsIncomplete": "Her adımda tezgah ve operasyon adı zorunludur.",
+      "saved": "Adımlar kaydedildi.",
+      "failed": "Adımlar kaydedilemedi."
+    },
+    "step": {
+      "workCenter": "Tezgah",
+      "operationName": "Operasyon",
+      "operationType": "Tür",
+      "setup": "Hazırlık",
+      "runUnit": "Süre/adet",
+      "runSqm": "Süre/m²",
+      "scrap": "Fire %"
+    },
+    "operationType": {
+      "Cutting": "Kesim",
+      "Edging": "Rodaj",
+      "Tempering": "Temperleme",
+      "Lamination": "Lamine",
+      "Drilling": "Delme",
+      "Sandblasting": "Kumlama",
+      "Washing": "Yıkama",
+      "QualityControl": "Kalite Kontrol",
+      "Packaging": "Paketleme",
+      "Other": "Diğer"
+    },
+    "workCenter": {
+      "code": "Kod",
+      "name": "Ad",
+      "dailyCapacity": "Günlük kapasite (dk)",
+      "active": "Aktif"
+    },
+    "workCenters": {
+      "empty": "Tanımlı tezgah yok"
+    },
+    "workCenterForm": {
+      "title": "Yeni Tezgah",
+      "editTitle": "Tezgahı Düzenle",
+      "codeNameRequired": "Kod ve ad zorunludur.",
+      "saved": "Tezgah kaydedildi.",
+      "failed": "Tezgah kaydedilemedi."
+    },
+    "operator": {
+      "workCenter": "Tezgah",
+      "employee": "Personel",
+      "level": "Yetkinlik",
+      "certifiedOn": "Sertifika tarihi",
+      "primary": "Birincil",
+      "active": "Aktif",
+      "notes": "Açıklama"
+    },
+    "operators": {
+      "empty": "Operatör ataması yok",
+      "updated": "Atama güncellendi.",
+      "actionFailed": "İşlem başarısız.",
+      "employeeInactive": "Pasif personel"
+    },
+    "operatorForm": {
+      "title": "Yeni Operatör Ataması",
+      "editTitle": "Atamayı Düzenle",
+      "workCenterEmployeeRequired": "Tezgah ve personel seçiniz.",
+      "selectWorkCenter": "Tezgah seçiniz…",
+      "selectEmployee": "Personel seçiniz…",
+      "saved": "Atama kaydedildi.",
+      "failed": "Atama kaydedilemedi."
+    },
+    "qualificationLevel": {
+      "Trainee": "Aday",
+      "Qualified": "Yetkin",
+      "Expert": "Uzman"
     }
   },
   "Admin": {
@@ -8038,5 +8376,69 @@
     "reporting": "Gönderiliyor…",
     "reported": "Talep oluşturuldu — teşekkürler.",
     "reportFailed": "Rapor gönderilemedi."
+  },
+  "ProductionJobs": {
+    "title": "Üretim İşleri",
+    "subtitle": "Üretim emirlerini, operasyonları ve saha yürütmesini yönetin.",
+    "empty_title": "Üretim işi bulunamadı",
+    "empty_desc": "Üretime başlamak için yeni bir iş oluşturun.",
+    "actions": {
+      "new_job": "Yeni İş",
+      "release": "İşi Başlat (Release)",
+      "start": "Başla",
+      "finish": "Bitir",
+      "complete_job": "İşi Tamamla"
+    },
+    "status": {
+      "all": "Tümü",
+      "Draft": "Taslak",
+      "Released": "Sahada",
+      "InProgress": "Devam Ediyor",
+      "OnHold": "Beklemede",
+      "ReadyToComplete": "Tamamlanmaya Hazır",
+      "Completed": "Tamamlandı",
+      "Cancelled": "İptal Edildi"
+    },
+    "stepStatus": {
+      "Pending": "Bekliyor",
+      "InProgress": "Devam Ediyor",
+      "Completed": "Tamamlandı",
+      "Skipped": "Atlandı",
+      "Reopened": "Yeniden Açıldı"
+    },
+    "fields": {
+      "product": "Ürün",
+      "qty": "Miktar",
+      "completed": "Tamamlanan",
+      "uom": "Birim",
+      "routing": "Rota (Routing)",
+      "warehouse": "Depo",
+      "notes": "Notlar",
+      "dueDate": "Termin",
+      "progress": "İlerleme",
+      "good": "Sağlam Miktar",
+      "scrapped": "Fire Miktar",
+      "warehouse_required": "Depo seçimi zorunludur"
+    },
+    "cancel_title": "İşi İptal Et",
+    "cancel_message": "{{number}} numaralı işi iptal etmek istediğinize emin misiniz?",
+    "cancel_success": "İş başarıyla iptal edildi",
+    "cancel_error": "İş iptal edilemedi",
+    "create_success": "İş başarıyla oluşturuldu",
+    "create_error": "İş oluşturulamadı",
+    "release_success": "İş üretim sahasına alındı",
+    "release_error": "İş sahaya alınamadı",
+    "complete_success": "İş başarıyla tamamlandı",
+    "complete_error": "İş tamamlanamadı",
+    "traveler_steps": "Operasyon Adımları",
+    "no_steps": "Bu iş için rota adımı tanımlanmamış.",
+    "step": "Adım",
+    "select_operator": "Operatör Seçin...",
+    "operator_required": "Operatör seçimi zorunludur",
+    "step_started": "Operasyon başlatıldı",
+    "step_finished": "Operasyon bitirildi",
+    "step_skipped": "Operasyon atlandı",
+    "ready_to_complete_title": "Tüm Adımlar Tamamlandı",
+    "ready_to_complete_desc": "Tüm zorunlu operasyonlar bitti. İş tamamlandı olarak işaretlenebilir ve stok girişi yapılabilir."
   }
 }

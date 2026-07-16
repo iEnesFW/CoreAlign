@@ -215,6 +215,40 @@ public static class NotificationTemplateSeeder
                 ["de"] = "Bestand von {{productName}} ({{sku}}) ist kritisch. Verfügbar: {{onHand}}, Meldebestand: {{reorderPoint}}.",
                 ["ru"] = "Остаток {{productName}} ({{sku}}) критический. В наличии: {{onHand}}, точка заказа: {{reorderPoint}}."
             }),
+        new TemplateSpec("GlassPlateLow", "GlassPlate",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Cam plaka stoğu azaldı",
+                ["en"] = "Glass plate stock low",
+                ["ar"] = "مخزون ألواح الزجاج منخفض",
+                ["de"] = "Glasplatten-Bestand niedrig",
+                ["ru"] = "Низкий запас стеклянных листов"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{sku}} cam plakası {{warehouse}} deposunda eşiğin altına indi. Yeni plaka ekleyin veya sipariş oluşturun.",
+                ["en"] = "{{sku}} glass plate dropped below the reorder point at {{warehouse}}. Add plates or create a reorder.",
+                ["ar"] = "انخفض لوح الزجاج {{sku}} عن حد إعادة الطلب في {{warehouse}}. أضف ألواحًا أو أنشئ طلبًا.",
+                ["de"] = "Glasplatte {{sku}} unter Meldebestand im Lager {{warehouse}}. Platten hinzufügen oder Nachbestellung erstellen.",
+                ["ru"] = "Стеклянный лист {{sku}} опустился ниже точки заказа на складе {{warehouse}}. Добавьте листы или создайте заказ."
+            }),
+        new TemplateSpec("GlassPlateDepleted", "GlassPlate",
+            new Dictionary<string, string>
+            {
+                ["tr"] = "Cam plaka bitti",
+                ["en"] = "Glass plate depleted",
+                ["ar"] = "نفد لوح الزجاج",
+                ["de"] = "Glasplatte aufgebraucht",
+                ["ru"] = "Стеклянные листы закончились"
+            },
+            new Dictionary<string, string>
+            {
+                ["tr"] = "{{sku}} cam plakası {{warehouse}} deposunda tükendi. Yeni plaka ekleyin veya sipariş oluşturun.",
+                ["en"] = "{{sku}} glass plate is out of stock at {{warehouse}}. Add plates or create a reorder.",
+                ["ar"] = "نفد لوح الزجاج {{sku}} في {{warehouse}}. أضف ألواحًا أو أنشئ طلبًا.",
+                ["de"] = "Glasplatte {{sku}} im Lager {{warehouse}} nicht mehr vorrätig. Platten hinzufügen oder Nachbestellung erstellen.",
+                ["ru"] = "Стеклянный лист {{sku}} закончился на складе {{warehouse}}. Добавьте листы или создайте заказ."
+            }),
     };
 
     private static readonly NotificationChannel[] SeedChannels = new[]

@@ -59,6 +59,15 @@ public class Product : TenantEntity, IHasConcurrencyToken
     public string? Color { get; private set; }
     public decimal? ThicknessMm { get; private set; }
 
+    // WHY: min-remnant fields are optional — null means no minimum, so every usable offcut is kept as a remnant.
+    public bool IsPlateTracked { get; private set; }
+    public decimal? MinRemnantAreaMm2 { get; private set; }
+    public decimal? MinRemnantWidthMm { get; private set; }
+    public decimal? MinRemnantHeightMm { get; private set; }
+    public int? MinPlateCount { get; private set; }
+    public decimal? StandardWidthMm { get; private set; }
+    public decimal? StandardHeightMm { get; private set; }
+
     public decimal? MinOrderQuantity { get; private set; }
 
     public ProcurementType ProcurementType { get; private set; } = ProcurementType.Buy;
@@ -75,6 +84,7 @@ public class Product : TenantEntity, IHasConcurrencyToken
 
     public Guid? WorkCenterId { get; private set; }
     public decimal RunTimeMinutesPerUnit { get; private set; }
+    public Guid? RoutingId { get; private set; }
 
     public Guid? PreferredSupplierId { get; private set; }
 
@@ -247,6 +257,32 @@ public class Product : TenantEntity, IHasConcurrencyToken
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    public void SetPlateTracking(
+        bool isPlateTracked,
+        decimal? minRemnantAreaMm2,
+        decimal? minRemnantWidthMm,
+        decimal? minRemnantHeightMm,
+        int? minPlateCount,
+        decimal? standardWidthMm,
+        decimal? standardHeightMm)
+    {
+        if (minRemnantAreaMm2 is < 0m) throw new ArgumentOutOfRangeException(nameof(minRemnantAreaMm2), "Minimum remnant area cannot be negative.");
+        if (minRemnantWidthMm is < 0m) throw new ArgumentOutOfRangeException(nameof(minRemnantWidthMm), "Minimum remnant width cannot be negative.");
+        if (minRemnantHeightMm is < 0m) throw new ArgumentOutOfRangeException(nameof(minRemnantHeightMm), "Minimum remnant height cannot be negative.");
+        if (minPlateCount is < 0) throw new ArgumentOutOfRangeException(nameof(minPlateCount), "Minimum plate count cannot be negative.");
+        if (standardWidthMm is < 0m) throw new ArgumentOutOfRangeException(nameof(standardWidthMm), "Standard width cannot be negative.");
+        if (standardHeightMm is < 0m) throw new ArgumentOutOfRangeException(nameof(standardHeightMm), "Standard height cannot be negative.");
+
+        IsPlateTracked = isPlateTracked;
+        MinRemnantAreaMm2 = minRemnantAreaMm2;
+        MinRemnantWidthMm = minRemnantWidthMm;
+        MinRemnantHeightMm = minRemnantHeightMm;
+        MinPlateCount = minPlateCount;
+        StandardWidthMm = standardWidthMm;
+        StandardHeightMm = standardHeightMm;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void Activate() => ChangeStatus(ProductStatus.Active);
 
     public void Deactivate() => ChangeStatus(ProductStatus.Discontinued);
@@ -282,6 +318,12 @@ public class Product : TenantEntity, IHasConcurrencyToken
     public void SetAbcClass(AbcClass abcClass)
     {
         AbcClass = abcClass;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void AssignRouting(Guid? routingId)
+    {
+        RoutingId = routingId;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

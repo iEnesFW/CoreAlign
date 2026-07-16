@@ -44,7 +44,10 @@ const FACE_SNAP_MM = 110;
 // A tighter corner radius so a body only snaps when its corner is genuinely close —
 // the old 150mm grabbed from far away and felt like it deflected to the wrong spot.
 const CORNER_SNAP_MM = 100;
-const AXIS_SNAP_MM = 50;
+// Edge/centreline ALIGNMENT catch window. Wider than a contact snap on purpose: lining two bodies
+// up on a shared X or Y is the common "make it tidy" gesture, and a tight 50mm window made it feel
+// like the alignment never caught (you had to be almost pixel-perfect before it stuck + drew a guide).
+const AXIS_SNAP_MM = 120;
 const DIMENSION_STEP_MM = 10;
 
 export const EMPTY_SNAP_TARGETS: PlanSnapTargets = { points: [], segments: [] };

@@ -8,6 +8,7 @@ import {
   Copy,
   FlipHorizontal2,
   Group as GroupIcon,
+  Home,
   Link2,
   Lock,
   LockOpen,
@@ -31,6 +32,10 @@ import {
   buildWallFootprint,
   penetratesAny,
 } from '@/features/glass-enclosure/scene/interaction/planCollision';
+import {
+  computeRoofOverWalls,
+  computeRoofSurfaceOverWalls,
+} from '@/features/glass-enclosure/model/roofFromWalls';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
@@ -62,6 +67,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const surfaces = useDesignerStore((s) => s.scene.surfaces ?? []);
   const walls = useDesignerStore((s) => s.scene.walls ?? []);
   const removeSlab = useDesignerStore((s) => s.removeSlab);
+  const addSlab = useDesignerStore((s) => s.addSlab);
+  const addSurface = useDesignerStore((s) => s.addSurface);
   const updateWall = useDesignerStore((s) => s.updateWall);
   const updateSlab = useDesignerStore((s) => s.updateSlab);
   const updateSurface = useDesignerStore((s) => s.updateSurface);
@@ -84,6 +91,48 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   };
   const { alignCenters, distributeEvenly, joinEndToEnd, equalizeHeights, equalizeLengths } =
     useMultiAlignActions();
+
+  const roofOverSelection = () => {
+    const selectedWalls = walls.filter((w) => multiSelection.wallIds.includes(w.id));
+    const surface = computeRoofSurfaceOverWalls(selectedWalls);
+    if (surface) {
+      const id = crypto.randomUUID();
+      addSurface({ ...surface, id });
+      setSelection({
+        kind: 'surface',
+        runId: null,
+        panelId: null,
+        connectionId: null,
+        hardwareId: null,
+        wallId: null,
+        slabId: null,
+        surfaceId: id,
+      });
+      return;
+    }
+    const roof = computeRoofOverWalls(selectedWalls);
+    if (!roof) {
+      queueToast({
+        dedupeKey: 'glass-roof-over-selection',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.MultiSelect.RoofNeedsWalls', {
+          defaultValue: 'Çatı için en az üç duvar seçin.',
+        }),
+      });
+      return;
+    }
+    const id = crypto.randomUUID();
+    addSlab({ ...roof, id });
+    setSelection({
+      kind: 'slab',
+      runId: null,
+      panelId: null,
+      connectionId: null,
+      hardwareId: null,
+      wallId: null,
+      slabId: id,
+    });
+  };
 
   const multiCount =
     multiSelection.runIds.length + multiSelection.wallIds.length + multiSelection.slabIds.length;
@@ -182,6 +231,15 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
                 onClick={() => groupWalls(null)}
               />
             </>
+          )}
+          {multiSelection.wallIds.length >= 3 && (
+            <ToolbarButton
+              icon={<Home size={13} />}
+              label={t('GlassEnclosure.Designer.MultiSelect.RoofOverSelection', {
+                defaultValue: 'Seçime çatı ekle',
+              })}
+              onClick={() => roofOverSelection()}
+            />
           )}
           <ToolbarButton
             icon={<Trash2 size={13} />}

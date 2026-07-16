@@ -93,6 +93,14 @@ describe('applyPlanMoveSnap', () => {
     expect(res.guides.some((g) => g.kind === 'axis')).toBe(true);
   });
 
+  it('catches an axis alignment ~100mm off (the wider window that made aligning usable)', () => {
+    // 100mm Y offset would NOT have snapped under the old 50mm window; the widened tolerance sticks it.
+    const targets: PlanSnapTargets = { points: [{ x: 1000, y: 100 }], segments: [] };
+    const res = applyPlanMoveSnap([{ x: 200, y: 0 }], 0, 0, targets);
+    expect(res.dyMm).toBe(100);
+    expect(res.guides.some((g) => g.kind === 'axis')).toBe(true);
+  });
+
   it('butts a rectangular body flush against a neighbour face via its face-corner probe (not the centerline)', () => {
     // Neighbour wall A: right face is the vertical segment x=0, corner at (0,0).
     const targets: PlanSnapTargets = {

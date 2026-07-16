@@ -91,6 +91,7 @@
       "stock": "Stock",
       "mrp": "MRP",
       "mrpWorkbench": "MRP Workbench",
+      "productionRoutings": "Production Routings",
       "warranty": "Warranty",
       "installation": "Installation",
       "accounting": "Accounting",
@@ -98,6 +99,7 @@
       "duplicateDetection": "Duplicate Records",
       "documentNumberGap": "Number Gaps",
       "serialLookup": "Serial Lookup",
+      "glassPlates": "Glass Plates",
       "activityLog": "Activity Log",
       "settings": "Settings",
       "providers": "Providers",
@@ -388,6 +390,22 @@
     "reorder": {
       "button": "Reorder",
       "created": "New draft created: {{number}}"
+    },
+    "scrap": {
+      "done": "Scrap recorded.",
+      "exceeds": "Scrap quantity cannot exceed the remaining quantity ({{max}}).",
+      "invalid": "Enter a line, warehouse and a valid quantity.",
+      "line": "Line",
+      "max": "Maximum",
+      "noLines": "No lines available for scrap.",
+      "notes": "Scrap reason / notes",
+      "notesPlaceholder": "E.g. production defect, damage…",
+      "quantity": "Scrap quantity",
+      "remaining": "Remaining",
+      "selectWarehouse": "Select…",
+      "submit": "Save scrap",
+      "title": "Record scrap",
+      "warehouse": "Warehouse"
     },
     "bulk": {
       "selected": "{{count}} selected",
@@ -726,22 +744,6 @@
       "open": "Open"
     },
     "resultCountLabel": "orders",
-    "scrap": {
-      "done": "Scrap recorded.",
-      "exceeds": "Scrap quantity cannot exceed the remaining quantity ({{max}}).",
-      "invalid": "Enter a line, warehouse and a valid quantity.",
-      "line": "Line",
-      "max": "Maximum",
-      "noLines": "No lines available for scrap.",
-      "notes": "Scrap reason / notes",
-      "notesPlaceholder": "E.g. production defect, damage…",
-      "quantity": "Scrap quantity",
-      "remaining": "Remaining",
-      "selectWarehouse": "Select…",
-      "submit": "Save scrap",
-      "title": "Record scrap",
-      "warehouse": "Warehouse"
-    },
     "stats": {
       "avg": "Avg",
       "drafts": "Pending drafts",
@@ -1833,7 +1835,12 @@
           "subtitle": "B2B orders, virtual POS and accounting under one roof — no manual handoffs."
         }
       ],
-      "pipeline": ["Design", "Quote", "Production", "Accounting"],
+      "pipeline": [
+        "Design",
+        "Quote",
+        "Production",
+        "Accounting"
+      ],
       "stats": [
         {
           "value": "98.8%",
@@ -1848,7 +1855,11 @@
           "label": "cloud access"
         }
       ],
-      "trust": ["ISO 27001", "KVKK & GDPR", "99.9% uptime"]
+      "trust": [
+        "ISO 27001",
+        "KVKK & GDPR",
+        "99.9% uptime"
+      ]
     }
   },
   "LandingPage": {
@@ -2829,7 +2840,10 @@
       "ViewPlan": "Plan (2D)",
       "View3D": "3D",
       "LiveCost": "Live cost",
-      "LivePreview": "Preview",
+      "LivePreview": "Live",
+      "TabsAriaLabel": "Designer tabs",
+      "CostEstimate": "Estimate",
+      "CostPreviewError": "Live pricing unavailable — showing an in-browser estimate.",
       "NoCostYet": "Add runs and panels to see costs.",
       "LiveCostDisclaimer": "In-browser estimate. The server report is authoritative.",
       "ViewCutting": "Cutting",
@@ -2981,6 +2995,12 @@
         "ArcTitle": "Curve (arc)",
         "ArcRadius": "Curve radius",
         "ArcDropsFeatures": "Converting to a curve removed this wall's openings/shapes.",
+        "EdgeArcTitle": "Single-edge arc",
+        "EdgeTop": "Top edge",
+        "EdgeBottom": "Bottom edge",
+        "EdgeLeft": "Left edge",
+        "EdgeRight": "Right edge",
+        "EdgeArcInfo": "Enter a rise (sagitta) for an edge; only that edge bows (e.g. an arched top).",
         "Arc": {
           "straight": "Straight",
           "left": "Curve left",
@@ -3015,6 +3035,12 @@
         "Rotation": "Rotation",
         "DeleteFloor": "Delete floor",
         "DeleteRoof": "Delete roof",
+        "EdgeArcTitle": "Single-edge arc",
+        "EdgeFront": "Front edge",
+        "EdgeBack": "Back edge",
+        "EdgeLeft": "Left edge",
+        "EdgeRight": "Right edge",
+        "EdgeArcInfo": "Enter a rise (sagitta) for an edge; only that edge bows outward.",
         "PlanArcTitle": "Plan curve (like a wall)",
         "PlanArcAxisLength": "Length axis",
         "PlanArcAxisDepth": "Depth axis",
@@ -3101,13 +3127,19 @@
         "Title": "Templates — insert a ready-made composition with one click",
         "LWalls": "L walls",
         "UWalls": "U three walls",
-        "RoomDoor": "Four walls + door opening",
+        "Room": "Four walls (closed box)",
         "GableRoof": "Gable roof",
         "BarrelRoof": "Barrel roof",
         "ArcRoof": "Curved roof (plan arc)",
         "ArcRun": "Curved glass run",
         "NoSystem": "Define a profile system before inserting a template.",
-        "Inserted": "Template added to the scene."
+        "Inserted": "Template added to the scene.",
+        "Mine": "My templates",
+        "SaveCurrent": "Save this drawing as a template",
+        "NamePlaceholder": "Template name",
+        "Saved": "Template saved.",
+        "SaveEmpty": "An empty drawing or blank name can't be saved as a template.",
+        "Delete": "Delete template"
       },
       "WallFeature": {
         "Title": "Wall layer",
@@ -3175,7 +3207,9 @@
         "DistributeX": "Distribute X evenly",
         "DistributeY": "Distribute Y evenly",
         "Group": "Group (move together)",
-        "Ungroup": "Ungroup"
+        "Ungroup": "Ungroup",
+        "RoofOverSelection": "Add roof over selection",
+        "RoofNeedsWalls": "Select at least three walls for a roof."
       },
       "Corner": {
         "Title": "Corner rounding (mm)",
@@ -3599,6 +3633,8 @@
         "Banner.Pro": "Pending blocking revision",
         "Banner.Action": "Review",
         "CreatedAt": "Created",
+        "StatusColumn": "Status",
+        "ActionsColumn": "Actions",
         "Banner": {
           "Action": "Review",
           "Simple": "This work order is awaiting an approval",
@@ -3623,6 +3659,7 @@
       "Title": "Cutting Report",
       "Profile1D": "Profile cutting (1D)",
       "Glass2D": "Glass cutting (2D)",
+      "Guillotine": "Guillotine",
       "StockBar": "Stock bar",
       "Bars": "Bars",
       "Cuts": "Cuts",
@@ -3958,6 +3995,307 @@
         "Height": "Height (mm)",
         "Depth": "Depth (mm)"
       }
+    }
+  },
+  "GlassPlates": {
+    "title": "Glass Plates",
+    "subtitle": "Plate inventory, remnant tracking and rack locations",
+    "tabs": {
+      "plates": "Plates",
+      "usable": "Usable for cut",
+      "locations": "Locations",
+      "lowStock": "Low stock",
+      "definitions": "Plate Definitions"
+    },
+    "plates": {
+      "empty": "No plates recorded",
+      "number": "Plate no",
+      "kind": "Kind",
+      "status": "Status",
+      "size": "Size (mm)",
+      "remaining": "Remaining",
+      "utilization": "Utilization",
+      "location": "Location",
+      "actions": "Actions"
+    },
+    "kind": {
+      "Fresh": "Full plate",
+      "Remnant": "Remnant"
+    },
+    "status": {
+      "Available": "Available",
+      "Reserved": "Reserved",
+      "InUse": "In use",
+      "Consumed": "Consumed",
+      "Scrapped": "Scrapped"
+    },
+    "usable": {
+      "productId": "Product no",
+      "productIdPlaceholder": "Enter product id",
+      "width": "Width (mm)",
+      "height": "Height (mm)",
+      "prompt": "Enter a product and size to see usable plates",
+      "none": "No plate fits this size"
+    },
+    "locations": {
+      "empty": "No locations defined",
+      "code": "Code",
+      "name": "Name",
+      "kind": "Kind",
+      "active": "Active"
+    },
+    "locationKind": {
+      "Rack": "Rack",
+      "Shelf": "Shelf",
+      "Pallet": "Pallet",
+      "Floor": "Floor",
+      "Zone": "Zone"
+    },
+    "lowStock": {
+      "empty": "No plates at low stock",
+      "sku": "SKU",
+      "product": "Product",
+      "available": "Available",
+      "threshold": "Threshold",
+      "replenish": "Replenish"
+    },
+    "actions": {
+      "receive": "Receive Plates",
+      "newLocation": "New Location",
+      "cancel": "Cancel",
+      "save": "Save",
+      "remove": "Remove",
+      "consume": "Cut / Use",
+      "scrap": "Scrap",
+      "warehouseAccess": "Warehouse Access"
+    },
+    "locationForm": {
+      "title": "New Storage Location",
+      "warehouse": "Warehouse",
+      "selectWarehouse": "Select…",
+      "warehouseRequired": "Select a warehouse.",
+      "codeNameRequired": "Code and name are required.",
+      "notes": "Notes",
+      "created": "Location created.",
+      "createFailed": "Could not create location."
+    },
+    "receiveForm": {
+      "title": "Receive Plates",
+      "product": "Product",
+      "productRequired": "Select a product.",
+      "warehouse": "Warehouse",
+      "warehouseRequired": "Select a warehouse.",
+      "location": "Location",
+      "noLocation": "No location",
+      "unitCostPerM2": "Unit cost (m²)",
+      "plateNumber": "Plate no",
+      "width": "Width",
+      "height": "Height",
+      "thickness": "Thickness",
+      "linesRequired": "Add at least one valid plate row.",
+      "addPlate": "Add plate",
+      "notes": "Notes",
+      "received": "{{count}} plates received.",
+      "failed": "Plate receipt failed."
+    },
+    "definitions": {
+      "empty": "No plate-tracked products defined",
+      "standardSize": "Standard size",
+      "minPlateCount": "Min. plates",
+      "minRemnantArea": "Min. remnant"
+    },
+    "trackingForm": {
+      "title": "Plate Tracking Definition",
+      "newDefinition": "New Definition",
+      "product": "Product",
+      "productRequired": "Select a product.",
+      "isPlateTracked": "Track as plates",
+      "remnantSection": "Remnant (offcut) thresholds",
+      "stockSection": "Stock and standard size",
+      "minRemnantArea": "Min. remnant area (mm²)",
+      "minRemnantWidth": "Min. remnant width (mm)",
+      "minRemnantHeight": "Min. remnant height (mm)",
+      "minPlateCount": "Min. plate count",
+      "standardWidth": "Standard width (mm)",
+      "standardHeight": "Standard height (mm)",
+      "saved": "Definition saved.",
+      "failed": "Could not save definition."
+    },
+    "consumeForm": {
+      "title": "Cut Plate — {{plate}}",
+      "remaining": "Remaining",
+      "cutSection": "Cut piece",
+      "cutWidth": "Width (mm)",
+      "cutHeight": "Height (mm)",
+      "pieces": "Pieces",
+      "cutArea": "Cut area (mm²)",
+      "willConsume": "{{area}} m² will be consumed",
+      "remnantSection": "Resulting remnant (optional)",
+      "remnantWidth": "Remnant width (mm)",
+      "remnantHeight": "Remnant height (mm)",
+      "remnantPlateNumber": "Remnant plate no",
+      "areaRequired": "Enter a cut area.",
+      "areaExceeds": "Cut area exceeds remaining area.",
+      "consumed": "Plate cut.",
+      "consumedWithRemnant": "Plate cut, remnant created.",
+      "failed": "Cut failed."
+    },
+    "scrapForm": {
+      "title": "Scrap Entry — {{plate}}",
+      "mode": "Scrap type",
+      "modeCount": "Whole plate (count)",
+      "modeArea": "Partial (area)",
+      "area": "Scrap area (mm²)",
+      "reason": "Scrap reason",
+      "selectReason": "Select a reason…",
+      "reasonRequired": "Select a scrap reason.",
+      "areaRequired": "Enter a scrap area.",
+      "areaExceeds": "Scrap area exceeds remaining area.",
+      "notes": "Notes",
+      "confirm": "Save Scrap",
+      "scrapped": "Scrap recorded.",
+      "failed": "Scrap entry failed."
+    },
+    "access": {
+      "title": "Warehouse Access",
+      "user": "User",
+      "selectUser": "Select a user…",
+      "userRequired": "Select a user.",
+      "warehouses": "Accessible warehouses",
+      "hint": "Warehouses outside the selection are hidden from this user (admins always see all).",
+      "noWarehouses": "No warehouses defined",
+      "emptyMeansNone": "This user will not be able to access any warehouse.",
+      "saved": "Warehouse access updated."
+    }
+  },
+  "Manufacturing": {
+    "title": "Production Routings",
+    "subtitle": "Work centers, operator assignments and product routings",
+    "tabs": {
+      "routings": "Routings",
+      "workCenters": "Work Centers",
+      "operators": "Operators"
+    },
+    "common": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "remove": "Remove",
+      "actions": "Actions",
+      "edit": "Edit",
+      "steps": "Steps",
+      "activate": "Activate",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "deactivate": "Deactivate",
+      "new_routings": "New Routing",
+      "new_workCenters": "New Work Center",
+      "new_operators": "New Assignment"
+    },
+    "routing": {
+      "code": "Code",
+      "name": "Name",
+      "description": "Description",
+      "status": "Status",
+      "stepCount": "Steps"
+    },
+    "routingStatus": {
+      "Draft": "Draft",
+      "Active": "Active",
+      "Archived": "Archived"
+    },
+    "routings": {
+      "empty": "No routings defined",
+      "transitioned": "Routing status updated.",
+      "actionFailed": "Action failed.",
+      "deleteTitle": "Delete Routing",
+      "deleteMessage": "Delete routing {{code}}?",
+      "deleted": "Routing deleted."
+    },
+    "routingForm": {
+      "title": "New Routing",
+      "editTitle": "Edit Routing",
+      "codeNameRequired": "Code and name are required.",
+      "saved": "Routing saved.",
+      "failed": "Could not save routing.",
+      "editHint": "Use the Steps action on the row to edit steps (Draft only)."
+    },
+    "stepsForm": {
+      "title": "Routing Steps — {{code}}",
+      "addStep": "Add step",
+      "rowsIncomplete": "Every step needs a work center and an operation name.",
+      "saved": "Steps saved.",
+      "failed": "Could not save steps."
+    },
+    "step": {
+      "workCenter": "Work center",
+      "operationName": "Operation",
+      "operationType": "Type",
+      "setup": "Setup",
+      "runUnit": "Time/unit",
+      "runSqm": "Time/m²",
+      "scrap": "Scrap %"
+    },
+    "operationType": {
+      "Cutting": "Cutting",
+      "Edging": "Edging",
+      "Tempering": "Tempering",
+      "Lamination": "Lamination",
+      "Drilling": "Drilling",
+      "Sandblasting": "Sandblasting",
+      "Washing": "Washing",
+      "QualityControl": "Quality Control",
+      "Packaging": "Packaging",
+      "Other": "Other"
+    },
+    "workCenter": {
+      "code": "Code",
+      "name": "Name",
+      "dailyCapacity": "Daily capacity (min)",
+      "active": "Active"
+    },
+    "workCenters": {
+      "empty": "No work centers defined"
+    },
+    "workCenterForm": {
+      "title": "New Work Center",
+      "editTitle": "Edit Work Center",
+      "codeNameRequired": "Code and name are required.",
+      "saved": "Work center saved.",
+      "failed": "Could not save work center."
+    },
+    "operator": {
+      "workCenter": "Work center",
+      "employee": "Employee",
+      "level": "Qualification",
+      "certifiedOn": "Certified on",
+      "primary": "Primary",
+      "active": "Active",
+      "notes": "Notes"
+    },
+    "operators": {
+      "empty": "No operator assignments",
+      "updated": "Assignment updated.",
+      "actionFailed": "Action failed.",
+      "employeeInactive": "Inactive employee"
+    },
+    "operatorForm": {
+      "title": "New Operator Assignment",
+      "editTitle": "Edit Assignment",
+      "workCenterEmployeeRequired": "Select a work center and an employee.",
+      "selectWorkCenter": "Select a work center…",
+      "selectEmployee": "Select an employee…",
+      "saved": "Assignment saved.",
+      "failed": "Could not save assignment."
+    },
+    "qualificationLevel": {
+      "Trainee": "Trainee",
+      "Qualified": "Qualified",
+      "Expert": "Expert"
     }
   },
   "Admin": {
@@ -8038,5 +8376,69 @@
     "reporting": "Reporting…",
     "reported": "Ticket created — thank you.",
     "reportFailed": "Could not send the report."
+  },
+  "ProductionJobs": {
+    "title": "Production Jobs",
+    "subtitle": "Manage production travelers, operations, and shop floor execution.",
+    "empty_title": "No production jobs found",
+    "empty_desc": "Create a job to start manufacturing products.",
+    "actions": {
+      "new_job": "New Job",
+      "release": "Release Job",
+      "start": "Start",
+      "finish": "Finish",
+      "complete_job": "Complete Job"
+    },
+    "status": {
+      "all": "All",
+      "Draft": "Draft",
+      "Released": "Released",
+      "InProgress": "In Progress",
+      "OnHold": "On Hold",
+      "ReadyToComplete": "Ready To Complete",
+      "Completed": "Completed",
+      "Cancelled": "Cancelled"
+    },
+    "stepStatus": {
+      "Pending": "Pending",
+      "InProgress": "In Progress",
+      "Completed": "Completed",
+      "Skipped": "Skipped",
+      "Reopened": "Reopened"
+    },
+    "fields": {
+      "product": "Product",
+      "qty": "Quantity",
+      "completed": "Completed",
+      "uom": "Unit",
+      "routing": "Routing",
+      "warehouse": "Warehouse",
+      "notes": "Notes",
+      "dueDate": "Due Date",
+      "progress": "Progress",
+      "good": "Good Qty",
+      "scrapped": "Scrap Qty",
+      "warehouse_required": "Warehouse selection is required"
+    },
+    "cancel_title": "Cancel Job",
+    "cancel_message": "Are you sure you want to cancel job {{number}}?",
+    "cancel_success": "Job cancelled successfully",
+    "cancel_error": "Could not cancel job",
+    "create_success": "Job created successfully",
+    "create_error": "Could not create job",
+    "release_success": "Job released to shop floor",
+    "release_error": "Could not release job",
+    "complete_success": "Job completed successfully",
+    "complete_error": "Could not complete job",
+    "traveler_steps": "Traveler Steps",
+    "no_steps": "No routing steps defined for this job.",
+    "step": "Step",
+    "select_operator": "Select Operator...",
+    "operator_required": "Operator selection is required",
+    "step_started": "Operation started",
+    "step_finished": "Operation finished",
+    "step_skipped": "Operation skipped",
+    "ready_to_complete_title": "All Steps Completed",
+    "ready_to_complete_desc": "All required operations are done. The job is ready to be marked as complete and stock to be received."
   }
 }

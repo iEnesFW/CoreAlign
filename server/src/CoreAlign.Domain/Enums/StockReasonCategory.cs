@@ -11,5 +11,6 @@ public enum StockReasonCategory
     CycleCount = 6,
     Return = 7,
     DamageWriteOff = 8,
-    Expired = 9
+    Expired = 9,
+    Scrap = 10
 }

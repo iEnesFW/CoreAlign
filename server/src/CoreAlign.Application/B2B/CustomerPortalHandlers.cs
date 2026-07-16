@@ -93,7 +93,7 @@ public class GetCustomerPortalDashboardHandler : IRequestHandler<GetCustomerPort
         var (recentOrderRows, _) = await _orders.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken);
         var recentOrders = recentOrderRows.Select(OrderMapper.ToSummaryDto).ToList();
 
-        var (recentInvoiceRows, _) = await _invoices.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken);
+        var (recentInvoiceRows, _) = await _invoices.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken: cancellationToken);
         var recentInvoices = recentInvoiceRows.Select(InvoiceMapper.ToSummaryDto).ToList();
 
         var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
@@ -205,7 +205,7 @@ public class GetCustomerPortalInvoicesHandler : IRequestHandler<GetCustomerPorta
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
-        var (items, total) = await _invoices.SearchAsync(null, customerId, page, pageSize, cancellationToken);
+        var (items, total) = await _invoices.SearchAsync(null, customerId, page, pageSize, cancellationToken: cancellationToken);
 
         IEnumerable<InvoiceSearchRow> filtered = items;
         if (!string.IsNullOrWhiteSpace(request.Status)

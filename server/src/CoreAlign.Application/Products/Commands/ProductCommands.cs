@@ -98,7 +98,8 @@ public record UpdateProductCommand(
     ProcurementType ProcurementType = ProcurementType.Buy,
     CostingMethod CostingMethod = CostingMethod.WeightedAverage,
     string? Color = null,
-    decimal? ThicknessMm = null
+    decimal? ThicknessMm = null,
+    long? ExpectedConcurrencyToken = null
 ) : IRequest<ProductDto>, ITransactionalRequest;
 
 public record DeleteProductCommand(Guid Id) : IRequest<bool>, ITransactionalRequest;

@@ -47,10 +47,67 @@ public class PricingService : IPricingService
         var customer = await _customers.GetByIdAsync(request.CustomerId, cancellationToken)
             ?? throw new InvalidOperationException("Customer not found for pricing.");
 
+        var cppList = await _customerProductPrices.GetForCustomerAndProductAsync(customer.Id, product.Id, cancellationToken);
+
+        PriceList? priceList = null;
+        if (customer.PriceListId.HasValue)
+        {
+            priceList = await _priceLists.GetWithItemsAsync(customer.PriceListId.Value, cancellationToken);
+        }
+
+        return ResolveFromLoaded(request, product, customer, cppList, priceList);
+    }
+
+    public async Task<IReadOnlyList<PriceResolutionResult>> ResolveBatchAsync(IEnumerable<PriceResolutionRequest> requests, CancellationToken cancellationToken = default)
+    {
+        var reqs = requests.ToList();
+        if (reqs.Count == 0)
+        {
+            return Array.Empty<PriceResolutionResult>();
+        }
+
+        var products = await _products.GetByIdsAsync(reqs.Select(r => r.ProductId).Distinct(), cancellationToken);
+        var customers = await _customers.GetByIdsAsync(reqs.Select(r => r.CustomerId).Distinct(), cancellationToken);
+
+        var cppByCustomer = new Dictionary<Guid, IReadOnlyList<CustomerProductPrice>>();
+        var priceListByCustomer = new Dictionary<Guid, PriceList?>();
+        foreach (var customerId in reqs.Select(r => r.CustomerId).Distinct())
+        {
+            cppByCustomer[customerId] = await _customerProductPrices.GetByCustomerAsync(customerId, cancellationToken);
+            PriceList? priceList = null;
+            if (customers.TryGetValue(customerId, out var cust) && cust.PriceListId.HasValue)
+            {
+                priceList = await _priceLists.GetWithItemsAsync(cust.PriceListId.Value, cancellationToken);
+            }
+            priceListByCustomer[customerId] = priceList;
+        }
+
+        var results = new List<PriceResolutionResult>(reqs.Count);
+        foreach (var req in reqs)
+        {
+            if (!products.TryGetValue(req.ProductId, out var product))
+            {
+                throw new InvalidOperationException("Product not found for pricing.");
+            }
+            if (!customers.TryGetValue(req.CustomerId, out var customer))
+            {
+                throw new InvalidOperationException("Customer not found for pricing.");
+            }
+            var cppList = cppByCustomer[req.CustomerId].Where(c => c.ProductId == product.Id).ToList();
+            results.Add(ResolveFromLoaded(req, product, customer, cppList, priceListByCustomer[req.CustomerId]));
+        }
+        return results;
+    }
+
+    private static PriceResolutionResult ResolveFromLoaded(
+        PriceResolutionRequest request,
+        Product product,
+        Customer customer,
+        IReadOnlyList<CustomerProductPrice> cppList,
+        PriceList? priceList)
+    {
         var currency = request.RequestedCurrency ?? customer.DefaultCurrency ?? product.Currency;
 
-        // 1) Customer-specific product price
-        var cppList = await _customerProductPrices.GetForCustomerAndProductAsync(customer.Id, product.Id, cancellationToken);
         var matchingCpp = cppList
             .Where(p => p.IsValid(request.AsOfUtc, request.Quantity))
             .OrderByDescending(p => p.UpdatedAtUtc)
@@ -70,34 +127,28 @@ public class PricingService : IPricingService
                 AppliedRecordId: matchingCpp.Id);
         }
 
-        // 2) Customer's assigned price list
-        if (customer.PriceListId.HasValue)
+        if (priceList is not null && priceList.IsCurrentlyValid(request.AsOfUtc))
         {
-            var priceList = await _priceLists.GetWithItemsAsync(customer.PriceListId.Value, cancellationToken);
-            if (priceList is not null && priceList.IsCurrentlyValid(request.AsOfUtc))
+            var item = priceList.Items
+                .Where(i => i.ProductId == product.Id && i.MatchesQuantity(request.Quantity))
+                .OrderByDescending(i => i.UpdatedAtUtc)
+                .FirstOrDefault();
+            if (item is not null)
             {
-                var item = priceList.Items
-                    .Where(i => i.ProductId == product.Id && i.MatchesQuantity(request.Quantity))
-                    .OrderByDescending(i => i.UpdatedAtUtc)
-                    .FirstOrDefault();
-                if (item is not null)
-                {
-                    return new PriceResolutionResult(
-                        UnitPrice: item.Price,
-                        Currency: priceList.Currency,
-                        DiscountPercent: item.DiscountPercent ?? 0m,
-                        Source: PriceSource.PriceList,
-                        SourceLabel: $"Price list: {priceList.Name}",
-                        ReferenceListPrice: product.ListPrice == 0 ? product.Price : product.ListPrice,
-                        TaxRatePercent: 0m,
-                        IsTaxInclusive: priceList.IsTaxInclusive,
-                        TaxRateId: product.TaxRateId,
-                        AppliedRecordId: item.Id);
-                }
+                return new PriceResolutionResult(
+                    UnitPrice: item.Price,
+                    Currency: priceList.Currency,
+                    DiscountPercent: item.DiscountPercent ?? 0m,
+                    Source: PriceSource.PriceList,
+                    SourceLabel: $"Price list: {priceList.Name}",
+                    ReferenceListPrice: product.ListPrice == 0 ? product.Price : product.ListPrice,
+                    TaxRatePercent: 0m,
+                    IsTaxInclusive: priceList.IsTaxInclusive,
+                    TaxRateId: product.TaxRateId,
+                    AppliedRecordId: item.Id);
             }
         }
 
-        // 3) Product list price (default)
         var unitPrice = product.ListPrice > 0 ? product.ListPrice : product.Price;
         return new PriceResolutionResult(
             UnitPrice: unitPrice,
@@ -110,16 +161,6 @@ public class PricingService : IPricingService
             IsTaxInclusive: product.IsPriceTaxInclusive,
             TaxRateId: product.TaxRateId,
             AppliedRecordId: null);
-    }
-
-    public async Task<IReadOnlyList<PriceResolutionResult>> ResolveBatchAsync(IEnumerable<PriceResolutionRequest> requests, CancellationToken cancellationToken = default)
-    {
-        var results = new List<PriceResolutionResult>();
-        foreach (var req in requests)
-        {
-            results.Add(await ResolveAsync(req, cancellationToken));
-        }
-        return results;
     }
 
     public async Task<decimal?> ResolveMinQuantityAsync(Guid productId, Guid customerId, CancellationToken cancellationToken = default)

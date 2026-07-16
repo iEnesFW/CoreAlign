@@ -21,7 +21,7 @@ public sealed class TenantOverrideFxProvider
             return null;
         }
         var code = currencyCode.Trim().ToUpperInvariant();
-        var hits = await _exchangeRates.GetLatestPerCurrencyOnOrBeforeAsync(asOfDate, ct);
+        var hits = await _exchangeRates.GetLatestTenantOverridesOnOrBeforeAsync(tenantId, asOfDate, ct);
         var match = hits
             .Where(r => string.Equals(r.Currency, code, StringComparison.OrdinalIgnoreCase))
             .Where(r => string.Equals(r.Source, FxSourceCodes.TenantOverride, StringComparison.OrdinalIgnoreCase))

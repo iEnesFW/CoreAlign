@@ -50,23 +50,29 @@ describe('splitPanelsAtLength', () => {
     expect(splitPanelsAtLength([panel('a', 0, 500)], 900, ids())).toBeNull();
   });
 
-  it('gives the new right half a fresh id and no hardware', () => {
-    const hw = [
-      {
-        id: 'h',
-        kind: 'Handle',
-        colorHex: '#000',
-        offsetXmm: 0,
-        offsetYmm: 0,
-        offsetZmm: 0,
-        widthMm: 40,
-        heightMm: 120,
-        depthMm: 20,
-      } as SceneHardwareItem,
-    ];
+  it('partitions hardware to the correct half and rescales its centre offset', () => {
+    const hardwareAt = (id: string, offsetXmm: number): SceneHardwareItem => ({
+      id,
+      kind: 'Handle',
+      colorHex: '#000',
+      offsetXmm,
+      offsetYmm: 0,
+      offsetZmm: 0,
+      widthMm: 40,
+      heightMm: 120,
+      depthMm: 20,
+    });
+    // 1000mm panel, centre at 0: left fitting 300mm left of centre, right fitting 300mm right.
+    const hw = [hardwareAt('left', -300), hardwareAt('right', 300)];
     const result = splitPanelsAtLength([panel('a', 0, 1000, hw)], 500, ids());
-    expect(result![0].hardware).toBe(hw);
-    expect(result![1].hardware).toEqual([]);
+
+    expect(result![0].id).toBe('a');
     expect(result![1].id).toBe('new-1');
+    // Left half (0..500, new centre at 250): the left fitting stays, re-homed to -50.
+    expect(result![0].hardware.map((h) => h.id)).toEqual(['left']);
+    expect(result![0].hardware[0].offsetXmm).toBe(-50);
+    // Right half (500..1000, new centre at 750): the right fitting follows it, re-homed to +50.
+    expect(result![1].hardware.map((h) => h.id)).toEqual(['right']);
+    expect(result![1].hardware[0].offsetXmm).toBe(50);
   });
 });

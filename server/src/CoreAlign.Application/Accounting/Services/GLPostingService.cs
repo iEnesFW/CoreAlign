@@ -60,6 +60,7 @@ public static class GLPostingDefaults
         GLPostingKey.DoubtfulDebtExpense => "654",
         GLPostingKey.CustomerAdvanceReceived => "340",
         GLPostingKey.VendorAdvancePaid => "159",
+        GLPostingKey.WithholdingPayable => "360",
         _ => null,
     };
 }

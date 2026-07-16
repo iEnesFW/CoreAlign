@@ -70,7 +70,7 @@ public class OrdersController : ControllerBase
     [HttpPost("bulk-action")]
     public async Task<IActionResult> BulkActionAsync([FromBody] BulkOrderActionCommand command, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(command, cancellationToken);
+        var result = await _mediator.Send(command with { ActorUserId = CurrentUserId }, cancellationToken);
         return result.ToOk();
     }
 
@@ -121,4 +121,8 @@ public class OrdersController : ControllerBase
     [HttpPost("{id:guid}/close")]
     public async Task<IActionResult> CloseOrderAsync(Guid id, CancellationToken cancellationToken)
         => (await _mediator.Send(new CloseOrderCommand(id), cancellationToken)).ToOk();
+
+    [HttpPost("{id:guid}/scrap")]
+    public async Task<IActionResult> ScrapOrderLineAsync(Guid id, [FromBody] ScrapOrderLineCommand cmd, CancellationToken cancellationToken)
+        => (await _mediator.Send(cmd with { OrderId = id }, cancellationToken)).ToOk();
 }

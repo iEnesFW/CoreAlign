@@ -99,6 +99,7 @@ export interface UpdateProductInput {
   status: ProductStatus;
   launchDate?: string | null;
   endOfLifeDate?: string | null;
+  expectedConcurrencyToken?: number | null;
 }
 
 export interface ProductListParams {

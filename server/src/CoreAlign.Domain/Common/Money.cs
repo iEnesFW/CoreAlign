@@ -48,11 +48,4 @@ public static class Money
         if (ratePercent <= 0m) return 0m;
         return RoundAmount(amount * ratePercent / 100m);
     }
-
-    /// <summary>
-    /// Convert a foreign-currency amount to the base currency using the rate snapshot.
-    /// Falls back to the original amount when the rate is non-positive (treated as 1:1).
-    /// </summary>
-    public static decimal ToBaseCurrency(decimal amount, decimal exchangeRate) =>
-        RoundAmount(amount * (exchangeRate > 0m ? exchangeRate : 1m));
 }

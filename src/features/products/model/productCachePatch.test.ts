@@ -54,6 +54,7 @@ const product = (id: string, name: string): Product => ({
   isActive: true,
   createdAtUtc: '2026-01-01T00:00:00Z',
   updatedAtUtc: '2026-06-01T00:00:00Z',
+  concurrencyToken: 0,
 });
 
 const page = (...products: Product[]): PagedProductsResponse => ({

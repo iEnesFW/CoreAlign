@@ -12,6 +12,7 @@ const CATALOG: { id: string; category: HardwareCategoryKind }[] = [
   { id: 'handle-2', category: 'Handle' },
   { id: 'lock-1', category: 'Lock' },
   { id: 'gasket-1', category: 'Gasket' },
+  { id: 'brush-1', category: 'Brush' },
 ];
 
 const hw = (overrides: Partial<SceneHardwareItem>): SceneHardwareItem => ({
@@ -62,7 +63,7 @@ describe('combinePanelHardware', () => {
     expect(result).toEqual([{ hardwareItemId: 'handle-1', quantity: 1 }]);
   });
 
-  it('maps each bool to its own category (handle/lock/gasket)', () => {
+  it('maps each bool to its own category (handle/lock/brush)', () => {
     const result = combinePanelHardware(
       { hardware: [], hasHandle: true, hasLock: true, hasBrushSeal: true },
       CATALOG,
@@ -70,7 +71,19 @@ describe('combinePanelHardware', () => {
     expect(result).toEqual([
       { hardwareItemId: 'handle-1', quantity: 1 },
       { hardwareItemId: 'lock-1', quantity: 1 },
+      { hardwareItemId: 'brush-1', quantity: 1 },
+    ]);
+  });
+
+  it('quotes a brush seal separately from an explicit gasket strip (no silent drop)', () => {
+    // A gasket strip (category Gasket) must NOT suppress the brush-seal bool (category Brush).
+    const result = combinePanelHardware(
+      { hardware: [hw({ hardwareItemId: 'gasket-1' })], hasBrushSeal: true },
+      CATALOG,
+    );
+    expect(result).toEqual([
       { hardwareItemId: 'gasket-1', quantity: 1 },
+      { hardwareItemId: 'brush-1', quantity: 1 },
     ]);
   });
 

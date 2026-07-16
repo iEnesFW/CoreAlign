@@ -39,10 +39,10 @@ public sealed class PrivacyErasureAndGuardTests
         _repo.GetByIdAsync(request.Id, Arg.Any<CancellationToken>()).Returns(request);
         _users.GetByIdAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(BuildUser(tenantB, subjectUserId));
 
-        var act = () => BuildService().ProcessErasureRequestAsync(request.Id, keepFinancialTrail: false);
+        var act = () => BuildService().ProcessErasureRequestAsync(request.Id);
 
         await act.Should().ThrowAsync<PrivacyUserNotFoundException>();
-        await _anonymizer.DidNotReceive().AnonymizeUserAsync(Arg.Any<Guid>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await _anonymizer.DidNotReceive().AnonymizeUserAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -54,9 +54,9 @@ public sealed class PrivacyErasureAndGuardTests
         _repo.GetByIdAsync(request.Id, Arg.Any<CancellationToken>()).Returns(request);
         _users.GetByIdAsync(subjectUserId, Arg.Any<CancellationToken>()).Returns(BuildUser(tenant, subjectUserId));
 
-        await BuildService().ProcessErasureRequestAsync(request.Id, keepFinancialTrail: false);
+        await BuildService().ProcessErasureRequestAsync(request.Id);
 
-        await _anonymizer.Received(1).AnonymizeUserAsync(subjectUserId, false, Arg.Any<CancellationToken>());
+        await _anonymizer.Received(1).AnonymizeUserAsync(subjectUserId, Arg.Any<CancellationToken>());
     }
 
     [Fact]

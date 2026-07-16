@@ -5,7 +5,7 @@ import type { SceneSlabState, SceneWallState } from './project.types';
 export type GlassTemplateKey =
   | 'l-walls'
   | 'u-walls'
-  | 'room-door'
+  | 'room'
   | 'gable-roof'
   | 'barrel-roof'
   | 'arc-roof'
@@ -43,8 +43,6 @@ export const DEFAULT_TEMPLATE_PARAMS: TemplateParams = {
 
 const WALL_THICKNESS_MM = 200;
 const SLAB_THICKNESS_MM = 150;
-const DOOR_WIDTH_MM = 900;
-const DOOR_HEIGHT_MM = 2050;
 
 const wall = (
   originX: number,
@@ -104,22 +102,13 @@ export const buildGlassTemplate = (
         runs: [],
         walls: [wall(0, 0, 90, D, H), wall(0, D, 0, W, H), wall(W, D, -90, D, H)],
       };
-    case 'room-door':
+    case 'room':
       return {
         key,
         slabs: [],
         runs: [],
         walls: [
-          wall(0, 0, 0, W, H, [
-            {
-              id: crypto.randomUUID(),
-              kind: 'door',
-              offsetMm: Math.round(W / 2),
-              sillMm: 0,
-              widthMm: DOOR_WIDTH_MM,
-              heightMm: DOOR_HEIGHT_MM,
-            },
-          ]),
+          wall(0, 0, 0, W, H),
           wall(0, 0, 90, D, H),
           wall(0, D, 0, W, H),
           wall(W, 0, 90, D, H),

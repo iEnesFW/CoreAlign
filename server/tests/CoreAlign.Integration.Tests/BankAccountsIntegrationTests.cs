@@ -61,10 +61,10 @@ public class BankAccountsIntegrationTests
     {
         var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
 
-        var create = await client.PostAsJsonAsync(BaseUrl, NewAccount("tr33 0006 1005 1978 6457 8413 99", isPrimary: true));
+        var create = await client.PostAsJsonAsync(BaseUrl, NewAccount("tr02 0006 1005 1978 6457 8413 99", isPrimary: true));
         create.StatusCode.Should().Be(HttpStatusCode.Created);
         var created = (await create.Content.ReadFromJsonAsync<ApiResponse<BankAccountProbe>>())!.Data!;
-        created.Iban.Should().Be("TR330006100519786457841399", "iban is normalized (uppercased, spaces stripped)");
+        created.Iban.Should().Be("TR020006100519786457841399", "iban is normalized (uppercased, spaces stripped)");
         created.OpeningBalance.Should().Be(15000.50m);
         created.IsPrimary.Should().BeTrue();
 
@@ -76,7 +76,7 @@ public class BankAccountsIntegrationTests
             id = created.Id,
             accountName = "Renamed Account",
             bankName = "Garanti BBVA",
-            iban = "TR330006100519786457841399",
+            iban = "TR020006100519786457841399",
             currency = "USD",
             openingBalance = 0m,
             branchName = (string?)null,
@@ -101,7 +101,7 @@ public class BankAccountsIntegrationTests
     public async Task Tenant_cannot_read_another_tenants_bank_account()
     {
         var tenantAClient = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
-        var create = await tenantAClient.PostAsJsonAsync(BaseUrl, NewAccount("TR120006100519786457841111"));
+        var create = await tenantAClient.PostAsJsonAsync(BaseUrl, NewAccount("TR330006100519786457841326"));
         create.StatusCode.Should().Be(HttpStatusCode.Created);
         var id = (await create.Content.ReadFromJsonAsync<ApiResponse<BankAccountProbe>>())!.Data!.Id;
 

@@ -16,8 +16,11 @@ public enum DiscountValueType
     FixedAmount = 1,
 }
 
-public class DiscountRule : TenantEntity
+public class DiscountRule : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public DiscountRuleScope Scope { get; private set; }

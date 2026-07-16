@@ -29,6 +29,7 @@ public interface IExchangeRateRepository
     Task<ExchangeRate?> GetAsync(string currency, DateTime validOnDate, CancellationToken ct);
     Task<IReadOnlyList<ExchangeRate>> ListAsync(DateTime? from, DateTime? to, string? currency, CancellationToken ct);
     Task<IReadOnlyList<ExchangeRate>> GetLatestPerCurrencyOnOrBeforeAsync(DateTime asOf, CancellationToken ct);
+    Task<IReadOnlyList<ExchangeRate>> GetLatestTenantOverridesOnOrBeforeAsync(Guid tenantId, DateTime asOf, CancellationToken ct);
     Task AddAsync(ExchangeRate rate, CancellationToken ct);
     void Update(ExchangeRate rate);
 

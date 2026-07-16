@@ -288,7 +288,7 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         ApprovedByUserId = approvedByUserId;
         IsPostedToLedger = true;
         UpdatedAtUtc = now;
-        AddDomainEvent(new InvoiceIssuedEvent(TenantId, Id, CustomerId, OrderId, InvoiceNumber, Type, Total, Currency, now));
+        AddDomainEvent(new InvoiceIssuedEvent(TenantId, Id, CustomerId, OrderId, InvoiceNumber, Type, Total, Currency, now, ExchangeRate));
     }
 
     public void MarkSent()
@@ -360,7 +360,7 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         UpdatedAtUtc = now;
         if (wasIssued)
         {
-            AddDomainEvent(new InvoiceVoidedEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, reason, now));
+            AddDomainEvent(new InvoiceVoidedEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, reason, now, ExchangeRate));
         }
     }
 
@@ -381,7 +381,7 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         }
         Status = InvoiceStatus.WrittenOff;
         UpdatedAtUtc = now;
-        AddDomainEvent(new InvoiceWrittenOffEvent(TenantId, Id, CustomerId, InvoiceNumber, amount, Currency, reason, now));
+        AddDomainEvent(new InvoiceWrittenOffEvent(TenantId, Id, CustomerId, InvoiceNumber, amount, Currency, reason, now, ExchangeRate));
     }
 
     public void Cancel(DateTime now)
@@ -391,7 +391,7 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         Status = InvoiceStatus.Cancelled;
         CancelledAtUtc = now;
         UpdatedAtUtc = now;
-        AddDomainEvent(new InvoiceCancelledEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, wasIssued, now));
+        AddDomainEvent(new InvoiceCancelledEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, wasIssued, now, ExchangeRate));
     }
 
     public void MarkAsPaid(DateTime now)

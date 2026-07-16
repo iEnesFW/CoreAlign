@@ -12,7 +12,8 @@ public record InvoiceIssuedEvent(
     InvoiceType Type,
     decimal Amount,
     string Currency,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record InvoicePaidEvent(
     Guid TenantId,
@@ -41,7 +42,8 @@ public record InvoiceVoidedEvent(
     decimal Amount,
     string Currency,
     string? Reason,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record InvoiceCancelledEvent(
     Guid TenantId,
@@ -51,7 +53,8 @@ public record InvoiceCancelledEvent(
     decimal Amount,
     string Currency,
     bool WasIssued,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record InvoiceWrittenOffEvent(
     Guid TenantId,
@@ -61,7 +64,8 @@ public record InvoiceWrittenOffEvent(
     decimal Amount,
     string Currency,
     string? Reason,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record PaymentConfirmedEvent(
     Guid TenantId,
@@ -89,4 +93,5 @@ public record PaymentVoidedEvent(
     string PaymentNumber,
     decimal Amount,
     string Currency,
-    DateTime OccurredAtUtc) : IDomainEvent;
+    DateTime OccurredAtUtc,
+    decimal ExchangeRate = 1m) : IDomainEvent;

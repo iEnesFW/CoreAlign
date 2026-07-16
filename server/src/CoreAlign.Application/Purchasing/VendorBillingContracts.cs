@@ -70,7 +70,10 @@ public record CreateVendorBillCommand(
     decimal ExchangeRate = 1m,
     Guid? PurchaseOrderId = null,
     string? Notes = null,
-    IReadOnlyList<VendorBillLineInput>? Lines = null) : IRequest<VendorBillDto>, ITransactionalRequest;
+    IReadOnlyList<VendorBillLineInput>? Lines = null,
+    string? WithholdingCode = null,
+    int WithholdingNumerator = 0,
+    int WithholdingDenominator = 0) : IRequest<VendorBillDto>, ITransactionalRequest;
 
 public record PostVendorBillCommand(Guid Id) : IRequest<VendorBillDto>, ITransactionalRequest;
 public record ApproveVendorBillCommand(Guid Id) : IRequest<VendorBillDto>, ITransactionalRequest;

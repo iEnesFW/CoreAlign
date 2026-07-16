@@ -43,7 +43,7 @@ const GuideLine = ({ guide }: { guide: PlanSnapGuide }) => {
       dashed
       dashSize={0.08}
       gapSize={0.05}
-      lineWidth={1.5}
+      lineWidth={2}
       raycast={() => null}
     />
   );

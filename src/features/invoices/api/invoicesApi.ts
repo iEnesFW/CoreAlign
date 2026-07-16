@@ -6,6 +6,7 @@ import type {
   CreditedLineQuantity,
   GenerateInvoiceRequest,
   Invoice,
+  InvoiceAggregates,
   InvoiceListParams,
   InvoiceSummary,
   IssueCreditNotePayload,
@@ -16,6 +17,11 @@ const BASE = '/invoices';
 export const invoicesApi = {
   list: (params: InvoiceListParams) =>
     apiClient.get<ApiResponse<PagedResult<InvoiceSummary>>>(BASE, { params }).then((r) => r.data),
+
+  aggregates: (search?: string, customerId?: string) =>
+    apiClient
+      .get<ApiResponse<InvoiceAggregates>>(`${BASE}/aggregates`, { params: { search, customerId } })
+      .then((r) => r.data),
 
   getById: (id: string) => apiClient.get<ApiResponse<Invoice>>(`${BASE}/${id}`).then((r) => r.data),
 

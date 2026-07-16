@@ -22,7 +22,7 @@ public class RecomputeBomTriggersRevisionTests
 
     private static BOMCompositionResult BuildComposition(decimal subtotal = 1000m)
     {
-        var taxAmount = decimal.Round(subtotal * BomQuoteTotalsCalculator.TaxRate, 4);
+        var taxAmount = decimal.Round(subtotal * 0.20m, 4);
         return new BOMCompositionResult(
             TotalAreaM2: 0m,
             TotalPanels: 0,

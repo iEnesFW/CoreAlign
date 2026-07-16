@@ -343,6 +343,8 @@ export interface SceneSurfaceState {
   colorHex?: string | null;
   materialKey?: string | null;
   locked?: boolean;
+  // WHY: edgeArcs[i] = signed sagitta (mm) bowing the edge points[i]->points[i+1]; index-aligned to points.
+  edgeArcs?: (number | null)[] | null;
 }
 
 export interface CornerRadiiMm {
@@ -384,6 +386,9 @@ export interface SceneWallState {
   cornerRadiiMm?: CornerRadiiMm;
   cornerNotchMm?: CornerRadiiMm;
   edgeNotchMm?: WallEdgeNotch[];
+  // WHY: single-edge arc bows one edge of the wall's length x height face; the extrude keeps the
+  // wall thickness straight. Mutually exclusive with the whole-body plan arc / bend.
+  geomEdgeArc?: EdgeArcMap | null;
   openings?: SceneWallOpening[];
   features?: SceneWallFeature[];
   locked?: boolean;
@@ -507,6 +512,9 @@ export interface RunFrameEdges {
   right: boolean;
 }
 
+export type EdgeArcKey = 'front' | 'right' | 'back' | 'left';
+export type EdgeArcMap = Partial<Record<EdgeArcKey, number>>;
+
 export interface SceneSlabState {
   id: string;
   kind: 'floor' | 'roof';
@@ -534,6 +542,8 @@ export interface SceneSlabState {
   colorHex?: string | null;
   materialKey?: string | null;
   cornerRadiiMm?: CornerRadiiMm;
+  // WHY: single-edge arc on the flat slab — geomEdgeArc[side] bows just that rect edge outward.
+  geomEdgeArc?: EdgeArcMap | null;
   features?: SceneWallFeature[];
   locked?: boolean;
 }

@@ -283,8 +283,8 @@ public class VendorLedgerRepository : IVendorLedgerRepository
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Debit = g.Sum(e => e.EntryType == LedgerEntryType.Debit ? e.Amount : 0m),
-                Credit = g.Sum(e => e.EntryType == LedgerEntryType.Credit ? e.Amount : 0m),
+                Debit = g.Sum(e => e.EntryType == LedgerEntryType.Debit ? e.AmountInBase : 0m),
+                Credit = g.Sum(e => e.EntryType == LedgerEntryType.Credit ? e.AmountInBase : 0m),
             })
             .FirstOrDefaultAsync(ct);
         if (row is null) return 0m;
@@ -313,8 +313,8 @@ public class VendorLedgerRepository : IVendorLedgerRepository
             .GroupBy(_ => 1)
             .Select(g => new
             {
-                Debit = g.Sum(e => e.EntryType == LedgerEntryType.Debit ? e.Amount : 0m),
-                Credit = g.Sum(e => e.EntryType == LedgerEntryType.Credit ? e.Amount : 0m),
+                Debit = g.Sum(e => e.EntryType == LedgerEntryType.Debit ? e.AmountInBase : 0m),
+                Credit = g.Sum(e => e.EntryType == LedgerEntryType.Credit ? e.AmountInBase : 0m),
             })
             .FirstOrDefaultAsync(cancellationToken);
         if (row is null) return 0m;

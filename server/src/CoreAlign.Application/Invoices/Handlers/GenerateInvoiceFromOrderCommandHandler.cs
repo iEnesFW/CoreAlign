@@ -1,3 +1,4 @@
+using CoreAlign.Application.Fx;
 using CoreAlign.Application.Invoices.Commands;
 using CoreAlign.Application.Invoices.DTOs;
 using CoreAlign.Domain.Common;
@@ -11,6 +12,8 @@ namespace CoreAlign.Application.Invoices.Handlers;
 
 public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateInvoiceFromOrderCommand, InvoiceDto>
 {
+    private const string BaseCurrency = "TRY";
+
     private static readonly OrderStatus[] EligibleOrderStatuses =
     {
         OrderStatus.Confirmed,
@@ -25,6 +28,8 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
     private readonly IDocumentSequenceRepository _sequenceRepository;
     private readonly IAccountingPeriodRepository _periodRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IFxRateResolverDetailed? _fxResolver;
+    private readonly ITenantContext? _tenantContext;
 
     // Single canonical constructor — DI always satisfies all dependencies.
     // Tests pass NSubstitute mocks for every dependency, removing the need for
@@ -34,13 +39,17 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
         IInvoiceRepository invoiceRepository,
         IDocumentSequenceRepository sequenceRepository,
         IAccountingPeriodRepository periodRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IFxRateResolverDetailed? fxResolver = null,
+        ITenantContext? tenantContext = null)
     {
         _orderRepository = orderRepository;
         _invoiceRepository = invoiceRepository;
         _sequenceRepository = sequenceRepository;
         _periodRepository = periodRepository;
         _unitOfWork = unitOfWork;
+        _fxResolver = fxResolver;
+        _tenantContext = tenantContext;
     }
 
     public async Task<InvoiceDto> Handle(GenerateInvoiceFromOrderCommand request, CancellationToken cancellationToken)
@@ -135,6 +144,17 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
                 withholdingNumerator: line.WithholdingNumerator,
                 withholdingDenominator: line.WithholdingDenominator);
             invoice.Lines.Add(invLine);
+        }
+
+        if (_fxResolver is not null &&
+            !string.Equals(invoice.Currency, BaseCurrency, StringComparison.OrdinalIgnoreCase))
+        {
+            var tenantId = _tenantContext?.CurrentTenantId;
+            var fxLock = await _fxResolver.ResolveDetailedAsync(invoice.Currency, now, tenantId, cancellationToken);
+            if (fxLock is not null)
+            {
+                invoice.ApplyFxRateSnapshot(fxLock.Snapshot.BuyingRate, fxLock.Snapshot.Source, DateTime.UtcNow);
+            }
         }
 
         invoice.Issue(draftNumber);

@@ -23,6 +23,11 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
         var product = await _productRepository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new ProductNotFoundException();
 
+        if (request.ExpectedConcurrencyToken is { } expected && product.ConcurrencyToken != expected)
+        {
+            throw new DomainConcurrencyException(product.ConcurrencyToken, expected);
+        }
+
         if (!string.Equals(product.Sku, request.Sku, StringComparison.OrdinalIgnoreCase) &&
             await _productRepository.SkuExistsAsync(request.Sku, request.Id, cancellationToken))
         {

@@ -357,6 +357,13 @@ export const useWallAutofill = () => {
       edges,
       fillGlassTypeId,
     );
+    // Bind each hole-/opening-fill run to its host wall so the persistent bond can recover the run
+    // after it drifts out of the geometric band (co-move alone loses it). Gap fills between two walls
+    // have no single host and keep the geometry fallback.
+    const store = useDesignerStore.getState();
+    for (const c of created) {
+      store.updateRun(c.id, { hostWallId: selectedWall.id });
+    }
     if (created.length > 0) await recordAutofillHistory(projectId, before);
     return created.length;
   };

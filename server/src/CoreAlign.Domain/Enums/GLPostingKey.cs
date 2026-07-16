@@ -37,4 +37,5 @@ public enum GLPostingKey
     DoubtfulDebtExpense = 24,
     CustomerAdvanceReceived = 25,
     VendorAdvancePaid = 26,
+    WithholdingPayable = 27,
 }

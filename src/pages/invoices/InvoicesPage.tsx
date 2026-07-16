@@ -28,40 +28,17 @@ import { InvoiceInlineCard } from '@/features/invoices/ui/InvoiceInlineCard';
 import { InvoiceList } from '@/features/invoices/ui/InvoiceList';
 import {
   useCancelInvoice,
+  useInvoiceAggregatesQuery,
   useInvoiceQuery,
   useInvoicesQuery,
   useMarkInvoicePaid,
 } from '@/features/invoices/hooks/useInvoiceQueries';
 import { PaymentCreateModal } from '@/features/payments/ui/PaymentCreateModal';
-import type { InvoiceStatus, InvoiceSummary } from '@/features/invoices/model/invoice.types';
+import type { InvoiceSummary } from '@/features/invoices/model/invoice.types';
 
 const PAGE_SIZE = 10;
 
 type StatusBucket = 'all' | 'open' | 'partiallyPaid' | 'overdue' | 'paid' | 'cancelled';
-
-const matchesBucket = (
-  status: InvoiceStatus,
-  isOverdue: boolean,
-  bucket: StatusBucket,
-): boolean => {
-  switch (bucket) {
-    case 'all':
-      return true;
-    case 'overdue':
-      return isOverdue || status === 'Overdue';
-    case 'open':
-      return ['Issued', 'Sent', 'PartiallyPaid'].includes(status) && !isOverdue;
-    case 'partiallyPaid':
-      return status === 'PartiallyPaid';
-    case 'paid':
-      return status === 'Paid';
-    case 'cancelled':
-      return status === 'Cancelled' || status === 'Void';
-  }
-};
-
-const daysFromNow = (iso: string) =>
-  Math.round((new Date(iso).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
 
 const exportInvoicesCsv = (rows: InvoiceSummary[]) =>
   downloadCsv({
@@ -108,12 +85,22 @@ export const InvoicesPage = () => {
     }
   }, [focusFromUrl, searchParams, setSearchParams]);
 
+  const searchParam = debouncedSearch.trim() || undefined;
   const params = useMemo(
-    () => ({ page, pageSize, search: debouncedSearch.trim() || undefined }),
-    [page, pageSize, debouncedSearch],
+    () => ({
+      page,
+      pageSize,
+      search: searchParam,
+      statusBucket: statusBucket === 'all' ? undefined : statusBucket,
+      dueSoonOnly: hasDueSoonOnly || undefined,
+    }),
+    [page, pageSize, searchParam, statusBucket, hasDueSoonOnly],
   );
 
   const invoicesQuery = useInvoicesQuery(params);
+  // Header KPIs + bucket counts aggregate the whole tenant result set (matching the
+  // search), server-side — so they never depend on which page/bucket is visible.
+  const aggregatesQuery = useInvoiceAggregatesQuery(searchParam);
   const markPaidMutation = useMarkInvoicePaid();
   const cancelMutation = useCancelInvoice();
   const confirm = useConfirm();
@@ -122,46 +109,15 @@ export const InvoicesPage = () => {
   const invoices = useMemo(() => result?.items ?? [], [result?.items]);
   const total = result?.total ?? 0;
 
-  const stats = useMemo(() => {
-    const buckets: Record<StatusBucket, number> = {
-      all: invoices.length,
-      open: 0,
-      partiallyPaid: 0,
-      overdue: 0,
-      paid: 0,
-      cancelled: 0,
-    };
-    let outstandingTotal = 0;
-    let dueSoonCount = 0;
-    let paidTotal = 0;
-    let overdueTotal = 0;
-    invoices.forEach((i) => {
-      (['open', 'partiallyPaid', 'overdue', 'paid', 'cancelled'] as StatusBucket[]).forEach((b) => {
-        if (matchesBucket(i.status, i.isOverdue, b)) buckets[b] += 1;
-      });
-      outstandingTotal += i.amountDue;
-      paidTotal += i.amountPaid;
-      if (i.isOverdue || i.status === 'Overdue') {
-        overdueTotal += i.amountDue;
-      }
-      const days = daysFromNow(i.dueDate);
-      if (i.amountDue > 0 && days >= 0 && days <= 7 && !i.isOverdue) {
-        dueSoonCount += 1;
-      }
-    });
-    return { buckets, outstandingTotal, paidTotal, overdueTotal, dueSoonCount };
-  }, [invoices]);
-
-  const filteredInvoices = useMemo(() => {
-    return invoices.filter((i) => {
-      if (!matchesBucket(i.status, i.isOverdue, statusBucket)) return false;
-      if (hasDueSoonOnly) {
-        const days = daysFromNow(i.dueDate);
-        if (!(i.amountDue > 0 && days >= 0 && days <= 7 && !i.isOverdue)) return false;
-      }
-      return true;
-    });
-  }, [invoices, statusBucket, hasDueSoonOnly]);
+  const agg = aggregatesQuery.data?.data;
+  const buckets = {
+    all: agg?.totalCount ?? 0,
+    open: agg?.openCount ?? 0,
+    partiallyPaid: agg?.partiallyPaidCount ?? 0,
+    overdue: agg?.overdueCount ?? 0,
+    paid: agg?.paidCount ?? 0,
+    cancelled: agg?.cancelledCount ?? 0,
+  };
 
   const hasActiveFilters =
     statusBucket !== 'all' || hasDueSoonOnly || debouncedSearch.trim() !== '';
@@ -227,43 +183,43 @@ export const InvoicesPage = () => {
   const statItems: StatStripItem[] = [
     {
       id: 'total',
-      label: t('invoices.stats.total', { defaultValue: 'Invoices (page)' }),
-      value: invoices.length,
+      label: t('invoices.stats.total', { defaultValue: 'Invoices' }),
+      value: buckets.all,
       format: (v) => Math.round(v).toLocaleString(locale),
       icon: <FileText size={14} />,
       sub: t('invoices.stats.totalHint', {
-        defaultValue: '{{count}} of {{all}}',
+        defaultValue: '{{count}} on this page',
         count: invoices.length,
-        all: total,
+        all: buckets.all,
       }),
       tone: 'sky',
     },
     {
       id: 'outstanding',
       label: t('invoices.stats.outstanding', { defaultValue: 'Outstanding' }),
-      value: stats.outstandingTotal,
+      value: agg?.outstandingTotal ?? 0,
       format: (v) => fmtCurrency(v),
       icon: <CircleDollarSign size={14} />,
-      sub: `${stats.buckets.open + stats.buckets.overdue} ${t('invoices.stats.openInvoices', { defaultValue: 'open' })}`,
+      sub: `${buckets.open + buckets.overdue} ${t('invoices.stats.openInvoices', { defaultValue: 'open' })}`,
       tone: 'amber',
     },
     {
       id: 'collected',
-      label: t('invoices.stats.collected', { defaultValue: 'Collected (page)' }),
-      value: stats.paidTotal,
+      label: t('invoices.stats.collected', { defaultValue: 'Collected' }),
+      value: agg?.paidTotal ?? 0,
       format: (v) => fmtCurrency(v),
       icon: <Coins size={14} />,
-      sub: `${stats.buckets.paid} ${t('invoices.status.Paid').toLowerCase()}`,
+      sub: `${buckets.paid} ${t('invoices.status.Paid').toLowerCase()}`,
       tone: 'emerald',
     },
     {
       id: 'overdue',
       label: t('invoices.stats.overdue', { defaultValue: 'Overdue' }),
-      value: stats.overdueTotal,
+      value: agg?.overdueTotal ?? 0,
       format: (v) => fmtCurrency(v),
       icon: <AlertTriangle size={14} />,
-      sub: `${stats.buckets.overdue} ${t('invoices.stats.overdueHint', { defaultValue: 'invoices past due' })}`,
-      tone: stats.overdueTotal > 0 ? 'rose' : 'slate',
+      sub: `${buckets.overdue} ${t('invoices.stats.overdueHint', { defaultValue: 'invoices past due' })}`,
+      tone: (agg?.overdueTotal ?? 0) > 0 ? 'rose' : 'slate',
       onClick: () => setStatusBucket('overdue'),
     },
   ];
@@ -284,8 +240,8 @@ export const InvoicesPage = () => {
           <>
             <button
               type="button"
-              onClick={() => exportInvoicesCsv(filteredInvoices)}
-              disabled={filteredInvoices.length === 0}
+              onClick={() => exportInvoicesCsv(invoices)}
+              disabled={invoices.length === 0}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               <Download size={13} />
@@ -330,33 +286,33 @@ export const InvoicesPage = () => {
               {
                 value: 'all',
                 label: t('invoices.filter.all', { defaultValue: 'All' }),
-                count: stats.buckets.all,
+                count: buckets.all,
               },
               {
                 value: 'open',
                 label: t('invoices.filter.open', { defaultValue: 'Open' }),
-                count: stats.buckets.open,
+                count: buckets.open,
               },
               {
                 value: 'partiallyPaid',
                 label: t('invoices.filter.partiallyPaid', { defaultValue: 'Partially paid' }),
-                count: stats.buckets.partiallyPaid,
+                count: buckets.partiallyPaid,
               },
               {
                 value: 'overdue',
                 label: t('invoices.filter.overdue', { defaultValue: 'Overdue' }),
-                count: stats.buckets.overdue,
+                count: buckets.overdue,
                 icon: <AlertTriangle size={11} />,
               },
               {
                 value: 'paid',
                 label: t('invoices.filter.paid', { defaultValue: 'Paid' }),
-                count: stats.buckets.paid,
+                count: buckets.paid,
               },
               {
                 value: 'cancelled',
                 label: t('invoices.filter.cancelled', { defaultValue: 'Cancelled' }),
-                count: stats.buckets.cancelled,
+                count: buckets.cancelled,
               },
             ]}
           />
@@ -366,7 +322,7 @@ export const InvoicesPage = () => {
             label={t('invoices.filter.dueSoon', { defaultValue: 'Due in ≤7d' })}
             icon={<CalendarClock size={10} />}
             active={hasDueSoonOnly}
-            count={stats.dueSoonCount}
+            count={agg?.dueSoonCount ?? 0}
             tone="amber"
             onClick={() => {
               setPage(1);
@@ -375,7 +331,7 @@ export const InvoicesPage = () => {
           />
         }
         resultCount={{
-          count: filteredInvoices.length,
+          count: total,
           label: t('invoices.resultCountLabel', { defaultValue: 'invoices' }),
         }}
         hasActiveFilters={hasActiveFilters}
@@ -386,7 +342,7 @@ export const InvoicesPage = () => {
         <QueryError onRetry={() => invoicesQuery.refetch()} isRetrying={invoicesQuery.isFetching} />
       ) : (
         <InvoiceList
-          invoices={filteredInvoices}
+          invoices={invoices}
           isLoading={invoicesQuery.isPending}
           selectedId={viewingId}
           onView={(invoice) => {

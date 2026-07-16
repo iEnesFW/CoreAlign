@@ -61,6 +61,7 @@ public static class ApplicationServiceRegistration
         services.AddScoped<IClimateAdvisor, ClimateAdvisor>();
         services.AddScoped<IFieldSurveyApplier, FieldSurveyApplier>();
         services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
+        services.AddScoped<CoreAlign.Application.GlassPlates.Notifications.IGlassPlateDepletionNotifier, CoreAlign.Application.GlassPlates.Notifications.GlassPlateDepletionNotifier>();
         services.AddScoped<IProductionScheduler, ProductionScheduler>();
         services.AddScoped<IProjectRecomputeService, ProjectRecomputeService>();
         services.AddScoped<IShareTokenService, ShareTokenService>();

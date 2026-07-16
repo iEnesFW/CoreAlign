@@ -593,7 +593,8 @@ public class Order : TenantEntity, IHasConcurrencyToken
 
         foreach (var snap in revision.ProposedLines)
         {
-            var line = Lines.FirstOrDefault(l => l.ProductId == snap.ProductId);
+            var line = Lines.FirstOrDefault(l => l.LineNumber == snap.LineNumber)
+                ?? Lines.FirstOrDefault(l => l.ProductId == snap.ProductId);
             if (line is null) continue;
 
             line.ApplyPricing(

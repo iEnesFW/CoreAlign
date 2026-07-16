@@ -35,6 +35,7 @@ import {
   LayoutGrid,
   ClipboardList,
   ScanBarcode,
+  Layers,
   ShoppingBag,
   ReceiptText,
   Inbox,
@@ -206,6 +207,12 @@ const baseNavigation: NavItem[] = [
     href: '/dashboard/inventory/serial-lookup',
     icon: ScanBarcode,
   },
+  {
+    name: 'Glass Plates',
+    labelKey: 'Sidebar.nav.glassPlates',
+    href: '/dashboard/glass-plates',
+    icon: Layers,
+  },
 
   { section: 'PRODUCTION' },
   {
@@ -221,6 +228,18 @@ const baseNavigation: NavItem[] = [
     href: '/dashboard/mrp/workbench',
     icon: LayoutGrid,
     tourAnchor: 'sidebar-mrp-workbench',
+  },
+  {
+    name: 'Production Routings',
+    labelKey: 'Sidebar.nav.productionRoutings',
+    href: '/dashboard/production/routings',
+    icon: Wrench,
+  },
+  {
+    name: 'Production Jobs',
+    labelKey: 'Sidebar.nav.productionJobs',
+    href: '/dashboard/production/jobs',
+    icon: Factory,
   },
 
   { section: 'AFTER SALES' },

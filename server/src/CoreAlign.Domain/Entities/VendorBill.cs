@@ -31,10 +31,28 @@ public class VendorBill : TenantEntity, IHasConcurrencyToken
     public Guid? ApprovedByUserId { get; private set; }
     public DateTime? ApprovedAtUtc { get; private set; }
 
+    public string? WithholdingCode { get; private set; }
+    public int WithholdingNumerator { get; private set; }
+    public int WithholdingDenominator { get; private set; }
+
     public Vendor Vendor { get; set; } = null!;
     public ICollection<VendorBillLine> Lines { get; private set; } = new List<VendorBillLine>();
 
-    public decimal AmountDue => Math.Max(0m, Total - AmountPaid);
+    public decimal WithholdingAmount =>
+        !string.IsNullOrWhiteSpace(WithholdingCode) && WithholdingDenominator > 0 && WithholdingNumerator > 0
+            ? Math.Round(TaxAmount * WithholdingNumerator / WithholdingDenominator, 4)
+            : 0m;
+
+    public decimal PayableAmount => Math.Max(0m, Math.Round(Total - WithholdingAmount, 4));
+    public decimal AmountDue => Math.Max(0m, PayableAmount - AmountPaid);
+
+    public void SetWithholding(string? code, int numerator, int denominator)
+    {
+        WithholdingCode = string.IsNullOrWhiteSpace(code) ? null : code.Trim();
+        WithholdingNumerator = numerator < 0 ? 0 : numerator;
+        WithholdingDenominator = denominator < 0 ? 0 : denominator;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
 
     protected VendorBill() { }
 
@@ -163,16 +181,16 @@ public class VendorBill : TenantEntity, IHasConcurrencyToken
         {
             throw new StockMovementValidationException("Payment amount must be positive.");
         }
-        if (Status is VendorBillStatus.Draft or VendorBillStatus.Cancelled)
+        if (Status is VendorBillStatus.Draft or VendorBillStatus.Cancelled or VendorBillStatus.PendingApproval)
         {
             throw new InvalidOrderStatusTransitionException(Status.ToString(), "Payment");
         }
-        if (AmountPaid + amount > Total + 0.0001m)
+        if (AmountPaid + amount > PayableAmount + 0.0001m)
         {
             throw new StockMovementValidationException("Payment exceeds the amount due on this bill.");
         }
         AmountPaid = Math.Round(AmountPaid + amount, 4);
-        Status = AmountPaid >= Total ? VendorBillStatus.Paid : VendorBillStatus.PartiallyPaid;
+        Status = AmountPaid >= PayableAmount ? VendorBillStatus.Paid : VendorBillStatus.PartiallyPaid;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

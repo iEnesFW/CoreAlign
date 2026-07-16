@@ -21,6 +21,7 @@ import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
+import { computeFloorFollow } from './floorFollow';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -328,9 +329,13 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
   const prevMullions = new Map<string, boolean>();
   const prevCustomColor = new Map<string, string>();
   const prevLocked = new Map<string, boolean>();
+  const prevHostWall = new Map<string, string>();
   if (prev) {
     for (const r of prev.runs) {
       if (r.arcGlassBent) prevBent.set(r.id, true);
+      // hostWallId is blob-only (not on the run DTO) — carry it so the persistent cam↔host bond
+      // survives the refetch that fires after every mutation (else it silently reverts to null).
+      if (r.hostWallId) prevHostWall.set(r.id, r.hostWallId);
       // locked is blob-only (not on the run DTO) — without this carry, every refetch (which fires
       // after every run/panel mutation) silently UNLOCKED a run the user locked.
       if (r.locked) prevLocked.set(r.id, true);
@@ -394,6 +399,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
         frameEdges: prevFrame.get(run.id) ?? null,
         hasMullions: prevMullions.has(run.id) ? false : null,
         locked: prevLocked.get(run.id) ?? false,
+        hostWallId: prevHostWall.get(run.id) ?? null,
         notes: run.notes ?? null,
         panels: normalizePanelWidths(
           run.panels.map((panel) => ({
@@ -1000,11 +1006,44 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   updateSlab: (slabId, patch) => {
     const current = get();
+    const slabs = current.scene.slabs ?? [];
+    const target = slabs.find((s) => s.id === slabId);
+    // A FLOOR moved vertically carries everything resting on it (and what those carry) by the same ΔZ.
+    const follow =
+      target &&
+      target.kind === 'floor' &&
+      (patch.elevationMm !== undefined || patch.thicknessMm !== undefined)
+        ? computeFloorFollow(
+            current.scene,
+            slabId,
+            patch.elevationMm ?? target.elevationMm,
+            patch.thicknessMm ?? target.thicknessMm,
+          )
+        : null;
+    const wallSet = follow ? new Set(follow.wallIds) : null;
+    const runSet = follow ? new Set(follow.runIds) : null;
+    const roofSet = follow ? new Set(follow.roofSlabIds) : null;
     const next: SceneState = {
       ...current.scene,
-      slabs: (current.scene.slabs ?? []).map((slab) =>
-        slab.id === slabId ? { ...slab, ...patch } : slab,
-      ),
+      slabs: slabs.map((slab) => {
+        if (slab.id === slabId) return { ...slab, ...patch };
+        if (roofSet?.has(slab.id) && follow) {
+          return { ...slab, elevationMm: slab.elevationMm + follow.deltaZMm };
+        }
+        return slab;
+      }),
+      ...(follow
+        ? {
+            walls: (current.scene.walls ?? []).map((wall) =>
+              wallSet?.has(wall.id)
+                ? { ...wall, geomZ: (wall.geomZ ?? 0) + follow.deltaZMm }
+                : wall,
+            ),
+            runs: current.scene.runs.map((run) =>
+              runSet?.has(run.id) ? { ...run, geomZ: (run.geomZ ?? 0) + follow.deltaZMm } : run,
+            ),
+          }
+        : {}),
     };
     set(pushHistory(current, next));
   },

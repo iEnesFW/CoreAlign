@@ -148,6 +148,21 @@ export interface InvoiceListParams {
   pageSize: number;
   search?: string;
   customerId?: string;
+  statusBucket?: string;
+  dueSoonOnly?: boolean;
+}
+
+export interface InvoiceAggregates {
+  totalCount: number;
+  openCount: number;
+  partiallyPaidCount: number;
+  overdueCount: number;
+  paidCount: number;
+  cancelledCount: number;
+  dueSoonCount: number;
+  outstandingTotal: number;
+  paidTotal: number;
+  overdueTotal: number;
 }
 
 export interface IssueCreditNoteLineInput {

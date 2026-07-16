@@ -100,3 +100,9 @@ public class FiscalYearCloseNotFoundException : ConflictException
     public FiscalYearCloseNotFoundException(int year)
         : base($"The year-end close of {year} does not exist; the {year + 1} opening cannot precede it.") { }
 }
+
+public class GLPostingFailedException : ConflictException
+{
+    public GLPostingFailedException(string reason)
+        : base($"GL posting could not be completed ({reason}); the operation was rolled back to keep the sub-ledger and GL in sync.") { }
+}

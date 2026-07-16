@@ -120,15 +120,7 @@ public sealed class InvoiceIssuedEInvoiceOutboxHandler : IOutboxMessageHandler
     }
 
     private static SellerParty BuildSellerParty(Domain.Entities.Tenant tenant) =>
-        new(
-            Name: tenant.LegalName ?? tenant.TradeName ?? tenant.Name,
-            TaxNumber: tenant.TaxNumber,
-            NationalId: tenant.NationalId,
-            TaxOffice: tenant.TaxOffice,
-            AddressLine: tenant.AddressLine1,
-            City: tenant.City,
-            PostalCode: tenant.PostalCode,
-            Country: tenant.Country ?? "Türkiye");
+        SellerPartyFactory.FromTenant(tenant);
 
     private static BuyerParty BuildBuyerParty(Domain.Entities.Invoice invoice, Domain.Entities.Customer? customer)
     {

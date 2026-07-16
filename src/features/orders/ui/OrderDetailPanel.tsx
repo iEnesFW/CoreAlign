@@ -8,6 +8,7 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  Flame,
   History,
   ListOrdered,
   NotebookPen,
@@ -25,6 +26,7 @@ import { useOrderQuery, useReorderOrder } from '@/features/orders/hooks/useOrder
 import { useCustomerQuery } from '@/features/customers/hooks/useCustomerQueries';
 import { useInvoicesByOrderQuery } from '@/features/invoices/hooks/useInvoiceQueries';
 import { CreateReturnModal } from '@/features/returns/ui/CreateReturnModal';
+import { OrderScrapModal } from '@/features/orders/ui/OrderScrapModal';
 import { DocumentChain } from '@/widgets/DocumentChain';
 import { NextBestAction } from '@/widgets/NextBestAction';
 import { AuditTimeline } from '@/features/audit';
@@ -98,6 +100,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
   const [tab, setTab] = useState<Tab>('overview');
   const [shipmentCreateOpen, setShipmentCreateOpen] = useState(false);
   const [returnCreateOpen, setReturnCreateOpen] = useState(false);
+  const [scrapOpen, setScrapOpen] = useState(false);
 
   const orderQuery = useOrderQuery(orderId);
   const order = orderQuery.data?.data ?? null;
@@ -221,6 +224,16 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
                 {t('Returns.create.title')}
               </button>
             )}
+            {order.lines.some((l) => l.quantityRemainingToShip > 0) && (
+              <button
+                type="button"
+                onClick={() => setScrapOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                <Flame size={13} />
+                {t('orders.scrap.button')}
+              </button>
+            )}
           </div>
         )}
         {tab === 'overview' && order && (
@@ -284,6 +297,7 @@ export const OrderDetailPanel = ({ orderId, onClose, onEdit, onGenerateInvoice }
         onClose={() => setReturnCreateOpen(false)}
         onCreated={(returnId) => navigate(`/dashboard/returns/${returnId}`)}
       />
+      {scrapOpen && order && <OrderScrapModal order={order} onClose={() => setScrapOpen(false)} />}
     </DetailPanel>
   );
 };

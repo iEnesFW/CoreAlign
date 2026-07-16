@@ -758,4 +758,51 @@ public class CrossTenantIsolationTests
             return ticket.Id;
         }
     }
+
+    [Fact]
+    public async Task TenantAdminA_CannotReadGlassProjectTemplateOfTenantB()
+    {
+        var templateId = await SeedTenantBGlassTemplateAsync();
+        var client = AdminOfTenantA();
+        var response = await client.GetAsync($"/api/v1/glass-enclosure/project-templates/{templateId}");
+        AssertDenied(response);
+    }
+
+    [Fact]
+    public async Task TenantAdminA_CannotDeleteGlassProjectTemplateOfTenantB()
+    {
+        var templateId = await SeedTenantBGlassTemplateAsync();
+        var client = AdminOfTenantA();
+        var response = await client.DeleteAsync($"/api/v1/glass-enclosure/project-templates/{templateId}");
+        AssertDenied(response);
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+        var stillThere = await db.Set<CoreAlign.Domain.Entities.GlassEnclosure.GlassProjectTemplate>()
+            .IgnoreQueryFilters()
+            .AnyAsync(t => t.Id == templateId);
+        stillThere.Should().BeTrue("Tenant A must not be able to delete Tenant B's template");
+    }
+
+    private async Task<Guid> SeedTenantBGlassTemplateAsync()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CoreAlignDbContext>();
+
+        using (TenantContextAccessor.PushTenant(_factory.TenantB.TenantId))
+        {
+            var template = new CoreAlign.Domain.Entities.GlassEnclosure.GlassProjectTemplate(
+                "Tenant B template",
+                Guid.NewGuid(),
+                """{"walls":[{}],"slabs":[],"runs":[]}""",
+                1,
+                0,
+                0);
+
+            db.Set<CoreAlign.Domain.Entities.GlassEnclosure.GlassProjectTemplate>().Add(template);
+            await db.SaveChangesAsync();
+
+            return template.Id;
+        }
+    }
 }

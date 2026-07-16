@@ -26,6 +26,11 @@ public class ReceivePurchaseOrderCommandValidator : AbstractValidator<ReceivePur
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.IdempotencyKey).NotEmpty().MaximumLength(80);
         RuleFor(x => x.Lines).NotEmpty();
+        RuleForEach(x => x.Lines).ChildRules(line =>
+        {
+            line.RuleFor(l => l.OrderLineId).NotEmpty();
+            line.RuleFor(l => l.Quantity).GreaterThan(0m).WithMessage("Validation.QuantityMustBePositive");
+        });
     }
 }
 

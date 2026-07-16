@@ -21,8 +21,10 @@ public class StockCostLayerConfiguration : IEntityTypeConfiguration<StockCostLay
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(l => l.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
 
-        // Open-layer FIFO lookup: oldest-first, scoped to a stock item. Soft Guid references
-        // (ProductId/WarehouseId/StockItemId) mirror the StockMovement ledger convention.
+        builder.HasOne<Product>().WithMany().HasForeignKey(l => l.ProductId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Warehouse>().WithMany().HasForeignKey(l => l.WarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<StockItem>().WithMany().HasForeignKey(l => l.StockItemId).OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(l => new { l.StockItemId, l.ReceivedAtUtc });
         builder.HasIndex(l => l.SourceMovementId);
     }

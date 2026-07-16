@@ -14,7 +14,6 @@ public interface IDataSubjectRequestService
 
     Task<DataSubjectRequestDto> ProcessErasureRequestAsync(
         Guid requestId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default);
 
     Task<DataSubjectRequestDto> ProcessPortabilityRequestAsync(
@@ -39,6 +38,11 @@ public interface IDataSubjectRequestService
 
     Task<DataSubjectRequestDto> GetAsync(
         Guid requestId,
+        CancellationToken cancellationToken = default);
+
+    Task<DataSubjectRequestDto> GetForRequesterAsync(
+        Guid requestId,
+        Guid requesterUserId,
         CancellationToken cancellationToken = default);
 
     Task<PersonalDataExportDto> BuildExportAsync(

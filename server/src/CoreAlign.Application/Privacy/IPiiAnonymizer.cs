@@ -4,12 +4,10 @@ public interface IPiiAnonymizer
 {
     Task<PiiAnonymizationResult> AnonymizeUserAsync(
         Guid userId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default);
 
     Task<PiiAnonymizationResult> AnonymizeCustomerAsync(
         Guid customerId,
-        bool keepFinancialTrail,
         CancellationToken cancellationToken = default);
 }
 

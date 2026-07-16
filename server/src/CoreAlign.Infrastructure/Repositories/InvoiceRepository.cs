@@ -57,6 +57,9 @@ public class InvoiceRepository : IInvoiceRepository
         Guid? customerId,
         int page,
         int pageSize,
+        string? statusBucket = null,
+        bool dueSoonOnly = false,
+        DateTime? nowUtc = null,
         CancellationToken cancellationToken = default)
     {
         // No .Include(Customer): the customer name lives on the snapshot field
@@ -64,32 +67,12 @@ public class InvoiceRepository : IInvoiceRepository
         // wider join we just removed. The projection below picks only the
         // columns InvoiceSearchRow needs — JSONB snapshots/breakdown and long
         // notes never leave the server.
-        var query = _context.Invoices.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            // ILike (Postgres) can use a gin_trgm_ops functional index; the
-            // SQLite fallback uses LOWER+LIKE which works without indexes for
-            // local dev volume. The pattern is built once per request.
-            var lower = $"%{search.Trim().ToLower()}%";
-            if (_context.Database.IsNpgsql())
-            {
-                query = query.Where(i =>
-                    EF.Functions.ILike(i.InvoiceNumber, lower) ||
-                    EF.Functions.ILike(i.CustomerNameSnapshot, lower));
-            }
-            else
-            {
-                query = query.Where(i =>
-                    EF.Functions.Like(i.InvoiceNumber.ToLower(), lower) ||
-                    EF.Functions.Like(i.CustomerNameSnapshot.ToLower(), lower));
-            }
-        }
-
-        if (customerId.HasValue)
-        {
-            query = query.Where(i => i.CustomerId == customerId.Value);
-        }
+        var now = DateTime.SpecifyKind(nowUtc ?? DateTime.UtcNow, DateTimeKind.Utc);
+        var query = ApplyBucketFilter(
+            ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId),
+            statusBucket,
+            dueSoonOnly,
+            now);
 
         var total = await query.CountAsync(cancellationToken);
 
@@ -117,6 +100,146 @@ public class InvoiceRepository : IInvoiceRepository
             .ToListAsync(cancellationToken);
 
         return (items, total);
+    }
+
+    private IQueryable<Invoice> ApplyListFilter(IQueryable<Invoice> query, string? search, Guid? customerId)
+    {
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            // ILike (Postgres) can use a gin_trgm_ops functional index; the
+            // SQLite fallback uses LOWER+LIKE which works without indexes for
+            // local dev volume. The pattern is built once per request.
+            var lower = $"%{search.Trim().ToLower()}%";
+            query = _context.Database.IsNpgsql()
+                ? query.Where(i =>
+                    EF.Functions.ILike(i.InvoiceNumber, lower) ||
+                    EF.Functions.ILike(i.CustomerNameSnapshot, lower))
+                : query.Where(i =>
+                    EF.Functions.Like(i.InvoiceNumber.ToLower(), lower) ||
+                    EF.Functions.Like(i.CustomerNameSnapshot.ToLower(), lower));
+        }
+
+        if (customerId.HasValue)
+        {
+            query = query.Where(i => i.CustomerId == customerId.Value);
+        }
+
+        return query;
+    }
+
+    // The bucket predicates below mirror GetAggregatesAsync so the list rows a bucket
+    // filters to stay in lockstep with the header count that bucket advertises.
+    private static IQueryable<Invoice> ApplyBucketFilter(
+        IQueryable<Invoice> query,
+        string? statusBucket,
+        bool dueSoonOnly,
+        DateTime now)
+    {
+        query = statusBucket switch
+        {
+            "open" => query.Where(i =>
+                (i.Status == InvoiceStatus.Issued
+                    || i.Status == InvoiceStatus.Sent
+                    || i.Status == InvoiceStatus.PartiallyPaid)
+                && (i.DueDate >= now || i.AmountPaid >= i.Total)),
+            "partiallyPaid" => query.Where(i => i.Status == InvoiceStatus.PartiallyPaid),
+            "overdue" => query.Where(i =>
+                (i.Status != InvoiceStatus.Paid
+                    && i.Status != InvoiceStatus.Cancelled
+                    && i.Status != InvoiceStatus.Void
+                    && i.DueDate < now
+                    && i.AmountPaid < i.Total)
+                || i.Status == InvoiceStatus.Overdue),
+            "paid" => query.Where(i => i.Status == InvoiceStatus.Paid),
+            "cancelled" => query.Where(i =>
+                i.Status == InvoiceStatus.Cancelled || i.Status == InvoiceStatus.Void),
+            _ => query,
+        };
+
+        if (dueSoonOnly)
+        {
+            var soon = now.AddDays(7);
+            query = query.Where(i =>
+                i.Total - i.AmountPaid > 0m
+                && i.Status != InvoiceStatus.Paid
+                && i.Status != InvoiceStatus.Cancelled
+                && i.Status != InvoiceStatus.Void
+                && i.DueDate >= now
+                && i.DueDate <= soon);
+        }
+
+        return query;
+    }
+
+    public async Task<InvoiceAggregates> GetAggregatesAsync(
+        string? search,
+        Guid? customerId,
+        DateTime nowUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.SpecifyKind(nowUtc, DateTimeKind.Utc);
+        var soon = now.AddDays(7);
+        var query = ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId);
+
+        // Per-status counts + running sums in one GROUP BY (mirrors GetInvoiceStatusBreakdownAsync).
+        // AmountDue == Total - AmountPaid (list rows are unclamped, so the sum matches the page KPI exactly).
+        var byStatus = await query
+            .GroupBy(i => i.Status)
+            .Select(g => new
+            {
+                Status = g.Key,
+                Count = g.Count(),
+                Paid = g.Sum(i => i.AmountPaid),
+                Due = g.Sum(i => i.Total - i.AmountPaid),
+            })
+            .ToListAsync(cancellationToken);
+
+        var totalCount = byStatus.Sum(r => r.Count);
+        var partiallyPaidCount = byStatus.Where(r => r.Status == InvoiceStatus.PartiallyPaid).Sum(r => r.Count);
+        var paidCount = byStatus.Where(r => r.Status == InvoiceStatus.Paid).Sum(r => r.Count);
+        var cancelledCount = byStatus
+            .Where(r => r.Status == InvoiceStatus.Cancelled || r.Status == InvoiceStatus.Void)
+            .Sum(r => r.Count);
+        var outstandingTotal = byStatus.Sum(r => r.Due);
+        var paidTotal = byStatus.Sum(r => r.Paid);
+
+        // Date-sensitive buckets (cut across statuses) — simple, translatable scalar aggregates.
+        var overdue = await query
+            .Where(i => (i.Status != InvoiceStatus.Paid
+                            && i.Status != InvoiceStatus.Cancelled
+                            && i.Status != InvoiceStatus.Void
+                            && i.DueDate < now
+                            && i.AmountPaid < i.Total)
+                        || i.Status == InvoiceStatus.Overdue)
+            .GroupBy(_ => 1)
+            .Select(g => new { Count = g.Count(), Total = g.Sum(i => i.Total - i.AmountPaid) })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var openCount = await query.CountAsync(i =>
+            (i.Status == InvoiceStatus.Issued
+                || i.Status == InvoiceStatus.Sent
+                || i.Status == InvoiceStatus.PartiallyPaid)
+            && (i.DueDate >= now || i.AmountPaid >= i.Total), cancellationToken);
+
+        var dueSoonCount = await query.CountAsync(i =>
+            i.Total - i.AmountPaid > 0m
+            && i.Status != InvoiceStatus.Paid
+            && i.Status != InvoiceStatus.Cancelled
+            && i.Status != InvoiceStatus.Void
+            && i.DueDate >= now
+            && i.DueDate <= soon, cancellationToken);
+
+        return new InvoiceAggregates(
+            totalCount,
+            openCount,
+            partiallyPaidCount,
+            overdue?.Count ?? 0,
+            paidCount,
+            cancelledCount,
+            dueSoonCount,
+            outstandingTotal,
+            paidTotal,
+            overdue?.Total ?? 0m);
     }
 
     public async Task<IReadOnlyList<Invoice>> GetOpenForCustomerAsync(Guid customerId, CancellationToken cancellationToken = default) =>

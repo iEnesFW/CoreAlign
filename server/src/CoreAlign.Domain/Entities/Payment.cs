@@ -185,7 +185,7 @@ public class Payment : TenantEntity, IHasConcurrencyToken
         VoidReason = reason;
         VoidedAtUtc = now;
         UpdatedAtUtc = now;
-        AddDomainEvent(new PaymentVoidedEvent(TenantId, Id, CustomerId, PaymentNumber, Amount, Currency, now));
+        AddDomainEvent(new PaymentVoidedEvent(TenantId, Id, CustomerId, PaymentNumber, Amount, Currency, now, ExchangeRate));
     }
 
     public void MarkRefunded()

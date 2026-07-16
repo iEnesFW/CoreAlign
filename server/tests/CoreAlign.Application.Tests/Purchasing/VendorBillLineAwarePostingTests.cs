@@ -368,6 +368,53 @@ public class VendorBillLineAwarePostingTests
         entry.TotalDebit.Should().BeGreaterThan(0m);
     }
 
+    // ---- (h) tevkifat: withholding bill books CR 360 for the withheld VAT, nets AP, and balances. ----
+    [Fact]
+    public async Task Withholding_bill_books_360_leg_nets_ap_and_balances()
+    {
+        _vendors.GetByIdAsync(VendorId, Arg.Any<CancellationToken>()).Returns(new Vendor("Acme") { Id = VendorId });
+        _ledger.GetLastRunningBalanceAsync(VendorId, Arg.Any<CancellationToken>()).Returns(0m);
+
+        // Header-only, no PO -> posts directly. Subtotal 1000, VAT 200; withhold 5/10 of the VAT = 100.
+        var bill = new VendorBill(VendorId, "Acme", "INV-W", DateTime.UtcNow, "TRY", 1000m, 200m) { Id = Guid.NewGuid() };
+        bill.SetWithholding("801", 5, 10);
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+
+        bill.WithholdingAmount.Should().Be(100m);
+        bill.PayableAmount.Should().Be(1100m);
+
+        var gl = CaptureGl(() => PostSut().Handle(new PostVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
+
+        bill.Status.Should().Be(VendorBillStatus.Posted);
+        Leg(gl, GLPostingKey.PurchaseExpense).Debit.Should().Be(1000m);
+        Leg(gl, GLPostingKey.InputVat).Debit.Should().Be(200m);
+        Leg(gl, GLPostingKey.AccountsPayable).Credit.Should().Be(1100m);
+        Leg(gl, GLPostingKey.WithholdingPayable).Credit.Should().Be(100m);
+        gl.Lines.Sum(l => l.Debit).Should().Be(gl.Lines.Sum(l => l.Credit));
+    }
+
+    // ---- (i) full cancel of a withholding bill reverses the 360 leg and nets to zero. ----
+    [Fact]
+    public async Task Withholding_bill_full_cancel_reverses_360_and_nets_to_zero()
+    {
+        _vendors.GetByIdAsync(VendorId, Arg.Any<CancellationToken>()).Returns(new Vendor("Acme") { Id = VendorId });
+        _ledger.GetLastRunningBalanceAsync(VendorId, Arg.Any<CancellationToken>()).Returns(0m);
+
+        var bill = new VendorBill(VendorId, "Acme", "INV-W", DateTime.UtcNow, "TRY", 1000m, 200m) { Id = Guid.NewGuid() };
+        bill.SetWithholding("801", 5, 10);
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+
+        var postGl = CaptureGl(() => PostSut().Handle(new PostVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
+        var cancelGl = CaptureGl(() => CancelSut().Handle(new CancelVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
+
+        decimal Net(GLPostingRequest r, GLPostingKey k) =>
+            r.Lines.Where(l => l.Key == k).Sum(l => l.Debit - l.Credit);
+
+        (Net(postGl, GLPostingKey.WithholdingPayable) + Net(cancelGl, GLPostingKey.WithholdingPayable)).Should().Be(0m);
+        (Net(postGl, GLPostingKey.AccountsPayable) + Net(cancelGl, GLPostingKey.AccountsPayable)).Should().Be(0m);
+        cancelGl.Lines.Sum(l => l.Debit).Should().Be(cancelGl.Lines.Sum(l => l.Credit));
+    }
+
     // Replays captured GL legs through the real GLPostingService against an
     // in-memory chart of accounts (322/191/320/631), returning the posted entry.
     private static async Task<JournalEntry> PostThroughRealServiceAsync(GLPostingRequest gl)

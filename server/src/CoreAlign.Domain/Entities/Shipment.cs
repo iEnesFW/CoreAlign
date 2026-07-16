@@ -107,6 +107,17 @@ public class Shipment : TenantEntity, IHasConcurrencyToken
         UpdatedAtUtc = DeliveredAtUtc.Value;
     }
 
+    public void MarkReturned()
+    {
+        if (Status == ShipmentStatus.Returned)
+        {
+            return;
+        }
+        EnsureTransitionAllowed(Status, ShipmentStatus.Returned);
+        Status = ShipmentStatus.Returned;
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
     public void Cancel(string? reason)
     {
         // Single source of truth: the FSM table forbids Dispatched -> Cancelled (a dispatched
@@ -169,6 +180,7 @@ public class Shipment : TenantEntity, IHasConcurrencyToken
             ShipmentStatus.Picked => to is ShipmentStatus.Packed or ShipmentStatus.Cancelled,
             ShipmentStatus.Packed => to is ShipmentStatus.Dispatched or ShipmentStatus.Cancelled,
             ShipmentStatus.Dispatched => to is ShipmentStatus.Delivered or ShipmentStatus.Returned,
+            ShipmentStatus.Delivered => to is ShipmentStatus.Returned,
             _ => false
         };
         if (!allowed)

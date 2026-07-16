@@ -13,9 +13,11 @@ import {
 import { StretchFaces } from '../interaction/StretchFaces';
 import { edgeColorFor } from './edgeColor';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
+import { SurfaceEdgeBowHandles } from '../interaction/SurfaceEdgeBowHandles';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
 import { buildSurfaceFootprint, restElevationMm } from '../interaction/planCollision';
 import { polygonSelfIntersects } from '../../model/polygonValidation';
+import { bowedPolygonOutline } from '../../model/edgeArcOutline';
 import { useDesignerStore } from '../../model/designerStore';
 import type { PlanFootprint } from '../interaction/planCollision';
 import type { StretchFaceDef } from '../interaction/StretchFaces';
@@ -70,12 +72,14 @@ const signedAreaMm = (points: SceneSurfacePoint[]): number => {
 
 const buildGeometry = (
   points: SceneSurfacePoint[],
+  edgeArcs: (number | null)[] | null | undefined,
   thicknessMm: number,
   cx: number,
   cy: number,
 ): BufferGeometry | null => {
   if (points.length < 3) return null;
-  const ccw = signedAreaMm(points) < 0 ? [...points].reverse() : points;
+  const outline = bowedPolygonOutline(points, edgeArcs);
+  const ccw = signedAreaMm(outline) < 0 ? [...outline].reverse() : outline;
   const shape = new Shape();
   ccw.forEach((p, i) => {
     const x = (p.x - cx) / MM;
@@ -117,11 +121,13 @@ export function PolygonSurfaceObject({
   }, [surface.points]);
 
   const [previewPoints, setPreviewPoints] = useState<SceneSurfacePoint[] | null>(null);
+  const [previewEdgeArcs, setPreviewEdgeArcs] = useState<(number | null)[] | null>(null);
   const livePoints = previewPoints ?? surface.points;
+  const liveEdgeArcs = previewEdgeArcs ?? surface.edgeArcs ?? null;
 
   const geometry = useMemo(
-    () => buildGeometry(livePoints, surface.thicknessMm, centroid.cx, centroid.cy),
-    [livePoints, surface.thicknessMm, centroid],
+    () => buildGeometry(livePoints, liveEdgeArcs, surface.thicknessMm, centroid.cx, centroid.cy),
+    [livePoints, liveEdgeArcs, surface.thicknessMm, centroid],
   );
   useEffect(() => () => geometry?.dispose(), [geometry]);
 
@@ -216,6 +222,24 @@ export function PolygonSurfaceObject({
     updateSurface(surface.id, { points: nextPoints });
   };
 
+  const edgeArcBase = (): (number | null)[] => {
+    const base = surface.edgeArcs ? [...surface.edgeArcs] : [];
+    while (base.length < surface.points.length) base.push(null);
+    return base.slice(0, surface.points.length);
+  };
+  const previewEdgeArc = (index: number, sagittaMm: number) => {
+    const base = edgeArcBase();
+    base[index] = sagittaMm;
+    setPreviewEdgeArcs(base);
+  };
+  const commitEdgeArc = (index: number, sagittaMm: number) => {
+    setPreviewEdgeArcs(null);
+    const base = edgeArcBase();
+    base[index] = Math.abs(sagittaMm) < 1 ? null : sagittaMm;
+    if (polygonSelfIntersects(bowedPolygonOutline(surface.points, base))) return;
+    updateSurface(surface.id, { edgeArcs: base });
+  };
+
   const commitThickness = (deltaMm: number) => {
     const next = Math.max(MIN_THICKNESS_MM, stickyDimensionMm(surface.thicknessMm + deltaMm));
     if (next !== surface.thicknessMm) updateSurface(surface.id, { thicknessMm: next });
@@ -304,14 +328,25 @@ export function PolygonSurfaceObject({
       </mesh>
       {stretchToolActive && <StretchFaces faces={stretchFaces} />}
       {handlesActive && (
-        <SurfaceVertexHandles
-          points={surface.points}
-          centroidXMm={centroid.cx}
-          centroidYMm={centroid.cy}
-          topM={thicknessM}
-          onPreview={previewVertex}
-          onCommit={commitVertex}
-        />
+        <>
+          <SurfaceVertexHandles
+            points={surface.points}
+            centroidXMm={centroid.cx}
+            centroidYMm={centroid.cy}
+            topM={thicknessM}
+            onPreview={previewVertex}
+            onCommit={commitVertex}
+          />
+          <SurfaceEdgeBowHandles
+            points={surface.points}
+            edgeArcs={surface.edgeArcs}
+            centroidXMm={centroid.cx}
+            centroidYMm={centroid.cy}
+            topM={thicknessM}
+            onPreview={previewEdgeArc}
+            onCommit={commitEdgeArc}
+          />
+        </>
       )}
     </group>
   );

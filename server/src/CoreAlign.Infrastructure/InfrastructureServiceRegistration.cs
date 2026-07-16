@@ -1,4 +1,5 @@
 using CoreAlign.Application.B2B;
+using CoreAlign.Application.Common;
 using CoreAlign.Application.Common.Audit;
 using Microsoft.AspNetCore.DataProtection;
 using CoreAlign.Application.Common.Caching;
@@ -173,6 +174,13 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IStockCostLayerRepository, StockCostLayerRepository>();
         services.AddScoped<ISerialUnitRepository, SerialUnitRepository>();
         services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+        services.AddScoped<IGlassPlateRepository, GlassPlateRepository>();
+        services.AddScoped<IStorageLocationRepository, StorageLocationRepository>();
+        services.AddScoped<IGlassPlateConsumptionRepository, GlassPlateConsumptionRepository>();
+        services.AddScoped<IUserWarehouseAccessRepository, UserWarehouseAccessRepository>();
+        services.AddScoped<IProductionRoutingRepository, ProductionRoutingRepository>();
+        services.AddScoped<IWorkCenterOperatorRepository, WorkCenterOperatorRepository>();
+        services.AddScoped<IProductionJobRepository, ProductionJobRepository>();
         services.AddScoped<IStockAllocationRepository, StockAllocationRepository>();
         services.AddScoped<IStockReasonCodeRepository, StockReasonCodeRepository>();
         services.AddScoped<ILotRepository, LotRepository>();
@@ -212,6 +220,7 @@ public static class InfrastructureServiceRegistration
 
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<IPortalScopeService, PortalScopeService>();
+        services.AddScoped<IWarehouseAccessScope, WarehouseAccessScope>();
         services.AddScoped<CoreAlign.Application.Common.ICurrentCustomerAccessor, CurrentCustomerAccessor>();
         services.AddScoped<IUserMembershipService, UserMembershipService>();
         services.AddScoped<IB2BAuthorizationService, B2BAuthorizationService>();
@@ -231,6 +240,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IWorkOrderRevisionService, WorkOrderRevisionService>();
 
         services.AddScoped<IGlassProjectRepository, GlassProjectRepository>();
+        services.AddScoped<IGlassProjectTemplateRepository, GlassProjectTemplateRepository>();
         services.AddScoped<IGlassProjectRunRepository, GlassProjectRunRepository>();
         services.AddScoped<IRunConnectionRepository, RunConnectionRepository>();
         services.AddScoped<IGlassProjectPanelRepository, GlassProjectPanelRepository>();

@@ -47,6 +47,7 @@ import {
   OrdersPage,
   NewOrderPage,
   QuotesPage,
+  GlassPlatesPage,
   ReturnsPage,
   ReturnDetailPage,
   ProductsPage,
@@ -90,6 +91,8 @@ import {
   MrpDashboardPage,
   PurchaseRequisitionsPage,
   MrpWorkbenchPage,
+  ProductionRoutingsPage,
+  ProductionJobsPage,
   MarketplaceListPage,
   MarketplaceDetailPage,
   MyMarketplaceSubmissionsPage,
@@ -184,6 +187,7 @@ function App() {
                               element={<StockCountDetailPage />}
                             />
                             <Route path="quotes" element={<QuotesPage />} />
+                            <Route path="glass-plates" element={<GlassPlatesPage />} />
                             <Route path="orders" element={<OrdersPage />} />
                             <Route path="orders/new" element={<NewOrderPage />} />
                             <Route path="invoices" element={<InvoicesPage />} />
@@ -296,6 +300,14 @@ function App() {
                             />
                             <Route path="mrp" element={<MrpDashboardPage />} />
                             <Route path="mrp/workbench" element={<MrpWorkbenchPage />} />
+                            <Route
+                              path="production/routings"
+                              element={<ProductionRoutingsPage />}
+                            />
+                            <Route
+                              path="production/jobs"
+                              element={<ProductionJobsPage />}
+                            />
                             <Route path="mrp/requisitions" element={<PurchaseRequisitionsPage />} />
                             <Route path="marketplace" element={<MarketplaceListPage />} />
                             <Route path="marketplace/:id" element={<MarketplaceDetailPage />} />

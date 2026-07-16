@@ -35,6 +35,23 @@ public interface IGlassProjectRepository
     void Remove(GlassProject project);
 }
 
+public record GlassProjectTemplateListItem(
+    Guid Id,
+    string Name,
+    int WallCount,
+    int SlabCount,
+    int RunCount,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc);
+
+public interface IGlassProjectTemplateRepository
+{
+    Task<GlassProjectTemplate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<GlassProjectTemplateListItem>> ListByUserAsync(Guid createdByUserId, CancellationToken cancellationToken = default);
+    Task AddAsync(GlassProjectTemplate template, CancellationToken cancellationToken = default);
+    void Remove(GlassProjectTemplate template);
+}
+
 public interface IGlassProjectRunRepository
 {
     Task<GlassProjectRun?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

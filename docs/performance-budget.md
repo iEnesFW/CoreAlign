@@ -72,6 +72,7 @@ BUNDLE_VENDOR_3D_MAX_KB=2048 npm run check:bundle
 | Chunk                      | Reason                                                                                                                                                        | Owner / Ticket       | Removal trigger                                                                                                       |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `AddressRegionFields-*.js` | Eagerly imports the full `country-state-city` dataset (~8 MB). Pre-existing repo state. CI passes `--allow-chunk AddressRegionFields` for the admin SPA only. | sprint11-blockers.md | Split via `React.lazy` + on-demand dataset fetch, OR replace with a lighter province lookup; then remove the CI flag. |
+| `GlassProjectDesignerPage-*.js` | The 3D glass designer (three.js r128 + ~157 feature files: scene builders, inspectors, interaction handles) — inherently large. Already ~618 KB; the single-edge-arc + polygon-roof geometry work nudged it to ~627 KB (~8 KB delta). CI passes `--allow-chunk GlassProjectDesignerPage` for the admin SPA. | docs/Cam_Mekan_Modul_Plan.md | Code-split the scene builders + lazy-load the per-body inspectors behind the designer route; then remove the flag. |
 
 ## Tightening a Budget
 

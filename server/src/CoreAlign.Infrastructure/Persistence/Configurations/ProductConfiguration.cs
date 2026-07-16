@@ -1,4 +1,5 @@
 using CoreAlign.Domain.Entities;
+using CoreAlign.Domain.Entities.Manufacturing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,6 +24,12 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.ThicknessMm).HasColumnType("numeric(9,2)");
         builder.HasIndex(p => new { p.TenantId, p.Color });
         builder.HasIndex(p => new { p.TenantId, p.ThicknessMm });
+        builder.Property(p => p.MinRemnantAreaMm2).HasColumnType("numeric(18,4)");
+        builder.Property(p => p.MinRemnantWidthMm).HasColumnType("numeric(10,2)");
+        builder.Property(p => p.MinRemnantHeightMm).HasColumnType("numeric(10,2)");
+        builder.Property(p => p.StandardWidthMm).HasColumnType("numeric(10,2)");
+        builder.Property(p => p.StandardHeightMm).HasColumnType("numeric(10,2)");
+        builder.HasIndex(p => new { p.TenantId, p.IsPlateTracked }).HasFilter("is_plate_tracked = true");
         builder.Property(p => p.TagsJson).HasColumnType("jsonb");
 
         builder.Property(p => p.Price).HasColumnType("numeric(18,4)");
@@ -58,6 +65,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.HasOne(p => p.Brand).WithMany().HasForeignKey(p => p.BrandId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<ProductionRouting>().WithMany().HasForeignKey(p => p.RoutingId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasIndex(p => new { p.TenantId, p.RoutingId });
         builder.HasOne(p => p.TaxRate).WithMany().HasForeignKey(p => p.TaxRateId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.BaseUom).WithMany().HasForeignKey(p => p.BaseUomId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.ParentProduct).WithMany().HasForeignKey(p => p.ParentProductId).OnDelete(DeleteBehavior.Restrict);

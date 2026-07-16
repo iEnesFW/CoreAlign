@@ -276,6 +276,7 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
           {
             ...base,
             id: product.id,
+            expectedConcurrencyToken: product.concurrencyToken,
             slug: product.slug,
             parentProductId: product.parentProductId,
             variantAttributesJson: product.variantAttributesJson,

@@ -1,4 +1,5 @@
 using CoreAlign.Application.Common;
+using CoreAlign.Application.Fx;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
@@ -110,15 +111,18 @@ public sealed class ProcessIncomingInvoiceHandler : IRequestHandler<ProcessIncom
     private readonly IIncomingInvoiceRepository _incoming;
     private readonly IVendorRepository _vendors;
     private readonly IVendorBillRepository _bills;
+    private readonly IFxRateProvider? _fx;
 
     public ProcessIncomingInvoiceHandler(
         IIncomingInvoiceRepository incoming,
         IVendorRepository vendors,
-        IVendorBillRepository bills)
+        IVendorBillRepository bills,
+        IFxRateProvider? fx = null)
     {
         _incoming = incoming;
         _vendors = vendors;
         _bills = bills;
+        _fx = fx;
     }
 
     public async Task<IncomingInvoiceProcessResult> Handle(ProcessIncomingInvoiceCommand request, CancellationToken cancellationToken)
@@ -152,6 +156,14 @@ public sealed class ProcessIncomingInvoiceHandler : IRequestHandler<ProcessIncom
             throw new DuplicateVendorBillNumberException();
         }
 
+        var exchangeRate = 1m;
+        if (!string.Equals(currency, DefaultCurrency, StringComparison.OrdinalIgnoreCase) && _fx is not null)
+        {
+            var snapshot = await _fx.GetRateAsync(currency, incoming.IssueDate, cancellationToken)
+                ?? throw new FxRateNotFoundException(currency, incoming.IssueDate);
+            exchangeRate = snapshot.BuyingRate;
+        }
+
         var bill = new VendorBill(
             vendorId: vendor.Id,
             vendorName: vendor.Name,
@@ -160,6 +172,7 @@ public sealed class ProcessIncomingInvoiceHandler : IRequestHandler<ProcessIncom
             currency: currency,
             subtotal: request.Subtotal,
             taxAmount: request.TaxAmount,
+            exchangeRate: exchangeRate,
             notes: $"Gelen e-Fatura: {incoming.Ettn}");
         await _bills.AddAsync(bill, cancellationToken);
 

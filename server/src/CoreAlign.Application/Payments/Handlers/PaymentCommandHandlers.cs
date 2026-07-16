@@ -250,7 +250,7 @@ public class OffsetCustomerAdvanceHandler : IRequestHandler<OffsetCustomerAdvanc
 
             // Offset (mahsup): consume the prepayment sitting in 340 against AR(120).
             // Posted inline + at the advance's own ExchangeRate; dedups on the application id.
-            await _gl.PostAsync(new GLPostingRequest(
+            var glResult = await _gl.PostAsync(new GLPostingRequest(
                 JournalSourceType.CustomerAdvanceApplied,
                 application.Id,
                 payment.PaymentNumber,
@@ -263,6 +263,11 @@ public class OffsetCustomerAdvanceHandler : IRequestHandler<OffsetCustomerAdvanc
                     new GLPostingLine(GLPostingKey.AccountsReceivable, 0m, apply.AppliedAmount),
                 },
                 payment.Currency, payment.ExchangeRate), ct);
+
+            if (glResult is GLPostingResult.SkippedClosedPeriod or GLPostingResult.SkippedUnmapped)
+            {
+                throw new GLPostingFailedException(glResult.ToString());
+            }
         }
 
         _payments.Update(payment);

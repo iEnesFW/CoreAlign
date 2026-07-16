@@ -23,5 +23,7 @@ public sealed class IncomingInvoiceConfiguration : IEntityTypeConfiguration<Inco
 
         builder.HasIndex(x => new { x.TenantId, x.Ettn }).IsUnique();
         builder.HasIndex(x => new { x.TenantId, x.Status, x.IssueDate }).IsDescending(false, false, true);
+
+        builder.HasOne<VendorBill>().WithMany().HasForeignKey(x => x.LinkedVendorBillId).OnDelete(DeleteBehavior.SetNull);
     }
 }

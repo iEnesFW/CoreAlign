@@ -235,6 +235,9 @@ public interface IInvoiceRepository
         Guid? customerId,
         int page,
         int pageSize,
+        string? statusBucket = null,
+        bool dueSoonOnly = false,
+        DateTime? nowUtc = null,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Invoice>> GetOpenForCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MonthlyInvoiceTotal>> GetMonthlyRevenueByCustomerAsync(
@@ -250,6 +253,18 @@ public interface IInvoiceRepository
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<StatusGroup>> GetInvoiceStatusBreakdownAsync(
         Guid customerId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tenant-wide KPI aggregates over ALL invoices matching the same search/customer
+    /// filter the list view uses — so the header cards (outstanding, overdue, collected,
+    /// status counts) reflect the whole result set, not just the visible page. Computed
+    /// server-side (SUM/COUNT) so no unbounded row set is materialized.
+    /// </summary>
+    Task<InvoiceAggregates> GetAggregatesAsync(
+        string? search,
+        Guid? customerId,
+        DateTime nowUtc,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Invoice>> GetCreditNotesForInvoiceAsync(
         Guid invoiceId,
@@ -332,6 +347,18 @@ public record TopProductLine(Guid? ProductId, string ProductSku, string ProductN
 public record PaymentBehavior(int OnTimePaidCount, int LatePaidCount, double AvgDaysToPayment);
 
 public record StatusGroup(string Status, int Count, decimal Total);
+
+public record InvoiceAggregates(
+    int TotalCount,
+    int OpenCount,
+    int PartiallyPaidCount,
+    int OverdueCount,
+    int PaidCount,
+    int CancelledCount,
+    int DueSoonCount,
+    decimal OutstandingTotal,
+    decimal PaidTotal,
+    decimal OverdueTotal);
 
 public interface IReportRepository
 {

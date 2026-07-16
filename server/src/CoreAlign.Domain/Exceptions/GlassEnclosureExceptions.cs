@@ -18,6 +18,16 @@ public class GlassProjectInvalidStatusTransitionException : DomainException
     }
 }
 
+public class GlassProjectTemplateNotFoundException : NotFoundException
+{
+    public GlassProjectTemplateNotFoundException() : base("Glass project template not found.") { }
+}
+
+public class GlassProjectTemplateInvalidException : DomainException
+{
+    public GlassProjectTemplateInvalidException(string message) : base(message) { }
+}
+
 public class GlassSystemNotCompatibleWithOpeningException : DomainException
 {
     public GlassSystemNotCompatibleWithOpeningException(string systemType, string openingType)

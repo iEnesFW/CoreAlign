@@ -19,6 +19,7 @@ export {
   penetratesAny,
   firstPenetratingOwner,
   footprintsPenetrate,
+  footprintsOverlapXY,
   clampPlanMove,
   clampPlanMoveNoDeepen,
   slidePlanMove,

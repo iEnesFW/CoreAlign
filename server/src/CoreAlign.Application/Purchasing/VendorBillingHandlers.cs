@@ -12,22 +12,32 @@ namespace CoreAlign.Application.Purchasing;
 
 internal static class VendorGLLines
 {
-    public static IReadOnlyList<GLPostingLine> Bill(decimal subtotal, decimal tax, decimal total, bool inventoryPurchase, bool reverse)
+    public static IReadOnlyList<GLPostingLine> Bill(decimal subtotal, decimal tax, decimal total, decimal withholding, bool inventoryPurchase, bool reverse)
     {
         var debitKey = inventoryPurchase ? GLPostingKey.GoodsReceiptClearing : GLPostingKey.PurchaseExpense;
-        return reverse
-            ? new[]
+        var payable = Math.Round(total - withholding, 4);
+        var lines = new List<GLPostingLine>();
+        if (reverse)
+        {
+            lines.Add(new GLPostingLine(GLPostingKey.AccountsPayable, payable, 0m));
+            if (withholding > 0m)
             {
-                new GLPostingLine(GLPostingKey.AccountsPayable, total, 0m),
-                new GLPostingLine(debitKey, 0m, subtotal),
-                new GLPostingLine(GLPostingKey.InputVat, 0m, tax),
+                lines.Add(new GLPostingLine(GLPostingKey.WithholdingPayable, withholding, 0m));
             }
-            : new[]
+            lines.Add(new GLPostingLine(debitKey, 0m, subtotal));
+            lines.Add(new GLPostingLine(GLPostingKey.InputVat, 0m, tax));
+        }
+        else
+        {
+            lines.Add(new GLPostingLine(debitKey, subtotal, 0m));
+            lines.Add(new GLPostingLine(GLPostingKey.InputVat, tax, 0m));
+            lines.Add(new GLPostingLine(GLPostingKey.AccountsPayable, 0m, payable));
+            if (withholding > 0m)
             {
-                new GLPostingLine(debitKey, subtotal, 0m),
-                new GLPostingLine(GLPostingKey.InputVat, tax, 0m),
-                new GLPostingLine(GLPostingKey.AccountsPayable, 0m, total),
-            };
+                lines.Add(new GLPostingLine(GLPostingKey.WithholdingPayable, 0m, withholding));
+            }
+        }
+        return lines;
     }
 
     // PO-linked inventory bill with lines: split the debit into a GR/IR clearing
@@ -43,15 +53,16 @@ internal static class VendorGLLines
     {
         var clearing = Math.Round(bill.Lines.Sum(l => l.ReceiptClearingCost), 4);
         var variance = Math.Round(bill.Subtotal - clearing, 4);
-        return BuildLineAwareLegs(clearing, variance, bill.TaxAmount, bill.Total, reverse);
+        return BuildLineAwareLegs(clearing, variance, bill.TaxAmount, bill.Total, bill.WithholdingAmount, reverse);
     }
 
     // Shared leg builder for both posting (reverse:false) and cancel (reverse:true)
     // so the void mirrors exactly what was posted. On reverse the debit/credit of
     // every leg flips while the variance keeps its economic sign via the swap.
     public static IReadOnlyList<GLPostingLine> BuildLineAwareLegs(
-        decimal clearing, decimal variance, decimal tax, decimal total, bool reverse)
+        decimal clearing, decimal variance, decimal tax, decimal total, decimal withholding, bool reverse)
     {
+        var payable = Math.Round(total - withholding, 4);
         var lines = new List<GLPostingLine>
         {
             reverse
@@ -74,8 +85,14 @@ internal static class VendorGLLines
             ? new GLPostingLine(GLPostingKey.InputVat, 0m, tax)
             : new GLPostingLine(GLPostingKey.InputVat, tax, 0m));
         lines.Add(reverse
-            ? new GLPostingLine(GLPostingKey.AccountsPayable, total, 0m)
-            : new GLPostingLine(GLPostingKey.AccountsPayable, 0m, total));
+            ? new GLPostingLine(GLPostingKey.AccountsPayable, payable, 0m)
+            : new GLPostingLine(GLPostingKey.AccountsPayable, 0m, payable));
+        if (withholding > 0m)
+        {
+            lines.Add(reverse
+                ? new GLPostingLine(GLPostingKey.WithholdingPayable, withholding, 0m)
+                : new GLPostingLine(GLPostingKey.WithholdingPayable, 0m, withholding));
+        }
         return lines;
     }
 
@@ -87,7 +104,7 @@ internal static class VendorGLLines
     public static IReadOnlyList<GLPostingLine> BuildPostLines(VendorBill bill) =>
         HasPoLinkedLines(bill)
             ? BillWithLines(bill)
-            : Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.PurchaseOrderId is not null, reverse: false);
+            : Bill(bill.Subtotal, bill.TaxAmount, bill.Total, bill.WithholdingAmount, bill.PurchaseOrderId is not null, reverse: false);
 
     // Reversal legs for a cancelled line-aware bill, prorated to the still-open
     // portion (factor = due / Total). The SAME line-aware split is reversed —
@@ -97,13 +114,15 @@ internal static class VendorGLLines
     // any sub-cent proration drift is absorbed by the GL residual nudge.
     public static IReadOnlyList<GLPostingLine> BillWithLinesReversal(VendorBill bill, decimal due)
     {
-        var factor = bill.Total == 0m ? 0m : due / bill.Total;
+        var factor = bill.PayableAmount == 0m ? 0m : due / bill.PayableAmount;
+        var withholding = Math.Round(bill.WithholdingAmount * factor, 4);
+        var gross = Math.Round(due + withholding, 4);
         var fullClearing = Math.Round(bill.Lines.Sum(l => l.ReceiptClearingCost), 4);
         var fullVariance = Math.Round(bill.Subtotal - fullClearing, 4);
         var clearing = Math.Round(fullClearing * factor, 4);
         var variance = Math.Round(fullVariance * factor, 4);
         var tax = Math.Round(bill.TaxAmount * factor, 4);
-        return BuildLineAwareLegs(clearing, variance, tax, due, reverse: true);
+        return BuildLineAwareLegs(clearing, variance, tax, gross, withholding, reverse: true);
     }
 }
 
@@ -241,11 +260,11 @@ internal static class VendorLedgerPoster
     {
         await ledger.AcquireAppendLockAsync(vendorId, ct);
         var last = await ledger.GetLastRunningBalanceAsync(vendorId, ct);
-        var signed = entryType == LedgerEntryType.Credit ? Math.Abs(amount) : -Math.Abs(amount);
-        var balance = Math.Round(last + signed, 4);
 
         var entry = new VendorLedgerEntry(vendorId, occurredAtUtc, occurredAtUtc.Date, entryType, amount,
             currency, exchangeRate, sourceType, sourceDocumentId, sourceDocumentNumber, description);
+        var signed = entry.EntryType == LedgerEntryType.Credit ? entry.AmountInBase : -entry.AmountInBase;
+        var balance = Math.Round(last + signed, 4);
         entry.SetRunningBalance(balance);
         await ledger.AddAsync(entry, ct);
 
@@ -296,6 +315,11 @@ public class CreateVendorBillHandler : IRequestHandler<CreateVendorBillCommand, 
             bill.ReplaceLines(lines);
         }
 
+        if (!string.IsNullOrWhiteSpace(c.WithholdingCode))
+        {
+            bill.SetWithholding(c.WithholdingCode, c.WithholdingNumerator, c.WithholdingDenominator);
+        }
+
         await _bills.AddAsync(bill, ct);
         await _uow.SaveChangesAsync(ct);
         return VendorBillingMapper.ToDto(bill);
@@ -317,7 +341,7 @@ internal static class VendorBillPostEffects
         CancellationToken ct)
     {
         await VendorLedgerPoster.PostAsync(ledger, vendors, bill.VendorId, DateTime.UtcNow,
-            LedgerEntryType.Credit, bill.Total, bill.Currency, bill.ExchangeRate,
+            LedgerEntryType.Credit, bill.PayableAmount, bill.Currency, bill.ExchangeRate,
             LedgerSourceType.Invoice, bill.Id, bill.BillNumber, $"Tedarikçi faturası {bill.BillNumber}", ct);
 
         await outbox.EnqueueAsync(new GLPostingRequest(
@@ -508,10 +532,12 @@ public class CancelVendorBillHandler : IRequestHandler<CancelVendorBillCommand, 
     // and credit the single debit account at the remaining subtotal.
     private static IReadOnlyList<GLPostingLine> BuildHeaderReversal(VendorBill bill, decimal due)
     {
-        var factor = bill.Total == 0m ? 0m : due / bill.Total;
+        var factor = bill.PayableAmount == 0m ? 0m : due / bill.PayableAmount;
+        var withholding = Math.Round(bill.WithholdingAmount * factor, 4);
+        var gross = Math.Round(due + withholding, 4);
         var reversedTax = Math.Round(bill.TaxAmount * factor, 4, MidpointRounding.ToEven);
-        var reversedSubtotal = due - reversedTax;
-        return VendorGLLines.Bill(reversedSubtotal, reversedTax, due, bill.PurchaseOrderId is not null, reverse: true);
+        var reversedSubtotal = gross - reversedTax;
+        return VendorGLLines.Bill(reversedSubtotal, reversedTax, gross, withholding, bill.PurchaseOrderId is not null, reverse: true);
     }
 }
 

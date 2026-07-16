@@ -4,7 +4,7 @@ import { queueToast } from '@/shared/api/toastQueue';
 import { glassProjectsApi } from '../api/glassProjectsApi';
 import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
-import { buildGlassTemplate, type GlassTemplateKey } from '../model/templates';
+import { buildGlassTemplate, type GlassTemplate, type GlassTemplateKey } from '../model/templates';
 import { developedLengthMm } from '../model/arcGeometry';
 import { panelCountForWidth } from '../model/wallAutofill';
 import { useAddRunMutation } from './useGlassProjectQueries';
@@ -28,9 +28,8 @@ export const useTemplateInsert = () => {
   const profileSystemsQuery = useProfileSystemsQuery();
   const colorsQuery = useColorOptionsQuery();
 
-  const insertTemplate = async (key: GlassTemplateKey) => {
+  const insertGlassTemplate = async (template: Omit<GlassTemplate, 'key'>) => {
     const state = useDesignerStore.getState();
-    const template = buildGlassTemplate(key);
     const anchor = dropAnchor(state.scene);
 
     // Walls + slabs live in the scene blob — ONE applyScenePatch = one undo step.
@@ -123,5 +122,7 @@ export const useTemplateInsert = () => {
     });
   };
 
-  return { insertTemplate };
+  const insertTemplate = (key: GlassTemplateKey) => insertGlassTemplate(buildGlassTemplate(key));
+
+  return { insertTemplate, insertGlassTemplate };
 };

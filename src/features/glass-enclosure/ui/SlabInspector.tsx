@@ -17,7 +17,7 @@ import {
   minArcRadiusMm,
 } from '../model/arcGeometry';
 import { slabArcDefaultSweepSign } from '../scene/builders/curvedSlabGeometry';
-import type { SceneSlabState } from '../model/project.types';
+import type { EdgeArcKey, EdgeArcMap, SceneSlabState } from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 
 export function SlabInspector() {
@@ -220,6 +220,21 @@ export function SlabInspector() {
       return;
     }
     commit({ [dim]: v });
+  };
+
+  // Single-edge arc: bow just one rect edge outward. Mutually exclusive with the whole-body
+  // arc / barrel / pitch — setting an edge sagitta clears those so the render can't split-brain.
+  const commitEdgeArc = (edge: EdgeArcKey, sagittaMm: number) => {
+    const base: EdgeArcMap = { ...(slab.geomEdgeArc ?? {}) };
+    if (Math.abs(sagittaMm) < 1) delete base[edge];
+    else base[edge] = Math.round(sagittaMm);
+    const hasAny = Object.values(base).some((s) => typeof s === 'number' && Math.abs(s) >= 1);
+    commit({
+      geomEdgeArc: hasAny ? base : null,
+      ...(hasAny
+        ? { geomArcRadiusMm: null, geomArcSweepDeg: null, arcRiseMm: null, pitchRiseMm: null }
+        : {}),
+    });
   };
 
   const handleDelete = () => {
@@ -459,6 +474,48 @@ export function SlabInspector() {
           </div>
         )}
       </div>
+
+      {!isShapedSurface && (
+        <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.Slab.EdgeArcTitle', { defaultValue: 'Tek kenar kavis' })}
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(
+              [
+                [
+                  'front',
+                  t('GlassEnclosure.Designer.Slab.EdgeFront', { defaultValue: 'Ön kenar' }),
+                ],
+                [
+                  'back',
+                  t('GlassEnclosure.Designer.Slab.EdgeBack', { defaultValue: 'Arka kenar' }),
+                ],
+                ['left', t('GlassEnclosure.Designer.Slab.EdgeLeft', { defaultValue: 'Sol kenar' })],
+                [
+                  'right',
+                  t('GlassEnclosure.Designer.Slab.EdgeRight', { defaultValue: 'Sağ kenar' }),
+                ],
+              ] as const
+            ).map(([edge, edgeLabel]) => (
+              <NumberField
+                key={edge}
+                label={`${edgeLabel} (mm)`}
+                value={draft.geomEdgeArc?.[edge] ?? 0}
+                onCommit={(v) => commitEdgeArc(edge, v)}
+                onDraft={(v) =>
+                  setDraft({ ...draft, geomEdgeArc: { ...(draft.geomEdgeArc ?? {}), [edge]: v } })
+                }
+              />
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-400">
+            {t('GlassEnclosure.Designer.Slab.EdgeArcInfo', {
+              defaultValue: 'Bir kenara ok (sagitta) girin; sadece o kenar dışa kavislenir.',
+            })}
+          </p>
+        </div>
+      )}
 
       {!isShapedSurface && (
         <div className="space-y-2 rounded-md border border-slate-200 p-2.5 dark:border-slate-700">

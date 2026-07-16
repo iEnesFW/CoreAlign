@@ -4451,6 +4451,11 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -4818,6 +4823,66 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_glass_project_share_tokens_tenant_id_project_id");
 
                     b.ToTable("glass_project_share_tokens");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.GlassProjectTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_user_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload_json");
+
+                    b.Property<int>("RunCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("run_count");
+
+                    b.Property<int>("SlabCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("slab_count");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<int>("WallCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("wall_count");
+
+                    b.HasKey("Id")
+                        .HasName("pk_glass_project_templates");
+
+                    b.HasIndex("TenantId", "CreatedByUserId", "UpdatedAtUtc")
+                        .HasDatabaseName("ix_glass_project_templates_tenant_user_updated");
+
+                    b.ToTable("glass_project_templates");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.GlassType", b =>
@@ -6125,6 +6190,336 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("wind_zones");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.GlassPlate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<string>("Condition")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("condition");
+
+                    b.Property<DateTime?>("ConsumedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at_utc");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<decimal>("HeightMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("height_mm");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid?>("LotId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lot_id");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal>("OriginalAreaMm2")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("original_area_mm2");
+
+                    b.Property<Guid?>("ParentPlateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_plate_id");
+
+                    b.Property<string>("PlateNumber")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("plate_number");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at_utc");
+
+                    b.Property<decimal>("RemainingAreaMm2")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("remaining_area_mm2");
+
+                    b.Property<Guid?>("ReservedByJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reserved_by_job_id");
+
+                    b.Property<Guid?>("SourceReceiptMovementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_receipt_movement_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("StorageLocationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("storage_location_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<decimal>("ThicknessMm")
+                        .HasColumnType("numeric(9,2)")
+                        .HasColumnName("thickness_mm");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.Property<decimal>("WidthMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("width_mm");
+
+                    b.HasKey("Id")
+                        .HasName("pk_glass_plates");
+
+                    b.HasIndex("LotId")
+                        .HasDatabaseName("ix_glass_plates_lot_id");
+
+                    b.HasIndex("ParentPlateId")
+                        .HasDatabaseName("ix_glass_plates_parent_plate_id");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_glass_plates_product_id");
+
+                    b.HasIndex("StorageLocationId")
+                        .HasDatabaseName("ix_glass_plates_storage_location_id");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_glass_plates_warehouse_id");
+
+                    b.HasIndex("TenantId", "PlateNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_glass_plates_tenant_id_plate_number");
+
+                    b.HasIndex("TenantId", "ProductId", "RemainingAreaMm2")
+                        .HasDatabaseName("ix_glass_plates_tenant_id_product_id_remaining_area_mm2")
+                        .HasFilter("status = 'Available'");
+
+                    b.HasIndex("TenantId", "ProductId", "Status")
+                        .HasDatabaseName("ix_glass_plates_tenant_id_product_id_status");
+
+                    b.HasIndex("TenantId", "WarehouseId", "StorageLocationId")
+                        .HasDatabaseName("ix_glass_plates_tenant_id_warehouse_id_storage_location_id");
+
+                    b.ToTable("glass_plates", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.GlassPlateConsumption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<decimal>("CutAreaMm2")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("cut_area_mm2");
+
+                    b.Property<decimal?>("CutHeightMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("cut_height_mm");
+
+                    b.Property<decimal?>("CutWidthMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("cut_width_mm");
+
+                    b.Property<Guid>("GlassPlateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("glass_plate_id");
+
+                    b.Property<Guid?>("JobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_id");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<Guid?>("OperatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operator_id");
+
+                    b.Property<Guid?>("OrderLineId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("order_line_id");
+
+                    b.Property<int>("Pieces")
+                        .HasColumnType("integer")
+                        .HasColumnName("pieces");
+
+                    b.Property<Guid>("PostedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("posted_by_user_id");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<Guid?>("ResultingRemnantPlateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resulting_remnant_plate_id");
+
+                    b.Property<Guid?>("ScrapReasonCodeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scrap_reason_code_id");
+
+                    b.Property<decimal>("ScrappedAreaMm2")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("scrapped_area_mm2");
+
+                    b.Property<Guid?>("StockMovementId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("stock_movement_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.Property<Guid?>("WorkCenterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_center_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_glass_plate_consumptions");
+
+                    b.HasIndex("GlassPlateId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_glass_plate_id");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_product_id");
+
+                    b.HasIndex("ScrapReasonCodeId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_scrap_reason_code_id");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_warehouse_id");
+
+                    b.HasIndex("TenantId", "GlassPlateId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_tenant_id_glass_plate_id");
+
+                    b.HasIndex("TenantId", "OrderLineId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_tenant_id_order_line_id");
+
+                    b.HasIndex("TenantId", "ProductId", "WarehouseId")
+                        .HasDatabaseName("ix_glass_plate_consumptions_tenant_id_product_id_warehouse_id");
+
+                    b.ToTable("glass_plate_consumptions", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.StorageLocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("kind");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid?>("ParentLocationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_location_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_storage_locations");
+
+                    b.HasIndex("ParentLocationId")
+                        .HasDatabaseName("ix_storage_locations_parent_location_id");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_storage_locations_warehouse_id");
+
+                    b.HasIndex("TenantId", "WarehouseId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_storage_locations_tenant_id_warehouse_id_code");
+
+                    b.ToTable("storage_locations", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.GoodsReceipt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6424,6 +6819,9 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_incoming_invoices");
+
+                    b.HasIndex("LinkedVendorBillId")
+                        .HasDatabaseName("ix_incoming_invoices_linked_vendor_bill_id");
 
                     b.HasIndex("TenantId", "Ettn")
                         .IsUnique()
@@ -7861,6 +8259,453 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("planned_production_orders", (string)null);
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("cancellation_reason");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at_utc");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at_utc");
+
+                    b.Property<decimal>("CompletedQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("completed_quantity");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<int?>("CurrentStepNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_step_number");
+
+                    b.Property<DateTime?>("DueDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("due_date_utc");
+
+                    b.Property<string>("JobNumber")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("job_number");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("notes");
+
+                    b.Property<decimal>("PlannedQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("planned_quantity");
+
+                    b.Property<DateTime?>("PlannedStartDateUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("planned_start_date_utc");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTime?>("ReleasedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("released_at_utc");
+
+                    b.Property<string>("RoutingCodeSnapshot")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("routing_code_snapshot");
+
+                    b.Property<string>("RoutingNameSnapshot")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("routing_name_snapshot");
+
+                    b.Property<long?>("RoutingSnapshotVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("routing_snapshot_version");
+
+                    b.Property<decimal>("ScrappedQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("scrapped_quantity");
+
+                    b.Property<Guid?>("SourcePlannedProductionOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_planned_production_order_id");
+
+                    b.Property<Guid?>("SourceRoutingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_routing_id");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at_utc");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("UnitOfMeasure")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("unit_of_measure");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_production_jobs");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_production_jobs_product_id");
+
+                    b.HasIndex("SourcePlannedProductionOrderId")
+                        .HasDatabaseName("ix_production_jobs_source_planned_production_order_id");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_production_jobs_warehouse_id");
+
+                    b.HasIndex("TenantId", "JobNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_production_jobs_tenant_id_job_number");
+
+                    b.HasIndex("TenantId", "ProductId")
+                        .HasDatabaseName("ix_production_jobs_tenant_id_product_id");
+
+                    b.HasIndex("TenantId", "Status", "DueDateUtc", "Id")
+                        .HasDatabaseName("ix_production_jobs_tenant_id_status_due_date_utc_id");
+
+                    b.ToTable("production_jobs", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal?>("ActualRunMinutes")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("actual_run_minutes");
+
+                    b.Property<decimal?>("ActualSetupMinutes")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("actual_setup_minutes");
+
+                    b.Property<Guid?>("AssignedOperatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_operator_id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<DateTime?>("FinishedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finished_at_utc");
+
+                    b.Property<decimal>("GoodQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("good_quantity");
+
+                    b.Property<decimal>("InputQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("input_quantity");
+
+                    b.Property<string>("Instructions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("instructions");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_optional");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("OperationName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("operation_name");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("operation_type");
+
+                    b.Property<Guid>("ProductionJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("production_job_id");
+
+                    b.Property<int>("ReworkCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rework_count");
+
+                    b.Property<int?>("ReworkedFromStepNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("reworked_from_step_number");
+
+                    b.Property<decimal?>("RunTimeMinutesPerSqm")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("run_time_minutes_per_sqm");
+
+                    b.Property<decimal>("RunTimeMinutesPerUnit")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("run_time_minutes_per_unit");
+
+                    b.Property<decimal>("ScrapPercentage")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("scrap_percentage");
+
+                    b.Property<Guid?>("ScrapReasonCodeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scrap_reason_code_id");
+
+                    b.Property<decimal>("ScrappedQuantity")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("scrapped_quantity");
+
+                    b.Property<decimal>("SetupTimeMinutes")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("setup_time_minutes");
+
+                    b.Property<Guid?>("SourceRoutingStepId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_routing_step_id");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("started_at_utc");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<int>("StepNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("step_number");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("WorkCenterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_center_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_production_job_steps");
+
+                    b.HasIndex("ProductionJobId")
+                        .HasDatabaseName("ix_production_job_steps_production_job_id");
+
+                    b.HasIndex("WorkCenterId")
+                        .HasDatabaseName("ix_production_job_steps_work_center_id");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("ix_production_job_steps_tenant_id_status");
+
+                    b.HasIndex("TenantId", "WorkCenterId")
+                        .HasDatabaseName("ix_production_job_steps_tenant_id_work_center_id");
+
+                    b.HasIndex("TenantId", "ProductionJobId", "StepNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_production_job_steps_tenant_id_production_job_id_step_number");
+
+                    b.ToTable("production_job_steps", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionRouting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("code");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_production_routings");
+
+                    b.HasIndex("TenantId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_production_routings_tenant_id_code");
+
+                    b.HasIndex("TenantId", "Status")
+                        .HasDatabaseName("ix_production_routings_tenant_id_status");
+
+                    b.ToTable("production_routings", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.RoutingStep", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("Instructions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("instructions");
+
+                    b.Property<bool>("IsOptional")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_optional");
+
+                    b.Property<string>("OperationName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("operation_name");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("operation_type");
+
+                    b.Property<Guid>("RoutingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("routing_id");
+
+                    b.Property<decimal?>("RunTimeMinutesPerSqm")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("run_time_minutes_per_sqm");
+
+                    b.Property<decimal>("RunTimeMinutesPerUnit")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("run_time_minutes_per_unit");
+
+                    b.Property<decimal>("ScrapPercentage")
+                        .HasColumnType("numeric(6,3)")
+                        .HasColumnName("scrap_percentage");
+
+                    b.Property<decimal>("SetupTimeMinutes")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("setup_time_minutes");
+
+                    b.Property<int>("StepNumber")
+                        .HasColumnType("integer")
+                        .HasColumnName("step_number");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WorkCenterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_center_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_routing_steps");
+
+                    b.HasIndex("RoutingId")
+                        .HasDatabaseName("ix_routing_steps_routing_id");
+
+                    b.HasIndex("WorkCenterId")
+                        .HasDatabaseName("ix_routing_steps_work_center_id");
+
+                    b.HasIndex("TenantId", "WorkCenterId")
+                        .HasDatabaseName("ix_routing_steps_tenant_id_work_center_id");
+
+                    b.HasIndex("TenantId", "RoutingId", "StepNumber")
+                        .IsUnique()
+                        .HasDatabaseName("ix_routing_steps_tenant_id_routing_id_step_number");
+
+                    b.ToTable("routing_steps", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.WorkCenter", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7913,6 +8758,81 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_work_centers_tenant_id_is_active");
 
                     b.ToTable("work_centers", (string)null);
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.WorkCenterOperator", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateOnly?>("CertifiedOn")
+                        .HasColumnType("date")
+                        .HasColumnName("certified_on");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("employee_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("QualificationLevel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("qualification_level");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("WorkCenterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("work_center_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_work_center_operators");
+
+                    b.HasIndex("EmployeeId")
+                        .HasDatabaseName("ix_work_center_operators_employee_id");
+
+                    b.HasIndex("WorkCenterId")
+                        .HasDatabaseName("ix_work_center_operators_work_center_id");
+
+                    b.HasIndex("TenantId", "EmployeeId")
+                        .HasDatabaseName("ix_work_center_operators_tenant_id_employee_id");
+
+                    b.HasIndex("TenantId", "WorkCenterId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_work_center_operators_tenant_id_work_center_id")
+                        .HasFilter("is_primary = true AND is_active = true");
+
+                    b.HasIndex("TenantId", "WorkCenterId", "EmployeeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_work_center_operators_tenant_id_work_center_id_employee_id")
+                        .HasFilter("is_active = true");
+
+                    b.ToTable("work_center_operators", (string)null);
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.Module", b =>
@@ -11303,6 +12223,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(32)")
                         .HasColumnName("code");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -11372,6 +12299,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -11435,6 +12369,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("code");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -11535,6 +12476,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasColumnName("code");
+
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
@@ -11839,6 +12787,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_lot_tracked");
 
+                    b.Property<bool>("IsPlateTracked")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_plate_tracked");
+
                     b.Property<bool>("IsPriceTaxInclusive")
                         .HasColumnType("boolean")
                         .HasColumnName("is_price_tax_inclusive");
@@ -11878,6 +12830,22 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<decimal?>("MinOrderQuantity")
                         .HasColumnType("numeric")
                         .HasColumnName("min_order_quantity");
+
+                    b.Property<int?>("MinPlateCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("min_plate_count");
+
+                    b.Property<decimal?>("MinRemnantAreaMm2")
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("min_remnant_area_mm2");
+
+                    b.Property<decimal?>("MinRemnantHeightMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("min_remnant_height_mm");
+
+                    b.Property<decimal?>("MinRemnantWidthMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("min_remnant_width_mm");
 
                     b.Property<decimal>("MinSellingPrice")
                         .HasColumnType("numeric(18,4)")
@@ -11936,6 +12904,10 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("requires_inspection");
 
+                    b.Property<Guid?>("RoutingId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("routing_id");
+
                     b.Property<decimal>("RunTimeMinutesPerUnit")
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("run_time_minutes_per_unit");
@@ -11971,6 +12943,14 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("StandardCost")
                         .HasColumnType("numeric(18,4)")
                         .HasColumnName("standard_cost");
+
+                    b.Property<decimal?>("StandardHeightMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("standard_height_mm");
+
+                    b.Property<decimal?>("StandardWidthMm")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("standard_width_mm");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -12043,6 +13023,9 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.HasIndex("ParentProductId")
                         .HasDatabaseName("ix_products_parent_product_id");
 
+                    b.HasIndex("RoutingId")
+                        .HasDatabaseName("ix_products_routing_id");
+
                     b.HasIndex("TaxRateId")
                         .HasDatabaseName("ix_products_tax_rate_id");
 
@@ -12060,8 +13043,15 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId", "Color")
                         .HasDatabaseName("ix_products_tenant_id_color");
 
+                    b.HasIndex("TenantId", "IsPlateTracked")
+                        .HasDatabaseName("ix_products_tenant_id_is_plate_tracked")
+                        .HasFilter("is_plate_tracked = true");
+
                     b.HasIndex("TenantId", "Name")
                         .HasDatabaseName("ix_products_tenant_id_name");
+
+                    b.HasIndex("TenantId", "RoutingId")
+                        .HasDatabaseName("ix_products_tenant_id_routing_id");
 
                     b.HasIndex("TenantId", "Sku")
                         .IsUnique()
@@ -14944,11 +15934,17 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_stock_cost_layers");
 
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_stock_cost_layers_product_id");
+
                     b.HasIndex("SourceMovementId")
                         .HasDatabaseName("ix_stock_cost_layers_source_movement_id");
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_stock_cost_layers_tenant_id");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_stock_cost_layers_warehouse_id");
 
                     b.HasIndex("StockItemId", "ReceivedAtUtc")
                         .HasDatabaseName("ix_stock_cost_layers_stock_item_id_received_at_utc");
@@ -17178,6 +18174,53 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("user_sessions");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.UserWarehouseAccess", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("GrantedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("granted_by_user_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("warehouse_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_warehouse_access");
+
+                    b.HasIndex("WarehouseId")
+                        .HasDatabaseName("ix_user_warehouse_access_warehouse_id");
+
+                    b.HasIndex("TenantId", "UserId")
+                        .HasDatabaseName("ix_user_warehouse_access_tenant_id_user_id");
+
+                    b.HasIndex("TenantId", "UserId", "WarehouseId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_user_warehouse_access_tenant_id_user_id_warehouse_id");
+
+                    b.ToTable("user_warehouse_access", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.VatExemptionCode", b =>
                 {
                     b.Property<Guid>("Id")
@@ -17688,6 +18731,19 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)")
                         .HasColumnName("vendor_name");
+
+                    b.Property<string>("WithholdingCode")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("withholding_code");
+
+                    b.Property<int>("WithholdingDenominator")
+                        .HasColumnType("integer")
+                        .HasColumnName("withholding_denominator");
+
+                    b.Property<int>("WithholdingNumerator")
+                        .HasColumnType("integer")
+                        .HasColumnName("withholding_numerator");
 
                     b.HasKey("Id")
                         .HasName("pk_vendor_bills");
@@ -19608,6 +20664,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_glass_project_share_tokens_tenants_tenant_id");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.GlassProjectTemplate", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_project_templates_tenants_tenant_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.GlassEnclosure.GlassType", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -19749,6 +20815,114 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_glass_run_connections_tenants_tenant_id");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.GlassPlate", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Lot", null)
+                        .WithMany()
+                        .HasForeignKey("LotId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_glass_plates_lots_lot_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plates_products_product_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.GlassPlates.StorageLocation", "StorageLocation")
+                        .WithMany()
+                        .HasForeignKey("StorageLocationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_glass_plates_storage_locations_storage_location_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plates_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plates_warehouses_warehouse_id");
+
+                    b.Navigation("Product");
+
+                    b.Navigation("StorageLocation");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.GlassPlateConsumption", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.GlassPlates.GlassPlate", "GlassPlate")
+                        .WithMany()
+                        .HasForeignKey("GlassPlateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plate_consumptions_glass_plates_glass_plate_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plate_consumptions_products_product_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.StockReasonCode", null)
+                        .WithMany()
+                        .HasForeignKey("ScrapReasonCodeId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_glass_plate_consumptions_stock_reason_codes_scrap_reason_code~");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plate_consumptions_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_glass_plate_consumptions_warehouses_warehouse_id");
+
+                    b.Navigation("GlassPlate");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.GlassPlates.StorageLocation", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.GlassPlates.StorageLocation", "ParentLocation")
+                        .WithMany()
+                        .HasForeignKey("ParentLocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_storage_locations_storage_locations_parent_location_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_storage_locations_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_storage_locations_warehouses_warehouse_id");
+
+                    b.Navigation("ParentLocation");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.GoodsReceipt", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.PurchaseOrder", "PurchaseOrder")
@@ -19825,6 +20999,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.IncomingInvoice", b =>
                 {
+                    b.HasOne("CoreAlign.Domain.Entities.VendorBill", null)
+                        .WithMany()
+                        .HasForeignKey("LinkedVendorBillId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_incoming_invoices_vendor_bills_linked_vendor_bill_id");
+
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("TenantId")
@@ -20048,6 +21228,92 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_planned_production_orders_tenants_tenant_id");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_jobs_products_product_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.PlannedProductionOrder", null)
+                        .WithMany()
+                        .HasForeignKey("SourcePlannedProductionOrderId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_production_jobs_planned_production_orders_source_planned_pr~");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_jobs_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_production_jobs_warehouses_warehouse_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobStep", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("ProductionJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_job_steps_production_jobs_production_job_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_job_steps_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.WorkCenter", null)
+                        .WithMany()
+                        .HasForeignKey("WorkCenterId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_production_job_steps_work_centers_work_center_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionRouting", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_routings_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.RoutingStep", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionRouting", null)
+                        .WithMany("Steps")
+                        .HasForeignKey("RoutingId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_routing_steps_production_routings_routing_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_routing_steps_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.WorkCenter", null)
+                        .WithMany()
+                        .HasForeignKey("WorkCenterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_routing_steps_work_centers_work_center_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.WorkCenter", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -20056,6 +21322,30 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_work_centers_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.WorkCenterOperator", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Payroll.Employee", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_work_center_operators_employees_employee_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_work_center_operators_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.WorkCenter", null)
+                        .WithMany()
+                        .HasForeignKey("WorkCenterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_work_center_operators_work_centers_work_center_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.ModulePricePlan", b =>
@@ -20630,6 +21920,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .HasConstraintName("fk_products_products_parent_product_id");
 
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionRouting", null)
+                        .WithMany()
+                        .HasForeignKey("RoutingId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_products_production_routings_routing_id");
+
                     b.HasOne("CoreAlign.Domain.Entities.TaxRate", "TaxRate")
                         .WithMany()
                         .HasForeignKey("TaxRateId")
@@ -21167,12 +22463,33 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.StockCostLayer", b =>
                 {
+                    b.HasOne("CoreAlign.Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_cost_layers_products_product_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.StockItem", null)
+                        .WithMany()
+                        .HasForeignKey("StockItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_cost_layers_stock_items_stock_item_id");
+
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_stock_cost_layers_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", null)
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_stock_cost_layers_warehouses_warehouse_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.StockCount", b =>
@@ -21605,6 +22922,25 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.UserWarehouseAccess", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_warehouse_access_tenants_tenant_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_warehouse_access_warehouses_warehouse_id");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Vendor", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Vendor", "ParentVendor")
@@ -21908,6 +23244,16 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("CoreAlign.Domain.Entities.JournalEntry", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", b =>
+                {
+                    b.Navigation("Steps");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionRouting", b =>
+                {
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.Module", b =>

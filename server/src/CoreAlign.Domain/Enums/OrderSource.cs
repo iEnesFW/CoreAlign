@@ -8,5 +8,6 @@ public enum OrderSource
     Edi = 3,
     Marketplace = 4,
     Phone = 5,
-    InStore = 6
+    InStore = 6,
+    Quote = 7
 }

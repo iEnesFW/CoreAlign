@@ -30,7 +30,7 @@ public class VendorPayment : TenantEntity, IHasConcurrencyToken
     private bool _isPosted = true;
 
     public decimal UnappliedAmount => Math.Max(0m, Math.Round(Amount - AppliedAmount, 4));
-    public bool IsDraft => !IsVoided && AppliedAmount == 0m;
+    public bool IsDraft => !IsVoided && AppliedAmount == 0m && !_isPosted;
 
     public bool IsPosted => _isPosted;
 

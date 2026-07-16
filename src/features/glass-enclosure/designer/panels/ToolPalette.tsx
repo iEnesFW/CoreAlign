@@ -19,14 +19,17 @@ import {
   RectangleHorizontal,
   RotateCw,
   Ruler,
+  Save,
   Shapes,
   Spline,
   Square,
   SquareSplitHorizontal,
+  Trash2,
   Triangle,
   Wand2,
 } from 'lucide-react';
 import { PROCEDURAL_MATERIAL_KEYS } from '@/shared/three-engine';
+import { queueToast } from '@/shared/api/toastQueue';
 import { cn } from '@/shared/lib/cn';
 import {
   useDesignerStore,
@@ -38,6 +41,7 @@ import {
 } from '@/features/glass-enclosure/model/designerStore';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
 import { useTemplateInsert } from '@/features/glass-enclosure/hooks/useTemplateInsert';
+import { useUserGlassTemplates } from '@/features/glass-enclosure/hooks/useUserGlassTemplates';
 import { useColorOptionsQuery } from '@/features/glass-enclosure/hooks/useGlassEnclosureQueries';
 import type { GlassTemplateKey } from '@/features/glass-enclosure/model/templates';
 
@@ -96,7 +100,7 @@ const PLACEMENTS: {
 const TEMPLATES: { key: GlassTemplateKey; labelKey: string; defaultLabel: string }[] = [
   { key: 'l-walls', labelKey: 'LWalls', defaultLabel: 'L duvar' },
   { key: 'u-walls', labelKey: 'UWalls', defaultLabel: 'U üç duvar' },
-  { key: 'room-door', labelKey: 'RoomDoor', defaultLabel: 'Dört duvar + kapı boşluğu' },
+  { key: 'room', labelKey: 'Room', defaultLabel: 'Dört duvar (kapalı kutu)' },
   { key: 'gable-roof', labelKey: 'GableRoof', defaultLabel: 'Beşik çatı' },
   { key: 'barrel-roof', labelKey: 'BarrelRoof', defaultLabel: 'Tonoz çatı' },
   { key: 'arc-roof', labelKey: 'ArcRoof', defaultLabel: 'Kavisli çatı (plan arc)' },
@@ -197,9 +201,40 @@ export function ToolPalette() {
   const setPlacementShape = useDesignerStore((s) => s.setPlacementShape);
   const { autofill } = useWallAutofill();
   const { insertTemplate } = useTemplateInsert();
+  const {
+    templates: userTemplates,
+    saveCurrentAsTemplate,
+    deleteTemplate,
+    insertUserTemplate,
+  } = useUserGlassTemplates();
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   const colorsQuery = useColorOptionsQuery();
   const colors = colorsQuery.data?.data ?? [];
+
+  const commitSaveTemplate = async () => {
+    const saved = await saveCurrentAsTemplate(templateName);
+    setSavingTemplate(false);
+    setTemplateName('');
+    queueToast(
+      saved
+        ? {
+            dedupeKey: 'glass-template-saved',
+            variant: 'success',
+            description: t('GlassEnclosure.Designer.Templates.Saved', {
+              defaultValue: 'Şablon kaydedildi.',
+            }),
+          }
+        : {
+            dedupeKey: 'glass-template-save-empty',
+            variant: 'warning',
+            description: t('GlassEnclosure.Designer.Templates.SaveEmpty', {
+              defaultValue: 'Boş çizim veya boş isim şablon olarak kaydedilemez.',
+            }),
+          },
+    );
+  };
 
   const label = (key: string, defaultValue: string) =>
     t(`GlassEnclosure.Designer.Tool.${key}`, { defaultValue });
@@ -274,6 +309,68 @@ export function ToolPalette() {
               })}
             </button>
           ))}
+          <div className="my-0.5 h-px bg-slate-200 dark:bg-slate-700" />
+          {userTemplates.length > 0 && (
+            <div className="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              {t('GlassEnclosure.Designer.Templates.Mine', { defaultValue: 'Şablonlarım' })}
+            </div>
+          )}
+          {userTemplates.map((ut) => (
+            <div
+              key={ut.id}
+              className="group flex items-center gap-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <button
+                type="button"
+                className="flex-1 truncate rounded px-2 py-1 text-left text-xs font-medium text-slate-700 dark:text-slate-200"
+                onClick={() => {
+                  setTemplatesOpen(false);
+                  void insertUserTemplate(ut.id);
+                }}
+              >
+                {ut.name}
+              </button>
+              <button
+                type="button"
+                className="mr-1 rounded p-1 text-slate-400 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                title={t('GlassEnclosure.Designer.Templates.Delete', {
+                  defaultValue: 'Şablonu sil',
+                })}
+                onClick={() => void deleteTemplate(ut.id)}
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+          {savingTemplate ? (
+            <input
+              ref={(el) => el?.focus()}
+              value={templateName}
+              onChange={(event) => setTemplateName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') void commitSaveTemplate();
+                else if (event.key === 'Escape') {
+                  setSavingTemplate(false);
+                  setTemplateName('');
+                }
+              }}
+              placeholder={t('GlassEnclosure.Designer.Templates.NamePlaceholder', {
+                defaultValue: 'Şablon adı',
+              })}
+              className="mx-1 my-0.5 rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 outline-none focus:border-primary-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            />
+          ) : (
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded px-2 py-1 text-left text-xs font-medium text-primary-600 transition hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-950/40"
+              onClick={() => setSavingTemplate(true)}
+            >
+              <Save size={12} />
+              {t('GlassEnclosure.Designer.Templates.SaveCurrent', {
+                defaultValue: 'Bu çizimi şablon kaydet',
+              })}
+            </button>
+          )}
         </div>
       )}
       {placement === 'pen' && (

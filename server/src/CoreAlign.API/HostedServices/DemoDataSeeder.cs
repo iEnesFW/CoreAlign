@@ -204,6 +204,7 @@ public class DemoDataSeeder : BackgroundService
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.ReturnRequestNumber, "RTN", now.Year), ct);
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.StockCountNumber, "STC", now.Year), ct);
             await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.GoodsReceiptNumber, "GRN", now.Year), ct);
+            await sequences.AddAsync(new DocumentSequence(DocumentSequenceType.ProductionJobNumber, "JOB", now.Year), ct);
             await uow.SaveChangesAsync(ct);
 
             // Chart of accounts FIRST — GL auto-posting silently no-ops without it.

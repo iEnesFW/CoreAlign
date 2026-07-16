@@ -4,6 +4,7 @@ using CoreAlign.Application.Treasury.Fx;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Entities.Compliance;
 using CoreAlign.Domain.Entities.Treasury;
+using CoreAlign.Domain.Enums;
 using CoreAlign.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -95,6 +96,24 @@ public sealed class ExchangeRateRepository : IExchangeRateRepository
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(r => r.TenantId == Guid.Empty && r.ValidOnDate <= asOfUtc)
+            .ToListAsync(ct);
+        return rows
+            .GroupBy(r => r.Currency, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(r => r.ValidOnDate).First())
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<ExchangeRate>> GetLatestTenantOverridesOnOrBeforeAsync(Guid tenantId, DateTime asOf, CancellationToken ct)
+    {
+        if (tenantId == Guid.Empty)
+        {
+            return Array.Empty<ExchangeRate>();
+        }
+        var asOfUtc = AsUtc(asOf);
+        var rows = await _context.ExchangeRates
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(r => r.TenantId == tenantId && r.Source == FxSourceCodes.TenantOverride && r.ValidOnDate <= asOfUtc)
             .ToListAsync(ct);
         return rows
             .GroupBy(r => r.Currency, StringComparer.OrdinalIgnoreCase)

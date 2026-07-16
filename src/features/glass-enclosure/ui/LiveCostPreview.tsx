@@ -67,7 +67,8 @@ export function LiveCostPreview({
     ],
   );
 
-  const breakdown = preview.data ? mapBomSummaryToBreakdown(preview.data) : localBreakdown;
+  const usingBackend = Boolean(preview.data);
+  const breakdown = usingBackend ? mapBomSummaryToBreakdown(preview.data!) : localBreakdown;
 
   const formatter = useMemo(
     () =>
@@ -93,10 +94,22 @@ export function LiveCostPreview({
         <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {t('GlassEnclosure.Designer.LiveCost')}
         </h3>
-        <span className="rounded bg-success-500/10 px-1.5 py-0.5 text-[10px] font-medium text-success-700 dark:bg-success-500/20 dark:text-success-300">
-          {t('GlassEnclosure.Designer.LivePreview')}
-        </span>
+        {usingBackend ? (
+          <span className="rounded bg-success-500/10 px-1.5 py-0.5 text-[10px] font-medium text-success-700 dark:bg-success-500/20 dark:text-success-300">
+            {t('GlassEnclosure.Designer.LivePreview')}
+          </span>
+        ) : (
+          <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+            {t('GlassEnclosure.Designer.CostEstimate')}
+          </span>
+        )}
       </header>
+
+      {!usingBackend && preview.isError && (
+        <p className="rounded bg-amber-500/10 px-2 py-1 text-[10px] font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+          {t('GlassEnclosure.Designer.CostPreviewError')}
+        </p>
+      )}
 
       <dl className="space-y-1 text-xs">
         <Row

@@ -72,6 +72,28 @@ public class GlassProjectRepository : IGlassProjectRepository
     public void Remove(GlassProject project) => _context.GlassProjects.Remove(project);
 }
 
+public class GlassProjectTemplateRepository : IGlassProjectTemplateRepository
+{
+    private readonly CoreAlignDbContext _context;
+    public GlassProjectTemplateRepository(CoreAlignDbContext context) => _context = context;
+
+    public Task<GlassProjectTemplate?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        _context.GlassProjectTemplates.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<GlassProjectTemplateListItem>> ListByUserAsync(Guid createdByUserId, CancellationToken cancellationToken = default) =>
+        await _context.GlassProjectTemplates
+            .AsNoTracking()
+            .Where(t => t.CreatedByUserId == createdByUserId)
+            .OrderByDescending(t => t.UpdatedAtUtc)
+            .Select(t => new GlassProjectTemplateListItem(
+                t.Id, t.Name, t.WallCount, t.SlabCount, t.RunCount, t.CreatedAtUtc, t.UpdatedAtUtc))
+            .ToListAsync(cancellationToken);
+
+    public async Task AddAsync(GlassProjectTemplate template, CancellationToken cancellationToken = default) =>
+        await _context.GlassProjectTemplates.AddAsync(template, cancellationToken);
+    public void Remove(GlassProjectTemplate template) => _context.GlassProjectTemplates.Remove(template);
+}
+
 public class GlassProjectRunRepository : IGlassProjectRunRepository
 {
     private readonly CoreAlignDbContext _context;

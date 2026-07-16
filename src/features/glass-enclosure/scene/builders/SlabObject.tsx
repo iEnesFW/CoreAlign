@@ -48,6 +48,7 @@ import {
   deriveArcFromSweep,
   isRealArc,
 } from '../../model/arcGeometry';
+import { edgeArcOutline, hasEdgeArc } from '../../model/edgeArcOutline';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
@@ -229,6 +230,20 @@ const buildSlabGeometries = (
       ),
       featureItems: [],
     };
+  }
+
+  // WHY: single-edge arc bows one rect edge of a FLAT slab; mutually exclusive with the whole-body
+  // arc/barrel/pitch above (they return first). Features deferred here like barrel/pitch.
+  if (hasEdgeArc(slab.geomEdgeArc)) {
+    const outline = edgeArcOutline(slab.lengthMm, slab.depthMm, slab.geomEdgeArc ?? {});
+    if (outline.length >= 3) {
+      const shape = outlineToShape(outline.map((p) => ({ x: p.x, z: p.y })));
+      const body = orient(
+        new ExtrudeGeometry(shape, { depth: thicknessM, bevelEnabled: false }),
+        0,
+      );
+      return { body, featureItems: [] };
+    }
   }
 
   const radii = slab.cornerRadiiMm ?? {};

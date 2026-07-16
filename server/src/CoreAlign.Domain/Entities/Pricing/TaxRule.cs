@@ -11,8 +11,11 @@ public enum TaxRuleScope
     Product = 4,
 }
 
-public class TaxRule : TenantEntity
+public class TaxRule : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public TaxRuleScope Scope { get; private set; }

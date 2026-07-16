@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
@@ -18,6 +19,9 @@ public class DataSubjectRequestsController : ControllerBase
 
     public DataSubjectRequestsController(IDataSubjectRequestService service) => _service = service;
 
+    private Guid CurrentUserId =>
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : Guid.Empty;
+
     [HttpPost]
     public async Task<IActionResult> Submit(
         [FromBody] SubmitDataSubjectRequestBody body,
@@ -36,7 +40,7 @@ public class DataSubjectRequestsController : ControllerBase
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct) =>
-        (await _service.GetAsync(id, ct)).ToOk();
+        (await _service.GetForRequesterAsync(id, CurrentUserId, ct)).ToOk();
 }
 
 [ApiController]
@@ -81,7 +85,7 @@ public class AdminDataSubjectRequestsController : ControllerBase
         DataSubjectRequestDto result = body.Action switch
         {
             ProcessAction.Access => await _service.ProcessAccessRequestAsync(id, ct),
-            ProcessAction.Erasure => await _service.ProcessErasureRequestAsync(id, body.KeepFinancialTrail, ct),
+            ProcessAction.Erasure => await _service.ProcessErasureRequestAsync(id, ct),
             ProcessAction.Portability => await _service.ProcessPortabilityRequestAsync(id, ct),
             ProcessAction.Rectification => await _service.ProcessRectificationRequestAsync(
                 id,
@@ -116,7 +120,6 @@ public enum ProcessAction
 
 public sealed record ProcessDataSubjectRequestBody(
     ProcessAction Action,
-    bool KeepFinancialTrail = true,
     string? RejectionReason = null,
     RectificationCorrectionsBody? Corrections = null);
 

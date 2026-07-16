@@ -42,6 +42,10 @@ export const ProductsPage = lazyNamed(
 export const OrdersPage = lazyNamed(() => import('@/pages/orders/OrdersPage'), 'OrdersPage');
 export const NewOrderPage = lazyNamed(() => import('@/pages/orders/NewOrderPage'), 'NewOrderPage');
 export const QuotesPage = lazyNamed(() => import('@/pages/Quotes/QuotesPage'), 'QuotesPage');
+export const GlassPlatesPage = lazyNamed(
+  () => import('@/pages/glass-plates/GlassPlatesPage'),
+  'GlassPlatesPage',
+);
 export const ReturnsPage = lazyNamed(() => import('@/pages/returns/ReturnsPage'), 'ReturnsPage');
 export const ReturnDetailPage = lazyNamed(
   () => import('@/pages/returns/ReturnDetailPage'),
@@ -262,6 +266,14 @@ export const PurchaseRequisitionsPage = lazyNamed(
 export const MrpWorkbenchPage = lazyNamed(
   () => import('@/pages/mrp/MrpWorkbenchPage'),
   'MrpWorkbenchPage',
+);
+export const ProductionRoutingsPage = lazyNamed(
+  () => import('@/pages/manufacturing/ProductionRoutingsPage'),
+  'ProductionRoutingsPage',
+);
+export const ProductionJobsPage = lazyNamed(
+  () => import('@/pages/manufacturing/ProductionJobsPage'),
+  'ProductionJobsPage',
 );
 export const MarketplaceListPage = lazyNamed(
   () => import('@/pages/marketplace/MarketplaceListPage'),

@@ -23,7 +23,8 @@ public sealed record BulkOrderActionResult(
 public sealed record BulkOrderActionCommand(
     List<Guid> OrderIds,
     BulkOrderActionType Action,
-    string? Reason = null) : IRequest<BulkOrderActionResult>;
+    string? Reason = null,
+    Guid? ActorUserId = null) : IRequest<BulkOrderActionResult>;
 
 public sealed class BulkOrderActionCommandValidator : AbstractValidator<BulkOrderActionCommand>
 {
@@ -59,7 +60,7 @@ public sealed class BulkOrderActionCommandHandler
                 IRequest<OrderDto> command = request.Action switch
                 {
                     BulkOrderActionType.Submit => new SubmitOrderCommand(orderId),
-                    BulkOrderActionType.Approve => new ApproveOrderCommand(orderId),
+                    BulkOrderActionType.Approve => new ApproveOrderCommand(orderId, request.ActorUserId),
                     BulkOrderActionType.Allocate => new AllocateOrderCommand(orderId),
                     BulkOrderActionType.Cancel => new CancelOrderCommand(orderId, request.Reason),
                     _ => throw new InvalidOrderLineException("Unsupported bulk order action."),

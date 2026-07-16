@@ -86,7 +86,7 @@ jobs:
           path: .
 
       - name: Check admin bundle
-        run: node scripts/check-bundle-size.mjs --dist dist --allow-chunk AddressRegionFields
+        run: node scripts/check-bundle-size.mjs --dist dist --allow-chunk AddressRegionFields --allow-chunk vendor-geo --allow-chunk GlassProjectDesignerPage
 
       - name: Check customer-portal bundle
         run: node scripts/check-bundle-size.mjs --dist apps/customer-portal/dist

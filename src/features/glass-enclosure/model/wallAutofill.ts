@@ -181,8 +181,10 @@ export const computeOpeningEdges = (
           Math.round((wall.rotationDeg + resolvedArcWall.direction * phi0 * (180 / Math.PI)) * 10) /
           10;
         const subChordMm = Math.round(2 * resolvedArcWall.radiusMm * Math.sin(subSweepRad / 2));
+        // WHY: 0.01° (matches the backend numeric(5,2) so it survives the refetch) — a coarser 0.1°
+        // drifted the panel's DEVELOPED width ~2-3mm from the hole, the visible gap on a shaped fill.
         const subSweepDeg =
-          Math.round(resolvedArcWall.direction * subSweepRad * (180 / Math.PI) * 10) / 10;
+          Math.round(resolvedArcWall.direction * subSweepRad * (180 / Math.PI) * 100) / 100;
         // Idempotency footprint from the REAL sub-arc band (a straight capsule along the phantom
         // tangent would neither match the bent run it created nor the hole it should cover).
         const pseudoRun: SceneRunState = {
