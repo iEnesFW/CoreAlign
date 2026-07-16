@@ -124,7 +124,7 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
               <h3 className="font-medium">{t('ProductionJobs.ready_to_complete_title')}</h3>
               <p className="text-sm text-slate-500">{t('ProductionJobs.ready_to_complete_desc')}</p>
             </div>
-            <Button onClick={handleComplete} tone="success">
+            <Button onClick={handleComplete} variant="success">
               <CheckCircle2 className="h-4 w-4" /> {t('ProductionJobs.actions.complete_job')}
             </Button>
           </div>
@@ -251,7 +251,7 @@ const StepCard = ({ job, step }: { job: Record<string, any>; step: Record<string
 
         {isActive && step.status === 'Pending' && (
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-            <Select value={operatorId} onChange={(e) => setOperatorId(e.target.value)} size="sm">
+            <Select value={operatorId} onChange={(e) => setOperatorId(e.target.value)}>
               <option value="">{t('ProductionJobs.select_operator')}</option>
               {operators?.map((o) => (
                 <option key={o.id} value={o.employeeId}>
@@ -274,7 +274,7 @@ const StepCard = ({ job, step }: { job: Record<string, any>; step: Record<string
 
         {isActive && step.status === 'InProgress' && (
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
-            <Select value={operatorId} onChange={(e) => setOperatorId(e.target.value)} size="sm">
+            <Select value={operatorId} onChange={(e) => setOperatorId(e.target.value)}>
               <option value="">{t('ProductionJobs.select_operator')}</option>
               {operators?.map((o) => (
                 <option key={o.id} value={o.employeeId}>
@@ -288,17 +288,15 @@ const StepCard = ({ job, step }: { job: Record<string, any>; step: Record<string
                 label={t('ProductionJobs.fields.good')}
                 value={goodQty}
                 onChange={(e) => setGoodQty(Number(e.target.value))}
-                size="sm"
               />
               <Input
                 type="number"
                 label={t('ProductionJobs.fields.scrapped')}
                 value={scrappedQty}
                 onChange={(e) => setScrappedQty(Number(e.target.value))}
-                size="sm"
               />
             </div>
-            <Button size="sm" onClick={handleFinish} tone="success" className="w-full">
+            <Button size="sm" onClick={handleFinish} variant="success" className="w-full">
               <CheckCircle2 className="w-4 h-4" /> {t('ProductionJobs.actions.finish')}
             </Button>
           </div>

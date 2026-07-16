@@ -207,12 +207,12 @@ export const productionJobsApi = {
 };
 
 export const kioskApi = {
-  verifyPin: (operatorId: string, pinCode: string) =>
-    apiClient
-      .post<
-        ApiResponse<{ success: boolean }>
-      >(`/kiosk/manufacturing/verify-pin`, { operatorId, pinCode })
-      .then((r) => r.data),
+    verifyPin: (operatorId: string, pinCode: string) =>
+      apiClient
+        .post<
+          ApiResponse<{ success: boolean; workCenterId: string }>
+        >(`/kiosk/manufacturing/verify-pin`, { operatorId, pinCode })
+        .then((r) => r.data),
 
   getActiveSteps: (workCenterId: string) =>
     apiClient

@@ -3,13 +3,14 @@ import { Button } from '@/shared/ui/Button/Button';
 import { Input } from '@/shared/ui/Input/Input';
 import { useQuery } from '@tanstack/react-query';
 import { kioskApi } from '@/features/manufacturing/api/manufacturingApi';
-import { toast } from 'sonner';
+import { useStartJobStep, useFinishJobStep } from '@/features/manufacturing/hooks/useManufacturingQueries';
+import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
 
 export const ManufacturingKioskPage: React.FC = () => {
   const [pinCode, setPinCode] = useState('');
   const [operatorId, setOperatorId] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [workCenterId, setWorkCenterId] = useState(''); // Would typically be pre-configured or selected
+  const [workCenterId, setWorkCenterId] = useState('');
 
   const { data: activeSteps } = useQuery({
     queryKey: ['kiosk-active-steps', workCenterId],
@@ -17,18 +18,45 @@ export const ManufacturingKioskPage: React.FC = () => {
     enabled: isAuthenticated && !!workCenterId,
   });
 
+  const { mutateAsync: startStep } = useStartJobStep();
+  const { mutateAsync: finishStep } = useFinishJobStep();
+
   const handleLogin = async () => {
-    try {
-      const response = await kioskApi.verifyPin(operatorId, pinCode);
-      if (response.isSuccess) {
-        setIsAuthenticated(true);
-        toast.success('Successfully authenticated');
-        // Pre-configure work center for MVP
-        setWorkCenterId('00000000-0000-0000-0000-000000000000'); // Normally, you'd select this
-      }
-    } catch {
-      toast.error('Invalid PIN or Operator ID');
+    const [response] = await safeRequestWithNotify(kioskApi.verifyPin(operatorId, pinCode));
+    if (response?.isSuccess && response.data?.workCenterId) {
+      setIsAuthenticated(true);
+      setWorkCenterId(response.data.workCenterId);
     }
+  };
+
+  const handleStart = async (step: Record<string, unknown>) => {
+    await safeRequestWithNotify(
+      startStep({
+        id: step.jobId as string,
+        stepNumber: step.stepNumber as number,
+        input: { operatorId }
+      }),
+      { successMessage: 'Step Started!' }
+    );
+  };
+
+  const handleFinish = async (step: Record<string, unknown>) => {
+    const goodStr = window.prompt(`Enter Good Quantity (Max ${step.inputQuantity}):`, String(step.inputQuantity));
+    if (goodStr === null) return;
+    const goodQty = Number(goodStr) || 0;
+    
+    const scrapStr = window.prompt(`Enter Scrapped Quantity:`, '0');
+    if (scrapStr === null) return;
+    const scrapQty = Number(scrapStr) || 0;
+
+    await safeRequestWithNotify(
+      finishStep({
+        id: step.jobId as string,
+        stepNumber: step.stepNumber as number,
+        input: { operatorId, goodQuantity: goodQty, scrappedQuantity: scrapQty }
+      }),
+      { successMessage: 'Step Finished!' }
+    );
   };
 
   if (!isAuthenticated) {
@@ -95,7 +123,7 @@ export const ManufacturingKioskPage: React.FC = () => {
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">{step.jobNumber}</h3>
+              <h3 className="text-xl font-semibold">{step.jobNumber as string}</h3>
               <span
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
                   step.status === 'InProgress'
@@ -103,24 +131,24 @@ export const ManufacturingKioskPage: React.FC = () => {
                     : 'bg-yellow-100 text-yellow-800'
                 }`}
               >
-                {step.status}
+                {step.status as string}
               </span>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-2">
-              <strong>Product:</strong> {step.productName}
+              <strong>Product:</strong> {step.productName as string}
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-2">
-              <strong>Operation:</strong> {step.operationName}
+              <strong>Operation:</strong> {step.operationName as string}
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              <strong>Input Qty:</strong> {step.inputQuantity}
+              <strong>Input Qty:</strong> {step.inputQuantity as string}
             </p>
 
             <div className="flex space-x-3">
               {step.status === 'Pending' && (
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => toast.success('Step Started!')}
+                  onClick={() => handleStart(step)}
                 >
                   Start
                 </Button>
@@ -128,7 +156,7 @@ export const ManufacturingKioskPage: React.FC = () => {
               {step.status === 'InProgress' && (
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={() => toast.success('Step Finished!')}
+                  onClick={() => handleFinish(step)}
                 >
                   Finish
                 </Button>

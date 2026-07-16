@@ -4,7 +4,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Manufacturing.Handlers;
 
-public class VerifyOperatorPinQueryHandler : IRequestHandler<Queries.VerifyOperatorPinQuery, bool>
+public class VerifyOperatorPinQueryHandler : IRequestHandler<Queries.VerifyOperatorPinQuery, Guid?>
 {
     private readonly IWorkCenterOperatorRepository _operators;
     private readonly ITenantContext _tenant;
@@ -15,7 +15,7 @@ public class VerifyOperatorPinQueryHandler : IRequestHandler<Queries.VerifyOpera
         _tenant = tenant;
     }
 
-    public async Task<bool> Handle(Queries.VerifyOperatorPinQuery request, CancellationToken ct)
+    public async Task<Guid?> Handle(Queries.VerifyOperatorPinQuery request, CancellationToken ct)
     {
         var tenantId = _tenant.RequireTenantId();
         var op = await _operators.GetByIdAsync(tenantId, request.OperatorId, ct)
@@ -23,12 +23,12 @@ public class VerifyOperatorPinQueryHandler : IRequestHandler<Queries.VerifyOpera
 
         if (!op.IsActive)
         {
-            return false;
+            return null;
         }
 
         // Simplistic check for Phase 4 Kiosk Mode
         // In real-world scenario, this should use hashed PinCode check.
-        return op.PinCode == request.PinCode;
+        return op.PinCode == request.PinCode ? op.WorkCenterId : null;
     }
 }
 

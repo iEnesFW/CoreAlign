@@ -19,12 +19,12 @@ public class ManufacturingKioskController : ControllerBase
     [HttpPost("verify-pin")]
     public async Task<IActionResult> VerifyPin([FromBody] VerifyOperatorPinRequest request, CancellationToken ct)
     {
-        var isValid = await _mediator.Send(new VerifyOperatorPinQuery(request.OperatorId, request.PinCode), ct);
-        if (!isValid)
+        var workCenterId = await _mediator.Send(new VerifyOperatorPinQuery(request.OperatorId, request.PinCode), ct);
+        if (workCenterId == null)
         {
             return Unauthorized(CoreAlign.Application.Common.ApiResponse<object>.Failure("Invalid PIN or operator is inactive.", 401));
         }
-        return new { Success = true }.ToOk();
+        return new { Success = true, WorkCenterId = workCenterId }.ToOk();
     }
 
     [HttpGet("work-centers/{workCenterId:guid}/active-steps")]

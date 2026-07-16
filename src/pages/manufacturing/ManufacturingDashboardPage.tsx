@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '@/features/manufacturing/api/manufacturingApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/Card/Card';
+import { Card, CardBody, CardHeader, CardTitle } from '@/shared/ui/Card/Card';
+
+interface KpiData {
+  totalJobsCompleted: number;
+  totalGoodQuantity: number;
+  totalScrappedQuantity: number;
+  overallYieldPercentage: number;
+  workCenterKpis: Array<{
+    workCenterId: string;
+    workCenterName: string;
+    totalGoodQuantity: number;
+    totalScrappedQuantity: number;
+    yieldPercentage: number;
+    totalRunMinutes: number;
+  }>;
+}
 
 export const ManufacturingDashboardPage: React.FC = () => {
   const [dateRange] = useState({
@@ -14,7 +29,7 @@ export const ManufacturingDashboardPage: React.FC = () => {
     queryFn: () => dashboardApi.getKpis(dateRange.start, dateRange.end),
   });
 
-  const kpiData = kpis?.data;
+  const kpiData = kpis?.data as KpiData | undefined;
 
   if (isLoading) {
     return <div className="p-8">Loading dashboard metrics...</div>;
@@ -31,42 +46,42 @@ export const ManufacturingDashboardPage: React.FC = () => {
               Total Jobs Completed
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardBody>
             <div className="text-2xl font-bold">{kpiData?.totalJobsCompleted || 0}</div>
-          </CardContent>
+          </CardBody>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Good Quantity</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardBody>
             <div className="text-2xl font-bold text-green-600">
               {kpiData?.totalGoodQuantity || 0}
             </div>
-          </CardContent>
+          </CardBody>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Total Scrap</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardBody>
             <div className="text-2xl font-bold text-red-600">
               {kpiData?.totalScrappedQuantity || 0}
             </div>
-          </CardContent>
+          </CardBody>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Overall Yield</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardBody>
             <div className="text-2xl font-bold text-blue-600">
               {kpiData?.overallYieldPercentage?.toFixed(2) || '0.00'}%
             </div>
-          </CardContent>
+          </CardBody>
         </Card>
       </div>
 
@@ -94,7 +109,7 @@ export const ManufacturingDashboardPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
-              {kpiData?.workCenterKpis?.map((wc: Record<string, unknown>) => (
+              {kpiData?.workCenterKpis?.map((wc: KpiData['workCenterKpis'][0]) => (
                 <tr key={wc.workCenterId}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                     {wc.workCenterName}

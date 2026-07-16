@@ -3,7 +3,7 @@ using MediatR;
 
 namespace CoreAlign.Application.Manufacturing.Queries;
 
-public record VerifyOperatorPinQuery(Guid OperatorId, string PinCode) : IRequest<bool>;
+public record VerifyOperatorPinQuery(Guid OperatorId, string PinCode) : IRequest<Guid?>;
 
 public record GetActiveKioskStepsQuery(Guid WorkCenterId) : IRequest<IReadOnlyList<KioskStepDto>>;
 

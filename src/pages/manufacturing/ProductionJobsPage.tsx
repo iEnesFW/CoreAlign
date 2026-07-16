@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, Factory, FileText, Play, Plus, Trash2, XCircle } from 'lucide-react';
+import { Factory, FileText, Plus, XCircle } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { Card } from '@/shared/ui/Card/Card';
 import { Badge } from '@/shared/ui/Badge/Badge';
@@ -17,16 +17,15 @@ import type {
 } from '@/features/manufacturing/model/productionJob.types';
 import { JobFormModal } from '@/features/manufacturing/ui/JobFormModal';
 import { JobDetailPanel } from '@/features/manufacturing/ui/JobDetailPanel';
-import { formatDateWithTime } from '@/shared/http/dateTimeUtils';
 
-const statusTone: Record<ProductionJobStatus, 'success' | 'neutral' | 'warning' | 'critical'> = {
+const statusTone: Record<ProductionJobStatus, 'success' | 'neutral' | 'warning' | 'danger'> = {
   Draft: 'warning',
   Released: 'neutral',
   InProgress: 'neutral',
   OnHold: 'warning',
   ReadyToComplete: 'success',
   Completed: 'success',
-  Cancelled: 'critical',
+  Cancelled: 'danger',
 };
 
 export const ProductionJobsPage = () => {
@@ -50,8 +49,8 @@ export const ProductionJobsPage = () => {
       await confirm({
         title: t('ProductionJobs.cancel_title'),
         message: t('ProductionJobs.cancel_message', { number: job.jobNumber }),
-        confirmText: t('Common.actions.cancel_it'),
-        intent: 'danger',
+        confirmLabel: t('Common.actions.cancel_it'),
+        tone: 'danger',
       })
     ) {
       try {
@@ -102,22 +101,23 @@ export const ProductionJobsPage = () => {
       </div>
 
       {error ? (
-        <QueryError error={error} onRetry={refetch} />
+        <QueryError onRetry={() => refetch()} />
       ) : isLoading ? (
         <Card className="p-8">
           <div className="flex justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
           </div>
         </Card>
-      ) : jobs.length === 0 ? (
+      ) : jobs?.length === 0 ? (
         <EmptyState
-          icon={Factory}
+          icon={<Factory size={24} />}
           title={t('ProductionJobs.empty_title')}
           description={t('ProductionJobs.empty_desc')}
-          action={{
-            label: t('ProductionJobs.actions.new_job'),
-            onClick: () => setCreateModalOpen(true),
-          }}
+          action={
+            <Button onClick={() => setCreateModalOpen(true)}>
+              {t('ProductionJobs.actions.new_job')}
+            </Button>
+          }
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -132,7 +132,7 @@ export const ProductionJobsPage = () => {
                   <h3 className="font-semibold text-slate-900 dark:text-white">{job.jobNumber}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">{job.productName}</p>
                 </div>
-                <Badge tone={statusTone[job.status]}>
+                <Badge variant={statusTone[job.status]}>
                   {t(`ProductionJobs.status.${job.status}`)}
                 </Badge>
               </div>
@@ -160,7 +160,7 @@ export const ProductionJobsPage = () => {
                       {t('ProductionJobs.fields.dueDate')}
                     </span>
                     <span className="font-medium text-slate-900 dark:text-white">
-                      {formatDateWithTime(job.dueDateUtc)}
+                      {new Date(job.dueDateUtc).toLocaleString()}
                     </span>
                   </div>
                 )}
