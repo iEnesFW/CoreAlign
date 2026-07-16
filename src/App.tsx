@@ -93,6 +93,8 @@ import {
   MrpWorkbenchPage,
   ProductionRoutingsPage,
   ProductionJobsPage,
+  ManufacturingKioskPage,
+  ManufacturingDashboardPage,
   MarketplaceListPage,
   MarketplaceDetailPage,
   MyMarketplaceSubmissionsPage,
@@ -304,9 +306,11 @@ function App() {
                               path="production/routings"
                               element={<ProductionRoutingsPage />}
                             />
+                            <Route path="production/jobs" element={<ProductionJobsPage />} />
+                            <Route path="production/kiosk" element={<ManufacturingKioskPage />} />
                             <Route
-                              path="production/jobs"
-                              element={<ProductionJobsPage />}
+                              path="production/dashboard"
+                              element={<ManufacturingDashboardPage />}
                             />
                             <Route path="mrp/requisitions" element={<PurchaseRequisitionsPage />} />
                             <Route path="marketplace" element={<MarketplaceListPage />} />

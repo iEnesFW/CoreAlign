@@ -14,6 +14,13 @@ public record CreateProductionJobCommand(
     DateTime? DueDateUtc,
     string? Notes) : IRequest<ProductionJobDetailDto>, ITransactionalRequest;
 
+public record ConvertPlannedOrderToJobCommand(
+    Guid PlannedOrderId,
+    Guid? WarehouseId,
+    Guid? RoutingId,
+    string UnitOfMeasure,
+    string? Notes) : IRequest<ProductionJobDetailDto>, ITransactionalRequest;
+
 public record ReleaseProductionJobCommand(
     Guid Id,
     Guid WarehouseId) : IRequest<ProductionJobDetailDto>, ITransactionalRequest;

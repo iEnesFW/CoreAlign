@@ -10,7 +10,7 @@ import { useCreateJob } from '@/features/manufacturing/hooks/useManufacturingQue
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
 import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
 import { useRoutingsQuery } from '@/features/manufacturing/hooks/useManufacturingQueries';
-import { Textarea } from '@/shared/ui/Input/Textarea';
+import { Textarea } from '@/shared/ui/Textarea/Textarea';
 
 interface Props {
   onClose: () => void;
@@ -45,7 +45,7 @@ export const JobFormModal = ({ onClose }: Props) => {
       });
       toast.success(t('ProductionJobs.create_success'));
       onClose();
-    } catch (error: any) {
+    } catch (error) {
       toastApiError(error, t('ProductionJobs.create_error'));
     }
   };
@@ -74,7 +74,7 @@ export const JobFormModal = ({ onClose }: Props) => {
               required
             >
               <option value="">{t('Common.actions.select')}</option>
-              {products?.items.map((p) => (
+              {products?.data?.items?.map((p: { id: string; name: string; sku: string }) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.sku})
                 </option>
@@ -86,7 +86,9 @@ export const JobFormModal = ({ onClose }: Props) => {
                 type="number"
                 label={t('ProductionJobs.fields.qty')}
                 value={formData.plannedQuantity}
-                onChange={(e) => setFormData({ ...formData, plannedQuantity: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, plannedQuantity: Number(e.target.value) })
+                }
                 min="0.01"
                 step="0.01"
                 required
@@ -118,7 +120,7 @@ export const JobFormModal = ({ onClose }: Props) => {
               onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
             >
               <option value="">{t('Common.actions.select')}</option>
-              {warehouses?.map((w) => (
+              {warehouses?.data?.map((w: { id: string; name: string; code: string }) => (
                 <option key={w.id} value={w.id}>
                   {w.name} ({w.code})
                 </option>
@@ -127,8 +129,10 @@ export const JobFormModal = ({ onClose }: Props) => {
 
             <Textarea
               label={t('ProductionJobs.fields.notes')}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              value={formData.notes || ''}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                setFormData((p) => ({ ...p, notes: e.target.value }))
+              }
               rows={3}
             />
           </form>

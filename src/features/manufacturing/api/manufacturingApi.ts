@@ -137,8 +137,7 @@ export const productionJobsApi = {
       params: { status, productId },
     }),
 
-  getById: (id: string) =>
-    cachedGet<ApiResponse<ProductionJobDetail>>(apiClient, `${JOBS}/${id}`),
+  getById: (id: string) => cachedGet<ApiResponse<ProductionJobDetail>>(apiClient, `${JOBS}/${id}`),
 
   create: (input: CreateProductionJobInput) =>
     apiClient.post<ApiResponse<ProductionJobDetail>>(JOBS, input).then((r) => {
@@ -205,4 +204,27 @@ export const productionJobsApi = {
       invalidateHttpCache(JOB_INVALIDATION);
       return r.data;
     }),
+};
+
+export const kioskApi = {
+  verifyPin: (operatorId: string, pinCode: string) =>
+    apiClient
+      .post<
+        ApiResponse<{ success: boolean }>
+      >(`/kiosk/manufacturing/verify-pin`, { operatorId, pinCode })
+      .then((r) => r.data),
+
+  getActiveSteps: (workCenterId: string) =>
+    apiClient
+      .get<ApiResponse<unknown[]>>(`/kiosk/manufacturing/work-centers/${workCenterId}/active-steps`)
+      .then((r) => r.data),
+};
+
+export const dashboardApi = {
+  getKpis: (startDateUtc: string, endDateUtc: string) =>
+    apiClient
+      .get<
+        ApiResponse<unknown>
+      >(`/manufacturing/dashboard/kpis`, { params: { startDateUtc, endDateUtc } })
+      .then((r) => r.data),
 };

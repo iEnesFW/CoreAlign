@@ -3,6 +3,7 @@ using CoreAlign.Application.Manufacturing.Commands;
 using CoreAlign.Application.Manufacturing.DTOs;
 using CoreAlign.Application.Manufacturing.Mapping;
 using CoreAlign.Domain.Entities.Manufacturing;
+using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
@@ -20,31 +21,38 @@ public class ProductionJobCommandHandlers :
     IRequestHandler<PutJobOnHoldCommand, ProductionJobDetailDto>,
     IRequestHandler<ResumeJobCommand, ProductionJobDetailDto>,
     IRequestHandler<CancelProductionJobCommand, ProductionJobDetailDto>,
-    IRequestHandler<CompleteProductionJobCommand, ProductionJobDetailDto>
+    IRequestHandler<CompleteProductionJobCommand, ProductionJobDetailDto>,
+    IRequestHandler<ConvertPlannedOrderToJobCommand, ProductionJobDetailDto>
 {
     private readonly ITenantContext _tenantContext;
     private readonly IProductionJobRepository _jobRepository;
-    private readonly IProductRepository _productRepository;
     private readonly IProductionRoutingRepository _routingRepository;
-    private readonly IWorkCenterRepository _workCenterRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
+    private readonly IProductRepository _productRepository;
+    private readonly IWorkCenterRepository _workCenterRepository;
+    private readonly IPlannedProductionOrderRepository _plannedOrderRepository;
+    private readonly IStockMovementRepository _stockMovementRepository;
     private readonly IDateTimeProvider _dateTime;
 
     public ProductionJobCommandHandlers(
         ITenantContext tenantContext,
         IProductionJobRepository jobRepository,
-        IProductRepository productRepository,
         IProductionRoutingRepository routingRepository,
+        IProductRepository productRepository,
         IWorkCenterRepository workCenterRepository,
         IDocumentSequenceRepository sequenceRepository,
+        IPlannedProductionOrderRepository plannedOrderRepository,
+        IStockMovementRepository stockMovementRepository,
         IDateTimeProvider dateTime)
     {
         _tenantContext = tenantContext;
         _jobRepository = jobRepository;
-        _productRepository = productRepository;
         _routingRepository = routingRepository;
+        _productRepository = productRepository;
         _workCenterRepository = workCenterRepository;
         _sequenceRepository = sequenceRepository;
+        _plannedOrderRepository = plannedOrderRepository;
+        _stockMovementRepository = stockMovementRepository;
         _dateTime = dateTime;
     }
 
@@ -173,7 +181,95 @@ public class ProductionJobCommandHandlers :
     {
         var job = await GetJobAsync(request.Id, ct);
         job.MarkCompleted(request.CompletedQuantity, request.WarehouseId, _dateTime.UtcNow);
+        
+        var tenantId = _tenantContext.CurrentTenantId ?? throw new MissingTenantContextException();
+        // Phase 3B Stock Movement Logic
+        var product = await _productRepository.GetByIdAsync(job.ProductId, ct);
+        var cost = product?.StandardCost ?? 0m;
+        
+        var movement = new StockMovement(
+            job.ProductId,
+            request.WarehouseId,
+            StockMovementType.Receipt,
+            request.CompletedQuantity,
+            cost, // unitCost
+            request.CompletedQuantity, // onHandAfter (simplified for now, ideally needs latest onHand calculation)
+            cost, // avgCostAfter
+            _dateTime.UtcNow,
+            StockSourceDocumentType.Production,
+            job.Id,
+            null,
+            job.JobNumber,
+            null,
+            null,
+            null,
+            null, // UserId
+            "Completed Production Job");
+            
+        await _stockMovementRepository.AddAsync(movement, ct);
+
         return await BuildDetailDtoAsync(job, null, ct);
+    }
+
+    public async Task<ProductionJobDetailDto> Handle(ConvertPlannedOrderToJobCommand request, CancellationToken ct)
+    {
+        var tenantId = _tenantContext.CurrentTenantId ?? throw new MissingTenantContextException();
+        var now = _dateTime.UtcNow;
+
+        var plannedOrder = await _plannedOrderRepository.GetByIdAsync(request.PlannedOrderId, ct)
+            ?? throw new PlannedProductionOrderNotFoundException(request.PlannedOrderId);
+            
+        plannedOrder.Release();
+
+        var product = await _productRepository.GetByIdAsync(plannedOrder.ProductId, ct)
+            ?? throw new ProductNotFoundException();
+
+        var jobNumber = await _sequenceRepository.ConsumeAsync(DocumentSequenceType.ProductionJobNumber, now, ct);
+
+        var job = new ProductionJob(
+            jobNumber,
+            plannedOrder.ProductId,
+            plannedOrder.Quantity,
+            request.UnitOfMeasure,
+            plannedOrder.Id, // SourcePlannedProductionOrderId
+            request.WarehouseId,
+            plannedOrder.ReleaseDateUtc,
+            plannedOrder.DueDateUtc,
+            request.Notes);
+
+        if (request.RoutingId.HasValue)
+        {
+            var routing = await _routingRepository.GetByIdReadAsync(tenantId, request.RoutingId.Value, ct)
+                ?? throw new RoutingNotFoundException(request.RoutingId.Value);
+
+            if (routing.Status != RoutingStatus.Active)
+            {
+                throw new RoutingNotActiveForJobException(routing.Id);
+            }
+
+            var snapshots = routing.Steps.Select(s => new ProductionJobStepSnapshot(
+                s.StepNumber,
+                s.WorkCenterId,
+                s.Id,
+                s.OperationName,
+                s.OperationType,
+                s.SetupTimeMinutes,
+                s.RunTimeMinutesPerUnit,
+                s.RunTimeMinutesPerSqm,
+                s.ScrapPercentage,
+                s.Instructions,
+                s.IsOptional)).ToList();
+
+            job.SnapshotRouting(
+                routing.Id,
+                routing.Code,
+                routing.Name,
+                routing.ConcurrencyToken,
+                snapshots);
+        }
+
+        await _jobRepository.AddAsync(job, ct);
+        return await BuildDetailDtoAsync(job, product.Name, ct);
     }
 
     private async Task<ProductionJob> GetJobAsync(Guid id, CancellationToken ct)

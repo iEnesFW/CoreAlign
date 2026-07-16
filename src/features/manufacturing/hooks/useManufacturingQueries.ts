@@ -158,7 +158,15 @@ export const useReleaseJob = () => {
 export const useStartJobStep = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, stepNumber, input }: { id: string; stepNumber: number; input: any }) => {
+    mutationFn: async ({
+      id,
+      stepNumber,
+      input,
+    }: {
+      id: string;
+      stepNumber: number;
+      input: any;
+    }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.startStep(id, stepNumber, input);
     },
@@ -169,7 +177,15 @@ export const useStartJobStep = () => {
 export const useFinishJobStep = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, stepNumber, input }: { id: string; stepNumber: number; input: any }) => {
+    mutationFn: async ({
+      id,
+      stepNumber,
+      input,
+    }: {
+      id: string;
+      stepNumber: number;
+      input: any;
+    }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.finishStep(id, stepNumber, input);
     },
@@ -231,7 +247,6 @@ export const useCompleteJob = () => {
     onSuccess: invalidate,
   });
 };
-
 
 export const useCreateWorkCenter = () => {
   const qc = useQueryClient();

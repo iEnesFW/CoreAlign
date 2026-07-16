@@ -32,4 +32,7 @@ public interface IProductionJobRepository
         Guid? productId,
         int take,
         CancellationToken ct = default);
+
+    Task<IReadOnlyList<ProductionJob>> GetByStatusAsync(Guid tenantId, ProductionJobStatus[] statuses, CancellationToken ct = default);
+    Task<IReadOnlyList<ProductionJob>> GetCompletedJobsInRangeAsync(Guid tenantId, DateTime start, DateTime end, CancellationToken ct = default);
 }

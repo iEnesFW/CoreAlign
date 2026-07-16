@@ -12,6 +12,7 @@ public class WorkCenterOperator : TenantEntity
     public bool IsActive { get; private set; } = true;
     public DateOnly? CertifiedOn { get; private set; }
     public string? Notes { get; private set; }
+    public string? PinCode { get; private set; }
 
     protected WorkCenterOperator() { }
 
@@ -21,7 +22,8 @@ public class WorkCenterOperator : TenantEntity
         OperatorQualificationLevel level,
         bool isPrimary = false,
         DateOnly? certifiedOn = null,
-        string? notes = null)
+        string? notes = null,
+        string? pinCode = null)
     {
         if (workCenterId == Guid.Empty)
             throw new ArgumentException("Work center is required.", nameof(workCenterId));
@@ -35,6 +37,7 @@ public class WorkCenterOperator : TenantEntity
         IsActive = true;
         CertifiedOn = certifiedOn;
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        PinCode = string.IsNullOrWhiteSpace(pinCode) ? null : pinCode.Trim();
     }
 
     public void Update(
@@ -42,13 +45,15 @@ public class WorkCenterOperator : TenantEntity
         bool isPrimary,
         bool isActive,
         DateOnly? certifiedOn,
-        string? notes)
+        string? notes,
+        string? pinCode)
     {
         QualificationLevel = level;
         IsActive = isActive;
         IsPrimary = isActive && isPrimary;
         CertifiedOn = certifiedOn;
         Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        PinCode = string.IsNullOrWhiteSpace(pinCode) ? null : pinCode.Trim();
         Touch();
     }
 

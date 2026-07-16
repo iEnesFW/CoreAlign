@@ -275,6 +275,14 @@ export const ProductionJobsPage = lazyNamed(
   () => import('@/pages/manufacturing/ProductionJobsPage'),
   'ProductionJobsPage',
 );
+export const ManufacturingKioskPage = lazyNamed(
+  () => import('@/pages/manufacturing/ManufacturingKioskPage'),
+  'ManufacturingKioskPage',
+);
+export const ManufacturingDashboardPage = lazyNamed(
+  () => import('@/pages/manufacturing/ManufacturingDashboardPage'),
+  'ManufacturingDashboardPage',
+);
 export const MarketplaceListPage = lazyNamed(
   () => import('@/pages/marketplace/MarketplaceListPage'),
   'MarketplaceListPage',

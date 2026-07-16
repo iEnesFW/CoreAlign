@@ -57,4 +57,23 @@ public sealed class ProductionJobRepository : IProductionJobRepository
 
         return await query.Take(take).ToListAsync(ct);
     }
+
+    public async Task<IReadOnlyList<ProductionJob>> GetByStatusAsync(Guid tenantId, ProductionJobStatus[] statuses, CancellationToken ct = default)
+    {
+        return await Jobs
+            .Include(j => j.Steps)
+            .Where(j => j.TenantId == tenantId && statuses.Contains(j.Status))
+            .ToListAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<ProductionJob>> GetCompletedJobsInRangeAsync(Guid tenantId, DateTime start, DateTime end, CancellationToken ct = default)
+    {
+        return await Jobs
+            .Include(j => j.Steps)
+            .Where(j => j.TenantId == tenantId 
+                     && j.Status == ProductionJobStatus.Completed 
+                     && j.CompletedAtUtc >= start 
+                     && j.CompletedAtUtc <= end)
+            .ToListAsync(ct);
+    }
 }

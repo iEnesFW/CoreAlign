@@ -10,10 +10,7 @@ import { QueryError } from '@/shared/ui/QueryError/QueryError';
 import { useConfirm } from '@/shared/ui/ConfirmDialog/useConfirm';
 import { toastApiError } from '@/shared/lib/mutationToast';
 import { toast } from 'sonner';
-import {
-  useCancelJob,
-  useJobsQuery,
-} from '@/features/manufacturing/hooks/useManufacturingQueries';
+import { useCancelJob, useJobsQuery } from '@/features/manufacturing/hooks/useManufacturingQueries';
 import type {
   ProductionJobListSummary,
   ProductionJobStatus,
@@ -38,24 +35,29 @@ export const ProductionJobsPage = () => {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  const { data: jobs, isLoading, error, refetch } = useJobsQuery(
-    statusFilter === 'all' ? undefined : statusFilter
-  );
-  
+  const {
+    data: jobs,
+    isLoading,
+    error,
+    refetch,
+  } = useJobsQuery(statusFilter === 'all' ? undefined : statusFilter);
+
   const { mutateAsync: cancelJob, isPending: isCancelling } = useCancelJob();
   const confirm = useConfirm();
 
   const handleCancel = async (job: ProductionJobListSummary) => {
-    if (await confirm({
-      title: t('ProductionJobs.cancel_title'),
-      message: t('ProductionJobs.cancel_message', { number: job.jobNumber }),
-      confirmText: t('Common.actions.cancel_it'),
-      intent: 'danger',
-    })) {
+    if (
+      await confirm({
+        title: t('ProductionJobs.cancel_title'),
+        message: t('ProductionJobs.cancel_message', { number: job.jobNumber }),
+        confirmText: t('Common.actions.cancel_it'),
+        intent: 'danger',
+      })
+    ) {
       try {
         await cancelJob({ id: job.id, input: { reason: 'User cancelled via UI' } });
         toast.success(t('ProductionJobs.cancel_success'));
-      } catch (err: any) {
+      } catch (err) {
         toastApiError(err, t('ProductionJobs.cancel_error'));
       }
     }
@@ -120,15 +122,15 @@ export const ProductionJobsPage = () => {
       ) : (
         <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
           {jobs.map((job) => (
-            <Card key={job.id} className="flex flex-col p-5 hover:border-primary-300 transition-colors cursor-pointer" onClick={() => setSelectedJobId(job.id)}>
+            <Card
+              key={job.id}
+              className="flex flex-col p-5 hover:border-primary-300 transition-colors cursor-pointer"
+              onClick={() => setSelectedJobId(job.id)}
+            >
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">
-                    {job.jobNumber}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {job.productName}
-                  </p>
+                  <h3 className="font-semibold text-slate-900 dark:text-white">{job.jobNumber}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{job.productName}</p>
                 </div>
                 <Badge tone={statusTone[job.status]}>
                   {t(`ProductionJobs.status.${job.status}`)}
@@ -164,13 +166,16 @@ export const ProductionJobsPage = () => {
                 )}
                 {job.stepCount > 0 && (
                   <div className="col-span-2">
-                     <span className="block text-slate-500 dark:text-slate-400 mb-1">
-                      {t('ProductionJobs.fields.progress')} ({job.currentStepNumber ?? 0}/{job.stepCount})
+                    <span className="block text-slate-500 dark:text-slate-400 mb-1">
+                      {t('ProductionJobs.fields.progress')} ({job.currentStepNumber ?? 0}/
+                      {job.stepCount})
                     </span>
                     <div className="w-full bg-slate-200 rounded-full h-2 dark:bg-slate-700">
-                      <div 
-                        className="bg-primary-600 h-2 rounded-full transition-all" 
-                        style={{ width: `${Math.min(100, Math.max(0, ((job.currentStepNumber ?? 0) / job.stepCount) * 100))}%` }}
+                      <div
+                        className="bg-primary-600 h-2 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, Math.max(0, ((job.currentStepNumber ?? 0) / job.stepCount) * 100))}%`,
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -178,12 +183,17 @@ export const ProductionJobsPage = () => {
               </div>
 
               <div className="mt-auto flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                 {job.status === 'Draft' || job.status === 'Released' || job.status === 'InProgress' ? (
+                {job.status === 'Draft' ||
+                job.status === 'Released' ||
+                job.status === 'InProgress' ? (
                   <Button
                     variant="ghost"
                     size="sm"
                     className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
-                    onClick={(e) => { e.stopPropagation(); handleCancel(job); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancel(job);
+                    }}
                     disabled={isCancelling}
                   >
                     <XCircle className="h-4 w-4" />
@@ -199,12 +209,10 @@ export const ProductionJobsPage = () => {
         </div>
       )}
 
-      {isCreateModalOpen && (
-        <JobFormModal onClose={() => setCreateModalOpen(false)} />
-      )}
-      
+      {isCreateModalOpen && <JobFormModal onClose={() => setCreateModalOpen(false)} />}
+
       {selectedJobId && (
-         <JobDetailPanel jobId={selectedJobId} onClose={() => setSelectedJobId(null)} />
+        <JobDetailPanel jobId={selectedJobId} onClose={() => setSelectedJobId(null)} />
       )}
     </div>
   );

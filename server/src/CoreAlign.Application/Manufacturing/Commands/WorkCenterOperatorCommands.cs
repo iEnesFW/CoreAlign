@@ -11,7 +11,8 @@ public record CreateWorkCenterOperatorCommand(
     OperatorQualificationLevel QualificationLevel,
     bool IsPrimary,
     DateOnly? CertifiedOn,
-    string? Notes) : IRequest<WorkCenterOperatorDto>, ITransactionalRequest;
+    string? Notes,
+    string? PinCode) : IRequest<WorkCenterOperatorDto>, ITransactionalRequest;
 
 public record UpdateWorkCenterOperatorCommand(
     Guid Id,
@@ -19,7 +20,8 @@ public record UpdateWorkCenterOperatorCommand(
     bool IsPrimary,
     bool IsActive,
     DateOnly? CertifiedOn,
-    string? Notes) : IRequest<WorkCenterOperatorDto>, ITransactionalRequest;
+    string? Notes,
+    string? PinCode) : IRequest<WorkCenterOperatorDto>, ITransactionalRequest;
 
 public record DeactivateWorkCenterOperatorCommand(Guid Id) : IRequest<Unit>, ITransactionalRequest;
 

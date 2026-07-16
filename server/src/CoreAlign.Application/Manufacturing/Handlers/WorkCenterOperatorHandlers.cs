@@ -71,7 +71,13 @@ public class CreateWorkCenterOperatorHandler
         }
 
         var op = new WorkCenterOperator(
-            c.WorkCenterId, c.EmployeeId, c.QualificationLevel, c.IsPrimary, c.CertifiedOn, c.Notes);
+            c.WorkCenterId,
+            c.EmployeeId,
+            c.QualificationLevel,
+            c.IsPrimary,
+            c.CertifiedOn,
+            c.Notes,
+            c.PinCode);
         await _operators.AddAsync(op, ct);
 
         return OperatorDtoAssembler.Build(op, wc, emp);
@@ -104,7 +110,7 @@ public class UpdateWorkCenterOperatorHandler
         var op = await _operators.GetByIdAsync(tenantId, c.Id, ct)
             ?? throw new WorkCenterOperatorNotFoundException(c.Id);
 
-        op.Update(c.QualificationLevel, c.IsPrimary, c.IsActive, c.CertifiedOn, c.Notes);
+        op.Update(c.QualificationLevel, c.IsPrimary, c.IsActive, c.CertifiedOn, c.Notes, c.PinCode);
 
         var wc = (await _workCenters.GetByIdsAsync(new[] { op.WorkCenterId }, ct)).FirstOrDefault();
         var emp = await _employees.GetByIdAsync(op.EmployeeId, ct);
