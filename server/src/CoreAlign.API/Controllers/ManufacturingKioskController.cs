@@ -22,16 +22,16 @@ public class ManufacturingKioskController : ControllerBase
         var isValid = await _mediator.Send(new VerifyOperatorPinQuery(request.OperatorId, request.PinCode), ct);
         if (!isValid)
         {
-            return Unauthorized(new { Message = "Invalid PIN or operator is inactive." });
+            return Unauthorized(CoreAlign.Application.Common.ApiResponse<object>.Failure("Invalid PIN or operator is inactive.", 401));
         }
-        return Ok(new { Success = true });
+        return new { Success = true }.ToOk();
     }
 
     [HttpGet("work-centers/{workCenterId:guid}/active-steps")]
     public async Task<IActionResult> GetActiveSteps(Guid workCenterId, CancellationToken ct)
     {
         var steps = await _mediator.Send(new GetActiveKioskStepsQuery(workCenterId), ct);
-        return Ok(steps);
+        return steps.ToOk();
     }
 }
 

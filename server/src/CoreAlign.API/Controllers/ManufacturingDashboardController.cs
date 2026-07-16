@@ -20,6 +20,6 @@ public class ManufacturingDashboardController : ControllerBase
     public async Task<IActionResult> GetKpis([FromQuery] DateTime startDateUtc, [FromQuery] DateTime endDateUtc, CancellationToken ct)
     {
         var kpis = await _mediator.Send(new GetManufacturingKpiSummaryQuery(startDateUtc, endDateUtc), ct);
-        return Ok(kpis);
+        return kpis.ToOk();
     }
 }

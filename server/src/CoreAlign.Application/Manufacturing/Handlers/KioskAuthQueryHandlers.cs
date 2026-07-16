@@ -59,10 +59,12 @@ public class GetActiveKioskStepsQueryHandler : IRequestHandler<Queries.GetActive
 
         var activeSteps = new List<Queries.KioskStepDto>();
 
+        var productIds = jobs.Select(j => j.ProductId).Distinct().ToArray();
+        var products = await _products.GetByIdsAsync(productIds, ct);
+
         foreach (var job in jobs)
         {
-            var product = await _products.GetByIdAsync(job.ProductId, ct);
-            var productName = product?.Name ?? "Unknown Product";
+            var productName = products.TryGetValue(job.ProductId, out var product) ? product.Name : "Unknown Product";
 
             foreach (var step in job.Steps.Where(s => s.WorkCenterId == request.WorkCenterId && s.Status is Domain.Enums.ProductionJobStepStatus.Pending or Domain.Enums.ProductionJobStepStatus.InProgress))
             {
