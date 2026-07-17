@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayCircle, Save, Tags, Workflow } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
 import { Button } from '@/shared/ui/Button/Button';
 import { Select } from '@/shared/ui/Select/Select';
 import {
@@ -219,19 +218,19 @@ export const MrpWorkbenchPage = () => {
   const runs = planRuns.data?.data?.items ?? [];
 
   return (
-    <ListPageTemplate
-      header={
+    <div className="flex flex-col flex-1 w-full space-y-8 pb-12">
+      <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-transparent rounded-3xl p-6 border border-white/20 dark:border-white/5 backdrop-blur-sm shadow-sm">
         <PageHeader
-          icon={<Workflow size={20} />}
+          icon={<Workflow size={24} className="text-indigo-600 dark:text-indigo-400" />}
           title={t('Mrp.Workbench.Title')}
           subtitle={t('Mrp.Workbench.Subtitle')}
           actions={
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-3">
               <Select
                 aria-label={t('Mrp.Workbench.BucketKind') ?? 'Bucket'}
                 value={bucketKind}
                 onChange={(e) => setBucketKind(e.target.value as MrpBucketKind)}
-                className="w-full sm:w-40"
+                className="w-full sm:w-40 bg-white/70 dark:bg-slate-800/70 border-white/40 shadow-sm rounded-xl backdrop-blur-md"
               >
                 {BUCKET_KINDS.map((b) => (
                   <option key={b} value={b}>
@@ -243,7 +242,7 @@ export const MrpWorkbenchPage = () => {
                 aria-label={t('Mrp.Workbench.Horizon') ?? 'Horizon'}
                 value={horizonDays}
                 onChange={(e) => setHorizonDays(Number(e.target.value))}
-                className="w-full sm:w-40"
+                className="w-full sm:w-40 bg-white/70 dark:bg-slate-800/70 border-white/40 shadow-sm rounded-xl backdrop-blur-md"
               >
                 {HORIZON_OPTIONS.map((h) => (
                   <option key={h} value={h}>
@@ -251,34 +250,38 @@ export const MrpWorkbenchPage = () => {
                   </option>
                 ))}
               </Select>
-              <Button type="button" variant="outline" size="sm" onClick={() => preview.refetch()}>
-                <PlayCircle className="h-4 w-4" />
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl bg-white/60 hover:bg-white border-white/50 shadow-sm backdrop-blur-md dark:bg-slate-800/60 dark:hover:bg-slate-700"
+                onClick={() => preview.refetch()}
+              >
+                <PlayCircle className="h-4 w-4 mr-2" />
                 {t('Mrp.Workbench.RunPreview')}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                className="rounded-xl bg-white/60 hover:bg-white border-white/50 shadow-sm backdrop-blur-md dark:bg-slate-800/60 dark:hover:bg-slate-700"
                 disabled={classifyAbc.isPending}
                 onClick={handleClassifyAbc}
               >
-                <Tags className="h-4 w-4" />
+                <Tags className="h-4 w-4 mr-2 text-indigo-500" />
                 {t('Mrp.Workbench.ClassifyAbc')}
               </Button>
               <Button
                 type="button"
-                size="sm"
+                className="rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 text-white"
                 disabled={commit.isPending}
                 onClick={() => commit.mutate(previewParams)}
               >
-                <Save className="h-4 w-4" />
+                <Save className="h-4 w-4 mr-2" />
                 {t('Mrp.Workbench.Commit')}
               </Button>
             </div>
           }
         />
-      }
-    >
+      </div>
       <div className="space-y-6">
         {preview.isLoading && (
           <p className="text-sm text-slate-500 dark:text-slate-400">{t('Common.Loading')}</p>
@@ -293,24 +296,26 @@ export const MrpWorkbenchPage = () => {
           </p>
         )}
 
-        <nav className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-700">
-          {(['grid', 'queue', 'impact', 'distribution', 'capacity', 'runs'] as WorkbenchTab[]).map(
-            (tk) => (
+        <div className="flex justify-center mb-6">
+          <nav className="inline-flex bg-slate-100/80 dark:bg-slate-800/80 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+            {(
+              ['grid', 'queue', 'impact', 'distribution', 'capacity', 'runs'] as WorkbenchTab[]
+            ).map((tk) => (
               <button
                 key={tk}
                 type="button"
                 onClick={() => setTab(tk)}
-                className={
+                className={`px-5 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
                   tab === tk
-                    ? 'border-b-2 border-primary-600 px-3 py-2 text-sm font-semibold text-primary-700 dark:text-primary-300'
-                    : 'px-3 py-2 text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                }
+                    ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm scale-100'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 scale-95 hover:scale-100'
+                }`}
               >
                 {t(`Mrp.Workbench.Tab.${tk}`)}
               </button>
-            ),
-          )}
-        </nav>
+            ))}
+          </nav>
+        </div>
 
         {tab === 'grid' && plan && (
           <div className="space-y-3">
@@ -554,7 +559,7 @@ export const MrpWorkbenchPage = () => {
           />
         )}
       </div>
-    </ListPageTemplate>
+    </div>
   );
 };
 

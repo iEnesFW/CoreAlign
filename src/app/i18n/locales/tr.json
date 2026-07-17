@@ -535,11 +535,13 @@
       "total": "Toplam",
       "notes": "Notlar",
       "notesPlaceholder": "Dahili notlar",
+      "generalNotesPlaceholder": "Ek bilgi ve \u00e7\u0131klamalar",
       "lines": "Sipariş Satırları",
       "terms": "Vade",
       "dueDate": "Vade",
       "requestedDelivery": "Talep edilen teslim",
       "channel": "Kanal",
+      "channelPlaceholder": "\u00f6rn. B2B Portal",
       "type": "Sipariş Türü",
       "source": "Kaynak",
       "exchangeRate": "Döviz Kuru",
@@ -551,7 +553,9 @@
       "headerDiscount": "İskonto %",
       "shippingCost": "Kargo Ücreti",
       "internalNotes": "Dahili Notlar",
+      "internalNotesPlaceholder": "Yaln\u0131zca dahili kullan\u0131m i\u00e7indir.",
       "customerNotes": "Müşteri Notları",
+      "customerNotesPlaceholder": "Bu not m\u00fc\u015fteriye g\u00f6sterilebilir.",
       "roundingAdjustment": "Yuvarlama / tutar düzeltme"
     },
     "sections": {
@@ -577,6 +581,7 @@
       "InStore": "Mağaza"
     },
     "summary": {
+      "financial": "Finansal \u00d6zet",
       "subtotal": "Ara Toplam",
       "lineDiscount": "Satır İskontoları",
       "lineDiscountWithRate": "Satır İskontoları (%{{pct}})",
@@ -603,6 +608,7 @@
       "add": "Satır ekle",
       "product": "Ürün",
       "productPlaceholder": "Ürün seç",
+      "stock": "Stok",
       "quantity": "Mik.",
       "widthMm": "En (mm)",
       "heightMm": "Boy (mm)",
@@ -616,7 +622,10 @@
       "withholdingCodePlaceholder": "Tevkifat yok",
       "warehouse": "Depo",
       "warehousePlaceholder": "Depo seç",
+      "advancedOptions": "Geli\u015fmi\u015f se\u00e7enekler",
       "lineNotes": "Satır notu",
+      "lineNotesPlaceholder": "Bu kalem i\u00e7in iste\u011fe ba\u011fl\u0131 not",
+      "areaUnit": "Alan birimi",
       "lineTotal": "Satır Toplamı",
       "none": "—"
     },
@@ -1835,12 +1844,7 @@
           "subtitle": "B2B sipariş, sanal POS ve muhasebe aynı çatı altında — manuel aktarım yok."
         }
       ],
-      "pipeline": [
-        "Tasarım",
-        "Teklif",
-        "Üretim",
-        "Muhasebe"
-      ],
+      "pipeline": ["Tasarım", "Teklif", "Üretim", "Muhasebe"],
       "stats": [
         {
           "value": "%98,8",
@@ -1855,11 +1859,7 @@
           "label": "bulut erişimi"
         }
       ],
-      "trust": [
-        "ISO 27001",
-        "KVKK & GDPR",
-        "%99,9 uptime"
-      ]
+      "trust": ["ISO 27001", "KVKK & GDPR", "%99,9 uptime"]
     }
   },
   "LandingPage": {
@@ -1870,7 +1870,30 @@
       "articles": "Makaleler",
       "contact": "İletişim",
       "login": "Giriş",
-      "demo": "Demo planla"
+      "demo": "Demo planla",
+      "switchToTurkish": "Türkçeye geç",
+      "switchToEnglish": "İngilizceye geç"
+    },
+    "intro": {
+      "ariaLabel": "CoreAlign uçtan uca veri akışı tanıtımı",
+      "description": "Tek bir sipariş kaydının tasarımdan üretime, sevkiyata ve muhasebeye kesintisiz ilerleyişi.",
+      "eyebrow": "Tek Kayıt, Uçtan Uca",
+      "slogan": "Tasarımdan muhasebeye. Tek veri omurgası.",
+      "sloganLead": "Tasarımdan muhasebeye.",
+      "sloganClose": "Tek veri omurgası.",
+      "supporting": "Cam ve özel imalata özgü CAD, CPQ, MRP, stok, sevkiyat ve finans aynı kayıt üzerinde ilerler.",
+      "ctaPrimary": "Çözümlerimizi Keşfedin",
+      "ctaSecondary": "Demo planlayın",
+      "skip": "Geç",
+      "replay": "Animasyonu tekrar oynat",
+      "stages": {
+        "order": "Sipariş & Ölçü",
+        "design": "Tasarım",
+        "quoteBom": "Teklif & BOM",
+        "production": "MRP & Üretim",
+        "shipping": "Sevkiyat",
+        "accounting": "Muhasebe"
+      }
     },
     "hero": {
       "badge": "Sistem Sürümü v2.3.25 Devrede",
@@ -4275,7 +4298,8 @@
       "certifiedOn": "Sertifika tarihi",
       "primary": "Birincil",
       "active": "Aktif",
-      "notes": "Açıklama"
+      "notes": "Açıklama",
+      "pinCode": "Kiosk PIN"
     },
     "operators": {
       "empty": "Operatör ataması yok",

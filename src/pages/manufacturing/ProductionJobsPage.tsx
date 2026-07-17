@@ -1,9 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Factory, FileText, Plus, XCircle } from 'lucide-react';
+import { Factory, Plus, XCircle, LayoutGrid, List } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { Card } from '@/shared/ui/Card/Card';
-import { Badge } from '@/shared/ui/Badge/Badge';
 import { Button } from '@/shared/ui/Button/Button';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
 import { QueryError } from '@/shared/ui/QueryError/QueryError';
@@ -18,38 +16,52 @@ import type {
 import { JobFormModal } from '@/features/manufacturing/ui/JobFormModal';
 import { JobDetailPanel } from '@/features/manufacturing/ui/JobDetailPanel';
 
-const statusTone: Record<ProductionJobStatus, 'success' | 'neutral' | 'warning' | 'danger'> = {
-  Draft: 'warning',
-  Released: 'neutral',
-  InProgress: 'neutral',
-  OnHold: 'warning',
-  ReadyToComplete: 'success',
-  Completed: 'success',
-  Cancelled: 'danger',
+const KANBAN_COLUMNS: ProductionJobStatus[] = [
+  'Draft',
+  'Released',
+  'InProgress',
+  'OnHold',
+  'ReadyToComplete',
+  'Completed',
+];
+
+const statusColors: Record<ProductionJobStatus, string> = {
+  Draft: 'bg-slate-200 dark:bg-slate-700',
+  Released: 'bg-blue-100 dark:bg-blue-900/40',
+  InProgress: 'bg-indigo-100 dark:bg-indigo-900/40',
+  OnHold: 'bg-yellow-100 dark:bg-yellow-900/40',
+  ReadyToComplete: 'bg-emerald-100 dark:bg-emerald-900/40',
+  Completed: 'bg-green-100 dark:bg-green-900/40',
+  Cancelled: 'bg-red-100 dark:bg-red-900/40',
+};
+
+const statusBorderColors: Record<ProductionJobStatus, string> = {
+  Draft: 'border-slate-300 dark:border-slate-600',
+  Released: 'border-blue-300 dark:border-blue-700',
+  InProgress: 'border-indigo-300 dark:border-indigo-700',
+  OnHold: 'border-yellow-300 dark:border-yellow-700',
+  ReadyToComplete: 'border-emerald-300 dark:border-emerald-700',
+  Completed: 'border-green-300 dark:border-green-700',
+  Cancelled: 'border-red-300 dark:border-red-700',
 };
 
 export const ProductionJobsPage = () => {
   const { t } = useTranslation();
-  const [statusFilter, setStatusFilter] = useState<ProductionJobStatus | 'all'>('all');
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
-  const {
-    data: jobs,
-    isLoading,
-    error,
-    refetch,
-  } = useJobsQuery(statusFilter === 'all' ? undefined : statusFilter);
-
+  const { data: jobs, isLoading, error, refetch } = useJobsQuery();
   const { mutateAsync: cancelJob, isPending: isCancelling } = useCancelJob();
   const confirm = useConfirm();
 
-  const handleCancel = async (job: ProductionJobListSummary) => {
+  const handleCancel = async (job: ProductionJobListSummary, e: React.MouseEvent) => {
+    e.stopPropagation();
     if (
       await confirm({
         title: t('ProductionJobs.cancel_title'),
         message: t('ProductionJobs.cancel_message', { number: job.jobNumber }),
-        confirmLabel: t('Common.actions.cancel_it'),
+        confirmLabel: t('Common.Cancel'),
         tone: 'danger',
       })
     ) {
@@ -62,152 +74,163 @@ export const ProductionJobsPage = () => {
     }
   };
 
-  const filters: Array<{ id: ProductionJobStatus | 'all'; label: string }> = [
-    { id: 'all', label: t('ProductionJobs.status.all') },
-    { id: 'Draft', label: t('ProductionJobs.status.Draft') },
-    { id: 'Released', label: t('ProductionJobs.status.Released') },
-    { id: 'InProgress', label: t('ProductionJobs.status.InProgress') },
-    { id: 'ReadyToComplete', label: t('ProductionJobs.status.ReadyToComplete') },
-    { id: 'Completed', label: t('ProductionJobs.status.Completed') },
-  ];
+  const columns = useMemo(() => {
+    if (!jobs) return {};
+    const cols: Record<string, ProductionJobListSummary[]> = {};
+    KANBAN_COLUMNS.forEach((col) => {
+      cols[col] = jobs.filter((j) => j.status === col);
+    });
+    return cols;
+  }, [jobs]);
 
-  return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t('ProductionJobs.title')}
-        subtitle={t('ProductionJobs.subtitle')}
-        actions={
-          <Button onClick={() => setCreateModalOpen(true)}>
-            <Plus className="h-4 w-4" />
-            {t('ProductionJobs.actions.new_job')}
-          </Button>
-        }
-      />
-
-      <div className="flex flex-wrap gap-2">
-        {filters.map((f) => (
+  const renderJobCard = (job: ProductionJobListSummary) => (
+    <div
+      key={job.id}
+      onClick={() => setSelectedJobId(job.id)}
+      className="group relative bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all cursor-pointer hover:-translate-y-1"
+    >
+      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        {(job.status === 'Draft' || job.status === 'Released' || job.status === 'InProgress') && (
           <button
-            key={f.id}
-            onClick={() => setStatusFilter(f.id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              statusFilter === f.id
-                ? 'bg-primary-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
-            }`}
+            onClick={(e) => handleCancel(job, e)}
+            disabled={isCancelling}
+            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md transition-colors"
           >
-            {f.label}
+            <XCircle size={16} />
           </button>
-        ))}
+        )}
       </div>
 
-      {error ? (
-        <QueryError onRetry={() => refetch()} />
-      ) : isLoading ? (
-        <Card className="p-8">
-          <div className="flex justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+      <div className="flex justify-between items-start mb-3 pr-8">
+        <div>
+          <h4 className="font-bold text-slate-900 dark:text-white text-sm">{job.jobNumber}</h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+            {job.productName}
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-2 mt-3">
+        <div className="flex justify-between text-xs">
+          <span className="text-slate-500 dark:text-slate-400">
+            {t('ProductionJobs.fields.qty', 'Qty:')}
+          </span>
+          <span className="font-medium text-slate-700 dark:text-slate-300">
+            {job.plannedQuantity} {job.unitOfMeasure}
+          </span>
+        </div>
+
+        {job.stepCount > 0 && (
+          <div className="pt-2">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-slate-500">
+                {t('ProductionJobs.fields.progress', 'Progress')}
+              </span>
+              <span className="text-slate-700 dark:text-slate-300 font-medium">
+                {job.currentStepNumber ?? 0}/{job.stepCount}
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-1.5">
+              <div
+                className="bg-indigo-500 h-1.5 rounded-full transition-all"
+                style={{
+                  width: `${Math.min(100, Math.max(0, ((job.currentStepNumber ?? 0) / job.stepCount) * 100))}%`,
+                }}
+              ></div>
+            </div>
           </div>
-        </Card>
-      ) : jobs?.length === 0 ? (
-        <EmptyState
-          icon={<Factory size={24} />}
-          title={t('ProductionJobs.empty_title')}
-          description={t('ProductionJobs.empty_desc')}
-          action={
-            <Button onClick={() => setCreateModalOpen(true)}>
-              {t('ProductionJobs.actions.new_job')}
-            </Button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-6rem)]">
+      <div className="shrink-0 mb-6">
+        <PageHeader
+          title={t('ProductionJobs.title')}
+          subtitle={t('ProductionJobs.subtitle')}
+          actions={
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-600 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+                >
+                  <List size={18} />
+                </button>
+              </div>
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-600/20"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                {t('ProductionJobs.actions.new_job')}
+              </Button>
+            </div>
           }
         />
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {jobs?.map((job) => (
-            <Card
-              key={job.id}
-              className="flex flex-col p-5 hover:border-primary-300 transition-colors cursor-pointer"
-              onClick={() => setSelectedJobId(job.id)}
-            >
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">{job.jobNumber}</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{job.productName}</p>
-                </div>
-                <Badge variant={statusTone[job.status]}>
-                  {t(`ProductionJobs.status.${job.status}`)}
-                </Badge>
-              </div>
+      </div>
 
-              <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="block text-slate-500 dark:text-slate-400">
-                    {t('ProductionJobs.fields.qty')}
-                  </span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {job.plannedQuantity} {job.unitOfMeasure}
+      <div className="flex-1 overflow-hidden min-h-0">
+        {error ? (
+          <QueryError onRetry={() => refetch()} />
+        ) : isLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
+          </div>
+        ) : jobs?.length === 0 ? (
+          <EmptyState
+            icon={<Factory size={32} className="text-indigo-400" />}
+            title={t('ProductionJobs.empty_title')}
+            description={t('ProductionJobs.empty_desc')}
+            action={
+              <Button
+                onClick={() => setCreateModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {t('ProductionJobs.actions.new_job')}
+              </Button>
+            }
+          />
+        ) : viewMode === 'kanban' ? (
+          <div className="flex gap-6 h-full overflow-x-auto pb-4 px-1 snap-x">
+            {KANBAN_COLUMNS.map((col) => (
+              <div key={col} className="flex flex-col flex-none w-80 snap-start">
+                <div
+                  className={`flex items-center justify-between mb-3 px-3 py-2 rounded-lg border ${statusColors[col]} ${statusBorderColors[col]}`}
+                >
+                  <h3 className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+                    {t(`ProductionJobs.status.${col}`)}
+                  </h3>
+                  <span className="bg-white/50 dark:bg-black/20 text-slate-600 dark:text-slate-300 text-xs font-bold px-2 py-0.5 rounded-full">
+                    {columns[col]?.length || 0}
                   </span>
                 </div>
-                <div>
-                  <span className="block text-slate-500 dark:text-slate-400">
-                    {t('ProductionJobs.fields.completed')}
-                  </span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {job.completedQuantity} {job.unitOfMeasure}
-                  </span>
-                </div>
-                {job.dueDateUtc && (
-                  <div className="col-span-2">
-                    <span className="block text-slate-500 dark:text-slate-400">
-                      {t('ProductionJobs.fields.dueDate')}
-                    </span>
-                    <span className="font-medium text-slate-900 dark:text-white">
-                      {new Date(job.dueDateUtc).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-                {job.stepCount > 0 && (
-                  <div className="col-span-2">
-                    <span className="block text-slate-500 dark:text-slate-400 mb-1">
-                      {t('ProductionJobs.fields.progress')} ({job.currentStepNumber ?? 0}/
-                      {job.stepCount})
-                    </span>
-                    <div className="w-full bg-slate-200 rounded-full h-2 dark:bg-slate-700">
-                      <div
-                        className="bg-primary-600 h-2 rounded-full transition-all"
-                        style={{
-                          width: `${Math.min(100, Math.max(0, ((job.currentStepNumber ?? 0) / job.stepCount) * 100))}%`,
-                        }}
-                      ></div>
+
+                <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+                  {columns[col]?.map(renderJobCard)}
+                  {columns[col]?.length === 0 && (
+                    <div className="h-[132px] rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
+                      {t('ProductionJobs.empty_title')}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-
-              <div className="mt-auto flex justify-end gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                {job.status === 'Draft' ||
-                job.status === 'Released' ||
-                job.status === 'InProgress' ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleCancel(job);
-                    }}
-                    disabled={isCancelling}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                ) : null}
-                <Button variant="secondary" size="sm" onClick={() => setSelectedJobId(job.id)}>
-                  <FileText className="h-4 w-4" />
-                  {t('Common.actions.details')}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full overflow-y-auto pb-4">
+            {jobs?.map(renderJobCard)}
+          </div>
+        )}
+      </div>
 
       {isCreateModalOpen && <JobFormModal onClose={() => setCreateModalOpen(false)} />}
 

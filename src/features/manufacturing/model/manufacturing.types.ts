@@ -119,6 +119,7 @@ export interface CreateWorkCenterOperatorInput {
   isPrimary: boolean;
   certifiedOn: string | null;
   notes: string | null;
+  pinCode: string | null;
 }
 
 export interface UpdateWorkCenterOperatorInput {
@@ -128,6 +129,7 @@ export interface UpdateWorkCenterOperatorInput {
   isActive: boolean;
   certifiedOn: string | null;
   notes: string | null;
+  pinCode: string | null;
 }
 
 export interface AssignRoutingToProductInput {

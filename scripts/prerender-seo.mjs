@@ -74,7 +74,7 @@ const ORG_DESC = {
 
 const ROUTES = ['/', '/solutions', '/about', '/articles', '/contact'];
 const H1_KEY = {
-  '/': 'LandingPage.hero.title',
+  '/': 'LandingPage.intro.slogan',
   '/solutions': 'LandingPage.solutions.title',
   '/about': 'LandingPage.about.title',
   '/articles': 'LandingPage.articles.title',

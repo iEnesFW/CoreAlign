@@ -104,7 +104,7 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
                 value={warehouseId}
                 onChange={(e) => setWarehouseId(e.target.value)}
               >
-                <option value="">{t('Common.actions.select')}</option>
+                <option value="">{t('Common.Select', 'Seçiniz')}</option>
                 {warehouses?.data?.map((w: { id: string; name: string }) => (
                   <option key={w.id} value={w.id}>
                     {w.name}

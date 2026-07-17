@@ -116,7 +116,7 @@ export interface FinishJobStepInput {
   operatorId: string;
 }
 
-export interface SkipJobStepInput {}
+export type SkipJobStepInput = Record<string, never>;
 
 export interface ReworkToStepInput {
   targetStepNumber: number;

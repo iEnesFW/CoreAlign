@@ -414,7 +414,17 @@ if (shouldAutoMigrate)
         }
         else
         {
-            await db.Database.MigrateAsync();
+            try
+            {
+                await db.Database.MigrateAsync();
+            }
+            catch (Exception ex)
+            {
+                var pendingMigrations = await db.Database.GetPendingMigrationsAsync();
+                var failedMigration = pendingMigrations.FirstOrDefault();
+                app.Logger.LogCritical(ex, "FATAL MIGRATION ERROR: The database migration failed! The error likely occurred while trying to apply the migration: '{FailedMigration}'", failedMigration ?? "Unknown (or seed data)");
+                throw;
+            }
         }
     }
     catch (Npgsql.PostgresException ex) when (ex.SqlState == "28P01")

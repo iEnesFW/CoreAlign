@@ -15,6 +15,7 @@ interface Props {
   crumbs?: Crumb[];
   actions?: React.ReactNode;
   trailing?: React.ReactNode;
+  bottomCenter?: React.ReactNode;
   className?: string;
   tone?: 'indigo' | 'emerald' | 'violet' | 'amber' | 'rose' | 'sky';
 }
@@ -45,6 +46,7 @@ export const PageHeader = ({
   crumbs,
   actions,
   trailing,
+  bottomCenter,
   className,
   tone = 'indigo',
 }: Props) => {
@@ -127,6 +129,12 @@ export const PageHeader = ({
           </div>
         )}
       </div>
+
+      {bottomCenter && (
+        <div className="relative z-10 flex justify-center px-4 pb-2 lg:pointer-events-none lg:absolute lg:inset-x-0 lg:bottom-2 lg:px-6 lg:pb-0">
+          <div className="pointer-events-auto">{bottomCenter}</div>
+        </div>
+      )}
     </header>
   );
 };

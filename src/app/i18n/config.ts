@@ -25,7 +25,14 @@ const detected =
   (typeof window !== 'undefined' && window.localStorage.getItem('corealign.lang')) ||
   (typeof navigator !== 'undefined' && navigator.language?.slice(0, 2)) ||
   'en';
-const initialLng = resolveLocale(detected);
+const initialPath = typeof window !== 'undefined' ? window.location.pathname : '';
+const landingRouteLanguage =
+  initialPath === '/en' || initialPath.startsWith('/en/')
+    ? 'en'
+    : initialPath === '/'
+      ? 'tr'
+      : undefined;
+const initialLng = resolveLocale(landingRouteLanguage ?? detected);
 
 const initialResources = await (async () => ({
   [initialLng]: { translation: await loadLocale(initialLng) },
@@ -54,17 +61,23 @@ i18n
 
 registerRtlListener(i18n);
 
+export const changeI18nLanguage = async (lng: string) => {
+  const resolved = resolveLocale(lng);
+  if (!i18n.hasResourceBundle(resolved, defaultNS)) {
+    const bundle = await loadLocale(resolved);
+    i18n.addResourceBundle(resolved, defaultNS, bundle, true, true);
+  }
+  await i18n.changeLanguage(resolved);
+};
+
 if (typeof document !== 'undefined') {
   document.documentElement.lang = initialLng;
 }
 
-i18n.on('languageChanged', async (lng) => {
+i18n.on('languageChanged', (lng) => {
   if (typeof document !== 'undefined') {
     document.documentElement.lang = lng;
   }
-  if (i18n.hasResourceBundle(lng, 'translation')) return;
-  const bundle = await loadLocale(lng);
-  i18n.addResourceBundle(lng, 'translation', bundle, true, true);
 });
 
 export default i18n;

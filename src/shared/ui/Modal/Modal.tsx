@@ -85,22 +85,22 @@ export const Modal = ({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5 sm:rounded-2xl dark:border-slate-800 dark:bg-slate-950 dark:ring-white/5',
-          'animate-zoom-in',
+          'relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-[32px] border border-white/20 bg-white/95 backdrop-blur-2xl shadow-2xl ring-1 ring-black/5 sm:rounded-3xl dark:border-slate-700/50 dark:bg-slate-900/90 dark:ring-white/5',
+          'animate-in zoom-in-95 duration-300 ease-out',
           sizeMap[size],
           className,
         )}
       >
         {(title || icon) && (
-          <header className="flex items-start gap-3 border-b border-slate-200/80 bg-slate-50/40 px-4 py-3 dark:border-slate-800/80 dark:bg-slate-900/40">
+          <header className="flex items-center gap-4 border-b border-slate-200/50 px-6 py-4 dark:border-slate-800/50 bg-transparent">
             {icon && (
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 text-white shadow-md shadow-primary-500/20">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                 {icon}
               </div>
             )}
             <div className="min-w-0 flex-1">
               {title && (
-                <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <h2 className="truncate text-[17px] font-bold tracking-tight text-slate-800 dark:text-slate-100">
                   {title}
                 </h2>
               )}
@@ -114,16 +114,16 @@ export const Modal = ({
               ref={closeRef}
               type="button"
               onClick={onClose}
-              className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+              className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
               aria-label={t('Common.Close', { defaultValue: 'Close' })}
             >
-              <X size={14} />
+              <X size={16} />
             </button>
           </header>
         )}
-        <div className={cn('flex-1 overflow-y-auto p-4', bodyClassName)}>{children}</div>
+        <div className={cn('flex-1 overflow-y-auto px-6 py-5', bodyClassName)}>{children}</div>
         {footer && (
-          <footer className="flex items-center justify-end gap-2 border-t border-slate-200/80 bg-slate-50/40 px-4 py-2.5 dark:border-slate-800/80 dark:bg-slate-900/40">
+          <footer className="flex items-center justify-end gap-3 border-t border-slate-200/50 bg-slate-50/30 px-6 py-4 dark:border-slate-800/50 dark:bg-slate-900/30">
             {footer}
           </footer>
         )}

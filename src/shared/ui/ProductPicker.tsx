@@ -8,6 +8,7 @@ interface Props {
   disabled?: boolean;
   invalid?: boolean;
   onSelect: (productId: string) => void;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 const MAX_RESULTS = 50;
@@ -15,7 +16,7 @@ const MAX_RESULTS = 50;
 const labelOf = (p: Product) => `${p.sku} — ${p.name}`;
 
 export const ProductPicker = forwardRef<HTMLInputElement, Props>(
-  ({ products, value, disabled, invalid, onSelect }, ref) => {
+  ({ products, value, disabled, invalid, onSelect, onKeyDown: externalOnKeyDown }, ref) => {
     const { t } = useTranslation();
     const selected = useMemo(() => products.find((p) => p.id === value), [products, value]);
     const [query, setQuery] = useState('');
@@ -75,6 +76,8 @@ export const ProductPicker = forwardRef<HTMLInputElement, Props>(
         setOpen(false);
         revert();
       }
+
+      if (!e.defaultPrevented) externalOnKeyDown?.(e);
     };
 
     return (
@@ -106,10 +109,10 @@ export const ProductPicker = forwardRef<HTMLInputElement, Props>(
             }, 120);
           }}
           onKeyDown={onKeyDown}
-          className={`w-full rounded border bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100 ${
+          className={`w-full rounded-xl border bg-white/60 backdrop-blur-md px-3 py-2 text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 disabled:opacity-60 transition-all dark:bg-slate-900/60 dark:text-slate-100 dark:focus:bg-slate-900 ${
             invalid
-              ? 'border-danger-400 focus:border-danger-500 focus:ring-danger-500'
-              : 'border-slate-200 focus:border-primary-500 focus:ring-primary-500 dark:border-slate-700'
+              ? 'border-danger-400 focus:border-danger-500 focus:ring-danger-500/20'
+              : 'border-slate-200 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-slate-700/50'
           }`}
         />
         {open && filtered.length > 0 && (

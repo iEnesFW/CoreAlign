@@ -9,23 +9,25 @@ export const NewOrderPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        icon={<ShoppingCart size={20} />}
-        title={t('orders.modal.createTitle')}
-        crumbs={[
-          { label: t('orders.title'), to: '/dashboard/orders' },
-          { label: t('orders.modal.createTitle') },
-        ]}
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden py-2">
+      <OrderFormModal
+        open
+        order={null}
+        presentation="page"
+        onClose={() => navigate('/dashboard/orders')}
+        renderPageHeader={(stepNavigation) => (
+          <PageHeader
+            className="shrink-0"
+            icon={<ShoppingCart size={20} />}
+            title={t('orders.modal.createTitle')}
+            crumbs={[
+              { label: t('orders.title'), to: '/dashboard/orders' },
+              { label: t('orders.modal.createTitle') },
+            ]}
+            bottomCenter={stepNavigation}
+          />
+        )}
       />
-      <div className="mx-auto w-full max-w-4xl">
-        <OrderFormModal
-          open
-          order={null}
-          presentation="page"
-          onClose={() => navigate('/dashboard/orders')}
-        />
-      </div>
     </div>
   );
 };

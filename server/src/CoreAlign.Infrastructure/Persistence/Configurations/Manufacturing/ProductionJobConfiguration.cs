@@ -42,6 +42,11 @@ public class ProductionJobConfiguration : IEntityTypeConfiguration<ProductionJob
             .HasForeignKey(s => s.ProductionJobId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasMany(j => j.Logs)
+            .WithOne()
+            .HasForeignKey(l => l.ProductionJobId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         builder.HasOne<Product>().WithMany().HasForeignKey(j => j.ProductId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<PlannedProductionOrder>().WithMany()
             .HasForeignKey(j => j.SourcePlannedProductionOrderId).OnDelete(DeleteBehavior.SetNull);

@@ -107,7 +107,7 @@ export const useAssignRoutingToProduct = () => {
 
 // --- Production Jobs ---
 
-export const useJobsQuery = (status?: any, productId?: string) =>
+export const useJobsQuery = (status?: unknown, productId?: string) =>
   useQuery({
     queryKey: manufacturingKeys.jobs(status, productId),
     queryFn: async () => {
@@ -136,7 +136,7 @@ const useInvalidateJobs = () => {
 export const useCreateJob = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async (input: any) => {
+    mutationFn: async (input: unknown) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.create(input);
     },
@@ -147,7 +147,7 @@ export const useCreateJob = () => {
 export const useReleaseJob = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+    mutationFn: async ({ id, input }: { id: string; input: unknown }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.release(id, input);
     },
@@ -165,7 +165,7 @@ export const useStartJobStep = () => {
     }: {
       id: string;
       stepNumber: number;
-      input: any;
+      input: unknown;
     }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.startStep(id, stepNumber, input);
@@ -184,7 +184,7 @@ export const useFinishJobStep = () => {
     }: {
       id: string;
       stepNumber: number;
-      input: any;
+      input: unknown;
     }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.finishStep(id, stepNumber, input);
@@ -207,7 +207,7 @@ export const useSkipJobStep = () => {
 export const useReworkJobStep = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+    mutationFn: async ({ id, input }: { id: string; input: unknown }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.rework(id, input);
     },
@@ -229,7 +229,7 @@ export const useTransitionJob = () => {
 export const useCancelJob = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+    mutationFn: async ({ id, input }: { id: string; input: unknown }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.cancel(id, input);
     },
@@ -240,7 +240,7 @@ export const useCancelJob = () => {
 export const useCompleteJob = () => {
   const invalidate = useInvalidateJobs();
   return useMutation({
-    mutationFn: async ({ id, input }: { id: string; input: any }) => {
+    mutationFn: async ({ id, input }: { id: string; input: unknown }) => {
       const { productionJobsApi } = await import('../api/manufacturingApi');
       return productionJobsApi.complete(id, input);
     },

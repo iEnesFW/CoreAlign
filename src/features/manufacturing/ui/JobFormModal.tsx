@@ -73,7 +73,7 @@ export const JobFormModal = ({ onClose }: Props) => {
               onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
               required
             >
-              <option value="">{t('Common.actions.select')}</option>
+              <option value="">{t('Common.Select', 'Seçiniz')}</option>
               {products?.data?.items?.map((p: { id: string; name: string; sku: string }) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.sku})
@@ -106,7 +106,7 @@ export const JobFormModal = ({ onClose }: Props) => {
               value={formData.routingId}
               onChange={(e) => setFormData({ ...formData, routingId: e.target.value })}
             >
-              <option value="">{t('Common.actions.select')}</option>
+              <option value="">{t('Common.Select', 'Seçiniz')}</option>
               {routings?.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name} ({r.code})
@@ -119,7 +119,7 @@ export const JobFormModal = ({ onClose }: Props) => {
               value={formData.warehouseId}
               onChange={(e) => setFormData({ ...formData, warehouseId: e.target.value })}
             >
-              <option value="">{t('Common.actions.select')}</option>
+              <option value="">{t('Common.Select', 'Seçiniz')}</option>
               {warehouses?.data?.map((w: { id: string; name: string; code: string }) => (
                 <option key={w.id} value={w.id}>
                   {w.name} ({w.code})
@@ -140,10 +140,10 @@ export const JobFormModal = ({ onClose }: Props) => {
 
         <div className="border-t border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-800/50 flex justify-end gap-3 mt-auto">
           <Button variant="secondary" onClick={onClose}>
-            {t('Common.actions.cancel')}
+            {t('Common.Cancel', 'İptal')}
           </Button>
           <Button type="submit" form="jobForm" disabled={isPending}>
-            {isPending ? t('Common.actions.saving') : t('Common.actions.save')}
+            {isPending ? t('Common.Saving', 'Kaydediliyor...') : t('Common.Save', 'Kaydet')}
           </Button>
         </div>
       </div>

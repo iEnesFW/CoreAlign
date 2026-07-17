@@ -17,16 +17,25 @@ const Kpi = ({ icon: Icon, label, value, tone }: KpiProps) => (
   <div
     role="group"
     aria-label={label}
-    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+    className="group relative overflow-hidden flex items-center gap-4 rounded-2xl border border-white/40 bg-white/60 p-5 shadow-sm backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-slate-700/50 dark:bg-slate-800/60"
   >
-    <span className={`flex h-10 w-10 items-center justify-center rounded-full ${tone}`}>
-      <Icon className="h-5 w-5" />
+    <div
+      className={`absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-20 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-40 ${tone.split(' ')[0]}`}
+    />
+
+    <span
+      className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-inner ${tone}`}
+    >
+      <Icon className="h-6 w-6" />
     </span>
-    <div className="flex-1">
-      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
+
+    <div className="relative flex-1">
+      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1 line-clamp-1">
+        {label}
+      </p>
       <p
         data-testid="stat-value"
-        className="text-2xl font-semibold text-slate-800 dark:text-slate-100"
+        className="text-3xl font-extrabold text-slate-800 dark:text-slate-100 tabular-nums leading-none"
       >
         {value}
       </p>
@@ -37,7 +46,7 @@ const Kpi = ({ icon: Icon, label, value, tone }: KpiProps) => (
 export const KpiStrip = ({ plan }: Props) => {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Kpi
         icon={AlertTriangle}
         label={t('Mrp.Workbench.Kpi.StockoutRisk')}
@@ -54,7 +63,7 @@ export const KpiStrip = ({ plan }: Props) => {
         icon={ShieldAlert}
         label={t('Mrp.Workbench.Kpi.OpenExceptions')}
         value={plan.actionMessageCount}
-        tone="bg-primary-100 text-primary-700 dark:bg-primary-500/20 dark:text-primary-300"
+        tone="bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300"
       />
       <Kpi
         icon={Truck}

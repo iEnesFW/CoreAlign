@@ -50,6 +50,9 @@ public class ProductionJob : TenantEntity, IHasConcurrencyToken
     private readonly List<ProductionJobStep> _steps = new();
     public IReadOnlyCollection<ProductionJobStep> Steps => _steps.AsReadOnly();
 
+    private readonly List<ProductionJobLog> _logs = new();
+    public IReadOnlyCollection<ProductionJobLog> Logs => _logs.AsReadOnly();
+
     public bool IsTerminal => Status is ProductionJobStatus.Completed or ProductionJobStatus.Cancelled;
     public bool AllRequiredStepsDone =>
         _steps.Count > 0
@@ -172,6 +175,9 @@ public class ProductionJob : TenantEntity, IHasConcurrencyToken
             Status = ProductionJobStatus.InProgress;
             StartedAtUtc = AsUtc(utcNow);
         }
+        
+        _logs.Add(new ProductionJobLog(Id, step.Id, operatorId, "Start", utcNow, null, null, null));
+        
         Touch();
         return step;
     }
@@ -193,6 +199,9 @@ public class ProductionJob : TenantEntity, IHasConcurrencyToken
         var step = RequireStep(stepNumber);
         step.Finish(goodQuantity, scrappedQuantity, scrapReasonCodeId, actualSetupMinutes, actualRunMinutes, operatorId, utcNow);
         ScrappedQuantity += scrappedQuantity;
+
+        _logs.Add(new ProductionJobLog(Id, step.Id, operatorId, "Finish", utcNow, scrapReasonCodeId?.ToString(), goodQuantity, actualRunMinutes.HasValue ? (int)actualRunMinutes.Value : null));
+
 
         var next = _steps
             .Where(s => s.StepNumber > stepNumber

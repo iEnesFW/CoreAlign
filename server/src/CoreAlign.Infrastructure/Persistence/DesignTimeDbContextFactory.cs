@@ -11,7 +11,7 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<CoreAlignD
     public CoreAlignDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<CoreAlignDbContext>()
-            .UseNpgsql("Host=localhost;Database=corealign_design;Username=design;Password=design")
+            .UseNpgsql("Host=localhost;Database=corealign;Username=postgres;Password=Asdqwe123")
             .Options;
         return new CoreAlignDbContext(options, new DesignTimeTenantContext(), new DesignTimePublisher());
     }

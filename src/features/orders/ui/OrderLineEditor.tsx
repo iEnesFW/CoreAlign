@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Trash2 } from 'lucide-react';
-import { Input } from '@/shared/ui/Input/Input';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
 import type { Product } from '@/shared/model/product.types';
 import type {
@@ -12,9 +12,6 @@ import type {
 import { glassLineArea, isAreaUnit } from '../model/orderSchema';
 import type { OrderFormValues, OrderLineFormValues } from '../model/orderSchema';
 import { ProductPicker } from '@/shared/ui/ProductPicker';
-
-const selectCls =
-  'w-full rounded border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100';
 
 interface Props {
   index: number;
@@ -38,7 +35,7 @@ interface Props {
   onAddLine: () => void;
 }
 
-const truncateName = (name: string, max = 40): string =>
+const truncateName = (name: string, max = 20): string =>
   name.length > max ? `${name.slice(0, max)}…` : name;
 
 const computeLine = (line?: Partial<OrderLineFormValues>, withholdingCode?: WithholdingTaxCode) => {
@@ -89,11 +86,9 @@ export const OrderLineEditor = ({
   onRemove,
   onAddLine,
 }: Props) => {
+  const [noteOpen, setNoteOpen] = useState(false);
   const { t } = useTranslation();
-  const translateError = (key?: string): string | undefined =>
-    key ? t(key, { defaultValue: key }) : undefined;
 
-  const step = (1 / Math.pow(10, decimals)).toString();
   const selectedWithholding = line?.withholdingTaxCodeId
     ? withholdingCodes.find((c) => c.id === line.withholdingTaxCodeId)
     : undefined;
@@ -105,14 +100,13 @@ export const OrderLineEditor = ({
   const glassArea = areaMode
     ? glassLineArea(unitCode, line?.widthMm, line?.heightMm, line?.pieces)
     : null;
-  // For an area-unit line the quantity is DERIVED from the cut size, so the summary/pricing use the
-  // computed area rather than the (hidden) plain quantity field.
+
   const calc = computeLine(
     glassArea !== null ? { ...line, quantity: glassArea } : line,
     selectedWithholding,
   );
 
-  const handleLastFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleLastFieldKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (disabled || !isLast) return;
     if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
       e.preventDefault();
@@ -121,204 +115,216 @@ export const OrderLineEditor = ({
   };
 
   return (
-    <div className="rounded border border-slate-200 bg-slate-50/50 p-2 dark:border-slate-800 dark:bg-slate-800/30">
-      <div className="flex items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <ProductPicker
-            ref={setProductRef}
-            products={products}
-            value={line?.productId ?? ''}
-            disabled={disabled}
-            invalid={!!errors?.productId}
-            onSelect={(id) => onProductSelect(index, id)}
-          />
-          {errors?.productId?.message && (
-            <span className="mt-1 block text-xs text-danger-500">
-              {translateError(errors.productId.message)}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => onRemove(index)}
-          disabled={disabled || !canRemove}
-          className="rounded p-2 text-slate-500 hover:bg-danger-50 hover:text-danger-600 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-danger-500/10"
-          aria-label={t('common.delete')}
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
-
-      <div className="mt-2 grid grid-cols-12 gap-2">
-        <div className="col-span-6 sm:col-span-3">
-          {areaMode ? (
-            <div className="flex h-full min-h-[38px] flex-col justify-center rounded border border-dashed border-emerald-300 px-2 py-1 dark:border-emerald-800">
-              <span className="text-[10px] uppercase tracking-wide text-slate-400">
-                {t('orders.lines.quantity')}
-              </span>
-              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                {glassArea !== null ? `${formatNumber(glassArea, locale, 4)} ${unitCode}` : '—'}
-              </span>
-              <input
-                type="hidden"
-                {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-              />
-            </div>
-          ) : (
-            <div className="relative">
-              <Input
-                type="number"
-                step={step}
-                placeholder={t('orders.lines.quantity')}
-                disabled={disabled}
-                error={translateError(errors?.quantity?.message)}
-                {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
-              />
-              {line?.uomCode && (
-                <span className="pointer-events-none absolute right-2 top-2 text-xs text-slate-400">
-                  {line.uomCode}
+    <div
+      className={`p-4 transition-colors group ${noteOpen ? 'bg-slate-50 dark:bg-[#1e2332]' : 'bg-white dark:bg-[#1b202e] hover:bg-slate-50 dark:hover:bg-[#1f2536] border-b border-slate-100 dark:border-[#2a3143]/50 last:border-0'}`}
+    >
+      <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_3.75rem_minmax(5.5rem,0.9fr)] lg:items-center">
+        {/* Product Column */}
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <ProductPicker
+              ref={(el) => setProductRef(el)}
+              products={products}
+              value={line?.productId ?? ''}
+              disabled={disabled}
+              invalid={!!errors?.productId}
+              onSelect={(pid) => onProductSelect(index, pid)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onAddLine();
+                }
+              }}
+            />
+            {selectedProduct && (
+              <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-slate-400">
+                <span className="truncate">{truncateName(selectedProduct.name, 35)}</span>
+                <span className="text-slate-500">|</span>
+                <span className="font-semibold text-slate-300">
+                  {t('orders.lines.stock')}:{' '}
+                  {formatNumber(selectedProduct.stockQuantity, locale, 0)}{' '}
+                  {line?.uomCode ?? selectedProduct.unit}
                 </span>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="col-span-6 sm:col-span-3">
-          <Input
-            type="number"
-            step={step}
-            placeholder={t('orders.lines.unitPrice')}
-            disabled={disabled}
-            error={translateError(errors?.unitPrice?.message)}
-            {...register(`lines.${index}.unitPrice`, { valueAsNumber: true })}
-          />
+
+        {/* Quantities & Prices */}
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,0.6fr)_minmax(0,0.75fr)]">
+          <div className="relative min-w-0">
+            <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block lg:hidden">
+              {t('orders.lines.quantity')}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              disabled={disabled}
+              className="w-full text-left lg:text-right bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-2 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-50 appearance-none"
+              {...register(`lines.${index}.quantity`, { valueAsNumber: true })}
+            />
+            {areaMode && (
+              <div className="absolute right-2 top-8 lg:top-1.5 flex items-center justify-end">
+                <span
+                  className="text-[10px] font-bold text-indigo-400 opacity-80"
+                  title={t('orders.lines.areaUnit')}
+                >
+                  m²
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block lg:hidden">
+              {t('orders.lines.unitPrice')}
+            </label>
+            <input
+              type="number"
+              step="0.0001"
+              disabled={disabled}
+              className="w-full text-left lg:text-right bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-2 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-50 appearance-none"
+              {...register(`lines.${index}.unitPrice`, { valueAsNumber: true })}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block lg:hidden">
+              {t('orders.lines.discountPercent')}
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              disabled={disabled}
+              className="w-full text-left lg:text-right bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-2 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-50 appearance-none"
+              {...register(`lines.${index}.lineDiscountPercent`)}
+            />
+          </div>
+
+          <div className="min-w-0">
+            <label className="text-[10px] text-slate-500 uppercase font-semibold mb-1 block lg:hidden">
+              {t('orders.lines.taxRate')}
+            </label>
+            <select
+              disabled={disabled}
+              className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-2 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 lg:text-right"
+              {...register(`lines.${index}.taxRateId`)}
+              onChange={(e) => onTaxRateSelect(index, e.target.value)}
+              onKeyDown={handleLastFieldKeyDown}
+            >
+              <option value="">--</option>
+              {taxRates.map((tr) => (
+                <option key={tr.id} value={tr.id}>
+                  {tr.ratePercent}%
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="col-span-6 sm:col-span-3">
-          <Input
-            type="number"
-            step="0.01"
-            min="0"
-            max="100"
-            placeholder={t('orders.lines.discountPercent')}
-            disabled={disabled}
-            {...register(`lines.${index}.lineDiscountPercent`)}
-          />
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <select
-            disabled={disabled}
-            className={selectCls}
-            value={line?.taxRateId ?? ''}
-            onChange={(e) => onTaxRateSelect(index, e.target.value)}
-            aria-label={t('orders.lines.taxRate')}
-          >
-            <option value="">{t('orders.lines.taxRatePlaceholder')}</option>
-            {taxRates.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name} ({r.ratePercent}%)
-              </option>
-            ))}
-          </select>
+
+        <div className="mt-1 flex items-center justify-between gap-3 lg:contents">
+          {/* Actions */}
+          <div className="flex shrink-0 items-center gap-1 lg:justify-center">
+            <button
+              type="button"
+              onClick={() => setNoteOpen(!noteOpen)}
+              className={`transition-colors p-1.5 rounded-md ${noteOpen ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10'}`}
+              title={t('orders.lines.advancedOptions')}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => onRemove(index)}
+              disabled={!canRemove || disabled}
+              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-50 transition-colors p-1.5 rounded-md"
+              title={t('common.delete')}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+
+          <div className="min-w-0 text-right">
+            <output
+              className="whitespace-nowrap text-sm font-bold tabular-nums text-slate-900 dark:text-slate-100"
+              title={t('orders.lines.lineTotal')}
+              aria-label={t('orders.lines.lineTotal')}
+            >
+              {formatCurrency(calc.total, locale, currency, decimals)}
+            </output>
+          </div>
         </div>
       </div>
 
-      <div className="mt-2 grid grid-cols-12 gap-2">
-        <div className="col-span-6 sm:col-span-3">
-          <select
-            disabled={disabled}
-            className={selectCls}
-            {...register(`lines.${index}.withholdingTaxCodeId`)}
-            aria-label={t('orders.lines.withholdingCode')}
-          >
-            <option value="">{t('orders.lines.withholdingCodePlaceholder')}</option>
-            {withholdingCodes.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.code} — {truncateName(c.name)} ({c.numerator}/{c.denominator})
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-span-6 sm:col-span-3">
-          <select
-            disabled={disabled}
-            className={selectCls}
-            {...register(`lines.${index}.warehouseId`)}
-            aria-label={t('orders.lines.warehouse')}
-          >
-            <option value="">{t('orders.lines.warehousePlaceholder')}</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="col-span-12 sm:col-span-6">
-          <Input
-            type="text"
-            placeholder={t('orders.lines.lineNotes')}
-            disabled={disabled}
-            onKeyDown={handleLastFieldKeyDown}
-            {...register(`lines.${index}.lineNotes`)}
-          />
-        </div>
-      </div>
-
-      {areaMode && (
-        <div className="mt-2 grid grid-cols-12 items-center gap-2">
-          <div className="col-span-4 sm:col-span-3">
-            <Input
-              type="number"
-              step="0.1"
-              placeholder={t('orders.lines.widthMm')}
-              disabled={disabled}
-              {...register(`lines.${index}.widthMm`)}
-            />
-          </div>
-          <div className="col-span-4 sm:col-span-3">
-            <Input
-              type="number"
-              step="0.1"
-              placeholder={t('orders.lines.heightMm')}
-              disabled={disabled}
-              {...register(`lines.${index}.heightMm`)}
-            />
-          </div>
-          <div className="col-span-4 sm:col-span-2">
-            <Input
-              type="number"
-              step="1"
-              placeholder={t('orders.lines.pieces')}
-              disabled={disabled}
-              {...register(`lines.${index}.pieces`)}
-            />
-          </div>
-          {glassArea !== null && (
-            <div className="col-span-12 flex items-center text-xs font-medium text-emerald-600 dark:text-emerald-400 sm:col-span-4">
-              = {formatNumber(glassArea, locale, 4)} {unitCode}
+      {/* Advanced Options */}
+      {noteOpen && (
+        <div className="overflow-hidden">
+          <div className="mt-4 lg:ml-7 grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-[#141824] rounded-lg border border-slate-200 dark:border-[#2a3143] shadow-inner">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                {t('orders.lines.warehouse')}
+              </label>
+              <select
+                disabled={disabled}
+                className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-3 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 "
+                {...register(`lines.${index}.warehouseId`)}
+              >
+                <option value="">--</option>
+                {warehouses.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                {t('orders.lines.withholdingCode')}
+              </label>
+              <select
+                disabled={disabled}
+                className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-3 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 "
+                {...register(`lines.${index}.withholdingTaxCodeId`)}
+              >
+                <option value="">{t('orders.lines.none')}</option>
+                {withholdingCodes.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.code} - {w.numerator}/{w.denominator}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">
+                {t('orders.lines.lineNotes')}
+              </label>
+              <input
+                type="text"
+                placeholder={t('orders.lines.lineNotesPlaceholder')}
+                disabled={disabled}
+                className="w-full text-left  bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-3 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all disabled:opacity-50 appearance-none"
+                {...register(`lines.${index}.lineNotes`)}
+              />
+            </div>
+          </div>
         </div>
       )}
-
-      <div className="mt-2 flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-        <span>
-          {formatNumber(calc.qty, locale, decimals)} × {formatNumber(calc.price, locale, decimals)}
-        </span>
-        {calc.discountPct > 0 && (
-          <span className="text-warning-600 dark:text-warning-400">
-            {t('orders.lines.discountPercent')} {calc.discountPct}% (−
-            {formatCurrency(calc.discount, locale, currency, decimals)})
-          </span>
-        )}
-        {calc.taxPct > 0 && (
-          <span className="rounded bg-slate-200 px-1.5 py-0.5 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-            {t('orders.lines.taxRate')} {calc.taxPct}%
-          </span>
-        )}
-        <span className="font-semibold text-slate-900 dark:text-slate-100">
-          {t('orders.lines.lineTotal')}: {formatCurrency(calc.total, locale, currency, decimals)}
-        </span>
-      </div>
     </div>
   );
 };

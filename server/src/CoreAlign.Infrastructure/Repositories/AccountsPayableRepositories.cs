@@ -197,8 +197,8 @@ public class ThreeWayMatchReader : IThreeWayMatchReader
             .AsNoTracking()
             .AsQueryable();
         if (vendorId.HasValue) posQuery = posQuery.Where(p => p.VendorId == vendorId.Value);
-        if (fromUtc.HasValue) posQuery = posQuery.Where(p => p.OrderDate >= fromUtc.Value);
-        if (toUtc.HasValue) posQuery = posQuery.Where(p => p.OrderDate <= toUtc.Value);
+        if (fromUtc.HasValue) posQuery = posQuery.Where(p => p.OrderDate >= DateTime.SpecifyKind(fromUtc.Value, DateTimeKind.Utc));
+        if (toUtc.HasValue) posQuery = posQuery.Where(p => p.OrderDate <= DateTime.SpecifyKind(toUtc.Value, DateTimeKind.Utc));
 
         var pos = await posQuery.ToListAsync(cancellationToken);
         if (pos.Count == 0) return Array.Empty<ThreeWayMatchRow>();

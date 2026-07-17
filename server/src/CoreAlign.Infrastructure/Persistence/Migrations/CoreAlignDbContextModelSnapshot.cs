@@ -8408,6 +8408,76 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("production_jobs", (string)null);
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_minutes");
+
+                    b.Property<DateTime>("EventTimeUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("event_time_utc");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("event_type");
+
+                    b.Property<Guid>("OperatorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operator_id");
+
+                    b.Property<Guid>("ProductionJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("production_job_id");
+
+                    b.Property<Guid>("ProductionJobStepId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("production_job_step_id");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_production_job_logs");
+
+                    b.HasIndex("ProductionJobId")
+                        .HasDatabaseName("ix_production_job_logs_production_job_id");
+
+                    b.HasIndex("ProductionJobStepId")
+                        .HasDatabaseName("ix_production_job_logs_production_job_step_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_production_job_logs_tenant_id");
+
+                    b.ToTable("production_job_logs", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobStep", b =>
                 {
                     b.Property<Guid>("Id")
@@ -21261,6 +21331,30 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_production_jobs_warehouses_warehouse_id");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobLog", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", null)
+                        .WithMany("Logs")
+                        .HasForeignKey("ProductionJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_job_logs_production_jobs_production_job_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionJobStep", null)
+                        .WithMany()
+                        .HasForeignKey("ProductionJobStepId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_job_logs_production_job_steps_production_job_ste~");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_production_job_logs_tenants_tenant_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJobStep", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", null)
@@ -23252,6 +23346,8 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.Manufacturing.ProductionJob", b =>
                 {
+                    b.Navigation("Logs");
+
                     b.Navigation("Steps");
                 });
 

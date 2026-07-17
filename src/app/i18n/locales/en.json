@@ -535,11 +535,13 @@
       "total": "Total",
       "notes": "Notes",
       "notesPlaceholder": "Internal notes",
+      "generalNotesPlaceholder": "Additional information and notes",
       "lines": "Order Lines",
       "terms": "Terms",
       "dueDate": "Due",
       "requestedDelivery": "Requested delivery",
       "channel": "Channel",
+      "channelPlaceholder": "e.g. B2B Portal",
       "type": "Order Type",
       "source": "Source",
       "exchangeRate": "Exchange Rate",
@@ -551,7 +553,9 @@
       "headerDiscount": "Discount %",
       "shippingCost": "Shipping Cost",
       "internalNotes": "Internal Notes",
+      "internalNotesPlaceholder": "For internal use only.",
       "customerNotes": "Customer Notes",
+      "customerNotesPlaceholder": "This note may be shown to the customer.",
       "roundingAdjustment": "Rounding / amount adjustment"
     },
     "sections": {
@@ -577,6 +581,7 @@
       "InStore": "In-Store"
     },
     "summary": {
+      "financial": "Financial Summary",
       "subtotal": "Subtotal",
       "lineDiscount": "Line Discounts",
       "lineDiscountWithRate": "Line Discounts ({{pct}}%)",
@@ -603,6 +608,7 @@
       "add": "Add line",
       "product": "Product",
       "productPlaceholder": "Select product",
+      "stock": "Stock",
       "quantity": "Qty",
       "widthMm": "Width (mm)",
       "heightMm": "Height (mm)",
@@ -616,7 +622,10 @@
       "withholdingCodePlaceholder": "No withholding",
       "warehouse": "Warehouse",
       "warehousePlaceholder": "Select warehouse",
+      "advancedOptions": "Advanced options",
       "lineNotes": "Line note",
+      "lineNotesPlaceholder": "Optional note for this line",
+      "areaUnit": "Area unit",
       "lineTotal": "Line Total",
       "none": "—"
     },
@@ -1835,12 +1844,7 @@
           "subtitle": "B2B orders, virtual POS and accounting under one roof — no manual handoffs."
         }
       ],
-      "pipeline": [
-        "Design",
-        "Quote",
-        "Production",
-        "Accounting"
-      ],
+      "pipeline": ["Design", "Quote", "Production", "Accounting"],
       "stats": [
         {
           "value": "98.8%",
@@ -1855,11 +1859,7 @@
           "label": "cloud access"
         }
       ],
-      "trust": [
-        "ISO 27001",
-        "KVKK & GDPR",
-        "99.9% uptime"
-      ]
+      "trust": ["ISO 27001", "KVKK & GDPR", "99.9% uptime"]
     }
   },
   "LandingPage": {
@@ -1870,7 +1870,30 @@
       "articles": "Articles",
       "contact": "Contact",
       "login": "Sign in",
-      "demo": "Book a demo"
+      "demo": "Book a demo",
+      "switchToTurkish": "Switch to Turkish",
+      "switchToEnglish": "Switch to English"
+    },
+    "intro": {
+      "ariaLabel": "CoreAlign end-to-end data flow introduction",
+      "description": "One order record moving continuously through design, production, shipping, and accounting.",
+      "eyebrow": "One Record, End to End",
+      "slogan": "From design to accounting. One data backbone.",
+      "sloganLead": "From design to accounting.",
+      "sloganClose": "One data backbone.",
+      "supporting": "Purpose-built CAD, CPQ, MRP, inventory, shipping, and finance for glass and custom manufacturing move on the same record.",
+      "ctaPrimary": "Explore our solutions",
+      "ctaSecondary": "Book a demo",
+      "skip": "Skip",
+      "replay": "Replay animation",
+      "stages": {
+        "order": "Order & Measure",
+        "design": "Design",
+        "quoteBom": "Quote & BOM",
+        "production": "MRP & Production",
+        "shipping": "Shipping",
+        "accounting": "Accounting"
+      }
     },
     "hero": {
       "badge": "System Version v2.3.25 Active",
@@ -4275,7 +4298,8 @@
       "certifiedOn": "Certified on",
       "primary": "Primary",
       "active": "Active",
-      "notes": "Notes"
+      "notes": "Notes",
+      "pinCode": "Kiosk PIN"
     },
     "operators": {
       "empty": "No operator assignments",

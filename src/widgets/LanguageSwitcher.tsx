@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Globe, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LOCALES, type LocaleDescriptor } from '@/app/i18n/supportedLocales';
+import { changeI18nLanguage } from '@/app/i18n/config';
 import { useUpdateLocale } from '@/features/auth/hooks/useUpdateLocale';
 
 interface LanguageSwitcherProps {
@@ -27,11 +28,11 @@ export const LanguageSwitcher = ({ variant = 'menu', className }: LanguageSwitch
 
   const handleSelect = useCallback(
     (locale: LocaleDescriptor) => {
-      void i18n.changeLanguage(locale.code);
+      void changeI18nLanguage(locale.code);
       updateLocale.mutate(locale.code);
       setIsOpen(false);
     },
-    [i18n, updateLocale],
+    [updateLocale],
   );
 
   const currentCode = (i18n.language ?? 'en').slice(0, 2).toLowerCase();
