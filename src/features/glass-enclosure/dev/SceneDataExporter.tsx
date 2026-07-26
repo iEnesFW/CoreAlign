@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDesignerStore } from '../model/designerStore';
-import { isRealArc, resolveArc } from '../model/arcGeometry';
+import { isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometry';
 
 // WHY: dev/E2E-only bridge that exposes the AUTHORITATIVE designer scene (the zustand store's exact
 // authored geometry — mm-precise radius/sweep/rotation/shape) on window for headless geometric-
@@ -42,7 +42,10 @@ export function SceneDataExporter() {
             .filter((run) => isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg))
             .map((run) => ({
               runId: run.id,
-              ...resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1),
+              ...resolveArc(
+                radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
+                run.geomArcSweepDeg ?? 1,
+              ),
             })),
         },
       };

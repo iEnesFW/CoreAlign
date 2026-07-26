@@ -5,7 +5,13 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
-import { arcEndLocal, deriveArcFromChordSagitta, isRealArc, resolveArc } from './arcGeometry';
+import {
+  arcEndLocal,
+  deriveArcFromChordSagitta,
+  isRealArc,
+  radiusFromChordSweep,
+  resolveArc,
+} from './arcGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 import type { OpenEdge } from './wallAutofill';
 
@@ -127,7 +133,10 @@ const wallEndpoints = (wall: SceneWallState): [WallEndpoint, WallEndpoint] => {
   // ARC wall: the far end is arcEndLocal rotated into world (origin + length·dir(rotationDeg) is
   // the phantom straight end), and the outward direction at that end is the END tangent.
   if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
-    const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+    const resolved = resolveArc(
+      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+      wall.geomArcSweepDeg ?? 1,
+    );
     const e = arcEndLocal(resolved.radiusMm, wall.geomArcSweepDeg ?? 1);
     return [
       {

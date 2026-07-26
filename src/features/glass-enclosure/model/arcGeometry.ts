@@ -68,7 +68,11 @@ export const resolveArc = (radiusMm: number, sweepDeg: number): ResolvedArc => {
   const direction: 1 | -1 = sweepDeg < 0 ? -1 : 1;
   const arcLengthMm = radius * sweepRad;
   return {
-    radiusMm: Math.round(radius),
+    // WHY: NOT rounded. radiusM and arcLengthMm are exact, so rounding this one field made the
+    // consumers that measure with radiusMm (end/apex probes, snap targets) disagree with the band
+    // drawn at radiusM by up to half a millimetre times the sweep — a split-brain in the resolver
+    // itself. Round at the display site, not in the geometry.
+    radiusMm: radius,
     radiusM: radius / 1000,
     sweepRad,
     direction,

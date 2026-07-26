@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Edges, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
@@ -478,6 +478,26 @@ export function WallObject({
   // null/0 — e.g. from an old persisted state) must render STRAIGHT, never get pitched flat by the
   // [-π/2,0,0] mesh rotation as a degenerate band (the CTRL+Z "wall lies flat" bug).
   const isArcWall = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg);
+  /**
+   * THE curved-surface frame of this wall — the one every consumer must read: the render band, the
+   * (u,v) pick, the draw clamp, the front/back side test, the on-surface previews and the feature
+   * cutter.
+   *
+   * WHY: the radius is re-derived from the AUTHORITATIVE chord + sweep. Reading the stored radius
+   * raw inverts a cylinder nobody draws — measured on a wall whose chord was edited without the
+   * radius following (4500 mm chord still carrying R3000), the pick landed up to **583 mm** away
+   * from the cursor, growing non-linearly along the wall. That is exactly the reported "free-draw
+   * on a wall produces a distorted, unrelated hole": the stroke is sampled in one parameterisation
+   * and carved in another.
+   */
+  const wallSurfaceArc = useCallback(
+    () =>
+      resolveArc(
+        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
+        wall.geomArcSweepDeg ?? 1,
+      ),
+    [wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg],
+  );
   // An L-shaped (bent) wall is a single mitred solid; its footprint resize / curve handles don't
   // apply and it can't carry surface features yet (#6c).
   const isBentWall = Boolean(wall.bendAngleDeg && Math.abs(wall.bendAngleDeg) >= 1);
@@ -591,10 +611,7 @@ export function WallObject({
         wall.thicknessMm / 2,
       );
     }
-    const resolved = resolveArc(
-      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
-      wall.geomArcSweepDeg ?? 1,
-    );
+    const resolved = wallSurfaceArc();
     const apex = arcPointAt(resolved.radiusMm, resolved.direction, resolved.sweepRad / 2);
     const chordDeg = (Math.atan2(chordDyMm, chordDxMm) * 180) / Math.PI;
     const chordLenMm = Math.hypot(chordDxMm, chordDyMm);
@@ -605,7 +622,7 @@ export function WallObject({
         y: wall.originY + apex.x * wallSin + apex.z * wallCos,
       },
     ];
-  }, [isArcWall, wall, chordDxMm, chordDyMm, wallCos, wallSin]);
+  }, [isArcWall, wallSurfaceArc, wall, chordDxMm, chordDyMm, wallCos, wallSin]);
 
   const coMove = useMemo(() => {
     const groupWalls = wall.groupId
@@ -809,7 +826,7 @@ export function WallObject({
     // A curved wall's front/back surface is cylindrical — invert it so the pick maps to (offset
     // along the developed wall, height), instead of the flat-box projection which mislocates it.
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const resolved = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const resolved = wallSurfaceArc();
       // curvedWallPickUv takes GROUP-local coords (it internally un-rotates the band's [-π/2,0,0]),
       // so TMP_VEC after worldToLocal is fed directly. Forward (pick) and back (render) both map U
       // along the developed arc length (radius·sweep), so the drawn point stays under the cursor.
@@ -840,7 +857,7 @@ export function WallObject({
     if (!group) return 'front';
     TMP_VEC.copy(point);
     group.worldToLocal(TMP_VEC);
-    const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+    const arc = wallSurfaceArc();
     const centerY = -arc.direction * arc.radiusM;
     const rHit = Math.hypot(TMP_VEC.x, TMP_VEC.z + centerY);
     return rHit >= arc.radiusM ? 'front' : 'back';
@@ -852,7 +869,7 @@ export function WallObject({
     // committed feature use), NOT the flat chord — clamp to that, or points stored in chord units get
     // mis-scaled into developed units (drawn point drifts, and an oversized cut can erase the band).
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const arc = resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1);
+      const arc = wallSurfaceArc();
       return {
         x: clampValue(uMm, m, Math.max(m, arc.arcLengthMm - m)),
         z: clampValue(vMm, m / 2, Math.max(m / 2, wall.heightMm - m / 2)),
@@ -1296,10 +1313,7 @@ export function WallObject({
     // curved band (same forward map as the committed feature) so the preview line follows the cursor
     // on the curve, instead of the flat XY plane (which lands it at the chord, far to the side).
     if (isArcWall && (side === 'front' || side === 'back')) {
-      const arc = resolveArc(
-        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
-        wall.geomArcSweepDeg ?? 1,
-      );
+      const arc = wallSurfaceArc();
       const halfT = wall.thicknessMm / 1000 / 2;
       const surfaceR =
         side === 'front'
@@ -1362,13 +1376,12 @@ export function WallObject({
     penFace,
     penArcPreview,
     isArcWall,
+    wallSurfaceArc,
     wall.id,
     wall.lengthMm,
     wall.heightMm,
     wall.heightEndMm,
     wall.thicknessMm,
-    wall.geomArcRadiusMm,
-    wall.geomArcSweepDeg,
   ]);
 
   // The DRAW tool's filled DraftPreview lives on the flat face frame — on an arc wall it detaches
@@ -1380,10 +1393,7 @@ export function WallObject({
     if (side !== 'front' && side !== 'back') return null;
     const outline = featureOutlineMm(draft);
     if (outline.length < 3) return null;
-    const arc = resolveArc(
-      radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
-      wall.geomArcSweepDeg ?? 1,
-    );
+    const arc = wallSurfaceArc();
     const halfT = wall.thicknessMm / 1000 / 2;
     const surfaceR =
       side === 'front'
@@ -1398,14 +1408,7 @@ export function WallObject({
       arc.arcLengthMm,
       true,
     );
-  }, [
-    draft,
-    isArcWall,
-    wall.lengthMm,
-    wall.geomArcRadiusMm,
-    wall.geomArcSweepDeg,
-    wall.thicknessMm,
-  ]);
+  }, [draft, isArcWall, wallSurfaceArc, wall.thicknessMm]);
 
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
   const heightLevels = collectHeightLevels(fullScene, wall.id);
@@ -1639,12 +1642,7 @@ export function WallObject({
   const chordThetaL = Math.atan2(chordUz, chordUx);
   const arcChordLabel = (d: number) =>
     labelMm(Math.max(MIN_LENGTH_MM, chordLenMm + stickyDelta(chordLenMm, d)));
-  const wallArcResolved = isArcWall
-    ? resolveArc(
-        radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
-        wall.geomArcSweepDeg ?? 1,
-      )
-    : null;
+  const wallArcResolved = isArcWall ? wallSurfaceArc() : null;
   const endTangentYaw = wallArcResolved
     ? Math.atan2(
         Math.cos(wallArcResolved.sweepRad),

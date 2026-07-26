@@ -1,4 +1,4 @@
-import { isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometry';
+import { arcEndLocal, isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometry';
 import type { ResolvedArc } from '../model/arcGeometry';
 
 /**
@@ -76,3 +76,27 @@ export const rotationForChord = (
   pose: PoseConvention = 'rolled',
 ): number =>
   quantizeRotationDeg(pose === 'rolled' ? chordDeg - (signedSweepDeg ?? 0) / 2 : chordDeg);
+
+/**
+ * The DEVELOPED face length of a body: the arc length a curved body's surface actually has, the
+ * plain length when it is straight.
+ *
+ * This is the domain of every on-surface `u` coordinate (draw picks, feature offsets, clamps, the
+ * CSG cutter). Deriving it from the stored radius instead of the chord returns a length nobody
+ * draws, and every stored outline then rescales into the wrong units.
+ */
+export const bodyDevelopedLengthMm = (body: CurvablePose): number =>
+  resolveBodyCurvature(body)?.arcLengthMm ?? body.lengthMm;
+
+/**
+ * A body's far endpoint in its OWN local frame (x along `rotationDeg`, y across), in mm.
+ *
+ * Straight bodies end at (length, 0); an arc ends where its curve ends. Anything that needs "where
+ * does this body finish" — snap targets, attachment tests, corner posts, the 2D plan — must read it
+ * here so they cannot disagree about the same body.
+ */
+export const bodyEndLocalMm = (body: CurvablePose): { xMm: number; yMm: number } => {
+  const arc = resolveBodyCurvature(body);
+  if (!arc) return { xMm: body.lengthMm, yMm: 0 };
+  return arcEndLocal(arc.radiusMm, body.geomArcSweepDeg ?? 1);
+};

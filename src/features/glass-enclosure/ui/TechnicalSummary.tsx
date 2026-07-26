@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
-import { isRealArc, resolveArc } from '../model/arcGeometry';
+import { isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometry';
 import { panelNetAreaMm2 } from '../model/panelOutline';
 import { parsePanelPolygonPoints } from '../model/panelPolygon';
 import type { GlassTypeDto, ProfileSystemDto } from '../model/glassEnclosure.types';
@@ -67,10 +67,15 @@ export function TechnicalSummary({ glassTypes, profileSystems }: TechnicalSummar
     const curvedRuns = runs
       .filter((r) => isRealArc(r.geomArcRadiusMm, r.geomArcSweepDeg))
       .map((r) => {
-        const resolved = resolveArc(r.geomArcRadiusMm ?? 0, r.geomArcSweepDeg ?? 1);
+        // Report the arc the scene actually draws — the radius re-derived from the authoritative
+        // chord + sweep. Reading the stored radius raw quoted a curve nobody built.
+        const resolved = resolveArc(
+          radiusFromChordSweep(r.lengthMm, r.geomArcRadiusMm, r.geomArcSweepDeg),
+          r.geomArcSweepDeg ?? 1,
+        );
         return {
           label: r.label,
-          radiusMm: resolved.radiusMm,
+          radiusMm: Math.round(resolved.radiusMm),
           arcLengthMm: Math.round(resolved.arcLengthMm),
           bent: r.arcGlassBent ?? false,
         };

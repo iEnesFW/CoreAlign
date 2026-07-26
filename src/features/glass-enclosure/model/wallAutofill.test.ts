@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeOpeningEdges, panelCountForWidth, suggestedPanelCount } from './wallAutofill';
-import { arcEndLocal, arcPointAt, resolveArc } from './arcGeometry';
+import { arcEndLocal, arcPointAt } from './arcGeometry';
+import { resolveWallArc } from './wallHoleGeometry';
 import type { SceneRunState, SceneWallState } from './project.types';
 
 const fillRun = (
@@ -192,7 +193,11 @@ describe('computeOpeningEdges on an ARC wall (sub-arc fill)', () => {
     expect(edges).toHaveLength(1);
     const edge = edges[0];
 
-    const resolved = resolveArc(2000, 90);
+    // Resolve exactly the way production does — from the AUTHORITATIVE chord + sweep, not the raw
+    // stored radius. Reading 2000 raw here measured a band nobody draws (chord 2828 at 90° is
+    // R1999.7) and let a 0.3 mm resolver split-brain hide behind the assertion's tolerance.
+    const resolved = resolveWallArc(arcWallWithHole());
+    if (!resolved) throw new Error('arc wall did not resolve');
     const u0 = 1571 - 300;
     const phi0 = u0 / resolved.radiusMm;
     const subSweepRad = 600 / resolved.radiusMm;
@@ -200,7 +205,8 @@ describe('computeOpeningEdges on an ARC wall (sub-arc fill)', () => {
     expect(edge.originX).toBeCloseTo(1000 + expectedStart.x, 0);
     expect(edge.originY).toBeCloseTo(500 + expectedStart.z, 0);
 
-    expect(edge.geomArcRadiusMm).toBe(resolved.radiusMm);
+    // Measured on the exact band, PERSISTED as an integer (the column is whole millimetres).
+    expect(edge.geomArcRadiusMm).toBe(Math.round(resolved.radiusMm));
     expect(Math.abs(edge.geomArcSweepDeg ?? 0)).toBeCloseTo((subSweepRad * 180) / Math.PI, 1);
     expect(edge.arcGlassBent).toBe(true);
     expect(edge.lengthMm).toBe(Math.round(2 * resolved.radiusMm * Math.sin(subSweepRad / 2)));

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { bodyEndLocalMm } from '../geometry/curvature';
 import { safeRequest, safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { queueToast } from '@/shared/api/toastQueue';
 import { glassProjectsApi } from '../api/glassProjectsApi';
@@ -6,7 +7,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeWallFillPlan, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
-import { arcEndLocal, developedLengthMm } from '../model/arcGeometry';
+import { developedLengthMm } from '../model/arcGeometry';
 import {
   useAddConnectionMutation,
   useAddRunMutation,
@@ -29,7 +30,12 @@ const edgeEndpoints = (edge: GapEdge): { x: number; y: number }[] => {
   const rad = (edge.rotationDeg * Math.PI) / 180;
   const start = { x: edge.originX, y: edge.originY };
   if (edge.geomArcRadiusMm && edge.geomArcSweepDeg) {
-    const e = arcEndLocal(edge.geomArcRadiusMm, edge.geomArcSweepDeg);
+    const e = bodyEndLocalMm({
+      lengthMm: edge.lengthMm,
+      rotationDeg: edge.rotationDeg,
+      geomArcRadiusMm: edge.geomArcRadiusMm,
+      geomArcSweepDeg: edge.geomArcSweepDeg,
+    });
     return [
       start,
       {

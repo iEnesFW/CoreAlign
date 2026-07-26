@@ -1,4 +1,5 @@
-import { arcEndLocal, isRealArc, radiusFromChordSweep } from './arcGeometry';
+import { isRealArc, radiusFromChordSweep } from './arcGeometry';
+import { bodyEndLocalMm } from '../geometry/curvature';
 import type { SceneRunState, SceneWallState } from './project.types';
 
 const ATTACH_BAND_MM = 80;
@@ -10,7 +11,7 @@ const runEndPoint = (run: SceneRunState): { x: number; y: number } => {
   const sin = Math.sin(rad);
   if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
     // CHORD-INVARIANT: the end sits at the fixed chord endpoint, derived from the stored radius+sweep.
-    const e = arcEndLocal(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+    const e = bodyEndLocalMm(run);
     return {
       x: run.originX + e.xMm * cos - e.yMm * sin,
       y: run.originY + e.xMm * sin + e.yMm * cos,

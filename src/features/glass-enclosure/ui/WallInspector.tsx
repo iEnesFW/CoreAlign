@@ -90,6 +90,29 @@ export function WallInspector() {
       clampedPatch.thicknessMm = Math.max(50, Math.round(clampedPatch.thicknessMm));
     if (typeof clampedPatch.heightEndMm === 'number')
       clampedPatch.heightEndMm = Math.max(100, Math.round(clampedPatch.heightEndMm));
+    // WHY: on an ARC wall a typed length is a keep-sweep CHORD resize. Storing the new chord with
+    // the STALE radius leaves the row self-inconsistent, and every (u,v) consumer then inverts a
+    // cylinder nobody draws — measured at 583 mm of pick error on a 4500 mm chord still carrying
+    // R3000, which is what turned a free-drawn hole into a distorted, unrelated one.
+    if (
+      typeof clampedPatch.lengthMm === 'number' &&
+      clampedPatch.geomArcRadiusMm === undefined &&
+      isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
+    ) {
+      const resized = commitArcOrWarn(
+        wall,
+        { kind: 'chordResize', chordMm: clampedPatch.lengthMm },
+        t,
+      );
+      if (!resized) {
+        setDraft(wall);
+        return;
+      }
+      clampedPatch.lengthMm = resized.lengthMm ?? clampedPatch.lengthMm;
+      clampedPatch.rotationDeg = resized.rotationDeg;
+      clampedPatch.geomArcRadiusMm = resized.geomArcRadiusMm;
+      clampedPatch.geomArcSweepDeg = resized.geomArcSweepDeg;
+    }
     const candidate: SceneWallState = { ...wall, ...clampedPatch };
     const alreadyColliding = penetratesAny(
       buildWallFootprint(wall, 0, 0, wall.rotationDeg),

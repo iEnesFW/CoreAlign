@@ -1,10 +1,5 @@
-import {
-  arcEndLocal,
-  bowArcPlanPoints,
-  bowFromArc,
-  isRealArc,
-  radiusFromChordSweep,
-} from './arcGeometry';
+import { bowArcPlanPoints, bowFromArc, isRealArc, radiusFromChordSweep } from './arcGeometry';
+import { bodyEndLocalMm } from '../geometry/curvature';
 import { polygonSelfIntersects, type Point2D } from './polygonValidation';
 import type { SceneSurfacePoint, SceneWallState } from './project.types';
 
@@ -28,7 +23,7 @@ const wallStart = (wall: SceneWallState): Point2D => ({ x: wall.originX, y: wall
 
 const localEnd = (wall: SceneWallState): Point2D => {
   if (isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
-    const e = arcEndLocal(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 0);
+    const e = bodyEndLocalMm(wall);
     return { x: e.xMm, y: e.yMm };
   }
   if (isBentWall(wall)) {

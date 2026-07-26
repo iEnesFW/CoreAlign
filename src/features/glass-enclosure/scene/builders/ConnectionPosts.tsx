@@ -1,5 +1,6 @@
 import { ProfileBar } from './ProfileBar';
-import { arcEndLocal, isRealArc } from '../../model/arcGeometry';
+import { bodyEndLocalMm } from '../../geometry/curvature';
+import { isRealArc } from '../../model/arcGeometry';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { ColorOptionDto } from '../../model/glassEnclosure.types';
 import type { SceneConnectionState, SceneRunState } from '../../model/project.types';
@@ -22,7 +23,7 @@ const runEndpoints = (run: SceneRunState): { x: number; y: number }[] => {
   let endX: number;
   let endY: number;
   if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
-    const e = arcEndLocal(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+    const e = bodyEndLocalMm(run);
     endX = run.originX + e.xMm * cos - e.yMm * sin;
     endY = run.originY + e.xMm * sin + e.yMm * cos;
   } else {

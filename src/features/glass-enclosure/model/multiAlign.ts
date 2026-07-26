@@ -1,4 +1,4 @@
-import { arcEndLocal, isRealArc, resolveArc } from './arcGeometry';
+import { arcEndLocal, isRealArc, radiusFromChordSweep, resolveArc } from './arcGeometry';
 import type { SceneRunState, SceneSlabState, SceneWallState } from './project.types';
 
 export type AlignTarget =
@@ -20,7 +20,10 @@ const DEG2RAD = Math.PI / 180;
 const lineEndXY = (line: SceneRunState | SceneWallState): PlanXY => {
   const rad = line.rotationDeg * DEG2RAD;
   if (isRealArc(line.geomArcRadiusMm, line.geomArcSweepDeg)) {
-    const resolved = resolveArc(line.geomArcRadiusMm ?? 0, line.geomArcSweepDeg ?? 1);
+    const resolved = resolveArc(
+      radiusFromChordSweep(line.lengthMm, line.geomArcRadiusMm, line.geomArcSweepDeg),
+      line.geomArcSweepDeg ?? 1,
+    );
     const e = arcEndLocal(resolved.radiusMm, line.geomArcSweepDeg ?? 1);
     return {
       x: line.originX + e.xMm * Math.cos(rad) - e.yMm * Math.sin(rad),

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { bodyEndLocalMm } from '../geometry/curvature';
 import { useTranslation } from 'react-i18next';
 import { BrickWall, Minus, MoveDiagonal2, Pencil, Plus, Square } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { resolveWallHoles } from '../model/wallHoleGeometry';
-import { arcEndLocal, isRealArc, resolveArc } from '../model/arcGeometry';
+import { isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometry';
 import { snapAngleDeg } from '../model/angleSnap';
 import type { SceneRunState, SceneSlabState, SceneWallState } from '../model/project.types';
 
@@ -60,7 +61,7 @@ const rotateVec = (xMm: number, yMm: number, rotationDeg: number): Vec => {
 
 const runEndLocal = (run: SceneRunState): Vec => {
   if (!isArcRun(run)) return { x: run.lengthMm, y: 0 };
-  const arc = arcEndLocal(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1);
+  const arc = bodyEndLocalMm(run);
   return { x: arc.xMm, y: arc.yMm };
 };
 
@@ -85,9 +86,14 @@ type ArcRenderParams = { radiusMm: number; largeArcFlag: 0 | 1; sweepFlag: 0 | 1
 
 const arcRenderParams = (run: SceneRunState): ArcRenderParams | null => {
   if (!isArcRun(run)) return null;
-  // RAW stored radius — exactly what the 3D renderer, snap targets and collision footprints use,
-  // so the 2D plan can never draw an arc the other systems disagree with.
-  const radiusMm = resolveArc(run.geomArcRadiusMm ?? 0, run.geomArcSweepDeg ?? 1).radiusMm;
+  // The radius re-derived from the authoritative chord + sweep — exactly what the 3D renderer,
+  // snap targets and collision footprints use, so the 2D plan can never draw an arc the other
+  // systems disagree with. (Reading the stored radius raw drew a different curve on a row whose
+  // chord had been edited without the radius following.)
+  const radiusMm = resolveArc(
+    radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
+    run.geomArcSweepDeg ?? 1,
+  ).radiusMm;
   // CHORD-INVARIANT: the sweep is stored directly (a major arc >180° sets the SVG large-arc flag).
   const sweepRad = Math.min((Math.abs(run.geomArcSweepDeg ?? 0) * Math.PI) / 180, Math.PI * 2);
   return {

@@ -242,7 +242,23 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
   const { commitWallPatch } = useWallEntityActions();
 
   const commit = (patch: Partial<SceneWallState>) => {
-    const candidate = { ...wall, ...patch };
+    // WHY: on an ARC wall a typed length is a keep-sweep CHORD resize. Writing the chord with the
+    // STALE radius leaves the row self-inconsistent and every curved-surface (u,v) consumer then
+    // inverts a cylinder nobody draws (measured: 583 mm of pick drift), which is what made a
+    // free-drawn hole land distorted and unrelated to the stroke.
+    let effective = patch;
+    if (patch.lengthMm !== undefined && isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)) {
+      const arc = commitArcOrWarn(wall, { kind: 'chordResize', chordMm: patch.lengthMm }, t);
+      if (!arc) return;
+      effective = {
+        ...patch,
+        lengthMm: arc.lengthMm ?? patch.lengthMm,
+        rotationDeg: arc.rotationDeg,
+        geomArcRadiusMm: arc.geomArcRadiusMm,
+        geomArcSweepDeg: arc.geomArcSweepDeg,
+      };
+    }
+    const candidate = { ...wall, ...effective };
     const state = useDesignerStore.getState();
     const attached = findAttachedRunIds(wall, state.scene.runs);
     // Exempt a group sibling ONLY where it already touches this wall (an L-leg joint) — a sibling
@@ -271,7 +287,7 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
     ) {
       return;
     }
-    commitWallPatch(wall, patch);
+    commitWallPatch(wall, effective);
   };
 
   return (

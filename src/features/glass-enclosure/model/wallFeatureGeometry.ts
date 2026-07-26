@@ -1,4 +1,4 @@
-import { isRealArc, resolveArc } from './arcGeometry';
+import { bodyDevelopedLengthMm } from '../geometry/curvature';
 import type {
   SceneWallFeature,
   SceneWallFeaturePoint,
@@ -256,10 +256,7 @@ export const sanitizeFreeOutline = (
 // A curved wall's face coordinates run in DEVELOPED arc-length units (curvedWallPickUv maps hits
 // with u ∈ [0, radius·sweep]), so the usable face length is the developed length — the chord
 // (lengthMm) is always shorter and would reject shapes on the far part of a deep curve.
-export const wallFaceLengthMm = (wall: SceneWallState): number =>
-  isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
-    ? resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1).arcLengthMm
-    : wall.lengthMm;
+export const wallFaceLengthMm = (wall: SceneWallState): number => bodyDevelopedLengthMm(wall);
 
 export const wallHeightAtMm = (wall: SceneWallState, xMm: number): number => {
   const heightEnd = wall.heightEndMm ?? wall.heightMm;

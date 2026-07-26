@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { bodyEndLocalMm } from '../geometry/curvature';
 import { useTranslation } from 'react-i18next';
 import {
   SceneViewport,
@@ -1457,7 +1458,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   }) => {
     const rad = body.rotationDeg * DEG2RAD;
     if (isRealArc(body.geomArcRadiusMm, body.geomArcSweepDeg)) {
-      const e = arcEndLocal(body.geomArcRadiusMm ?? 0, body.geomArcSweepDeg ?? 1);
+      const e = bodyEndLocalMm(body);
       return {
         x: body.originX + (e.xMm / 2) * Math.cos(rad) - (e.yMm / 2) * Math.sin(rad),
         y: body.originY + (e.xMm / 2) * Math.sin(rad) + (e.yMm / 2) * Math.cos(rad),

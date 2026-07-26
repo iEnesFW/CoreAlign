@@ -158,6 +158,8 @@ export const computeWallFillPlan = (
         const rotationDeg =
           Math.round((wall.rotationDeg + resolvedArcWall.direction * phi0 * (180 / Math.PI)) * 10) /
           10;
+        // WHY: measure on the EXACT resolved radius (the band the wall actually draws), round only
+        // what is stored — geomArcRadiusMm is persisted as an integer.
         const subChordMm = Math.round(2 * resolvedArcWall.radiusMm * Math.sin(subSweepRad / 2));
         // WHY: 0.01° (matches the backend numeric(5,2) so it survives the refetch) — a coarser 0.1°
         // drifted the panel's DEVELOPED width ~2-3mm from the hole, the visible gap on a shaped fill.
@@ -179,7 +181,7 @@ export const computeWallFillPlan = (
           hasTopDrip: false,
           hasBottomThreshold: false,
           geomZ,
-          geomArcRadiusMm: resolvedArcWall.radiusMm,
+          geomArcRadiusMm: Math.round(resolvedArcWall.radiusMm),
           geomArcSweepDeg: subSweepDeg,
           panels: [],
         };
@@ -194,7 +196,7 @@ export const computeWallFillPlan = (
           lengthMm: subChordMm,
           heightMm,
           geomZ,
-          geomArcRadiusMm: resolvedArcWall.radiusMm,
+          geomArcRadiusMm: Math.round(resolvedArcWall.radiusMm),
           geomArcSweepDeg: subSweepDeg,
           arcGlassBent: true,
           shapeKind: hole.shape?.shapeKind ?? null,
