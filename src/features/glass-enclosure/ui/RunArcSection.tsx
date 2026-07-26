@@ -4,13 +4,9 @@ import { FlipHorizontal } from 'lucide-react';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
-import {
-  deriveArcFromChordSagitta,
-  deriveArcFromRadius,
-  deriveArcFromSweep,
-  facetJointAngleDeg,
-  isRealArc,
-} from '../model/arcGeometry';
+import { deriveArcFromRadius, facetJointAngleDeg, isRealArc } from '../model/arcGeometry';
+import { arcCommitKeepingEnds } from '../geometry/arcCommit';
+import type { ArcCommitInput } from '../geometry/arcCommit';
 import type { ScenePanelState, SceneRunState } from '../model/project.types';
 
 interface RunArcSectionProps {
@@ -44,9 +40,6 @@ export function RunArcSection({
 
   const radius = draft.geomArcRadiusMm ?? 0;
   const isArc = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg);
-  // The sign of geomArcSweepDeg is the bulge direction (computeArcLayout/arcEndLocal read it).
-  // Preserve it when recomputing the arc so a flipped curve stays flipped after a radius/sweep edit.
-  const sweepSign = (draft.geomArcSweepDeg ?? 0) < 0 ? -1 : 1;
   // draft.lengthMm is the chord (the fixed span); radius → minor sweep = 2·asin(chord/2r).
   const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius) : null;
   const jointAngle = derived ? facetJointAngleDeg(derived.sweepDeg, panels.length) : 0;
@@ -59,47 +52,46 @@ export function RunArcSection({
   const bentOnArc = (): { arcGlassBent?: boolean } =>
     committedArcRadiusMm > 0 ? {} : { arcGlassBent: true };
 
-  const commitRadius = (raw: number) => {
-    if (raw > 0) {
-      const next = deriveArcFromRadius(draft.lengthMm, Math.max(minRadius, raw));
-      onDraftRadius(next.radiusMm);
-      commit({
-        geomArcRadiusMm: next.radiusMm,
-        geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
-        ...bentOnArc(),
-      });
-    } else {
-      commit({ geomArcRadiusMm: null, geomArcSweepDeg: null });
+  // WHY: every curvature edit goes through the ONE writer. It re-rolls rotationDeg for the new
+  // sweep, which is what keeps both endpoints pinned — writing radius+sweep on their own swung the
+  // far end by metres and read to the user as "width, height and position all changed".
+  const applyArc = (input: ArcCommitInput): boolean => {
+    const { patch, rejection, radiusMm } = arcCommitKeepingEnds(draft, input);
+    if (!patch) {
+      if (rejection === 'radiusTooSmall') {
+        queueToast({
+          dedupeKey: 'glass-arc-radius-too-small',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
+            defaultValue:
+              'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
+            r: radiusMm ?? 0,
+          }),
+        });
+      }
+      return false;
     }
+    onDraftRadius(patch.geomArcRadiusMm);
+    commit({
+      ...(patch.lengthMm !== undefined ? { lengthMm: patch.lengthMm } : {}),
+      rotationDeg: patch.rotationDeg,
+      geomArcRadiusMm: patch.geomArcRadiusMm,
+      geomArcSweepDeg: patch.geomArcSweepDeg,
+      ...(patch.geomArcSweepDeg === null ? {} : bentOnArc()),
+    });
+    return true;
   };
 
-  // The server validator rejects GeomArcRadiusMm < 100 — without this guard the arc APPEARED to
-  // apply, then the failed persist silently reverted it on the next refetch.
-  const guardRadius = (radiusMm: number): boolean => {
-    if (radiusMm >= 100) return true;
-    queueToast({
-      dedupeKey: 'glass-arc-radius-too-small',
-      variant: 'warning',
-      description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
-        defaultValue:
-          'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
-        r: radiusMm,
-      }),
-    });
-    return false;
+  const commitRadius = (raw: number) => {
+    applyArc(
+      raw > 0 ? { kind: 'radius', radiusMm: Math.max(minRadius, raw) } : { kind: 'straighten' },
+    );
   };
 
   const commitSweep = () => {
     const deg = Number(sweepDraft);
     if (!deg || deg <= 0) return;
-    const next = deriveArcFromSweep(draft.lengthMm, deg);
-    if (!guardRadius(next.radiusMm)) return;
-    onDraftRadius(next.radiusMm);
-    commit({
-      geomArcRadiusMm: next.radiusMm,
-      geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
-      ...bentOnArc(),
-    });
+    applyArc({ kind: 'sweep', sweepDeg: deg });
     setSweepDraft('');
   };
 
@@ -108,26 +100,15 @@ export function RunArcSection({
     const sagitta = Number(sagittaDraft);
     // A bow past half the chord is a MAJOR arc (> 180°) — allowed; only reject non-positive input.
     if (!chord || !sagitta || chord <= 0 || sagitta <= 0) return;
-    const next = deriveArcFromChordSagitta(chord, sagitta);
-    if (!guardRadius(next.radiusMm)) return;
-    onDraftRadius(next.radiusMm);
-    commit({
-      // CHORD-INVARIANT: a field-measured chord+sagitta — lengthMm is the CHORD (the fixed span).
-      lengthMm: next.chordMm,
-      geomArcRadiusMm: next.radiusMm,
-      geomArcSweepDeg: sweepSign * (Math.round(next.sweepDeg * 10) / 10),
-      ...bentOnArc(),
-    });
+    if (!applyArc({ kind: 'chordSagitta', chordMm: chord, sagittaMm: sagitta })) return;
     setChordDraft('');
     setSagittaDraft('');
   };
 
-  // Mirror the curve: negate the sweep sign so the arc bulges the other way (for an arc drawn
-  // in the wrong direction). No-op on a straight run.
+  // Mirror the curve so it bulges the other way. The sweep sign alone is not enough — the pose has
+  // to be re-rolled too, or the body pivots around its start instead of mirroring in place.
   const flipArc = () => {
-    const current = draft.geomArcSweepDeg ?? 0;
-    if (current === 0) return;
-    commit({ geomArcSweepDeg: -current });
+    applyArc({ kind: 'flip' });
   };
 
   return (

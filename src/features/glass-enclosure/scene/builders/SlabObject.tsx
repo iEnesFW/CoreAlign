@@ -44,13 +44,10 @@ import {
 } from './curvedSlabGeometry';
 import { buildPitchedRoofGeometry } from './pitchedRoofGeometry';
 import { edgeColorFor } from './edgeColor';
-import {
-  arcFromCornerResize,
-  bowFromArc,
-  deriveArcFromChordSagitta,
-  deriveArcFromSweep,
-  isRealArc,
-} from '../../model/arcGeometry';
+import { bowFromArc, isRealArc } from '../../model/arcGeometry';
+import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
+import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
+import type { CurvablePose } from '../../geometry/curvature';
 import { edgeArcOutline, hasEdgeArc } from '../../model/edgeArcOutline';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import type { WallFeatureSide } from './wallFaces';
@@ -366,6 +363,15 @@ export function SlabObject({
   const slabCurrentSagittaMm = isArcSlab
     ? bowFromArc(chordLenMm, slab.geomArcRadiusMm ?? 0, slab.geomArcSweepDeg ?? 0)
     : 0;
+  // The slab as the shared curvature writer sees it: the BENT AXIS is the chord (length or depth),
+  // and the pose is SYMMETRIC — rotationDeg stays the axis direction because the mesh builder
+  // (curvedSlabPlanColumnsMm) owns the mirror. Rolling it like a run/wall would swing the deck.
+  const slabArcPose = (chordMm = chordLenMm): CurvablePose => ({
+    lengthMm: chordMm,
+    rotationDeg: slab.rotationDeg,
+    geomArcRadiusMm: slab.geomArcRadiusMm,
+    geomArcSweepDeg: slab.geomArcSweepDeg,
+  });
   // Developed (s,c) frame of a plan-curved slab: ALL pen/draw/feature coordinates live in it, so
   // the surface never "behaves flat" — picks invert plan→(s,c), previews/cuts map (s,c)→plan.
   const arcFrame = useMemo(
@@ -1086,24 +1092,18 @@ export function SlabObject({
       resetBody();
       return;
     }
-    const scaled = arcFromCornerResize(next, slab.geomArcSweepDeg ?? 1);
-    if (scaled.geomArcRadiusMm < 100) {
+    const arc = commitArcOrWarn(slabArcPose(), { kind: 'chordResize', chordMm: next }, t, {
+      pose: 'symmetric',
+    });
+    if (!arc) {
       resetBody();
-      queueToast({
-        dedupeKey: 'glass-arc-radius-too-small',
-        variant: 'warning',
-        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
-          defaultValue:
-            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
-          r: scaled.geomArcRadiusMm,
-        }),
-      });
       return;
     }
     const shift = fromStart ? next - current : 0;
     const patch: Partial<SceneSlabState> = {
       ...(isLength ? { lengthMm: next } : { depthMm: next }),
-      geomArcRadiusMm: scaled.geomArcRadiusMm,
+      geomArcRadiusMm: arc.geomArcRadiusMm,
+      geomArcSweepDeg: arc.geomArcSweepDeg,
       ...(fromStart
         ? isLength
           ? {
@@ -1479,15 +1479,18 @@ export function SlabObject({
                   const nextOriginX = next.originX + Math.sin(nr) * backHalf;
                   const nextOriginY = next.originY - Math.cos(nr) * backHalf;
                   const bentChordMm = slabArcAxis === 'length' ? next.lengthMm : next.crossMm;
-                  const radius = deriveArcFromSweep(
-                    Math.max(100, bentChordMm),
-                    Math.abs(slab.geomArcSweepDeg ?? 90),
-                  ).radiusMm;
+                  // Preview through the WRITER so the dashed band is byte-for-byte what a release
+                  // would store.
+                  const previewArc = arcCommitKeepingEnds(
+                    slabArcPose(Math.max(100, bentChordMm)),
+                    { kind: 'chordResize', chordMm: Math.max(100, bentChordMm) },
+                    { pose: 'symmetric' },
+                  ).patch;
                   const outline = curvedSlabPlanOutlineMm(
                     next.lengthMm,
                     next.crossMm,
-                    radius,
-                    slab.geomArcSweepDeg ?? 1,
+                    previewArc?.geomArcRadiusMm ?? slab.geomArcRadiusMm ?? 0,
+                    previewArc?.geomArcSweepDeg ?? slab.geomArcSweepDeg ?? 1,
                     slabArcAxis,
                   );
                   const topY = (slab.elevationMm + slab.thicknessMm) / 1000;
@@ -1507,18 +1510,24 @@ export function SlabObject({
             const backHalf = next.crossMm / 2;
             const originX = Math.round(next.originX + Math.sin(nr) * backHalf);
             const originY = Math.round(next.originY - Math.cos(nr) * backHalf);
-            // A corner resize on a plan-arc slab changes the bent axis' CHORD: keep the curl angle
-            // (sweep) and re-derive the radius so the arc ends stay pinned to the new corners
-            // (arcFromCornerResize semantics — same rule the wall/run end handles use).
+            // A corner resize on a plan-arc slab changes the bent axis' CHORD: the shared writer
+            // keeps the curl angle (sweep) and re-derives the radius so the arc ends stay pinned to
+            // the new corners — the same rule the wall/run end handles use.
             const bentChordMm = slabArcAxis === 'length' ? next.lengthMm : next.crossMm;
-            const arcPatch = isArcSlab
-              ? {
-                  geomArcRadiusMm: deriveArcFromSweep(
-                    bentChordMm,
-                    Math.abs(slab.geomArcSweepDeg ?? 90),
-                  ).radiusMm,
-                }
-              : {};
+            let arcPatch: Partial<SceneSlabState> = {};
+            if (isArcSlab) {
+              const arc = commitArcOrWarn(
+                slabArcPose(bentChordMm),
+                { kind: 'chordResize', chordMm: bentChordMm },
+                t,
+                { pose: 'symmetric' },
+              );
+              if (!arc) return;
+              arcPatch = {
+                geomArcRadiusMm: arc.geomArcRadiusMm,
+                geomArcSweepDeg: arc.geomArcSweepDeg,
+              };
+            }
             // Reject a corner resize that would grow the slab into a neighbour — checked against
             // the SAME band that will be committed (the re-derived radius), not the stale one.
             const resized = buildSlabFootprint(
@@ -1554,25 +1563,23 @@ export function SlabObject({
           currentSagittaMm={slabCurrentSagittaMm}
           topYM={(slab.elevationMm + slab.thicknessMm) / 1000}
           onCommit={(sagittaMm) => {
-            // SYMMETRIC plan bow (no rotation): the bent axis' two ends stay FIXED; the sagitta sets
-            // the curve. radius+sweep derived from chord(=axis length)+sagitta; rotationDeg untouched.
-            // Below the straighten threshold it returns to a flat slab (null radius/sweep).
-            if (Math.abs(sagittaMm) < 25) {
-              updateSlab(slab.id, { geomArcRadiusMm: null, geomArcSweepDeg: null });
-              return;
-            }
-            // Canonical arcFromBow/bowFromArc sign pair: +sagitta (the chord's CCW "+across", what
-            // the handle reports) → NEGATIVE sweep — so the re-grab handle rests on the visible
-            // apex instead of its mirror, and the mesh (slabArcDirSign) bows on the dragged side.
+            // SYMMETRIC plan bow: the bent axis' two ends stay FIXED and rotationDeg is UNTOUCHED
+            // (the mesh builder owns the mirror). The shared writer supplies the quantised sweep,
+            // the chord-consistent radius, the straighten deadzone and the server-radius guard;
+            // the sign pair (+sagitta → NEGATIVE sweep) is the same contract runs/walls use, so the
+            // re-grab handle rests on the visible apex and the deck bows on the dragged side.
             // Features SURVIVE the curve (#6b): the arc branch carves + renders them in the
             // developed (s,c) frame, so nothing needs dropping.
-            const d = deriveArcFromChordSagitta(chordLenMm, Math.abs(sagittaMm));
+            const arc = commitArcOrWarn(slabArcPose(), { kind: 'bow', sagittaMm }, t, {
+              pose: 'symmetric',
+            });
+            if (!arc) return;
             updateSlab(slab.id, {
-              geomArcRadiusMm: d.radiusMm,
-              geomArcSweepDeg: Math.round((sagittaMm >= 0 ? -1 : 1) * d.sweepDeg * 10) / 10,
-              slabArcAxis,
-              arcRiseMm: null,
-              pitchRiseMm: null,
+              geomArcRadiusMm: arc.geomArcRadiusMm,
+              geomArcSweepDeg: arc.geomArcSweepDeg,
+              ...(arc.geomArcRadiusMm === null
+                ? {}
+                : { slabArcAxis, arcRiseMm: null, pitchRiseMm: null }),
             });
           }}
         />

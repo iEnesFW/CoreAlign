@@ -10,12 +10,10 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import { wallFeatureModeLabelKey, wallFeatureShapeLabelKey } from '../model/wallFeatureLabels';
-import {
-  deriveArcFromRadius,
-  deriveArcFromSweep,
-  isRealArc,
-  minArcRadiusMm,
-} from '../model/arcGeometry';
+import { isRealArc } from '../model/arcGeometry';
+import { commitArcOrWarn } from '../geometry/arcCommitFeedback';
+import type { ArcCommitInput } from '../geometry/arcCommit';
+import type { CurvablePose } from '../geometry/curvature';
 import { slabArcDefaultSweepSign } from '../scene/builders/curvedSlabGeometry';
 import type { EdgeArcKey, EdgeArcMap, SceneSlabState } from '../model/project.types';
 import { ObjectAppearanceSection } from './ObjectAppearanceSection';
@@ -137,41 +135,41 @@ export function SlabInspector() {
   // Plan arc (curves like a wall) — mutually exclusive with barrel/pitch (the up-curve). Radius/
   // sweep set the curve while the bent axis' two ends stay fixed (symmetric, no rotation).
   // Features SURVIVE (#6b): the arc branch carves + renders them in the developed (s,c) frame.
-  // WHY: the drag path guards a sub-100mm arc radius, but the inspector numeric commits didn't — a
-  // tight sweep on a short chord could persist a degenerate ~50mm band. Reject + toast, like the drag.
-  const arcRadiusTooSmall = (radiusMm: number): boolean => {
-    if (radiusMm >= 100) return false;
-    queueToast({
-      dedupeKey: 'glass-arc-radius-too-small',
-      variant: 'warning',
-      description: t('GlassEnclosure.Designer.ArcRadiusTooSmall', {
-        defaultValue: 'Yarıçap 100 mm altına inemez — daha geniş bir açı veya uzunluk seçin.',
-      }),
+  // Every curvature edit routes through the shared writer with the SYMMETRIC pose (rotationDeg is
+  // the axis, not a rolled tangent — the mesh builder owns the mirror). It supplies the quantised
+  // sweep, the chord-consistent radius and the server-radius guard the drag path already had.
+  const planArcPose = (chordMm = planArcChordMm): CurvablePose => ({
+    lengthMm: chordMm,
+    rotationDeg: draft.rotationDeg,
+    geomArcRadiusMm: draft.geomArcRadiusMm,
+    geomArcSweepDeg: draft.geomArcSweepDeg,
+  });
+  const applyPlanArc = (
+    input: ArcCommitInput,
+    extra: Partial<SceneSlabState> = {},
+    chordMm = planArcChordMm,
+  ) => {
+    const patch = commitArcOrWarn(planArcPose(chordMm), input, t, {
+      pose: 'symmetric',
+      bulge: planArcSign,
+    });
+    if (!patch) return false;
+    commit({
+      geomArcRadiusMm: patch.geomArcRadiusMm,
+      geomArcSweepDeg: patch.geomArcSweepDeg,
+      ...(patch.geomArcRadiusMm === null
+        ? {}
+        : { slabArcAxis: planArcAxis, arcRiseMm: null, pitchRiseMm: null }),
+      ...extra,
     });
     return true;
   };
-  const planArcPatch = (radiusMm: number, sweepDeg: number) => {
-    if (arcRadiusTooSmall(radiusMm)) return;
-    commit({
-      geomArcRadiusMm: radiusMm,
-      geomArcSweepDeg: planArcSign * Math.abs(Math.round(sweepDeg * 10) / 10),
-      slabArcAxis: planArcAxis,
-      arcRiseMm: null,
-      pitchRiseMm: null,
-    });
-  };
   const commitPlanArcRadius = (v: number) => {
-    if (v > 0) {
-      const next = deriveArcFromRadius(planArcChordMm, Math.max(minArcRadiusMm(planArcChordMm), v));
-      planArcPatch(next.radiusMm, next.sweepDeg);
-    } else {
-      commit({ geomArcRadiusMm: null, geomArcSweepDeg: null });
-    }
+    applyPlanArc(v > 0 ? { kind: 'radius', radiusMm: v } : { kind: 'straighten' });
   };
   const commitPlanArcSweep = (v: number) => {
     if (v <= 0) return;
-    const next = deriveArcFromSweep(planArcChordMm, v);
-    planArcPatch(next.radiusMm, next.sweepDeg);
+    applyPlanArc({ kind: 'sweep', sweepDeg: v });
   };
   const setPlanArcAxis = (axis: 'length' | 'depth') => {
     if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg)) {
@@ -181,9 +179,19 @@ export function SlabInspector() {
       // developed (s = along the bend, c = across) frame — swapping the bend axis swaps their
       // coordinates so each shape stays on the same physical spot of the sheet.
       const chord = axis === 'length' ? draft.lengthMm : draft.depthMm;
-      const next = deriveArcFromSweep(chord, Math.abs(draft.geomArcSweepDeg ?? 90));
       const onBodySide = planArcSign === slabArcDefaultSweepSign(planArcAxis);
-      const nextSign = onBodySide ? slabArcDefaultSweepSign(axis) : -slabArcDefaultSweepSign(axis);
+      const nextSign: 1 | -1 = onBodySide
+        ? slabArcDefaultSweepSign(axis)
+        : slabArcDefaultSweepSign(axis) === 1
+          ? -1
+          : 1;
+      const nextArc = commitArcOrWarn(
+        planArcPose(chord),
+        { kind: 'chordResize', chordMm: chord },
+        t,
+        { pose: 'symmetric', bulge: nextSign },
+      );
+      if (!nextArc) return;
       const swappedFeatures =
         axis !== planArcAxis && (slab.features ?? []).length > 0
           ? {
@@ -199,8 +207,8 @@ export function SlabInspector() {
           : {};
       commit({
         slabArcAxis: axis,
-        geomArcRadiusMm: next.radiusMm,
-        geomArcSweepDeg: nextSign * Math.abs(next.sweepDeg),
+        geomArcRadiusMm: nextArc.geomArcRadiusMm,
+        geomArcSweepDeg: nextArc.geomArcSweepDeg,
         ...swappedFeatures,
       });
     } else {
@@ -214,9 +222,7 @@ export function SlabInspector() {
   const commitDimension = (dim: 'lengthMm' | 'depthMm', v: number) => {
     const dimAxis = dim === 'lengthMm' ? 'length' : 'depth';
     if (isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg) && planArcAxis === dimAxis) {
-      const next = deriveArcFromSweep(v, Math.abs(draft.geomArcSweepDeg ?? 90));
-      if (arcRadiusTooSmall(next.radiusMm)) return;
-      commit({ [dim]: v, geomArcRadiusMm: next.radiusMm });
+      applyPlanArc({ kind: 'chordResize', chordMm: v }, { [dim]: v }, v);
       return;
     }
     commit({ [dim]: v });

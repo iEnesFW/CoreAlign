@@ -4,12 +4,9 @@ import { DoorOpen, RectangleHorizontal, Trash2, Wand2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
 import { useWallEntityActions } from '../hooks/useDesignerEntityActions';
-import {
-  deriveArcFromRadius,
-  deriveArcFromSweep,
-  isRealArc,
-  minArcRadiusMm,
-} from '../model/arcGeometry';
+import { isRealArc, minArcRadiusMm } from '../model/arcGeometry';
+import { commitArcOrWarn } from '../geometry/arcCommitFeedback';
+import type { ArcCommitInput, ArcCommitOptions } from '../geometry/arcCommit';
 import { queueToast } from '@/shared/api/toastQueue';
 import {
   buildRunFootprint,
@@ -141,15 +138,36 @@ export function WallInspector() {
   // leaving orphaned data that vanishes from the 3D view but lingers in the model. Surface
   // FEATURES are kept — applyCurvedWallFeatures does carve those into the band, so deleting them
   // was silent data loss for geometry that works.
+  // Every curvature edit in this inspector goes through the ONE writer: it re-rolls rotationDeg for
+  // the new sweep, which is what keeps both wall ends pinned. Writing radius+sweep alone swung the
+  // far end by metres and read to the user as "width, height and position all changed".
+  const applyArc = (
+    input: ArcCommitInput,
+    extra: Partial<SceneWallState> = {},
+    options?: ArcCommitOptions,
+  ) => {
+    const patch = commitArcOrWarn(draft, input, t, options);
+    if (!patch) return false;
+    commit({
+      ...(patch.lengthMm !== undefined ? { lengthMm: patch.lengthMm } : {}),
+      rotationDeg: patch.rotationDeg,
+      geomArcRadiusMm: patch.geomArcRadiusMm,
+      geomArcSweepDeg: patch.geomArcSweepDeg,
+      ...extra,
+    });
+    return true;
+  };
+
   const commitArc = (sweep: number) => {
     const hasExtras = (wall.openings ?? []).length > 0;
-    commit({
-      // CHORD-INVARIANT: lengthMm stays the chord (the fixed span); radius = chord/(2·sin(sweep/2)),
-      // so toggling to an arc bows between the two fixed ends without moving them.
-      geomArcRadiusMm: deriveArcFromSweep(draft.lengthMm, sweep).radiusMm,
-      geomArcSweepDeg: sweep,
-      ...(hasExtras ? { openings: [] } : {}),
-    });
+    // The button's sign IS the requested bulge side, so force it — the writer's default (keep the
+    // side the body already has) is right for a radius edit but wrong for "curve left / right".
+    const applied = applyArc(
+      { kind: 'sweep', sweepDeg: Math.abs(sweep) },
+      hasExtras ? { openings: [] } : {},
+      { bulge: sweep < 0 ? -1 : 1 },
+    );
+    if (!applied) return;
     if (hasExtras) {
       queueToast({
         dedupeKey: 'glass-arc-drops-features',
@@ -555,9 +573,7 @@ export function WallInspector() {
                 key={key}
                 type="button"
                 onClick={() =>
-                  key === 'straight'
-                    ? commit({ geomArcRadiusMm: null, geomArcSweepDeg: null })
-                    : commitArc(sweep ?? 90)
+                  key === 'straight' ? applyArc({ kind: 'straighten' }) : commitArc(sweep ?? 90)
                 }
                 className={`rounded border px-2 py-1.5 text-xs font-medium transition ${
                   active
@@ -580,16 +596,8 @@ export function WallInspector() {
             onCommit={(v) => {
               // CHORD-INVARIANT: setting the radius keeps the CHORD (lengthMm, the fixed span) and
               // re-derives the sweep (= 2·asin(chord/2r)); the tightest radius is a half-circle
-              // (chord/2). Sign kept. (deriveArcFromRadius clamps to the floor.)
-              const sign = (draft.geomArcSweepDeg ?? 1) < 0 ? -1 : 1;
-              const next = deriveArcFromRadius(
-                draft.lengthMm,
-                Math.max(minArcRadiusMm(draft.lengthMm), v),
-              );
-              commit({
-                geomArcRadiusMm: next.radiusMm,
-                geomArcSweepDeg: sign * (Math.round(next.sweepDeg * 10) / 10),
-              });
+              // (chord/2). The writer clamps to that floor and re-rolls the pose so the ends stay.
+              applyArc({ kind: 'radius', radiusMm: v });
             }}
             onDraft={(v) => setDraft({ ...draft, geomArcRadiusMm: v })}
           />

@@ -33,6 +33,7 @@ import {
   radiusFromChordSweep,
   resolveArc,
 } from '../model/arcGeometry';
+import { PLACEMENT_SWEEP_DEG, curvedPlacementArc } from '../geometry/arcCommit';
 import { curvedSlabFrame, curvedSlabPlanColumnsMm } from './builders/curvedSlabGeometry';
 import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
@@ -1511,19 +1512,24 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   };
 
   const placeWall = (draft: PlacementWallDraft) => {
+    // A curved placement must be born through the single writer: it rolls rotationDeg so the CHORD
+    // still runs along the direction the user dragged. Writing radius+sweep on the raw drag angle
+    // swung the far end half a sweep away from where the ghost was drawn.
+    const arc =
+      placementShape === 'curved' ? curvedPlacementArc(draft.lengthMm, draft.rotationDeg) : null;
     const wall: SceneWallState = {
       id: crypto.randomUUID(),
       originX: draft.originX,
       originY: draft.originY,
-      rotationDeg: draft.rotationDeg,
+      rotationDeg: arc?.rotationDeg ?? draft.rotationDeg,
       lengthMm: draft.lengthMm,
       heightMm: draft.heightMm,
       heightEndMm: null,
       thicknessMm: draft.thicknessMm,
       colorHex: null,
       openings: [],
-      geomArcRadiusMm: placementShape === 'curved' ? draft.lengthMm : null,
-      geomArcSweepDeg: placementShape === 'curved' ? 60 : null,
+      geomArcRadiusMm: arc?.geomArcRadiusMm ?? null,
+      geomArcSweepDeg: arc?.geomArcSweepDeg ?? null,
     };
     addWall(wall);
     setPlacement(null);
@@ -1573,11 +1579,15 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     // then sizes the panels from the DEVELOPED length. A straight create + arc patch left the
     // server panels summing to the CHORD (BOM glass under-measured ~4.5% at 60°), and the old
     // local patch targeted runs[runs.length-1] — the wrong run before the refetch landed.
-    // rotationDeg rolls by −sweep/2 so the chord stays along the placement direction; at 60° the
-    // radius equals the chord (2·r·sin30° = r).
-    const curved = placementShape === 'curved';
-    const developedMm = curved
-      ? developedLengthMm(draft.lengthMm, draft.lengthMm, 60)
+    // The single writer rolls rotationDeg so the chord stays along the placement direction.
+    const arc =
+      placementShape === 'curved' ? curvedPlacementArc(draft.lengthMm, draft.rotationDeg) : null;
+    const developedMm = arc
+      ? developedLengthMm(
+          draft.lengthMm,
+          arc.geomArcRadiusMm ?? draft.lengthMm,
+          PLACEMENT_SWEEP_DEG,
+        )
       : draft.lengthMm;
     await safeRequestWithNotify(
       enqueuePersist(() =>
@@ -1589,9 +1599,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             profileSystemId: profileSystems[0].id,
             originX: draft.originX,
             originY: draft.originY,
-            rotationDeg: curved
-              ? Math.round((draft.rotationDeg - 30) * 100) / 100
-              : draft.rotationDeg,
+            rotationDeg: arc?.rotationDeg ?? draft.rotationDeg,
             panelCount: Math.max(1, Math.ceil(developedMm / PANEL_TARGET_WIDTH_MM)),
             label: `${t('GlassEnclosure.Designer.DefaultRunLabel', { defaultValue: 'Hat' })} ${
               runCount + 1
@@ -1600,8 +1608,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             hasTopDrip: true,
             hasBottomThreshold: false,
             geomZ: 0,
-            geomArcRadiusMm: curved ? draft.lengthMm : null,
-            geomArcSweepDeg: curved ? 60 : null,
+            geomArcRadiusMm: arc?.geomArcRadiusMm ?? null,
+            geomArcSweepDeg: arc?.geomArcSweepDeg ?? null,
             arcGlassBent: false,
             notes: null,
           },

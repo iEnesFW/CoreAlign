@@ -2,21 +2,20 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
-import { queueToast } from '@/shared/api/toastQueue';
 import { ArcOutline } from './ArcOutline';
 import { CurvedPanelMesh } from './CurvedPanelMesh';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import {
   arcEndLocal,
-  arcFromBow,
-  arcFromCornerResize,
   bowArcPlanPoints,
   bowFromArc,
   computeArcLayout,
   radiusFromChordSweep,
   resolveArc,
 } from '../../model/arcGeometry';
+import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
+import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -319,30 +318,21 @@ export function ArcRunGroup({
   const commitArcChord = (deltaMm: number, fromStart: boolean) => {
     const target = stickyDelta(chordMm, deltaMm);
     const newChord = Math.max(MIN_RUN_LENGTH_MM, Math.round(chordMm + target));
-    const scaled = arcFromCornerResize(newChord, run.geomArcSweepDeg ?? 1);
     if (newChord === Math.round(chordMm)) {
       resetBody();
       return;
     }
-    if (scaled.geomArcRadiusMm < 100) {
-      // Toast LOCALLY (like WallObject/SlabObject) — a silent snap-back read as "stretch is broken"
-      // on tight arcs. Routing the refused radius-only patch through onStretchRun would ship a
-      // chord/radius pair that is out of sync across a component boundary (the split-brain class
-      // the arc model prevents), relying on a remote guard to reject it.
+    // The single writer keeps the curl ANGLE and re-derives the radius for the new span; it also
+    // refuses (with a toast) a radius the server would reject — a silent snap-back read as "stretch
+    // is broken" on tight arcs.
+    const patch = commitArcOrWarn(run, { kind: 'chordResize', chordMm: newChord }, t);
+    if (!patch) {
       resetBody();
-      queueToast({
-        dedupeKey: 'glass-arc-radius-too-small',
-        variant: 'warning',
-        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
-          defaultValue:
-            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
-          r: scaled.geomArcRadiusMm,
-        }),
-      });
       return;
     }
+    const nextLengthMm = patch.lengthMm ?? newChord;
     const chordRad = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
-    const shift = fromStart ? -(newChord - chordMm) : 0;
+    const shift = fromStart ? -(nextLengthMm - chordMm) : 0;
     const nextOriginX = Math.round(run.originX + shift * Math.cos(chordRad));
     const nextOriginY = Math.round(run.originY + shift * Math.sin(chordRad));
     const resized = buildRunFootprint(
@@ -350,8 +340,8 @@ export function ArcRunGroup({
         ...run,
         originX: nextOriginX,
         originY: nextOriginY,
-        lengthMm: scaled.lengthMm,
-        geomArcRadiusMm: scaled.geomArcRadiusMm,
+        lengthMm: nextLengthMm,
+        geomArcRadiusMm: patch.geomArcRadiusMm,
       },
       0,
       0,
@@ -362,10 +352,12 @@ export function ArcRunGroup({
       return;
     }
     onStretchRun?.(run.id, {
-      lengthMm: scaled.lengthMm,
+      lengthMm: nextLengthMm,
       originX: nextOriginX,
       originY: nextOriginY,
-      geomArcRadiusMm: scaled.geomArcRadiusMm,
+      geomArcRadiusMm: patch.geomArcRadiusMm,
+      geomArcSweepDeg: patch.geomArcSweepDeg,
+      rotationDeg: patch.rotationDeg,
     });
   };
   const commitArcHeight = (deltaMm: number) => {
@@ -673,11 +665,17 @@ export function ArcRunGroup({
             const rad = (next.rotationDeg * Math.PI) / 180;
             const ex = next.originX + next.lengthMm * Math.cos(rad);
             const ey = next.originY + next.lengthMm * Math.sin(rad);
-            const scaled = arcFromCornerResize(
-              Math.max(MIN_RUN_LENGTH_MM, next.lengthMm),
-              run.geomArcSweepDeg ?? 1,
+            // Preview through the WRITER (not a parallel formula) so what is drawn is byte-for-byte
+            // what a release would store — including the sweep quantisation.
+            const { patch } = arcCommitKeepingEnds(run, {
+              kind: 'chordResize',
+              chordMm: Math.max(MIN_RUN_LENGTH_MM, next.lengthMm),
+            });
+            const sag = bowFromArc(
+              next.lengthMm,
+              patch?.geomArcRadiusMm ?? run.geomArcRadiusMm ?? 0,
+              patch?.geomArcSweepDeg ?? run.geomArcSweepDeg ?? 1,
             );
-            const sag = bowFromArc(next.lengthMm, scaled.geomArcRadiusMm, run.geomArcSweepDeg ?? 1);
             const topY = ((run.geomZ ?? 0) + run.heightMm) / 1000;
             return bowArcPlanPoints(next.originX, next.originY, ex, ey, sag).map(
               (p): [number, number, number] => [p.x / 1000, topY, p.y / 1000],
@@ -685,15 +683,16 @@ export function ArcRunGroup({
           }}
           onCommit={(next) => {
             // The footprint box length is the CHORD (the span between the fixed ends). Dragging an
-            // end changes that span while keeping the sweep angle (curl shape); lengthMm = the new
-            // chord and the radius re-derives for it (arcFromCornerResize); the origin shifts along
-            // the chord direction.
+            // end changes that span while keeping the sweep angle (curl shape); the single writer
+            // re-derives the radius for the new chord and the origin shifts along it.
             const chordDeg = Math.atan2(endWorldY - run.originY, endWorldX - run.originX);
             const dirX = Math.cos(chordDeg);
             const dirY = Math.sin(chordDeg);
             const along = (next.originX - run.originX) * dirX + (next.originY - run.originY) * dirY;
             const newChord = Math.max(MIN_RUN_LENGTH_MM, Math.round(next.lengthMm));
-            const scaled = arcFromCornerResize(newChord, run.geomArcSweepDeg ?? 1);
+            const patch = commitArcOrWarn(run, { kind: 'chordResize', chordMm: newChord }, t);
+            if (!patch) return;
+            const nextLengthMm = patch.lengthMm ?? newChord;
             const originX = Math.round(run.originX + along * dirX);
             const originY = Math.round(run.originY + along * dirY);
             const resized = buildRunFootprint(
@@ -701,8 +700,8 @@ export function ArcRunGroup({
                 ...run,
                 originX,
                 originY,
-                lengthMm: scaled.lengthMm,
-                geomArcRadiusMm: scaled.geomArcRadiusMm,
+                lengthMm: nextLengthMm,
+                geomArcRadiusMm: patch.geomArcRadiusMm,
               },
               0,
               0,
@@ -710,10 +709,12 @@ export function ArcRunGroup({
             );
             if (penetratesAny(resized, gestureObstacles)) return;
             onStretchRun?.(run.id, {
-              lengthMm: scaled.lengthMm,
+              lengthMm: nextLengthMm,
               originX,
               originY,
-              geomArcRadiusMm: scaled.geomArcRadiusMm,
+              geomArcRadiusMm: patch.geomArcRadiusMm,
+              geomArcSweepDeg: patch.geomArcSweepDeg,
+              rotationDeg: patch.rotationDeg,
             });
           }}
         />
@@ -727,16 +728,16 @@ export function ArcRunGroup({
           currentSagittaMm={bowFromArc(run.lengthMm, arc.radiusMm, run.geomArcSweepDeg ?? 0)}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(sagittaMm) => {
-            // CHORD-INVARIANT: the two ends stay FIXED. The chord is the STORED lengthMm and the
-            // chord direction is the exact unroll (rotation + sweep/2) — never re-measured from
-            // the rounded radius (that drifted lengthMm on every shallow commit).
-            const chordDeg = run.rotationDeg + (run.geomArcSweepDeg ?? 0) / 2;
-            const bow = arcFromBow(run.lengthMm, chordDeg, sagittaMm);
+            // CHORD-INVARIANT: the two ends stay FIXED. The single writer takes the chord from the
+            // STORED lengthMm and the chord direction from the exact unroll (rotation + sweep/2) —
+            // never re-measured from the rounded radius (that drifted lengthMm on shallow commits).
+            const patch = commitArcOrWarn(run, { kind: 'bow', sagittaMm }, t);
+            if (!patch) return;
             onStretchRun(run.id, {
-              lengthMm: bow.lengthMm,
-              rotationDeg: bow.rotationDeg,
-              geomArcRadiusMm: bow.geomArcRadiusMm,
-              geomArcSweepDeg: bow.geomArcSweepDeg,
+              ...(patch.lengthMm !== undefined ? { lengthMm: patch.lengthMm } : {}),
+              rotationDeg: patch.rotationDeg,
+              geomArcRadiusMm: patch.geomArcRadiusMm,
+              geomArcSweepDeg: patch.geomArcSweepDeg,
             });
           }}
         />

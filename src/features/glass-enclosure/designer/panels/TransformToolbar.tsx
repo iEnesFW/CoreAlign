@@ -21,7 +21,8 @@ import {
   findAttachedRunIds,
   findAttachedWallIds,
 } from '@/features/glass-enclosure/model/wallAttachment';
-import { arcFromCornerResize, isRealArc } from '@/features/glass-enclosure/model/arcGeometry';
+import { isRealArc } from '@/features/glass-enclosure/model/arcGeometry';
+import { commitArcOrWarn } from '@/features/glass-enclosure/geometry/arcCommitFeedback';
 import type {
   SceneHardwareItem,
   ScenePanelState,
@@ -122,14 +123,18 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
   const commit = (patch: Partial<SceneRunState>) => {
     // WHY: on an ARC run a typed length is a keep-sweep chord resize — persisting the new chord
     // with the STALE radius made projectToScene revert it to the old chord on the next refetch.
-    const effective =
-      patch.lengthMm !== undefined && isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)
-        ? {
-            ...patch,
-            geomArcRadiusMm: arcFromCornerResize(patch.lengthMm, run.geomArcSweepDeg ?? 1)
-              .geomArcRadiusMm,
-          }
-        : patch;
+    let effective = patch;
+    if (patch.lengthMm !== undefined && isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+      const arc = commitArcOrWarn(run, { kind: 'chordResize', chordMm: patch.lengthMm }, t);
+      if (!arc) return;
+      effective = {
+        ...patch,
+        lengthMm: arc.lengthMm ?? patch.lengthMm,
+        rotationDeg: arc.rotationDeg,
+        geomArcRadiusMm: arc.geomArcRadiusMm,
+        geomArcSweepDeg: arc.geomArcSweepDeg,
+      };
+    }
     const candidate = { ...run, ...effective };
     const attached = findAttachedWallIds(run, useDesignerStore.getState().scene.walls ?? []);
     const obstacles = solidObstaclesExcept(new Set([run.id, ...attached]));

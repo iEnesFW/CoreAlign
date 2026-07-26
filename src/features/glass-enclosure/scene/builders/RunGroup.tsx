@@ -4,7 +4,7 @@ import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
-import { arcFromBow } from '../../model/arcGeometry';
+import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -669,16 +669,16 @@ export function RunGroup({
           currentSagittaMm={0}
           topYM={((run.geomZ ?? 0) + run.heightMm) / 1000}
           onCommit={(sagittaMm) => {
-            // CHORD-INVARIANT: the run's two ends stay FIXED (chord = lengthMm, chordDeg =
-            // rotationDeg). arcFromBow rolls rotationDeg so the body bows between them; the sweep is
-            // free 1–360°. Below the straighten threshold it stays straight (null radius/sweep).
-            const bow = arcFromBow(run.lengthMm, run.rotationDeg, sagittaMm);
+            // CHORD-INVARIANT: the run's two ends stay FIXED. The single writer re-rolls
+            // rotationDeg for the new sweep so the body bows BETWEEN them instead of pivoting.
+            const patch = commitArcOrWarn(run, { kind: 'bow', sagittaMm }, t);
+            if (!patch) return;
             onStretchRun(run.id, {
-              lengthMm: bow.lengthMm,
-              rotationDeg: bow.rotationDeg,
-              geomArcRadiusMm: bow.geomArcRadiusMm,
-              geomArcSweepDeg: bow.geomArcSweepDeg,
-              arcGlassBent: bow.geomArcRadiusMm ? true : run.arcGlassBent,
+              ...(patch.lengthMm !== undefined ? { lengthMm: patch.lengthMm } : {}),
+              rotationDeg: patch.rotationDeg,
+              geomArcRadiusMm: patch.geomArcRadiusMm,
+              geomArcSweepDeg: patch.geomArcSweepDeg,
+              arcGlassBent: patch.geomArcRadiusMm ? true : run.arcGlassBent,
             });
           }}
         />

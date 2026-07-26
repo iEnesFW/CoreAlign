@@ -76,8 +76,6 @@ import {
 } from './wallFaces';
 import { ArcOutline } from './ArcOutline';
 import {
-  arcFromBow,
-  arcFromCornerResize,
   arcPointAt,
   bowArcPlanPoints,
   bowFromArc,
@@ -85,6 +83,9 @@ import {
   radiusFromChordSweep,
   resolveArc,
 } from '../../model/arcGeometry';
+import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
+import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
+import { chordDirectionDeg } from '../../geometry/curvature';
 import { resolveAttachedRunIds } from '../../model/wallAttachment';
 import { useWallEntityActions } from '../../hooks/useDesignerEntityActions';
 import {
@@ -1446,28 +1447,21 @@ export function WallObject({
     const chord = Math.hypot(chordDxMm, chordDyMm);
     const target = stickyDelta(chord, deltaMm);
     const newChord = Math.max(MIN_LENGTH_MM, Math.round(chord + target));
-    const scaled = arcFromCornerResize(newChord, wall.geomArcSweepDeg ?? 1);
     if (newChord === Math.round(chord)) {
       resetBody();
       return;
     }
-    if (scaled.geomArcRadiusMm < 100) {
-      // A silent snap-back read as "stretch is broken" on tight arcs — explain the rejection the
-      // same way the run path does.
+    // The single writer keeps the curl ANGLE, re-derives the radius for the new span, and refuses
+    // (with a toast) a radius the server would reject — a silent snap-back read as "stretch is
+    // broken" on tight arcs.
+    const patch = commitArcOrWarn(wall, { kind: 'chordResize', chordMm: newChord }, t);
+    if (!patch) {
       resetBody();
-      queueToast({
-        dedupeKey: 'glass-arc-radius-too-small',
-        variant: 'warning',
-        description: t('GlassEnclosure.Designer.Arc.RadiusTooSmall', {
-          defaultValue:
-            'Bu ölçüler {{r}} mm yarıçap üretiyor — minimum 100 mm. Kirişi büyütün veya oku küçültün.',
-          r: scaled.geomArcRadiusMm,
-        }),
-      });
       return;
     }
+    const nextLengthMm = patch.lengthMm ?? newChord;
     const chordRad = Math.atan2(chordDyMm, chordDxMm);
-    const shift = fromStart ? -(newChord - chord) : 0;
+    const shift = fromStart ? -(nextLengthMm - chord) : 0;
     const originX = Math.round(wall.originX + shift * Math.cos(chordRad));
     const originY = Math.round(wall.originY + shift * Math.sin(chordRad));
     const resized = buildWallFootprint(
@@ -1475,8 +1469,8 @@ export function WallObject({
         ...wall,
         originX,
         originY,
-        lengthMm: scaled.lengthMm,
-        geomArcRadiusMm: scaled.geomArcRadiusMm,
+        lengthMm: nextLengthMm,
+        geomArcRadiusMm: patch.geomArcRadiusMm,
       },
       0,
       0,
@@ -1490,8 +1484,10 @@ export function WallObject({
     commitWallPatch(wall, {
       originX,
       originY,
-      lengthMm: scaled.lengthMm,
-      geomArcRadiusMm: scaled.geomArcRadiusMm,
+      lengthMm: nextLengthMm,
+      geomArcRadiusMm: patch.geomArcRadiusMm,
+      geomArcSweepDeg: patch.geomArcSweepDeg,
+      rotationDeg: patch.rotationDeg,
     });
   };
 
@@ -2012,14 +2008,16 @@ export function WallObject({
                   const rad = (next.rotationDeg * Math.PI) / 180;
                   const ex = next.originX + next.lengthMm * Math.cos(rad);
                   const ey = next.originY + next.lengthMm * Math.sin(rad);
-                  const scaled = arcFromCornerResize(
-                    Math.max(100, next.lengthMm),
-                    wall.geomArcSweepDeg ?? 1,
-                  );
+                  // Preview through the WRITER so what is drawn is byte-for-byte what a release
+                  // would store — including the sweep quantisation.
+                  const previewPatch = arcCommitKeepingEnds(wall, {
+                    kind: 'chordResize',
+                    chordMm: Math.max(100, next.lengthMm),
+                  }).patch;
                   const sag = bowFromArc(
                     next.lengthMm,
-                    scaled.geomArcRadiusMm,
-                    wall.geomArcSweepDeg ?? 1,
+                    previewPatch?.geomArcRadiusMm ?? wall.geomArcRadiusMm ?? 0,
+                    previewPatch?.geomArcSweepDeg ?? wall.geomArcSweepDeg ?? 1,
                   );
                   const topY =
                     ((wall.geomZ ?? 0) +
@@ -2033,17 +2031,18 @@ export function WallObject({
           }
           onCommit={(next) => {
             if (isArcWall) {
-              // Dragging an end changes the CHORD (span) along the chord direction; keep the sweep
-              // (curl shape), re-derive the radius (arcFromCornerResize), and shift the origin along
-              // the chord. The ends stay on the curve.
-              const chordRad =
-                ((wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2) * Math.PI) / 180;
+              // Dragging an end changes the CHORD (span) along the chord direction; the single
+              // writer keeps the sweep (curl shape) and re-derives the radius, and the origin
+              // shifts along the chord. The ends stay on the curve.
+              const chordRad = (chordDirectionDeg(wall) * Math.PI) / 180;
               const dirX = Math.cos(chordRad);
               const dirY = Math.sin(chordRad);
               const along =
                 (next.originX - wall.originX) * dirX + (next.originY - wall.originY) * dirY;
               const newChord = Math.max(100, Math.round(next.lengthMm));
-              const scaled = arcFromCornerResize(newChord, wall.geomArcSweepDeg ?? 1);
+              const patch = commitArcOrWarn(wall, { kind: 'chordResize', chordMm: newChord }, t);
+              if (!patch) return;
+              const nextLengthMm = patch.lengthMm ?? newChord;
               const originX = Math.round(wall.originX + along * dirX);
               const originY = Math.round(wall.originY + along * dirY);
               const resized = buildWallFootprint(
@@ -2051,19 +2050,23 @@ export function WallObject({
                   ...wall,
                   originX,
                   originY,
-                  lengthMm: scaled.lengthMm,
-                  geomArcRadiusMm: scaled.geomArcRadiusMm,
+                  lengthMm: nextLengthMm,
+                  geomArcRadiusMm: patch.geomArcRadiusMm,
                 },
                 0,
                 0,
                 wall.rotationDeg,
               );
               if (penetratesAny(resized, editObstacles)) return;
-              updateWall(wall.id, {
+              // WHY: this moves the wall ORIGIN — a raw updateWall would leave attached glass
+              // behind (the pose-change rule); commitWallPatch co-moves and persists it.
+              commitWallPatch(wall, {
                 originX,
                 originY,
-                lengthMm: scaled.lengthMm,
-                geomArcRadiusMm: scaled.geomArcRadiusMm,
+                lengthMm: nextLengthMm,
+                geomArcRadiusMm: patch.geomArcRadiusMm,
+                geomArcSweepDeg: patch.geomArcSweepDeg,
+                rotationDeg: patch.rotationDeg,
               });
               return;
             }
@@ -2101,22 +2104,22 @@ export function WallObject({
             ((wall.geomZ ?? 0) + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm)) / 1000
           }
           onCommit={(sagittaMm) => {
-            // CHORD-INVARIANT: the wall's two ends stay FIXED. The chord comes from the STORED
-            // lengthMm and the chord direction from the exact unroll (rotation + sweep/2) — never
-            // re-measured from the rounded radius, which drifted lengthMm on every shallow commit.
-            const chordDeg = wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2;
-            const bow = arcFromBow(wall.lengthMm, chordDeg, sagittaMm);
+            // CHORD-INVARIANT: the wall's two ends stay FIXED. The single writer takes the chord
+            // from the STORED lengthMm and the chord direction from the exact unroll — never
+            // re-measured from the rounded radius, which drifted lengthMm on shallow commits.
+            const patch = commitArcOrWarn(wall, { kind: 'bow', sagittaMm }, t);
+            if (!patch) return;
             // WHY: the curved band never carves wall.openings, so bowing a wall that has them would
             // leave data the user can neither see nor reach — and autofill would refuse it forever.
             // WallInspector.commitArc already drops them; the bow handle must not be a way around it.
             const dropsOpenings =
-              isRealArc(bow.geomArcRadiusMm, bow.geomArcSweepDeg) &&
+              isRealArc(patch.geomArcRadiusMm, patch.geomArcSweepDeg) &&
               (wall.openings ?? []).length > 0;
             updateWall(wall.id, {
-              lengthMm: bow.lengthMm,
-              rotationDeg: bow.rotationDeg,
-              geomArcRadiusMm: bow.geomArcRadiusMm,
-              geomArcSweepDeg: bow.geomArcSweepDeg,
+              ...(patch.lengthMm !== undefined ? { lengthMm: patch.lengthMm } : {}),
+              rotationDeg: patch.rotationDeg,
+              geomArcRadiusMm: patch.geomArcRadiusMm,
+              geomArcSweepDeg: patch.geomArcSweepDeg,
               ...(dropsOpenings ? { openings: [] } : {}),
             });
             if (dropsOpenings) {

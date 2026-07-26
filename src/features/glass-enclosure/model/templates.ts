@@ -1,4 +1,5 @@
 import { deriveArcFromSweep } from './arcGeometry';
+import { rotationForChord } from '../geometry/curvature';
 import { slabArcDefaultSweepSign } from '../scene/builders/curvedSlabGeometry';
 import type { SceneSlabState, SceneWallState } from './project.types';
 
@@ -150,9 +151,11 @@ export const buildGlassTemplate = (
       };
     }
     case 'arc-run': {
-      // Chord along +x, bulge toward +y (canonical: bulge opposite the sweep sign → sweep −90),
-      // rotationDeg = the ROLLED start tangent (chordDeg − dir·sweep/2 = 0 − (−1)·90/2 = +45).
+      // Chord along +x, bulge toward +y (canonical: bulge opposite the sweep sign → negative
+      // sweep). rotationForChord supplies the ROLLED start tangent so both ends land on the chord —
+      // the same rule every arc edit uses, rather than a hand-computed constant.
       const derived = deriveArcFromSweep(W, 90);
+      const sweepDeg = -Math.abs(derived.sweepDeg);
       return {
         key,
         walls: [],
@@ -161,11 +164,11 @@ export const buildGlassTemplate = (
           {
             originX: 0,
             originY: 0,
-            rotationDeg: 45,
+            rotationDeg: rotationForChord(0, sweepDeg),
             lengthMm: derived.chordMm,
             heightMm: H,
             geomArcRadiusMm: derived.radiusMm,
-            geomArcSweepDeg: -Math.abs(derived.sweepDeg),
+            geomArcSweepDeg: sweepDeg,
             arcGlassBent: true,
           },
         ],
