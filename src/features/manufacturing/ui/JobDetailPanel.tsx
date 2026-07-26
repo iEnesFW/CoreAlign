@@ -47,7 +47,8 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
   };
 
   const handleComplete = async () => {
-    if (!warehouseId && !job?.warehouseId) {
+    const resolvedWarehouseId = warehouseId || job?.warehouseId;
+    if (!resolvedWarehouseId) {
       toast.error(t('ProductionJobs.fields.warehouse_required'));
       return;
     }
@@ -56,7 +57,7 @@ export const JobDetailPanel = ({ jobId, onClose }: Props) => {
         id: jobId,
         input: {
           completedQuantity: job?.plannedQuantity ?? 0,
-          warehouseId: warehouseId || job?.warehouseId,
+          warehouseId: resolvedWarehouseId,
         },
       });
       toast.success(t('ProductionJobs.complete_success'));

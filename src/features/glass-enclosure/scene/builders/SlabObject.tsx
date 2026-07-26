@@ -12,8 +12,10 @@ import {
   useDrag3D,
   useTiledProceduralTexture,
 } from '@/shared/three-engine';
+import { isAltPressed } from '@/shared/three-engine';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
+import { notifyStackUnavailable } from '../interaction/stackFeedback';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -29,6 +31,7 @@ import {
   penetratesAny,
   restElevationAtPointMm,
   restElevationMm,
+  restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
@@ -457,7 +460,12 @@ export function SlabObject({
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
     restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, supportFootprints, 0);
-  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
+  const restingAtStart = restsOnSupportAtMm(
+    buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
+    supportFootprints,
+    baseElevMm,
+    5,
+  );
 
   // While co-moving a multi-selection, sibling members travel with this slab, so
   // their footprints must not register as collisions during the drag.
@@ -514,6 +522,8 @@ export function SlabObject({
         });
         return;
       }
+      // WHY: an Alt-drag that cannot stack must say why — silently sliding sideways reads as a bug.
+      if (isMultiMember && isAltPressed()) notifyStackUnavailable(t);
       onCommitMove?.(slab.id, delta);
     },
     onRotateCommit: (commit) =>

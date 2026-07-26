@@ -115,7 +115,7 @@ export const ManufacturingKioskPage: React.FC = () => {
                   value={operatorId}
                   onChange={(e) => setOperatorId(e.target.value)}
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl h-14 pl-12 text-lg focus:ring-indigo-500 focus:border-indigo-500"
-                  icon={<UserCog className="h-5 w-5 text-white/50" />}
+                  leftIcon={<UserCog className="h-5 w-5 text-white/50" />}
                 />
               </div>
               <div className="relative">
@@ -128,7 +128,7 @@ export const ManufacturingKioskPage: React.FC = () => {
                   value={pinCode}
                   onChange={(e) => setPinCode(e.target.value)}
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/30 rounded-xl h-14 pl-12 text-lg focus:ring-indigo-500 focus:border-indigo-500 font-mono tracking-widest"
-                  icon={<KeyRound className="h-5 w-5 text-white/50" />}
+                  leftIcon={<KeyRound className="h-5 w-5 text-white/50" />}
                 />
               </div>
             </div>

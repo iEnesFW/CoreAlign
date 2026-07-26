@@ -368,6 +368,7 @@ CoreAlign.API.HostedServices.DemoDataSeeder.IsSeedingEnabled(builder.Configurati
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.PayrollSystemDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.GibCodeSystemDataSeeder>();
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.FeedbackNotificationTemplateSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.GlassPlateSystemDataSeeder>();
 
 // Hangfire recurring-job host. Real environments use PostgreSQL storage (Hangfire

@@ -1,6 +1,17 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, Sun, Moon, User, Sliders, LogOut, Command } from 'lucide-react';
+import {
+  Menu,
+  Search,
+  Sun,
+  Moon,
+  User,
+  Sliders,
+  LogOut,
+  Command,
+  Bug,
+  Lightbulb,
+} from 'lucide-react';
 import { useTheme } from '@/app/providers/themeContext';
 import { useAuthStore } from '@/shared/lib/store/authStore';
 import { useLogout } from '@/features/auth/hooks/useAuth';
@@ -10,6 +21,9 @@ import { NotificationBell } from '@/features/collaboration/ui/NotificationBell';
 import { useCommandItems } from './commandItems';
 import { LanguageSwitcher } from '@/widgets/LanguageSwitcher';
 import { FxRateBadge } from '@/features/fx/ui/FxRateBadge';
+import { FeedbackFormModal } from '@/features/feedback/ui/FeedbackFormModal';
+import { useFormatLocale } from '@/shared/lib/useFormatLocale';
+import type { FeedbackType } from '@/features/feedback/model/feedback.types';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -47,7 +61,18 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [feedbackType, setFeedbackType] = useState<FeedbackType | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const formatLocale = useFormatLocale();
+  const todayLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(formatLocale, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date()),
+    [formatLocale],
+  );
 
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
@@ -136,9 +161,36 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
       </div>
 
       <div className="flex items-center gap-1">
+        <span
+          className="mr-1 hidden whitespace-nowrap text-xs font-medium text-slate-500 lg:inline-flex dark:text-slate-400"
+          title={t('feedback.navbar.today', { defaultValue: 'Bugün' })}
+        >
+          {todayLabel}
+        </span>
+
         <div className="mr-1 hidden lg:inline-flex">
           <FxRateBadge currencyCode="USD" />
         </div>
+
+        <button
+          type="button"
+          onClick={() => setFeedbackType('Bug')}
+          className={iconButton}
+          aria-label={t('feedback.navbar.reportBug', { defaultValue: 'Hata bildir' })}
+          title={t('feedback.navbar.reportBug', { defaultValue: 'Hata bildir' })}
+        >
+          <Bug size={16} />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setFeedbackType('Feature')}
+          className={iconButton}
+          aria-label={t('feedback.navbar.featureRequest', { defaultValue: 'Geliştirme talebi' })}
+          title={t('feedback.navbar.featureRequest', { defaultValue: 'Geliştirme talebi' })}
+        >
+          <Lightbulb size={16} />
+        </button>
 
         <button
           type="button"
@@ -241,6 +293,14 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
           )}
         </div>
       </div>
+
+      {feedbackType && (
+        <FeedbackFormModal
+          initialType={feedbackType}
+          initialPageUrl={location.pathname}
+          onClose={() => setFeedbackType(null)}
+        />
+      )}
 
       {paletteOpen && (
         <CommandPalette

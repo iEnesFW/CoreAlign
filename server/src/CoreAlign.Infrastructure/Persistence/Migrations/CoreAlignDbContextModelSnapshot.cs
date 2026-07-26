@@ -2704,6 +2704,71 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.ToTable("email_verification_tokens");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackAttachment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<string>("DisplayFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("display_file_name");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<Guid>("FeedbackTicketId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("feedback_ticket_id");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("storage_path");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.Property<Guid?>("UploadedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("uploaded_by_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_feedback_attachments");
+
+                    b.HasIndex("FeedbackTicketId")
+                        .HasDatabaseName("ix_feedback_attachments_feedback_ticket_id");
+
+                    b.HasIndex("TenantId", "FeedbackTicketId", "DisplayOrder")
+                        .HasDatabaseName("ix_feedback_attachments_tenant_id_feedback_ticket_id_display_o~");
+
+                    b.ToTable("feedback_attachments", (string)null);
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackTicket", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2727,12 +2792,20 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("attachment_path");
 
+                    b.Property<long>("ConcurrencyToken")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("concurrency_token");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
 
                     b.Property<string>("CreatedByName")
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("created_by_name");
 
                     b.Property<Guid?>("CreatedByUserId")
@@ -2745,11 +2818,13 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnName("description");
 
                     b.Property<string>("Module")
-                        .HasColumnType("text")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("module");
 
                     b.Property<string>("PageUrl")
-                        .HasColumnType("text")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("page_url");
 
                     b.Property<int>("Priority")
@@ -2764,6 +2839,12 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("status");
 
+                    b.Property<int>("StatusChangeCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("status_change_count");
+
                     b.Property<string>("StepsToReproduce")
                         .HasColumnType("text")
                         .HasColumnName("steps_to_reproduce");
@@ -2774,7 +2855,8 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("title");
 
                     b.Property<int>("Type")
@@ -2788,10 +2870,64 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_feedback_tickets");
 
-                    b.HasIndex("TenantId")
-                        .HasDatabaseName("ix_feedback_tickets_tenant_id");
+                    b.HasIndex("TenantId", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("ix_feedback_tickets_tenant_id_status_created_at_utc");
 
                     b.ToTable("feedback_tickets");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackTicketComment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("author_name");
+
+                    b.Property<Guid?>("AuthorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
+                    b.Property<Guid>("FeedbackTicketId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("feedback_ticket_id");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_internal");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Id")
+                        .HasName("pk_feedback_ticket_comments");
+
+                    b.HasIndex("FeedbackTicketId")
+                        .HasDatabaseName("ix_feedback_ticket_comments_feedback_ticket_id");
+
+                    b.HasIndex("TenantId", "FeedbackTicketId", "CreatedAtUtc")
+                        .HasDatabaseName("ix_feedback_ticket_comments_tenant_id_feedback_ticket_id_creat~");
+
+                    b.ToTable("feedback_ticket_comments", (string)null);
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.GLAccount", b =>
@@ -20476,6 +20612,23 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackAttachment", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.FeedbackTicket", null)
+                        .WithMany()
+                        .HasForeignKey("FeedbackTicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_feedback_attachments_feedback_tickets_feedback_ticket_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_feedback_attachments_tenants_tenant_id");
+                });
+
             modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackTicket", b =>
                 {
                     b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
@@ -20484,6 +20637,23 @@ namespace CoreAlign.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_feedback_tickets_tenants_tenant_id");
+                });
+
+            modelBuilder.Entity("CoreAlign.Domain.Entities.FeedbackTicketComment", b =>
+                {
+                    b.HasOne("CoreAlign.Domain.Entities.FeedbackTicket", null)
+                        .WithMany()
+                        .HasForeignKey("FeedbackTicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_feedback_ticket_comments_feedback_tickets_feedback_ticket_id");
+
+                    b.HasOne("CoreAlign.Domain.Entities.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_feedback_ticket_comments_tenants_tenant_id");
                 });
 
             modelBuilder.Entity("CoreAlign.Domain.Entities.GLAccount", b =>

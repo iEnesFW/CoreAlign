@@ -127,7 +127,7 @@ public class RoutingHandlerTests
         var sut = new CreateWorkCenterOperatorHandler(_operators, _workCenters, _employees, _tenant);
 
         var act = () => sut.Handle(new CreateWorkCenterOperatorCommand(
-            Guid.NewGuid(), Guid.NewGuid(), OperatorQualificationLevel.Qualified, false, null, null), default);
+            Guid.NewGuid(), Guid.NewGuid(), OperatorQualificationLevel.Qualified, false, null, null, null), default);
 
         await act.Should().ThrowAsync<WorkCenterNotFoundException>();
     }
@@ -144,7 +144,7 @@ public class RoutingHandlerTests
         var sut = new CreateWorkCenterOperatorHandler(_operators, _workCenters, _employees, _tenant);
 
         var act = () => sut.Handle(new CreateWorkCenterOperatorCommand(
-            wc.Id, emp.Id, OperatorQualificationLevel.Qualified, false, null, null), default);
+            wc.Id, emp.Id, OperatorQualificationLevel.Qualified, false, null, null, null), default);
 
         await act.Should().ThrowAsync<EmployeeNotFoundException>();
     }
@@ -162,7 +162,7 @@ public class RoutingHandlerTests
         var sut = new CreateWorkCenterOperatorHandler(_operators, _workCenters, _employees, _tenant);
 
         var act = () => sut.Handle(new CreateWorkCenterOperatorCommand(
-            wc.Id, emp.Id, OperatorQualificationLevel.Expert, true, null, null), default);
+            wc.Id, emp.Id, OperatorQualificationLevel.Expert, true, null, null, null), default);
 
         await act.Should().ThrowAsync<WorkCenterOperatorAlreadyAssignedException>();
         await _operators.DidNotReceive().AddAsync(Arg.Any<WorkCenterOperator>(), Arg.Any<CancellationToken>());
@@ -181,7 +181,7 @@ public class RoutingHandlerTests
         var sut = new CreateWorkCenterOperatorHandler(_operators, _workCenters, _employees, _tenant);
 
         var dto = await sut.Handle(new CreateWorkCenterOperatorCommand(
-            wc.Id, emp.Id, OperatorQualificationLevel.Expert, true, null, "usta"), default);
+            wc.Id, emp.Id, OperatorQualificationLevel.Expert, true, null, "usta", null), default);
 
         dto.WorkCenterCode.Should().Be("WC-1");
         dto.EmployeeName.Should().Be("Ali Veli");

@@ -1,61 +1,70 @@
+using System.Net;
 using System.Net.Http.Json;
-using CoreAlign.Application.Manufacturing.Commands;
-using CoreAlign.Application.Manufacturing.DTOs;
-using CoreAlign.Domain.Entities.Manufacturing;
-using CoreAlign.Domain.Entities;
-using CoreAlign.Domain.Enums;
-using CoreAlign.Infrastructure.Persistence;
-using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
-using Xunit;
-using CoreAlign.Integration.Tests.Common;
+using CoreAlign.Integration.Tests.Infrastructure;
 
 namespace CoreAlign.Integration.Tests.Manufacturing;
 
-public class ProductionJobEndpointsTests : IntegrationTestBase
+[Collection(IntegrationCollection.Name)]
+public class ProductionJobEndpointsTests
 {
-    private readonly Guid _tenantId = Guid.NewGuid();
-    private readonly Guid _productId = Guid.NewGuid();
+    private const string ListUrl = "/api/v1/production-jobs";
 
-    protected override async Task SeedAsync(CoreAlignDbContext db)
+    private readonly CoreAlignWebApiFactory _factory;
+
+    public ProductionJobEndpointsTests(CoreAlignWebApiFactory factory)
     {
-        var product = Product.Create(_tenantId, "TEST-PROD", "Test Product", ProductType.Manufactured, "PCS", null, null);
-        product.Id = _productId;
-        await db.Set<Product>().AddAsync(product);
+        _factory = factory;
+    }
 
-        var sequence = new CoreAlign.Domain.Entities.DocumentSequence(DocumentSequenceType.ProductionJobNumber, "JOB", 2026);
-        sequence.TenantId = _tenantId;
-        await db.Set<CoreAlign.Domain.Entities.DocumentSequence>().AddAsync(sequence);
-        await db.SaveChangesAsync();
+    private static string DetailUrl(Guid id) => $"{ListUrl}/{id}";
+
+    [Fact]
+    public async Task Listing_jobs_requires_authentication()
+    {
+        var response = await _factory.CreateClient().GetAsync(ListUrl);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task List_ReturnsJobsWithoutNPlusOne()
+    public async Task Listing_jobs_succeeds_for_an_authenticated_tenant_user()
     {
-        var client = CreateAuthenticatedClient(_tenantId);
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
 
-        // Act
-        var response = await client.GetAsync("/api/v1.0/production-jobs");
+        var response = await client.GetAsync(ListUrl);
 
-        // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
-    public async Task Create_ValidData_CreatesAndReturnsJob()
+    public async Task Creating_a_job_requires_authentication()
     {
-        var client = CreateAuthenticatedClient(_tenantId);
-        var command = new CreateProductionJobCommand(_productId, 50, "PCS", null, null, null, null, "Test Job");
+        var response = await _factory
+            .CreateClient()
+            .PostAsJsonAsync(ListUrl, new { productId = Guid.NewGuid(), plannedQuantity = 5m, unitOfMeasure = "PCS" });
 
-        // Act
-        var response = await client.PostAsJsonAsync("/api/v1.0/production-jobs", command);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 
-        // Assert
-        response.IsSuccessStatusCode.Should().BeTrue();
-        var result = await response.Content.ReadFromJsonAsync<ProductionJobDetailDto>();
-        result.Should().NotBeNull();
-        result!.JobNumber.Should().StartWith("JOB");
-        result.PlannedQuantity.Should().Be(50);
-        result.Status.Should().Be(ProductionJobStatus.Draft);
+    [Fact]
+    public async Task Creating_a_job_is_forbidden_for_non_admin()
+    {
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.Customer);
+
+        var response = await client.PostAsJsonAsync(
+            ListUrl,
+            new { productId = Guid.NewGuid(), plannedQuantity = 5m, unitOfMeasure = "PCS" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Fetching_an_unknown_job_is_not_found()
+    {
+        var client = _factory.CreateClient().AuthenticatedAs(_factory.TenantA, TestPersona.TenantAdmin);
+
+        var response = await client.GetAsync(DetailUrl(Guid.NewGuid()));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

@@ -17,5 +17,7 @@ public record KioskStepDto(
     decimal InputQuantity,
     string Status,
     DateTime? StartedAtUtc,
-    Guid? AssignedOperatorId
+    Guid? AssignedOperatorId,
+    decimal SetupTimeMinutes,
+    decimal RunTimeMinutesPerUnit
 );

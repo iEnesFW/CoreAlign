@@ -12,6 +12,7 @@ export default defineConfig([
     'dist',
     'node_modules',
     'server',
+    'docs',
     'coverage',
     '.vite',
     '.husky',

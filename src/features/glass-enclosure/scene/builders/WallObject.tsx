@@ -32,8 +32,10 @@ import {
   useDrag3D,
   useTiledProceduralTexture,
 } from '@/shared/three-engine';
+import { isAltPressed } from '@/shared/three-engine';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
+import { notifyStackUnavailable } from '../interaction/stackFeedback';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
@@ -58,6 +60,7 @@ import {
   penetratesAny,
   restElevationAtPointMm,
   restElevationMm,
+  restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
@@ -99,6 +102,7 @@ import {
   simplifyFreePoints,
   wallHeightAtMm,
 } from '../../model/wallFeatureGeometry';
+import { OPENING_GAP_MM, clampOpeningRectMm } from '../../model/wallHoleGeometry';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanGestureAdapter, PlanRotationCommit } from '../interaction/useObjectGestures';
 import type { StretchFaceDef } from '../interaction/StretchFaces';
@@ -126,7 +130,13 @@ interface WallObjectProps {
     attachedRunIds: string[],
     groupWallIds: string[],
   ) => void;
-  onStackWall?: (wallId: string, delta: PlanMoveDelta, geomZMm: number) => void;
+  onStackWall?: (
+    wallId: string,
+    delta: PlanMoveDelta,
+    geomZMm: number,
+    attachedRunIds: string[],
+    groupWallIds: string[],
+  ) => void;
   onCommitRotate?: (
     wallId: string,
     commit: PlanRotationCommit,
@@ -157,16 +167,12 @@ const REGION_COLOR = '#2563eb';
 const MIN_LENGTH_MM = 100;
 const MIN_HEIGHT_MM = 100;
 const MIN_THICKNESS_MM = 50;
-const SIDE_MARGIN_M = 0.005;
-const BOTTOM_MARGIN_M = 0.001;
-const TOP_MARGIN_M = 0.01;
-const MIN_HOLE_M = 0.02;
 const DEG2RAD = Math.PI / 180;
 const HALF_PI = Math.PI / 2;
 const FACE_LIFT_M = 0.002;
 const FEATURE_FACE_LIFT_M = 0.004;
 const FACE_HIT_SIZE_M = 0.12;
-const FEATURE_GAP_MM = 50;
+const FEATURE_GAP_MM = OPENING_GAP_MM;
 const PLUG_INSET_MM = 1;
 const MIN_PLUG_DEPTH_M = 0.003;
 const HOLE_THRESHOLD_MM = 5;
@@ -201,24 +207,17 @@ const clampedOpeningRectM = (
   heightStartM: number,
   heightEndM: number,
 ): OpeningFrameRect | null => {
-  const halfW = opening.widthMm / 2000;
-  const centerX = opening.offsetMm / 1000;
-  const x0 = Math.max(SIDE_MARGIN_M, centerX - halfW);
-  const x1 = Math.min(lengthM - SIDE_MARGIN_M, centerX + halfW);
-  if (x1 - x0 < MIN_HOLE_M) return null;
-  const slope = lengthM > 0 ? (heightEndM - heightStartM) / lengthM : 0;
-  const topLimit = Math.min(heightStartM + slope * x0, heightStartM + slope * x1) - TOP_MARGIN_M;
-  let y0 = Math.max(BOTTOM_MARGIN_M, opening.sillMm / 1000);
-  let y1 = Math.min(topLimit, (opening.sillMm + opening.heightMm) / 1000);
-  // WHY: on a sloped wall a thickness/length edit can push the opening's top above the local roofline
-  // — rather than DROP it (the "my window vanished" case), slide the sill down so it still fits under
-  // the sloped top. Only return null when the wall is genuinely too short at this offset.
-  if (y1 - y0 < MIN_HOLE_M) {
-    y0 = Math.max(BOTTOM_MARGIN_M, topLimit - opening.heightMm / 1000);
-    y1 = Math.min(topLimit, y0 + opening.heightMm / 1000);
-  }
-  if (y1 - y0 < MIN_HOLE_M) return null;
-  return { x0, x1, y0, y1, hasSill: opening.sillMm > 0 };
+  // WHY: the clamp lives in the model layer so autofill carves glass from the SAME rect this
+  // extrudes — two independent derivations were the "glass does not match the hole" split-brain.
+  const rect = clampOpeningRectMm(opening, lengthM * 1000, heightStartM * 1000, heightEndM * 1000);
+  if (!rect) return null;
+  return {
+    x0: rect.x0 / 1000,
+    x1: rect.x1 / 1000,
+    y0: rect.y0 / 1000,
+    y1: rect.y1 / 1000,
+    hasSill: rect.hasSill,
+  };
 };
 
 const buildOpeningPath = (rect: OpeningFrameRect): Path => {
@@ -671,15 +670,15 @@ export function WallObject({
 
   // Default drag is lateral: the wall (plus any grouped walls / attached runs it
   // carries) collides side-to-side so it can butt flush against a neighbour. Holding
-  // Alt instead rests a bare wall on top of whatever it overlaps. Only a wall that
-  // carries no group/runs is Alt-stackable; ground (0) fallback prevents self-ratchet.
+  // Alt instead rests the wall on top of whatever it overlaps — group siblings and
+  // attached glass ride the same ΔZ; ground (0) fallback prevents self-ratchet.
   const baseWallElevMm = wall.geomZ ?? 0;
   const stackSupports = useMemo(
     () => (supports ?? EMPTY_OBSTACLES).filter((o) => o.ownerId !== wall.id),
     [supports, wall.id],
   );
-  const canStack =
-    Boolean(onStackWall) && coMove.groupWalls.length === 0 && coMove.runs.length === 0;
+  const isMultiMember = multiSelectionHas(multiSelection, 'wall', wall.id);
+  const canStack = Boolean(onStackWall) && !isMultiMember;
   const restElevAt = (dxMm: number, dyMm: number) =>
     restElevationMm(
       buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg),
@@ -689,7 +688,12 @@ export function WallObject({
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
     restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
-  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseWallElevMm) < 5;
+  const restingAtStart = restsOnSupportAtMm(
+    buildWallFootprint(wall, 0, 0, wall.rotationDeg),
+    stackSupports,
+    baseWallElevMm,
+    5,
+  );
 
   const adapter: PlanGestureAdapter = {
     originXMm: wall.originX,
@@ -748,13 +752,20 @@ export function WallObject({
     onRotatePreview: (sweepDeg) =>
       previewSnapshotsRotation(attachedRef.current, centerXMm, centerYMm, sweepDeg),
     onMoveCommit: (delta, meta) => {
-      // A standalone bare wall (canStack ⇒ no group / attached runs) that is stacked (explicit or
-      // precise centre-over) rests at stackElevMm; a plain lateral drag keeps its elevation. A wall
-      // carrying a group / runs always moves laterally via onCommitMove.
+      // A wall that is stacked (explicit or precise centre-over) rests at stackElevMm and carries
+      // its group siblings / attached glass up with it; a plain lateral drag keeps its elevation.
       if (canStack && onStackWall && meta.stackElevMm !== null) {
-        onStackWall(wall.id, delta, meta.stackElevMm);
+        onStackWall(
+          wall.id,
+          delta,
+          meta.stackElevMm,
+          coMove.runs.map((r) => r.id),
+          coMove.groupWalls.map((w) => w.id),
+        );
         return;
       }
+      // WHY: an Alt-drag that cannot stack must say why — silently sliding sideways reads as a bug.
+      if (isMultiMember && isAltPressed()) notifyStackUnavailable(t);
       onCommitMove?.(
         wall.id,
         delta,
@@ -2095,12 +2106,28 @@ export function WallObject({
             // re-measured from the rounded radius, which drifted lengthMm on every shallow commit.
             const chordDeg = wall.rotationDeg + (wall.geomArcSweepDeg ?? 0) / 2;
             const bow = arcFromBow(wall.lengthMm, chordDeg, sagittaMm);
+            // WHY: the curved band never carves wall.openings, so bowing a wall that has them would
+            // leave data the user can neither see nor reach — and autofill would refuse it forever.
+            // WallInspector.commitArc already drops them; the bow handle must not be a way around it.
+            const dropsOpenings =
+              isRealArc(bow.geomArcRadiusMm, bow.geomArcSweepDeg) &&
+              (wall.openings ?? []).length > 0;
             updateWall(wall.id, {
               lengthMm: bow.lengthMm,
               rotationDeg: bow.rotationDeg,
               geomArcRadiusMm: bow.geomArcRadiusMm,
               geomArcSweepDeg: bow.geomArcSweepDeg,
+              ...(dropsOpenings ? { openings: [] } : {}),
             });
+            if (dropsOpenings) {
+              queueToast({
+                dedupeKey: 'glass-arc-drops-features',
+                variant: 'warning',
+                description: t('GlassEnclosure.Designer.Wall.ArcDropsFeatures', {
+                  defaultValue: 'Kavise çevirince bu duvarın açıklık/şekilleri kaldırıldı.',
+                }),
+              });
+            }
           }}
         />
       )}

@@ -77,7 +77,9 @@ public class GetActiveKioskStepsQueryHandler : IRequestHandler<Queries.GetActive
                     step.InputQuantity,
                     step.Status.ToString(),
                     step.StartedAtUtc,
-                    step.AssignedOperatorId
+                    step.AssignedOperatorId,
+                    step.SetupTimeMinutes,
+                    step.RunTimeMinutesPerUnit
                 ));
             }
         }

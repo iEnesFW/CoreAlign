@@ -1,6 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { feedbackApi, type FeedbackListParams } from '../api/feedbackApi';
-import type { CreateFeedbackInput, UpdateFeedbackStatusInput } from '../model/feedback.types';
+import { feedbackApi, feedbackThreadApi, type FeedbackListParams } from '../api/feedbackApi';
+import type {
+  AddFeedbackCommentInput,
+  CreateFeedbackInput,
+  UpdateFeedbackStatusInput,
+} from '../model/feedback.types';
 
 export const useFeedbackListQuery = (params: FeedbackListParams) =>
   useQuery({
@@ -30,6 +34,53 @@ export const useUploadFeedbackAttachment = () => {
   return useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) =>
       feedbackApi.uploadAttachment(id, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  });
+};
+
+export const useFeedbackTicketQuery = (id: string | null) =>
+  useQuery({
+    queryKey: ['feedback', 'detail', id] as const,
+    queryFn: () => feedbackApi.getById(id as string),
+    enabled: Boolean(id),
+  });
+
+export const useFeedbackCommentsQuery = (ticketId: string | null) =>
+  useQuery({
+    queryKey: ['feedback', 'comments', ticketId] as const,
+    queryFn: () => feedbackThreadApi.listComments(ticketId as string),
+    enabled: Boolean(ticketId),
+  });
+
+export const useFeedbackAttachmentsQuery = (ticketId: string | null) =>
+  useQuery({
+    queryKey: ['feedback', 'attachments', ticketId] as const,
+    queryFn: () => feedbackThreadApi.listAttachments(ticketId as string),
+    enabled: Boolean(ticketId),
+  });
+
+export const useAddFeedbackComment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AddFeedbackCommentInput) => feedbackThreadApi.addComment(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  });
+};
+
+export const useUploadFeedbackAttachments = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ticketId, files }: { ticketId: string; files: File[] }) =>
+      feedbackThreadApi.uploadAttachments(ticketId, files),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
+  });
+};
+
+export const useDeleteFeedbackAttachment = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ticketId, attachmentId }: { ticketId: string; attachmentId: string }) =>
+      feedbackThreadApi.deleteAttachment(ticketId, attachmentId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['feedback'] }),
   });
 };

@@ -11,6 +11,12 @@ public interface IUserRepository
     Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<User>> ListByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<User>> ListByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deliberate CROSS-TENANT read: platform-wide role holders (PlatformAdmin) live in their own
+    /// home tenants, so they cannot be found with the tenant-scoped list.
+    /// </summary>
+    Task<IReadOnlyList<User>> ListByRoleAsync(string roleName, CancellationToken cancellationToken = default);
     Task AddAsync(User user, CancellationToken cancellationToken = default);
     void Update(User user);
 }

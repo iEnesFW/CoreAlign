@@ -24,6 +24,7 @@ import type { StretchFaceDef } from '../interaction/StretchFaces';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
 import { panelIsShaped } from '../../model/panelOutline';
 import { useObjectGestures } from '../interaction/useObjectGestures';
+import { notifyStackUnavailable } from '../interaction/stackFeedback';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import {
   RUN_PLAN_THICKNESS_MM,
@@ -31,6 +32,7 @@ import {
   penetratesAny,
   restElevationAtPointMm,
   restElevationMm,
+  restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import type { RunStretchPatch } from './RunGroup';
@@ -49,6 +51,7 @@ import type {
   GlassTypeDto,
   ProfileSystemDto,
 } from '../../model/glassEnclosure.types';
+import { isAltPressed } from '@/shared/three-engine';
 import { stickyDimensionMm } from '@/shared/three-engine';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { SceneRunState } from '../../model/project.types';
@@ -229,7 +232,12 @@ export function ArcRunGroup({
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dx: number, dy: number) =>
     restElevationAtPointMm(centerXMm + dx, centerYMm + dy, stackSupports, 0);
-  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
+  const restingAtStart = restsOnSupportAtMm(
+    buildRunFootprint(run, 0, 0, run.rotationDeg),
+    stackSupports,
+    baseElevMm,
+    5,
+  );
   const canStack = Boolean(onStackRun) && !isMultiMember;
 
   const adapter: PlanGestureAdapter = {
@@ -271,6 +279,8 @@ export function ArcRunGroup({
         onStackRun(run.id, delta, meta.stackElevMm);
         return;
       }
+      // WHY: an Alt-drag that cannot stack must say why — silently sliding sideways reads as a bug.
+      if (isMultiMember && isAltPressed()) notifyStackUnavailable(t);
       onMoveRun?.(run.id, delta);
     },
     onRotateCommit: (commit) => onRotateRun?.(run.id, commit),

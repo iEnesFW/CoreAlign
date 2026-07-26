@@ -54,6 +54,20 @@ public class UserRepository : IUserRepository
             .AnyAsync(u => u.Username == username, cancellationToken);
     }
 
+    // WHY: PlatformAdmin is a platform-wide role whose holders sit in their own home tenants, so the
+    // tenant-scoped list can never find them. This read is intentionally cross-tenant.
+    public async Task<IReadOnlyList<User>> ListByRoleAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .IgnoreQueryFilters()
+            .Include(u => u.UserRoles)
+            .ThenInclude(ur => ur.Role)
+            .AsSplitQuery()
+            .Where(u => u.IsActive && u.UserRoles.Any(ur => ur.Role != null && ur.Role.Name == roleName))
+            .OrderBy(u => u.Email)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<User>> ListByTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
         return await _context.Users

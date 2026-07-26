@@ -37,6 +37,7 @@ import { curvedSlabFrame, curvedSlabPlanColumnsMm } from './builders/curvedSlabG
 import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
+import { applyWallStack } from '../model/stackCoMove';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
 import { useViewerAppearance } from '../model/viewerAppearance';
@@ -1347,22 +1348,26 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     for (const runId of attachedRunIds) persistFreshRun(runId);
   };
 
-  // Bare wall stack-on-top: move it and write the resting elevation so it can sit
-  // on top of another wall/body instead of interpenetrating.
-  const onStackWall = (wallId: string, delta: PlanMoveDelta, geomZMm: number) => {
-    useDesignerStore.getState().applyScenePatch((s) => ({
-      ...s,
-      walls: (s.walls ?? []).map((w) =>
-        w.id === wallId
-          ? {
-              ...w,
-              originX: Math.round(w.originX + delta.dxMm),
-              originY: Math.round(w.originY + delta.dyMm),
-              geomZ: geomZMm,
-            }
-          : w,
-      ),
-    }));
+  // Wall stack-on-top: move it and write the resting elevation so it can sit on top of another
+  // wall/body instead of interpenetrating. Group siblings and attached glass ride the same ΔZ.
+  const onStackWall = (
+    wallId: string,
+    delta: PlanMoveDelta,
+    geomZMm: number,
+    attachedRunIds: string[],
+    groupWallIds: string[],
+  ) => {
+    useDesignerStore.getState().applyScenePatch((s) =>
+      applyWallStack(s, {
+        wallId,
+        dxMm: delta.dxMm,
+        dyMm: delta.dyMm,
+        targetZMm: geomZMm,
+        groupWallIds,
+        attachedRunIds,
+      }),
+    );
+    for (const runId of attachedRunIds) persistFreshRun(runId);
   };
 
   const onCommitWallRotate = (

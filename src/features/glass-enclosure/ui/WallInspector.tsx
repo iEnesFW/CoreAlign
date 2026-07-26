@@ -137,17 +137,18 @@ export function WallInspector() {
   const removeEdgeNotch = (id: string) =>
     updateWall(wall.id, { edgeNotchMm: edgeNotches.filter((n) => n.id !== id) });
 
-  // Curved walls can't carry openings/surface features yet (#6a/#7), so converting a
-  // straight wall to an arc drops them rather than leaving orphaned data that vanishes
-  // from the 3D view but lingers in the model.
+  // A curved band never carves wall.openings, so converting to an arc drops them rather than
+  // leaving orphaned data that vanishes from the 3D view but lingers in the model. Surface
+  // FEATURES are kept — applyCurvedWallFeatures does carve those into the band, so deleting them
+  // was silent data loss for geometry that works.
   const commitArc = (sweep: number) => {
-    const hasExtras = (wall.openings ?? []).length > 0 || (wall.features ?? []).length > 0;
+    const hasExtras = (wall.openings ?? []).length > 0;
     commit({
       // CHORD-INVARIANT: lengthMm stays the chord (the fixed span); radius = chord/(2·sin(sweep/2)),
       // so toggling to an arc bows between the two fixed ends without moving them.
       geomArcRadiusMm: deriveArcFromSweep(draft.lengthMm, sweep).radiusMm,
       geomArcSweepDeg: sweep,
-      ...(hasExtras ? { openings: [], features: [] } : {}),
+      ...(hasExtras ? { openings: [] } : {}),
     });
     if (hasExtras) {
       queueToast({
@@ -205,19 +206,17 @@ export function WallInspector() {
 
   const handleAutofill = async () => {
     const created = await autofill();
+    // WHY: every zero-result path inside autofill() already queued its REAL reason (no profile,
+    // no wall selected, no holes, or which holes were refused and why). A second generic
+    // "add an opening" toast on top of that contradicts the specific one.
+    if (created === 0) return;
     queueToast({
       dedupeKey: 'glass-wall-autofill',
-      variant: created > 0 ? 'success' : 'info',
-      description:
-        created > 0
-          ? t('GlassEnclosure.Designer.Wall.AutofillDone', {
-              defaultValue: '{{count}} cam hattı oluşturuldu.',
-              count: created,
-            })
-          : t('GlassEnclosure.Designer.Wall.AutofillNone', {
-              defaultValue:
-                'Doldurulacak boşluk bulunamadı — duvara pencere/kapı boşluğu veya delik ekleyin.',
-            }),
+      variant: 'success',
+      description: t('GlassEnclosure.Designer.Wall.AutofillDone', {
+        defaultValue: '{{count}} cam hattı oluşturuldu.',
+        count: created,
+      }),
     });
   };
 

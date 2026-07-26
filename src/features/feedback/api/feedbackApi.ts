@@ -2,7 +2,10 @@ import { apiClient } from '@/shared/api/apiClient';
 import { cachedGet, invalidateHttpCache } from '@/shared/http/httpCache';
 import type { ApiResponse } from '@/shared/types/api';
 import type {
+  AddFeedbackCommentInput,
   CreateFeedbackInput,
+  FeedbackAttachment,
+  FeedbackComment,
   FeedbackStatus,
   FeedbackTicket,
   FeedbackType,
@@ -45,4 +48,43 @@ export const feedbackApi = {
         return r.data;
       });
   },
+};
+
+export const feedbackThreadApi = {
+  listComments: (ticketId: string) =>
+    cachedGet<ApiResponse<FeedbackComment[]>>(apiClient, `${BASE}/${ticketId}/comments`),
+
+  addComment: (input: AddFeedbackCommentInput) =>
+    apiClient
+      .post<ApiResponse<FeedbackComment>>(`${BASE}/${input.ticketId}/comments`, {
+        body: input.body,
+        isInternal: input.isInternal ?? false,
+      })
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      }),
+
+  listAttachments: (ticketId: string) =>
+    cachedGet<ApiResponse<FeedbackAttachment[]>>(apiClient, `${BASE}/${ticketId}/attachments`),
+
+  uploadAttachments: (ticketId: string, files: File[]) => {
+    const form = new FormData();
+    for (const file of files) form.append('files', file);
+    return apiClient
+      .post<ApiResponse<FeedbackAttachment[]>>(`${BASE}/${ticketId}/attachments`, form)
+      .then((r) => {
+        invalidateHttpCache(INVALIDATION);
+        return r.data;
+      });
+  },
+
+  deleteAttachment: (ticketId: string, attachmentId: string) =>
+    apiClient.delete<void>(`${BASE}/${ticketId}/attachments/${attachmentId}`).then((r) => {
+      invalidateHttpCache(INVALIDATION);
+      return r.data;
+    }),
+
+  attachmentUrl: (ticketId: string, attachmentId: string) =>
+    `${BASE}/${ticketId}/attachments/${attachmentId}`,
 };

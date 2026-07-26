@@ -79,7 +79,6 @@ export const RecipientMultiSelect = ({
             {filtered.map((u) => (
               <li key={u.id}>
                 <Checkbox
-                  id={`recipient-${u.id}`}
                   checked={selected.has(u.id)}
                   disabled={disabled}
                   onChange={() => toggle(u.id)}

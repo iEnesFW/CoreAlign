@@ -16,6 +16,7 @@ import {
   useUpdateFeedbackStatus,
 } from '@/features/feedback/hooks/useFeedback';
 import { FeedbackFormModal } from '@/features/feedback/ui/FeedbackFormModal';
+import { FeedbackThread } from '@/features/feedback/ui/FeedbackThread';
 import type {
   FeedbackStatus,
   FeedbackTicket,
@@ -69,6 +70,7 @@ export const FeedbackPage = () => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
   const isAdmin = useAuthStore((s) => s.user?.roles?.includes('TenantAdmin') ?? false);
+  const isPlatformAdmin = useAuthStore((s) => s.user?.roles?.includes('PlatformAdmin') ?? false);
 
   const [typeFilter, setTypeFilter] = useState<FeedbackType | ''>('');
   const [statusFilter, setStatusFilter] = useState<FeedbackStatus | ''>('');
@@ -188,6 +190,7 @@ export const FeedbackPage = () => {
                   >
                     {STATUS_LABEL[ticket.status]}
                   </span>
+                  <AgeBadge ticket={ticket} />
                   <span className="hidden w-28 shrink-0 text-right text-[10px] text-slate-400 md:inline">
                     {fmtDate(ticket.createdAtUtc, locale)}
                   </span>
@@ -221,6 +224,7 @@ export const FeedbackPage = () => {
                       </div>
                     )}
                     {isAdmin && <AdminStatusEditor ticket={ticket} onApply={changeStatus} />}
+                    <FeedbackThread ticketId={ticket.id} canWriteInternal={isPlatformAdmin} />
                   </div>
                 )}
               </li>
@@ -234,6 +238,28 @@ export const FeedbackPage = () => {
   );
 };
 
+const TERMINAL_STATUSES: FeedbackStatus[] = ['Resolved', 'Closed', 'Rejected'];
+const AGE_WARNING_DAYS = 3;
+const AGE_DANGER_DAYS = 7;
+
+const AgeBadge = ({ ticket }: { ticket: FeedbackTicket }) => {
+  const { t } = useTranslation();
+  const days = useMemo(
+    () => Math.floor((new Date().getTime() - new Date(ticket.createdAtUtc).getTime()) / 86_400_000),
+    [ticket.createdAtUtc],
+  );
+  if (TERMINAL_STATUSES.includes(ticket.status) || days < AGE_WARNING_DAYS) return null;
+  const tone =
+    days >= AGE_DANGER_DAYS
+      ? 'bg-danger-100 text-danger-700 dark:bg-danger-500/15 dark:text-danger-300'
+      : 'bg-warning-100 text-warning-700 dark:bg-warning-500/15 dark:text-warning-300';
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${tone}`}>
+      {t('feedback.ageDays', { defaultValue: '{{n}} gündür açık', n: days })}
+    </span>
+  );
+};
+
 const AdminStatusEditor = ({
   ticket,
   onApply,
@@ -242,7 +268,11 @@ const AdminStatusEditor = ({
   onApply: (ticket: FeedbackTicket, status: FeedbackStatus, response: string) => void;
 }) => {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<FeedbackStatus>(ticket.status);
+  // WHY: the aggregate rejects an illegal transition with a 409, so offering one is a dead end.
+  const allowed = ticket.allowedNextStatuses?.length
+    ? ticket.allowedNextStatuses
+    : STATUS_OPTIONS.filter((s) => s !== ticket.status);
+  const [status, setStatus] = useState<FeedbackStatus>(allowed[0] ?? ticket.status);
   const [response, setResponse] = useState(ticket.adminResponse ?? '');
 
   return (
@@ -253,7 +283,7 @@ const AdminStatusEditor = ({
         onChange={(e) => setStatus(e.target.value as FeedbackStatus)}
         className="w-full sm:w-48"
       >
-        {STATUS_OPTIONS.map((s) => (
+        {allowed.map((s) => (
           <option key={s} value={s}>
             {STATUS_LABEL[s]}
           </option>

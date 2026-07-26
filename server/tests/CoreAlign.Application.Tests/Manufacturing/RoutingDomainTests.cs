@@ -221,7 +221,7 @@ public class RoutingDomainTests
     {
         var op = new WorkCenterOperator(Guid.NewGuid(), Guid.NewGuid(), OperatorQualificationLevel.Qualified);
 
-        op.Update(OperatorQualificationLevel.Trainee, isPrimary: true, isActive: false, null, "note");
+        op.Update(OperatorQualificationLevel.Trainee, isPrimary: true, isActive: false, null, "note", null);
 
         op.IsActive.Should().BeFalse();
         op.IsPrimary.Should().BeFalse();

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Billboard, Text } from '@react-three/drei';
 import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
@@ -7,6 +8,7 @@ import { arcFromBow } from '../../model/arcGeometry';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
+import { notifyStackUnavailable } from '../interaction/stackFeedback';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -27,6 +29,7 @@ import {
   penetratesAny,
   restElevationAtPointMm,
   restElevationMm,
+  restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
@@ -37,6 +40,7 @@ import type {
   GlassTypeDto,
   ProfileSystemDto,
 } from '../../model/glassEnclosure.types';
+import { isAltPressed } from '@/shared/three-engine';
 import type { QualityPreset } from '@/shared/three-engine';
 import type { SceneRunState } from '../../model/project.types';
 import type { PlanGestureAdapter, PlanRotationCommit } from '../interaction/useObjectGestures';
@@ -204,6 +208,8 @@ export function RunGroup({
     return planObstacles.filter((o) => !coMoving.has(o.ownerId));
   }, [planObstacles, multiSelection, run.id]);
 
+  const { t } = useTranslation();
+
   const setGroupRef = (group: Group | null) => {
     groupRef.current = group;
     registerSceneRef(run.id, group);
@@ -252,7 +258,12 @@ export function RunGroup({
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
     restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
-  const restingAtStart = Math.abs(centerRestAt(0, 0) - baseElevMm) < 5;
+  const restingAtStart = restsOnSupportAtMm(
+    buildRunFootprint(run, 0, 0, run.rotationDeg),
+    stackSupports,
+    baseElevMm,
+    5,
+  );
 
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
   const canStack = Boolean(onStackRun) && !isMultiMember;
@@ -293,6 +304,8 @@ export function RunGroup({
         onStackRun(run.id, delta, meta.stackElevMm);
         return;
       }
+      // WHY: an Alt-drag that cannot stack must say why — silently sliding sideways reads as a bug.
+      if (isMultiMember && isAltPressed()) notifyStackUnavailable(t);
       onMoveRun?.(run.id, delta);
     },
     onRotateCommit: (commit) => onRotateRun?.(run.id, commit),

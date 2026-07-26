@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/shared/ui/Checkbox/Checkbox';
 import { Button } from '@/shared/ui/Button/Button';
 import { cn } from '@/shared/lib/cn';
 import type { AppUser } from '@/features/users/model/user.types';
 import type { DunningSetting } from '@/features/dunning/model/dunning.types';
+import { dunningSettingSignature } from '@/features/dunning/model/dunningSettingSignature';
 import { RecipientMultiSelect } from './RecipientMultiSelect';
 
 interface DunningTypeRowProps {
@@ -17,8 +18,15 @@ interface DunningTypeRowProps {
 export const DunningTypeRow = ({ setting, users, onSave, isSaving }: DunningTypeRowProps) => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<DunningSetting>(setting);
+  const settingSignature = dunningSettingSignature(setting);
+  const [syncedSignature, setSyncedSignature] = useState(settingSignature);
 
-  const dirty = useMemo(() => JSON.stringify(draft) !== JSON.stringify(setting), [draft, setting]);
+  if (settingSignature !== syncedSignature) {
+    setSyncedSignature(settingSignature);
+    setDraft(setting);
+  }
+
+  const dirty = dunningSettingSignature(draft) !== settingSignature;
   const channelMissing = draft.isEnabled && !draft.sendInApp && !draft.sendEmail;
   const canSave = dirty && !channelMissing && !isSaving;
 
@@ -36,7 +44,6 @@ export const DunningTypeRow = ({ setting, users, onSave, isSaving }: DunningType
           </p>
         </div>
         <Checkbox
-          id={`enabled-${draft.type}`}
           checked={draft.isEnabled}
           onChange={(e) => patch({ isEnabled: e.target.checked })}
           label={t('Dunning.fields.enabled')}
@@ -54,13 +61,11 @@ export const DunningTypeRow = ({ setting, users, onSave, isSaving }: DunningType
             {t('Dunning.fields.channels')}
           </legend>
           <Checkbox
-            id={`inapp-${draft.type}`}
             checked={draft.sendInApp}
             onChange={(e) => patch({ sendInApp: e.target.checked })}
             label={t('Dunning.channels.inApp')}
           />
           <Checkbox
-            id={`email-${draft.type}`}
             checked={draft.sendEmail}
             onChange={(e) => patch({ sendEmail: e.target.checked })}
             label={t('Dunning.channels.email')}

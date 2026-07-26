@@ -3046,7 +3046,14 @@
         "AutofillGapTooClose": "The two walls' ends are too close together — leave at least 30 cm of gap between them.",
         "AutofillGapTooFar": "The two walls' ends are too far apart — gaps up to 60 m can be filled with glass.",
         "AutofillGapDirection": "The two walls face away from each other — position them so their open ends face across the gap to fill it.",
-        "AutofillGapBlocked": "The infill glass would cross another body — move the walls apart or clear the obstacle between them."
+        "AutofillGapBlocked": "The infill glass would cross another body — move the walls apart or clear the obstacle between them.",
+        "AutofillSkipBentWall": "A bent (L) wall does not carve holes into its body — {{n}} hole(s) were not filled. Split the wall into two legs first.",
+        "AutofillSkipArcOpening": "A curved wall does not carve window/door openings into its band — {{n}} opening(s) were not filled. Add a hole (shape) instead.",
+        "AutofillSkipSideFace": "{{n}} hole(s) sit on a side face and cannot be filled with front/back glass.",
+        "AutofillSkipNotCarved": "{{n}} hole(s) are not carved into the wall (too close to an edge, or overlapping another hole) — no glass was produced.",
+        "AutofillSkipTooSmall": "{{n}} hole(s) are too small for glass (300 mm minimum).",
+        "AutofillSkipAlreadyFilled": "{{n}} hole(s) are already filled with glass.",
+        "AutofillSkipApproximated": "{{n}} circular/elliptical hole(s) were filled with an approximate pane profile — use a polygon shape for an exact cut."
       },
       "Slab": {
         "Floor": "Floor",
@@ -3279,7 +3286,10 @@
       "Lock": "Lock",
       "Mirror": "Mirror horizontally",
       "PanelCountHint": "Set how many glass panels this run splits into, then apply.",
-      "Unlock": "Unlock"
+      "Unlock": "Unlock",
+      "Stack": {
+        "MultiSelectionBlocked": "Stacking is not available for a multi-selection. Select a single object and drag it with Alt."
+      }
     },
     "Field": {
       "Code": "Code",
@@ -4688,11 +4698,13 @@
       "stepsPlaceholder": "1) … 2) … 3) …",
       "pageUrl": "Page / location",
       "attachment": "Attachment (Photo / PDF)",
-      "attachmentHint": "JPG, PNG, WEBP or PDF · 5 MB max",
+      "attachmentHint": "JPG, PNG, WEBP or PDF · 5 MB per file",
       "attachmentRemove": "Remove attachment",
       "attachmentTooLarge": "File must be 5 MB or smaller.",
       "attachmentFailed": "Ticket created, but the file could not be uploaded.",
-      "submit": "Submit"
+      "submit": "Submit",
+      "attachmentDrop": "Drag and drop, paste from the clipboard, or choose files",
+      "attachmentTooMany": "You can attach at most {{n}} files."
     },
     "statusUpdated": "Status updated.",
     "page": {
@@ -4709,7 +4721,22 @@
     "adminResponse": "Admin response",
     "status": "Status",
     "responsePlaceholder": "Response (optional)",
-    "apply": "Apply"
+    "apply": "Apply",
+    "navbar": {
+      "today": "Today",
+      "reportBug": "Report a bug",
+      "featureRequest": "Feature request"
+    },
+    "ageDays": "Open for {{n}} days",
+    "comments": {
+      "title": "Conversation",
+      "empty": "No comments yet.",
+      "placeholder": "Write a comment…",
+      "send": "Send",
+      "internal": "Internal",
+      "internalHint": "Internal note (visible only to the platform admin)",
+      "unknownAuthor": "Unknown"
+    }
   },
   "Privacy": {
     "Title": "Privacy & GDPR",

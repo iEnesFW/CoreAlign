@@ -310,6 +310,26 @@ export const restElevationAtPointMm = (
   return top;
 };
 
+export const restsOnSupportAtMm = (
+  moved: PlanFootprint,
+  supports: PlanFootprint[],
+  baseMm: number,
+  toleranceMm: number,
+  groundMm = 0,
+): boolean => {
+  if (Math.abs(baseMm - groundMm) <= toleranceMm) return true;
+  for (const s of supports) {
+    if (s.ownerId === moved.ownerId) continue;
+    // WHY: a support whose top is ABOVE our base is something we stand BESIDE, not on — a floor
+    // slab overlaps every wall standing on it in plan, and taking that wall's top would report
+    // the floor as "not resting".
+    if (s.zMaxMm > baseMm + toleranceMm) continue;
+    if (Math.abs(s.zMaxMm - baseMm) > toleranceMm) continue;
+    if (footprintsOverlapXY(moved, s)) return true;
+  }
+  return false;
+};
+
 export const isFloating = (
   moved: PlanFootprint,
   supports: PlanFootprint[],

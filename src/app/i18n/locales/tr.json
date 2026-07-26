@@ -535,13 +535,13 @@
       "total": "Toplam",
       "notes": "Notlar",
       "notesPlaceholder": "Dahili notlar",
-      "generalNotesPlaceholder": "Ek bilgi ve \u00e7\u0131klamalar",
+      "generalNotesPlaceholder": "Ek bilgi ve çıklamalar",
       "lines": "Sipariş Satırları",
       "terms": "Vade",
       "dueDate": "Vade",
       "requestedDelivery": "Talep edilen teslim",
       "channel": "Kanal",
-      "channelPlaceholder": "\u00f6rn. B2B Portal",
+      "channelPlaceholder": "örn. B2B Portal",
       "type": "Sipariş Türü",
       "source": "Kaynak",
       "exchangeRate": "Döviz Kuru",
@@ -553,9 +553,9 @@
       "headerDiscount": "İskonto %",
       "shippingCost": "Kargo Ücreti",
       "internalNotes": "Dahili Notlar",
-      "internalNotesPlaceholder": "Yaln\u0131zca dahili kullan\u0131m i\u00e7indir.",
+      "internalNotesPlaceholder": "Yalnızca dahili kullanım içindir.",
       "customerNotes": "Müşteri Notları",
-      "customerNotesPlaceholder": "Bu not m\u00fc\u015fteriye g\u00f6sterilebilir.",
+      "customerNotesPlaceholder": "Bu not müşteriye gösterilebilir.",
       "roundingAdjustment": "Yuvarlama / tutar düzeltme"
     },
     "sections": {
@@ -581,7 +581,7 @@
       "InStore": "Mağaza"
     },
     "summary": {
-      "financial": "Finansal \u00d6zet",
+      "financial": "Finansal Özet",
       "subtotal": "Ara Toplam",
       "lineDiscount": "Satır İskontoları",
       "lineDiscountWithRate": "Satır İskontoları (%{{pct}})",
@@ -622,9 +622,9 @@
       "withholdingCodePlaceholder": "Tevkifat yok",
       "warehouse": "Depo",
       "warehousePlaceholder": "Depo seç",
-      "advancedOptions": "Geli\u015fmi\u015f se\u00e7enekler",
+      "advancedOptions": "Gelişmiş seçenekler",
       "lineNotes": "Satır notu",
-      "lineNotesPlaceholder": "Bu kalem i\u00e7in iste\u011fe ba\u011fl\u0131 not",
+      "lineNotesPlaceholder": "Bu kalem için isteğe bağlı not",
       "areaUnit": "Alan birimi",
       "lineTotal": "Satır Toplamı",
       "none": "—"
@@ -3046,7 +3046,14 @@
         "AutofillGapTooClose": "Seçili iki duvarın uçları birbirine çok yakın — aralarında en az 30 cm boşluk olmalı.",
         "AutofillGapTooFar": "Seçili iki duvarın uçları çok uzak — en fazla 60 m aralık camla doldurulabilir.",
         "AutofillGapDirection": "Seçili iki duvar birbirine ters yönde bakıyor — açık uçlarını boşluğa bakacak şekilde konumlandırın.",
-        "AutofillGapBlocked": "Aradaki cam başka bir gövdeyle kesişiyor — duvarları biraz ayırın veya aradaki engeli kaldırın."
+        "AutofillGapBlocked": "Aradaki cam başka bir gövdeyle kesişiyor — duvarları biraz ayırın veya aradaki engeli kaldırın.",
+        "AutofillSkipBentWall": "Bükümlü (L) duvarda delikler gövdeye kesilmiyor — {{n}} delik doldurulmadı. Duvarı \"İkiye ayır\" ile iki bacağa dönüştürün.",
+        "AutofillSkipArcOpening": "Kavisli duvarda pencere/kapı açıklığı gövdeye kesilmiyor — {{n}} açıklık doldurulmadı. Bunun yerine delik (şekil) ekleyin.",
+        "AutofillSkipSideFace": "Yan yüzdeki {{n}} delik ön/arka yüz camıyla doldurulamaz.",
+        "AutofillSkipNotCarved": "{{n}} delik duvara kesilmemiş (kenara çok yakın ya da başka bir delikle çakışıyor) — cam üretilmedi.",
+        "AutofillSkipTooSmall": "{{n}} delik cam için çok küçük (en az 300 mm gerekir).",
+        "AutofillSkipAlreadyFilled": "{{n}} delik zaten camla dolu.",
+        "AutofillSkipApproximated": "{{n}} daire/elips delik yaklaşık bir cam profille dolduruldu — birebir kesim için poligon şekli kullanın."
       },
       "Slab": {
         "Floor": "Zemin",
@@ -3279,7 +3286,10 @@
       "Lock": "Kilitle",
       "Mirror": "Yatay aynala",
       "PanelCountHint": "Bu hattın kaç cam panele bölüneceğini ayarlayın, sonra uygulayın.",
-      "Unlock": "Kilidi aç"
+      "Unlock": "Kilidi aç",
+      "Stack": {
+        "MultiSelectionBlocked": "Çoklu seçimde üst üste yerleştirme yapılamaz. Tek bir nesne seçip Alt ile sürükleyin."
+      }
     },
     "Field": {
       "Code": "Kod",
@@ -4688,11 +4698,13 @@
       "stepsPlaceholder": "1) … 2) … 3) …",
       "pageUrl": "Sayfa / konum",
       "attachment": "Ek (Fotoğraf / PDF)",
-      "attachmentHint": "JPG, PNG, WEBP veya PDF · en fazla 5 MB",
+      "attachmentHint": "JPG, PNG, WEBP veya PDF · dosya başına en fazla 5 MB",
       "attachmentRemove": "Eki kaldır",
       "attachmentTooLarge": "Dosya en fazla 5 MB olabilir.",
       "attachmentFailed": "Talep oluşturuldu ancak dosya yüklenemedi.",
-      "submit": "Gönder"
+      "submit": "Gönder",
+      "attachmentDrop": "Sürükleyip bırakın, panodan yapıştırın veya seçin",
+      "attachmentTooMany": "En fazla {{n}} dosya ekleyebilirsiniz."
     },
     "statusUpdated": "Durum güncellendi.",
     "page": {
@@ -4709,7 +4721,22 @@
     "adminResponse": "Yönetici yanıtı",
     "status": "Durum",
     "responsePlaceholder": "Yanıt (isteğe bağlı)",
-    "apply": "Uygula"
+    "apply": "Uygula",
+    "navbar": {
+      "today": "Bugün",
+      "reportBug": "Hata bildir",
+      "featureRequest": "Geliştirme talebi"
+    },
+    "ageDays": "{{n}} gündür açık",
+    "comments": {
+      "title": "Konuşma",
+      "empty": "Henüz yorum yok.",
+      "placeholder": "Bir yorum yazın…",
+      "send": "Gönder",
+      "internal": "Dahili",
+      "internalHint": "Dahili not (yalnız platform yöneticisi görür)",
+      "unknownAuthor": "Bilinmeyen"
+    }
   },
   "Privacy": {
     "Title": "Gizlilik & KVKK",

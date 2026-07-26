@@ -4,7 +4,7 @@ import { queueToast } from '@/shared/api/toastQueue';
 import { glassProjectsApi } from '../api/glassProjectsApi';
 import { useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
-import { computeOpeningEdges, panelCountForWidth } from '../model/wallAutofill';
+import { computeWallFillPlan, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
 import { arcEndLocal, developedLengthMm } from '../model/arcGeometry';
 import {
@@ -15,6 +15,7 @@ import {
 import { useColorOptionsQuery, useProfileSystemsQuery } from './useGlassEnclosureQueries';
 import type { GapEdge, TwoWallGapFailure } from '../model/multiAutofill';
 import type { OpenEdge } from '../model/wallAutofill';
+import type { WallHoleSkip, WallHoleSkipReason } from '../model/wallHoleGeometry';
 import type { SceneState } from '../model/project.types';
 import type { TFunction } from 'i18next';
 
@@ -49,6 +50,52 @@ const edgeEndpoints = (edge: GapEdge): { x: number; y: number }[] => {
 const angleDiffDeg = (a: number, b: number) => {
   const d = Math.abs((((a - b) % 180) + 180) % 180);
   return Math.min(d, 180 - d);
+};
+
+const HOLE_SKIP_TEXT: Record<WallHoleSkipReason, { key: string; tr: string }> = {
+  bentWall: {
+    key: 'AutofillSkipBentWall',
+    tr: 'Bükümlü (L) duvarda delikler gövdeye kesilmiyor — {{n}} delik doldurulmadı. Duvarı "İkiye ayır" ile iki bacağa dönüştürün.',
+  },
+  arcOpening: {
+    key: 'AutofillSkipArcOpening',
+    tr: 'Kavisli duvarda pencere/kapı açıklığı gövdeye kesilmiyor — {{n}} açıklık doldurulmadı. Bunun yerine delik (şekil) ekleyin.',
+  },
+  sideFace: {
+    key: 'AutofillSkipSideFace',
+    tr: 'Yan yüzdeki {{n}} delik ön/arka yüz camıyla doldurulamaz.',
+  },
+  notCarved: {
+    key: 'AutofillSkipNotCarved',
+    tr: '{{n}} delik duvara kesilmemiş (kenara çok yakın ya da başka bir delikle çakışıyor) — cam üretilmedi.',
+  },
+  tooSmall: {
+    key: 'AutofillSkipTooSmall',
+    tr: '{{n}} delik cam için çok küçük (en az 300 mm gerekir).',
+  },
+  alreadyFilled: {
+    key: 'AutofillSkipAlreadyFilled',
+    tr: '{{n}} delik zaten camla dolu.',
+  },
+  approximated: {
+    key: 'AutofillSkipApproximated',
+    tr: '{{n}} daire/elips delik yaklaşık bir cam profille dolduruldu — birebir kesim için poligon şekli kullanın.',
+  },
+};
+
+// WHY: a refused hole used to be indistinguishable from "this wall has no holes". Autofill now says
+// which holes it declined and why, so it never silently ships an approximate (or missing) pane.
+const holeSkipMessage = (skipped: WallHoleSkip[], t: TFunction): string | null => {
+  const counts = new Map<WallHoleSkipReason, number>();
+  for (const skip of skipped) counts.set(skip.reason, (counts.get(skip.reason) ?? 0) + 1);
+  const parts: string[] = [];
+  for (const [reason, count] of counts) {
+    const text = HOLE_SKIP_TEXT[reason];
+    parts.push(
+      t(`GlassEnclosure.Designer.Wall.${text.key}`, { n: count, defaultValue: text.tr }) as string,
+    );
+  }
+  return parts.length > 0 ? parts.join(' ') : null;
 };
 
 const twoWallGapFailureMessage = (reason: TwoWallGapFailure, t: TFunction): string => {
@@ -337,18 +384,30 @@ export const useWallAutofill = () => {
       });
       return 0;
     }
-    const edges = computeOpeningEdges([selectedWall], state.scene.runs);
+    const plan = computeWallFillPlan([selectedWall], state.scene.runs);
+    const edges = plan.edges;
+    const skipMessage = holeSkipMessage(plan.skipped, t);
     if (edges.length === 0) {
       // WHY: a single solid wall (no openings/holes) returned 0 with no feedback — tell the user.
+      // When holes WERE present but refused, the reason replaces the generic message.
       queueToast({
         dedupeKey: 'glass-autofill-no-openings',
-        variant: 'info',
-        description: t('GlassEnclosure.Designer.Wall.AutofillNoOpenings', {
-          defaultValue:
-            'Bu duvarda doldurulacak açıklık veya delik yok — önce bir açıklık/delik ekleyin ya da birden fazla duvar seçin.',
-        }),
+        variant: skipMessage ? 'warning' : 'info',
+        description:
+          skipMessage ??
+          t('GlassEnclosure.Designer.Wall.AutofillNoOpenings', {
+            defaultValue:
+              'Bu duvarda doldurulacak açıklık veya delik yok — önce bir açıklık/delik ekleyin ya da birden fazla duvar seçin.',
+          }),
       });
       return 0;
+    }
+    if (skipMessage) {
+      queueToast({
+        dedupeKey: 'glass-autofill-partial',
+        variant: 'warning',
+        description: skipMessage,
+      });
     }
     const created = await createRuns(
       projectId,

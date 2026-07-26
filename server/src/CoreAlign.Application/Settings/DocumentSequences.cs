@@ -53,6 +53,7 @@ internal static class DocumentSequenceDefaults
             [DocumentSequenceType.EmployeeNumber] = "PER",
             [DocumentSequenceType.PayrollRunNumber] = "BORD",
             [DocumentSequenceType.PayslipNumber] = "UCRET",
+            [DocumentSequenceType.ProductionJobNumber] = "JOB",
         };
 
     public static string PrefixFor(DocumentSequenceType type) =>

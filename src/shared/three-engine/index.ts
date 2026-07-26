@@ -46,6 +46,7 @@ export {
   buildPolygonFootprint,
   restElevationMm,
   restElevationAtPointMm,
+  restsOnSupportAtMm,
   isFloating,
   normalizePlanAngleDeg,
   penetratesAny,

@@ -5,15 +5,10 @@ import {
   penetratesAny,
 } from '../scene/interaction/planCollision';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
-import { arcPointAt, isRealArc, resolveArc } from './arcGeometry';
-import { featureOutlineMm } from './wallFeatureGeometry';
-import { serializePanelPolygonPoints } from './panelPolygon';
-import type {
-  PanelShapeKind,
-  SceneRunState,
-  SceneWallFeature,
-  SceneWallState,
-} from './project.types';
+import { arcPointAt } from './arcGeometry';
+import { resolveWallArc, resolveWallHoles } from './wallHoleGeometry';
+import type { WallHoleSkip } from './wallHoleGeometry';
+import type { PanelShapeKind, SceneRunState, SceneWallState } from './project.types';
 
 export interface OpenEdge {
   originX: number;
@@ -29,36 +24,8 @@ export interface OpenEdge {
   shapePointsJson?: string | null;
 }
 
-// Map a shaped wall hole (the feature silhouette) onto a glass PANEL shape so the
-// fill glass matches the hole instead of being a rectangle that overflows the wall.
-const featurePanelShape = (
-  feature: SceneWallFeature,
-): { shapeKind: PanelShapeKind; shapePointsJson: string | null } | null => {
-  if (feature.shape === 'rect') return null;
-  if (feature.shape === 'circle' || feature.shape === 'ellipse') {
-    return { shapeKind: 'ellipse', shapePointsJson: null };
-  }
-  const outline = featureOutlineMm({
-    shape: feature.shape,
-    offsetMm: feature.offsetMm,
-    centerZMm: feature.centerZMm,
-    widthMm: feature.widthMm,
-    heightMm: feature.heightMm,
-    sides: feature.sides,
-    points: feature.points,
-  });
-  // Feature outline is absolute (around offset/centerZ); a panel polygon is local,
-  // bottom-centred, y-up — shift x to centre, z (+up) to [0, height].
-  const hh = feature.heightMm / 2;
-  const pts = outline.map((p) => ({
-    x: Math.round(p.x - feature.offsetMm),
-    y: Math.round(p.z - feature.centerZMm + hh),
-  }));
-  return { shapeKind: 'polygon', shapePointsJson: serializePanelPolygonPoints(pts) };
-};
-
 const ENDPOINT_TOLERANCE_MM = 150;
-const MIN_EDGE_MM = 300;
+export const MIN_EDGE_MM = 300;
 
 interface Endpoint {
   x: number;
@@ -136,44 +103,55 @@ export const panelCountForWidth = (lengthMm: number, maxPanelWidthMm?: number): 
   return Math.max(1, Math.min(MAX_AUTOFILL_PANELS, Math.ceil(lengthMm / DEFAULT_PANEL_TARGET_MM)));
 };
 
-export const computeOpeningEdges = (
+export interface WallFillPlan {
+  edges: OpenEdge[];
+  skipped: WallHoleSkip[];
+}
+
+// WHY: the hole set comes from resolveWallHoles — the SAME decisions the wall builder makes when it
+// carves the body. Re-deriving it here (raw record, no clamp, no fits/overlap gate) is what produced
+// glass that did not match the hole: 11 mm too tall on a full-height window, 5 mm too wide against a
+// wall end, and whole panes for holes the wall never cut.
+export const computeWallFillPlan = (
   walls: SceneWallState[],
   existingRuns: SceneRunState[] = [],
-): OpenEdge[] => {
-  // Skip an opening/hole that an existing glass run already covers, so re-running
-  // autofill is idempotent (no stacked duplicate panels).
+): WallFillPlan => {
+  // Skip a hole that an existing glass run already covers, so re-running autofill is idempotent
+  // (no stacked duplicate panels).
   const runFootprints = existingRuns.map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg));
   const edges: OpenEdge[] = [];
+  const skipped: WallHoleSkip[] = [];
+  // WHY: 'approximated' is an advisory about a hole the resolver GLAZED. If the plan then refuses
+  // that same hole, the advisory would claim a fill that never happened and double-count the hole.
+  const refused = new Set<string>();
+  const refuse = (hole: { source: string; id: string }, reason: WallHoleSkip['reason']) => {
+    refused.add(`${hole.source}:${hole.id}`);
+    skipped.push({ source: hole.source as WallHoleSkip['source'], id: hole.id, reason });
+  };
   for (const wall of walls) {
+    const resolved = resolveWallHoles(wall);
+    skipped.push(...resolved.skipped);
     const radians = (wall.rotationDeg * Math.PI) / 180;
     const cos = Math.cos(radians);
     const sin = Math.sin(radians);
-    // The opening's sill is measured from the wall's own base, so a raised wall
-    // lifts the fill panel by the wall's geomZ on top of the local sill height.
+    // The hole's bottom is measured from the wall's own base, so a raised wall lifts the fill panel
+    // by the wall's geomZ on top of the local sill height.
     const wallBaseZ = wall.geomZ ?? 0;
-    // ARC wall: feature/opening offsets are DEVELOPED arc-length u, and rotationDeg is the ROLLED
-    // start tangent — walking origin + u·dir(rotationDeg) leaves the wall immediately (~0.3·R off
-    // at the mid-face of a 90° arc, the reported "detached glass"). The fill must be a SUB-ARC of
-    // the wall: same radius, sweep = uWidth/radius, origin ON the arc, rotation = the tangent at
-    // the hole's start (which reparametrizes the remaining arc identically).
-    const resolvedArcWall = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
-      ? resolveArc(wall.geomArcRadiusMm ?? 0, wall.geomArcSweepDeg ?? 1)
-      : null;
-    const pushEdge = (
-      startMm: number,
-      widthMm: number,
-      sillMm: number,
-      heightMm: number,
-      shape?: { shapeKind: PanelShapeKind; shapePointsJson: string | null } | null,
-    ) => {
-      if (widthMm < MIN_EDGE_MM || heightMm < MIN_EDGE_MM) return;
-      const geomZ = Math.round(wallBaseZ + sillMm);
+    // ARC wall: hole offsets are DEVELOPED arc-length u, and rotationDeg is the ROLLED start tangent
+    // — walking origin + u·dir(rotationDeg) leaves the wall immediately (~0.3·R off at the mid-face
+    // of a 90° arc, the reported "detached glass"). The fill must be a SUB-ARC of the wall: same
+    // radius, sweep = uWidth/radius, origin ON the arc, rotation = the tangent at the hole's start.
+    const resolvedArcWall = resolveWallArc(wall);
+    for (const hole of resolved.holes) {
+      if (hole.uWidthMm < MIN_EDGE_MM || hole.zHeightMm < MIN_EDGE_MM) {
+        refuse(hole, 'tooSmall');
+        continue;
+      }
+      const geomZ = Math.round(wallBaseZ + hole.zBottomMm);
+      const heightMm = Math.round(hole.zHeightMm);
       if (resolvedArcWall) {
-        const u0 = Math.max(0, Math.min(startMm, resolvedArcWall.arcLengthMm));
-        const uWidth = Math.min(widthMm, resolvedArcWall.arcLengthMm - u0);
-        if (uWidth < MIN_EDGE_MM) return;
-        const phi0 = u0 / resolvedArcWall.radiusMm;
-        const subSweepRad = uWidth / resolvedArcWall.radiusMm;
+        const phi0 = hole.uStartMm / resolvedArcWall.radiusMm;
+        const subSweepRad = hole.uWidthMm / resolvedArcWall.radiusMm;
         const start = arcPointAt(resolvedArcWall.radiusMm, resolvedArcWall.direction, phi0);
         const originX = Math.round(wall.originX + start.x * cos - start.z * sin);
         const originY = Math.round(wall.originY + start.x * sin + start.z * cos);
@@ -192,7 +170,7 @@ export const computeOpeningEdges = (
           orderIndex: 0,
           label: '',
           lengthMm: subChordMm,
-          heightMm: Math.round(heightMm),
+          heightMm,
           originX,
           originY,
           rotationDeg,
@@ -205,67 +183,63 @@ export const computeOpeningEdges = (
           geomArcSweepDeg: subSweepDeg,
           panels: [],
         };
-        if (penetratesAny(buildRunFootprint(pseudoRun, 0, 0, rotationDeg), runFootprints)) return;
+        if (penetratesAny(buildRunFootprint(pseudoRun, 0, 0, rotationDeg), runFootprints)) {
+          refuse(hole, 'alreadyFilled');
+          continue;
+        }
         edges.push({
           originX,
           originY,
           rotationDeg,
           lengthMm: subChordMm,
-          heightMm: Math.round(heightMm),
+          heightMm,
           geomZ,
           geomArcRadiusMm: resolvedArcWall.radiusMm,
           geomArcSweepDeg: subSweepDeg,
           arcGlassBent: true,
-          shapeKind: shape?.shapeKind ?? null,
-          shapePointsJson: shape?.shapePointsJson ?? null,
+          shapeKind: hole.shape?.shapeKind ?? null,
+          shapePointsJson: hole.shape?.shapePointsJson ?? null,
         });
-        return;
+        continue;
       }
-      const originX = Math.round(wall.originX + startMm * cos);
-      const originY = Math.round(wall.originY + startMm * sin);
+      const originX = Math.round(wall.originX + hole.uStartMm * cos);
+      const originY = Math.round(wall.originY + hole.uStartMm * sin);
+      const lengthMm = Math.round(hole.uWidthMm);
       const footprint: PlanFootprint = buildPlanFootprint(
         'opening-edge',
         originX,
         originY,
-        Math.round(widthMm),
+        lengthMm,
         wall.rotationDeg,
         RUN_PLAN_THICKNESS_MM / 2,
         geomZ,
-        geomZ + Math.round(heightMm),
+        geomZ + heightMm,
       );
-      if (penetratesAny(footprint, runFootprints)) return;
+      if (penetratesAny(footprint, runFootprints)) {
+        refuse(hole, 'alreadyFilled');
+        continue;
+      }
       edges.push({
         originX,
         originY,
         rotationDeg: wall.rotationDeg,
-        lengthMm: Math.round(widthMm),
-        heightMm: Math.round(heightMm),
+        lengthMm,
+        heightMm,
         geomZ,
-        shapeKind: shape?.shapeKind ?? null,
-        shapePointsJson: shape?.shapePointsJson ?? null,
+        shapeKind: hole.shape?.shapeKind ?? null,
+        shapePointsJson: hole.shape?.shapePointsJson ?? null,
       });
-    };
-    for (const opening of wall.openings ?? []) {
-      pushEdge(
-        opening.offsetMm - opening.widthMm / 2,
-        opening.widthMm,
-        opening.sillMm,
-        opening.heightMm,
-      );
-    }
-    for (const feature of wall.features ?? []) {
-      const throughHole =
-        feature.mode === 'hole' ||
-        (feature.mode === 'recess' && feature.depthMm >= wall.thicknessMm - 5);
-      if (!throughHole) continue;
-      pushEdge(
-        feature.offsetMm - feature.widthMm / 2,
-        feature.widthMm,
-        feature.centerZMm - feature.heightMm / 2,
-        feature.heightMm,
-        featurePanelShape(feature),
-      );
     }
   }
-  return edges;
+  return {
+    edges,
+    skipped: skipped.filter(
+      (s) => s.reason !== 'approximated' || !refused.has(`${s.source}:${s.id}`),
+    ),
+  };
 };
+
+export const computeOpeningEdges = (
+  walls: SceneWallState[],
+  existingRuns: SceneRunState[] = [],
+): OpenEdge[] => computeWallFillPlan(walls, existingRuns).edges;

@@ -140,6 +140,8 @@ public static class ApplicationServiceRegistration
         services.AddScoped<CoreAlign.Application.Notifications.Templates.INotificationTemplateRenderer,
             CoreAlign.Application.Notifications.Templates.ScribanNotificationTemplateRenderer>();
         services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Notifications.Outbox.NotificationDispatchOutboxHandler>();
+        services.AddScoped<CoreAlign.Application.Feedback.Notifications.IFeedbackNotificationOutbox, CoreAlign.Application.Feedback.Notifications.FeedbackNotificationOutbox>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Feedback.Notifications.FeedbackNotificationOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Notifications.Delivery.NotificationChannelSendOutboxHandler>();
         services.AddScoped<CoreAlign.Application.Notifications.Delivery.INotificationDeliveryQueue,
             CoreAlign.Application.Notifications.Delivery.NotificationDeliveryQueue>();

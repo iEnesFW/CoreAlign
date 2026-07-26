@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrickWall, Minus, MoveDiagonal2, Pencil, Plus, Square } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
+import { resolveWallHoles } from '../model/wallHoleGeometry';
 import { arcEndLocal, isRealArc, resolveArc } from '../model/arcGeometry';
 import { snapAngleDeg } from '../model/angleSnap';
 import type { SceneRunState, SceneSlabState, SceneWallState } from '../model/project.types';
@@ -39,11 +40,6 @@ const GRID_MAJOR_MM = 1000;
 const GRID_MINOR_MM = 100;
 const WALL_HEIGHT_MM = 2600;
 const WALL_THICKNESS_MM = 200;
-const OPENING_SIDE_MARGIN_MM = 5;
-const OPENING_BOTTOM_MARGIN_MM = 1;
-const OPENING_TOP_MARGIN_MM = 10;
-const OPENING_MIN_SPAN_MM = 20;
-const OPENING_GAP_MM = 50;
 
 const angleDeg = (dx: number, dy: number) => {
   const rad = Math.atan2(dy, dx);
@@ -70,32 +66,19 @@ const runEndLocal = (run: SceneRunState): Vec => {
 
 type OpeningSpan = { id: string; kind: 'window' | 'door'; fromMm: number; toMm: number };
 
+// WHY: this used to be a third, hand-inlined copy of the opening clamp — and it omitted the head
+// re-anchor, so the 2D plan and the carved 3D wall disagreed about which openings even exist.
+// resolveWallHoles is the one source of truth for what the wall actually carves.
 const wallOpeningSpans = (wall: SceneWallState): OpeningSpan[] => {
-  const sorted = [...(wall.openings ?? [])].sort((a, b) => a.offsetMm - b.offsetMm);
-  const heightStartMm = wall.heightMm;
-  const heightEndMm = wall.heightEndMm ?? wall.heightMm;
-  const slope = wall.lengthMm > 0 ? (heightEndMm - heightStartMm) / wall.lengthMm : 0;
-  const spans: OpeningSpan[] = [];
-  let lastRightMm = Number.NEGATIVE_INFINITY;
-  for (const opening of sorted) {
-    const leftMm = opening.offsetMm - opening.widthMm / 2;
-    if (leftMm < lastRightMm + OPENING_GAP_MM) continue;
-    const fromMm = Math.max(OPENING_SIDE_MARGIN_MM, leftMm);
-    const toMm = Math.min(
-      wall.lengthMm - OPENING_SIDE_MARGIN_MM,
-      opening.offsetMm + opening.widthMm / 2,
-    );
-    if (toMm - fromMm < OPENING_MIN_SPAN_MM) continue;
-    const topLimit =
-      Math.min(heightStartMm + slope * fromMm, heightStartMm + slope * toMm) -
-      OPENING_TOP_MARGIN_MM;
-    const y0 = Math.max(OPENING_BOTTOM_MARGIN_MM, opening.sillMm);
-    const y1 = Math.min(topLimit, opening.sillMm + opening.heightMm);
-    if (y1 - y0 < OPENING_MIN_SPAN_MM) continue;
-    spans.push({ id: opening.id, kind: opening.kind, fromMm, toMm });
-    lastRightMm = opening.offsetMm + opening.widthMm / 2;
-  }
-  return spans;
+  const kindById = new Map((wall.openings ?? []).map((o) => [o.id, o.kind]));
+  return resolveWallHoles(wall)
+    .holes.filter((hole) => hole.source === 'opening')
+    .map((hole) => ({
+      id: hole.id,
+      kind: kindById.get(hole.id) ?? 'window',
+      fromMm: hole.uStartMm,
+      toMm: hole.uStartMm + hole.uWidthMm,
+    }));
 };
 
 type ArcRenderParams = { radiusMm: number; largeArcFlag: 0 | 1; sweepFlag: 0 | 1 };

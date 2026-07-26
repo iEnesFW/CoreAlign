@@ -97,7 +97,6 @@ public static class InfrastructureServiceRegistration
 
         void ConfigureDb(IServiceProvider sp, DbContextOptionsBuilder options)
         {
-            options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
             if (isSqlite)
             {
                 var sqliteConn = string.IsNullOrWhiteSpace(connection) || !connection.StartsWith("Data Source=", StringComparison.OrdinalIgnoreCase)
@@ -281,6 +280,8 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IDealerUserRepository, DealerUserRepository>();
         services.AddScoped<IDiscountRuleRepository, DiscountRuleRepository>();
         services.AddScoped<IFeedbackRepository, FeedbackRepository>();
+        services.AddScoped<IFeedbackCommentRepository, FeedbackCommentRepository>();
+        services.AddScoped<IFeedbackAttachmentRepository, FeedbackAttachmentRepository>();
         services.AddScoped<IGLPostingMappingRepository, GLPostingMappingRepository>();
         services.AddScoped<IModulePricePlanRepository, ModulePricePlanRepository>();
         services.AddScoped<IModuleRepository, ModuleRepository>();

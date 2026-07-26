@@ -216,6 +216,8 @@ export interface KioskStepDto {
   status: string;
   startedAtUtc: string | null;
   assignedOperatorId: string | null;
+  setupTimeMinutes: number;
+  runTimeMinutesPerUnit: number;
 }
 
 export const kioskApi = {
