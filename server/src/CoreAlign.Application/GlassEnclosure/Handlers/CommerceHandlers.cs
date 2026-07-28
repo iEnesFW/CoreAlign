@@ -369,7 +369,10 @@ public class ConvertProjectToOrderCommandHandler : IRequestHandler<ConvertProjec
                 }
             }
 
-            var sellingUnitPrice = decimal.Round(bomLine.UnitCost * marginMultiplier, 4);
+            // WHY EffectiveUnitCost: the manual per-line override already moves the project total the
+            // customer was shown; reading UnitCost here booked the order at the un-overridden catalogue
+            // cost, so the quote and the order disagreed by the override on every edited line.
+            var sellingUnitPrice = decimal.Round(bomLine.EffectiveUnitCost * marginMultiplier, 4);
             var lineTaxRate = bomLine.IsService ? 0m : taxRatePercent;
 
             var orderLine = new OrderLine(
@@ -393,7 +396,7 @@ public class ConvertProjectToOrderCommandHandler : IRequestHandler<ConvertProjec
                 taxRateId: null,
                 isTaxInclusive: false,
                 withholdingRatePercent: 0m,
-                unitCostSnapshot: bomLine.UnitCost,
+                unitCostSnapshot: bomLine.EffectiveUnitCost,
                 uomId: null,
                 uomCode: bomLine.Unit,
                 uomConversionFactor: 1m,

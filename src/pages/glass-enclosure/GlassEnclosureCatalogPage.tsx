@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { toastApiError } from '@/shared/lib/mutationToast';
+import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import type {
+  GlassEnclosureSettingsDto,
+  UpdateSettingsCoreInput,
+} from '@/features/glass-enclosure/model/glassEnclosure.types';
 import {
+  useUpdateSettingsCoreMutation,
   useColorOptionsQuery,
   useGlassTypesQuery,
   useProfileSystemsQuery,
@@ -370,6 +378,7 @@ const SettingsPanel = () => {
           value={`${s.defaultTaxRatePercent}%`}
         />
       </SettingsCard>
+      <ArcPricingCard settings={s} />
       <SettingsCard title={t('GlassEnclosure.Settings.Field')}>
         <KV label={t('GlassEnclosure.Field.ToleranceTop')} value={`${s.fieldToleranceTopMm} mm`} />
         <KV
@@ -428,6 +437,153 @@ const SettingsPanel = () => {
     </div>
   );
 };
+
+const ArcPricingCard = ({ settings }: { settings: GlassEnclosureSettingsDto }) => {
+  const { t } = useTranslation();
+  const isAdmin = useIsTenantAdmin();
+  const updateCore = useUpdateSettingsCoreMutation();
+  const [factor, setFactor] = useState(String(settings.bentGlassCostFactor));
+  const [railFee, setRailFee] = useState(String(settings.bendRailFeePerM));
+  const [tracked, setTracked] = useState(settings);
+  if (tracked !== settings) {
+    setTracked(settings);
+    setFactor(String(settings.bentGlassCostFactor));
+    setRailFee(String(settings.bendRailFeePerM));
+  }
+
+  const parsedFactor = Number(factor);
+  const parsedRailFee = Number(railFee);
+  const factorValid = Number.isFinite(parsedFactor) && parsedFactor >= 1 && parsedFactor <= 10;
+  const railFeeValid = Number.isFinite(parsedRailFee) && parsedRailFee >= 0;
+  const dirty =
+    parsedFactor !== settings.bentGlassCostFactor || parsedRailFee !== settings.bendRailFeePerM;
+
+  const save = () => {
+    if (!factorValid || !railFeeValid) return;
+    // WHY every core field: the server DTO is a positional record with C# defaults, so any field the
+    // client omits silently resets to that default — sending the current values keeps them intact.
+    const input: UpdateSettingsCoreInput = {
+      defaultStockBarLengthMm: settings.defaultStockBarLengthMm,
+      defaultJumboGlassWidthMm: settings.defaultJumboGlassWidthMm,
+      defaultJumboGlassHeightMm: settings.defaultJumboGlassHeightMm,
+      sawKerfMm: settings.sawKerfMm,
+      glassKerfMm: settings.glassKerfMm,
+      guillotineRequired: settings.guillotineRequired,
+      defaultWastePercent: settings.defaultWastePercent,
+      laborCostPerM2: settings.laborCostPerM2,
+      defaultMarginPercent: settings.defaultMarginPercent,
+      defaultTaxRatePercent: settings.defaultTaxRatePercent,
+      bendRailFeePerM: parsedRailFee,
+      bentGlassCostFactor: parsedFactor,
+    };
+    updateCore.mutate(input, {
+      onSuccess: () => toast.success(t('GlassEnclosure.Settings.ArcPricingSaved')),
+      onError: (error) => toastApiError(error),
+    });
+  };
+
+  return (
+    <SettingsCard title={t('GlassEnclosure.Settings.ArcPricing')}>
+      <p className="mb-3 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+        {t('GlassEnclosure.Settings.ArcPricingHint')}
+      </p>
+      <SettingsNumberField
+        label={t('GlassEnclosure.Field.BentGlassCostFactor')}
+        value={factor}
+        onChange={setFactor}
+        onBlurCommit={() =>
+          setFactor(String(factorValid ? parsedFactor : settings.bentGlassCostFactor))
+        }
+        min={1}
+        max={10}
+        step={0.05}
+        suffix="×"
+        invalid={!factorValid}
+        disabled={!isAdmin}
+      />
+      <SettingsNumberField
+        label={t('GlassEnclosure.Field.BendRailFeePerM')}
+        value={railFee}
+        onChange={setRailFee}
+        onBlurCommit={() =>
+          setRailFee(String(railFeeValid ? parsedRailFee : settings.bendRailFeePerM))
+        }
+        min={0}
+        step={1}
+        suffix={`${settings.defaultCurrency}/m`}
+        invalid={!railFeeValid}
+        disabled={!isAdmin}
+      />
+      <p className="pt-1 text-xs text-slate-500 dark:text-slate-400">
+        {parsedFactor === 1
+          ? t('GlassEnclosure.Settings.ArcPricingNoPremium')
+          : t('GlassEnclosure.Settings.ArcPricingSeparateLine')}
+      </p>
+      {isAdmin ? (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={save}
+            disabled={!dirty || !factorValid || !railFeeValid || updateCore.isPending}
+            className="rounded bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {t('Common.Save')}
+          </button>
+        </div>
+      ) : (
+        <p className="pt-2 text-xs italic text-slate-400 dark:text-slate-500">
+          {t('GlassEnclosure.Settings.ArcPricingAdminOnly')}
+        </p>
+      )}
+    </SettingsCard>
+  );
+};
+
+const SettingsNumberField = ({
+  label,
+  value,
+  onChange,
+  onBlurCommit,
+  min,
+  max,
+  step,
+  suffix,
+  invalid,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  onBlurCommit: () => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  suffix: string;
+  invalid: boolean;
+  disabled: boolean;
+}) => (
+  <label className="flex items-center justify-between gap-3 text-sm">
+    <span className="text-slate-500 dark:text-slate-400">{label}</span>
+    <span className="flex items-center gap-1">
+      <input
+        type="number"
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlurCommit}
+        className={`w-24 rounded border bg-white px-2 py-1 text-right font-mono text-sm text-slate-900 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-900 dark:text-slate-100 ${
+          invalid
+            ? 'border-danger-500 focus:border-danger-500'
+            : 'border-slate-300 focus:border-primary-500 dark:border-slate-600'
+        }`}
+      />
+      <span className="w-14 text-xs text-slate-400 dark:text-slate-500">{suffix}</span>
+    </span>
+  </label>
+);
 
 const Table = ({ columns, rows }: { columns: string[]; rows: (string | number)[][] }) => (
   <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">

@@ -193,10 +193,15 @@ public class BOMComposer : IBOMComposer
                 totalArea += areaM2;
                 totalPanels += 1;
                 totalWeightKg += areaM2 * glass.WeightKgPerM2;
-                var rawGlassUnitCost = glass.PricePerM2 * glassCostFactor;
-                var glassUnitCost = decimal.Round(await _fx.ConvertAsync(rawGlassUnitCost, glass.Currency, currency, asOf, cancellationToken), 4);
-                var lineCost = areaM2 * glassUnitCost;
-                glassCost += lineCost;
+                // WHY split: folding the bent-glass factor into the glass rate hid the surcharge inside
+                // a catalogue price the tenant could neither see nor override. Base + premium is the
+                // same total, but every arc-driven amount is now its own named, overridable line.
+                var baseGlassUnitCost = decimal.Round(await _fx.ConvertAsync(glass.PricePerM2, glass.Currency, currency, asOf, cancellationToken), 4);
+                var bentGlassUnitCost = glassCostFactor == 1m
+                    ? baseGlassUnitCost
+                    : decimal.Round(await _fx.ConvertAsync(glass.PricePerM2 * glassCostFactor, glass.Currency, currency, asOf, cancellationToken), 4);
+                var bentPremiumUnitCost = bentGlassUnitCost - baseGlassUnitCost;
+                glassCost += areaM2 * baseGlassUnitCost;
                 var glassLinkage = await _linker.EnsureLinkedAsync(glass, CatalogItemKind.Glass, cancellationToken);
                 lines.Add(new BOMLineDraft(
                     GlassBOMLineKind.GlassPiece,
@@ -206,10 +211,30 @@ public class BOMComposer : IBOMComposer
                     $"{run.Label} · Panel {panel.PanelIndex + 1} · {glass.Name}",
                     decimal.Round(areaM2, 3),
                     "m²",
-                    glassUnitCost,
+                    baseGlassUnitCost,
                     currency,
                     panel.Id.ToString(),
                     sortOrder++));
+
+                if (bentPremiumUnitCost > 0m)
+                {
+                    glassCost += areaM2 * bentPremiumUnitCost;
+                    lines.Add(new BOMLineDraft(
+                        GlassBOMLineKind.GlassPiece,
+                        glass.Id,
+                        glassLinkage.ProductId,
+                        false,
+                        // WHY no factor in the text: this description is the key a manual price override
+                        // is re-matched on after a recompute, so it must not move when the tenant edits
+                        // the factor (or when the server's culture formats the decimal differently).
+                        $"{run.Label} · Panel {panel.PanelIndex + 1} · Bombeli cam farkı",
+                        decimal.Round(areaM2, 3),
+                        "m²",
+                        bentPremiumUnitCost,
+                        currency,
+                        panel.Id.ToString(),
+                        sortOrder++));
+                }
 
                 // Catalog hardware placed on the panel in the 3D designer — priced from the catalog
                 // (FX-converted, catalog-linked) so it reaches the quote/cutting list.

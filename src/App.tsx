@@ -31,6 +31,7 @@ import {
   DashboardPage,
   ForgotPasswordPage,
   GlassProjectDesignerPage,
+  GlassEnclosureCatalogPage,
   GlassProjectsPage,
   IncomeStatementPage,
   InventoryPage,
@@ -274,6 +275,10 @@ function App() {
                             <Route
                               path="glass-enclosure/projects/:id"
                               element={<GlassProjectDesignerPage />}
+                            />
+                            <Route
+                              path="glass-enclosure/catalog"
+                              element={<GlassEnclosureCatalogPage />}
                             />
                             <Route path="admin/providers" element={<ProvidersAdminPage />} />
                             <Route path="admin/providers/sso" element={<TenantIdpAdminPage />} />

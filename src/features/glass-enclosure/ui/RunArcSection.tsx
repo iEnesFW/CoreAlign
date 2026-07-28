@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FlipHorizontal } from 'lucide-react';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
+import { useSettingsQuery } from '../hooks/useGlassEnclosureQueries';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { deriveArcFromRadius, facetJointAngleDeg, isRealArc } from '../model/arcGeometry';
 import { arcCommitKeepingEnds } from '../geometry/arcCommit';
@@ -34,6 +35,9 @@ export function RunArcSection({
   const { t } = useTranslation();
   const setRunGlassBent = useDesignerStore((s) => s.setRunGlassBent);
   const { persistRun } = useRunEntityActions();
+  // WHY read the setting: this label used to hard-code "~2.5-3× maliyet", so it lied the moment a
+  // tenant changed the factor — and the factor is the tenant's to set.
+  const bentGlassFactor = useSettingsQuery().data?.data?.bentGlassCostFactor ?? 1;
   const [sweepDraft, setSweepDraft] = useState('');
   const [chordDraft, setChordDraft] = useState('');
   const [sagittaDraft, setSagittaDraft] = useState('');
@@ -229,9 +233,14 @@ export function RunArcSection({
               void persistRun({ ...draft, arcGlassBent: e.target.checked });
             }}
           />
-          {t('GlassEnclosure.Designer.Arc.BentGlass', {
-            defaultValue: 'Bombeli cam (özel üretim, ~2.5-3× maliyet)',
-          })}
+          {bentGlassFactor > 1
+            ? t('GlassEnclosure.Designer.Arc.BentGlassWithFactor', {
+                defaultValue: 'Bombeli cam (özel üretim, ×{{factor}} cam maliyeti)',
+                factor: bentGlassFactor,
+              })
+            : t('GlassEnclosure.Designer.Arc.BentGlass', {
+                defaultValue: 'Bombeli cam (özel üretim)',
+              })}
         </label>
       )}
 

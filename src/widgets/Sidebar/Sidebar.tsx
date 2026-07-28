@@ -126,6 +126,12 @@ const baseNavigation: NavItem[] = [
     icon: FolderKanban,
     tourAnchor: 'sidebar-projects',
   },
+  {
+    name: 'Glass Catalog',
+    labelKey: 'Sidebar.nav.glassCatalog',
+    href: '/dashboard/glass-enclosure/catalog',
+    icon: Boxes,
+  },
 
   { section: 'PURCHASING' },
   { name: 'Vendors', labelKey: 'Sidebar.nav.vendors', href: '/dashboard/vendors', icon: Box },

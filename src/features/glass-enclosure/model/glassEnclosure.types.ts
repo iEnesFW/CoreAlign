@@ -451,6 +451,8 @@ export interface GlassEnclosureSettingsDto {
   laborCostPerM2: number;
   defaultMarginPercent: number;
   defaultTaxRatePercent: number;
+  bendRailFeePerM: number;
+  bentGlassCostFactor: number;
   fieldToleranceTopMm: number;
   fieldToleranceSideMm: number;
   transportRatePerKm: number;
@@ -481,6 +483,8 @@ export interface UpdateSettingsCoreInput {
   laborCostPerM2: number;
   defaultMarginPercent: number;
   defaultTaxRatePercent: number;
+  bendRailFeePerM: number;
+  bentGlassCostFactor: number;
 }
 
 export interface UpdateSettingsFieldInput {

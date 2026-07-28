@@ -113,6 +113,34 @@ public class ConvertProjectToOrderTests
     }
 
     [Fact]
+    public async Task Manual_unit_price_override_is_carried_into_the_order_line()
+    {
+        var project = BuildQuotedProject();
+        _projectRepo.GetByIdAsync(project.Id, Arg.Any<CancellationToken>()).Returns(project);
+
+        var glassProduct = BuildProduct("GLS-6", "Tempered 6");
+        var overridden = new GlassProjectBOMLine(
+            project.Id, GlassBOMLineKind.GlassPiece, "Tempered 6", 2m, "Piece", 100m, "TRY",
+            productId: glassProduct.Id, sortOrder: 0);
+        overridden.ApplyUnitPriceOverride(180m);
+
+        _bomLineRepo.ListByProjectAsync(project.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { overridden });
+        _productRepo.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<Guid, Product> { [glassProduct.Id] = glassProduct });
+
+        Order? captured = null;
+        await _orderRepo.AddAsync(Arg.Do<Order>(o => captured = o), Arg.Any<CancellationToken>());
+
+        await _sut.Handle(new ConvertProjectToOrderCommand(project.Id), default);
+
+        // Reading UnitCost here booked the order at 100 while the customer was quoted 180.
+        var line = captured!.Lines.Should().ContainSingle().Subject;
+        line.UnitPrice.Should().Be(180m);
+        line.UnitCostSnapshot.Should().Be(180m);
+    }
+
+    [Fact]
     public async Task Service_line_produces_order_line_with_isservice_true_and_empty_product_id()
     {
         var project = BuildQuotedProject();

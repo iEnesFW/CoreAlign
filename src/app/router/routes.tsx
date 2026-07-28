@@ -219,6 +219,10 @@ export const GlassProjectDesignerPage = lazyNamed(
   () => import('@/pages/glass-enclosure/GlassProjectDesignerPage'),
   'GlassProjectDesignerPage',
 );
+export const GlassEnclosureCatalogPage = lazyNamed(
+  () => import('@/pages/glass-enclosure/GlassEnclosureCatalogPage'),
+  'GlassEnclosureCatalogPage',
+);
 export const ProvidersAdminPage = lazyNamed(
   () => import('@/pages/admin/ProvidersAdminPage'),
   'ProvidersAdminPage',
