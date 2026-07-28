@@ -148,7 +148,10 @@ export const computeWallFillPlan = (
         continue;
       }
       const geomZ = Math.round(wallBaseZ + hole.zBottomMm);
-      const heightMm = Math.round(hole.zHeightMm);
+      // WHY: round the TOP against the same grid as the base, not the height on its own. Rounding
+      // base and height independently let the pane's top edge land up to 0.75 mm off the carved
+      // hole's top (measured on a polygon feature hole) — a hairline z-fighting seam.
+      const heightMm = Math.round(wallBaseZ + hole.zBottomMm + hole.zHeightMm) - geomZ;
       if (resolvedArcWall) {
         const phi0 = hole.uStartMm / resolvedArcWall.radiusMm;
         const subSweepRad = hole.uWidthMm / resolvedArcWall.radiusMm;

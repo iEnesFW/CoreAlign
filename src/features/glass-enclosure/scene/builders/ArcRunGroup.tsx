@@ -16,6 +16,7 @@ import {
 } from '../../model/arcGeometry';
 import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
+import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -90,9 +91,9 @@ interface ArcRunGroupProps {
   supports?: PlanFootprint[];
 }
 
-const PROFILE_CROSS_SECTION = { width: 50, height: 60 };
+const PROFILE_FACE_MM = 60;
 const EMPTY_OBSTACLES: PlanFootprint[] = [];
-const MULLION_CROSS_SECTION = { width: 30, height: 40 };
+const MULLION_FACE_MM = 40;
 const DEFAULT_HEX_COLOR = '#cfd5d9';
 const MIN_RUN_LENGTH_MM = 100;
 
@@ -131,7 +132,17 @@ export function ArcRunGroup({
   const radiusM = arc.radiusM;
   const profileColor = run.customColorHex ?? color?.hexColor ?? DEFAULT_HEX_COLOR;
   const finish = color?.finishType ?? 'PowderCoated';
-  const profileHalf = PROFILE_CROSS_SECTION.height / 1000 / 2;
+  const profileHalf = PROFILE_FACE_MM / 1000 / 2;
+  // The frame fills the host wall's opening depth minus one shadow line per face (see RunGroup /
+  // model/mountDepth.ts); a free-standing curved run keeps the historic 50 mm section.
+  const hostThicknessMm = useDesignerStore((s) =>
+    run.hostWallId
+      ? ((s.scene.walls ?? []).find((w) => w.id === run.hostWallId)?.thicknessMm ?? null)
+      : null,
+  );
+  const mount = resolveMountDepth(hostThicknessMm, run);
+  const profileSection = mountedSection(PROFILE_FACE_MM, mount);
+  const mullionSection = mountedSection(MULLION_FACE_MM, mount);
 
   const panels = run.panels;
   // A single shaped pane on a curved run draws its own shape-matched (curved) frame band, so the
@@ -463,7 +474,7 @@ export function ArcRunGroup({
                 {showTopRail && (
                   <ProfileBar
                     lengthM={seg.chordM * 1.02}
-                    crossSectionMm={PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -473,7 +484,7 @@ export function ArcRunGroup({
                 {showBottomRail && (
                   <ProfileBar
                     lengthM={seg.chordM * 1.02}
-                    crossSectionMm={PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -498,7 +509,7 @@ export function ArcRunGroup({
                 >
                   <ProfileBar
                     lengthM={heightM}
-                    crossSectionMm={isOuter ? PROFILE_CROSS_SECTION : MULLION_CROSS_SECTION}
+                    crossSectionMm={isOuter ? profileSection : mullionSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}

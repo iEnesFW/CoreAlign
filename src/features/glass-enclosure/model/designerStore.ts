@@ -330,12 +330,21 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
   const prevCustomColor = new Map<string, string>();
   const prevLocked = new Map<string, boolean>();
   const prevHostWall = new Map<string, string>();
+  const prevMount = new Map<string, { d?: number | null; o?: number | null; g?: number | null }>();
   if (prev) {
     for (const r of prev.runs) {
       if (r.arcGlassBent) prevBent.set(r.id, true);
       // hostWallId is blob-only (not on the run DTO) — carry it so the persistent cam↔host bond
       // survives the refetch that fires after every mutation (else it silently reverts to null).
       if (r.hostWallId) prevHostWall.set(r.id, r.hostWallId);
+      // Mount depth overrides are blob-only too — same carry or every refetch drops them.
+      const mountOverride = {
+        d: r.mountDepthMm ?? null,
+        o: r.mountOffsetMm ?? null,
+        g: r.mountShadowGapMm ?? null,
+      };
+      if (mountOverride.d !== null || mountOverride.o !== null || mountOverride.g !== null)
+        prevMount.set(r.id, mountOverride);
       // locked is blob-only (not on the run DTO) — without this carry, every refetch (which fires
       // after every run/panel mutation) silently UNLOCKED a run the user locked.
       if (r.locked) prevLocked.set(r.id, true);
@@ -400,6 +409,9 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
         hasMullions: prevMullions.has(run.id) ? false : null,
         locked: prevLocked.get(run.id) ?? false,
         hostWallId: prevHostWall.get(run.id) ?? null,
+        mountDepthMm: prevMount.get(run.id)?.d ?? null,
+        mountOffsetMm: prevMount.get(run.id)?.o ?? null,
+        mountShadowGapMm: prevMount.get(run.id)?.g ?? null,
         notes: run.notes ?? null,
         panels: normalizePanelWidths(
           run.panels.map((panel) => ({

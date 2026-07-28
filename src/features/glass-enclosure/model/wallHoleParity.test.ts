@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { computeOpeningEdges } from './wallAutofill';
 import { resolveWallArc, resolveWallHoles } from './wallHoleGeometry';
+import {
+  FREE_STANDING_DEPTH_MM,
+  SHADOW_GAP_MM,
+  mountedSection,
+  resolveMountDepth,
+} from './mountDepth';
 import type { SceneWallFeature, SceneWallOpening, SceneWallState } from './project.types';
 
 const wall = (patch: Partial<SceneWallState> = {}): SceneWallState => ({
@@ -53,8 +59,12 @@ const expectParity = (w: SceneWallState) => {
 
   holes.forEach((hole, i) => {
     const edge = edges[i];
-    expect(edge.heightMm).toBeCloseTo(Math.round(hole.zHeightMm), 0);
     expect(edge.geomZ).toBeCloseTo(Math.round(baseZ + hole.zBottomMm), 0);
+    // The TOP edge is the one that must land on the carved hole's top. Rounding the base and the
+    // height independently let it drift by two half-millimetres (measured 0.75 mm on a polygon
+    // feature hole) — a hairline seam. Both ends are now rounded against the same grid.
+    const glassTop = (edge.geomZ ?? 0) + (edge.heightMm ?? 0);
+    expect(Math.abs(glassTop - (baseZ + hole.zBottomMm + hole.zHeightMm))).toBeLessThanOrEqual(0.5);
     if (arc) {
       // Curved wall: the pane is a sub-arc, so its DEVELOPED length is the hole's face width.
       const developed =
@@ -144,5 +154,30 @@ describe('autofill glass matches the hole the wall actually has', () => {
 
   it('curved wall: a feature hole is carved and glazed at developed length', () => {
     expectParity(wall({ geomArcRadiusMm: 3000, geomArcSweepDeg: 60, features: [feature()] }));
+  });
+});
+
+/**
+ * The THIRD axis. A carved opening runs the full wall thickness; the assembly put back into it must
+ * fill that depth, or the pane reads as "not seated" with a visible reveal on both faces.
+ */
+describe('the fill assembly seats through the wall thickness', () => {
+  it('leaves only the deliberate shadow line on each face, whatever the wall', () => {
+    for (const thicknessMm of [100, 150, 200, 300, 450]) {
+      const mount = resolveMountDepth(thicknessMm);
+      const revealPerFace = (thicknessMm - mount.depthMm) / 2;
+      expect(revealPerFace).toBeCloseTo(SHADOW_GAP_MM, 6);
+      // The OLD fixed 50 mm section left this much open instead — 75 mm on a 200 mm wall.
+      expect((thicknessMm - FREE_STANDING_DEPTH_MM) / 2).toBeGreaterThan(revealPerFace);
+    }
+  });
+
+  it('a free-standing run is untouched by the rule', () => {
+    expect(resolveMountDepth(null).depthMm).toBe(FREE_STANDING_DEPTH_MM);
+  });
+
+  it('the frame section carries the depth on the wall-normal axis', () => {
+    // Bar renders boxGeometry [length, height/1000, width/1000] — `width` IS the wall normal.
+    expect(mountedSection(60, resolveMountDepth(200))).toEqual({ width: 180, height: 60 });
   });
 });

@@ -1,4 +1,5 @@
 import { ProfileBar } from './ProfileBar';
+import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
 import type { OpeningFrameRect } from './WallObject';
 import type { QualityPreset } from '@/shared/three-engine';
 
@@ -13,7 +14,10 @@ const FRAME_COLOR = '#aeb4ba';
 const SECTION_M = FRAME_FACE_MM / 1000;
 
 export function WallOpeningFrames({ frames, thicknessMm, quality }: WallOpeningFramesProps) {
-  const section = { width: Math.min(FRAME_FACE_MM, thicknessMm), height: FRAME_FACE_MM };
+  // WHY: an opening is carved through the FULL wall thickness, so a fixed 50 mm frame left a 75 mm
+  // open reveal on each face of a 200 mm wall — the "the pane doesn't sit in the hole" gap. The
+  // frame now fills the reveal down to one deliberate shadow line per face.
+  const section = mountedSection(FRAME_FACE_MM, resolveMountDepth(thicknessMm));
   return (
     <>
       {frames.map((f, i) => {

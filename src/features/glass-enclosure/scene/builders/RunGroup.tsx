@@ -5,6 +5,7 @@ import type { Group } from 'three';
 import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
+import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -106,7 +107,8 @@ interface RunGroupProps {
   supports?: PlanFootprint[];
 }
 
-const DEFAULT_PROFILE_CROSS_SECTION = { width: 50, height: 60 };
+const PROFILE_FACE_MM = 60;
+const MULLION_FACE_MM = 40;
 const DEFAULT_HEX_COLOR = '#cfd5d9';
 const DEG2RAD = Math.PI / 180;
 const HALF_PI = Math.PI / 2;
@@ -187,7 +189,19 @@ export function RunGroup({
   const showRightRail = fe ? fe.right : true;
   const showMullions = run.hasMullions !== false;
   const halfWidth = lengthM / 2;
-  const profileHalf = DEFAULT_PROFILE_CROSS_SECTION.height / 1000 / 2;
+  const profileHalf = PROFILE_FACE_MM / 1000 / 2;
+  // WHY (S1 "the pane doesn't sit in the hole"): an opening is carved through the FULL wall
+  // thickness, but every solid put back was a fixed 50 mm section centred on the wall centreline —
+  // on a 200 mm wall that left a 75 mm open reveal on EACH face. The frame now fills the opening
+  // depth minus one deliberate shadow line per face. A run with no host wall keeps the old 50 mm.
+  const hostThicknessMm = useDesignerStore((s) =>
+    run.hostWallId
+      ? ((s.scene.walls ?? []).find((w) => w.id === run.hostWallId)?.thicknessMm ?? null)
+      : null,
+  );
+  const mount = resolveMountDepth(hostThicknessMm, run);
+  const profileSection = mountedSection(PROFILE_FACE_MM, mount);
+  const mullionSection = mountedSection(MULLION_FACE_MM, mount);
 
   const groupRef = useRef<Group>(null);
   const bodyRef = useRef<Group>(null);
@@ -469,7 +483,7 @@ export function RunGroup({
                 {showTopRail && (
                   <ProfileBar
                     lengthM={lengthM}
-                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -479,7 +493,7 @@ export function RunGroup({
                 {showBottomRail && (
                   <ProfileBar
                     lengthM={lengthM}
-                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -489,7 +503,7 @@ export function RunGroup({
                 {showLeftRail && (
                   <ProfileBar
                     lengthM={heightM}
-                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -500,7 +514,7 @@ export function RunGroup({
                 {showRightRail && (
                   <ProfileBar
                     lengthM={heightM}
-                    crossSectionMm={DEFAULT_PROFILE_CROSS_SECTION}
+                    crossSectionMm={profileSection}
                     hexColor={profileColor}
                     finish={finish}
                     quality={quality}
@@ -524,6 +538,7 @@ export function RunGroup({
                   <Mullion
                     key={`mullion-${i}`}
                     positionX={dividerX}
+                    crossSectionMm={mullionSection}
                     heightM={heightM}
                     hexColor={profileColor}
                     finish={finish}
@@ -689,6 +704,7 @@ export function RunGroup({
 
 interface MullionProps {
   positionX: number;
+  crossSectionMm: { width: number; height: number };
   heightM: number;
   hexColor: string;
   finish: 'Anodized' | 'PowderCoated' | 'WoodLook' | 'Raw';
@@ -700,6 +716,7 @@ interface MullionProps {
 
 function Mullion({
   positionX,
+  crossSectionMm,
   heightM,
   hexColor,
   finish,
@@ -745,7 +762,7 @@ function Mullion({
     >
       <ProfileBar
         lengthM={heightM}
-        crossSectionMm={{ width: 30, height: 40 }}
+        crossSectionMm={crossSectionMm}
         hexColor={hexColor}
         finish={finish}
         quality={quality}

@@ -493,6 +493,11 @@ export interface SceneRunState {
   arcGlassBent?: boolean;
   // WHY: persistent cam↔host bond (scene-local, rides sceneJson) — resolveAttached* honour it so glass follows its wall after drifting out of the geometric attach band; unset = pure geometry.
   hostWallId?: string | null;
+  // Mount depth through the host wall (blob-only, carried by projectToScene). Unset = derived from
+  // the host wall's thickness minus one shadow gap per face; see model/mountDepth.ts.
+  mountDepthMm?: number | null;
+  mountOffsetMm?: number | null;
+  mountShadowGapMm?: number | null;
   frameEdges?: RunFrameEdges | null;
   hasMullions?: boolean | null;
   locked?: boolean;
