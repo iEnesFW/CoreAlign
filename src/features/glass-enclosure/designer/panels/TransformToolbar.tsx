@@ -33,6 +33,7 @@ import type {
 import {
   clampHardwareOffsets,
   glassClampHeightMm,
+  glassClampWidthMm,
 } from '@/features/glass-enclosure/model/hardwarePlacement';
 
 const solidObstaclesExcept = (excludeIds: Set<string>): PlanFootprint[] => {
@@ -425,7 +426,7 @@ const HardwareFields = ({
     updateHardware(run.id, panel.id, item.id, {
       ...patch,
       ...clampHardwareOffsets(
-        panel.widthMm,
+        glassClampWidthMm(panel.widthMm, run),
         glassClampHeightMm(panel.heightMm, run.heightMm),
         next,
       ),

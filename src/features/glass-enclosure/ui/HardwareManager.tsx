@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2 } from 'lucide-react';
 import { useDesignerStore } from '../model/designerStore';
 import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
-import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
+import { useGlassTypesQuery, useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
 import { sceneHardwareKindToCategory } from '../model/panelHardware';
 import { HARDWARE_KINDS, createHardwareItem } from '../model/hardwareDefaults';
 import type { ScenePanelState, SceneHardwareKind } from '../model/project.types';
@@ -19,6 +19,10 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { persistPanelHardware } = usePanelEntityActions();
   const catalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
+  // WHY the real thickness: the seed always assumed 8 mm glass, so on a 12 mm pane every new piece
+  // was born 2 mm buried in the glass and only the inspector's Z field could rescue it.
+  const glassTypes = useGlassTypesQuery().data?.data ?? [];
+  const paneGlassThicknessMm = glassTypes.find((g) => g.id === panel.glassTypeId)?.thicknessMm ?? 8;
 
   const removeAndPersist = (hardwareId: string) => {
     removeHardware(runId, panel.id, hardwareId);
@@ -32,7 +36,7 @@ export function HardwareManager({ runId, panel }: HardwareManagerProps) {
     setSelection({ kind: 'hardware', runId, panelId: panel.id, connectionId: null, hardwareId });
 
   const handleAdd = (kind: SceneHardwareKind) => {
-    const base = createHardwareItem(kind);
+    const base = createHardwareItem(kind, paneGlassThicknessMm);
     // Auto-link the first catalog item of the matching category so the piece is quoted immediately;
     // the exact item is refined in the inspector. Unmatched kinds stay render-only until linked.
     const match = catalog.find((h) => h.category === sceneHardwareKindToCategory(kind));

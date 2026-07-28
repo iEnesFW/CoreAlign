@@ -5,6 +5,8 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
+import { PaneMount } from './PaneMount';
+import type { PaneSurface } from '../../model/paneSurface';
 import {
   buildCurvedBandGeometry,
   buildCurvedShapedFrameGeometry,
@@ -157,14 +159,18 @@ export function CurvedPanelMesh({
     [radiusM, direction, phiStart, phiEnd],
   );
 
-  // Hardware/fittings anchor ON the cylinder, not the chord plane: the chord frame floats off the
-  // curved glass by the panel-span sagitta (R·(1−cos(Δφ/2)) — tens to hundreds of mm), which is
-  // exactly the "pins hovering off the glass" report. Each item's offsetXmm is treated as the
-  // DEVELOPED (arc-length) coordinate from the panel mid — matching the developed panel widths —
-  // and baked into its own tangent-frame anchor (offsetXmm passed as 0 so it isn't double-applied).
+  // Hardware AND the built-in fittings mount through the SAME surface as a flat pane. The chord
+  // frame floats off the curved glass by the panel-span sagitta (R·(1−cos(Δφ/2)) — tens to hundreds
+  // of mm); the fittings used to step to the stile inside that flat frame and left the cylinder by
+  // up to 353 mm while hardware on the same pane sat correctly. One frame, one answer.
   const phiMid = (phiStart + phiEnd) / 2;
-  const tangentYawAt = (phi: number) => Math.atan2(direction * Math.sin(phi), Math.cos(phi));
-  const surfaceAnchor = (phi: number) => arcPointAt(radiusM, direction, phi);
+  const surface: PaneSurface = {
+    widthMm: radiusM * Math.abs(phiEnd - phiStart) * 1000,
+    heightMm: heightM * 1000,
+    thicknessMm,
+    baseYm: baseY,
+    curve: { radiusM, direction, phiMid },
+  };
 
   const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
@@ -209,42 +215,33 @@ export function CurvedPanelMesh({
         </mesh>
       )}
 
-      <group
-        position={[surfaceAnchor(phiMid).x, baseY + heightM / 2, surfaceAnchor(phiMid).z]}
-        rotation={[0, -tangentYawAt(phiMid), 0]}
-      >
-        <PanelFittings
-          widthM={chord.chordM}
-          thicknessM={thicknessM}
-          openingType={openingType}
-          hasHandle={hasHandle}
-          hasLock={hasLock}
-          onSelect={onSelect}
-        />
-      </group>
-      {hardware.map((hw) => {
-        const phi = phiMid + hw.offsetXmm / 1000 / radiusM;
-        const anchor = surfaceAnchor(phi);
-        return (
-          <group
-            key={hw.id}
-            position={[anchor.x, baseY + heightM / 2, anchor.z]}
-            rotation={[0, -tangentYawAt(phi), 0]}
-          >
-            <HardwareObject
-              item={{ ...hw, offsetXmm: 0 }}
-              isSelected={selectedHardwareId === hw.id}
-              onSelect={() => onSelectHardware(hw.id)}
-              onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
-              onResize={
-                onResizeHardware
-                  ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
-                  : undefined
-              }
-            />
-          </group>
-        );
-      })}
+      <PanelFittings
+        surface={surface}
+        openingType={openingType}
+        hasHandle={hasHandle}
+        hasLock={hasLock}
+        onSelect={onSelect}
+      />
+      {hardware.map((hw) => (
+        <PaneMount
+          key={hw.id}
+          surface={surface}
+          offset={{ uMm: hw.offsetXmm, vMm: hw.offsetYmm, nMm: hw.offsetZmm }}
+        >
+          <HardwareObject
+            item={hw}
+            surface={surface}
+            isSelected={selectedHardwareId === hw.id}
+            onSelect={() => onSelectHardware(hw.id)}
+            onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
+            onResize={
+              onResizeHardware
+                ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
+                : undefined
+            }
+          />
+        </PaneMount>
+      ))}
 
       {showAnnotations && chord.chordM > 0.18 && (
         <Billboard

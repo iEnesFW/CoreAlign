@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
-import { useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
+import { useGlassTypesQuery, useHardwareItemsQuery } from '../hooks/useGlassEnclosureQueries';
 import { usePanelEntityActions } from '../hooks/useDesignerEntityActions';
 import { HARDWARE_KINDS, hardwareKindDefault } from '../model/hardwareDefaults';
-import { clampHardwareOffsets, glassClampHeightMm } from '../model/hardwarePlacement';
+import {
+  clampHardwareOffsets,
+  glassClampHeightMm,
+  glassClampWidthMm,
+} from '../model/hardwarePlacement';
+import { seatOnFaceMm } from '../model/paneSurface';
 import type { SceneHardwareKind } from '../model/project.types';
 
 export function HardwareInspector() {
@@ -16,6 +21,7 @@ export function HardwareInspector() {
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { persistPanelHardware } = usePanelEntityActions();
   const catalog = useHardwareItemsQuery({ isActive: true }).data?.data ?? [];
+  const glassTypes = useGlassTypesQuery().data?.data ?? [];
 
   const { run, panel, item } = useMemo(() => {
     const run = runs.find((r) => r.id === selection.runId);
@@ -26,12 +32,14 @@ export function HardwareInspector() {
 
   if (!run || !panel || !item) return null;
 
+  const glassThicknessMm = glassTypes.find((g) => g.id === panel.glassTypeId)?.thicknessMm ?? 8;
+
   const commit = (patch: Partial<typeof item>) => {
     const next = { ...item, ...patch };
     updateHardware(run.id, panel.id, item.id, {
       ...patch,
       ...clampHardwareOffsets(
-        panel.widthMm,
+        glassClampWidthMm(panel.widthMm, run),
         glassClampHeightMm(panel.heightMm, run.heightMm),
         next,
       ),
@@ -82,6 +90,9 @@ export function HardwareInspector() {
               widthMm: def.widthMm,
               heightMm: def.heightMm,
               depthMm: def.depthMm,
+              // WHY re-seat: the new kind has a different depth, so keeping the old Z left a deep
+              // piece (Bracket, 40 mm) half-buried in the glass with no visible way back.
+              offsetZmm: seatOnFaceMm(glassThicknessMm, def.depthMm),
             });
           }}
           className={inputClass}

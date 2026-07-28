@@ -4,6 +4,8 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { useGlassMaterial } from '../materials/glassMaterial';
 import { HardwareObject, type HardwareDragDelta } from './HardwareObject';
 import { PanelFittings } from './PanelFittings';
+import { PaneMount } from './PaneMount';
+import type { PaneSurface } from '../../model/paneSurface';
 import { buildPanelGlassGeometry, type PanelGlassSpec } from './panelGeometry';
 import { buildPanelFrameGeometry } from './panelFrameGeometry';
 import { panelIsShaped } from '../../model/panelOutline';
@@ -156,6 +158,18 @@ export function PanelMesh({
     document.body.style.cursor = 'auto';
   };
 
+  // The pane's own surface. A FLAT pane is the DEGENERATE curved one, so hardware and the built-in
+  // fittings mount through the SAME frame here as on a curved run — no second transform to drift.
+  // The mounting frame is this group, whose origin is the glass CENTRE, so the glass base sits at
+  // −height/2 within it.
+  const surface: PaneSurface = {
+    widthMm: widthM * 1000,
+    heightMm: heightM * 1000,
+    thicknessMm,
+    baseYm: -heightM / 2,
+    curve: null,
+  };
+
   return (
     <group position={[centerX, baseY + heightM / 2, 0]}>
       {shapedGeometry ? (
@@ -197,8 +211,7 @@ export function PanelMesh({
       )}
 
       <PanelFittings
-        widthM={widthM}
-        thicknessM={thicknessM}
+        surface={surface}
         openingType={openingType}
         hasHandle={hasHandle}
         hasLock={hasLock}
@@ -231,18 +244,24 @@ export function PanelMesh({
       )}
 
       {hardware.map((hw) => (
-        <HardwareObject
+        <PaneMount
           key={hw.id}
-          item={hw}
-          isSelected={selectedHardwareId === hw.id}
-          onSelect={() => onSelectHardware(hw.id)}
-          onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
-          onResize={
-            onResizeHardware
-              ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
-              : undefined
-          }
-        />
+          surface={surface}
+          offset={{ uMm: hw.offsetXmm, vMm: hw.offsetYmm, nMm: hw.offsetZmm }}
+        >
+          <HardwareObject
+            item={hw}
+            surface={surface}
+            isSelected={selectedHardwareId === hw.id}
+            onSelect={() => onSelectHardware(hw.id)}
+            onCommitDrag={onDragHardware ? (delta) => onDragHardware(hw.id, delta) : undefined}
+            onResize={
+              onResizeHardware
+                ? (widthMm, heightMm) => onResizeHardware(hw.id, widthMm, heightMm)
+                : undefined
+            }
+          />
+        </PaneMount>
       ))}
 
       {showAnnotations && widthM > 0.18 && (

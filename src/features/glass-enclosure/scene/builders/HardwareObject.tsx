@@ -4,6 +4,12 @@ import type { ThreeEvent } from '@react-three/fiber';
 import type { Group } from 'three';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useDesignerStore } from '../../model/designerStore';
+import {
+  developedFromTangentMm,
+  hardwareBends,
+  surfaceSegmentsLocal,
+} from '../../model/paneSurface';
+import type { PaneSurface } from '../../model/paneSurface';
 import type { SceneHardwareItem, SceneHardwareKind } from '../../model/project.types';
 
 export interface HardwareDragDelta {
@@ -14,6 +20,8 @@ export interface HardwareDragDelta {
 
 interface HardwareObjectProps {
   item: SceneHardwareItem;
+  /** The host pane. The mount frame already placed this piece; this is for the drag and the bend. */
+  surface: PaneSurface;
   isSelected: boolean;
   onSelect: () => void;
   onCommitDrag?: (delta: HardwareDragDelta) => void;
@@ -88,6 +96,7 @@ function KindGeometry({ kind, w, h, d }: KindGeometryProps) {
 
 export function HardwareObject({
   item,
+  surface: paneSurface,
   isSelected,
   onSelect,
   onCommitDrag,
@@ -97,9 +106,8 @@ export function HardwareObject({
   const h = toMeters(item.heightMm);
   const d = toMeters(item.depthMm);
   const groupRef = useRef<Group>(null);
-  const baseX = item.offsetXmm / MM;
-  const baseY = item.offsetYmm / MM;
-  const baseZ = item.offsetZmm / MM;
+  // WHY zero: PaneMount already placed this piece on the pane's surface. Re-applying the offsets
+  // here would double them (and on a curved pane would place them in the wrong space entirely).
   const draggable = isSelected && Boolean(onCommitDrag);
   const transformHandlesActive = useDesignerStore((s) => s.transformHandlesActive);
   const showResizeHandles = isSelected && transformHandlesActive && Boolean(onResize);
@@ -108,12 +116,15 @@ export function HardwareObject({
     constraint: { mode: 'panelPlane', targetRef: groupRef },
     enabled: draggable,
     onMove: (delta) => {
-      groupRef.current?.position.set(baseX + delta.x / MM, baseY + delta.y / MM, baseZ);
+      groupRef.current?.position.set(delta.x / MM, delta.y / MM, 0);
     },
     onCommit: (delta) => {
-      groupRef.current?.position.set(baseX, baseY, baseZ);
+      groupRef.current?.position.set(0, 0, 0);
       if (Math.round(delta.x) !== 0 || Math.round(delta.y) !== 0) {
-        onCommitDrag?.({ dx: delta.x, dy: delta.y, dz: 0 });
+        // WHY the conversion: the drag runs on the FLAT tangent plane but offsetXmm is stored as a
+        // DEVELOPED (arc-length) coordinate. Committing the raw tangent length over-shot by 36 mm
+        // on a single 500 mm drag at a 1 m radius; the 5 mm snap hid the smaller cases.
+        onCommitDrag?.({ dx: developedFromTangentMm(delta.x, paneSurface), dy: delta.y, dz: 0 });
       }
     },
   });
@@ -182,13 +193,52 @@ export function HardwareObject({
     </>
   );
 
+  // WHY a piece may need to BEND and not merely be posed: a rigid box is right for a lock but not
+  // for a long profile — a 600 mm drip profile on a 2 m radius misses the glass by 22 mm at its
+  // ends, on a 1 m radius by 45 mm. The decision is derived from the PHYSICS (is this piece long
+  // enough, on this curve, to leave the surface?) rather than stored, so no migration and no stale
+  // flag: widen a handle to 800 mm and it starts conforming on its own.
+  const segments = hardwareBends(item, paneSurface)
+    ? surfaceSegmentsLocal(paneSurface, { uMm: 0, vMm: 0, nMm: 0 }, item.widthMm)
+    : null;
+
   return (
     <>
-      <group ref={groupRef} position={[baseX, baseY, baseZ]} {...drag.handlers}>
-        {body}
+      <group ref={groupRef} {...drag.handlers}>
+        {segments ? (
+          segments.map((seg, i) => (
+            <group key={i} position={[seg.xM, 0, seg.zM]} rotation={[0, seg.yawRad, 0]}>
+              <mesh
+                castShadow
+                onClick={handleClick}
+                onPointerOver={(e) => {
+                  e.stopPropagation();
+                  document.body.style.cursor = draggable ? 'grab' : 'pointer';
+                }}
+                onPointerOut={() => {
+                  document.body.style.cursor = 'auto';
+                }}
+                rotation={KIND_ROTATIONS[item.kind] ?? [0, 0, 0]}
+              >
+                <boxGeometry args={[toMeters(seg.spanMm), h, d]} />
+                <meshPhysicalMaterial
+                  color={item.colorHex}
+                  metalness={surface.metalness}
+                  roughness={surface.roughness}
+                  envMapIntensity={surface.envMapIntensity}
+                  clearcoat={surface.clearcoat}
+                  clearcoatRoughness={0.15}
+                />
+                {isSelected && <Edges color={SELECTED_EDGE} threshold={15} />}
+              </mesh>
+            </group>
+          ))
+        ) : (
+          <>{body}</>
+        )}
       </group>
       {showResizeHandles && onResize && (
-        <group position={[baseX, baseY, baseZ]}>
+        <group>
           {CORNER_SIGNS.map(([sx, sy], i) => (
             <HardwareCornerHandle key={i} item={item} sx={sx} sy={sy} onResize={onResize} />
           ))}

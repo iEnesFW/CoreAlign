@@ -61,7 +61,11 @@ import { computeNeighbourShrink, type StretchBody } from '../model/pushResize';
 import { findAttachedWallIds, resolveAttachedRunIds } from '../model/wallAttachment';
 import { splitPanelsAtLength } from '../model/panelSplit';
 import { panelIsShaped } from '../model/panelOutline';
-import { clampHardwareOffsets, glassClampHeightMm } from '../model/hardwarePlacement';
+import {
+  clampHardwareOffsets,
+  glassClampHeightMm,
+  glassClampWidthMm,
+} from '../model/hardwarePlacement';
 import { rotatePlanPointDeg } from './interaction/planTransform';
 import { wallFaceFrame, type WallFeatureSide } from './builders/wallFaces';
 import {
@@ -1118,7 +1122,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       let hardwareClamped = false;
       for (const hw of p.hardware) {
         const clamped = clampHardwareOffsets(
-          p.widthMm,
+          glassClampWidthMm(p.widthMm, run),
           glassClampHeightMm(p.heightMm, run.heightMm),
           hw,
         );
