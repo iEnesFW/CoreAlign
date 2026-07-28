@@ -1,0 +1,4 @@
+interface:
+  display_name: 'CoreAlign Project Context'
+  short_description: 'Load historical CoreAlign architecture decisions'
+  default_prompt: 'Use $corealign-project-context to load the relevant CoreAlign project decisions before making this change.'

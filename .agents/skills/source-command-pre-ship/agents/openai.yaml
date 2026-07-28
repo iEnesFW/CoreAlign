@@ -1,0 +1,4 @@
+interface:
+  display_name: 'CoreAlign Pre-Ship'
+  short_description: 'Run all CoreAlign release quality gates'
+  default_prompt: 'Use $source-command-pre-ship to run the required CoreAlign quality gates before handoff.'

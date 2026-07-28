@@ -1,13 +1,9 @@
 ---
-name: 'source-command-pre-ship'
-description: 'Bitti demeden önce zorunlu doğrulama kapıları (build + lint + typecheck + test + migration).'
+name: source-command-pre-ship
+description: Run CoreAlign pre-ship quality gates before declaring work complete. Use when the user invokes pre-ship, asks to prepare a release or handoff, or when a CoreAlign implementation needs final build, lint, typecheck, test, and migration verification.
 ---
 
-# source-command-pre-ship
-
-Use this skill when the user asks to run the migrated source command `pre-ship`.
-
-## Command Template
+# CoreAlign Pre-Ship
 
 "Bitti" demeden önce CoreAlign kalite kapılarını ÇALIŞTIR ve sonucu PASS/FAIL olarak raporla. AGENTS.md §8 + §13.5 + §17 bağlayıcı. Kullanıcıyı manuel test eden kişi yerine koyma — gate'leri sen koştur, yeşil görmeden teslim etme.
 
@@ -16,7 +12,7 @@ Dokunulan alana göre koş (yalnız ilgili olanları; şüphedeysen hepsini):
 **Backend değiştiyse**
 
 ```bash
-dotnet build server/src/CoreAlign.API/CoreAlign.API.csproj   # 0 warning (TreatWarningsAsErrors)
+dotnet build server/src/CoreAlign.API/CoreAlign.API.csproj
 dotnet test server/tests/CoreAlign.Application.Tests
 dotnet test server/tests/CoreAlign.Integration.Tests
 ```

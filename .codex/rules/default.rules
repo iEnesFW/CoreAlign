@@ -1,0 +1,76 @@
+prefix_rule(
+    pattern = ["git", ["status", "diff", "log", "show"]],
+    decision = "allow",
+    justification = "These Git commands inspect repository state without changing it.",
+    match = ["git status --short", "git diff --stat", "git log -5", "git show HEAD"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", ["build", "test"]],
+    decision = "allow",
+    justification = "Build and test are standard CoreAlign verification commands.",
+    match = ["dotnet build server/src/CoreAlign.API/CoreAlign.API.csproj", "dotnet test server/tests/CoreAlign.Application.Tests"],
+)
+
+prefix_rule(
+    pattern = ["npm", "run", ["build", "lint", "test", "typecheck", "format:check", "check:bundle"]],
+    decision = "allow",
+    justification = "These package scripts are CoreAlign quality gates.",
+    match = ["npm run build", "npm run lint", "npm run test", "npm run typecheck", "npm run format:check", "npm run check:bundle"],
+)
+
+prefix_rule(
+    pattern = ["git", "push", ["--force", "-f", "--force-with-lease"]],
+    decision = "prompt",
+    justification = "Force pushing rewrites shared history and requires explicit approval.",
+    match = ["git push --force origin main", "git push -f origin main", "git push --force-with-lease origin feature"],
+)
+
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "prompt",
+    justification = "A hard reset can discard user work and requires explicit approval.",
+    match = ["git reset --hard HEAD"],
+)
+
+prefix_rule(
+    pattern = ["git", "clean", ["-f", "-fd", "-df"]],
+    decision = "prompt",
+    justification = "Git clean deletes untracked files and requires explicit approval.",
+    match = ["git clean -f", "git clean -fd", "git clean -df"],
+)
+
+prefix_rule(
+    pattern = ["rm", ["-rf", "-fr"]],
+    decision = "prompt",
+    justification = "Recursive deletion is destructive and requires explicit approval.",
+    match = ["rm -rf build", "rm -fr dist"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "ef", "database", "drop"],
+    decision = "prompt",
+    justification = "Dropping the CoreAlign database is destructive and requires explicit approval.",
+    match = ["dotnet ef database drop --force"],
+)
+
+prefix_rule(
+    pattern = ["dotnet", "ef", "migrations", "remove"],
+    decision = "prompt",
+    justification = "Removing a migration can rewrite shared schema history and requires explicit approval.",
+    match = ["dotnet ef migrations remove"],
+)
+
+prefix_rule(
+    pattern = ["dropdb"],
+    decision = "prompt",
+    justification = "Dropping a PostgreSQL database is destructive and requires explicit approval.",
+    match = ["dropdb corealign"],
+)
+
+prefix_rule(
+    pattern = ["docker", "compose", "down"],
+    decision = "prompt",
+    justification = "Stopping and removing the project stack changes shared local state and requires approval.",
+    match = ["docker compose down"],
+)
