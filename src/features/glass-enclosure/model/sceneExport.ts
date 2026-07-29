@@ -1,6 +1,10 @@
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { logger } from '@/shared/lib/logger';
 import type { Object3D } from 'three';
+import { isRealArc } from './arcGeometry';
+import { arcBandOutlineMm } from './bandOutline';
+import { curvedSlabPlanOutlineMm } from '../scene/builders/curvedSlabGeometry';
+import { bowedPolygonOutline } from './edgeArcOutline';
 import type { SceneSlabState, SceneState } from './project.types';
 
 const RUN_THICKNESS_MM = 50;
@@ -55,6 +59,22 @@ const orientedRect = (
 };
 
 const slabRect = (slab: SceneSlabState): Pt[] => {
+  // A plan-arc slab is a bent band; curvedSlabPlanOutlineMm is the SAME source the mesh, the
+  // footprint and the snap targets read, so the export cannot disagree with what is on screen.
+  if (isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+    const cosR = Math.cos(slab.rotationDeg * DEG2RAD);
+    const sinR = Math.sin(slab.rotationDeg * DEG2RAD);
+    return curvedSlabPlanOutlineMm(
+      slab.lengthMm,
+      slab.depthMm,
+      slab.geomArcRadiusMm ?? 0,
+      slab.geomArcSweepDeg ?? 1,
+      slab.slabArcAxis ?? 'length',
+    ).map((p) => ({
+      x: slab.originX + p.x * cosR - p.z * sinR,
+      y: slab.originY + p.x * sinR + p.z * cosR,
+    }));
+  }
   const rad = slab.rotationDeg * DEG2RAD;
   const dx = Math.cos(rad);
   const dy = Math.sin(rad);
@@ -74,35 +94,26 @@ const slabRect = (slab: SceneSlabState): Pt[] => {
 export const scenePlanShapes = (scene: SceneState): PlanShape[] => {
   const shapes: PlanShape[] = [];
   for (const wall of scene.walls ?? []) {
-    shapes.push({
-      layer: 'WALLS',
-      points: orientedRect(
-        wall.originX,
-        wall.originY,
-        wall.lengthMm,
-        wall.rotationDeg,
-        wall.thicknessMm,
-      ),
-    });
+    // WHY isRealArc and not a radius check: a legacy row with a radius but no sweep renders
+    // STRAIGHT, and a radius-only gate would export a phantom one-degree stub for it.
+    const points = isRealArc(wall.geomArcRadiusMm, wall.geomArcSweepDeg)
+      ? arcBandOutlineMm(wall, wall.originX, wall.originY, wall.rotationDeg, wall.thicknessMm / 2)
+      : orientedRect(wall.originX, wall.originY, wall.lengthMm, wall.rotationDeg, wall.thicknessMm);
+    shapes.push({ layer: 'WALLS', points });
   }
   for (const run of scene.runs) {
-    shapes.push({
-      layer: 'RUNS',
-      points: orientedRect(
-        run.originX,
-        run.originY,
-        run.lengthMm,
-        run.rotationDeg,
-        RUN_THICKNESS_MM,
-      ),
-    });
+    const points = isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)
+      ? arcBandOutlineMm(run, run.originX, run.originY, run.rotationDeg, RUN_THICKNESS_MM / 2)
+      : orientedRect(run.originX, run.originY, run.lengthMm, run.rotationDeg, RUN_THICKNESS_MM);
+    shapes.push({ layer: 'RUNS', points });
   }
   for (const slab of scene.slabs ?? []) {
     shapes.push({ layer: slab.kind === 'roof' ? 'ROOFS' : 'FLOORS', points: slabRect(slab) });
   }
   for (const surface of scene.surfaces ?? []) {
     if (surface.points.length >= 3) {
-      shapes.push({ layer: 'SURFACES', points: surface.points.map((p) => ({ x: p.x, y: p.y })) });
+      const outline = bowedPolygonOutline(surface.points, surface.edgeArcs ?? null);
+      shapes.push({ layer: 'SURFACES', points: outline.map((p) => ({ x: p.x, y: p.y })) });
     }
   }
   return shapes;

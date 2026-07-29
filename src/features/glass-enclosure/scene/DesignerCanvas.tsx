@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { bodyEndLocalMm } from '../geometry/curvature';
+import { bodyEndLocalMm, originForChordCentreMm } from '../geometry/curvature';
 import { useTranslation } from 'react-i18next';
 import {
   SceneViewport,
@@ -1662,9 +1662,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
 
   const pasteRunAt = async (source: SceneRunState, centerX: number, centerY: number) => {
     if (!projectId) return;
-    const rad = source.rotationDeg * DEG2RAD;
-    const originX = Math.round(centerX - (source.lengthMm / 2) * Math.cos(rad));
-    const originY = Math.round(centerY - (source.lengthMm / 2) * Math.sin(rad));
+    // WHY the chord helper: walking back half the length along rotationDeg only centres a STRAIGHT
+    // body. On an arc, rotationDeg is the start tangent, so the pasted run landed metres from the
+    // cursor — and the collision pre-check ran against a footprint that was nowhere near it.
+    const { originX, originY } = originForChordCentreMm(centerX, centerY, source);
     const runCount = useDesignerStore.getState().scene.runs.length;
     const [response] = await safeRequestWithNotify(
       enqueuePersist(() =>
@@ -1711,12 +1712,10 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     setPasteArmed(false);
     if (clipboard.kind === 'wall') {
       const wall = clipboard.wall;
-      const rad = wall.rotationDeg * DEG2RAD;
       const clone: SceneWallState = {
         ...structuredClone(wall),
         id: crypto.randomUUID(),
-        originX: Math.round(centerX - (wall.lengthMm / 2) * Math.cos(rad)),
-        originY: Math.round(centerY - (wall.lengthMm / 2) * Math.sin(rad)),
+        ...originForChordCentreMm(centerX, centerY, wall),
         openings: (wall.openings ?? []).map((o) => ({ ...o, id: crypto.randomUUID() })),
         features: (wall.features ?? []).map((f) => ({ ...f, id: crypto.randomUUID() })),
       };

@@ -21,6 +21,7 @@ import {
   Wand2,
 } from 'lucide-react';
 import type { CornerFillMode } from '@/features/glass-enclosure/model/multiAutofill';
+import { bodyChordVectorMm } from '@/features/glass-enclosure/geometry/curvature';
 import {
   mirrorSlabPatch,
   mirrorSurfacePatch,
@@ -56,7 +57,7 @@ interface SelectionToolbarProps {
 
 const ARRAY_COUNT = 3;
 const ARRAY_GAP_MM = 200;
-const DEG2RAD = Math.PI / 180;
+
 const CORNER_FILL_ORDER: CornerFillMode[] = ['auto', 'straight', 'L', 'arc'];
 
 export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
@@ -455,9 +456,14 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {wallObj && mirrorButton(() => commitWallPatch(wallObj, mirrorWallPatch(wallObj)))}
           {wallObj &&
             arrayButton(() => {
-              const dx = Math.cos(wallObj.rotationDeg * DEG2RAD);
-              const dy = Math.sin(wallObj.rotationDeg * DEG2RAD);
-              const step = wallObj.lengthMm + ARRAY_GAP_MM;
+              // WHY the chord and not rotationDeg: on an arc body rotationDeg is the start
+              // tangent, so stepping along it walks the copies off at an angle (a diagonal
+              // staircase) instead of laying them end to end along the body axis.
+              const chord = bodyChordVectorMm(wallObj);
+              const span = Math.hypot(chord.xMm, chord.yMm) || wallObj.lengthMm;
+              const dx = chord.xMm / span;
+              const dy = chord.yMm / span;
+              const step = span + ARRAY_GAP_MM;
               const offsetAt = (k: number) => ({
                 offX: Math.round(wallObj.originX + dx * step * k) - wallObj.originX,
                 offY: Math.round(wallObj.originY + dy * step * k) - wallObj.originY,
@@ -563,9 +569,11 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {slab && mirrorButton(() => updateSlab(slab.id, mirrorSlabPatch(slab)))}
           {slab &&
             arrayButton(() => {
-              const dx = Math.cos(slab.rotationDeg * DEG2RAD);
-              const dy = Math.sin(slab.rotationDeg * DEG2RAD);
-              const step = slab.lengthMm + ARRAY_GAP_MM;
+              const chord = bodyChordVectorMm(slab);
+              const span = Math.hypot(chord.xMm, chord.yMm) || slab.lengthMm;
+              const dx = chord.xMm / span;
+              const dy = chord.yMm / span;
+              const step = span + ARRAY_GAP_MM;
               const offsetAt = (k: number) => ({
                 offX: Math.round(slab.originX + dx * step * k) - slab.originX,
                 offY: Math.round(slab.originY + dy * step * k) - slab.originY,

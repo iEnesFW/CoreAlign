@@ -103,3 +103,60 @@ export const bodyEndLocalMm = (body: CurvableShape): { xMm: number; yMm: number 
   if (!arc) return { xMm: body.lengthMm, yMm: 0 };
   return arcEndLocal(arc.radiusMm, body.geomArcSweepDeg ?? 1);
 };
+
+const DEG2RAD = Math.PI / 180;
+
+export interface PlacedBody extends CurvablePose {
+  originX: number;
+  originY: number;
+}
+
+/**
+ * The world-space vector from a body's start to its far end — its CHORD.
+ *
+ * WHY this exists: `lengthMm * dir(rotationDeg)` is the single most repeated arc bug in this
+ * module. On an arc body `rotationDeg` is the START TANGENT, so that expression points along the
+ * tangent instead of the chord and overshoots by the sagitta — metres wrong at a 90 degree sweep.
+ * Paste placement, the array tool, the DXF/plan export, push-resize and the 2D plan all need "which
+ * way and how far does this body actually run", and they must all read it from here.
+ */
+export const bodyChordVectorMm = (body: CurvablePose): { xMm: number; yMm: number } => {
+  const end = bodyEndLocalMm(body);
+  const rad = body.rotationDeg * DEG2RAD;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    xMm: end.xMm * cos - end.yMm * sin,
+    yMm: end.xMm * sin + end.yMm * cos,
+  };
+};
+
+/** A placed body's far endpoint in world mm. */
+export const bodyEndWorldMm = (body: PlacedBody): { xMm: number; yMm: number } => {
+  const chord = bodyChordVectorMm(body);
+  return { xMm: body.originX + chord.xMm, yMm: body.originY + chord.yMm };
+};
+
+/** The midpoint of a placed body's chord, in world mm — the point a drop/paste should centre on. */
+export const bodyChordMidWorldMm = (body: PlacedBody): { xMm: number; yMm: number } => {
+  const chord = bodyChordVectorMm(body);
+  return { xMm: body.originX + chord.xMm / 2, yMm: body.originY + chord.yMm / 2 };
+};
+
+/**
+ * The origin a body must be given so its CHORD MIDPOINT lands on `centre`.
+ *
+ * Placement code wants "drop this where I clicked"; walking back half the length along
+ * `rotationDeg` only does that for a straight body.
+ */
+export const originForChordCentreMm = (
+  centreXMm: number,
+  centreYMm: number,
+  body: CurvablePose,
+): { originX: number; originY: number } => {
+  const chord = bodyChordVectorMm(body);
+  return {
+    originX: Math.round(centreXMm - chord.xMm / 2),
+    originY: Math.round(centreYMm - chord.yMm / 2),
+  };
+};

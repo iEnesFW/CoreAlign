@@ -1,5 +1,6 @@
 import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine';
-import { isRealArc, radiusFromChordSweep, resolveArc } from '../../model/arcGeometry';
+import { isRealArc } from '../../model/arcGeometry';
+import { arcBandOutlineMm } from '../../model/bandOutline';
 import { curvedSlabPlanOutlineMm } from '../builders/curvedSlabGeometry';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
@@ -34,8 +35,6 @@ const DEG2RAD = Math.PI / 180;
 
 export const RUN_PLAN_THICKNESS_MM = 50;
 
-const ARC_FOOTPRINT_STEP_RAD = 0.25;
-
 const buildArcWallFootprint = (
   wall: SceneWallState,
   dxMm: number,
@@ -44,38 +43,15 @@ const buildArcWallFootprint = (
 ): PlanFootprint => {
   const zMin = wall.geomZ ?? 0;
   const zMax = zMin + Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
-  // CHORD-INVARIANT: derive the radius from the AUTHORITATIVE chord (lengthMm) + stored sweep, exactly
-  // as the renderer does (radiusFromChordSweep) — reading the integer-rounded/legacy-drifted stored
-  // radius directly made the collision band diverge from the visible glass on drifted rows.
-  const resolved = resolveArc(
-    radiusFromChordSweep(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg),
-    wall.geomArcSweepDeg ?? 1,
-  );
-  const radius = resolved.radiusMm;
-  const direction = resolved.direction;
-  const sweep = resolved.sweepRad;
   const half = wall.thicknessMm / 2;
-  const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
-  const rad = rotationDeg * DEG2RAD;
-  const cosR = Math.cos(rad);
-  const sinR = Math.sin(rad);
-  const toWorld = (lx: number, ly: number) => ({
-    x: wall.originX + dxMm + lx * cosR - ly * sinR,
-    y: wall.originY + dyMm + lx * sinR + ly * cosR,
-  });
-  const outer: { x: number; y: number }[] = [];
-  const inner: { x: number; y: number }[] = [];
-  for (let i = 0; i <= steps; i += 1) {
-    const phi = (sweep * i) / steps;
-    const px = radius * Math.sin(phi);
-    const py = direction * radius * (1 - Math.cos(phi));
-    const tangent = Math.atan2(direction * Math.sin(phi), Math.cos(phi));
-    const nx = -Math.sin(tangent);
-    const ny = Math.cos(tangent);
-    outer.push(toWorld(px + nx * half, py + ny * half));
-    inner.push(toWorld(px - nx * half, py - ny * half));
-  }
-  return buildPolygonFootprint(wall.id, [...outer, ...inner.reverse()], zMin, zMax, half);
+  const outline = arcBandOutlineMm(
+    wall,
+    wall.originX + dxMm,
+    wall.originY + dyMm,
+    rotationDeg,
+    half,
+  );
+  return buildPolygonFootprint(wall.id, outline, zMin, zMax, half);
 };
 
 export const buildWallFootprint = (
@@ -109,43 +85,9 @@ const buildArcRunFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const zMin = run.geomZ ?? 0;
-  // CHORD-INVARIANT: derive the radius from the AUTHORITATIVE chord (lengthMm) + stored sweep like the
-  // renderer (radiusFromChordSweep), so the collision band matches the visible glass on drifted rows.
-  const resolved = resolveArc(
-    radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
-    run.geomArcSweepDeg ?? 1,
-  );
-  const radius = resolved.radiusMm;
-  const direction = resolved.direction;
-  const sweep = resolved.sweepRad;
   const half = RUN_PLAN_THICKNESS_MM / 2;
-  const steps = Math.max(6, Math.ceil(sweep / ARC_FOOTPRINT_STEP_RAD));
-  const rad = rotationDeg * DEG2RAD;
-  const cosR = Math.cos(rad);
-  const sinR = Math.sin(rad);
-  const toWorld = (lx: number, ly: number) => ({
-    x: run.originX + dxMm + lx * cosR - ly * sinR,
-    y: run.originY + dyMm + lx * sinR + ly * cosR,
-  });
-  const outer: { x: number; y: number }[] = [];
-  const inner: { x: number; y: number }[] = [];
-  for (let i = 0; i <= steps; i += 1) {
-    const phi = (sweep * i) / steps;
-    const px = radius * Math.sin(phi);
-    const py = direction * radius * (1 - Math.cos(phi));
-    const tangent = Math.atan2(direction * Math.sin(phi), Math.cos(phi));
-    const nx = -Math.sin(tangent);
-    const ny = Math.cos(tangent);
-    outer.push(toWorld(px + nx * half, py + ny * half));
-    inner.push(toWorld(px - nx * half, py - ny * half));
-  }
-  return buildPolygonFootprint(
-    run.id,
-    [...outer, ...inner.reverse()],
-    zMin,
-    zMin + run.heightMm,
-    half,
-  );
+  const outline = arcBandOutlineMm(run, run.originX + dxMm, run.originY + dyMm, rotationDeg, half);
+  return buildPolygonFootprint(run.id, outline, zMin, zMin + run.heightMm, half);
 };
 
 export const buildRunFootprint = (
