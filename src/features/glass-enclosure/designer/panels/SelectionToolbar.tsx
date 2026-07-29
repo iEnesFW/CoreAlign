@@ -21,7 +21,11 @@ import {
   Wand2,
 } from 'lucide-react';
 import type { CornerFillMode } from '@/features/glass-enclosure/model/multiAutofill';
-import type { CornerRadiiMm } from '@/features/glass-enclosure/model/project.types';
+import {
+  mirrorSlabPatch,
+  mirrorSurfacePatch,
+  mirrorWallPatch,
+} from '@/features/glass-enclosure/model/mirrorBody';
 import { cn } from '@/shared/lib/cn';
 import { queueToast } from '@/shared/api/toastQueue';
 import type { PlanFootprint } from '@/shared/three-engine';
@@ -37,7 +41,10 @@ import {
   computeRoofSurfaceOverWalls,
 } from '@/features/glass-enclosure/model/roofFromWalls';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
-import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
+import {
+  useDesignerEntityActions,
+  useWallEntityActions,
+} from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
 import { useMultiAlignActions } from '@/features/glass-enclosure/hooks/useMultiAlignActions';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
@@ -74,6 +81,9 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const updateSurface = useDesignerStore((s) => s.updateSurface);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { createPanel, deletePanel, deleteRun, persistPanelHardware } = useDesignerEntityActions();
+  // WHY not raw updateWall: the arc flip changes rotationDeg, and any wall pose change must
+  // co-move + persist the glass attached to it or the panes are left behind.
+  const { commitWallPatch } = useWallEntityActions();
   const { autofill } = useWallAutofill();
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const cornerFillMode = useDesignerStore((s) => s.cornerFillMode);
@@ -296,12 +306,6 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
       onClick={onArray}
     />
   );
-  const swapRadii = (r?: CornerRadiiMm): CornerRadiiMm => ({
-    tl: r?.tr,
-    tr: r?.tl,
-    bl: r?.br,
-    br: r?.bl,
-  });
 
   const solidObstaclesExcluding = (excludeId: string): PlanFootprint[] => {
     const s = useDesignerStore.getState().scene;
@@ -448,27 +452,7 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(wallObj?.locked), () =>
             updateWall(selection.wallId as string, { locked: !wallObj?.locked }),
           )}
-          {wallObj &&
-            mirrorButton(() => {
-              const heightEnd = wallObj.heightEndMm;
-              const slopeSwap =
-                heightEnd !== null && heightEnd !== undefined
-                  ? { heightMm: heightEnd, heightEndMm: wallObj.heightMm }
-                  : {};
-              updateWall(wallObj.id, {
-                cornerRadiiMm: swapRadii(wallObj.cornerRadiiMm),
-                ...slopeSwap,
-                openings: (wallObj.openings ?? []).map((o) => ({
-                  ...o,
-                  offsetMm: wallObj.lengthMm - o.offsetMm,
-                })),
-                features: (wallObj.features ?? []).map((f) => ({
-                  ...f,
-                  offsetMm: wallObj.lengthMm - f.offsetMm,
-                  points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
-                })),
-              });
-            })}
+          {wallObj && mirrorButton(() => commitWallPatch(wallObj, mirrorWallPatch(wallObj)))}
           {wallObj &&
             arrayButton(() => {
               const dx = Math.cos(wallObj.rotationDeg * DEG2RAD);
@@ -576,17 +560,7 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(slab?.locked), () =>
             updateSlab(selection.slabId as string, { locked: !slab?.locked }),
           )}
-          {slab &&
-            mirrorButton(() =>
-              updateSlab(slab.id, {
-                cornerRadiiMm: swapRadii(slab.cornerRadiiMm),
-                features: (slab.features ?? []).map((f) => ({
-                  ...f,
-                  offsetMm: slab.lengthMm - f.offsetMm,
-                  points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
-                })),
-              }),
-            )}
+          {slab && mirrorButton(() => updateSlab(slab.id, mirrorSlabPatch(slab)))}
           {slab &&
             arrayButton(() => {
               const dx = Math.cos(slab.rotationDeg * DEG2RAD);
@@ -642,13 +616,7 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           )}
           {surfaceObj &&
             surfaceObj.points.length > 0 &&
-            mirrorButton(() => {
-              const cx =
-                surfaceObj.points.reduce((sum, p) => sum + p.x, 0) / surfaceObj.points.length;
-              updateSurface(surfaceObj.id, {
-                points: surfaceObj.points.map((p) => ({ x: Math.round(2 * cx - p.x), y: p.y })),
-              });
-            })}
+            mirrorButton(() => updateSurface(surfaceObj.id, mirrorSurfacePatch(surfaceObj)))}
           {surfaceObj &&
             surfaceObj.points.length > 0 &&
             arrayButton(() => {
