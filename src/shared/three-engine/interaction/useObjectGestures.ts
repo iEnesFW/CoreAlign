@@ -148,10 +148,14 @@ export function useObjectGestures({
     // keep its height unless it climbed onto something higher.
     let liftM = adapter.baseYM;
     if (adapter.centerLiftYMAt) {
-      if ((explicitStack || freeMove) && adapter.altLiftYMAt) {
-        // Rest on top of any overlapped support (else the object's base) — for an explicit stack
-        // or a free-move slab, so moving it over another object lands it on top, never inside.
+      if (explicitStack && adapter.altLiftYMAt) {
+        // Rest on top of ANY overlapped support, even a taller one — holding Alt is the user
+        // explicitly asking to climb onto something.
         liftM = adapter.altLiftYMAt(slid.dxMm, slid.dyMm);
+        // WHY freeMove is NOT in this branch: it means "never collision-slide" (a slab moves
+        // freely instead of locking against its neighbours), not "climb". Routing it here made a
+        // floor slab resolve its height from the WALLS STANDING ON IT, so dragging the floor a
+        // millimetre launched it to the top of its own wall.
       } else {
         const centerRest = adapter.centerLiftYMAt(slid.dxMm, slid.dyMm);
         liftM = adapter.restingAtStart ? centerRest : Math.max(adapter.baseYM, centerRest);

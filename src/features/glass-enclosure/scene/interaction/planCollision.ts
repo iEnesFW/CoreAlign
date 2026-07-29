@@ -14,7 +14,7 @@ export {
   buildPlanFootprint,
   buildPolygonFootprint,
   restElevationMm,
-  restElevationAtPointMm,
+  supportTopBelowMm,
   restsOnSupportAtMm,
   isFloating,
   normalizePlanAngleDeg,

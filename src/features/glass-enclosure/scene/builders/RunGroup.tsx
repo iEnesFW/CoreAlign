@@ -28,8 +28,8 @@ import {
   clampPlanStretch,
   firstPenetratingOwner,
   penetratesAny,
-  restElevationAtPointMm,
   restElevationMm,
+  supportTopBelowMm,
   restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
@@ -271,7 +271,11 @@ export function RunGroup({
   const centerYMm = run.originY + (run.lengthMm / 2) * dirY;
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
+    supportTopBelowMm(
+      buildRunFootprint(run, dxMm, dyMm, run.rotationDeg),
+      stackSupports,
+      baseElevMm,
+    );
   const restingAtStart = restsOnSupportAtMm(
     buildRunFootprint(run, 0, 0, run.rotationDeg),
     stackSupports,

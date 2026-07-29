@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { restElevationAtPointMm, restElevationMm, restsOnSupportAtMm } from '@/shared/three-engine';
+import { restElevationMm, restsOnSupportAtMm, supportTopBelowMm } from '@/shared/three-engine';
 import { buildSlabFootprint, buildWallFootprint } from './planCollision';
 import type { SceneSlabState, SceneWallState } from '../../model/project.types';
 
@@ -22,53 +22,63 @@ const slab = (
   elevationMm,
 });
 
-const centreOf = (s: SceneSlabState) => ({
-  x: s.originX + s.lengthMm / 2,
-  y: s.originY,
-});
-
-describe('resting detection: overlap probe vs centre probe', () => {
-  // The support: a small pedestal at the origin, top surface at 100 mm.
+describe('supportTopBelowMm — the one resolver gravity uses', () => {
   const support = slab('support', 0, 0, 1000, 1000, 0);
   const supportFp = buildSlabFootprint(support, 0, 0, support.rotationDeg);
   const supportTopMm = support.elevationMm + support.thicknessMm;
 
-  it('a slab resting squarely on the support agrees on both probes', () => {
+  it('rests a body squarely on the support', () => {
     const resting = slab('b', 0, 0, 800, 800, supportTopMm);
     const fp = buildSlabFootprint(resting, 0, 0, resting.rotationDeg);
-    const c = centreOf(resting);
-
-    expect(restElevationMm(fp, [supportFp], 0)).toBe(supportTopMm);
-    expect(restElevationAtPointMm(c.x, c.y, [supportFp], 0)).toBe(supportTopMm);
+    expect(supportTopBelowMm(fp, [supportFp], supportTopMm)).toBe(supportTopMm);
   });
 
-  it('a slab that overhangs the support is committed by overlap but reads as NOT resting by centre', () => {
-    // Sits ON the pedestal (its base == the pedestal top) but hangs far enough that its CENTRE
-    // is past the pedestal edge — exactly what an off-centre stack drop produces.
+  it('still rests an OVERHANGING body — overlap, not a centre point', () => {
+    // Its centre is past the pedestal edge; a centre probe read ground and the body could never
+    // descend again. Overlap sees the pedestal.
     const overhanging = slab('b', 900, 0, 2000, 800, supportTopMm);
     const fp = buildSlabFootprint(overhanging, 0, 0, overhanging.rotationDeg);
-    const c = centreOf(overhanging);
-
-    // The commit path (explicit stack / free-move slab) resolves the elevation by OVERLAP:
-    expect(restElevationMm(fp, [supportFp], 0)).toBe(supportTopMm);
-
-    // The resting test reads the CENTRE instead — and the centre is off the support:
-    expect(restElevationAtPointMm(c.x, c.y, [supportFp], 0)).toBe(0);
-
-    // So the two disagree: the object was legitimately placed on the support, yet the centre
-    // probe reports ground. restingAtStart (|centreProbe - base| < 5) is therefore false, and
-    // useObjectGestures falls into `Math.max(baseYM, centerRest)` — the object can never descend.
-    const centreProbe = restElevationAtPointMm(c.x, c.y, [supportFp], 0);
-    const restingAtStart = Math.abs(centreProbe - overhanging.elevationMm) < 5;
-    expect(restingAtStart).toBe(false);
+    expect(supportTopBelowMm(fp, [supportFp], supportTopMm)).toBe(supportTopMm);
   });
 
-  it('a slab standing on the ground reads as resting (ground fallback agrees)', () => {
-    const onGround = slab('b', 9000, 9000, 800, 800, 0);
-    const c = centreOf(onGround);
+  it('IGNORES a support whose top is above the body — this is the wall-flies-up bug', () => {
+    // A roof slab overhead, or a wall standing on the floor you are dragging: overlapping in plan
+    // but ABOVE. Taking its top teleported the dragged body up to it.
+    const overhead = slab('roof', 0, 0, 1000, 1000, 2600);
+    const overheadFp = buildSlabFootprint(overhead, 0, 0, overhead.rotationDeg);
+    const onGround = slab('b', 0, 0, 800, 800, 0);
+    const fp = buildSlabFootprint(onGround, 0, 0, onGround.rotationDeg);
+    expect(supportTopBelowMm(fp, [overheadFp], 0)).toBe(0);
+  });
 
-    const centreProbe = restElevationAtPointMm(c.x, c.y, [supportFp], 0);
-    expect(Math.abs(centreProbe - onGround.elevationMm) < 5).toBe(true);
+  it('never treats a body as its own support', () => {
+    const self = slab('b', 0, 0, 800, 800, 500);
+    const fp = buildSlabFootprint(self, 0, 0, self.rotationDeg);
+    expect(supportTopBelowMm(fp, [fp], 500)).toBe(0);
+  });
+
+  it('falls to the ground when nothing is underneath', () => {
+    const away = slab('b', 9000, 9000, 800, 800, 1500);
+    const fp = buildSlabFootprint(away, 0, 0, away.rotationDeg);
+    expect(supportTopBelowMm(fp, [supportFp], 1500)).toBe(0);
+  });
+
+  it('picks the HIGHEST support that is still below', () => {
+    const low = slab('low', 0, 0, 1000, 1000, 0);
+    const mid = slab('mid', 0, 0, 1000, 1000, 400);
+    const lowFp = buildSlabFootprint(low, 0, 0, low.rotationDeg);
+    const midFp = buildSlabFootprint(mid, 0, 0, mid.rotationDeg);
+    const body = slab('b', 0, 0, 800, 800, 900);
+    const fp = buildSlabFootprint(body, 0, 0, body.rotationDeg);
+    expect(supportTopBelowMm(fp, [lowFp, midFp], 900)).toBe(500);
+  });
+
+  it('explicit Alt-stack still climbs onto something taller (restElevationMm is unguarded)', () => {
+    const tall = slab('tall', 0, 0, 1000, 1000, 2000);
+    const tallFp = buildSlabFootprint(tall, 0, 0, tall.rotationDeg);
+    const body = slab('b', 0, 0, 800, 800, 0);
+    const fp = buildSlabFootprint(body, 0, 0, body.rotationDeg);
+    expect(restElevationMm(fp, [tallFp], 0)).toBe(2100);
   });
 });
 

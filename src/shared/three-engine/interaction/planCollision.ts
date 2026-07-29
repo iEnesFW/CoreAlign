@@ -277,6 +277,13 @@ export const footprintsOverlapXY = (a: PlanFootprint, b: PlanFootprint): boolean
   return obbOverlapExtent(footprintCorners(a), footprintCorners(b)) > CONTACT_EPS_MM;
 };
 
+/**
+ * The top of the highest support this body OVERLAPS, at any height — deliberate Alt-stacking.
+ *
+ * WHY there is no "must be below me" guard here, unlike {@link supportTopBelowMm}: holding Alt is
+ * the user explicitly asking to climb ONTO something, which is usually taller than where the body
+ * currently sits. Gravity must not use this.
+ */
 export const restElevationMm = (
   moved: PlanFootprint,
   supports: PlanFootprint[],
@@ -290,22 +297,41 @@ export const restElevationMm = (
   return top;
 };
 
-const pointInFootprint = (x: number, y: number, fp: PlanFootprint): boolean =>
-  pointInPolygon(x, y, footprintOutline(fp));
-
 // Top of the tallest support whose footprint CONTAINS the given plan point (the dragged object's
 // centre), else the fallback. Used as the precise "the object is clearly ON TOP of this" test for
 // auto-stacking — dragging merely beside/against something does not contain the centre, so it
 // stays lateral (the eager "any overlap" trigger was the annoyance).
-export const restElevationAtPointMm = (
-  x: number,
-  y: number,
+export const SUPPORT_TOLERANCE_MM = 5;
+
+/**
+ * The top of the highest thing this body can actually rest ON — the one resolver gravity uses.
+ *
+ * Three rules, and every one of them was a bug when it was missing:
+ *  - a support ABOVE our base is something we stand BESIDE, not on. Without this a roof overhead,
+ *    or a wall standing on the floor we are dragging, was reported as "what I rest on" and the body
+ *    teleported up to it.
+ *  - a body never supports itself.
+ *  - support is decided by plan OVERLAP, not by a single probe point, so "partly over the floor"
+ *    already counts — a centre-point probe cannot see a floor the body is only half onto, and the
+ *    lateral slide then pins it at the floor's edge forever.
+ *
+ * Deliberate Alt-stacking is NOT this: there the user is explicitly asking to climb onto something
+ * taller, which is what {@link restElevationMm} does.
+ */
+export const supportTopBelowMm = (
+  moved: PlanFootprint,
   supports: PlanFootprint[],
-  fallbackMm: number,
+  baseMm: number,
+  groundMm = 0,
+  toleranceMm = SUPPORT_TOLERANCE_MM,
 ): number => {
-  let top = fallbackMm;
+  let top = groundMm;
   for (const s of supports) {
-    if (s.zMaxMm > top && pointInFootprint(x, y, s)) top = s.zMaxMm;
+    if (s.ownerId === moved.ownerId) continue;
+    if (s.zMaxMm > baseMm + toleranceMm) continue;
+    if (s.zMaxMm <= top) continue;
+    if (!footprintsOverlapXY(moved, s)) continue;
+    top = s.zMaxMm;
   }
   return top;
 };

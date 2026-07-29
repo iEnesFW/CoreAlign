@@ -29,8 +29,8 @@ import {
   buildSlabFootprint,
   clampPlanStretch,
   penetratesAny,
-  restElevationAtPointMm,
   restElevationMm,
+  supportTopBelowMm,
   restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
@@ -465,7 +465,11 @@ export function SlabObject({
   const centerYMm = slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX;
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, supportFootprints, 0);
+    supportTopBelowMm(
+      buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
+      supportFootprints,
+      baseElevMm,
+    );
   const restingAtStart = restsOnSupportAtMm(
     buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
     supportFootprints,

@@ -22,6 +22,7 @@ import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
 import { computeFloorFollow } from './floorFollow';
+import { settleScene } from './settleScene';
 import type { QualityPreset } from '@/shared/three-engine';
 
 export type { QualityPreset };
@@ -808,7 +809,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       walls: (current.scene.walls ?? []).filter((wall) => wall.id !== wallId),
     };
-    set(pushHistory(current, next));
+    // Deleting a support must not leave whatever stood on it hanging in the air.
+    set(pushHistory(current, settleScene(next)));
   },
 
   addWallOpening: (wallId, opening) => {
@@ -1066,7 +1068,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       slabs: (current.scene.slabs ?? []).filter((slab) => slab.id !== slabId),
     };
-    set(pushHistory(current, next));
+    set(pushHistory(current, settleScene(next)));
   },
 
   addSurface: (surface) => {
@@ -1095,7 +1097,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       surfaces: (current.scene.surfaces ?? []).filter((surface) => surface.id !== surfaceId),
     };
-    set(pushHistory(current, next));
+    set(pushHistory(current, settleScene(next)));
   },
 
   resizePanelEdge: (runId, panelId, neighborId, deltaMm) => {
