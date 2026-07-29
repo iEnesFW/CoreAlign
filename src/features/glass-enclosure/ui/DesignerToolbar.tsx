@@ -96,7 +96,7 @@ export function DesignerToolbar({
       <button
         type="button"
         onClick={togglePresentation}
-        className={`${btnSecondary} ${presentation ? 'text-purple-600' : ''}`}
+        className={`${btnSecondary} ${presentation ? 'text-primary-600 dark:text-primary-400' : ''}`}
         aria-pressed={presentation}
       >
         <Wand2 size={16} /> {t('GlassEnclosure.Designer.Presentation')}
