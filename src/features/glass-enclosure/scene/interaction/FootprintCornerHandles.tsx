@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Line } from '@react-three/drei';
 import type { Group } from 'three';
-import { useDrag3D } from '@/shared/three-engine';
+import { setDragReadout, useDrag3D } from '@/shared/three-engine';
 import { boxCornersMm, resizeBoxFromCorner, type BoxFootprint } from './footprintCorners';
 
 const MM = 1000;
@@ -14,6 +14,23 @@ const HANDLE_HOVER_COLOR = '#f97316';
 const PREVIEW_COLOR = '#f97316';
 
 const snapGrid = (value: number) => Math.round(value / GRID_MM) * GRID_MM;
+
+// WHY the RESULT is rounded and not just the cursor: snapping the corner to the grid does not
+// snap the SIZE — the opposite corner sits wherever the body already was, so a grid-snapped drag
+// still produced 2417 x 1183. The dimensions are what the user reads and what gets fabricated, so
+// they are the thing that has to land on whole millimetres.
+const wholeMm = (b: BoxFootprint): BoxFootprint => ({
+  ...b,
+  originX: Math.round(b.originX),
+  originY: Math.round(b.originY),
+  lengthMm: Math.round(b.lengthMm),
+  crossMm: Math.round(b.crossMm),
+});
+
+const readoutFor = (b: BoxFootprint, mode: CornerHandleMode) =>
+  mode === 'ends'
+    ? `${Math.round(b.lengthMm)} mm`
+    : `${Math.round(b.lengthMm)} × ${Math.round(b.crossMm)} mm`;
 
 // 'corners' = the four box corners (thick footprints: walls, slabs). 'ends' = two handles on the
 // centreline ends (thin runs) — a thin box's four corners collapse to two screen dots, which read
@@ -132,23 +149,7 @@ function CornerHandle({
     constraint: { mode: 'ground' },
     enabled: true,
     onMove: (delta) => {
-      const resized = resizeBoxFromCorner(
-        box,
-        cornerIndex,
-        snapGrid(handleX + delta.x),
-        snapGrid(handleY + delta.z),
-        50,
-        STICK_STEP_MM,
-        STICK_TOL_MM,
-      );
-      onPreview(resized);
-      const pos = handlePosForBox(resized);
-      anchorRef.current?.position.set(pos.x / MM, topYM, pos.y / MM);
-    },
-    onCommit: (delta) => {
-      onPreview(null);
-      anchorRef.current?.position.set(handleX / MM, topYM, handleY / MM);
-      onCommit(
+      const resized = wholeMm(
         resizeBoxFromCorner(
           box,
           cornerIndex,
@@ -157,6 +158,28 @@ function CornerHandle({
           50,
           STICK_STEP_MM,
           STICK_TOL_MM,
+        ),
+      );
+      setDragReadout(readoutFor(resized, mode));
+      onPreview(resized);
+      const pos = handlePosForBox(resized);
+      anchorRef.current?.position.set(pos.x / MM, topYM, pos.y / MM);
+    },
+    onCommit: (delta) => {
+      onPreview(null);
+      setDragReadout(null);
+      anchorRef.current?.position.set(handleX / MM, topYM, handleY / MM);
+      onCommit(
+        wholeMm(
+          resizeBoxFromCorner(
+            box,
+            cornerIndex,
+            snapGrid(handleX + delta.x),
+            snapGrid(handleY + delta.z),
+            50,
+            STICK_STEP_MM,
+            STICK_TOL_MM,
+          ),
         ),
       );
     },
