@@ -67,6 +67,7 @@ interface DragSession {
   screenY: number;
   delta: DragDeltaMm;
   suppressClick: boolean;
+  frame: number | null;
 }
 
 export function useDrag3D({
@@ -85,6 +86,7 @@ export function useDrag3D({
     screenY: 0,
     delta: { x: 0, y: 0, z: 0 },
     suppressClick: false,
+    frame: null,
   });
 
   const setControlsEnabled = (value: boolean) => {
@@ -95,6 +97,7 @@ export function useDrag3D({
   useEffect(() => {
     const session = sessionRef.current;
     return () => {
+      if (session.frame !== null) cancelAnimationFrame(session.frame);
       if (session.pointerId === null) return;
       const controls = getThree().controls as unknown as { enabled: boolean } | null;
       if (controls) controls.enabled = true;
@@ -174,10 +177,32 @@ export function useDrag3D({
     return true;
   };
 
+  // WHY: pointermove fires at the POINTING DEVICE's polling rate (125 Hz on a plain mouse, up to
+  // 1000 Hz on a gaming one), not the display rate. Solving the move and rebuilding the preview on
+  // every event throws away most of that work unseen — and on a heavy body (CSG'd wall, free-drawn
+  // surface) that surplus is what makes the drag stutter. The delta is still computed from EVERY
+  // event (the event object is only valid synchronously and we want the newest position), but the
+  // downstream onMove runs at most once per displayed frame.
+  const cancelFrame = (session: DragSession) => {
+    if (session.frame === null) return;
+    cancelAnimationFrame(session.frame);
+    session.frame = null;
+  };
+
+  const scheduleMove = (session: DragSession) => {
+    if (session.frame !== null) return;
+    session.frame = requestAnimationFrame(() => {
+      session.frame = null;
+      if (session.pointerId === null || !session.active) return;
+      onMove(session.delta);
+    });
+  };
+
   const endDrag = (e: ThreeEvent<PointerEvent>, commit: boolean) => {
     const session = sessionRef.current;
     if (session.pointerId !== e.pointerId) return;
     (e.target as Element | null)?.releasePointerCapture(e.pointerId);
+    cancelFrame(session);
     session.pointerId = null;
     setControlsEnabled(true);
     document.body.style.cursor = 'auto';
@@ -185,8 +210,14 @@ export function useDrag3D({
     session.active = false;
     session.suppressClick = true;
     e.stopPropagation();
-    if (commit) onCommit(session.delta);
-    else onMove(ZERO_DELTA);
+    // The last pointermove may still be sitting in a cancelled frame — settle the preview on the
+    // real final delta before committing, so commit and preview never disagree by one frame.
+    if (commit) {
+      onMove(session.delta);
+      onCommit(session.delta);
+    } else {
+      onMove(ZERO_DELTA);
+    }
   };
 
   const onPointerDown = (e: ThreeEvent<PointerEvent>) => {
@@ -219,7 +250,7 @@ export function useDrag3D({
       document.body.style.cursor = 'grabbing';
     }
     e.stopPropagation();
-    if (computeDelta(e, session.delta)) onMove(session.delta);
+    if (computeDelta(e, session.delta)) scheduleMove(session);
   };
 
   const consumeClick = () => {

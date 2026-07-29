@@ -15,6 +15,7 @@ export {
   buildPolygonFootprint,
   restElevationMm,
   supportTopBelowMm,
+  SUPPORT_TOLERANCE_MM,
   restsOnSupportAtMm,
   isFloating,
   normalizePlanAngleDeg,

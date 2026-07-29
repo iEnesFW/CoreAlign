@@ -156,7 +156,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-query': ['@tanstack/react-query', 'axios'],
           'vendor-charts': ['recharts'],
-          'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-3d': ['three', '@react-three/fiber', '@react-three/drei', 'three-mesh-bvh'],
           'vendor-i18n': ['i18next', 'react-i18next'],
           'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'vendor-geo': ['country-state-city'],

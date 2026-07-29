@@ -32,7 +32,7 @@ import {
   useDrag3D,
   useTiledProceduralTexture,
 } from '@/shared/three-engine';
-import { isAltPressed } from '@/shared/three-engine';
+import { ensureBoundsTree, isAltPressed } from '@/shared/three-engine';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useObjectGestures } from '../interaction/useObjectGestures';
 import { notifyStackUnavailable } from '../interaction/stackFeedback';
@@ -61,6 +61,7 @@ import {
   restElevationMm,
   supportTopBelowMm,
   restsOnSupportAtMm,
+  SUPPORT_TOLERANCE_MM,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
@@ -605,6 +606,10 @@ export function WallObject({
     featureItems,
     openingFrames,
   } = useMemo(() => buildWallGeometries(geometryInput, true), [geometryInput]);
+  // A CSG-carved wall is the heaviest raycast target in the scene (each hole multiplies its
+  // triangle count) and R3F raycasts on every pointer event — build the BVH once per rebuild
+  // instead of walking every triangle on every hover.
+  ensureBoundsTree(geometry);
   useEffect(
     () => () => {
       geometry.dispose();
@@ -771,15 +776,16 @@ export function WallObject({
     );
   // WHY memoized: this rebuilds the wall's plan footprint (for a curved wall, a trig-generated
   // band polygon) and overlap-tests it against every support. Unmemoized it ran on EVERY render of
-  // EVERY wall — so an N-wall scene paid N band builds plus N x supports polygon tests per store
-  // change, including on each frame of somebody else's drag.
+  // EVERY wall, so an N-wall scene paid N band builds plus N x supports polygon tests on every
+  // store change — every commit, selection and inspector keystroke. (It does NOT run per drag
+  // frame: a drag moves the group imperatively and never writes the store until commit.)
   const restingAtStart = useMemo(
     () =>
       restsOnSupportAtMm(
         buildWallFootprint(wall, 0, 0, wall.rotationDeg),
         stackSupports,
         baseWallElevMm,
-        5,
+        SUPPORT_TOLERANCE_MM,
       ),
     [wall, stackSupports, baseWallElevMm],
   );

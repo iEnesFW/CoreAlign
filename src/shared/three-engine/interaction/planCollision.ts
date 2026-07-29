@@ -522,13 +522,15 @@ export const clampPlanMoveNoDeepen = (
   dyMm: number,
 ): PlanMoveDelta => {
   if (obstacles.length === 0) return { dxMm, dyMm };
+  const reachable = narrowToSweptPath(footprintAt, obstacles, dxMm, dyMm);
+  if (reachable.length === 0) return { dxMm, dyMm };
   const toArr = (s: PlanFootprintSet) => (Array.isArray(s) ? s : [s]);
   const startFps = toArr(footprintAt(0, 0));
-  const baseline = obstacles.map((o) => maxDepthAgainst(startFps, o));
+  const baseline = reachable.map((o) => maxDepthAgainst(startFps, o));
   const ok = (frac: number): boolean => {
     const fps = toArr(footprintAt(dxMm * frac, dyMm * frac));
-    for (let i = 0; i < obstacles.length; i += 1) {
-      if (maxDepthAgainst(fps, obstacles[i]) > baseline[i] + NO_DEEPEN_EPS_MM) return false;
+    for (let i = 0; i < reachable.length; i += 1) {
+      if (maxDepthAgainst(fps, reachable[i]) > baseline[i] + NO_DEEPEN_EPS_MM) return false;
     }
     return true;
   };
@@ -536,7 +538,7 @@ export const clampPlanMoveNoDeepen = (
   const pathLen = Math.hypot(dxMm, dyMm);
   const steps = Math.min(
     SWEEP_MAX_STEPS,
-    Math.max(SWEEP_MIN_STEPS, Math.ceil(pathLen / minObstacleBandMm(obstacles))),
+    Math.max(SWEEP_MIN_STEPS, Math.ceil(pathLen / minObstacleBandMm(reachable))),
   );
   let lastOk = 0;
   for (let i = 1; i <= steps; i += 1) {
@@ -556,6 +558,50 @@ export const clampPlanMoveNoDeepen = (
   return { dxMm, dyMm };
 };
 
+/**
+ * Obstacles the moving body could POSSIBLY touch anywhere along this move.
+ *
+ * WHY: both sweep loops re-test every obstacle at every sub-step, and the step count is driven by
+ * the thinnest obstacle IN THE WHOLE SCENE — so one 25 mm glass run made a 3 m drag cost 120
+ * sub-steps even when every body was kilometres away, and the cost grew with how far the user had
+ * already dragged (the delta is measured from drag start). Filtering to the swept bounding box
+ * first is conservative: a body whose box does not meet the swept box cannot be hit at any point
+ * along the path, so nothing that could collide is dropped.
+ */
+const narrowToSweptPath = (
+  footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
+  obstacles: PlanFootprint[],
+  dxMm: number,
+  dyMm: number,
+): PlanFootprint[] => {
+  if (obstacles.length === 0) return obstacles;
+  const toArr = (s: PlanFootprintSet) => (Array.isArray(s) ? s : [s]);
+  const boxes = [...toArr(footprintAt(0, 0)), ...toArr(footprintAt(dxMm, dyMm))].map((f) =>
+    outlineAabb(footprintOutline(f)),
+  );
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const b of boxes) {
+    if (b.minX < minX) minX = b.minX;
+    if (b.minY < minY) minY = b.minY;
+    if (b.maxX > maxX) maxX = b.maxX;
+    if (b.maxY > maxY) maxY = b.maxY;
+  }
+  // The joint tolerance is the largest slack any narrow-phase test can allow, so pad by it.
+  const pad = JOINT_TOLERANCE_MAX_MM + CONTACT_EPS_MM;
+  return obstacles.filter((o) => {
+    const b = outlineAabb(footprintOutline(o));
+    return !(
+      b.maxX < minX - pad ||
+      b.minX > maxX + pad ||
+      b.maxY < minY - pad ||
+      b.minY > maxY + pad
+    );
+  });
+};
+
 export const slidePlanMove = (
   footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
   obstacles: PlanFootprint[],
@@ -566,10 +612,12 @@ export const slidePlanMove = (
   // so it can slide free of an existing overlap — but KEEP every other obstacle active
   // so it still can't tunnel through a fresh object. (Previously a start-overlap freed
   // the whole move, which let a flush/overlapping body pass straight through others.)
+  const reachable = narrowToSweptPath(footprintAt, obstacles, dxMm, dyMm);
+  if (reachable.length === 0) return { dxMm, dyMm };
   const startFp = footprintAt(0, 0);
-  const active = penetratesAny(startFp, obstacles)
-    ? obstacles.filter((o) => !penetratesAny(startFp, [o]))
-    : obstacles;
+  const active = penetratesAny(startFp, reachable)
+    ? reachable.filter((o) => !penetratesAny(startFp, [o]))
+    : reachable;
   let result: PlanMoveDelta;
   if (!penetratesAny(footprintAt(dxMm, dyMm), active)) {
     result = sweptBoundary(footprintAt, active, dxMm, dyMm) ?? { dxMm, dyMm };
@@ -585,7 +633,7 @@ export const slidePlanMove = (
   // Final hard gate against the FULL obstacle set: the `active` filter only stops the body
   // being trapped by an overlap it starts inside — this stops it being pushed any DEEPER
   // into that same overlap (slide-out still allowed because depth only shrinks).
-  return clampPlanMoveNoDeepen(footprintAt, obstacles, result.dxMm, result.dyMm);
+  return clampPlanMoveNoDeepen(footprintAt, reachable, result.dxMm, result.dyMm);
 };
 
 export const clampPlanStretch = (

@@ -10,11 +10,14 @@ import {
 } from '@react-three/drei';
 import { RepeatWrapping, type Texture } from 'three';
 import { QUALITY_SETTINGS, type QualityPreset } from './quality/qualityPreset';
+import { installAcceleratedRaycast } from './acceleratedRaycast';
 import {
   getProceduralTexture,
   isProceduralMaterialKey,
   type ProceduralMaterialKey,
 } from './materials/proceduralTextures';
+
+installAcceleratedRaycast();
 
 export interface ViewportCamera {
   position: [number, number, number];

@@ -1,4 +1,5 @@
 export { SceneViewport, type ViewportAppearance } from './SceneViewport';
+export { ensureBoundsTree } from './acceleratedRaycast';
 export { Bar } from './primitives/Bar';
 export { useSurfaceMaterial, type SurfaceMaterialParams } from './materials/useSurfaceMaterial';
 export {
