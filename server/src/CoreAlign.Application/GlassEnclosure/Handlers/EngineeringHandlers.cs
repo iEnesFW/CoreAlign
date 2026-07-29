@@ -351,7 +351,7 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         var systemIds = project.Runs.Select(r => r.ProfileSystemId).Distinct().ToList();
         var systems = await _systemRepo.GetWithItemsByIdsAsync(systemIds, cancellationToken);
 
-        var groups = new Dictionary<(string Label, int LengthMm), int>();
+        var groups = new Dictionary<(string Label, int LengthMm, int StockBarLengthMm), int>();
         foreach (var run in project.Runs)
         {
             if (!systems.TryGetValue(run.ProfileSystemId, out var system)) continue;
@@ -370,12 +370,15 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
                 if (count <= 0) continue;
                 var profile = system.Items.FirstOrDefault(p => p.Role == role) ?? system.Items.FirstOrDefault();
                 if (profile is null) continue;
-                var key = (profile.Code, lengthMm);
+                // Bar stock is a property of the PROFILE, not of the tenant. This column existed
+                // but nothing in the planning path read it, so every profile was planned against
+                // the tenant default.
+                var key = (profile.Code, lengthMm, profile.StockBarLengthMm);
                 groups[key] = groups.TryGetValue(key, out var existing) ? existing + count : count;
             }
         }
         return groups
-            .Select(kv => new CuttingRequest1D(kv.Key.Label, kv.Key.LengthMm, kv.Value))
+            .Select(kv => new CuttingRequest1D(kv.Key.Label, kv.Key.LengthMm, kv.Value, kv.Key.StockBarLengthMm))
             .ToList();
     }
 

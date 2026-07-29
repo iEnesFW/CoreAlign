@@ -262,3 +262,9 @@ public class MarketplaceCannotInstallOwnSubmissionException : ConflictException
     public MarketplaceCannotInstallOwnSubmissionException()
         : base("Tenant cannot install its own marketplace submission.") { }
 }
+
+public class GlassCutCannotBeSplicedException : ConflictException
+{
+    public GlassCutCannotBeSplicedException(string profileCode, int requiredMm, int usableBarMm, int minPieceMm)
+        : base($"Profile '{profileCode}' needs a {requiredMm} mm length. It cannot be spliced from {usableBarMm} mm bars without producing a piece shorter than the {minPieceMm} mm minimum.") { }
+}
