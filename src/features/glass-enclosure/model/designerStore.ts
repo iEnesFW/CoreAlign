@@ -190,7 +190,11 @@ interface DesignerState {
   setRunGlassBent: (runId: string, bent: boolean) => void;
   setRunFrame: (
     runId: string,
-    patch: { frameEdges?: RunFrameEdges | null; hasMullions?: boolean | null },
+    patch: {
+      frameEdges?: RunFrameEdges | null;
+      hasMullions?: boolean | null;
+      mountShadowGapMm?: number | null;
+    },
   ) => void;
 
   addWall: (wall: SceneWallState) => void;
@@ -776,6 +780,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
               ...run,
               frameEdges: patch.frameEdges !== undefined ? patch.frameEdges : run.frameEdges,
               hasMullions: patch.hasMullions !== undefined ? patch.hasMullions : run.hasMullions,
+              mountShadowGapMm:
+                patch.mountShadowGapMm !== undefined
+                  ? patch.mountShadowGapMm
+                  : run.mountShadowGapMm,
             }
           : run,
       ),
@@ -1474,12 +1482,26 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const mullionsByRun = new Map<string, boolean>();
     const colorByRun = new Map<string, string>();
     const lockedByRun = new Map<string, boolean>();
+    const hostByRun = new Map<string, string>();
+    const mountByRun = new Map<string, { d: number | null; o: number | null; g: number | null }>();
     for (const r of scene.runs) {
       if (r.arcGlassBent) bentByRun.set(r.id, true);
       if (r.frameEdges) frameByRun.set(r.id, r.frameEdges);
       if (r.hasMullions === false) mullionsByRun.set(r.id, false);
       if (r.customColorHex) colorByRun.set(r.id, r.customColorHex);
       if (r.locked) lockedByRun.set(r.id, true);
+      // Blob-only, exactly like the fields above: the run DTO has no column for the host bond or
+      // the mount overrides, so without restoring them here every reload dropped the glass back to
+      // free-standing depth — a 25 mm reveal per face on a hosted pane.
+      if (r.hostWallId) hostByRun.set(r.id, r.hostWallId);
+      const mountOverride = {
+        d: r.mountDepthMm ?? null,
+        o: r.mountOffsetMm ?? null,
+        g: r.mountShadowGapMm ?? null,
+      };
+      if (mountOverride.d !== null || mountOverride.o !== null || mountOverride.g !== null) {
+        mountByRun.set(r.id, mountOverride);
+      }
       for (const p of r.panels) {
         if (p.hardware?.length) hwByPanel.set(p.id, p.hardware);
         if (p.cornerNotchMm) notchByPanel.set(p.id, p.cornerNotchMm);
@@ -1536,6 +1558,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         hasMullions: mullionsByRun.has(run.id) ? false : (run.hasMullions ?? true),
         customColorHex: colorByRun.get(run.id) ?? run.customColorHex ?? null,
         locked: lockedByRun.get(run.id) ?? run.locked ?? false,
+        hostWallId: hostByRun.get(run.id) ?? run.hostWallId ?? null,
+        mountDepthMm: mountByRun.get(run.id)?.d ?? run.mountDepthMm ?? null,
+        mountOffsetMm: mountByRun.get(run.id)?.o ?? run.mountOffsetMm ?? null,
+        mountShadowGapMm: mountByRun.get(run.id)?.g ?? run.mountShadowGapMm ?? null,
         panels: run.panels.map((panel) => {
           const hw = hwByPanel.get(panel.id);
           const notch = notchByPanel.get(panel.id);

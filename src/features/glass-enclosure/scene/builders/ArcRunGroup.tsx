@@ -17,6 +17,7 @@ import {
 import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
 import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
+import { resolveAttachedWallIds } from '../../model/wallAttachment';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { setBodyPreview } from '../interaction/bodyPreview';
@@ -135,11 +136,17 @@ export function ArcRunGroup({
   const profileHalf = PROFILE_FACE_MM / 1000 / 2;
   // The frame fills the host wall's opening depth minus one shadow line per face (see RunGroup /
   // model/mountDepth.ts); a free-standing curved run keeps the historic 50 mm section.
-  const hostThicknessMm = useDesignerStore((s) =>
-    run.hostWallId
-      ? ((s.scene.walls ?? []).find((w) => w.id === run.hostWallId)?.thicknessMm ?? null)
-      : null,
-  );
+  // WHY resolveAttachedWallIds and not just run.hostWallId: the explicit bond is written by ONE
+  // code path (single-wall autofill). A run the user draws or pastes into a carved hole never got
+  // one, so it stayed free-standing forever and sat short of the hole edge on every face with no
+  // way to fix it. Fall back to the geometric attachment the module already computes.
+  const sceneWalls = useDesignerStore((s) => s.scene.walls);
+  const hostThicknessMm = useMemo(() => {
+    const walls = sceneWalls ?? [];
+    if (walls.length === 0) return null;
+    const hostId = resolveAttachedWallIds(run, walls)[0];
+    return hostId ? (walls.find((w) => w.id === hostId)?.thicknessMm ?? null) : null;
+  }, [run, sceneWalls]);
   const mount = resolveMountDepth(hostThicknessMm, run);
   const profileSection = mountedSection(PROFILE_FACE_MM, mount);
   const mullionSection = mountedSection(MULLION_FACE_MM, mount);

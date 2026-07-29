@@ -26,12 +26,14 @@ describe('mount depth fills the carved opening', () => {
   it('a hosted run fills the wall minus one shadow gap per face', () => {
     const mount = resolveMountDepth(200);
     expect(mount.hosted).toBe(true);
-    expect(mount.depthMm).toBe(180);
+    expect(mount.depthMm).toBe(200 - 2 * SHADOW_GAP_MM);
     expect(mount.offsetMm).toBe(0);
     expect(mount.frontGapMm).toBe(SHADOW_GAP_MM);
     expect(mount.backGapMm).toBe(SHADOW_GAP_MM);
     expect(revealPerFaceMm(200, mount.depthMm)).toBe(SHADOW_GAP_MM);
-    expect(mount.depthMm / 200).toBe(0.9);
+    // The shadow line must stay a HAIRLINE. At 10 mm users read it as the glass failing to meet
+    // the hole edge, which is the whole reason this default came down.
+    expect(SHADOW_GAP_MM).toBeLessThanOrEqual(2);
   });
 
   it('scales with the wall: a thin wall and a thick wall both keep the same shadow line', () => {
@@ -104,7 +106,7 @@ describe('mountedSection maps depth onto the Bar cross-section', () => {
   it('puts the resolved depth on the Z axis and the catalogue face on Y', () => {
     // Bar renders boxGeometry [lengthM, height/1000, width/1000] — `width` IS the wall-normal axis.
     const section = mountedSection(60, resolveMountDepth(200));
-    expect(section).toEqual({ width: 180, height: 60 });
+    expect(section).toEqual({ width: 200 - 2 * SHADOW_GAP_MM, height: 60 });
   });
 
   it('a free-standing run still gets the historic 50 x face section', () => {

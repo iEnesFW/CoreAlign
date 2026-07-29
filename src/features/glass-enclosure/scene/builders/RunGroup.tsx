@@ -6,6 +6,7 @@ import { PanelMesh } from './PanelMesh';
 import { ProfileBar } from './ProfileBar';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
 import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
+import { resolveAttachedWallIds } from '../../model/wallAttachment';
 import { ArcSweepHandle } from '../interaction/ArcSweepHandle';
 import { useDrag3D } from '../interaction/useDrag3D';
 import { useObjectGestures } from '../interaction/useObjectGestures';
@@ -194,11 +195,17 @@ export function RunGroup({
   // thickness, but every solid put back was a fixed 50 mm section centred on the wall centreline —
   // on a 200 mm wall that left a 75 mm open reveal on EACH face. The frame now fills the opening
   // depth minus one deliberate shadow line per face. A run with no host wall keeps the old 50 mm.
-  const hostThicknessMm = useDesignerStore((s) =>
-    run.hostWallId
-      ? ((s.scene.walls ?? []).find((w) => w.id === run.hostWallId)?.thicknessMm ?? null)
-      : null,
-  );
+  // WHY resolveAttachedWallIds and not just run.hostWallId: the explicit bond is written by ONE
+  // code path (single-wall autofill). A run the user draws or pastes into a carved hole never got
+  // one, so it stayed free-standing forever and sat short of the hole edge on every face with no
+  // way to fix it. Fall back to the geometric attachment the module already computes.
+  const sceneWalls = useDesignerStore((s) => s.scene.walls);
+  const hostThicknessMm = useMemo(() => {
+    const walls = sceneWalls ?? [];
+    if (walls.length === 0) return null;
+    const hostId = resolveAttachedWallIds(run, walls)[0];
+    return hostId ? (walls.find((w) => w.id === hostId)?.thicknessMm ?? null) : null;
+  }, [run, sceneWalls]);
   const mount = resolveMountDepth(hostThicknessMm, run);
   const profileSection = mountedSection(PROFILE_FACE_MM, mount);
   const mullionSection = mountedSection(MULLION_FACE_MM, mount);

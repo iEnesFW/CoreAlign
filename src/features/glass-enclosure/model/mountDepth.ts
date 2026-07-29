@@ -12,9 +12,10 @@
  * pane is thin; what fills a reveal in a real window is the frame, not the glass.
  */
 
-// The deliberate setback per face. Small enough to read as a shadow line, large enough that the
-// frame never z-fights the wall surface it sits in.
-export const SHADOW_GAP_MM = 10;
+// The deliberate setback per face: a hairline shadow that keeps the frame from z-fighting the wall
+// surface it sits in, without reading as a gap. Was 10 mm, which users saw as the glass failing to
+// meet the hole edge. Per-run overridable via `mountShadowGapMm` (0 = dead flush).
+export const SHADOW_GAP_MM = 1;
 
 // What a run that is NOT hosted by a wall keeps: today's free-standing profile section. A run
 // standing in the open must not balloon to 180 mm just because a hosted one does.

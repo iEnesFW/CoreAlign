@@ -3251,12 +3251,14 @@
         "BR": "Sağ alt"
       },
       "Frame": {
-        "Title": "Profil kenarları",
-        "top": "Üst",
         "bottom": "Alt",
         "left": "Sol",
+        "Mullions": "Ara dikmeler (kapalıyken camlar macunla birleşir)",
         "right": "Sağ",
-        "Mullions": "Ara dikmeler (kapalıyken camlar macunla birleşir)"
+        "ShadowGap": "Gölge derzi (mm)",
+        "ShadowGapHint": "Camın duvar yüzünden ne kadar içeride kalacağı. 0 = deliğe tam sıfır oturur.",
+        "Title": "Profil kenarları",
+        "top": "Üst"
       },
       "CornerNotch": {
         "Title": "Köşe girintisi (mm)"

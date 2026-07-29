@@ -4,6 +4,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { queueToast } from '@/shared/api/toastQueue';
 import { arcFromCornerResize, isRealArc, minArcRadiusMm } from '../model/arcGeometry';
+import { SHADOW_GAP_MM } from '../model/mountDepth';
 import { RunArcSection } from './RunArcSection';
 import type {
   ColorOptionDto,
@@ -345,6 +346,30 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
               defaultValue: 'Ara dikmeler (kapalıyken camlar macunla birleşir)',
             })}
           </label>
+          <label className="flex items-center justify-between gap-2 text-xs">
+            <span>
+              {t('GlassEnclosure.Designer.Frame.ShadowGap', { defaultValue: 'Gölge derzi (mm)' })}
+            </span>
+            <input
+              type="number"
+              min={0}
+              max={50}
+              step={1}
+              value={run.mountShadowGapMm ?? SHADOW_GAP_MM}
+              onChange={(e) => {
+                const parsed = Number(e.target.value);
+                if (!Number.isFinite(parsed)) return;
+                setRunFrame(run.id, { mountShadowGapMm: Math.max(0, Math.min(50, parsed)) });
+              }}
+              className="w-20 rounded border border-slate-300 bg-white px-2 py-1 text-right text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </label>
+          <p className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+            {t('GlassEnclosure.Designer.Frame.ShadowGapHint', {
+              defaultValue:
+                'Camın duvar yüzünden ne kadar içeride kalacağı. 0 = deliğe tam sıfır oturur.',
+            })}
+          </p>
         </div>
       )}
 

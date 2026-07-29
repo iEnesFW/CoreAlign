@@ -3251,12 +3251,14 @@
         "BR": "Bottom right"
       },
       "Frame": {
-        "Title": "Profile edges",
-        "top": "Top",
         "bottom": "Bottom",
         "left": "Left",
+        "Mullions": "Mullions (off = glasses joined with silicone)",
         "right": "Right",
-        "Mullions": "Mullions (off = glasses joined with silicone)"
+        "ShadowGap": "Shadow gap (mm)",
+        "ShadowGapHint": "How far the glass sits back from the wall face. 0 = flush with the opening.",
+        "Title": "Profile edges",
+        "top": "Top"
       },
       "CornerNotch": {
         "Title": "Corner notch (mm)"

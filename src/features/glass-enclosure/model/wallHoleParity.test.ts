@@ -178,6 +178,9 @@ describe('the fill assembly seats through the wall thickness', () => {
 
   it('the frame section carries the depth on the wall-normal axis', () => {
     // Bar renders boxGeometry [length, height/1000, width/1000] — `width` IS the wall normal.
-    expect(mountedSection(60, resolveMountDepth(200))).toEqual({ width: 180, height: 60 });
+    expect(mountedSection(60, resolveMountDepth(200))).toEqual({
+      width: 200 - 2 * SHADOW_GAP_MM,
+      height: 60,
+    });
   });
 });
