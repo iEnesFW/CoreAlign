@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ObjectAppearanceSection } from './ObjectAppearanceSection';
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useDesignerStore } from '../model/designerStore';
-import { useColorOptionsQuery } from '../hooks/useGlassEnclosureQueries';
 import type { SceneSurfaceState } from '../model/project.types';
 
 export function SurfaceInspector() {
@@ -13,8 +13,6 @@ export function SurfaceInspector() {
   const updateSurface = useDesignerStore((s) => s.updateSurface);
   const removeSurface = useDesignerStore((s) => s.removeSurface);
   const setSelection = useDesignerStore((s) => s.setSelection);
-  const colorsQuery = useColorOptionsQuery();
-  const colors = colorsQuery.data?.data ?? [];
 
   const surface = useMemo(
     () => surfaces.find((s) => s.id === selection.surfaceId),
@@ -117,45 +115,15 @@ export function SurfaceInspector() {
         />
       </div>
 
-      <div className="space-y-1.5">
-        <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          {t('GlassEnclosure.Designer.WallFeature.Color', { defaultValue: 'Renk' })}
-        </p>
-        <div className="flex flex-wrap items-center gap-1">
-          {colors.map((color) => (
-            <button
-              key={color.id}
-              type="button"
-              title={color.name}
-              aria-label={color.name}
-              onClick={() => commit({ colorHex: color.hexColor, materialKey: null })}
-              className={cn(
-                'h-6 w-6 rounded border',
-                surface.colorHex === color.hexColor
-                  ? 'border-primary-500 ring-2 ring-primary-400/60'
-                  : 'border-slate-300 dark:border-slate-600',
-              )}
-              style={{ backgroundColor: color.hexColor }}
-            />
-          ))}
-          <label
-            title={t('GlassEnclosure.Designer.WallFeature.ColorCustom', {
-              defaultValue: 'Özel renk',
-            })}
-            className="inline-flex h-6 w-6 cursor-pointer items-center justify-center overflow-hidden rounded border border-slate-300 dark:border-slate-600"
-          >
-            <span className="sr-only">
-              {t('GlassEnclosure.Designer.WallFeature.ColorCustom', { defaultValue: 'Özel renk' })}
-            </span>
-            <input
-              type="color"
-              value={surface.colorHex ?? '#94a3b8'}
-              onChange={(e) => commit({ colorHex: e.target.value, materialKey: null })}
-              className="h-8 w-8 cursor-pointer border-0 bg-transparent p-0"
-            />
-          </label>
-        </div>
-      </div>
+      {/* WHY the shared section: walls and slabs already offered colour AND texture here, but a
+          free-drawn surface only ever got a colour picker — even though its renderer reads
+          materialKey (useTiledProceduralTexture) and the paint tool could already set one. The
+          control was the only missing piece. */}
+      <ObjectAppearanceSection
+        colorHex={surface.colorHex}
+        materialKey={surface.materialKey}
+        onChange={(patch) => commit(patch)}
+      />
 
       <p className="text-[11px] text-slate-400">
         {t('GlassEnclosure.Designer.Surface.Hint', {
