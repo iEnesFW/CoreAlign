@@ -495,3 +495,27 @@ describe('sanitizeFreeOutline', () => {
     expect(dense === null || !outlineSelfIntersects(dense)).toBe(true);
   });
 });
+
+describe('buildCurvedShapedGeometry winding', () => {
+  const R = 2;
+  const t = 0.02;
+  const w = 1000;
+  const h = 2000;
+  const rect = [
+    { x: -w / 2, y: 0 },
+    { x: w / 2, y: 0 },
+    { x: w / 2, y: h },
+    { x: -w / 2, y: h },
+  ];
+
+  // The (u,z) -> 3D map is ORIENTATION-REVERSING for direction === +1 (toAngle = PI/2 - phi, so the
+  // angle DECREASES as x grows). A triangle wound CCW in the flat outline therefore comes out
+  // CLOCKWISE on the cylinder, and the shaped pane renders inside-out: you see its back faces and
+  // the glass looks hollow from the outside. The cutter (buildCurvedWallFeatureSolid) already
+  // mirrors its emit for +1; the shaped PANE did not, which is the "arc wall hole looks wrong on
+  // positive sweep" report.
+  it.each([1, -1] as const)('is outward-facing for direction %i', (direction) => {
+    const g = buildCurvedShapedGeometry(rect, w, R, direction, 0, Math.PI / 4, t);
+    expect(signedVolume(g.getAttribute('position').array)).toBeGreaterThan(0);
+  });
+});

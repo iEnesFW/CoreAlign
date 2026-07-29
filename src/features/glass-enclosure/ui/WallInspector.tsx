@@ -5,6 +5,7 @@ import { useDesignerStore } from '../model/designerStore';
 import { useWallAutofill } from '../hooks/useWallAutofill';
 import { useWallEntityActions } from '../hooks/useDesignerEntityActions';
 import { isRealArc, minArcRadiusMm } from '../model/arcGeometry';
+import { bodyDevelopedLengthMm } from '../geometry/curvature';
 import { commitArcOrWarn } from '../geometry/arcCommitFeedback';
 import type { ArcCommitInput, ArcCommitOptions } from '../geometry/arcCommit';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -626,6 +627,16 @@ export function WallInspector() {
           />
         )}
       </div>
+
+      {isArc && (
+        <p className="rounded-md bg-slate-100 px-2.5 py-2 text-[11px] leading-relaxed text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {t('GlassEnclosure.Designer.Wall.DevelopedHint', {
+            defaultValue:
+              'Uzunluk alanı KİRİŞ (iki uç arası düz mesafe). Kavis üzerindeki gerçek yüzey {{developed}} mm — delik konumları ve cam bu uzunluğa göre ölçülür.',
+            developed: Math.round(bodyDevelopedLengthMm(draft)),
+          })}
+        </p>
+      )}
 
       {!isArc && (
         <>

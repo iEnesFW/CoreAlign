@@ -63,6 +63,11 @@ export const buildCurvedShapedGeometry = (
   const outerR = radius + thicknessM / 2;
   const innerR = Math.max(0.001, radius - thicknessM / 2);
   const toAngle = (phi: number) => (direction === 1 ? Math.PI / 2 - phi : phi - Math.PI / 2);
+  // WHY: for direction === +1 the angle DECREASES as x grows, so this map is orientation-REVERSING
+  // — a triangle wound CCW in the flat outline comes out clockwise on the cylinder and the pane
+  // renders inside-out (you see its back faces; the glass looks hollow from outside). The cutter
+  // (buildCurvedWallFeatureSolid) already mirrors its emit for +1; the shaped PANE did not.
+  const flip = direction === 1;
   const cyl = (xMm: number, yMm: number, r: number): [number, number, number] => {
     const phi = phiStart + ((xMm + w / 2) / w) * span;
     const a = toAngle(phi);
@@ -126,7 +131,7 @@ export const buildCurvedShapedGeometry = (
     const pa = cyl(a.x, a.y, r);
     const pb = cyl(b.x, b.y, r);
     const pc = cyl(c.x, c.y, r);
-    if (reversed) tri(pa, pc, pb);
+    if (reversed !== flip) tri(pa, pc, pb);
     else tri(pa, pb, pc);
   };
 
@@ -150,12 +155,12 @@ export const buildCurvedShapedGeometry = (
   for (let i = 0; i < dense.length; i += 1) {
     const a = dense[i];
     const b = dense[(i + 1) % dense.length];
-    quad(
-      cyl(a.x, a.y, innerR),
-      cyl(b.x, b.y, innerR),
-      cyl(b.x, b.y, outerR),
-      cyl(a.x, a.y, outerR),
-    );
+    const ai = cyl(a.x, a.y, innerR);
+    const bi = cyl(b.x, b.y, innerR);
+    const bo = cyl(b.x, b.y, outerR);
+    const ao = cyl(a.x, a.y, outerR);
+    if (flip) quad(ao, bo, bi, ai);
+    else quad(ai, bi, bo, ao);
   }
 
   const geometry = new BufferGeometry();
