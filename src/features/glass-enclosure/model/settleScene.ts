@@ -107,7 +107,12 @@ export const settleScene = (scene: SceneState): SceneState => {
   for (const item of items) {
     const top = supportTopBelowMm(item.footprint, supportsFor(item), item.baseMm);
     settledTop.set(item.id, top);
-    if (top !== item.baseMm) item.apply(top);
+    // WHY only DOWNWARD: gravity makes things fall, it never lifts. A floor slab is authored at
+    // -150 so that its TOP sits flush with the ground, and the ground fallback is 0 — so a plain
+    // "top !== base" would RAISE it to 0. Its z-range then becomes [0,150], which overlaps every
+    // wall standing at 0, and the collision solver starts refusing to drag anything onto the
+    // floor. Lifting a body is the drag/Alt-stack path's job, never this one.
+    if (top < item.baseMm) item.apply(top);
   }
 
   const changed =
