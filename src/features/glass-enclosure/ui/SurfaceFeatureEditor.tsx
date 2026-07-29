@@ -116,7 +116,6 @@ export function SurfaceFeatureEditor({
                     : Math.max(1, Math.round(v)),
               })
             }
-            onDraft={() => {}}
           />
         )}
         <NumberField
@@ -124,26 +123,22 @@ export function SurfaceFeatureEditor({
           value={feature.widthMm}
           min={60}
           onCommit={(v) => commitSize('widthMm', v)}
-          onDraft={() => {}}
         />
         <NumberField
           label={`${t('GlassEnclosure.Field.Height', { defaultValue: 'Yükseklik' })} (mm)`}
           value={feature.heightMm}
           min={60}
           onCommit={(v) => commitSize('heightMm', v)}
-          onDraft={() => {}}
         />
         <NumberField
           label={`${t('GlassEnclosure.Designer.WallFeature.Offset', { defaultValue: 'Konum X' })} (mm)`}
           value={feature.offsetMm}
           onCommit={(v) => onUpdate({ offsetMm: Math.round(v) })}
-          onDraft={() => {}}
         />
         <NumberField
           label={`${t('GlassEnclosure.Designer.WallFeature.CenterZ', { defaultValue: 'Konum Y' })} (mm)`}
           value={feature.centerZMm}
           onCommit={(v) => onUpdate({ centerZMm: Math.round(v) })}
-          onDraft={() => {}}
         />
         {feature.shape === 'polygon' && (
           <NumberField
@@ -151,7 +146,6 @@ export function SurfaceFeatureEditor({
             value={feature.sides ?? 6}
             min={3}
             onCommit={(v) => onUpdate({ sides: Math.max(3, Math.min(12, Math.round(v))) })}
-            onDraft={() => {}}
           />
         )}
       </div>

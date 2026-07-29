@@ -927,17 +927,37 @@ export const NumberField = ({
   value: number;
   min?: number;
   onCommit: (value: number) => void;
-  onDraft: (value: number) => void;
-}) => (
-  <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
-    <span className="text-[10px] uppercase tracking-wide">{label}</span>
-    <input
-      type="number"
-      min={min}
-      value={value}
-      onChange={(e) => onDraft(Number(e.target.value))}
-      onBlur={(e) => onCommit(Number(e.target.value))}
-      className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
-    />
-  </label>
-);
+  /**
+   * Optional. Supply it when the PARENT wants to mirror each keystroke (a live 3D preview).
+   *
+   * WHY optional: this input is fully controlled by `value`, so a caller that passed a no-op
+   * `onDraft` produced a field that could not be typed into AT ALL — every keystroke re-rendered
+   * the unchanged committed value straight back over it. Omitting it now means "let the field hold
+   * its own draft until blur", which is what those callers actually wanted.
+   */
+  onDraft?: (value: number) => void;
+}) => {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-400">
+      <span className="text-[10px] uppercase tracking-wide">{label}</span>
+      <input
+        type="number"
+        min={min}
+        value={draft ?? value}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          onDraft?.(Number(e.target.value));
+        }}
+        onBlur={(e) => {
+          setDraft(null);
+          onCommit(Number(e.target.value));
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
+        className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
+      />
+    </label>
+  );
+};
