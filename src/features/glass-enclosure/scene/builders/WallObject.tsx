@@ -85,7 +85,7 @@ import {
 } from '../../model/arcGeometry';
 import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
-import { chordDirectionDeg } from '../../geometry/curvature';
+import { bodyMidWorldMm, chordDirectionDeg } from '../../geometry/curvature';
 import { resolveAttachedRunIds } from '../../model/wallAttachment';
 import { useWallEntityActions } from '../../hooks/useDesignerEntityActions';
 import {
@@ -759,9 +759,13 @@ export function WallObject({
       stackSupports,
       baseWallElevMm,
     );
-  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
+  // Fallback 0 (ground): a support under the body lifts it; nothing under means gravity → floor.
+  // WHY the band apex and not centerXMm/centerYMm: those are the CHORD midpoint, which is the right
+  // rotate pivot but is off the band by the sagitta on a curved wall — probing there asked what was
+  // under empty space, so a curved wall genuinely resting on a support fell to the floor.
+  const gravityProbe = bodyMidWorldMm(wall);
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
+    restElevationAtPointMm(gravityProbe.xMm + dxMm, gravityProbe.yMm + dyMm, stackSupports, 0);
   // WHY memoized: this rebuilds the wall's plan footprint (for a curved wall, a trig-generated
   // band polygon) and overlap-tests it against every support. Unmemoized it ran on EVERY render of
   // EVERY wall — so an N-wall scene paid N band builds plus N x supports polygon tests per store

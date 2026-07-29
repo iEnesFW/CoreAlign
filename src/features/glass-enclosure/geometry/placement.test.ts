@@ -3,6 +3,7 @@ import {
   bodyChordMidWorldMm,
   bodyChordVectorMm,
   bodyEndWorldMm,
+  bodyMidWorldMm,
   originForChordCentreMm,
 } from './curvature';
 import { arcBandOutlineMm } from '../model/bandOutline';
@@ -172,5 +173,31 @@ describe('plan export', () => {
     );
     expect(straight.find((s) => s.layer === 'SURFACES')!.points).toHaveLength(4);
     expect(bowed.find((s) => s.layer === 'SURFACES')!.points.length).toBeGreaterThan(4);
+  });
+});
+
+describe('bodyMidWorldMm', () => {
+  it('lands ON the band, not on the chord that cuts across it', () => {
+    const mid = bodyMidWorldMm(arcBody);
+    const chordMid = bodyChordMidWorldMm(arcBody);
+    // The apex stands off the chord by the sagitta — that gap is exactly why a chord-midpoint
+    // gravity probe asked what was under empty space.
+    expect(Math.hypot(mid.xMm - chordMid.xMm, mid.yMm - chordMid.yMm)).toBeGreaterThan(500);
+  });
+
+  it('is the plain half-way point on a straight body', () => {
+    const mid = bodyMidWorldMm(straightBody);
+    const chordMid = bodyChordMidWorldMm(straightBody);
+    expect(mid.xMm).toBeCloseTo(chordMid.xMm, 6);
+    expect(mid.yMm).toBeCloseTo(chordMid.yMm, 6);
+  });
+
+  it('stands off the chord by exactly the sagitta', () => {
+    const mid = bodyMidWorldMm(arcBody);
+    // The chord runs due east from the origin, so the apex's offset from it is |y|, and for an arc
+    // that is R * (1 - cos(sweep/2)) by definition.
+    const sagitta =
+      arcBody.geomArcRadiusMm * (1 - Math.cos(((arcBody.geomArcSweepDeg / 2) * Math.PI) / 180));
+    expect(Math.abs(mid.yMm)).toBeCloseTo(sagitta, 0);
   });
 });

@@ -144,6 +144,33 @@ export const bodyChordMidWorldMm = (body: PlacedBody): { xMm: number; yMm: numbe
 };
 
 /**
+ * The point at a body's mid-span that is actually ON the body — its band apex when curved.
+ *
+ * WHY this is NOT the chord midpoint: on an arc the chord midpoint sits off the band by the
+ * sagitta (621 mm on a 4 m chord at a 90 degree sweep). That is fine for a rotate pivot, but a
+ * single-point "what am I standing on" probe taken there reads whatever is under EMPTY SPACE — so
+ * a curved wall genuinely resting on a support reported nothing beneath it and fell to the floor
+ * on the next nudge.
+ */
+export const bodyMidLocalMm = (body: CurvableShape): { xMm: number; yMm: number } => {
+  const arc = resolveBodyCurvature(body);
+  if (!arc) return { xMm: body.lengthMm / 2, yMm: 0 };
+  return arcEndLocal(arc.radiusMm, (body.geomArcSweepDeg ?? 1) / 2);
+};
+
+/** {@link bodyMidLocalMm} in world mm. */
+export const bodyMidWorldMm = (body: PlacedBody): { xMm: number; yMm: number } => {
+  const mid = bodyMidLocalMm(body);
+  const rad = body.rotationDeg * DEG2RAD;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    xMm: body.originX + mid.xMm * cos - mid.yMm * sin,
+    yMm: body.originY + mid.xMm * sin + mid.yMm * cos,
+  };
+};
+
+/**
  * The origin a body must be given so its CHORD MIDPOINT lands on `centre`.
  *
  * Placement code wants "drop this where I clicked"; walking back half the length along

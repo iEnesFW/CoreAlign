@@ -14,6 +14,7 @@ import {
   radiusFromChordSweep,
   resolveArc,
 } from '../../model/arcGeometry';
+import { bodyMidWorldMm } from '../../geometry/curvature';
 import { arcCommitKeepingEnds } from '../../geometry/arcCommit';
 import { commitArcOrWarn } from '../../geometry/arcCommitFeedback';
 import { mountedSection, resolveMountDepth } from '../../model/mountDepth';
@@ -239,9 +240,12 @@ export function ArcRunGroup({
     restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, baseElevMm);
   const centerXMm = (run.originX + endWorldX) / 2;
   const centerYMm = (run.originY + endWorldY) / 2;
-  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
+  // Fallback 0 (ground): a support under the body lifts it; nothing under means gravity → floor.
+  // The chord midpoint is NOT on a curved run — probe the band apex or curved glass mounted on a
+  // parapet reads "nothing beneath me" and drops to the floor on the next nudge.
+  const gravityProbe = bodyMidWorldMm(run);
   const centerRestAt = (dx: number, dy: number) =>
-    restElevationAtPointMm(centerXMm + dx, centerYMm + dy, stackSupports, 0);
+    restElevationAtPointMm(gravityProbe.xMm + dx, gravityProbe.yMm + dy, stackSupports, 0);
   const restingAtStart = restsOnSupportAtMm(
     buildRunFootprint(run, 0, 0, run.rotationDeg),
     stackSupports,
