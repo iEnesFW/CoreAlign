@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Edges } from '@react-three/drei';
-import { ExtrudeGeometry, Shape } from 'three';
+import { ExtrudeGeometry, Mesh, Shape } from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Texture } from 'three';
@@ -36,6 +36,20 @@ interface PolygonSurfaceObjectProps {
 const EMPTY_SUPPORTS: PlanFootprint[] = [];
 
 const IGNORE_RAYCAST = () => null;
+/**
+ * WHY this exists instead of `undefined`: R3F IGNORES an explicitly-undefined prop, so
+ * a conditional whose false branch was `undefined` never PUT BACK the real raycast when pen mode
+ * ended — the mesh kept the ignore function and the free-drawn surface became permanently
+ * unselectable and unmovable for the rest of the session. That is the "free-draw select/move does
+ * not work" report.
+ *
+ * It delegates at CALL time rather than capturing Mesh.prototype.raycast at module load, because
+ * the engine swaps in the BVH-accelerated raycast during startup and module order is not
+ * guaranteed.
+ */
+const DEFAULT_MESH_RAYCAST: Mesh['raycast'] = function (this: Mesh, raycaster, intersects) {
+  Mesh.prototype.raycast.call(this, raycaster, intersects);
+};
 
 const FLOOR_COLOR = '#b7bfc7';
 const ROOF_COLOR = '#8c98a4';
@@ -302,7 +316,7 @@ export function PolygonSurfaceObject({
         geometry={geometry}
         castShadow
         receiveShadow
-        raycast={penActive ? IGNORE_RAYCAST : undefined}
+        raycast={penActive ? IGNORE_RAYCAST : DEFAULT_MESH_RAYCAST}
         {...drag.handlers}
         onPointerDown={handlePointerDown}
         onClick={handleClick}
