@@ -6,11 +6,14 @@ import type { ResolvedArc } from '../model/arcGeometry';
  * straight span between the two fixed endpoints — and `rotationDeg` is the ROLLED START TANGENT
  * once the body is an arc, not the chord direction.
  */
-export interface CurvablePose {
+export interface CurvableShape {
   lengthMm: number;
-  rotationDeg: number;
   geomArcRadiusMm?: number | null;
   geomArcSweepDeg?: number | null;
+}
+
+export interface CurvablePose extends CurvableShape {
+  rotationDeg: number;
 }
 
 /**
@@ -35,7 +38,7 @@ export const quantizeSweepDeg = (sweepDeg: number): number =>
 export const quantizeRotationDeg = (rotationDeg: number): number =>
   Math.round(rotationDeg / ROTATION_QUANTUM_DEG) * ROTATION_QUANTUM_DEG;
 
-export const isCurved = (body: CurvablePose): boolean =>
+export const isCurved = (body: CurvableShape): boolean =>
   isRealArc(body.geomArcRadiusMm, body.geomArcSweepDeg);
 
 /**
@@ -45,7 +48,7 @@ export const isCurved = (body: CurvablePose): boolean =>
  * renderer, the collision footprint, the snap target and the pick surface disagree by millimetres.
  * Re-deriving it from the chord + sweep makes them agree by construction.
  */
-export const resolveBodyCurvature = (body: CurvablePose): ResolvedArc | null =>
+export const resolveBodyCurvature = (body: CurvableShape): ResolvedArc | null =>
   isCurved(body)
     ? resolveArc(
         radiusFromChordSweep(body.lengthMm, body.geomArcRadiusMm, body.geomArcSweepDeg),
@@ -85,7 +88,7 @@ export const rotationForChord = (
  * CSG cutter). Deriving it from the stored radius instead of the chord returns a length nobody
  * draws, and every stored outline then rescales into the wrong units.
  */
-export const bodyDevelopedLengthMm = (body: CurvablePose): number =>
+export const bodyDevelopedLengthMm = (body: CurvableShape): number =>
   resolveBodyCurvature(body)?.arcLengthMm ?? body.lengthMm;
 
 /**
@@ -95,7 +98,7 @@ export const bodyDevelopedLengthMm = (body: CurvablePose): number =>
  * does this body finish" — snap targets, attachment tests, corner posts, the 2D plan — must read it
  * here so they cannot disagree about the same body.
  */
-export const bodyEndLocalMm = (body: CurvablePose): { xMm: number; yMm: number } => {
+export const bodyEndLocalMm = (body: CurvableShape): { xMm: number; yMm: number } => {
   const arc = resolveBodyCurvature(body);
   if (!arc) return { xMm: body.lengthMm, yMm: 0 };
   return arcEndLocal(arc.radiusMm, body.geomArcSweepDeg ?? 1);

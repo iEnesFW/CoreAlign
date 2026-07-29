@@ -231,8 +231,30 @@ const buildOpeningPath = (rect: OpeningFrameRect): Path => {
   return path;
 };
 
+// WHY the narrow input: this builds the CSG chain for a curved wall, which is the single most
+// expensive thing WallObject does. Taking the whole SceneWallState forced the memo to key on the
+// whole object, so moving the wall, toggling its lock or recolouring it replayed every subtract.
+// These are exactly the fields the geometry reads.
+type WallGeometryInput = Pick<
+  SceneWallState,
+  | 'bendAngleDeg'
+  | 'bendAtMm'
+  | 'cornerNotchMm'
+  | 'cornerRadiiMm'
+  | 'edgeNotchMm'
+  | 'features'
+  | 'geomArcRadiusMm'
+  | 'geomArcSweepDeg'
+  | 'geomEdgeArc'
+  | 'heightEndMm'
+  | 'heightMm'
+  | 'lengthMm'
+  | 'openings'
+  | 'thicknessMm'
+>;
+
 const buildWallGeometries = (
-  wall: SceneWallState,
+  wall: WallGeometryInput,
   cutFeatures = true,
 ): {
   body: BufferGeometry;
@@ -544,11 +566,45 @@ export function WallObject({
   // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
   // hid the result on every face until the user happened to leave the tool. Depth commits on
   // release, so the CSG/extrude rebuilds once per edit, not per frame.
+  const geometryInput = useMemo<WallGeometryInput>(
+    () => ({
+      bendAngleDeg: wall.bendAngleDeg,
+      bendAtMm: wall.bendAtMm,
+      cornerNotchMm: wall.cornerNotchMm,
+      cornerRadiiMm: wall.cornerRadiiMm,
+      edgeNotchMm: wall.edgeNotchMm,
+      features: wall.features,
+      geomArcRadiusMm: wall.geomArcRadiusMm,
+      geomArcSweepDeg: wall.geomArcSweepDeg,
+      geomEdgeArc: wall.geomEdgeArc,
+      heightEndMm: wall.heightEndMm,
+      heightMm: wall.heightMm,
+      lengthMm: wall.lengthMm,
+      openings: wall.openings,
+      thicknessMm: wall.thicknessMm,
+    }),
+    [
+      wall.bendAngleDeg,
+      wall.bendAtMm,
+      wall.cornerNotchMm,
+      wall.cornerRadiiMm,
+      wall.edgeNotchMm,
+      wall.features,
+      wall.geomArcRadiusMm,
+      wall.geomArcSweepDeg,
+      wall.geomEdgeArc,
+      wall.heightEndMm,
+      wall.heightMm,
+      wall.lengthMm,
+      wall.openings,
+      wall.thicknessMm,
+    ],
+  );
   const {
     body: geometry,
     featureItems,
     openingFrames,
-  } = useMemo(() => buildWallGeometries(wall, true), [wall]);
+  } = useMemo(() => buildWallGeometries(geometryInput, true), [geometryInput]);
   useEffect(
     () => () => {
       geometry.dispose();
@@ -706,11 +762,19 @@ export function WallObject({
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
   const centerRestAt = (dxMm: number, dyMm: number) =>
     restElevationAtPointMm(centerXMm + dxMm, centerYMm + dyMm, stackSupports, 0);
-  const restingAtStart = restsOnSupportAtMm(
-    buildWallFootprint(wall, 0, 0, wall.rotationDeg),
-    stackSupports,
-    baseWallElevMm,
-    5,
+  // WHY memoized: this rebuilds the wall's plan footprint (for a curved wall, a trig-generated
+  // band polygon) and overlap-tests it against every support. Unmemoized it ran on EVERY render of
+  // EVERY wall — so an N-wall scene paid N band builds plus N x supports polygon tests per store
+  // change, including on each frame of somebody else's drag.
+  const restingAtStart = useMemo(
+    () =>
+      restsOnSupportAtMm(
+        buildWallFootprint(wall, 0, 0, wall.rotationDeg),
+        stackSupports,
+        baseWallElevMm,
+        5,
+      ),
+    [wall, stackSupports, baseWallElevMm],
   );
 
   const adapter: PlanGestureAdapter = {

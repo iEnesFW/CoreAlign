@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Edges } from '@react-three/drei';
 import { ExtrudeGeometry, Shape } from 'three';
 import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -10,6 +10,7 @@ import {
   useDrag3D,
   useTiledProceduralTexture,
 } from '@/shared/three-engine';
+import { useRafState } from '@/shared/lib/useRafState';
 import { StretchFaces } from '../interaction/StretchFaces';
 import { edgeColorFor } from './edgeColor';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
@@ -120,8 +121,12 @@ export function PolygonSurfaceObject({
     return { cx, cy };
   }, [surface.points]);
 
-  const [previewPoints, setPreviewPoints] = useState<SceneSurfacePoint[] | null>(null);
-  const [previewEdgeArcs, setPreviewEdgeArcs] = useState<(number | null)[] | null>(null);
+  // rAF-coalesced: every write here re-runs bowedPolygonOutline + earcut + toCreasedNormals over
+  // the whole outline, and pointermove fires far faster than the display refreshes.
+  const preview = useRafState<SceneSurfacePoint[] | null>(null);
+  const previewArcs = useRafState<(number | null)[] | null>(null);
+  const previewPoints = preview.value;
+  const previewEdgeArcs = previewArcs.value;
   const livePoints = previewPoints ?? surface.points;
   const liveEdgeArcs = previewEdgeArcs ?? surface.edgeArcs ?? null;
 
@@ -212,13 +217,16 @@ export function PolygonSurfaceObject({
   const maxYL = (bounds.maxY - centroid.cy) / MM;
 
   const previewVertex = (index: number, xMm: number, yMm: number) =>
-    setPreviewPoints(surface.points.map((p, i) => (i === index ? { x: xMm, y: yMm } : p)));
+    preview.schedule(surface.points.map((p, i) => (i === index ? { x: xMm, y: yMm } : p)));
   const commitVertex = (index: number, xMm: number, yMm: number) => {
-    setPreviewPoints(null);
+    preview.set(null);
     const cur = surface.points[index];
     if (!cur || (cur.x === xMm && cur.y === yMm)) return;
     const nextPoints = surface.points.map((p, i) => (i === index ? { x: xMm, y: yMm } : p));
-    if (polygonSelfIntersects(nextPoints)) return;
+    // WHY the bowed outline and not the raw vertices: on a surface with bowed edges the straight
+    // polygon can be perfectly simple while the shape actually rendered — and fed to earcut —
+    // crosses itself. Validating the vertices alone let a self-intersecting body through.
+    if (polygonSelfIntersects(bowedPolygonOutline(nextPoints, liveEdgeArcs))) return;
     updateSurface(surface.id, { points: nextPoints });
   };
 
@@ -230,10 +238,10 @@ export function PolygonSurfaceObject({
   const previewEdgeArc = (index: number, sagittaMm: number) => {
     const base = edgeArcBase();
     base[index] = sagittaMm;
-    setPreviewEdgeArcs(base);
+    previewArcs.schedule(base);
   };
   const commitEdgeArc = (index: number, sagittaMm: number) => {
-    setPreviewEdgeArcs(null);
+    previewArcs.set(null);
     const base = edgeArcBase();
     base[index] = Math.abs(sagittaMm) < 1 ? null : sagittaMm;
     if (polygonSelfIntersects(bowedPolygonOutline(surface.points, base))) return;

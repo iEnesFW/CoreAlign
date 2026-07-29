@@ -272,7 +272,6 @@ describe('curvedPlacementArc births an arc on the dragged chord', () => {
     const arc = curvedPlacementArc(4000, 0);
     const resolved = resolveBodyCurvature({
       lengthMm: arc?.lengthMm ?? 0,
-      rotationDeg: arc?.rotationDeg ?? 0,
       geomArcRadiusMm: arc?.geomArcRadiusMm ?? null,
       geomArcSweepDeg: arc?.geomArcSweepDeg ?? null,
     });

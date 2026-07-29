@@ -32,7 +32,6 @@ const edgeEndpoints = (edge: GapEdge): { x: number; y: number }[] => {
   if (edge.geomArcRadiusMm && edge.geomArcSweepDeg) {
     const e = bodyEndLocalMm({
       lengthMm: edge.lengthMm,
-      rotationDeg: edge.rotationDeg,
       geomArcRadiusMm: edge.geomArcRadiusMm,
       geomArcSweepDeg: edge.geomArcSweepDeg,
     });

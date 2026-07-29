@@ -256,9 +256,17 @@ export const sanitizeFreeOutline = (
 // A curved wall's face coordinates run in DEVELOPED arc-length units (curvedWallPickUv maps hits
 // with u ∈ [0, radius·sweep]), so the usable face length is the developed length — the chord
 // (lengthMm) is always shorter and would reject shapes on the far part of a deep curve.
-export const wallFaceLengthMm = (wall: SceneWallState): number => bodyDevelopedLengthMm(wall);
+// WHY a structural subset and not SceneWallState: WallObject memoizes its CSG chain on exactly the
+// fields the geometry reads, so it must be able to hand these helpers that narrow object. Every
+// existing caller still passes a full wall and type-checks unchanged.
+export type WallFaceMetrics = Pick<
+  SceneWallState,
+  'lengthMm' | 'heightMm' | 'heightEndMm' | 'geomArcRadiusMm' | 'geomArcSweepDeg'
+>;
 
-export const wallHeightAtMm = (wall: SceneWallState, xMm: number): number => {
+export const wallFaceLengthMm = (wall: WallFaceMetrics): number => bodyDevelopedLengthMm(wall);
+
+export const wallHeightAtMm = (wall: WallFaceMetrics, xMm: number): number => {
   const heightEnd = wall.heightEndMm ?? wall.heightMm;
   const faceLength = wallFaceLengthMm(wall);
   if (faceLength <= 0) return wall.heightMm;
@@ -266,7 +274,7 @@ export const wallHeightAtMm = (wall: SceneWallState, xMm: number): number => {
   return wall.heightMm + (heightEnd - wall.heightMm) * ratio;
 };
 
-export const featureFitsWall = (wall: SceneWallState, outline: FeatureOutlinePoint[]): boolean => {
+export const featureFitsWall = (wall: WallFaceMetrics, outline: FeatureOutlinePoint[]): boolean => {
   if (outline.length < 3) return false;
   const bounds = outlineBoundsMm(outline);
   if (bounds.maxX - bounds.minX < MIN_FEATURE_SIZE_MM / 2) return false;
