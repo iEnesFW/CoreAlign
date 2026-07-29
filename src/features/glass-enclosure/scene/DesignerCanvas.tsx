@@ -454,6 +454,22 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     [scene.walls, scene.runs, scene.slabs],
   );
   const planObstacles = solidFootprints;
+  // WHY a separate list: a ROOF rests on the structure it SPANS. Floors must be excluded — a roof
+  // dropped inside a room overlaps no perimeter wall in plan, so a generic support lookup finds
+  // only the floor and parks the roof at ground level.
+  const roofSupportFootprints = useMemo<PlanFootprint[]>(
+    () => [
+      ...(scene.walls ?? []).map((wall) => buildWallFootprint(wall, 0, 0, wall.rotationDeg)),
+      ...scene.runs.map((run) => buildRunFootprint(run, 0, 0, run.rotationDeg)),
+      ...(scene.slabs ?? [])
+        .filter((slab) => slab.kind === 'roof')
+        .map((slab) => buildSlabFootprint(slab, 0, 0, slab.rotationDeg)),
+      ...(scene.surfaces ?? [])
+        .filter((surface) => surface.kind === 'roof')
+        .map((surface) => buildSurfaceFootprint(surface)),
+    ],
+    [scene.walls, scene.runs, scene.slabs, scene.surfaces],
+  );
   const supportFootprints = useMemo<PlanFootprint[]>(
     () => [...solidFootprints, ...(scene.surfaces ?? []).map((s) => buildSurfaceFootprint(s))],
     [solidFootprints, scene.surfaces],
@@ -2019,7 +2035,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             runs={scene.runs}
             snapTargets={snapTargets}
             obstacles={placementObstacles}
-            supports={supportFootprints}
+            roofSupports={roofSupportFootprints}
             onPlaceWall={placeWall}
             onPlaceRun={(draft) => void placeRun(draft)}
             onPlaceSlab={placeSlab}

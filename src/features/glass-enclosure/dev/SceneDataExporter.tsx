@@ -11,6 +11,7 @@ import { isRealArc, radiusFromChordSweep, resolveArc } from '../model/arcGeometr
 interface CadSceneWindow {
   __E2E__?: boolean;
   __CAD_SCENE__?: () => unknown;
+  __CAD_STORE__?: () => unknown;
 }
 
 const isEnabled = (): boolean => {
@@ -50,8 +51,15 @@ export function SceneDataExporter() {
         },
       };
     };
+    // WHY a WRITE handle next to the read one: the designer's real defects live in the interaction
+    // and geometry layers (where a body settles, whether a move is blocked, what a carve does to a
+    // wall), and none of those are reachable from a unit test or from reading the scene. Driving
+    // the STORE ACTIONS the UI calls exercises exactly that code and is re-runnable, so the same
+    // matrix can be replayed after a fix. Same DEV/__E2E__ gate as the reader — never in production.
+    target.__CAD_STORE__ = () => useDesignerStore.getState();
     return () => {
       delete target.__CAD_SCENE__;
+      delete target.__CAD_STORE__;
     };
   }, []);
 

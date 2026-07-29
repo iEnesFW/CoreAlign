@@ -53,7 +53,7 @@ interface PlacementControllerProps {
   runs: SceneRunState[];
   snapTargets: PlanSnapTargets;
   obstacles: PlanFootprint[];
-  supports: PlanFootprint[];
+  roofSupports: PlanFootprint[];
   onPlaceWall: (draft: PlacementWallDraft) => void;
   onPlaceRun: (draft: PlacementRunDraft) => void;
   onPlaceSlab: (kind: 'floor' | 'roof', draft: PlacementSlabDraft) => void;
@@ -110,17 +110,68 @@ const nearestRunHeightMm = (runs: SceneRunState[], xMm: number, yMm: number): nu
  */
 const NO_SUPPORT_MM = Number.NEGATIVE_INFINITY;
 
-const supportTopUnderMm = (ghost: PlanFootprint, supports: PlanFootprint[]): number | null => {
-  // baseMm = +Infinity: nothing is "above" a body that has not been placed yet, so every
-  // overlapping support counts and the highest wins.
-  const top = supportTopBelowMm(
+// How far a roof may reach to find the structure it spans. A roof BRIDGES walls: dropped inside a
+// room it touches none of them in plan, so an overlap-only lookup finds nothing but the floor.
+const BRIDGE_REACH_MM = 4000;
+
+const aabbOf = (f: PlanFootprint) => {
+  if (f.polygon && f.polygon.length > 0) {
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const v of f.polygon) {
+      minX = Math.min(minX, v.x);
+      maxX = Math.max(maxX, v.x);
+      minY = Math.min(minY, v.y);
+      maxY = Math.max(maxY, v.y);
+    }
+    return { minX, maxX, minY, maxY };
+  }
+  const h = f.halfWidthMm;
+  return {
+    minX: Math.min(f.x1, f.x2) - h,
+    maxX: Math.max(f.x1, f.x2) + h,
+    minY: Math.min(f.y1, f.y2) - h,
+    maxY: Math.max(f.y1, f.y2) + h,
+  };
+};
+
+const aabbGapMm = (a: PlanFootprint, b: PlanFootprint) => {
+  const p = aabbOf(a);
+  const q = aabbOf(b);
+  const dx = Math.max(0, Math.max(p.minX - q.maxX, q.minX - p.maxX));
+  const dy = Math.max(0, Math.max(p.minY - q.maxY, q.minY - p.maxY));
+  return Math.hypot(dx, dy);
+};
+
+/**
+ * The height a ROOF should land at.
+ *
+ * WHY this is not the plain overlap resolver: a roof rests on the structure it SPANS, and a slab
+ * dropped inside a room overlaps none of the perimeter walls in plan — only the floor. Feeding it
+ * the generic support set therefore parked the roof at floor level ("çatı direkt yere yapışıyor").
+ * `roofSupports` deliberately excludes floors; when nothing is directly under the ghost it reaches
+ * out to the tallest structure within BRIDGE_REACH_MM, which is what "put it on the walls" means.
+ */
+const roofSupportTopMm = (ghost: PlanFootprint, roofSupports: PlanFootprint[]): number | null => {
+  const overlapping = supportTopBelowMm(
     ghost,
-    supports,
+    roofSupports,
     Number.POSITIVE_INFINITY,
     NO_SUPPORT_MM,
     SUPPORT_TOLERANCE_MM,
   );
-  return top === NO_SUPPORT_MM ? null : top;
+  if (overlapping !== NO_SUPPORT_MM) return overlapping;
+
+  let best = NO_SUPPORT_MM;
+  for (const s of roofSupports) {
+    if (s.ownerId === ghost.ownerId) continue;
+    if (s.zMaxMm <= best) continue;
+    if (aabbGapMm(ghost, s) > BRIDGE_REACH_MM) continue;
+    best = s.zMaxMm;
+  }
+  return best === NO_SUPPORT_MM ? null : best;
 };
 
 export function PlacementController({
@@ -128,7 +179,7 @@ export function PlacementController({
   runs,
   snapTargets,
   obstacles,
-  supports,
+  roofSupports,
   onPlaceWall,
   onPlaceRun,
   onPlaceSlab,
@@ -203,7 +254,7 @@ export function PlacementController({
     // with a ground-level ghost before the elevation is known.
     if (restOnTopMm !== undefined) return restOnTopMm;
     return (
-      supportTopUnderMm(ghostFootprintAt(xMm, yMm, 0, 0), supports) ?? ROOF_FALLBACK_ELEVATION_MM
+      roofSupportTopMm(ghostFootprintAt(xMm, yMm, 0, 0), roofSupports) ?? ROOF_FALLBACK_ELEVATION_MM
     );
   };
 
@@ -403,7 +454,7 @@ export function PlacementController({
         placement === 'floor'
           ? FLOOR_ELEVATION_MM
           : (elevationRef.current ??
-            supportTopUnderMm(ghostFootprintAt(pos.x, pos.y, 0, 0), supports) ??
+            roofSupportTopMm(ghostFootprintAt(pos.x, pos.y, 0, 0), roofSupports) ??
             ROOF_FALLBACK_ELEVATION_MM),
     });
   };

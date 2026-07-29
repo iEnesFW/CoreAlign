@@ -621,14 +621,25 @@ const selectionStillValid = (selection: DesignerSelection, scene: SceneState) =>
 };
 
 const pushHistory = (state: DesignerState, nextScene: SceneState): Partial<DesignerState> => {
+  // WHY gravity runs HERE and not per action: settling was wired to the three DELETE actions only,
+  // so a body added, moved, resized or loaded in mid-air just stayed there — measured against the
+  // live scene, a floor dropped at 1800 mm stayed at 1800, and a wall dropped at 900 mm over a
+  // floor never came down to its 150 mm top. Every mutation in this store ends at pushHistory, so
+  // this is the one chokepoint that cannot be forgotten by the next action anyone adds.
+  //
+  // It is safe against undo/redo: those restore straight from `history[]` and never pass through
+  // here, and the entry we record is the SETTLED scene, so replaying history is consistent.
+  // A body that IS supported (explicit Alt-stack included) resolves to its own base and is left
+  // untouched; settleScene returns the same reference when nothing moved.
+  const settled = settleScene(nextScene);
   const base =
     state.history.length === 0
       ? [cloneScene(state.scene)]
       : state.history.slice(0, state.historyIndex + 1);
-  const next = [...base, cloneScene(nextScene)];
+  const next = [...base, cloneScene(settled)];
   while (next.length > HISTORY_LIMIT) next.shift();
   return {
-    scene: nextScene,
+    scene: settled,
     history: next,
     historyIndex: next.length - 1,
     isDirty: true,
@@ -817,8 +828,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       walls: (current.scene.walls ?? []).filter((wall) => wall.id !== wallId),
     };
-    // Deleting a support must not leave whatever stood on it hanging in the air.
-    set(pushHistory(current, settleScene(next)));
+    set(pushHistory(current, next));
   },
 
   addWallOpening: (wallId, opening) => {
@@ -1076,7 +1086,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       slabs: (current.scene.slabs ?? []).filter((slab) => slab.id !== slabId),
     };
-    set(pushHistory(current, settleScene(next)));
+    set(pushHistory(current, next));
   },
 
   addSurface: (surface) => {
@@ -1105,7 +1115,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       ...current.scene,
       surfaces: (current.scene.surfaces ?? []).filter((surface) => surface.id !== surfaceId),
     };
-    set(pushHistory(current, settleScene(next)));
+    set(pushHistory(current, next));
   },
 
   resizePanelEdge: (runId, panelId, neighborId, deltaMm) => {
@@ -1155,7 +1165,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set({
       projectId: project.id,
       project,
-      scene: nextScene,
+      // WHY settle only on FRESH open (this branch) and not on the same-project refetch above:
+      // opening a project must heal bodies that were persisted hanging in the air — that is the
+      // "still floating after a refresh" report — but a refetch returns what we ourselves just
+      // saved, which pushHistory already settled, so re-settling there would only risk churn.
+      // settleScene is idempotent and leaves roofs alone, so a canopy stays where it was authored.
+      scene: settleScene(nextScene),
       selection: { kind: null, runId: null, panelId: null, connectionId: null },
       isDirty: false,
       history: [],
