@@ -2017,9 +2017,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           <PlacementController
             placement={placement}
             runs={scene.runs}
-            walls={scene.walls ?? []}
             snapTargets={snapTargets}
             obstacles={placementObstacles}
+            supports={supportFootprints}
             onPlaceWall={placeWall}
             onPlaceRun={(draft) => void placeRun(draft)}
             onPlaceSlab={placeSlab}

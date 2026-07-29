@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Box3, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
-import { clearSnapGuides, setSnapGuides } from '@/shared/three-engine';
+import {
+  clearSnapGuides,
+  setSnapGuides,
+  supportTopBelowMm,
+  SUPPORT_TOLERANCE_MM,
+} from '@/shared/three-engine';
 import { applyPlanMoveSnap } from './planSnap';
 import {
   RUN_PLAN_THICKNESS_MM,
@@ -11,9 +16,11 @@ import {
 } from './planCollision';
 import type { Group, Mesh, MeshBasicMaterial, Object3D } from 'three';
 import type { PlanFootprint } from './planCollision';
+import { useTranslation } from 'react-i18next';
+import { notifyPlacementBlocked } from './stackFeedback';
 import type { PlanPoint, PlanSnapTargets } from './planSnap';
 import type { PlacementKind } from '../../model/designerStore';
-import type { SceneRunState, SceneWallState } from '../../model/project.types';
+import type { SceneRunState } from '../../model/project.types';
 
 export interface PlacementWallDraft {
   originX: number;
@@ -44,9 +51,9 @@ export interface PlacementSlabDraft {
 interface PlacementControllerProps {
   placement: PlacementKind;
   runs: SceneRunState[];
-  walls: SceneWallState[];
   snapTargets: PlanSnapTargets;
   obstacles: PlanFootprint[];
+  supports: PlanFootprint[];
   onPlaceWall: (draft: PlacementWallDraft) => void;
   onPlaceRun: (draft: PlacementRunDraft) => void;
   onPlaceSlab: (kind: 'floor' | 'roof', draft: PlacementSlabDraft) => void;
@@ -90,76 +97,43 @@ const nearestRunHeightMm = (runs: SceneRunState[], xMm: number, yMm: number): nu
   return bestHeight;
 };
 
-const distanceToSpineMm = (
-  originX: number,
-  originY: number,
-  lengthMm: number,
-  rotationDeg: number,
-  xMm: number,
-  yMm: number,
-): number => {
-  const rad = rotationDeg * DEG2RAD;
-  const ex = originX + lengthMm * Math.cos(rad);
-  const ey = originY + lengthMm * Math.sin(rad);
-  const vx = ex - originX;
-  const vy = ey - originY;
-  const lenSq = vx * vx + vy * vy;
-  const t =
-    lenSq === 0
-      ? 0
-      : Math.min(1, Math.max(0, ((xMm - originX) * vx + (yMm - originY) * vy) / lenSq));
-  return Math.hypot(originX + t * vx - xMm, originY + t * vy - yMm);
-};
+/**
+ * The top of whatever actually sits under this footprint.
+ *
+ * WHY this replaced a nearest-spine guess: the old resolver measured the distance to each run's and
+ * wall's CENTRELINE and took the closest one — so a roof dropped beside a building landed at the
+ * height of a wall it was not over at all, and a wall's top was read as `heightMm` with its
+ * `geomZ` IGNORED (a wall standing on a deck reported the height it would have had on the ground).
+ * Slabs and surfaces were not considered at all, so a roof could not be placed on another roof.
+ * This uses the same overlap-based support resolver the gravity model uses, over the same footprint
+ * set, so placement and settling can never disagree.
+ */
+const NO_SUPPORT_MM = Number.NEGATIVE_INFINITY;
 
-const roofElevationAt = (
-  runs: SceneRunState[],
-  walls: SceneWallState[],
-  xMm: number,
-  yMm: number,
-): number => {
-  let bestTop: number | null = null;
-  let bestDist = Number.POSITIVE_INFINITY;
-  for (const run of runs) {
-    const dist = distanceToSpineMm(
-      run.originX,
-      run.originY,
-      run.lengthMm,
-      run.rotationDeg,
-      xMm,
-      yMm,
-    );
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestTop = (run.geomZ ?? 0) + run.heightMm;
-    }
-  }
-  for (const wall of walls) {
-    const dist = distanceToSpineMm(
-      wall.originX,
-      wall.originY,
-      wall.lengthMm,
-      wall.rotationDeg,
-      xMm,
-      yMm,
-    );
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestTop = Math.max(wall.heightMm, wall.heightEndMm ?? wall.heightMm);
-    }
-  }
-  return bestTop === null ? ROOF_FALLBACK_ELEVATION_MM : bestTop;
+const supportTopUnderMm = (ghost: PlanFootprint, supports: PlanFootprint[]): number | null => {
+  // baseMm = +Infinity: nothing is "above" a body that has not been placed yet, so every
+  // overlapping support counts and the highest wins.
+  const top = supportTopBelowMm(
+    ghost,
+    supports,
+    Number.POSITIVE_INFINITY,
+    NO_SUPPORT_MM,
+    SUPPORT_TOLERANCE_MM,
+  );
+  return top === NO_SUPPORT_MM ? null : top;
 };
 
 export function PlacementController({
   placement,
   runs,
-  walls,
   snapTargets,
   obstacles,
+  supports,
   onPlaceWall,
   onPlaceRun,
   onPlaceSlab,
 }: PlacementControllerProps) {
+  const { t } = useTranslation();
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
   const gl = useThree((s) => s.gl);
@@ -223,9 +197,14 @@ export function PlacementController({
 
   const slabElevationAt = (xMm: number, yMm: number, restOnTopMm?: number): number => {
     if (placement === 'floor') return FLOOR_ELEVATION_MM;
-    // A roof rests on the surface directly under the cursor (the hovered object's top) when one
-    // is hit; otherwise it falls back to the nearest run/wall top so it still lands sensibly.
-    return restOnTopMm ?? roofElevationAt(runs, walls, xMm, yMm);
+    // A roof rests on the surface directly under the cursor (the hovered object's top) when the
+    // ray hits one; otherwise it rests on whatever its own footprint OVERLAPS. The ghost's own z
+    // is irrelevant to that lookup (the resolver only tests plan overlap), so it is safe to probe
+    // with a ground-level ghost before the elevation is known.
+    if (restOnTopMm !== undefined) return restOnTopMm;
+    return (
+      supportTopUnderMm(ghostFootprintAt(xMm, yMm, 0, 0), supports) ?? ROOF_FALLBACK_ELEVATION_MM
+    );
   };
 
   const ghostFootprintAt = (
@@ -384,7 +363,13 @@ export function PlacementController({
 
   const commitPlacement = () => {
     const pos = posRef.current;
-    if (!pos || blockedRef.current) return;
+    if (!pos) return;
+    // A blocked click used to do NOTHING — no object, no reason, no sound. Users read that as the
+    // tool being broken rather than the spot being occupied.
+    if (blockedRef.current) {
+      notifyPlacementBlocked(t);
+      return;
+    }
     clearSnapGuides();
     const start = lineStart(pos.x, pos.y);
     if (placement === 'wall') {
@@ -417,7 +402,9 @@ export function PlacementController({
       elevationMm:
         placement === 'floor'
           ? FLOOR_ELEVATION_MM
-          : (elevationRef.current ?? roofElevationAt(runs, walls, pos.x, pos.y)),
+          : (elevationRef.current ??
+            supportTopUnderMm(ghostFootprintAt(pos.x, pos.y, 0, 0), supports) ??
+            ROOF_FALLBACK_ELEVATION_MM),
     });
   };
 

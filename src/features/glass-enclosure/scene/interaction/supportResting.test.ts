@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { restElevationMm, restsOnSupportAtMm, supportTopBelowMm } from '@/shared/three-engine';
 import { buildSlabFootprint, buildWallFootprint } from './planCollision';
+import type { PlanFootprint } from './planCollision';
 import type { SceneSlabState, SceneWallState } from '../../model/project.types';
 
 const slab = (
@@ -138,5 +139,59 @@ describe('restsOnSupportAtMm', () => {
     const fp = buildSlabFootprint(lowFloating, 0, 0, lowFloating.rotationDeg);
 
     expect(restsOnSupportAtMm(fp, [tallFp], lowFloating.elevationMm, 5)).toBe(false);
+  });
+});
+
+describe('placement probe: the top of what is UNDER the ghost', () => {
+  // Placement asks the same resolver with baseMm = +Infinity (nothing is "above" a body that has
+  // not been placed) and a -Infinity ground sentinel so "no support at all" is distinguishable
+  // from "rests on the ground".
+  const NO_SUPPORT = Number.NEGATIVE_INFINITY;
+  const topUnder = (ghost: PlanFootprint, supports: PlanFootprint[]) =>
+    supportTopBelowMm(ghost, supports, Number.POSITIVE_INFINITY, NO_SUPPORT, 5);
+
+  const wallAt = (id: string, x: number, geomZ: number, heightMm = 2600) =>
+    buildWallFootprint(
+      {
+        id,
+        originX: x,
+        originY: 0,
+        rotationDeg: 0,
+        lengthMm: 3000,
+        heightMm,
+        thicknessMm: 200,
+        geomZ,
+        openings: [],
+        features: [],
+      } as unknown as SceneWallState,
+      0,
+      0,
+      0,
+    );
+
+  it('honours a raised wall geomZ — the old resolver read heightMm alone', () => {
+    // A 2600 wall standing on a 400 deck tops out at 3000, not 2600.
+    const wall = wallAt('w', 0, 400);
+    const ghost = buildSlabFootprint(slab('ghost', 0, 0, 2000, 2000, 0), 0, 0, 0);
+    expect(topUnder(ghost, [wall])).toBe(3000);
+  });
+
+  it('ignores a wall the ghost is NOT over — the old resolver took the NEAREST centreline', () => {
+    const wall = wallAt('w', 0, 0);
+    const away = buildSlabFootprint(slab('ghost', 40000, 40000, 2000, 2000, 0), 0, 0, 0);
+    expect(topUnder(away, [wall])).toBe(NO_SUPPORT);
+  });
+
+  it('can rest a roof on another roof — slabs were not considered at all before', () => {
+    const lower = buildSlabFootprint(slab('roof1', 0, 0, 4000, 4000, 2600), 0, 0, 0);
+    const ghost = buildSlabFootprint(slab('ghost', 0, 0, 2000, 2000, 0), 0, 0, 0);
+    expect(topUnder(ghost, [lower])).toBe(2700);
+  });
+
+  it('takes the HIGHEST overlapping support', () => {
+    const low = wallAt('low', 0, 0, 2000);
+    const high = wallAt('high', 0, 0, 3200);
+    const ghost = buildSlabFootprint(slab('ghost', 0, 0, 2000, 2000, 0), 0, 0, 0);
+    expect(topUnder(ghost, [low, high])).toBe(3200);
   });
 });

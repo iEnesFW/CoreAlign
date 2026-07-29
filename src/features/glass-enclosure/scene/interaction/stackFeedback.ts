@@ -11,3 +11,13 @@ export const notifyStackUnavailable = (t: TFunction): void => {
     }),
   });
 };
+
+export const notifyPlacementBlocked = (t: TFunction): void => {
+  queueToast({
+    dedupeKey: 'glass-placement-blocked',
+    variant: 'warning',
+    description: t('GlassEnclosure.Designer.Placement.Blocked', {
+      defaultValue: 'Burada başka bir gövde var — yerleştirmek için boş bir nokta seçin.',
+    }),
+  });
+};

@@ -3293,6 +3293,9 @@
       "Unlock": "Kilidi aç",
       "Stack": {
         "MultiSelectionBlocked": "Çoklu seçimde üst üste yerleştirme yapılamaz. Tek bir nesne seçip Alt ile sürükleyin."
+      },
+      "Placement": {
+        "Blocked": "Burada başka bir gövde var — yerleştirmek için boş bir nokta seçin."
       }
     },
     "Field": {

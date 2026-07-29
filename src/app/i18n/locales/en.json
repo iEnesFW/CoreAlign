@@ -3293,6 +3293,9 @@
       "Unlock": "Unlock",
       "Stack": {
         "MultiSelectionBlocked": "Stacking is not available for a multi-selection. Select a single object and drag it with Alt."
+      },
+      "Placement": {
+        "Blocked": "Something already occupies this spot — pick a clear point to place it."
       }
     },
     "Field": {
