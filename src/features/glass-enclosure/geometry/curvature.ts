@@ -131,6 +131,18 @@ export const bodyChordVectorMm = (body: CurvablePose): { xMm: number; yMm: numbe
   };
 };
 
+/**
+ * The `rotationDeg` a body must store so its CHORD points along `chordAngleDeg`.
+ *
+ * WHY: a plan editor drags ENDPOINTS, so what it can measure is the chord direction — but an arc
+ * body stores its START TANGENT. Writing the chord angle in verbatim swings the arc by half its
+ * sweep on every endpoint edit. Straight bodies are unaffected (their chord IS their tangent).
+ */
+export const rotationFromChordAngleDeg = (shape: CurvableShape, chordAngleDeg: number): number => {
+  const end = bodyEndLocalMm(shape);
+  return chordAngleDeg - Math.atan2(end.yMm, end.xMm) / DEG2RAD;
+};
+
 /** A placed body's far endpoint in world mm. */
 export const bodyEndWorldMm = (body: PlacedBody): { xMm: number; yMm: number } => {
   const chord = bodyChordVectorMm(body);

@@ -309,7 +309,11 @@ export function Plan2DCanvas({
       }
     }
     setDrag({ mode: 'idle' });
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    // Guarded: a gesture that never took the capture (or lost it) must not throw NotFoundError
+    // here and swallow the rest of the handler.
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   };
 
   const handleWheel = useCallback((event: WheelEvent) => {
@@ -728,6 +732,10 @@ function RunSegment({
         strokeWidth={20}
         onPointerDown={(e) => {
           e.stopPropagation();
+          // WHY capture (the pan/draw gestures already take it): without it the moves stop the
+          // instant the cursor leaves the plan canvas — an endpoint near the edge froze mid-drag
+          // and never committed, which reads as "the 2D handle is broken".
+          e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId);
           onGrabEndpoint('start', displayStart);
         }}
       />
@@ -740,6 +748,7 @@ function RunSegment({
         strokeWidth={20}
         onPointerDown={(e) => {
           e.stopPropagation();
+          e.currentTarget.ownerSVGElement?.setPointerCapture(e.pointerId);
           onGrabEndpoint('end', displayEnd);
         }}
       />

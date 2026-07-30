@@ -40,7 +40,6 @@ import {
   useSaveSceneMutation,
   useSceneLatestQuery,
   useTechnicalSummaryQuery,
-  useUpdateRunMutation,
   useValidateProjectMutation,
 } from '@/features/glass-enclosure/hooks/useGlassProjectQueries';
 import {
@@ -60,6 +59,9 @@ import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDe
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
 import { enqueuePersist } from '@/features/glass-enclosure/model/persistQueue';
+import { commitArcOrWarn } from '@/features/glass-enclosure/geometry/arcCommitFeedback';
+import { rotationFromChordAngleDeg } from '@/features/glass-enclosure/geometry/curvature';
+import { isRealArc } from '@/features/glass-enclosure/model/arcGeometry';
 import {
   buildRunFootprint,
   buildWallFootprint,
@@ -70,7 +72,7 @@ import {
   type PlanFootprintSet,
 } from '@/features/glass-enclosure/scene/interaction/planCollision';
 import type { DesignerTool, PlacementKind } from '@/features/glass-enclosure/model/designerStore';
-import type { SceneState } from '@/features/glass-enclosure/model/project.types';
+import type { SceneRunState, SceneState } from '@/features/glass-enclosure/model/project.types';
 
 type DesignerViewMode = 'split' | '2d' | '3d' | 'cutting' | 'engineering' | 'quote' | 'survey';
 
@@ -116,7 +118,6 @@ export function GlassProjectDesignerPage() {
   const saveMutation = useSaveSceneMutation();
   const validateMutation = useValidateProjectMutation();
   const addRunMutation = useAddRunMutation();
-  const updateRunMutation = useUpdateRunMutation();
   const addConnectionMutation = useAddConnectionMutation();
   const [viewMode, setViewMode] = useState<DesignerViewMode>('3d');
   const cuttingReportQuery = useCuttingReportQuery(id ?? null);
@@ -265,7 +266,7 @@ export function GlassProjectDesignerPage() {
     }
   }, [handleCopy, handleArmPaste]);
 
-  const { deleteRun, deletePanel, persistRun } = useDesignerEntityActions();
+  const { deleteRun, deletePanel, persistRun, persistPanel } = useDesignerEntityActions();
   const { deleteMultiSelection } = useMultiSelectionDelete();
 
   const handleDeleteSelection = useCallback(() => {
@@ -656,33 +657,42 @@ export function GlassProjectDesignerPage() {
       if (!id) return;
       const run = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
       if (!run) return;
-      await safeRequestWithNotify(
-        enqueuePersist(() =>
-          updateRunMutation.mutateAsync({
-            id,
-            runId,
-            input: {
-              lengthMm: geometry.lengthMm,
-              heightMm: run.heightMm,
-              originX: geometry.originX,
-              originY: geometry.originY,
-              rotationDeg: geometry.rotationDeg,
-              label: run.label,
-              profileSystemId: run.profileSystemId,
-              colorId: run.colorId,
-              hasTopDrip: run.hasTopDrip,
-              hasBottomThreshold: run.hasBottomThreshold,
-              geomArcRadiusMm: run.geomArcRadiusMm ?? null,
-              geomArcSweepDeg: run.geomArcSweepDeg ?? null,
-              arcGlassBent: run.arcGlassBent ?? false,
-              notes: null,
-            },
-          }),
-        ),
-        { showSuccessNotification: false },
-      );
+      // WHY the store first and never a raw persist: on an ARC run lengthMm is the CHORD, so a new
+      // chord has to re-derive radius/sweep (keep-sweep) or the server keeps boundarying panels
+      // from the STALE developed length. Writing straight to the mutation also skipped the store,
+      // so the 3D view and the panel widths stayed on the old geometry until the next refetch.
+      let patch: Partial<SceneRunState> = {
+        lengthMm: geometry.lengthMm,
+        originX: geometry.originX,
+        originY: geometry.originY,
+        rotationDeg: geometry.rotationDeg,
+      };
+      if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
+        const arc = commitArcOrWarn(run, { kind: 'chordResize', chordMm: geometry.lengthMm }, t);
+        if (!arc) return;
+        const shape = {
+          lengthMm: arc.lengthMm ?? geometry.lengthMm,
+          geomArcRadiusMm: arc.geomArcRadiusMm,
+          geomArcSweepDeg: arc.geomArcSweepDeg,
+        };
+        // The 2D handle hands back the CHORD direction between the two endpoints; a curved body
+        // stores the ROLLED start tangent.
+        patch = {
+          ...patch,
+          ...shape,
+          rotationDeg: rotationFromChordAngleDeg(shape, geometry.rotationDeg),
+        };
+      }
+      const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+      useDesignerStore.getState().updateRun(runId, patch);
+      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+      if (!fresh) return;
+      await persistRun(fresh);
+      for (const p of fresh.panels) {
+        if (beforeWidths.get(p.id) !== p.widthMm) await persistPanel(runId, p);
+      }
     },
-    [id, updateRunMutation],
+    [id, persistRun, persistPanel, t],
   );
 
   const handleAddConnectionCandidate = useCallback(
