@@ -374,6 +374,52 @@ export async function openDesigner({
      * is NOT good enough: a curved or L-shaped body has its bbox centre off the surface, so the
      * ray sails past it into the ground. Sampling the screen and testing ancestry is shape-proof.
      */
+    /**
+     * Every pixel whose ray lands INSIDE a world-space box — the only safe way to click a specific
+     * body's face.
+     *
+     * WHY this exists: `project(worldPoint)` gives you the body's centre pixel, and the obvious next
+     * move — "now click 120 px to the left" — is wrong. On-screen size depends entirely on the
+     * camera, and the designer's saved pose is often far away: measured, a 3 m wall covered about
+     * 30x24 px, so every offset click landed on the ground and the pen looked broken when it was
+     * not. Scan for pixels that DEMONSTRABLY hit the target, then click those.
+     *
+     * Note the camera is the app's, not yours: writing `three.camera.position` from a probe is
+     * overridden by the designer's own camera sync, so never assume the distance you set.
+     */
+    pixelsInWorldBox: (min, max, stepPx = 6) =>
+      page.evaluate(
+        ([lo, hi, step]) => {
+          const three = window.__CAD_R3F__();
+          const targets = three.internal?.interaction ?? [];
+          if (targets.length === 0) return [];
+          const rect = three.gl.domElement.getBoundingClientRect();
+          const out = [];
+          for (let y = rect.top + 4; y < rect.bottom - 4; y += step) {
+            for (let x = rect.left + 4; x < rect.right - 4; x += step) {
+              three.raycaster.setFromCamera(
+                {
+                  x: ((x - rect.left) / rect.width) * 2 - 1,
+                  y: -(((y - rect.top) / rect.height) * 2 - 1),
+                },
+                three.camera,
+              );
+              const hit = three.raycaster
+                .intersectObjects(targets, true)
+                .filter((h) => h.object.visible)[0];
+              if (!hit) continue;
+              const p = hit.point;
+              if (p.x < lo[0] || p.x > hi[0]) continue;
+              if (p.y < lo[1] || p.y > hi[1]) continue;
+              if (p.z < lo[2] || p.z > hi[2]) continue;
+              out.push({ x: Math.round(x), y: Math.round(y), world: [p.x, p.y, p.z] });
+            }
+          }
+          return out;
+        },
+        [min, max, stepPx],
+      ),
+
     findBodyPixel: (samples = 240) =>
       page.evaluate((n) => {
         const three = window.__CAD_R3F__();

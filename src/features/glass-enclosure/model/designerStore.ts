@@ -316,6 +316,23 @@ const emptyScene = (): SceneState => ({
 
 const cloneScene = (scene: SceneState): SceneState => structuredClone(scene);
 
+/**
+ * Append a body, or REPLACE the one that already carries this id.
+ *
+ * WHY: the adders appended blindly, so adding a body whose id was already in the scene produced a
+ * second entry with the same key — and every lookup in this module is `find(x => x.id === id)`, so
+ * the duplicate became a GHOST: rendered, but impossible to select, edit or delete (measured: a
+ * probe re-adding the same wall id across sessions left 8 stacked walls, only one of them
+ * reachable). Ids are the scene's primary key; adding one that exists means replacing it.
+ */
+const upsertById = <T extends { id: string }>(list: readonly T[], item: T): T[] => {
+  const index = list.findIndex((x) => x.id === item.id);
+  if (index < 0) return [...list, item];
+  const next = [...list];
+  next[index] = item;
+  return next;
+};
+
 // WHY a pending map: a run created on the SERVER (autofill) only reaches the scene when the refetch
 // lands, so writing its host bond straight after creation hit `updateRun` with an id the store did
 // not have yet and was silently dropped — the cam↔wall bond was never actually written. Recording
@@ -811,7 +828,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const next: SceneState = {
       ...current.scene,
-      walls: [...(current.scene.walls ?? []), wall],
+      walls: upsertById(current.scene.walls ?? [], wall),
     };
     set(pushHistory(current, next));
   },
@@ -997,7 +1014,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const next: SceneState = {
       ...current.scene,
-      slabs: [...(current.scene.slabs ?? []), slab],
+      slabs: upsertById(current.scene.slabs ?? [], slab),
     };
     set(pushHistory(current, next));
   },
@@ -1103,7 +1120,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const next: SceneState = {
       ...current.scene,
-      surfaces: [...(current.scene.surfaces ?? []), surface],
+      surfaces: upsertById(current.scene.surfaces ?? [], surface),
     };
     set(pushHistory(current, next));
   },
@@ -1268,14 +1285,17 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   addRun: (run) => {
     const current = get();
+    // A re-add of an existing id REPLACES it (see upsertById) and must keep that run's place in
+    // the order; only a genuinely new run goes on the end.
+    const existingIndex = current.scene.runs.findIndex((r) => r.id === run.id);
     const newRun: SceneRunState = {
       ...run,
-      orderIndex: current.scene.runs.length,
+      orderIndex: existingIndex >= 0 ? existingIndex : current.scene.runs.length,
       panels: run.panels ?? [],
     };
     const next: SceneState = {
       ...current.scene,
-      runs: [...current.scene.runs, newRun],
+      runs: upsertById(current.scene.runs, newRun),
     };
     set(pushHistory(current, next));
   },
