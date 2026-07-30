@@ -550,7 +550,12 @@ export function GlassProjectDesignerPage() {
         e.preventDefault();
         useDesignerStore.getState().toggleTransformHandles();
       } else if (e.key === 'Escape') {
+        // The scene's own Escape listeners (pen polygon, face-pen session, armed placement) run
+        // first and claim the event; without this check their rung and this ladder's rung both
+        // fired on one press.
+        if (e.defaultPrevented) return;
         const state = useDesignerStore.getState();
+        e.preventDefault();
         if (state.transformHandlesActive) {
           state.setTransformHandles(false);
           return;

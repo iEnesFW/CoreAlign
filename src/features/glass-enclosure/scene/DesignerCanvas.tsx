@@ -431,8 +431,20 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       )
         return;
       if (e.key === 'Escape') {
-        useDesignerStore.getState().setPenFace(null);
-        setPlacement(null);
+        // One rung per press: cancel the face-pen session first, and only once there is none does
+        // Escape disarm the placement. Clearing both at once (and letting the page's selection
+        // ladder run after) meant a single press unwound two levels.
+        if (e.defaultPrevented) return;
+        const store = useDesignerStore.getState();
+        if (store.penFace) {
+          e.preventDefault();
+          store.setPenFace(null);
+          return;
+        }
+        if (placement) {
+          e.preventDefault();
+          setPlacement(null);
+        }
       } else if (e.key === 'Enter' && placement === 'pen') {
         e.preventDefault();
         onPenFaceFinishRef.current();

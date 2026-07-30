@@ -122,6 +122,11 @@ export function PenController({ snapTargets, onFinish, mode }: PenControllerProp
         e.preventDefault();
         actions.finish();
       } else if (e.key === 'Escape') {
+        // WHY consume: three separate window listeners answer Escape (this one, the canvas's
+        // placement/pen-face one, and the page's selection ladder). Without a claim they ALL run
+        // and one press drops two rungs — cancelling the drawing AND the selection behind it.
+        if (e.defaultPrevented || pointsRef.current.length === 0) return;
+        e.preventDefault();
         actions.cancelArc();
         pointsRef.current = [];
         setPoints([]);
