@@ -91,11 +91,14 @@ export const CanvasPanel = ({
   // rendered permanently disabled. A project whose geometry sits away from the origin then opens
   // with the content off-frame and the user has no way back except manually orbiting. The camera
   // itself is the right owner of the behaviour, so fall back to it and keep the props as overrides.
-  const is3d = view === '3d';
-  const zoomIn = onZoomIn ?? (is3d ? () => viewportCamera.zoomBy(1 / ZOOM_STEP) : undefined);
-  const zoomOut = onZoomOut ?? (is3d ? () => viewportCamera.zoomBy(ZOOM_STEP) : undefined);
+  // The 3D canvas mounts in SPLIT too, and viewportCamera is the single global camera API — gating
+  // the fallbacks on '3d' alone left all three buttons dead in the split view, which is the layout
+  // the designer opens in.
+  const has3d = view === '3d' || view === 'split';
+  const zoomIn = onZoomIn ?? (has3d ? () => viewportCamera.zoomBy(1 / ZOOM_STEP) : undefined);
+  const zoomOut = onZoomOut ?? (has3d ? () => viewportCamera.zoomBy(ZOOM_STEP) : undefined);
   const fitToScreen =
-    onFitToScreen ?? (is3d ? () => viewportCamera.fitTo(DESIGNER_ROOT_NAME) : undefined);
+    onFitToScreen ?? (has3d ? () => viewportCamera.fitTo(DESIGNER_ROOT_NAME) : undefined);
 
   return (
     <section

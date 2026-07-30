@@ -33,6 +33,7 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
   const selection = useDesignerStore((s) => s.selection);
   const runs = useDesignerStore((s) => s.scene.runs);
   const updatePanel = useDesignerStore((s) => s.updatePanel);
+  const previewPanelShapePoints = useDesignerStore((s) => s.previewPanelShapePoints);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { createPanel, persistPanel, persistPanelHardware, deletePanel } = usePanelEntityActions();
   const { persistRun } = useRunEntityActions();
@@ -318,9 +319,7 @@ export function PanelInspector({ glassTypes, profileSystems, sections }: PanelIn
                   widthMm={draft.widthMm}
                   heightMm={draft.heightMm ?? run.heightMm}
                   pointsJson={draft.shapePointsJson}
-                  onPreview={(json) =>
-                    updatePanel(run.id, panel.id, { shapeKind: 'polygon', shapePointsJson: json })
-                  }
+                  onPreview={(json) => previewPanelShapePoints(run.id, panel.id, json)}
                   onCommit={(json) => commit({ shapeKind: 'polygon', shapePointsJson: json })}
                 />
               )}

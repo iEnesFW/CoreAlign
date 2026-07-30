@@ -230,7 +230,11 @@ export function RunArcSection({
             checked={draft.arcGlassBent ?? false}
             onChange={(e) => {
               setRunGlassBent(draft.id, e.target.checked);
-              void persistRun({ ...draft, arcGlassBent: e.target.checked });
+              // WHY the store and not `draft`: draft is the inspector's LOCAL edit buffer and
+              // toRunInput ships every one of its geometry fields to the server — so ticking this
+              // box also pushed half-typed length/height/arc values the user had not committed.
+              const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === draft.id);
+              if (fresh) void persistRun(fresh);
             }}
           />
           {bentGlassFactor > 1

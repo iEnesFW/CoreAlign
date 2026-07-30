@@ -199,7 +199,7 @@ public record ThermalAcousticDto(
     decimal TotalAreaM2,
     decimal WeightedUValue,
     decimal WeightedSoundDb,
-    decimal EstimatedWinterEnergySavingsKwh,
+    decimal EstimatedWinterHeatLossKwh,
     decimal EstimatedDbReductionVsOpen);
 
 public record TechnicalSummaryDto(

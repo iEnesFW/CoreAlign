@@ -67,8 +67,10 @@ export function TechnicalSummaryReport({ summary }: TechnicalSummaryReportProps)
             value={`${summary.thermal.weightedUValue.toFixed(2)} W/m²K`}
           />
           <Metric
-            label={t('GlassEnclosure.Engineering.EnergySavings')}
-            value={`${summary.thermal.estimatedWinterEnergySavingsKwh.toFixed(0)} kWh / yıl`}
+            label={t('GlassEnclosure.Engineering.HeatLoss')}
+            value={t('GlassEnclosure.Engineering.KwhPerYear', {
+              value: summary.thermal.estimatedWinterHeatLossKwh.toFixed(0),
+            })}
           />
         </Card>
 

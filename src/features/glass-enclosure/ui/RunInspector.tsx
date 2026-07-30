@@ -273,8 +273,13 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
               step={1}
               value={draft.rotationDeg}
               onChange={(e) => setDraft({ ...draft, rotationDeg: Number(e.target.value) })}
-              onMouseUp={() => commit({ rotationDeg: draft.rotationDeg })}
-              onTouchEnd={() => commit({ rotationDeg: draft.rotationDeg })}
+              // WHY four handlers: onChange only moves the local draft, so the body never rotates
+              // until something commits. Mouse/touch were covered; a KEYBOARD user (arrow keys on a
+              // focused slider) or anyone who dragged and then tabbed away saw the readout change
+              // and the scene stay put — the edit was silently discarded on the next refetch.
+              onPointerUp={() => commit({ rotationDeg: draft.rotationDeg })}
+              onKeyUp={() => commit({ rotationDeg: draft.rotationDeg })}
+              onBlur={() => commit({ rotationDeg: draft.rotationDeg })}
               className="w-full"
             />
             <div className="text-xs text-slate-500">{draft.rotationDeg}°</div>

@@ -3189,7 +3189,12 @@
         "PenIntentGlassPanel": "Cam paneli",
         "PenIntentDivide": "Panel böl",
         "PenModeClicked": "Nokta nokta çiz",
-        "PenModeFreehand": "Serbest çizim (sürükle)"
+        "PenModeFreehand": "Serbest çizim (sürükle)",
+        "Measure": "Ölç",
+        "Material_grass": "Çim",
+        "Material_asphalt": "Asfalt",
+        "Material_brick": "Tuğla",
+        "Material_plaster": "Sıva"
       },
       "Toolbox": {
         "Title": "Nesneler",
@@ -3305,7 +3310,14 @@
         "TooSmall": "Çizilen şekil çok küçük.",
         "SelfIntersecting": "Çizim kendini kesiyor — şekli tek parça, kesişmeden çizin."
       },
-      "WeightedU": "Ağırlıklı U değeri"
+      "WeightedU": "Ağırlıklı U değeri",
+      "Layer": {
+        "Runs": "Hatlar",
+        "Walls": "Duvarlar",
+        "Slabs": "Döşemeler",
+        "Surfaces": "Yüzeyler"
+      },
+      "LockedBlocked": "Bu nesne kilitli — düzenlemek için önce kilidi açın."
     },
     "Field": {
       "Active": "Aktif",
@@ -3400,7 +3412,6 @@
       "HeightFactor": "Yükseklik Katsayısı",
       "WeightedU": "Ağırlıklı U Değeri",
       "WeightedDb": "Ağırlıklı dB",
-      "EnergySavings": "Tahmini Enerji Tasarrufu",
       "DbReduction": "Ses Azaltımı",
       "Runs": "Cepheler",
       "Panels": "Paneller",
@@ -3409,7 +3420,9 @@
       "Overall": "Genel",
       "Disclaimer": "Hesaplamalar TS 498'e göre yaklaşık değerlerdir. Taşıyıcı uygulamalar için statik mühendisi onayı gereklidir.",
       "WindZoneMissing": "Rüzgar bölgesi atanmamış. Proje başlığından belirleyin.",
-      "NoSummary": "Mühendislik özetini görmek için projeyi kaydedin."
+      "NoSummary": "Mühendislik özetini görmek için projeyi kaydedin.",
+      "HeatLoss": "Kış ısı kaybı (tahmini)",
+      "KwhPerYear": "{{value}} kWh / yıl"
     },
     "Share": {
       "Title": "Cam Balkon Teklifi",

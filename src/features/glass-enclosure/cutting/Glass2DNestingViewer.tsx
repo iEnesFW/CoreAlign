@@ -92,7 +92,7 @@ export function Glass2DNestingViewer({ report }: Glass2DNestingViewerProps) {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         {report.sheets.map((sheet) => (
-          <SheetCard key={sheet.sheetId} sheet={sheet} />
+          <SheetCard key={`${sheet.sheetId}-${sheet.sheetIndex}`} sheet={sheet} />
         ))}
       </div>
     </section>

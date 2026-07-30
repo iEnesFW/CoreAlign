@@ -32,6 +32,7 @@ import {
   clampWallOpening,
   clampWallPatch,
 } from './sceneGuards';
+import { notifyLockedBlocked } from './lockFeedback';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
 import { computeFloorFollow } from './floorFollow';
 import { settleScene } from './settleScene';
@@ -260,6 +261,7 @@ interface DesignerState {
 
   addPanel: (runId: string, panel: Omit<ScenePanelState, 'panelIndex'>) => void;
   updatePanel: (runId: string, panelId: string, patch: Partial<ScenePanelState>) => void;
+  previewPanelShapePoints: (runId: string, panelId: string, shapePointsJson: string) => void;
   removePanel: (runId: string, panelId: string) => void;
   rebalancePanels: (
     runId: string,
@@ -788,7 +790,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   updateWall: (wallId, patch) => {
     const current = get();
     const target = (current.scene.walls ?? []).find((wall) => wall.id === wallId);
-    if (!target || blockedByLock(target, patch)) return;
+    if (!target) return;
+    if (blockedByLock(target, patch)) return notifyLockedBlocked();
     const guarded = clampWallPatch(target, patch);
     const next: SceneState = {
       ...current.scene,
@@ -801,7 +804,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeWall: (wallId) => {
     const current = get();
-    if (blockedByLockOnDelete((current.scene.walls ?? []).find((w) => w.id === wallId))) return;
+    if (blockedByLockOnDelete((current.scene.walls ?? []).find((w) => w.id === wallId)))
+      return notifyLockedBlocked();
     const next: SceneState = {
       ...current.scene,
       walls: (current.scene.walls ?? []).filter((wall) => wall.id !== wallId),
@@ -1018,7 +1022,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const slabs = current.scene.slabs ?? [];
     const target = slabs.find((s) => s.id === slabId);
-    if (!target || blockedByLock(target, rawPatch)) return;
+    if (!target) return;
+    if (blockedByLock(target, rawPatch)) return notifyLockedBlocked();
     const patch = clampSlabPatch(rawPatch);
     // A FLOOR moved vertically carries everything resting on it (and what those carry) by the same ΔZ.
     const follow =
@@ -1062,7 +1067,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeSlab: (slabId) => {
     const current = get();
-    if (blockedByLockOnDelete((current.scene.slabs ?? []).find((b) => b.id === slabId))) return;
+    if (blockedByLockOnDelete((current.scene.slabs ?? []).find((b) => b.id === slabId)))
+      return notifyLockedBlocked();
     const next: SceneState = {
       ...current.scene,
       slabs: (current.scene.slabs ?? []).filter((slab) => slab.id !== slabId),
@@ -1082,7 +1088,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   updateSurface: (surfaceId, patch) => {
     const current = get();
     const target = (current.scene.surfaces ?? []).find((surface) => surface.id === surfaceId);
-    if (!target || blockedByLock(target, patch)) return;
+    if (!target) return;
+    if (blockedByLock(target, patch)) return notifyLockedBlocked();
     const guarded = clampSurfacePatch(patch);
     const next: SceneState = {
       ...current.scene,
@@ -1096,7 +1103,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   removeSurface: (surfaceId) => {
     const current = get();
     if (blockedByLockOnDelete((current.scene.surfaces ?? []).find((b) => b.id === surfaceId)))
-      return;
+      return notifyLockedBlocked();
     const next: SceneState = {
       ...current.scene,
       surfaces: (current.scene.surfaces ?? []).filter((surface) => surface.id !== surfaceId),
@@ -1259,7 +1266,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   updateRun: (runId, rawPatch) => {
     const current = get();
     const runTarget = current.scene.runs.find((run) => run.id === runId);
-    if (!runTarget || blockedByLock(runTarget, rawPatch)) return;
+    if (!runTarget) return;
+    if (blockedByLock(runTarget, rawPatch)) return notifyLockedBlocked();
     const patch = clampRunPatch(rawPatch);
     const next: SceneState = {
       ...current.scene,
@@ -1303,7 +1311,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeRun: (runId) => {
     const current = get();
-    if (blockedByLockOnDelete(current.scene.runs.find((r) => r.id === runId))) return;
+    if (blockedByLockOnDelete(current.scene.runs.find((r) => r.id === runId)))
+      return notifyLockedBlocked();
     const next: SceneState = {
       ...current.scene,
       runs: reindexRuns(current.scene.runs.filter((r) => r.id !== runId)),
@@ -1358,7 +1367,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   updatePanel: (runId, panelId, rawPatch) => {
     const current = get();
     const panelRun = current.scene.runs.find((run) => run.id === runId);
-    if (!panelRun || blockedByLock(panelRun, rawPatch)) return;
+    if (!panelRun) return;
+    if (blockedByLock(panelRun, rawPatch)) return notifyLockedBlocked();
     const patch = clampPanelPatch(panelRun, rawPatch);
     const next: SceneState = {
       ...current.scene,
@@ -1381,6 +1391,33 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       }),
     };
     set(pushHistory(current, next));
+  },
+
+  // WHY a second, history-free writer: the polygon editor calls this on EVERY pointermove. The
+  // ordinary updatePanel goes through pushHistory, which settles the whole scene and clones it —
+  // so one drag pushed dozens of entries and buried the user’s real edits under a wall of undo
+  // steps. Preview mutates the scene only; the pointerup still commits through updatePanel.
+  previewPanelShapePoints: (runId, panelId, shapePointsJson) => {
+    const current = get();
+    const panelRun = current.scene.runs.find((run) => run.id === runId);
+    if (!panelRun || panelRun.locked) return;
+    set({
+      scene: {
+        ...current.scene,
+        runs: current.scene.runs.map((run) =>
+          run.id === runId
+            ? {
+                ...run,
+                panels: run.panels.map((panel) =>
+                  panel.id === panelId
+                    ? { ...panel, shapeKind: 'polygon' as const, shapePointsJson }
+                    : panel,
+                ),
+              }
+            : run,
+        ),
+      },
+    });
   },
 
   removePanel: (runId, panelId) => {

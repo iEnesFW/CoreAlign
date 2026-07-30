@@ -29,6 +29,23 @@ public record CuttingPlacement2D(
     PanelCutShape? Shape = null,
     int? NominalHeightMm = null);
 
+/// <summary>
+/// Net glass a placement consumes. A triangle/arch/trapezoid still occupies its bounding blank on
+/// the sheet (packing is unchanged), but the offcut cut away INSIDE that blank is real waste — the
+/// MaxRects optimizer already accounted for it this way while this one counted the whole blank, so
+/// the two cutting screens reported different utilisation for the very same panels.
+/// Rotation-invariant: the authoring dimensions are used, not the placed ones.
+/// </summary>
+public static class CuttingPlacementArea
+{
+    public static long NetAreaMm2(CuttingPlacement2D p)
+    {
+        var authoredWidth = p.Rotated ? p.HeightMm : p.WidthMm;
+        var authoredHeight = p.NominalHeightMm ?? (p.Rotated ? p.WidthMm : p.HeightMm);
+        return (long)PanelCutGeometry.NetAreaMm2(authoredWidth, authoredHeight, p.Shape);
+    }
+}
+
 public record CuttingSheet2D(
     int SheetIndex,
     int WidthMm,
@@ -100,7 +117,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             var groupUsed = 0L;
             foreach (var sheet in sheets)
             {
-                groupUsed += sheet.Placements.Sum(p => (long)p.WidthMm * p.HeightMm);
+                groupUsed += sheet.Placements.Sum(CuttingPlacementArea.NetAreaMm2);
                 resultSheets.Add(new CuttingSheet2D(
                     resultSheets.Count + 1, sheetWidthMm, sheetHeightMm, sheet.Placements, sheet.WasteAreaMm2)
                 {
@@ -219,7 +236,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
 
         public IReadOnlyList<CuttingPlacement2D> Placements => _placements;
         public long WasteAreaMm2 =>
-            (long)_widthMm * _heightMm - _placements.Sum(p => (long)p.WidthMm * p.HeightMm);
+            (long)_widthMm * _heightMm - _placements.Sum(CuttingPlacementArea.NetAreaMm2);
 
         public bool TryPlace(CuttingRequest2D rect, int kerfMm, bool guillotineOnly)
         {

@@ -355,16 +355,33 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         foreach (var run in project.Runs)
         {
             if (!systems.TryGetValue(run.ProfileSystemId, out var system)) continue;
-            var panelCount = Math.Max(1, run.Panels.Count);
             var railSpanMm = GlassRunPanelMath.PanelSpanMm(run.LengthMm, run.GeomArcRadiusMm, run.GeomArcSweepDeg);
-            var segments = new[]
+            // WHY per-panel heights: a panel may override the run height (raked / stepped facade)
+            // and the GLASS request already honours that (panel.HeightMm ?? run.HeightMm). The
+            // profile table did not, so the shop cut a 2400 mm sash for an 1800 mm pane — 600 mm
+            // of scrap per opening and a frame that does not close on the glass. SideJamb spans
+            // the whole run, so it legitimately stays at the run height.
+            var sashHeights = run.Panels.Count > 0
+                ? run.Panels.Select(p => p.HeightMm ?? run.HeightMm).ToList()
+                : new List<int> { run.HeightMm };
+            // A mullion stands between two panes and must reach the taller of the pair.
+            var mullionHeights = sashHeights
+                .Zip(sashHeights.Skip(1), (a, b) => Math.Max(a, b))
+                .ToList();
+            var segments = new List<(ProfileRole Role, int LengthMm, int Count)>
             {
-                (Role: ProfileRole.Top, LengthMm: railSpanMm, Count: 1),
-                (Role: ProfileRole.Bottom, LengthMm: railSpanMm, Count: 1),
-                (Role: ProfileRole.SideJamb, LengthMm: run.HeightMm, Count: 2),
-                (Role: ProfileRole.Sash, LengthMm: run.HeightMm, Count: 2 * panelCount),
-                (Role: ProfileRole.Mullion, LengthMm: run.HeightMm, Count: Math.Max(0, panelCount - 1)),
+                (ProfileRole.Top, railSpanMm, 1),
+                (ProfileRole.Bottom, railSpanMm, 1),
+                (ProfileRole.SideJamb, run.HeightMm, 2),
             };
+            foreach (var group in sashHeights.GroupBy(h => h))
+            {
+                segments.Add((ProfileRole.Sash, group.Key, 2 * group.Count()));
+            }
+            foreach (var group in mullionHeights.GroupBy(h => h))
+            {
+                segments.Add((ProfileRole.Mullion, group.Key, group.Count()));
+            }
             foreach (var (role, lengthMm, count) in segments)
             {
                 if (count <= 0) continue;
@@ -580,7 +597,7 @@ public class GetTechnicalSummaryQueryHandler : IRequestHandler<GetTechnicalSumma
             thermal.TotalAreaM2,
             thermal.WeightedUValue,
             thermal.WeightedSoundDb,
-            thermal.EstimatedWinterEnergySavingsKwh,
+            thermal.EstimatedWinterHeatLossKwh,
             thermal.EstimatedDbReductionVsOpen);
 
         return new TechnicalSummaryDto(

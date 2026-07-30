@@ -1,3 +1,4 @@
+using CoreAlign.Application.GlassEnclosure.Cutting;
 using CoreAlign.Application.GlassEnclosure.Services;
 using CoreAlign.Domain.Exceptions;
 
@@ -167,5 +168,39 @@ public class CuttingOptimizer2DTests
 
         result.TotalSheets.Should().Be(1);
         result.UtilizationPercent.Should().BeGreaterThan(40m);
+    }
+
+    /// <summary>
+    /// The two cutting screens quoted different utilisation for the very same panels: this planner
+    /// counted the whole rectangular BLANK as consumed while the MaxRects nester counted the NET
+    /// silhouette. A triangle cut from a 1×2 m blank leaves half of it as real offcut.
+    /// </summary>
+    [Fact]
+    public void A_shaped_panel_consumes_its_silhouette_not_its_blank()
+    {
+        // Raked from 2000 mm down to 1000 mm → a trapezoid averaging 1500 mm tall, i.e. 75 % of
+        // the blank. The blank-based accounting reported the full 2.0 m².
+        var shape = PanelCutShape.From("raked", 1000, null, null, null, null, null);
+        var shaped = new[] { new CuttingRequest2D("p1", 1000, 2000, 1, shape, NominalHeightMm: 2000) };
+        var plain = new[] { new CuttingRequest2D("p1", 1000, 2000, 1) };
+
+        var shapedResult = _sut.Plan(shaped, 3210, 2250, 0, guillotineOnly: false);
+        var plainResult = _sut.Plan(plain, 3210, 2250, 0, guillotineOnly: false);
+
+        shapedResult.TotalUsedMm2.Should().BeLessThan(plainResult.TotalUsedMm2);
+        shapedResult.TotalUsedMm2.Should().BeInRange(1_499_000, 1_501_000);
+        // Capacity is unchanged, so the offcut inside the blank shows up as waste.
+        (shapedResult.TotalUsedMm2 + shapedResult.TotalWasteMm2)
+            .Should().Be(plainResult.TotalUsedMm2 + plainResult.TotalWasteMm2);
+    }
+
+    [Fact]
+    public void A_plain_rectangle_still_consumes_its_full_area()
+    {
+        var requests = new[] { new CuttingRequest2D("p1", 1000, 2000, 1) };
+
+        var result = _sut.Plan(requests, 3210, 2250, 0, guillotineOnly: false);
+
+        result.TotalUsedMm2.Should().Be(2_000_000);
     }
 }

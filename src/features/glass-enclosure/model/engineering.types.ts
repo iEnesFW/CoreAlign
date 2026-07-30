@@ -170,7 +170,7 @@ export interface ThermalAcousticDto {
   totalAreaM2: number;
   weightedUValue: number;
   weightedSoundDb: number;
-  estimatedWinterEnergySavingsKwh: number;
+  estimatedWinterHeatLossKwh: number;
   estimatedDbReductionVsOpen: number;
 }
 

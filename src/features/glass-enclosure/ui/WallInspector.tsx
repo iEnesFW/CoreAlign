@@ -921,6 +921,12 @@ const OpeningField = ({
           const parsed = Number(draft);
           if (!Number.isNaN(parsed)) onCommit(parsed);
         }}
+        // WHY: NumberField in this same file already commits on Enter; OpeningField did not, so on
+        // the 12 opening/feature inputs it feeds, pressing Enter looked like it applied the value
+        // while nothing was written until the field happened to lose focus.
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+        }}
         className="w-full rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-900 focus:border-primary-500 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100"
       />
     </label>

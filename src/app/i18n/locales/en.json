@@ -3189,7 +3189,12 @@
         "PenIntentGlassPanel": "Glass panel",
         "PenIntentDivide": "Split panels",
         "PenModeClicked": "Click to place points",
-        "PenModeFreehand": "Freehand (drag)"
+        "PenModeFreehand": "Freehand (drag)",
+        "Measure": "Measure",
+        "Material_grass": "Grass",
+        "Material_asphalt": "Asphalt",
+        "Material_brick": "Brick",
+        "Material_plaster": "Plaster"
       },
       "Toolbox": {
         "Title": "Objects",
@@ -3305,7 +3310,14 @@
         "TooSmall": "The drawn shape is too small.",
         "SelfIntersecting": "The stroke crosses itself — draw the shape as a single non-crossing loop."
       },
-      "WeightedU": "Weighted U-value"
+      "WeightedU": "Weighted U-value",
+      "Layer": {
+        "Runs": "Runs",
+        "Walls": "Walls",
+        "Slabs": "Slabs",
+        "Surfaces": "Surfaces"
+      },
+      "LockedBlocked": "This object is locked — unlock it before editing."
     },
     "Field": {
       "Active": "Active",
@@ -3400,7 +3412,6 @@
       "HeightFactor": "Height Factor",
       "WeightedU": "Weighted U-Value",
       "WeightedDb": "Weighted dB",
-      "EnergySavings": "Estimated Energy Savings",
       "DbReduction": "Noise Reduction",
       "Runs": "Runs",
       "Panels": "Panels",
@@ -3409,7 +3420,9 @@
       "Overall": "Overall",
       "Disclaimer": "Calculations are approximations per TS 498. Structural engineer approval is required for load-bearing applications.",
       "WindZoneMissing": "Wind zone not assigned. Set it in the project header.",
-      "NoSummary": "Save the project to see the engineering summary."
+      "NoSummary": "Save the project to see the engineering summary.",
+      "HeatLoss": "Estimated winter heat loss",
+      "KwhPerYear": "{{value}} kWh / year"
     },
     "Share": {
       "Title": "Glass Enclosure Quote",

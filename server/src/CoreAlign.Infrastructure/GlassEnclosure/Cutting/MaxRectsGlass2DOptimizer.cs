@@ -47,8 +47,12 @@ public sealed class MaxRectsGlass2DOptimizer : IGlass2DNestingOptimizer
             if (placed) continue;
 
             var template = ChooseStockSheet(stockSheets, openSheets.Count);
+            // WHY a fresh id: the template is a STOCK definition (size/kerf/margin), not an
+            // instance. Copying its Guid gave every sheet cut from the same stock the same
+            // SheetId, which the viewer uses as its React key — three jumbo sheets collapsed to
+            // one card and re-optimising redrew stale SVG.
             var newSheet = new MaxRectsSheet(
-                template.SheetId,
+                Guid.NewGuid(),
                 openSheets.Count + 1,
                 template.WidthMm,
                 template.HeightMm,
