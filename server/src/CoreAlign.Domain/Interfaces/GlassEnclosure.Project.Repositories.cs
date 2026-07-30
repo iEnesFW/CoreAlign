@@ -119,6 +119,7 @@ public interface IGlassProjectBOMLineRepository
 public interface IGlassProjectCuttingPlanRepository
 {
     Task<GlassProjectCuttingPlan?> GetLatestAsync(Guid projectId, GlassCuttingPlanType planType, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<GlassProjectCuttingPlan>> ListRecentAsync(Guid projectId, GlassCuttingPlanType planType, int limit, CancellationToken cancellationToken = default);
     Task AddAsync(GlassProjectCuttingPlan plan, CancellationToken cancellationToken = default);
 }
 

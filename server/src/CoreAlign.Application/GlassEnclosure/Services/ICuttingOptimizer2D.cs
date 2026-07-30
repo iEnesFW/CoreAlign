@@ -1,4 +1,5 @@
 using CoreAlign.Application.GlassEnclosure.Cutting;
+using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Application.GlassEnclosure.Services;
 
@@ -8,7 +9,15 @@ public record CuttingRequest2D(
     int HeightMm,
     int Quantity,
     PanelCutShape? Shape = null,
-    int? NominalHeightMm = null);
+    int? NominalHeightMm = null)
+{
+    /// <summary>
+    /// Cuts that may share a jumbo sheet, i.e. same glass type and thickness. Each key gets its own
+    /// sheet pool. <c>null</c> puts every cut in one pool, which is what callers that do not track
+    /// glass identity keep getting.
+    /// </summary>
+    public string? GroupKey { get; init; }
+}
 
 public record CuttingPlacement2D(
     string Label,
@@ -25,7 +34,19 @@ public record CuttingSheet2D(
     int WidthMm,
     int HeightMm,
     IReadOnlyList<CuttingPlacement2D> Placements,
-    long WasteMm2);
+    long WasteMm2)
+{
+    /// <summary>Sheet pool this sheet was cut from. See <see cref="CuttingRequest2D.GroupKey"/>.</summary>
+    public string? GroupKey { get; init; }
+}
+
+/// <summary>Per-sheet-pool totals. Summing the groups reproduces the result totals exactly.</summary>
+public record CuttingGroup2D(
+    string? GroupKey,
+    int TotalSheets,
+    long TotalUsedMm2,
+    long TotalWasteMm2,
+    decimal UtilizationPercent);
 
 public record CuttingResult2D(
     int SheetWidthMm,
@@ -37,7 +58,10 @@ public record CuttingResult2D(
     long TotalWasteMm2,
     decimal UtilizationPercent,
     IReadOnlyList<CuttingSheet2D> Sheets,
-    IReadOnlyList<string> Unplaced);
+    IReadOnlyList<string> Unplaced)
+{
+    public IReadOnlyList<CuttingGroup2D> Groups { get; init; } = Array.Empty<CuttingGroup2D>();
+}
 
 public interface ICuttingOptimizer2D
 {
@@ -62,12 +86,68 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
         if (sheetHeightMm <= 0) throw new ArgumentOutOfRangeException(nameof(sheetHeightMm));
         if (kerfMm < 0) throw new ArgumentOutOfRangeException(nameof(kerfMm));
 
-        var rects = ExpandRequests(requests, sheetWidthMm, sheetHeightMm)
-            .OrderByDescending(r => r.WidthMm * r.HeightMm)
-            .ToList();
+        var expanded = ExpandRequests(requests, sheetWidthMm, sheetHeightMm).ToList();
 
-        var sheets = new List<MutableSheet>();
+        var resultSheets = new List<CuttingSheet2D>();
+        var groups = new List<CuttingGroup2D>();
         var unplaced = new List<string>();
+
+        // WHY: 6 mm and 8 mm glass cannot come off one jumbo sheet — one sheet pool per group, then concatenate.
+        foreach (var group in expanded.GroupBy(r => r.GroupKey ?? string.Empty))
+        {
+            var sheets = PackGroup(group, sheetWidthMm, sheetHeightMm, kerfMm, guillotineOnly, unplaced);
+
+            var groupUsed = 0L;
+            foreach (var sheet in sheets)
+            {
+                groupUsed += sheet.Placements.Sum(p => (long)p.WidthMm * p.HeightMm);
+                resultSheets.Add(new CuttingSheet2D(
+                    resultSheets.Count + 1, sheetWidthMm, sheetHeightMm, sheet.Placements, sheet.WasteAreaMm2)
+                {
+                    GroupKey = group.Key.Length == 0 ? null : group.Key,
+                });
+            }
+
+            var groupCapacity = (long)sheets.Count * sheetWidthMm * sheetHeightMm;
+            groups.Add(new CuttingGroup2D(
+                group.Key.Length == 0 ? null : group.Key,
+                sheets.Count,
+                groupUsed,
+                groupCapacity - groupUsed,
+                groupCapacity == 0 ? 0m : decimal.Round((decimal)groupUsed * 100m / groupCapacity, 3)));
+        }
+
+        var totalUsed = groups.Sum(g => g.TotalUsedMm2);
+        var totalWaste = groups.Sum(g => g.TotalWasteMm2);
+        var totalCapacity = totalUsed + totalWaste;
+        var utilization = totalCapacity == 0 ? 0m : (decimal)totalUsed * 100m / totalCapacity;
+
+        return new CuttingResult2D(
+            sheetWidthMm,
+            sheetHeightMm,
+            kerfMm,
+            guillotineOnly,
+            resultSheets.Count,
+            totalUsed,
+            totalWaste,
+            decimal.Round(utilization, 3),
+            resultSheets,
+            unplaced)
+        {
+            Groups = groups,
+        };
+    }
+
+    private static List<MutableSheet> PackGroup(
+        IEnumerable<CuttingRequest2D> groupRequests,
+        int sheetWidthMm,
+        int sheetHeightMm,
+        int kerfMm,
+        bool guillotineOnly,
+        List<string> unplaced)
+    {
+        var sheets = new List<MutableSheet>();
+        var rects = groupRequests.OrderByDescending(r => (long)r.WidthMm * r.HeightMm);
 
         foreach (var rect in rects)
         {
@@ -94,25 +174,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             }
         }
 
-        var resultSheets = sheets.Select((s, i) => new CuttingSheet2D(
-            i + 1, sheetWidthMm, sheetHeightMm, s.Placements, s.WasteAreaMm2)).ToList();
-
-        var totalUsed = resultSheets.Sum(s => (long)s.Placements.Sum(p => p.WidthMm * p.HeightMm));
-        var totalCapacity = (long)resultSheets.Count * sheetWidthMm * sheetHeightMm;
-        var totalWaste = totalCapacity - totalUsed;
-        var utilization = totalCapacity == 0 ? 0m : (decimal)totalUsed * 100m / totalCapacity;
-
-        return new CuttingResult2D(
-            sheetWidthMm,
-            sheetHeightMm,
-            kerfMm,
-            guillotineOnly,
-            resultSheets.Count,
-            totalUsed,
-            totalWaste,
-            decimal.Round(utilization, 3),
-            resultSheets,
-            unplaced);
+        return sheets;
     }
 
     private static IEnumerable<CuttingRequest2D> ExpandRequests(
@@ -127,12 +189,16 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             var fitsRotated = req.HeightMm <= sheetWidthMm && req.WidthMm <= sheetHeightMm;
             if (!fitsDirect && !fitsRotated)
             {
-                throw new InvalidOperationException(
-                    $"Cut '{req.Label}' of {req.WidthMm}x{req.HeightMm} mm exceeds jumbo {sheetWidthMm}x{sheetHeightMm} mm.");
+                // WHY: an oversized panel is user input, not a server fault — name the cut instead of a 500.
+                throw new GlassCutExceedsJumboSheetException(
+                    req.Label, req.WidthMm, req.HeightMm, sheetWidthMm, sheetHeightMm);
             }
             for (var i = 0; i < req.Quantity; i++)
             {
-                yield return new CuttingRequest2D(req.Label, req.WidthMm, req.HeightMm, 1, req.Shape, req.NominalHeightMm);
+                yield return new CuttingRequest2D(req.Label, req.WidthMm, req.HeightMm, 1, req.Shape, req.NominalHeightMm)
+                {
+                    GroupKey = req.GroupKey,
+                };
             }
         }
     }
@@ -163,7 +229,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
 
             foreach (var free in _freeRects)
             {
-                if (TryFit(rect.WidthMm, rect.HeightMm, kerfMm, free, out var shortSide))
+                if (TryFit(rect.WidthMm, rect.HeightMm, free, out var shortSide))
                 {
                     if (shortSide < bestShortSide)
                     {
@@ -172,7 +238,7 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
                         bestRotated = false;
                     }
                 }
-                if (rect.WidthMm != rect.HeightMm && TryFit(rect.HeightMm, rect.WidthMm, kerfMm, free, out shortSide))
+                if (rect.WidthMm != rect.HeightMm && TryFit(rect.HeightMm, rect.WidthMm, free, out shortSide))
                 {
                     if (shortSide < bestShortSide)
                     {
@@ -205,14 +271,13 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             return true;
         }
 
-        private static bool TryFit(int wantedW, int wantedH, int kerfMm, FreeRect free, out int shortSide)
+        // WHY: the split already excised the kerf, so charging it here reserved it twice per cut plane.
+        private static bool TryFit(int wantedW, int wantedH, FreeRect free, out int shortSide)
         {
-            var w = wantedW + (free.X > 0 ? kerfMm : 0);
-            var h = wantedH + (free.Y > 0 ? kerfMm : 0);
-            if (w <= free.Width && h <= free.Height)
+            if (wantedW <= free.Width && wantedH <= free.Height)
             {
-                var leftover1 = free.Width - w;
-                var leftover2 = free.Height - h;
+                var leftover1 = free.Width - wantedW;
+                var leftover2 = free.Height - wantedH;
                 shortSide = Math.Min(leftover1, leftover2);
                 return true;
             }
@@ -266,13 +331,14 @@ public class MaximalRectanglesOptimizer2D : ICuttingOptimizer2D
             {
                 if (!Intersects(free, placedX, placedY, placedWidth + kerfMm, placedHeight + kerfMm)) continue;
                 toRemove.Add(free);
-                if (placedX > free.X) toAdd.Add(new FreeRect(free.X, free.Y, placedX - free.X, free.Height));
+                // WHY: every side of the piece is a cut plane, so left/bottom free material stops one kerf short too.
+                if (placedX - kerfMm > free.X) toAdd.Add(new FreeRect(free.X, free.Y, placedX - kerfMm - free.X, free.Height));
                 if (placedX + placedWidth + kerfMm < free.X + free.Width)
                 {
                     var rightX = placedX + placedWidth + kerfMm;
                     toAdd.Add(new FreeRect(rightX, free.Y, free.X + free.Width - rightX, free.Height));
                 }
-                if (placedY > free.Y) toAdd.Add(new FreeRect(free.X, free.Y, free.Width, placedY - free.Y));
+                if (placedY - kerfMm > free.Y) toAdd.Add(new FreeRect(free.X, free.Y, free.Width, placedY - kerfMm - free.Y));
                 if (placedY + placedHeight + kerfMm < free.Y + free.Height)
                 {
                     var topY = placedY + placedHeight + kerfMm;

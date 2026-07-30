@@ -268,3 +268,9 @@ public class GlassCutCannotBeSplicedException : ConflictException
     public GlassCutCannotBeSplicedException(string profileCode, int requiredMm, int usableBarMm, int minPieceMm)
         : base($"Profile '{profileCode}' needs a {requiredMm} mm length. It cannot be spliced from {usableBarMm} mm bars without producing a piece shorter than the {minPieceMm} mm minimum.") { }
 }
+
+public class GlassCutExceedsJumboSheetException : ConflictException
+{
+    public GlassCutExceedsJumboSheetException(string label, int widthMm, int heightMm, int sheetWidthMm, int sheetHeightMm)
+        : base($"Glass cut '{label}' of {widthMm}x{heightMm} mm does not fit the {sheetWidthMm}x{sheetHeightMm} mm jumbo sheet in either orientation. Reduce the panel or configure a larger jumbo sheet.") { }
+}

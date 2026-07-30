@@ -279,6 +279,13 @@ public class GlassProjectCuttingPlanRepository : IGlassProjectCuttingPlanReposit
             .OrderByDescending(p => p.GeneratedAtUtc)
             .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<GlassProjectCuttingPlan>> ListRecentAsync(Guid projectId, GlassCuttingPlanType planType, int limit, CancellationToken cancellationToken = default) =>
+        await _context.GlassProjectCuttingPlans.AsNoTracking()
+            .Where(p => p.ProjectId == projectId && p.PlanType == planType)
+            .OrderByDescending(p => p.GeneratedAtUtc)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
     public async Task AddAsync(GlassProjectCuttingPlan plan, CancellationToken cancellationToken = default) =>
         await _context.GlassProjectCuttingPlans.AddAsync(plan, cancellationToken);
 }

@@ -56,7 +56,14 @@ public record BOMSummaryDto(
     bool HasStockShortage = false,
     IReadOnlyList<BomShortageDto>? Shortages = null);
 
-public record CuttingCut1DDto(string Label, int LengthMm, int OffsetMm);
+/// <param name="PieceIndex">Which spliced piece of the cut this is. 1 for an unspliced cut.</param>
+/// <param name="PieceCount">How many bar-length pieces the cut was spliced into. 1 means no joint.</param>
+public record CuttingCut1DDto(
+    string Label,
+    int LengthMm,
+    int OffsetMm,
+    int PieceIndex = 1,
+    int PieceCount = 1);
 
 public record CuttingPattern1DDto(
     int BarIndex,
@@ -101,7 +108,17 @@ public record CuttingSheet2DDto(
     int WidthMm,
     int HeightMm,
     IReadOnlyList<CuttingPlacement2DDto> Placements,
-    long WasteMm2);
+    long WasteMm2)
+{
+    public string? GroupKey { get; init; }
+}
+
+public record CuttingGroup2DDto(
+    string? GroupKey,
+    int TotalSheets,
+    long TotalUsedMm2,
+    long TotalWasteMm2,
+    decimal UtilizationPercent);
 
 public record CuttingResult2DDto(
     int SheetWidthMm,
@@ -113,7 +130,10 @@ public record CuttingResult2DDto(
     long TotalWasteMm2,
     decimal UtilizationPercent,
     IReadOnlyList<CuttingSheet2DDto> Sheets,
-    IReadOnlyList<string> Unplaced);
+    IReadOnlyList<string> Unplaced)
+{
+    public IReadOnlyList<CuttingGroup2DDto> Groups { get; init; } = Array.Empty<CuttingGroup2DDto>();
+}
 
 public record CuttingReportDto(
     Guid ProjectId,

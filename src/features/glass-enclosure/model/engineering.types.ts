@@ -66,6 +66,8 @@ export interface CuttingCut1DDto {
   label: string;
   lengthMm: number;
   offsetMm: number;
+  pieceIndex?: number;
+  pieceCount?: number;
 }
 
 export interface CuttingPattern1DDto {
@@ -116,6 +118,15 @@ export interface CuttingSheet2DDto {
   heightMm: number;
   placements: CuttingPlacement2DDto[];
   wasteMm2: number;
+  groupKey?: string | null;
+}
+
+export interface CuttingGroup2DDto {
+  groupKey: string | null;
+  totalSheets: number;
+  totalUsedMm2: number;
+  totalWasteMm2: number;
+  utilizationPercent: number;
 }
 
 export interface CuttingResult2DDto {
@@ -129,6 +140,7 @@ export interface CuttingResult2DDto {
   utilizationPercent: number;
   sheets: CuttingSheet2DDto[];
   unplaced: string[];
+  groups?: CuttingGroup2DDto[];
 }
 
 export interface CuttingReportDto {

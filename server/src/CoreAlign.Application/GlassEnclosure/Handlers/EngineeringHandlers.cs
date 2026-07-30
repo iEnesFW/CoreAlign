@@ -387,7 +387,7 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
         var glassIds = project.Runs.SelectMany(r => r.Panels).Select(p => p.GlassTypeId).Distinct().ToList();
         var glassMap = await _glassRepo.GetByIdsAsync(glassIds, cancellationToken);
 
-        var groups = new Dictionary<string, (string Label, int WidthMm, int BlankHeightMm, PanelCutShape? Shape, int NominalHeightMm, int Count)>();
+        var groups = new Dictionary<string, (string Label, int WidthMm, int BlankHeightMm, PanelCutShape? Shape, int NominalHeightMm, string GroupKey, int Count)>();
         foreach (var run in project.Runs)
         {
             foreach (var panel in run.Panels)
@@ -400,7 +400,7 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
                 var key = $"{glass.Code}|{panel.WidthMm}|{nominalHeight}|{PanelCutGeometry.Signature(shape)}";
                 if (groups.TryGetValue(key, out var existing))
                 {
-                    groups[key] = (existing.Label, existing.WidthMm, existing.BlankHeightMm, existing.Shape, existing.NominalHeightMm, existing.Count + 1);
+                    groups[key] = (existing.Label, existing.WidthMm, existing.BlankHeightMm, existing.Shape, existing.NominalHeightMm, existing.GroupKey, existing.Count + 1);
                 }
                 else
                 {
@@ -410,20 +410,27 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
                         blankHeight,
                         shape,
                         nominalHeight,
+                        GlassSheetPoolKey(glass),
                         1);
                 }
             }
         }
         return groups.Values
-            .Select(g => new CuttingRequest2D(g.Label, g.WidthMm, g.BlankHeightMm, g.Count, g.Shape, g.NominalHeightMm))
+            .Select(g => new CuttingRequest2D(g.Label, g.WidthMm, g.BlankHeightMm, g.Count, g.Shape, g.NominalHeightMm)
+            {
+                GroupKey = g.GroupKey,
+            })
             .ToList();
     }
+
+    private static string GlassSheetPoolKey(GlassType glass) => $"{glass.Code} · {glass.ThicknessMm} mm";
 
     private static CuttingResult1DDto MapToDto(CuttingResult1D r) => new(
         r.StockBarLengthMm, r.KerfMm, r.TotalBars, r.TotalCuts, r.TotalUsedMm, r.TotalWasteMm, r.UtilizationPercent,
         r.Patterns.Select(p => new CuttingPattern1DDto(
             p.BarIndex, p.StockBarLengthMm,
-            p.Cuts.Select(c => new CuttingCut1DDto(c.Label, c.LengthMm, c.OffsetMm)).ToList(),
+            // WHY: a spliced rail is joined on site, so the shop floor must see the piece breakdown.
+            p.Cuts.Select(c => new CuttingCut1DDto(c.Label, c.LengthMm, c.OffsetMm, c.PieceIndex, c.PieceCount)).ToList(),
             p.WasteMm)).ToList());
 
     private static CuttingResult2DDto MapToDto(CuttingResult2D r) => new(
@@ -434,8 +441,16 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
             s.Placements.Select(p => new CuttingPlacement2DDto(
                 p.Label, p.X, p.Y, p.WidthMm, p.HeightMm, p.Rotated,
                 PanelCutShapeMapper.ToDto(p.Shape, (decimal?)p.NominalHeightMm, p.WidthMm, p.HeightMm, p.Rotated))).ToList(),
-            s.WasteMm2)).ToList(),
-        r.Unplaced);
+            s.WasteMm2)
+        {
+            GroupKey = s.GroupKey,
+        }).ToList(),
+        r.Unplaced)
+    {
+        Groups = r.Groups
+            .Select(g => new CuttingGroup2DDto(g.GroupKey, g.TotalSheets, g.TotalUsedMm2, g.TotalWasteMm2, g.UtilizationPercent))
+            .ToList(),
+    };
 }
 
 public class GetCuttingReportQueryHandler : IRequestHandler<GetCuttingReportQuery, CuttingReportDto?>
@@ -447,18 +462,43 @@ public class GetCuttingReportQueryHandler : IRequestHandler<GetCuttingReportQuer
     public async Task<CuttingReportDto?> Handle(GetCuttingReportQuery request, CancellationToken cancellationToken)
     {
         var plan1D = await _planRepo.GetLatestAsync(request.ProjectId, GlassCuttingPlanType.Profile1D, cancellationToken);
-        var plan2D = await _planRepo.GetLatestAsync(request.ProjectId, GlassCuttingPlanType.Glass2D, cancellationToken);
-        if (plan1D is null && plan2D is null) return null;
+
+        // WHY scan a few rows instead of taking only the newest: before the nesting got its own
+        // slot, an "optimise" wrote a nesting-shaped payload into the Glass2D row. Measured on the
+        // live database, 10 of 74 Glass2D rows are that shape, and for 5 projects it is the NEWEST
+        // row while a perfectly good cutting report sits just behind it. Taking only the newest
+        // would report "no plan" and throw away recoverable work.
+        var recent2D = await _planRepo.ListRecentAsync(
+            request.ProjectId,
+            GlassCuttingPlanType.Glass2D,
+            Glass2DLookbackRows,
+            cancellationToken);
+        var plan2D = recent2D.FirstOrDefault(p => ReadGlass2D(p.PlanJson) is not null) ?? recent2D.FirstOrDefault();
+        var result2D = ReadGlass2D(plan2D?.PlanJson);
+        if (plan1D is null && result2D is null) return null;
 
         var result1D = plan1D is null
             ? new CuttingResult1DDto(0, 0, 0, 0, 0, 0, 0, Array.Empty<CuttingPattern1DDto>())
             : JsonSerializer.Deserialize<CuttingResult1DDto>(plan1D.PlanJson) ?? throw new InvalidOperationException("Invalid 1D plan JSON");
-        var result2D = plan2D is null
-            ? new CuttingResult2DDto(0, 0, 0, false, 0, 0, 0, 0, Array.Empty<CuttingSheet2DDto>(), Array.Empty<string>())
-            : JsonSerializer.Deserialize<CuttingResult2DDto>(plan2D.PlanJson) ?? throw new InvalidOperationException("Invalid 2D plan JSON");
 
         var generatedAt = plan1D?.GeneratedAtUtc ?? plan2D?.GeneratedAtUtc ?? DateTime.UtcNow;
-        return new CuttingReportDto(request.ProjectId, generatedAt, result1D, result2D);
+        return new CuttingReportDto(request.ProjectId, generatedAt, result1D, result2D ?? EmptyGlass2D);
+    }
+
+    private const int Glass2DLookbackRows = 5;
+
+    private static CuttingResult2DDto EmptyGlass2D => new(
+        0, 0, 0, false, 0, 0, 0, 0, Array.Empty<CuttingSheet2DDto>(), Array.Empty<string>());
+
+    // WHY: pre-fix rows hold the nesting shape, which deserialises into a silent 0-sheet husk.
+    private static CuttingResult2DDto? ReadGlass2D(string? planJson)
+    {
+        if (string.IsNullOrWhiteSpace(planJson)) return null;
+        using var document = JsonDocument.Parse(planJson);
+        if (document.RootElement.ValueKind != JsonValueKind.Object) return null;
+        if (!document.RootElement.TryGetProperty(nameof(CuttingResult2DDto.SheetWidthMm), out _)) return null;
+        return JsonSerializer.Deserialize<CuttingResult2DDto>(planJson)
+            ?? throw new InvalidOperationException("Invalid 2D plan JSON");
     }
 }
 
@@ -609,7 +649,7 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
 
         var plan = new GlassProjectCuttingPlan(
             project.Id,
-            GlassCuttingPlanType.Glass2D,
+            GlassCuttingPlanType.Glass2DNesting,
             JsonSerializer.Serialize(dto),
             nestingResult.TotalWasteAreaMm2,
             0m,

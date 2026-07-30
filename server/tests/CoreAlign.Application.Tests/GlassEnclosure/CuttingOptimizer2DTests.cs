@@ -1,4 +1,5 @@
 using CoreAlign.Application.GlassEnclosure.Services;
+using CoreAlign.Domain.Exceptions;
 
 namespace CoreAlign.Application.Tests.GlassEnclosure;
 
@@ -67,13 +68,90 @@ public class CuttingOptimizer2DTests
     }
 
     [Fact]
-    public void Throws_when_rectangle_exceeds_sheet_both_orientations()
+    public void Oversize_rectangle_fails_as_a_user_error_naming_the_cut_and_the_sheet()
     {
-        var requests = new[] { new CuttingRequest2D("oversize", 4000, 3000, 1) };
+        var requests = new[] { new CuttingRequest2D("CLR6 4000×3000", 4000, 3000, 1) };
 
         Action act = () => _sut.Plan(requests, 3210, 2250, 4, guillotineOnly: false);
 
-        act.Should().Throw<InvalidOperationException>();
+        var thrown = act.Should().Throw<GlassCutExceedsJumboSheetException>().Which;
+        thrown.Should().BeAssignableTo<ConflictException>();
+        thrown.Message.Should().Contain("CLR6 4000×3000").And.Contain("4000x3000").And.Contain("3210x2250");
+    }
+
+    [Fact]
+    public void Kerf_is_reserved_once_per_cut_plane_so_the_row_still_fits_one_sheet()
+    {
+        var requests = new[] { new CuttingRequest2D("k", 491, 1000, 4) };
+
+        var result = _sut.Plan(requests, 2000, 1000, 10, guillotineOnly: true);
+
+        result.TotalSheets.Should().Be(1);
+        result.Sheets[0].Placements.Should().HaveCount(4);
+        result.Sheets[0].Placements.Select(p => p.X).OrderBy(x => x).Should().Equal(0, 501, 1002, 1503);
+    }
+
+    [Fact]
+    public void Kerf_is_reserved_once_per_cut_plane_in_the_free_form_path_too()
+    {
+        var requests = new[] { new CuttingRequest2D("k", 491, 1000, 4) };
+
+        var result = _sut.Plan(requests, 2000, 1000, 10, guillotineOnly: false);
+
+        result.TotalSheets.Should().Be(1);
+        result.Sheets[0].Placements.Should().HaveCount(4);
+    }
+
+    [Fact]
+    public void Cuts_of_different_glass_groups_never_share_a_sheet()
+    {
+        var requests = new[]
+        {
+            new CuttingRequest2D("clear-6", 1000, 2000, 1) { GroupKey = "CLR · 6 mm" },
+            new CuttingRequest2D("clear-8", 1000, 2000, 1) { GroupKey = "CLR · 8 mm" },
+        };
+
+        var result = _sut.Plan(requests, 3210, 2250, 4, guillotineOnly: false);
+
+        result.TotalSheets.Should().Be(2);
+        result.Sheets.Should().OnlyContain(s => s.Placements.Count == 1);
+        result.Sheets.Select(s => s.GroupKey).Should().BeEquivalentTo(new[] { "CLR · 6 mm", "CLR · 8 mm" });
+        result.Sheets.Select(s => s.SheetIndex).Should().Equal(1, 2);
+    }
+
+    [Fact]
+    public void Group_totals_add_up_to_the_report_totals()
+    {
+        var requests = new[]
+        {
+            new CuttingRequest2D("clear-6", 1000, 2000, 3) { GroupKey = "CLR · 6 mm" },
+            new CuttingRequest2D("clear-8", 900, 1800, 2) { GroupKey = "CLR · 8 mm" },
+        };
+
+        var result = _sut.Plan(requests, 3210, 2250, 4, guillotineOnly: true);
+
+        result.Groups.Should().HaveCount(2);
+        result.Groups.Sum(g => g.TotalSheets).Should().Be(result.TotalSheets);
+        result.Groups.Sum(g => g.TotalUsedMm2).Should().Be(result.TotalUsedMm2);
+        result.Groups.Sum(g => g.TotalWasteMm2).Should().Be(result.TotalWasteMm2);
+        (result.TotalUsedMm2 + result.TotalWasteMm2)
+            .Should().Be((long)result.TotalSheets * result.SheetWidthMm * result.SheetHeightMm);
+    }
+
+    [Fact]
+    public void Cuts_without_a_group_key_keep_sharing_one_sheet_pool()
+    {
+        var requests = new[]
+        {
+            new CuttingRequest2D("a", 1000, 2000, 1),
+            new CuttingRequest2D("b", 1000, 2000, 1),
+        };
+
+        var result = _sut.Plan(requests, 3210, 2250, 4, guillotineOnly: false);
+
+        result.TotalSheets.Should().Be(1);
+        result.Groups.Should().ContainSingle();
+        result.Groups[0].GroupKey.Should().BeNull();
     }
 
     [Fact]

@@ -114,6 +114,7 @@ const ProfileSection = ({ report }: { report: CuttingReportDto }) => {
 };
 
 const BarVisualizer = ({ pattern }: { pattern: CuttingPattern1DDto }) => {
+  const { t } = useTranslation();
   const total = pattern.stockBarLengthMm;
   return (
     <div className="rounded border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-800">
@@ -127,14 +128,30 @@ const BarVisualizer = ({ pattern }: { pattern: CuttingPattern1DDto }) => {
         {(pattern.cuts ?? []).map((cut) => {
           const left = (cut.offsetMm / total) * 100;
           const width = (cut.lengthMm / total) * 100;
+          const pieceCount = cut.pieceCount ?? 1;
+          const pieceIndex = cut.pieceIndex ?? 1;
+          const spliced = pieceCount > 1;
+          const spliceLabel = t('GlassEnclosure.Cutting.SplicePiece', {
+            index: pieceIndex,
+            count: pieceCount,
+          });
           return (
             <div
               key={`${cut.label}-${cut.offsetMm}`}
               className="absolute top-0 h-full border-r border-slate-300 bg-gradient-to-b from-primary-400/40 to-primary-500/60 px-1 text-[10px] font-mono text-primary-900 dark:from-primary-400/30 dark:to-primary-500/50 dark:text-primary-100"
               style={{ left: `${left}%`, width: `${width}%` }}
-              title={`${cut.label} · ${cut.lengthMm}mm`}
+              title={
+                spliced
+                  ? `${cut.label} · ${cut.lengthMm}mm · ${spliceLabel}`
+                  : `${cut.label} · ${cut.lengthMm}mm`
+              }
             >
               <span className="truncate">{cut.lengthMm}</span>
+              {spliced && (
+                <span className="ml-1 rounded bg-warning-500/20 px-1 text-[9px] font-semibold text-warning-800 dark:text-warning-300">
+                  {spliceLabel}
+                </span>
+              )}
             </div>
           );
         })}
@@ -185,6 +202,46 @@ const GlassSection = ({ report }: { report: CuttingReportDto }) => {
         ]}
       />
 
+      {(r.groups?.length ?? 0) > 1 && (
+        <div className="overflow-x-auto rounded border border-slate-200 dark:border-slate-700">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <tr>
+                <th scope="col" className="px-2 py-1 font-medium">
+                  {t('GlassEnclosure.Cutting.GlassGroup')}
+                </th>
+                <th scope="col" className="px-2 py-1 font-medium">
+                  {t('GlassEnclosure.Cutting.Sheets')}
+                </th>
+                <th scope="col" className="px-2 py-1 font-medium">
+                  {t('GlassEnclosure.Cutting.Utilization')}
+                </th>
+                <th scope="col" className="px-2 py-1 font-medium">
+                  {t('GlassEnclosure.Cutting.Waste')}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {(r.groups ?? []).map((g) => (
+                <tr
+                  key={g.groupKey ?? 'default'}
+                  className="border-t border-slate-200 dark:border-slate-700"
+                >
+                  <td className="px-2 py-1 font-mono text-slate-800 dark:text-slate-100">
+                    {g.groupKey ?? '—'}
+                  </td>
+                  <td className="px-2 py-1 font-mono">{g.totalSheets}</td>
+                  <td className="px-2 py-1 font-mono">{g.utilizationPercent.toFixed(1)}%</td>
+                  <td className="px-2 py-1 font-mono">
+                    {(g.totalWasteMm2 / 1_000_000).toFixed(2)} m²
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {(r.unplaced?.length ?? 0) > 0 && (
         <div className="rounded border border-danger-500/40 bg-danger-50 p-2 text-xs text-danger-700 dark:bg-danger-950/30 dark:text-danger-300">
           {t('GlassEnclosure.Cutting.UnplacedWarning', {
@@ -217,6 +274,7 @@ const SheetVisualizer = ({ sheet }: { sheet: CuttingSheet2DDto }) => {
       <div className="mb-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
         <span className="font-mono">
           Jumbo #{sheet.sheetIndex} · {sheet.widthMm} × {sheet.heightMm} mm
+          {sheet.groupKey && ` · ${sheet.groupKey}`}
         </span>
         <span className="text-warning-600 dark:text-warning-400">
           ↳ {wasteM2.toFixed(2)} m² fire
@@ -311,10 +369,12 @@ const Stats = ({ stats }: { stats: { label: string; value: string }[] }) => (
 );
 
 const downloadCsv = (r: CuttingReportDto['profile1D'], filename: string) => {
-  const lines: string[] = ['bar_no,position_mm,length_mm,label'];
+  const lines: string[] = ['bar_no,position_mm,length_mm,label,piece_index,piece_count'];
   for (const pattern of r.patterns ?? []) {
     for (const cut of pattern.cuts ?? []) {
-      lines.push(`${pattern.barIndex},${cut.offsetMm},${cut.lengthMm},${cut.label}`);
+      lines.push(
+        `${pattern.barIndex},${cut.offsetMm},${cut.lengthMm},${cut.label},${cut.pieceIndex ?? 1},${cut.pieceCount ?? 1}`,
+      );
     }
   }
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });

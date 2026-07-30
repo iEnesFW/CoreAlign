@@ -197,7 +197,10 @@ public enum GlassBOMLineKind
 public enum GlassCuttingPlanType
 {
     Profile1D = 0,
-    Glass2D = 1
+    Glass2D = 1,
+    // WHY: nesting persists a different JSON shape than Glass2D; sharing one slot silently destroyed
+    // the saved cutting report because the reader deserialises Glass2D as CuttingResult2DDto.
+    Glass2DNesting = 2
 }
 
 public enum GlassAttachmentKind
