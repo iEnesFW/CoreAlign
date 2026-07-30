@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildPlanFootprint,
   buildRunFootprint,
   buildWallFootprint,
+  clampPlanMove,
   clampPlanMoveNoDeepen,
   penetratesAny,
   slidePlanMove,
@@ -115,5 +117,55 @@ describe('slidePlanMove / clampPlanMoveNoDeepen (objects never interpenetrate fu
     const r = run('r', 0, 0, 1000);
     const fp = (dx: number, dy: number) => buildRunFootprint(r, dx, dy, 0);
     expect(clampPlanMoveNoDeepen(fp, [], 250, 0)).toEqual({ dxMm: 250, dyMm: 0 });
+  });
+});
+
+describe('clamped moves never land INSIDE an obstacle (rounding must not overshoot)', () => {
+  // POS-F4 claimed Math.round(dxMm * lo) can push the clamped delta past the contact boundary.
+  // Randomised sweep over body sizes, angles and approach vectors; any penetrating result fails.
+  const box = (
+    id: string,
+    originX: number,
+    originY: number,
+    lengthMm: number,
+    crossMm: number,
+    rotationDeg: number,
+    zMin = 0,
+    zMax = 2400,
+  ) => buildPlanFootprint(id, originX, originY, lengthMm, rotationDeg, crossMm / 2, zMin, zMax);
+
+  it('holds over 4000 randomised approaches', () => {
+    let rng = 20260730;
+    const next = () => {
+      rng = (rng * 1103515245 + 12345) % 2147483648;
+      return rng / 2147483648;
+    };
+    let overshoots = 0;
+    for (let i = 0; i < 4000; i += 1) {
+      const obsRot = Math.round(next() * 360);
+      const obstacle = box(
+        'obs',
+        Math.round(next() * 2000 - 1000),
+        Math.round(next() * 2000 - 1000),
+        200 + Math.round(next() * 4000),
+        50 + Math.round(next() * 800),
+        obsRot,
+      );
+      const movedRot = Math.round(next() * 360);
+      const startX = Math.round(next() * 8000 - 4000);
+      const startY = Math.round(next() * 8000 - 4000);
+      const lengthMm = 200 + Math.round(next() * 3000);
+      const crossMm = 50 + Math.round(next() * 400);
+      const dxMm = Math.round(next() * 12000 - 6000);
+      const dyMm = Math.round(next() * 12000 - 6000);
+
+      const footprintAt = (dx: number, dy: number) =>
+        box('moved', startX + dx, startY + dy, lengthMm, crossMm, movedRot);
+
+      if (penetratesAny(footprintAt(0, 0), [obstacle])) continue;
+      const clamped = clampPlanMove(footprintAt, [obstacle], dxMm, dyMm);
+      if (penetratesAny(footprintAt(clamped.dxMm, clamped.dyMm), [obstacle])) overshoots += 1;
+    }
+    expect(overshoots).toBe(0);
   });
 });

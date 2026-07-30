@@ -586,8 +586,22 @@ export async function selfTest({ shotPath = null, target = 'fixture' } = {}) {
       // un-undone probe drag silently relocates their glass (measured — an earlier run moved this
       // project's run to 2415,255 and it persisted).
       if (moved) {
-        await d.store(() => window.__CAD_STORE__().undo());
-        await d.page.waitForTimeout(600);
+        // WHY the keyboard and not store.undo(): the store's undo only rewinds the LOCAL scene,
+        // but the drag commit already persisted the new origin through the run mutation — a
+        // store-only undo therefore left the SERVER displaced (measured: this project's run stayed
+        // at 1250,12765 after a "restored" self-test). Ctrl+Z goes through the page handler, which
+        // reconciles the rewound scene back to the server.
+        await d.page.keyboard.press('Control+z');
+        await d.page.waitForTimeout(3000);
+        const restored = await d.store(() => {
+          const r = window.__CAD_STORE__().scene.runs[0];
+          return r ? { x: r.originX, y: r.originY } : null;
+        });
+        const back =
+          restored !== null &&
+          Math.abs(restored.x - before.x) < 1 &&
+          Math.abs(restored.y - before.y) < 1;
+        check('self-test drag was undone on the real project', back, JSON.stringify(restored));
       }
     }
   }

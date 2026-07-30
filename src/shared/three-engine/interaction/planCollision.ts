@@ -409,6 +409,34 @@ export const firstPenetratingOwner = (
   return null;
 };
 
+const ROUND_BACKOFF_STEPS = 4;
+
+/**
+ * Turn a bisected fraction into a WHOLE-MILLIMETRE delta that still satisfies the predicate.
+ *
+ * WHY the back-off: the bisection returns a fraction that is known to be clear, but rounding each
+ * axis independently both lengthens the move (up to half a millimetre per axis) and tilts it a
+ * hair. Between two nearly-parallel bodies the overlap extent tracks the slide 1:1, so that hair
+ * lands PAST the contact boundary and the "clamped" move ends up penetrating — after which an
+ * unrelated later edit is refused as colliding. Measured: 29 of 4000 randomised approaches.
+ * Standing still always satisfies it (callers establish the start is clear before bisecting).
+ */
+const roundedDeltaSatisfying = (
+  dxMm: number,
+  dyMm: number,
+  frac: number,
+  ok: (dx: number, dy: number) => boolean,
+): PlanMoveDelta => {
+  let dx = Math.round(dxMm * frac);
+  let dy = Math.round(dyMm * frac);
+  for (let i = 0; i < ROUND_BACKOFF_STEPS; i += 1) {
+    if (ok(dx, dy)) return { dxMm: dx, dyMm: dy };
+    dx -= Math.sign(dx);
+    dy -= Math.sign(dy);
+  }
+  return ok(dx, dy) ? { dxMm: dx, dyMm: dy } : { dxMm: 0, dyMm: 0 };
+};
+
 export const clampPlanMove = (
   footprintAt: (dxMm: number, dyMm: number) => PlanFootprintSet,
   obstacles: PlanFootprint[],
@@ -424,7 +452,12 @@ export const clampPlanMove = (
     if (penetratesAny(footprintAt(dxMm * mid, dyMm * mid), obstacles)) hi = mid;
     else lo = mid;
   }
-  return { dxMm: Math.round(dxMm * lo), dyMm: Math.round(dyMm * lo) };
+  return roundedDeltaSatisfying(
+    dxMm,
+    dyMm,
+    lo,
+    (dx, dy) => !penetratesAny(footprintAt(dx, dy), obstacles),
+  );
 };
 
 const SWEEP_MIN_STEPS = 24;
@@ -458,7 +491,12 @@ const sweptBoundary = (
         if (penetratesAny(footprintAt(dxMm * mid, dyMm * mid), obstacles)) hi = mid;
         else lo = mid;
       }
-      return { dxMm: Math.round(dxMm * lo), dyMm: Math.round(dyMm * lo) };
+      return roundedDeltaSatisfying(
+        dxMm,
+        dyMm,
+        lo,
+        (dx, dy) => !penetratesAny(footprintAt(dx, dy), obstacles),
+      );
     }
     lastClear = t;
   }
@@ -540,13 +578,14 @@ export const clampPlanMoveNoDeepen = (
   const toArr = (s: PlanFootprintSet) => (Array.isArray(s) ? s : [s]);
   const startFps = toArr(footprintAt(0, 0));
   const baseline = reachable.map((o) => maxDepthAgainst(startFps, o));
-  const ok = (frac: number): boolean => {
-    const fps = toArr(footprintAt(dxMm * frac, dyMm * frac));
+  const okAt = (dx: number, dy: number): boolean => {
+    const fps = toArr(footprintAt(dx, dy));
     for (let i = 0; i < reachable.length; i += 1) {
       if (maxDepthAgainst(fps, reachable[i]) > baseline[i] + NO_DEEPEN_EPS_MM) return false;
     }
     return true;
   };
+  const ok = (frac: number): boolean => okAt(dxMm * frac, dyMm * frac);
   if (ok(1)) return { dxMm, dyMm };
   const pathLen = Math.hypot(dxMm, dyMm);
   const steps = Math.min(
@@ -564,7 +603,7 @@ export const clampPlanMoveNoDeepen = (
         if (ok(mid)) lo = mid;
         else hi = mid;
       }
-      return { dxMm: Math.round(dxMm * lo), dyMm: Math.round(dyMm * lo) };
+      return roundedDeltaSatisfying(dxMm, dyMm, lo, okAt);
     }
     lastOk = t;
   }
