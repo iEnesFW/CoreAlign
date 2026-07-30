@@ -209,6 +209,14 @@ public class GlassEnclosureNotFoundException : NotFoundException
     }
 }
 
+public class GlassTypeInUseException : ConflictException
+{
+    public GlassTypeInUseException(string code)
+        : base($"Glass type {code} is used by existing project panels and cannot be deleted. Deactivate it instead.")
+    {
+    }
+}
+
 public class GlassEnclosureDuplicateCodeException : ConflictException
 {
     public GlassEnclosureDuplicateCodeException(string resource, string code)

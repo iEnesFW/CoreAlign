@@ -545,7 +545,7 @@ public class GetTechnicalSummaryQueryHandler : IRequestHandler<GetTechnicalSumma
             foreach (var panel in run.Panels)
             {
                 if (!glassMap.TryGetValue(panel.GlassTypeId, out var glass)) continue;
-                var areaM2 = (decimal)panel.WidthMm * run.HeightMm / 1_000_000m;
+                var areaM2 = GlassPanelAreaMath.NetAreaM2(run, panel);
                 totalArea += areaM2;
                 totalWeight += areaM2 * glass.WeightKgPerM2;
                 panelCount += 1;

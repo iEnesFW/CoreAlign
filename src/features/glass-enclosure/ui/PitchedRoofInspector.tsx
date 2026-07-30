@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { useConfigureEnclosureMutation } from '../hooks/useGlassProjectQueries';
 import { useDesignerStore } from '../model/designerStore';
 
 interface PitchedRoofInspectorProps {
@@ -18,6 +20,7 @@ export function PitchedRoofInspector({ className }: PitchedRoofInspectorProps) {
   const { t } = useTranslation();
   const project = useDesignerStore((s) => s.project);
   const updatePitchedRoof = useDesignerStore((s) => s.updatePitchedRoof);
+  const configureMutation = useConfigureEnclosureMutation();
 
   const isApplicable = useMemo(
     () => project?.enclosureSubtype === 'Greenhouse' && project?.geometryMode === 'Pitched',
@@ -74,6 +77,37 @@ export function PitchedRoofInspector({ className }: PitchedRoofInspectorProps) {
     }
   };
 
+  // WHY an explicit save (PolygonInspector's pattern): the roof fields are PROJECT columns, not
+  // part of the scene blob the autosave writes — the store setter is a live preview only. Without
+  // this the values never reached the server and a refresh silently restored the old pitch.
+  const hasChanges =
+    pitchValue !== (project.roofPitchDeg ?? null) ||
+    ridgeValue !== (project.ridgeHeightMm ?? null) ||
+    eaveValue !== (project.eaveHeightMm ?? null);
+  const canSave = hasChanges && !pitchOutOfRange && !ridgeNotGreaterThanEave;
+
+  const save = async () => {
+    await safeRequestWithNotify(
+      configureMutation.mutateAsync({
+        id: project.id,
+        input: {
+          category: project.enclosureCategory ?? 'Special',
+          subtype: project.enclosureSubtype ?? 'Greenhouse',
+          geometryMode: project.geometryMode ?? 'Pitched',
+          mountingTopology: project.mountingTopology,
+          roofPitchDeg: pitchValue,
+          ridgeHeightMm: ridgeValue,
+          eaveHeightMm: eaveValue,
+          polygonVerticesJson: project.polygonVerticesJson,
+        },
+      }),
+      {
+        successMessage: t('GlassEnclosure.Designer.Greenhouse.PitchParam.Saved'),
+        showSuccessNotification: true,
+      },
+    );
+  };
+
   return (
     <section
       className={
@@ -127,6 +161,20 @@ export function PitchedRoofInspector({ className }: PitchedRoofInspectorProps) {
         step={50}
         error={null}
       />
+
+      {hasChanges ? (
+        <p className="text-[10px] text-warning-700 dark:text-warning-400">
+          {t('GlassEnclosure.Designer.Greenhouse.PitchParam.Unsaved')}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        onClick={save}
+        disabled={!canSave || configureMutation.isPending}
+        className="w-full rounded bg-success-600 px-2 py-1.5 text-xs font-semibold text-white transition hover:bg-success-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {t('GlassEnclosure.Designer.Greenhouse.PitchParam.Save')}
+      </button>
     </section>
   );
 }

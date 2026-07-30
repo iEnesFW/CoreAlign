@@ -187,9 +187,7 @@ public class BOMComposer : IBOMComposer
             {
                 var glass = await _glassRepo.GetByIdAsync(panel.GlassTypeId, cancellationToken);
                 if (glass is null) continue;
-                var shape = PanelCutShapeMapper.FromPanel(panel);
-                var nominalHeight = panel.HeightMm ?? run.HeightMm;
-                var areaM2 = PanelCutGeometry.NetAreaMm2(panel.WidthMm, nominalHeight, shape) / 1_000_000m;
+                var areaM2 = GlassPanelAreaMath.NetAreaM2(run, panel);
                 totalArea += areaM2;
                 totalPanels += 1;
                 totalWeightKg += areaM2 * glass.WeightKgPerM2;

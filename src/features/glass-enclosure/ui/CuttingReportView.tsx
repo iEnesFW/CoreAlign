@@ -7,6 +7,7 @@ import type {
 } from '../model/engineering.types';
 import {
   panelShapeToken,
+  placedPanelPolygonMm,
   placedPanelPolygonPoints,
   type PanelShapeToken,
 } from '../cutting/placedPanelOutline';
@@ -387,14 +388,30 @@ const downloadDxf = (r: CuttingReportDto['glass2D']) => {
     for (const p of sheet.placements ?? []) {
       const x = p.x;
       const y = sheet.heightMm - p.y - p.heightMm;
-      parts.push('0', 'LWPOLYLINE', '8', `SHEET-${sheet.sheetIndex}`, '90', '5', '70', '1');
-      const points = [
-        [x, y],
-        [x + p.widthMm, y],
-        [x + p.widthMm, y + p.heightMm],
-        [x, y + p.heightMm],
-        [x, y],
-      ];
+      // WHY: a raked/arched/elliptical/polygon panel is NOT its blank rectangle — cutting the DXF
+      // as a rect wastes the offcut and mis-cuts the piece. The viewer already draws the true
+      // silhouette from the same helper; the export used to be the only rectangle-only consumer.
+      const outline = placedPanelPolygonMm(p);
+      const points = outline
+        ? // The helper works in SVG (y-down) sheet space; DXF is y-up. Close the loop explicitly.
+          [...outline, outline[0]].map((pt) => [pt.x, sheet.heightMm - pt.y] as const)
+        : ([
+            [x, y],
+            [x + p.widthMm, y],
+            [x + p.widthMm, y + p.heightMm],
+            [x, y + p.heightMm],
+            [x, y],
+          ] as const);
+      parts.push(
+        '0',
+        'LWPOLYLINE',
+        '8',
+        `SHEET-${sheet.sheetIndex}`,
+        '90',
+        points.length.toString(),
+        '70',
+        '1',
+      );
       for (const [px, py] of points) {
         parts.push('10', px.toString(), '20', py.toString());
       }

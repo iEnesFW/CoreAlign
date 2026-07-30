@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   panelShapeToken,
+  placedPanelPolygonMm,
   placedPanelPolygonPoints,
   type PlacedPanelLike,
 } from './placedPanelOutline';
@@ -170,5 +171,49 @@ describe('placedPanelPolygonPoints', () => {
     };
     // triangle (-500,0),(500,0),(0,2000) → sheet y-down: (0,2000),(1000,2000),(500,0)
     expect(placedPanelPolygonPoints(placed)).toBe('0,2000 1000,2000 500,0');
+  });
+});
+
+/**
+ * The DXF export was the one consumer that still cut the blank RECTANGLE while the viewer drew the
+ * true silhouette from this helper — so a raked/arched/elliptical/polygon panel was mis-cut and its
+ * offcut wasted. The export now reads the numeric variant below.
+ */
+describe('placedPanelPolygonMm — the numeric source the DXF export cuts from', () => {
+  it('returns the same points the SVG string carries', () => {
+    const placed: PlacedPanelLike = {
+      x: 0,
+      y: 0,
+      widthMm: 1000,
+      heightMm: 2200,
+      rotated: false,
+      shape: rakedShape,
+    };
+    expect(placedPanelPolygonMm(placed)).toEqual([
+      { x: 0, y: 2200 },
+      { x: 1000, y: 2200 },
+      { x: 1000, y: 0 },
+      { x: 0, y: 200 },
+    ]);
+  });
+
+  it('a shaped panel is NOT its blank rectangle', () => {
+    const placed: PlacedPanelLike = {
+      x: 0,
+      y: 0,
+      widthMm: 1000,
+      heightMm: 2200,
+      rotated: false,
+      shape: rakedShape,
+    };
+    const outline = placedPanelPolygonMm(placed);
+    expect(outline).toHaveLength(4);
+    // The top edge is raked: its two corners sit at DIFFERENT heights, which a rect can't express.
+    expect(outline?.[2].y).not.toBe(outline?.[3].y);
+  });
+
+  it('stays null for a plain rectangle so the export keeps its rect fallback', () => {
+    const rect: PlacedPanelLike = { x: 0, y: 0, widthMm: 1000, heightMm: 2000, rotated: false };
+    expect(placedPanelPolygonMm(rect)).toBeNull();
   });
 });

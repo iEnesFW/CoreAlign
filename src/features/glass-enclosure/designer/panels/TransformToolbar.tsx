@@ -344,7 +344,32 @@ const SlabFields = ({ slab }: { slab: SceneSlabState }) => {
   const updateSlab = useDesignerStore((s) => s.updateSlab);
 
   const commit = (patch: Partial<SceneSlabState>) => {
-    const candidate = { ...slab, ...patch };
+    // WHY: on a PLAN-ARC slab the bent axis' dimension IS the chord. Writing it with the stale
+    // radius leaves radius+sweep implying the OLD chord, so the bent edge's "fixed" ends jump on
+    // the next render — SlabInspector.commitDimension already re-derives it; this field did not.
+    let effective = patch;
+    const bentAxisKey = (slab.slabArcAxis ?? 'length') === 'length' ? 'lengthMm' : 'depthMm';
+    const chordMm = patch[bentAxisKey];
+    if (chordMm !== undefined && isRealArc(slab.geomArcRadiusMm, slab.geomArcSweepDeg)) {
+      const arc = commitArcOrWarn(
+        {
+          lengthMm: chordMm,
+          rotationDeg: slab.rotationDeg,
+          geomArcRadiusMm: slab.geomArcRadiusMm,
+          geomArcSweepDeg: slab.geomArcSweepDeg,
+        },
+        { kind: 'chordResize', chordMm },
+        t,
+        { pose: 'symmetric', bulge: (slab.geomArcSweepDeg ?? 1) < 0 ? -1 : 1 },
+      );
+      if (!arc) return;
+      effective = {
+        ...patch,
+        geomArcRadiusMm: arc.geomArcRadiusMm,
+        geomArcSweepDeg: arc.geomArcSweepDeg,
+      };
+    }
+    const candidate = { ...slab, ...effective };
     const obstacles = solidObstaclesExcept(new Set([slab.id]));
     if (
       !transformAllowed(
@@ -358,7 +383,7 @@ const SlabFields = ({ slab }: { slab: SceneSlabState }) => {
     ) {
       return;
     }
-    updateSlab(slab.id, patch);
+    updateSlab(slab.id, effective);
   };
 
   return (

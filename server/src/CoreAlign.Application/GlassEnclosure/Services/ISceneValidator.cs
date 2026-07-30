@@ -1,4 +1,5 @@
 using System.Text.Json;
+using CoreAlign.Application.GlassEnclosure.Cutting;
 using CoreAlign.Application.GlassEnclosure.DTOs;
 using CoreAlign.Domain.Entities.GlassEnclosure;
 using CoreAlign.Domain.Enums;
@@ -118,7 +119,7 @@ public class SceneValidator : ISceneValidator
                         run.Id, panel.Id));
                 }
 
-                var panelAreaM2 = (decimal)panel.WidthMm * run.HeightMm / 1_000_000m;
+                var panelAreaM2 = GlassPanelAreaMath.NetAreaM2(run, panel);
                 if (glass.MaxPanelAreaM2 > 0 && panelAreaM2 > glass.MaxPanelAreaM2)
                 {
                     findings.Add(new GlassValidationFindingDto(
@@ -188,7 +189,7 @@ public class SceneValidator : ISceneValidator
                 {
                     foreach (var panel in run.Panels)
                     {
-                        var areaM2 = (decimal)panel.WidthMm * run.HeightMm / 1_000_000m;
+                        var areaM2 = GlassPanelAreaMath.NetAreaM2(run, panel);
                         if (areaM2 > 2m)
                         {
                             findings.Add(new GlassValidationFindingDto(

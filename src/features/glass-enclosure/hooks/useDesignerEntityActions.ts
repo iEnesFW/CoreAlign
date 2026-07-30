@@ -6,6 +6,7 @@ import { developedLengthMm } from '../model/arcGeometry';
 import { combinePanelHardware } from '../model/panelHardware';
 import { createPanelFromTemplate } from '../model/panelDefaults';
 import { moveWallWithAttachments, resolveAttachedRunIds } from '../model/wallAttachment';
+import { blockedByLock, clampWallPatch } from '../model/sceneGuards';
 import { enqueuePersist } from '../model/persistQueue';
 import {
   useAddPanelMutation,
@@ -315,8 +316,14 @@ export const useWallEntityActions = () => {
   const { persistRun } = useRunEntityActions();
 
   // WHY: numeric/inspector wall edits must co-move + persist attached glass exactly like the drag path (onCommitWallMove) — otherwise the glass is left behind (audit §2b) or snaps back on refetch.
-  const commitWallPatch = (wall: SceneWallState, patch: Partial<SceneWallState>) => {
+  const commitWallPatch = (wall: SceneWallState, rawPatch: Partial<SceneWallState>) => {
     const store = useDesignerStore.getState();
+    // WHY the gate runs HERE too: the pose branch below writes the wall through applyScenePatch,
+    // which is a raw scene swap — it never sees `blockedByLock` or `clampWallPatch`. So a LOCKED
+    // wall could still be moved and rotated from the inspector and the transform toolbar, and the
+    // shape floors / opening re-fit were skipped on exactly the edits that reshape the wall.
+    if (blockedByLock(wall, rawPatch)) return;
+    const patch = clampWallPatch(wall, rawPatch);
     const after = { ...wall, ...patch };
     const poseChanged =
       after.originX !== wall.originX ||

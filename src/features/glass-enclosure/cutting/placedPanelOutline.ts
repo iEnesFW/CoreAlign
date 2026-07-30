@@ -38,7 +38,7 @@ export const panelShapeToken = (shape?: PanelCutShapeDto | null): PanelShapeToke
 // Returns null for a plain rectangle so the caller can draw a faster <rect>.
 // panelOutlinePointsMm is bottom-centre, y-up; here we flip to SVG y-down and
 // rotate 90° CW into the placed box when the nester rotated the blank.
-export const placedPanelPolygonPoints = (p: PlacedPanelLike): string | null => {
+export const placedPanelPolygonMm = (p: PlacedPanelLike): { x: number; y: number }[] | null => {
   const shape = p.shape;
   if (!shape) return null;
   // Only a raked or arched top changes the silhouette from the blank rectangle.
@@ -67,13 +67,16 @@ export const placedPanelPolygonPoints = (p: PlacedPanelLike): string | null => {
     points: polyPoints,
   });
 
-  return outline
-    .map((pt) => {
-      const bx = pt.x + originalWidth / 2;
-      const by = blankHeight - pt.y;
-      const sx = p.rotated ? p.x + (blankHeight - by) : p.x + bx;
-      const sy = p.rotated ? p.y + bx : p.y + by;
-      return `${Math.round(sx)},${Math.round(sy)}`;
-    })
-    .join(' ');
+  return outline.map((pt) => {
+    const bx = pt.x + originalWidth / 2;
+    const by = blankHeight - pt.y;
+    const sx = p.rotated ? p.x + (blankHeight - by) : p.x + bx;
+    const sy = p.rotated ? p.y + bx : p.y + by;
+    return { x: Math.round(sx), y: Math.round(sy) };
+  });
 };
+
+export const placedPanelPolygonPoints = (p: PlacedPanelLike): string | null =>
+  placedPanelPolygonMm(p)
+    ?.map((pt) => `${pt.x},${pt.y}`)
+    .join(' ') ?? null;

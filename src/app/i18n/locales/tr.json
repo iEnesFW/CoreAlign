@@ -2819,7 +2819,10 @@
           "RidgeMustExceedEave": "Mahya yüksekliği saçak yüksekliğinden büyük olmalıdır.",
           "RidgeRequired": "Beşik çatı için mahya yüksekliği gereklidir.",
           "EaveRequired": "Beşik çatı için saçak yüksekliği gereklidir.",
-          "PitchRequired": "Beşik çatı için çatı eğimi gereklidir."
+          "PitchRequired": "Beşik çatı için çatı eğimi gereklidir.",
+          "Save": "Çatı parametrelerini kaydet",
+          "Saved": "Çatı parametreleri kaydedildi",
+          "Unsaved": "Kaydedilmemiş değişiklikler var — sunucuya yazmak için kaydedin."
         }
       },
       "Help": {

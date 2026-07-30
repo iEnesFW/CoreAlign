@@ -77,6 +77,12 @@ export const blockedByLock = (
   return Object.keys(patch).some((key) => key !== 'locked');
 };
 
+// WHY deletion needs its own gate: blockedByLock inspects a PATCH, and a delete carries none —
+// so every remove* action wrote straight through and a locked body could be erased from the
+// layer list, the context menu or a multi-delete. The lock is meant to survive exactly that.
+export const blockedByLockOnDelete = (body: { locked?: boolean | null } | undefined): boolean =>
+  Boolean(body?.locked);
+
 const WALL_SHAPE_KEYS = [
   'lengthMm',
   'heightMm',

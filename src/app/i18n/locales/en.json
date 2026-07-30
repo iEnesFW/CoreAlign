@@ -2819,7 +2819,10 @@
           "RidgeMustExceedEave": "Ridge height must be greater than eave height.",
           "RidgeRequired": "Ridge height is required for gable roofs.",
           "EaveRequired": "Eave height is required for gable roofs.",
-          "PitchRequired": "Roof pitch is required for gable roofs."
+          "PitchRequired": "Roof pitch is required for gable roofs.",
+          "Save": "Save roof parameters",
+          "Saved": "Roof parameters saved",
+          "Unsaved": "Unsaved changes — save to write them to the server."
         }
       },
       "Help": {

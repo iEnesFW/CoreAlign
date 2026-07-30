@@ -75,6 +75,8 @@ public interface IGlassProjectPanelRepository
 {
     Task<GlassProjectPanel?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<GlassProjectPanel>> ListByRunAsync(Guid runId, CancellationToken cancellationToken = default);
+    /// <summary>Guards catalogue deletes: glass_project_panels.glass_type_id carries no FK, so a hard-deleted glass type would silently drop panels from the cutting report and the BOM.</summary>
+    Task<bool> AnyUsesGlassTypeAsync(Guid glassTypeId, CancellationToken cancellationToken = default);
     Task AddAsync(GlassProjectPanel panel, CancellationToken cancellationToken = default);
     void Update(GlassProjectPanel panel);
     void Remove(GlassProjectPanel panel);

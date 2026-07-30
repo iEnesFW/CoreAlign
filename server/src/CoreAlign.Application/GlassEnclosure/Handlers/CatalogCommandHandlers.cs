@@ -110,12 +110,24 @@ public class UpdateGlassTypeCommandHandler : IRequestHandler<UpdateGlassTypeComm
 public class DeleteGlassTypeCommandHandler : IRequestHandler<DeleteGlassTypeCommand, Unit>
 {
     private readonly IGlassTypeRepository _repository;
-    public DeleteGlassTypeCommandHandler(IGlassTypeRepository repository) => _repository = repository;
+    private readonly IGlassProjectPanelRepository _panels;
+    public DeleteGlassTypeCommandHandler(IGlassTypeRepository repository, IGlassProjectPanelRepository panels)
+    {
+        _repository = repository;
+        _panels = panels;
+    }
 
     public async Task<Unit> Handle(DeleteGlassTypeCommand request, CancellationToken cancellationToken)
     {
         var glass = await _repository.GetByIdAsync(request.Id, cancellationToken)
             ?? throw new GlassEnclosureNotFoundException("GlassType");
+        // WHY: glass_project_panels.glass_type_id carries no FK, so a hard delete left orphan panels
+        // that the cutting report, the BOM and the technical summary all SILENTLY skipped — the plan
+        // simply came back short. Retire the type with IsActive=false instead.
+        if (await _panels.AnyUsesGlassTypeAsync(request.Id, cancellationToken))
+        {
+            throw new GlassTypeInUseException(glass.Code);
+        }
         _repository.Remove(glass);
         return Unit.Value;
     }

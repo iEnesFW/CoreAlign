@@ -146,6 +146,9 @@ public class GlassProjectPanelRepository : IGlassProjectPanelRepository
     public async Task<IReadOnlyList<GlassProjectPanel>> ListByRunAsync(Guid runId, CancellationToken cancellationToken = default) =>
         await _context.GlassProjectPanels.AsNoTracking().Where(p => p.RunId == runId).OrderBy(p => p.PanelIndex).ToListAsync(cancellationToken);
 
+    public Task<bool> AnyUsesGlassTypeAsync(Guid glassTypeId, CancellationToken cancellationToken = default) =>
+        _context.GlassProjectPanels.AsNoTracking().AnyAsync(p => p.GlassTypeId == glassTypeId, cancellationToken);
+
     public async Task AddAsync(GlassProjectPanel panel, CancellationToken cancellationToken = default) =>
         await _context.GlassProjectPanels.AddAsync(panel, cancellationToken);
     public void Update(GlassProjectPanel panel) => _context.GlassProjectPanels.Update(panel);

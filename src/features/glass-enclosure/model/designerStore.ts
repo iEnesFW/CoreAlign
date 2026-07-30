@@ -24,6 +24,7 @@ import { distributePanelWidths, runPanelTargetMm, withClampedRunLength } from '.
 export { distributePanelWidths } from './runPanelSpan';
 import {
   blockedByLock,
+  blockedByLockOnDelete,
   clampPanelPatch,
   clampRunPatch,
   clampSlabPatch,
@@ -800,6 +801,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeWall: (wallId) => {
     const current = get();
+    if (blockedByLockOnDelete((current.scene.walls ?? []).find((w) => w.id === wallId))) return;
     const next: SceneState = {
       ...current.scene,
       walls: (current.scene.walls ?? []).filter((wall) => wall.id !== wallId),
@@ -1060,6 +1062,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeSlab: (slabId) => {
     const current = get();
+    if (blockedByLockOnDelete((current.scene.slabs ?? []).find((b) => b.id === slabId))) return;
     const next: SceneState = {
       ...current.scene,
       slabs: (current.scene.slabs ?? []).filter((slab) => slab.id !== slabId),
@@ -1092,6 +1095,8 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeSurface: (surfaceId) => {
     const current = get();
+    if (blockedByLockOnDelete((current.scene.surfaces ?? []).find((b) => b.id === surfaceId)))
+      return;
     const next: SceneState = {
       ...current.scene,
       surfaces: (current.scene.surfaces ?? []).filter((surface) => surface.id !== surfaceId),
@@ -1298,6 +1303,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   removeRun: (runId) => {
     const current = get();
+    if (blockedByLockOnDelete(current.scene.runs.find((r) => r.id === runId))) return;
     const next: SceneState = {
       ...current.scene,
       runs: reindexRuns(current.scene.runs.filter((r) => r.id !== runId)),
@@ -1556,6 +1562,11 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
       mullionsByRun.size === 0 &&
       colorByRun.size === 0 &&
       lockedByRun.size === 0 &&
+      // WHY these two belong in the early-return test: they are blob-only carries just like the
+      // maps above, so a scene whose ONLY restorable state was a host bond or a mount override
+      // bailed out here and lost it — the pane snapped back to free-standing depth on reload.
+      hostByRun.size === 0 &&
+      mountByRun.size === 0 &&
       snapshotWalls.length === 0 &&
       snapshotSlabs.length === 0 &&
       snapshotSurfaces.length === 0
@@ -1632,7 +1643,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         ridgeHeightMm: patch.ridgeHeightMm ?? s.project.ridgeHeightMm,
         eaveHeightMm: patch.eaveHeightMm ?? s.project.eaveHeightMm,
       };
-      return { project: next, isDirty: true };
+      // WHY no isDirty: the roof fields live on the PROJECT row, not in the scene blob autosave
+      // writes. Marking dirty made autosave push sceneJson and then call markSaved(), so the UI
+      // reported "saved" while the pitch/ridge/eave never reached the server and a refresh
+      // silently restored the old values. This setter is the LIVE PREVIEW only —
+      // PitchedRoofInspector persists through configureEnclosure.
+      return { project: next };
     }),
 
   undo: () => {
