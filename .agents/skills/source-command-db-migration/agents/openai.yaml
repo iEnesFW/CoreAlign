@@ -1,0 +1,4 @@
+interface:
+  display_name: 'CoreAlign DB Migration'
+  short_description: 'Create and verify CoreAlign EF migrations safely'
+  default_prompt: 'Use $source-command-db-migration to create and verify this CoreAlign migration.'

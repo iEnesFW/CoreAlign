@@ -1,0 +1,4 @@
+interface:
+  display_name: 'CoreAlign New Module'
+  short_description: 'Scaffold a CoreAlign FSD and CQRS module'
+  default_prompt: 'Use $source-command-new-module to implement this CoreAlign module.'

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'CoreAlign New Endpoint'
+  short_description: 'Build a tenant-safe CoreAlign API endpoint'
+  default_prompt: 'Use $source-command-new-endpoint to implement this CoreAlign API endpoint.'
