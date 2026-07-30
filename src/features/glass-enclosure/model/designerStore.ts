@@ -1197,9 +1197,19 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
           s.multiSelection.wallIds.length +
           s.multiSelection.slabIds.length >
         0;
-      return selection.kind && hasMulti
-        ? { selection, multiSelection: EMPTY_MULTI_SELECTION }
-        : { selection };
+      if (!selection.kind || !hasMulti) return { selection };
+      // WHY the membership test: grabbing one of several selected bodies must KEEP the group.
+      // Every gesture calls onPick (which lands here) before it captures the siblings it is about
+      // to co-move, so clearing unconditionally dissolved the multi-selection on the first frame of
+      // the drag and only the held body moved. Picking a body OUTSIDE the group still replaces it,
+      // which is what a plain click on empty geometry should do.
+      const picksMember =
+        (selection.runId !== null && s.multiSelection.runIds.includes(selection.runId)) ||
+        (typeof selection.wallId === 'string' &&
+          s.multiSelection.wallIds.includes(selection.wallId)) ||
+        (typeof selection.slabId === 'string' &&
+          s.multiSelection.slabIds.includes(selection.slabId));
+      return picksMember ? { selection } : { selection, multiSelection: EMPTY_MULTI_SELECTION };
     }),
   setQuality: (quality) => set({ quality }),
   toggleAnnotations: () => set((s) => ({ showAnnotations: !s.showAnnotations })),
