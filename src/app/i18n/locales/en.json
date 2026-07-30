@@ -2730,7 +2730,8 @@
         "Title": "Curve (arc)",
         "WarnJointAngle": "Joint angle {{deg}}° — increase the panel count for faceting (recommended ≤10°).",
         "WarnSliding": "Sliding panels cannot run on a curved track with flat glass — enable bent glass or change the opening type.",
-        "WarnTightRadius": "Tight radius ({{r}} mm) — verify the system manufacturer minimum (typically ≥1500 mm)."
+        "WarnTightRadius": "Tight radius ({{r}} mm) — verify the system manufacturer minimum (typically ≥1500 mm).",
+        "RadiusAmbiguousOnMajor": "On an arc wider than 180° the radius alone is ambiguous — change the depth from the sweep field."
       },
       "ArcMinRadiusInfo": "Min. radius {{min}} mm",
       "ArcStraightInfo": "0 = straight run; enter a radius to curve this run.",

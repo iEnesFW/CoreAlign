@@ -5,8 +5,15 @@ import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
 import { useSettingsQuery } from '../hooks/useGlassEnclosureQueries';
 import { useRunEntityActions } from '../hooks/useDesignerEntityActions';
-import { deriveArcFromRadius, facetJointAngleDeg, isRealArc } from '../model/arcGeometry';
+import {
+  bowFromArc,
+  facetJointAngleDeg,
+  isRealArc,
+  radiusFromChordSweep,
+  resolveArc,
+} from '../model/arcGeometry';
 import { arcCommitKeepingEnds } from '../geometry/arcCommit';
+import type { ArcDerived } from '../model/arcGeometry';
 import type { ArcCommitInput } from '../geometry/arcCommit';
 import type { ScenePanelState, SceneRunState } from '../model/project.types';
 
@@ -23,6 +30,24 @@ interface RunArcSectionProps {
 
 const WARN_MIN_RADIUS_MM = 1500;
 const WARN_JOINT_ANGLE_DEG = 10;
+
+/**
+ * Read-out geometry for the CURRENT curve. The stored sweep is authoritative (it is the only thing
+ * that distinguishes a major arc from its minor twin on the same chord and radius); the radius is
+ * re-derived from chord + sweep so a rounded/legacy column cannot skew the numbers the user reads.
+ */
+const resolveDisplayArc = (run: SceneRunState): ArcDerived => {
+  const sweepDeg = run.geomArcSweepDeg ?? 0;
+  const radiusMm = radiusFromChordSweep(run.lengthMm, run.geomArcRadiusMm, sweepDeg);
+  const resolved = resolveArc(radiusMm, sweepDeg);
+  return {
+    radiusMm: Math.round(radiusMm),
+    sweepDeg: Math.abs(sweepDeg),
+    chordMm: Math.round(run.lengthMm),
+    sagittaMm: Math.round(Math.abs(bowFromArc(run.lengthMm, radiusMm, sweepDeg))),
+    arcLengthMm: Math.round(resolved.arcLengthMm),
+  };
+};
 
 export function RunArcSection({
   draft,
@@ -42,10 +67,12 @@ export function RunArcSection({
   const [chordDraft, setChordDraft] = useState('');
   const [sagittaDraft, setSagittaDraft] = useState('');
 
-  const radius = draft.geomArcRadiusMm ?? 0;
   const isArc = isRealArc(draft.geomArcRadiusMm, draft.geomArcSweepDeg);
-  // draft.lengthMm is the chord (the fixed span); radius → minor sweep = 2·asin(chord/2r).
-  const derived = isArc ? deriveArcFromRadius(draft.lengthMm, radius) : null;
+  // WHY read the STORED sweep instead of re-deriving it from the chord: 2·asin(chord/2r) can only
+  // return a MINOR arc, so a 270° run was displayed as 90° and its developed length as 2356 mm
+  // instead of 7069 mm — a third of the glass. Someone ordering bent glass off this readout would
+  // order a third of what the run needs. TechnicalSummary already resolves it this way.
+  const derived = isArc ? resolveDisplayArc(draft) : null;
   const jointAngle = derived ? facetJointAngleDeg(derived.sweepDeg, panels.length) : 0;
   const hasSlidingPanels = panels.some(
     (p) => p.openingType === 'SlidingLeft' || p.openingType === 'SlidingRight',
@@ -86,7 +113,27 @@ export function RunArcSection({
     return true;
   };
 
+  // A stored sweep past 180° is a MAJOR arc; radius alone cannot express it (deriveArcFromRadius
+  // returns 2·asin(chord/2r) ≤ 180°, i.e. the minor twin on the same chord and radius).
+  const isMajorArc = Math.abs(draft.geomArcSweepDeg ?? 0) > 180;
+
   const commitRadius = (raw: number) => {
+    // WHY the no-op guard: this fires on BLUR, so merely clicking into the field to read the value
+    // and clicking away used to re-commit it — and on a major arc that silently collapsed a 270°
+    // curve to its 90° twin. Nothing the user typed, nothing they could undo by re-typing.
+    if (raw === committedArcRadiusMm) return;
+    if (raw > 0 && isMajorArc) {
+      queueToast({
+        dedupeKey: 'glass-arc-radius-major',
+        variant: 'warning',
+        description: t('GlassEnclosure.Designer.Arc.RadiusAmbiguousOnMajor', {
+          defaultValue:
+            '180°’den geniş bir kaviste yarıçap tek başına belirsizdir — derinliği yay açısı alanından değiştirin.',
+        }),
+      });
+      onDraftRadius(committedArcRadiusMm);
+      return;
+    }
     applyArc(
       raw > 0 ? { kind: 'radius', radiusMm: Math.max(minRadius, raw) } : { kind: 'straighten' },
     );

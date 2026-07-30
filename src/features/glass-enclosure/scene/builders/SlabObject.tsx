@@ -2,9 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Edges, Line } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { useTranslation } from 'react-i18next';
-import { DoubleSide, ExtrudeGeometry, ShapeGeometry, Vector3 } from 'three';
+import { DoubleSide, ExtrudeGeometry, Raycaster, ShapeGeometry, Vector3 } from 'three';
 import type { ThreeEvent } from '@react-three/fiber';
-import type { Group, Texture, BufferGeometry } from 'three';
+import type { Group, Mesh, Texture, BufferGeometry } from 'three';
 import {
   isShiftPressed,
   setDragReadout,
@@ -106,6 +106,8 @@ interface SlabObjectProps {
   ) => void;
   onPenFaceFinish?: () => void;
 }
+
+const FACE_PICK_RAYCASTER = new Raycaster();
 
 const FLOOR_COLOR = '#b7bfc7';
 const ROOF_COLOR = '#8c98a4';
@@ -411,6 +413,17 @@ export function SlabObject({
 
   const groupRef = useRef<Group>(null);
   const bodyRef = useRef<Group>(null);
+  const faceMeshRef = useRef<Mesh>(null);
+  // WHY: during a captured pen drag R3F hands back the CAPTURE-TIME intersection whenever the fresh
+  // ray misses the mesh, so a cursor that briefly leaves the slab face recorded a spike back to the
+  // stroke origin. Re-pick against the body; a miss means SKIP the sample, never store a stale one.
+  const freshFaceHitPoint = (e: ThreeEvent<PointerEvent>): Vector3 | null => {
+    const mesh = faceMeshRef.current;
+    if (!mesh) return e.point;
+    FACE_PICK_RAYCASTER.ray.copy(e.ray);
+    const hits = FACE_PICK_RAYCASTER.intersectObject(mesh, false);
+    return hits.length > 0 ? hits[0].point : null;
+  };
   const drawSessionRef = useRef<{
     x0: number;
     z0: number;
@@ -857,7 +870,8 @@ export function SlabObject({
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
     if (penFreehandRef.current) {
-      const local = penFacePoint(e.point);
+      const fresh = freshFaceHitPoint(e);
+      const local = fresh ? penFacePoint(fresh) : null;
       if (!local) return;
       const session = useDesignerStore.getState().penFace;
       const last = session?.points[session.points.length - 1];
@@ -868,7 +882,9 @@ export function SlabObject({
       return;
     }
     const arc = penArcRef.current;
-    const local = penFacePoint(e.point);
+    // Mid-drag samples are dropped on a miss; a plain hover has no capture to go stale.
+    const point = freshFaceHitPoint(e) ?? (arc?.active ? null : e.point);
+    const local = point ? penFacePoint(point) : null;
     if (!local) return;
     if (arc?.active) {
       const session = useDesignerStore.getState().penFace;
@@ -1415,6 +1431,7 @@ export function SlabObject({
       >
         <group ref={bodyRef}>
           <mesh
+            ref={faceMeshRef}
             geometry={body}
             castShadow
             receiveShadow

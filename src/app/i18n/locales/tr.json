@@ -2730,7 +2730,8 @@
         "Title": "Kavis (arc)",
         "WarnJointAngle": "Eklem açısı {{deg}}° — faseta için panel sayısını artırın (önerilen ≤10°).",
         "WarnSliding": "Kayar paneller kavisli rayda düz camla çalışmaz — bombeli cam modunu açın veya açılım tipini değiştirin.",
-        "WarnTightRadius": "Dar yarıçap ({{r}} mm) — sistem üreticisinin minimumunu doğrulayın (tipik ≥1500 mm)."
+        "WarnTightRadius": "Dar yarıçap ({{r}} mm) — sistem üreticisinin minimumunu doğrulayın (tipik ≥1500 mm).",
+        "RadiusAmbiguousOnMajor": "180°’den geniş bir kaviste yarıçap tek başına belirsizdir — derinliği yay açısı alanından değiştirin."
       },
       "ArcMinRadiusInfo": "Min. yarıçap {{min}} mm",
       "ArcStraightInfo": "0 = düz cephe; kavis için yarıçap girin.",

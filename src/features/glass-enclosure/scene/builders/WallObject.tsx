@@ -54,6 +54,7 @@ import {
 import { EMPTY_SNAP_TARGETS, filterSnapTargets, lineProbePoints } from '../interaction/planSnap';
 import {
   buildRunFootprint,
+  buildSlabFootprint,
   buildWallFootprint,
   clampPlanStretch,
   footprintsPenetrate,
@@ -113,6 +114,8 @@ import type { PlanMoveDelta, PlanPoint, PlanSnapTargets } from '../interaction/p
 import type { PlanFootprint } from '../interaction/planCollision';
 import type { ComposedFeature, FeatureOutlineSpec } from '../../model/wallFeatureGeometry';
 import type {
+  SceneRunState,
+  SceneSlabState,
   SceneWallFeature,
   SceneWallFeaturePoint,
   SceneWallOpening,
@@ -760,6 +763,15 @@ export function WallObject({
     [supports, wall.id],
   );
   const isMultiMember = multiSelectionHas(multiSelection, 'wall', wall.id);
+  // WHY snapshot the co-moving BODIES: gestureObstacles removes multi-selection members from the
+  // obstacle list because they travel with this wall — but footprintAt never added them to the
+  // MOVING set, so the clamp never saw them. That asymmetry let a selected glass run be dragged
+  // straight into an unselected wall with no rejection. Exclusion and motion must be symmetric.
+  const multiBodiesRef = useRef<{
+    walls: SceneWallState[];
+    runs: SceneRunState[];
+    slabs: SceneSlabState[];
+  }>({ walls: [], runs: [], slabs: [] });
   const canStack = Boolean(onStackWall) && !isMultiMember;
   const restElevAt = (dxMm: number, dyMm: number) =>
     restElevationMm(
@@ -807,10 +819,14 @@ export function WallObject({
     footprintAt: (dxMm, dyMm, rotationDeg) => {
       const own = buildWallFootprint(wall, dxMm, dyMm, rotationDeg);
       if (rotationDeg !== wall.rotationDeg) return own;
+      const moving = multiBodiesRef.current;
       return [
         own,
         ...coMove.groupWalls.map((w) => buildWallFootprint(w, dxMm, dyMm, w.rotationDeg)),
         ...coMove.runs.map((r) => buildRunFootprint(r, dxMm, dyMm, r.rotationDeg)),
+        ...moving.walls.map((w) => buildWallFootprint(w, dxMm, dyMm, w.rotationDeg)),
+        ...moving.runs.map((r) => buildRunFootprint(r, dxMm, dyMm, r.rotationDeg)),
+        ...moving.slabs.map((b) => buildSlabFootprint(b, dxMm, dyMm, b.rotationDeg)),
       ];
     },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
@@ -828,6 +844,18 @@ export function WallObject({
     onPick: () => onSelect(wall.id),
     onGestureStart: () => {
       const multi = useDesignerStore.getState().multiSelection;
+      const gestureScene = useDesignerStore.getState().scene;
+      multiBodiesRef.current = multiSelectionHas(multi, 'wall', wall.id)
+        ? {
+            walls: (gestureScene.walls ?? []).filter(
+              (w) => w.id !== wall.id && multi.wallIds.includes(w.id),
+            ),
+            runs: gestureScene.runs.filter(
+              (r) => multi.runIds.includes(r.id) && !coMove.runs.some((cr) => cr.id === r.id),
+            ),
+            slabs: (gestureScene.slabs ?? []).filter((b) => multi.slabIds.includes(b.id)),
+          }
+        : { walls: [], runs: [], slabs: [] };
       const multiSiblings = multiSelectionHas(multi, 'wall', wall.id)
         ? captureMultiSnapshots(useDesignerStore.getState().scene, multi, {
             kind: 'wall',
@@ -1098,8 +1126,11 @@ export function WallObject({
   const drawArcUvRef = useRef<{ x: number; z: number } | null>(null);
   const bandMeshRef = useRef<Mesh>(null);
   // WHY: during a captured drag R3F delivers the CAPTURE-TIME intersection whenever the fresh ray
-  // misses the mesh — re-picking from that stale e.point snapped arc strokes back to their start.
-  const freshArcHitPoint = (e: ThreeEvent<PointerEvent>): Vector3 | null => {
+  // misses the mesh — re-picking from that stale e.point snapped strokes back to their start. The
+  // gate used to be arc-only, but bandMeshRef is the body mesh for a STRAIGHT wall too and the
+  // capture is taken there as well: dragging the cursor briefly off a straight wall face injected a
+  // spike back to the stroke origin. A missed ray means SKIP the sample, never record a stale one.
+  const freshFaceHitPoint = (e: ThreeEvent<PointerEvent>): Vector3 | null => {
     const mesh = bandMeshRef.current;
     if (!mesh) return e.point;
     ARC_PICK_RAYCASTER.ray.copy(e.ray);
@@ -1195,7 +1226,7 @@ export function WallObject({
   const handleDrawPointerMove = (e: ThreeEvent<PointerEvent>) => {
     const session = drawSessionRef.current;
     if (isArcWall && session) {
-      const point = freshArcHitPoint(e);
+      const point = freshFaceHitPoint(e);
       const uv = point ? faceUvMm(point, session.side) : null;
       if (uv) drawArcUvRef.current = clampToFace(uv.u, uv.v, session.side);
     }
@@ -1295,7 +1326,9 @@ export function WallObject({
     if (!arc?.active) return;
     (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
     const session = useDesignerStore.getState().penFace;
-    const point = isArcWall ? freshArcHitPoint(e) : e.point;
+    // On the FINAL sample a miss must not throw the arc away — fall back to the captured point so
+    // releasing just off the face still commits the curve the user was previewing.
+    const point = freshFaceHitPoint(e) ?? e.point;
     const local = point ? penFacePoint(point, e.face?.normal) : null;
     if (!session || !local) return;
     penSuppressClickRef.current = true;
@@ -1313,7 +1346,7 @@ export function WallObject({
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
     if (penFreehandRef.current) {
-      const point = isArcWall ? freshArcHitPoint(e) : e.point;
+      const point = freshFaceHitPoint(e);
       const local = point ? penFacePoint(point, e.face?.normal) : null;
       if (!local) return;
       const session = useDesignerStore.getState().penFace;
@@ -1325,7 +1358,9 @@ export function WallObject({
       return;
     }
     const arc = penArcRef.current;
-    const point = isArcWall && arc?.active ? freshArcHitPoint(e) : e.point;
+    // Mid-drag samples are dropped on a miss (a stale point spikes the preview); a plain hover has
+    // no capture to go stale, so it may fall back.
+    const point = freshFaceHitPoint(e) ?? (arc?.active ? null : e.point);
     const local = point ? penFacePoint(point, e.face?.normal) : null;
     if (!local) return;
     if (arc?.active) {
