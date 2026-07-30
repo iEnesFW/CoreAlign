@@ -2011,7 +2011,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onCameraChange={setCamera}
         onPointerMissed={clearSelection}
       >
-        <group ref={registerExportRoot}>
+        <group ref={registerExportRoot} name="designer-root">
           {layerVisibility.runs && renderGeometry()}
           {layerVisibility.runs && scene.connections.length > 0 && (
             <ConnectionPosts

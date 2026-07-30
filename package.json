@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "designer:probe": "node e2e/designer/harness.mjs",
     "e2e": "playwright test --config=e2e/playwright.config.ts",
     "e2e:admin": "playwright test --config=e2e/playwright.config.ts --project=admin",
     "e2e:customer": "playwright test --config=e2e/playwright.config.ts --project=customer-portal",

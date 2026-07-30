@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useStore, useThree } from '@react-three/fiber';
 import {
   ContactShadows,
   Environment,
@@ -33,6 +33,39 @@ interface OrbitLike {
 }
 
 const CAMERA_SAVE_DEBOUNCE_MS = 450;
+
+/**
+ * Dev/E2E-only handle on the live render surface: scene, camera, renderer and canvas.
+ *
+ * WHY this is needed to test the designer at all: the store hook proves what was AUTHORED, but the
+ * defects that matter here happen AFTER that — a carve that comes out inside-out, a body that
+ * renders somewhere other than where its numbers say. Reading the scene graph catches those. The
+ * CAMERA is the second half: driving a real pointer drag means knowing which PIXEL a corner handle
+ * occupies, and the only honest way to get that is to project the world point through the same
+ * camera the renderer uses.
+ */
+function RenderSurfaceExporter() {
+  // WHY: useStore() is the stable zustand store; useThree() returns a fresh state object on every
+  // camera/size change, which would tear down and re-install the handle constantly and leave a
+  // window where the harness sees it missing.
+  const store = useStore();
+  useEffect(() => {
+    const w = window as unknown as {
+      __E2E__?: boolean;
+      __CAD_R3F__?: () => unknown;
+    };
+    if (!import.meta.env.DEV && !w.__E2E__) return;
+    const handle = () => store.getState();
+    w.__CAD_R3F__ = handle;
+    return () => {
+      // WHY: each Canvas owns its own React root, so a remount can run the OLD root's cleanup
+      // AFTER the new root's effect. Deleting unconditionally would leave the handle pointing at a
+      // disposed renderer whose GL context is lost. Only retract our own registration.
+      if (w.__CAD_R3F__ === handle) delete w.__CAD_R3F__;
+    };
+  }, [store]);
+  return null;
+}
 
 function CameraSync({
   initialCamera,
@@ -212,6 +245,7 @@ export function SceneViewport({
             maxPolarAngle={Math.PI / 2.05}
           />
           <CameraSync initialCamera={initialCamera} onChange={onCameraChange} />
+          <RenderSurfaceExporter />
 
           <hemisphereLight
             args={['#dce6f2', resolvedAppearance.ground ?? '#8a9099', presentation ? 0.35 : 0.55]}
