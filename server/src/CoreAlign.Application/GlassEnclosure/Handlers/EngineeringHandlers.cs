@@ -471,6 +471,36 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
     };
 }
 
+public class GetGlass2DNestingReportQueryHandler
+    : IRequestHandler<GetGlass2DNestingReportQuery, Glass2DNestingReportDto?>
+{
+    private readonly IGlassProjectCuttingPlanRepository _planRepo;
+
+    public GetGlass2DNestingReportQueryHandler(IGlassProjectCuttingPlanRepository planRepo) =>
+        _planRepo = planRepo;
+
+    public async Task<Glass2DNestingReportDto?> Handle(
+        GetGlass2DNestingReportQuery request,
+        CancellationToken cancellationToken)
+    {
+        var plan = await _planRepo.GetLatestAsync(
+            request.ProjectId,
+            GlassCuttingPlanType.Glass2DNesting,
+            cancellationToken);
+        if (plan is null) return null;
+        // A stored row whose payload no longer parses (an older shape) is treated as absent rather
+        // than crashing the panel — the user can simply re-run the optimisation.
+        try
+        {
+            return JsonSerializer.Deserialize<Glass2DNestingReportDto>(plan.PlanJson);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+}
+
 public class GetCuttingReportQueryHandler : IRequestHandler<GetCuttingReportQuery, CuttingReportDto?>
 {
     private readonly IGlassProjectCuttingPlanRepository _planRepo;

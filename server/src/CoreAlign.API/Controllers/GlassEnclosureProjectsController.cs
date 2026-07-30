@@ -245,6 +245,11 @@ public class GlassEnclosureProjectsController : ControllerBase
             body?.GuillotineOnly ?? false,
             body?.AllowRotation ?? true), ct)).ToOk();
 
+    [HttpGet("{id:guid}/nesting-plan")]
+    [Authorize(Policy = GlassEnclosurePolicies.CuttingReportDownload)]
+    public async Task<IActionResult> GetGlass2DNestingReport(Guid id, CancellationToken ct) =>
+        (await _mediator.Send(new GetGlass2DNestingReportQuery(id), ct)).ToOk();
+
     [HttpGet("{id:guid}/cutting-plan")]
     [Authorize(Policy = GlassEnclosurePolicies.CuttingReportDownload)]
     public async Task<IActionResult> GetCuttingReport(Guid id, CancellationToken ct) =>

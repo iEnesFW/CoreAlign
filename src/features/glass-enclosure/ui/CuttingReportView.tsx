@@ -3,6 +3,7 @@ import { FileDown, RotateCw } from 'lucide-react';
 import type {
   CuttingPattern1DDto,
   CuttingReportDto,
+  CuttingResult1DDto,
   CuttingSheet2DDto,
 } from '../model/engineering.types';
 import {
@@ -73,6 +74,16 @@ export function CuttingReportView({ report, onRegenerate, isGenerating }: Cuttin
   );
 }
 
+// The stock lengths actually packed, taken from the patterns. A plan mixing a 6 m and a 7 m
+// profile is reported as both, not as whichever length the tenant default happens to hold.
+const stockBarLabel = (r: CuttingResult1DDto): string => {
+  const lengths = [...new Set<number>((r.patterns ?? []).map((p) => p.stockBarLengthMm))].sort(
+    (a, b) => a - b,
+  );
+  if (lengths.length === 0) return `${r.stockBarLengthMm} mm`;
+  return lengths.map((mm) => `${mm} mm`).join(' · ');
+};
+
 const ProfileSection = ({ report }: { report: CuttingReportDto }) => {
   const { t } = useTranslation();
   const r = report.profile1D;
@@ -94,7 +105,13 @@ const ProfileSection = ({ report }: { report: CuttingReportDto }) => {
 
       <Stats
         stats={[
-          { label: t('GlassEnclosure.Cutting.StockBar'), value: `${r.stockBarLengthMm} mm` },
+          {
+            label: t('GlassEnclosure.Cutting.StockBar'),
+            // WHY read the patterns: r.stockBarLengthMm is only the tenant FALLBACK. Bars are
+            // packed per PROFILE (a 7 m profile never shares a 6 m bar), so a mixed plan was
+            // headlined with a length half its bars never used.
+            value: stockBarLabel(r),
+          },
           { label: t('GlassEnclosure.Cutting.Bars'), value: r.totalBars.toString() },
           { label: t('GlassEnclosure.Cutting.Cuts'), value: r.totalCuts.toString() },
           {

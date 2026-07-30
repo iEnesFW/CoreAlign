@@ -372,6 +372,15 @@ export const useCuttingReportQuery = (id: string | null) =>
     enabled: id !== null,
   });
 
+// WHY persist-backed: the optimisation used to live only in React state, so switching tabs threw
+// away work the server had already stored in a plan row nobody read back.
+export const useGlass2DNestingReportQuery = (id: string | null) =>
+  useQuery({
+    queryKey: glassProjectKeys.nestingPlan(id),
+    queryFn: () => glassProjectsApi.getGlass2DNestingReport(id as string),
+    enabled: id !== null,
+  });
+
 export const useGenerateCuttingPlanMutation = () => {
   const qc = useQueryClient();
   return useMutation({
@@ -385,8 +394,10 @@ export const useOptimize2DNestingMutation = () => {
   return useMutation({
     mutationFn: (args: { id: string; input: Optimize2DNestingInput }) =>
       glassProjectsApi.optimize2DNesting(args.id, args.input),
-    onSuccess: (_, args) =>
-      qc.invalidateQueries({ queryKey: glassProjectKeys.cuttingPlan(args.id) }),
+    onSuccess: (_, args) => {
+      void qc.invalidateQueries({ queryKey: glassProjectKeys.cuttingPlan(args.id) });
+      void qc.invalidateQueries({ queryKey: glassProjectKeys.nestingPlan(args.id) });
+    },
   });
 };
 

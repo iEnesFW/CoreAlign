@@ -152,6 +152,11 @@ export const glassProjectsApi = {
   optimize2DNesting: (id: string, input: Optimize2DNestingInput) =>
     post<Glass2DNestingReportDto>(`/${id}/optimize-2d-nesting`, input),
 
+  getGlass2DNestingReport: (id: string) =>
+    apiClient
+      .get<ApiResponse<Glass2DNestingReportDto | null>>(`${BASE}/${id}/nesting-plan`)
+      .then((r) => r.data),
+
   getCuttingReport: (id: string) =>
     apiClient
       .get<ApiResponse<CuttingReportDto | null>>(`${BASE}/${id}/cutting-plan`)

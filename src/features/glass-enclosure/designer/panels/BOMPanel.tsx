@@ -7,6 +7,7 @@ import { useDesignerUxMode } from '@/shared/lib/persona';
 import { QuoteSummaryView } from '@/features/glass-enclosure/ui/QuoteSummaryView';
 import { Optimize2DButton } from '@/features/glass-enclosure/cutting/Optimize2DButton';
 import { Glass2DNestingViewer } from '@/features/glass-enclosure/cutting/Glass2DNestingViewer';
+import { useGlass2DNestingReportQuery } from '@/features/glass-enclosure/hooks/useGlassProjectQueries';
 import type {
   BOMSummaryDto,
   Glass2DNestingReportDto,
@@ -34,7 +35,11 @@ export const BOMPanel = ({
   const mode = useDesignerUxMode();
   const isSimple = mode === 'Simple';
   const [nestingOpen, setNestingOpen] = useState(false);
-  const [nestingReport, setNestingReport] = useState<Glass2DNestingReportDto | null>(null);
+  // WHY hydrate from the server: the last run is persisted as a plan row, so re-opening the modal
+  // (or the page) shows it again instead of an empty viewer that discards work already paid for.
+  const savedNesting = useGlass2DNestingReportQuery(nestingOpen ? project.id : null);
+  const [freshNesting, setFreshNesting] = useState<Glass2DNestingReportDto | null>(null);
+  const nestingReport = freshNesting ?? savedNesting.data?.data ?? null;
 
   const title = isSimple
     ? t('GlassEnclosure.Designer.Shell.BomTitleSimple', { defaultValue: 'Malzeme Listesi' })
@@ -151,7 +156,7 @@ export const BOMPanel = ({
           <div className="flex justify-end">
             <Optimize2DButton
               projectId={project.id}
-              onOptimized={(report) => setNestingReport(report)}
+              onOptimized={(report) => setFreshNesting(report)}
             />
           </div>
           <Glass2DNestingViewer report={nestingReport} />

@@ -12,6 +12,7 @@ export const glassProjectKeys = {
   validation: (id: string | null) => [...glassProjectKeys.all, 'validation', id] as const,
   bom: (id: string | null) => [...glassProjectKeys.all, 'bom', id] as const,
   cuttingPlan: (id: string | null) => [...glassProjectKeys.all, 'cutting-plan', id] as const,
+  nestingPlan: (id: string | null) => [...glassProjectKeys.all, 'nesting-plan', id] as const,
   technicalSummary: (id: string | null) =>
     [...glassProjectKeys.all, 'technical-summary', id] as const,
   shareTokens: (id: string | null) => [...glassProjectKeys.all, 'share-tokens', id] as const,

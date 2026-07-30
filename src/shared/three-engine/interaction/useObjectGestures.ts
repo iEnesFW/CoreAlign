@@ -196,8 +196,28 @@ export function useObjectGestures({
     return isCtrlPressed() ? Math.round(target) : snapAngleDeg(target);
   };
 
+  // The footprint this body (plus everything co-moving with it) occupies at a given angle. Both
+  // the preview and the commit resolve the clamp through this, so they cannot drift apart.
+  const footprintAtAngle = (deg: number) => {
+    const origin = rotatePlanPointDeg(
+      adapter.originXMm,
+      adapter.originYMm,
+      adapter.centerXMm,
+      adapter.centerYMm,
+      deg - adapter.rotationDeg,
+    );
+    return adapter.footprintAt(origin.x - adapter.originXMm, origin.y - adapter.originYMm, deg);
+  };
+
   const applyRotatePreview = (delta: DragDeltaMm) => {
-    const nextDeg = delta.x === 0 && delta.z === 0 ? adapter.rotationDeg : resolveAngle(delta);
+    const raw = delta.x === 0 && delta.z === 0 ? adapter.rotationDeg : resolveAngle(delta);
+    // WHY clamp the PREVIEW too: the commit clamps against neighbours but the preview did not, so
+    // the body span visibly further than it was allowed to turn and snapped back on release —
+    // indistinguishable from the edit being rejected outright.
+    const nextDeg =
+      raw === adapter.rotationDeg
+        ? raw
+        : clampPlanRotation(footprintAtAngle, obstacles, adapter.rotationDeg, raw);
     lastAngleRef.current = nextDeg;
     const sweepDeg = nextDeg - adapter.rotationDeg;
     const origin = rotatePlanPointDeg(
@@ -242,21 +262,7 @@ export function useObjectGestures({
       resetIdle();
       return;
     }
-    const clamped = clampPlanRotation(
-      (deg) => {
-        const origin = rotatePlanPointDeg(
-          adapter.originXMm,
-          adapter.originYMm,
-          adapter.centerXMm,
-          adapter.centerYMm,
-          deg - adapter.rotationDeg,
-        );
-        return adapter.footprintAt(origin.x - adapter.originXMm, origin.y - adapter.originYMm, deg);
-      },
-      obstacles,
-      adapter.rotationDeg,
-      targetDeg,
-    );
+    const clamped = clampPlanRotation(footprintAtAngle, obstacles, adapter.rotationDeg, targetDeg);
     const sweepDeg = clamped - adapter.rotationDeg;
     if (sweepDeg === 0) {
       resetIdle();

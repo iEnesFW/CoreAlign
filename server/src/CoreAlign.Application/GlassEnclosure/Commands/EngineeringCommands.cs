@@ -26,4 +26,7 @@ public record GetBomPreviewQuery(Guid ProjectId) : IRequest<BOMSummaryDto>;
 
 public record GetCuttingReportQuery(Guid ProjectId) : IRequest<CuttingReportDto?>;
 
+/// <summary>Latest persisted advanced-nesting run. The optimisation was written to a plan row but never read back, so it lived only in React state and vanished on the next tab switch.</summary>
+public record GetGlass2DNestingReportQuery(Guid ProjectId) : IRequest<Glass2DNestingReportDto?>;
+
 public record GetTechnicalSummaryQuery(Guid ProjectId) : IRequest<TechnicalSummaryDto>;
