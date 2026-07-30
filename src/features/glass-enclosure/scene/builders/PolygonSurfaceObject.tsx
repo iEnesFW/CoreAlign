@@ -16,7 +16,11 @@ import { edgeColorFor } from './edgeColor';
 import { SurfaceVertexHandles } from '../interaction/SurfaceVertexHandles';
 import { SurfaceEdgeBowHandles } from '../interaction/SurfaceEdgeBowHandles';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
-import { buildSurfaceFootprint, restElevationMm } from '../interaction/planCollision';
+import {
+  buildSurfaceFootprint,
+  liftToClearMm,
+  restElevationMm,
+} from '../interaction/planCollision';
 import { polygonSelfIntersects } from '../../model/polygonValidation';
 import { bowedPolygonOutline } from '../../model/edgeArcOutline';
 import { useDesignerStore } from '../../model/designerStore';
@@ -159,6 +163,15 @@ export function PolygonSurfaceObject({
   // this surface's own footprint by ownerId, so it never rests on itself.
   const restElevationAt = (dxMm: number, dyMm: number) =>
     restElevationMm(buildSurfaceFootprint(surface, dxMm, dyMm), supportFootprints, 0);
+  // A plain drag keeps the elevation, but keeping it blindly let the plate slide straight THROUGH
+  // a wall — a surface has no lateral collision at all. Rise onto whatever it would intersect.
+  const clearedElevationAt = (dxMm: number, dyMm: number) =>
+    liftToClearMm(
+      buildSurfaceFootprint(surface, dxMm, dyMm),
+      supportFootprints,
+      surface.elevationMm,
+      surface.thicknessMm,
+    );
 
   const moveEnabled = interactive && activeTool === 'move' && !surface.locked;
   const drag = useDrag3D({
@@ -170,7 +183,7 @@ export function PolygonSurfaceObject({
       lastDeltaRef.current = { x: dx, y: dy };
       const alt = isAltPressed();
       altLatchRef.current = alt;
-      const elevMm = alt ? restElevationAt(dx, dy) : surface.elevationMm;
+      const elevMm = alt ? restElevationAt(dx, dy) : clearedElevationAt(dx, dy);
       groupRef.current?.position.set(
         (centroid.cx + delta.x) / MM,
         elevMm / MM,
@@ -185,7 +198,7 @@ export function PolygonSurfaceObject({
       if (d.x !== 0 || d.y !== 0) {
         updateSurface(surface.id, {
           points: surface.points.map((p) => ({ x: p.x + d.x, y: p.y + d.y })),
-          ...(alt ? { elevationMm: Math.round(restElevationAt(d.x, d.y)) } : {}),
+          elevationMm: Math.round(alt ? restElevationAt(d.x, d.y) : clearedElevationAt(d.x, d.y)),
         });
       } else {
         groupRef.current?.position.set(

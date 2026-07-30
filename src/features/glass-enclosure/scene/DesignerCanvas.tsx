@@ -108,6 +108,8 @@ interface DesignerCanvasProps {
   colors: ColorOptionDto[];
 }
 
+const PEN_FLOOR_THICKNESS_MM = 120;
+
 const SNAP_GRID_MM = 5;
 const STICKY_SNAP_MM = 25;
 const MIN_HARDWARE_MM = 8;
@@ -1132,8 +1134,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       id: crypto.randomUUID(),
       kind: 'floor',
       points: pointsMm.map((p) => ({ x: Math.round(p.x), y: Math.round(p.y) })),
-      elevationMm: 0,
-      thicknessMm: 120,
+      // WHY below grade: a floor plate is authored so its TOP is flush with 0, exactly like the
+      // placement tool does (FLOOR_ELEVATION_MM = −150). Authoring it AT 0 put the plate in the
+      // range [0,120], so it stuck up out of the ground and every wall standing at 0 was inside
+      // it — the pen-drawn floor and the placed floor disagreed about what "floor" means.
+      elevationMm: -PEN_FLOOR_THICKNESS_MM,
+      thicknessMm: PEN_FLOOR_THICKNESS_MM,
       colorHex: null,
       materialKey: null,
     };

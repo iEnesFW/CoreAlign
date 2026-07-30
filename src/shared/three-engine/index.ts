@@ -54,6 +54,7 @@ export {
   buildPolygonFootprint,
   restElevationMm,
   supportTopBelowMm,
+  liftToClearMm,
   SUPPORT_TOLERANCE_MM,
   WALKABLE_STEP_UP_MM,
   restsOnSupportAtMm,

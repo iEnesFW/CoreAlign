@@ -349,6 +349,49 @@ export const supportTopBelowMm = (
   return top;
 };
 
+// A body may need more than one pass: clearing the first obstacle can bring it into a second one.
+const MAX_LIFT_PASSES = 8;
+
+/**
+ * Where a FLOATING body (slab, roof, floor plate) must sit so it does not pass THROUGH anything.
+ *
+ * These bodies deliberately have no lateral collision — a slab slides freely instead of locking
+ * against its neighbours — so the vertical axis is the only thing that can keep them out of solid
+ * matter. The rule is one sentence: keep the height you started at, and rise onto anything you
+ * would otherwise intersect.
+ *
+ * WHY not the gravity resolver: supportTopBelowMm falls back to the GROUND, which is wrong twice
+ * over for these bodies. A floor plate is authored BELOW grade (its top flush with 0), so the
+ * ground fallback ratcheted it up by its own thickness — everything standing on it was suddenly
+ * inside it, and the plate appeared to change thickness. A roof legitimately floats over an open
+ * span, so the same fallback slammed it to the ground the moment it was dragged off its walls.
+ * Neither body is falling; both are being placed.
+ *
+ * Touching is not intersecting: a plate whose top is exactly the wall base stays put.
+ */
+export const liftToClearMm = (
+  moved: PlanFootprint,
+  supports: PlanFootprint[],
+  startBaseMm: number,
+  heightMm: number,
+): number => {
+  let base = startBaseMm;
+  for (let pass = 0; pass < MAX_LIFT_PASSES; pass += 1) {
+    let lifted = base;
+    for (const s of supports) {
+      if (s.ownerId === moved.ownerId) continue;
+      if (s.zMaxMm <= base + CONTACT_EPS_MM) continue;
+      if (base + heightMm <= s.zMinMm + CONTACT_EPS_MM) continue;
+      if (s.zMaxMm <= lifted) continue;
+      if (!footprintsOverlapXY(moved, s)) continue;
+      lifted = s.zMaxMm;
+    }
+    if (lifted === base) return base;
+    base = lifted;
+  }
+  return base;
+};
+
 export const restsOnSupportAtMm = (
   moved: PlanFootprint,
   supports: PlanFootprint[],

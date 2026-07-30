@@ -322,6 +322,20 @@ const emptyScene = (): SceneState => ({
 const cloneScene = (scene: SceneState): SceneState => structuredClone(scene);
 
 /**
+ * A floor plate is authored so its TOP is flush with grade — the placement tool writes −150 for a
+ * 150 mm plate. Rows saved before the pen-drawn floor agreed with that convention sit AT 0, which
+ * puts the plate in [0, thickness]: it pokes out of the ground and every wall standing at 0 is
+ * inside it. Sinking it is idempotent (once moved, elevation is no longer 0) and there is no
+ * reading of "floor at exactly grade level, thickness upward" that is correct.
+ */
+const sinkFloorToGrade = <T extends { kind: string; elevationMm: number; thicknessMm: number }>(
+  body: T,
+): T =>
+  body.kind === 'floor' && body.elevationMm === 0 && body.thicknessMm > 0
+    ? { ...body, elevationMm: -body.thicknessMm }
+    : body;
+
+/**
  * Append a body, or REPLACE the one that already carries this id.
  *
  * WHY: the adders appended blindly, so adding a body whose id was already in the scene produced a
@@ -1584,13 +1598,14 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     // Slabs get the same half-arc hygiene as walls: a radius without a real sweep (stale/legacy
     // blob data) is normalized to FLAT instead of being consumed as a degenerate 1° arc.
     const snapshotSlabs = (scene.slabs ?? []).map((s) => {
-      if (isRealArc(s.geomArcRadiusMm, s.geomArcSweepDeg)) return s;
+      const graded = sinkFloorToGrade(s);
+      if (isRealArc(s.geomArcRadiusMm, s.geomArcSweepDeg)) return graded;
       if ((s.geomArcRadiusMm ?? 0) > 0 || s.geomArcSweepDeg) {
-        return { ...s, geomArcRadiusMm: null, geomArcSweepDeg: null };
+        return { ...graded, geomArcRadiusMm: null, geomArcSweepDeg: null };
       }
-      return s;
+      return graded;
     });
-    const snapshotSurfaces = scene.surfaces ?? [];
+    const snapshotSurfaces = (scene.surfaces ?? []).map(sinkFloorToGrade);
     if (
       hwByPanel.size === 0 &&
       notchByPanel.size === 0 &&

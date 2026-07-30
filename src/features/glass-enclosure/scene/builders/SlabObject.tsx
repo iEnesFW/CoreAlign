@@ -28,12 +28,10 @@ import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
 import {
   buildSlabFootprint,
   clampPlanStretch,
+  liftToClearMm,
   penetratesAny,
   restElevationMm,
-  supportTopBelowMm,
   restsOnSupportAtMm,
-  SUPPORT_TOLERANCE_MM,
-  WALKABLE_STEP_UP_MM,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
@@ -480,17 +478,21 @@ export function SlabObject({
     );
   const centerXMm = slab.originX + (slab.lengthMm / 2) * dirX - (slab.depthMm / 2) * dirY;
   const centerYMm = slab.originY + (slab.lengthMm / 2) * dirY + (slab.depthMm / 2) * dirX;
-  // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.
+  // A slab is PLACED, not dropped: it keeps the height it was authored at and rises onto anything
+  // it would otherwise pass through.
+  //
+  // WHY not the gravity resolver here (it was, and it produced two separate field reports): its
+  // fallback is the GROUND. A floor plate is authored at −thickness so its top is flush with grade,
+  // so the fallback ratcheted it up by its own thickness the instant it was nudged — everything
+  // standing on it was then inside it, and users read the plate poking out of the ground as its
+  // thickness having changed. A roof legitimately spans open air, so the same fallback slammed it
+  // to the ground as soon as it left its walls. Neither body is falling.
   const centerRestAt = (dxMm: number, dyMm: number) =>
-    supportTopBelowMm(
+    liftToClearMm(
       buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
       supportFootprints,
       baseElevMm,
-      0,
-      SUPPORT_TOLERANCE_MM,
-      // WHY a floor does not step up onto another floor: floors are the terrain itself and belong
-      // at their authored elevation — two overlapping ground plates must not ratchet upward.
-      slab.kind === 'floor' ? 0 : WALKABLE_STEP_UP_MM,
+      slab.thicknessMm,
     );
   const restingAtStart = restsOnSupportAtMm(
     buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
