@@ -316,6 +316,21 @@ const emptyScene = (): SceneState => ({
 
 const cloneScene = (scene: SceneState): SceneState => structuredClone(scene);
 
+// WHY a pending map: a run created on the SERVER (autofill) only reaches the scene when the refetch
+// lands, so writing its host bond straight after creation hit `updateRun` with an id the store did
+// not have yet and was silently dropped — the cam↔wall bond was never actually written. Recording
+// the intent here lets the very refetch that introduces the run apply it.
+const pendingHostWall = new Map<string, string>();
+export const recordPendingHostWall = (runId: string, wallId: string) => {
+  pendingHostWall.set(runId, wallId);
+};
+const consumePendingHostWall = (runId: string): string | null => {
+  const wallId = pendingHostWall.get(runId);
+  if (wallId === undefined) return null;
+  pendingHostWall.delete(runId);
+  return wallId;
+};
+
 const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState => {
   const prevHardware = new Map<string, SceneHardwareItem[]>();
   const prevNotch = new Map<string, CornerRadiiMm>();
@@ -403,7 +418,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
         frameEdges: prevFrame.get(run.id) ?? null,
         hasMullions: prevMullions.has(run.id) ? false : null,
         locked: prevLocked.get(run.id) ?? false,
-        hostWallId: prevHostWall.get(run.id) ?? null,
+        hostWallId: prevHostWall.get(run.id) ?? consumePendingHostWall(run.id),
         mountDepthMm: prevMount.get(run.id)?.d ?? null,
         mountOffsetMm: prevMount.get(run.id)?.o ?? null,
         mountShadowGapMm: prevMount.get(run.id)?.g ?? null,

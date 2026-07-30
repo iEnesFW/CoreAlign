@@ -3,7 +3,7 @@ import { bodyEndLocalMm } from '../geometry/curvature';
 import { safeRequest, safeRequestWithNotify } from '@/shared/lib/safeRequest';
 import { queueToast } from '@/shared/api/toastQueue';
 import { glassProjectsApi } from '../api/glassProjectsApi';
-import { useDesignerStore } from '../model/designerStore';
+import { recordPendingHostWall, useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeWallFillPlan, panelCountForWidth } from '../model/wallAutofill';
 import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
@@ -424,8 +424,13 @@ export const useWallAutofill = () => {
     // Bind each hole-/opening-fill run to its host wall so the persistent bond can recover the run
     // after it drifts out of the geometric band (co-move alone loses it). Gap fills between two walls
     // have no single host and keep the geometry fallback.
+    // WHY both: the run may not be in the scene yet (it lands with the refetch that follows the
+    // server create), and updateRun silently ignores an unknown id — measured, the bond was never
+    // written. recordPendingHostWall lets that refetch apply it; updateRun covers the case where
+    // the run is already there so the bond is live immediately.
     const store = useDesignerStore.getState();
     for (const c of created) {
+      recordPendingHostWall(c.id, selectedWall.id);
       store.updateRun(c.id, { hostWallId: selectedWall.id });
     }
     if (created.length > 0) await recordAutofillHistory(projectId, before);
