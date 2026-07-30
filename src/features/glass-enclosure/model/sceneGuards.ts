@@ -102,10 +102,15 @@ export const clampWallPatch = (
   // WHY re-clamp the openings here: shortening a wall left its openings at the old span, so a
   // 600 mm wall kept a 2000 mm window and rendered as an empty frame. The opening rule already
   // existed but only ran when the OPENING was edited, never when the wall changed under it.
+  // WHY the patch's own openings win: re-clamping from `wall.openings` unconditionally OVERWROTE
+  // whatever the caller sent — so the bow handle's arc conversion, which clears openings in the
+  // same patch (a curved band cannot carve them), had its `openings: []` silently restored and the
+  // wall kept holes it never cuts. Clamp what is BEING written, not what was there.
   const shapeChanged = WALL_SHAPE_KEYS.some((key) => next[key] !== undefined);
-  if (shapeChanged && (wall.openings?.length ?? 0) > 0) {
+  const sourceOpenings = next.openings ?? wall.openings ?? [];
+  if (shapeChanged && sourceOpenings.length > 0) {
     const reshaped: SceneWallState = { ...wall, ...next };
-    next.openings = (wall.openings ?? []).map((opening) => clampWallOpening(reshaped, opening));
+    next.openings = sourceOpenings.map((opening) => clampWallOpening(reshaped, opening));
   }
   return next;
 };

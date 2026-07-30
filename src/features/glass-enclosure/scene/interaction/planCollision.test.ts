@@ -5,6 +5,8 @@ import {
   buildWallFootprint,
   clampPlanMove,
   clampPlanMoveNoDeepen,
+  clampPlanRotation,
+  clampPlanStretch,
   penetratesAny,
   slidePlanMove,
 } from './planCollision';
@@ -167,5 +169,70 @@ describe('clamped moves never land INSIDE an obstacle (rounding must not oversho
       if (penetratesAny(footprintAt(clamped.dxMm, clamped.dyMm), [obstacle])) overshoots += 1;
     }
     expect(overshoots).toBe(0);
+  });
+});
+
+describe('stretch and rotation clamps also respect the contact boundary', () => {
+  const box = (id: string, x: number, y: number, l: number, c: number, rot: number) =>
+    buildPlanFootprint(id, x, y, l, rot, c / 2, 0, 2400);
+
+  it('a clamped stretch never ends inside the neighbour', () => {
+    let rng = 8675309;
+    const next = () => {
+      rng = (rng * 1103515245 + 12345) % 2147483648;
+      return rng / 2147483648;
+    };
+    let bad = 0;
+    for (let i = 0; i < 2000; i += 1) {
+      const obstacle = box(
+        'obs',
+        Math.round(next() * 3000 - 1500),
+        Math.round(next() * 3000 - 1500),
+        300 + Math.round(next() * 3000),
+        60 + Math.round(next() * 500),
+        Math.round(next() * 360),
+      );
+      const startX = Math.round(next() * 4000 - 2000);
+      const startY = Math.round(next() * 4000 - 2000);
+      const rot = Math.round(next() * 360);
+      const baseLen = 300 + Math.round(next() * 2000);
+      const cross = 60 + Math.round(next() * 300);
+      const deltaMm = Math.round(next() * 6000 - 3000);
+      const at = (d: number) => box('moved', startX, startY, Math.max(50, baseLen + d), cross, rot);
+      if (penetratesAny(at(0), [obstacle])) continue;
+      const clamped = clampPlanStretch(at, [obstacle], deltaMm);
+      if (penetratesAny(at(clamped), [obstacle])) bad += 1;
+    }
+    expect(bad).toBe(0);
+  });
+
+  it('a clamped rotation never ends inside the neighbour', () => {
+    let rng = 424242;
+    const next = () => {
+      rng = (rng * 1103515245 + 12345) % 2147483648;
+      return rng / 2147483648;
+    };
+    let bad = 0;
+    for (let i = 0; i < 2000; i += 1) {
+      const obstacle = box(
+        'obs',
+        Math.round(next() * 2000 - 1000),
+        Math.round(next() * 2000 - 1000),
+        300 + Math.round(next() * 3000),
+        60 + Math.round(next() * 500),
+        Math.round(next() * 360),
+      );
+      const startX = Math.round(next() * 3000 - 1500);
+      const startY = Math.round(next() * 3000 - 1500);
+      const len = 300 + Math.round(next() * 2500);
+      const cross = 60 + Math.round(next() * 300);
+      const fromDeg = Math.round(next() * 360);
+      const toDeg = fromDeg + Math.round(next() * 300 - 150);
+      const at = (deg: number) => box('moved', startX, startY, len, cross, deg);
+      if (penetratesAny(at(fromDeg), [obstacle])) continue;
+      const clamped = clampPlanRotation(at, [obstacle], fromDeg, toDeg);
+      if (penetratesAny(at(clamped), [obstacle])) bad += 1;
+    }
+    expect(bad).toBe(0);
   });
 });

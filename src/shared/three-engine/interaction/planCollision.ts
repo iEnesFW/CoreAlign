@@ -688,6 +688,27 @@ export const slidePlanMove = (
   return clampPlanMoveNoDeepen(footprintAt, reachable, result.dxMm, result.dyMm);
 };
 
+/**
+ * The scalar sibling of {@link roundedDeltaSatisfying} — same trap, one dimension.
+ *
+ * A stretch or a rotation is bisected to a clear fraction and then rounded to whole mm/degrees,
+ * and that rounding can carry it past the contact boundary just as the two-axis version did.
+ * Step back toward `fallback` (standing still), which callers have already proven is clear.
+ */
+const roundedScalarSatisfying = (
+  value: number,
+  fallback: number,
+  ok: (v: number) => boolean,
+): number => {
+  let v = Math.round(value);
+  const step = Math.sign(v - fallback) || 1;
+  for (let i = 0; i < ROUND_BACKOFF_STEPS; i += 1) {
+    if (ok(v)) return v;
+    v -= step;
+  }
+  return ok(v) ? v : fallback;
+};
+
 export const clampPlanStretch = (
   footprintAt: (deltaMm: number) => PlanFootprintSet,
   obstacles: PlanFootprint[],
@@ -702,7 +723,7 @@ export const clampPlanStretch = (
     if (penetratesAny(footprintAt(deltaMm * mid), obstacles)) hi = mid;
     else lo = mid;
   }
-  return Math.round(deltaMm * lo);
+  return roundedScalarSatisfying(deltaMm * lo, 0, (d) => !penetratesAny(footprintAt(d), obstacles));
 };
 
 export const clampPlanRotation = (
@@ -720,5 +741,9 @@ export const clampPlanRotation = (
     if (penetratesAny(footprintAt(fromDeg + (toDeg - fromDeg) * mid), obstacles)) hi = mid;
     else lo = mid;
   }
-  return Math.round(fromDeg + (toDeg - fromDeg) * lo);
+  return roundedScalarSatisfying(
+    fromDeg + (toDeg - fromDeg) * lo,
+    fromDeg,
+    (deg) => !penetratesAny(footprintAt(deg), obstacles),
+  );
 };

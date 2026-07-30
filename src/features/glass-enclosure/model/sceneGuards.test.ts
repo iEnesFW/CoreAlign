@@ -142,3 +142,42 @@ describe('openings follow the wall they live in', () => {
     expect(patch.openings![0]).toMatchObject({ widthMm: 2000, offsetMm: 2000, heightMm: 1400 });
   });
 });
+
+describe('a patch that REPLACES the openings wins over the re-clamp', () => {
+  const withWindow = wall({
+    openings: [
+      { id: 'o1', kind: 'window', offsetMm: 2000, widthMm: 2000, heightMm: 1400, sillMm: 900 },
+    ],
+  } as unknown as Partial<SceneWallState>);
+
+  it('keeps an explicit empty list when the same patch curves the wall', () => {
+    // The bow handle converts a wall to an arc and clears its openings in ONE patch — a curved
+    // band cannot carve them. Re-clamping from the OLD wall silently restored them.
+    const patch = clampWallPatch(withWindow, {
+      geomArcRadiusMm: 2500,
+      geomArcSweepDeg: 60,
+      rotationDeg: -30,
+      openings: [],
+    } as Partial<SceneWallState>);
+    expect(patch.openings).toEqual([]);
+  });
+
+  it('clamps the openings the caller sent, not the ones already on the wall', () => {
+    const patch = clampWallPatch(withWindow, {
+      lengthMm: 600,
+      openings: [
+        { id: 'o2', kind: 'door', offsetMm: 300, widthMm: 2000, heightMm: 2100, sillMm: 0 },
+      ],
+    } as unknown as Partial<SceneWallState>);
+    expect(patch.openings).toHaveLength(1);
+    expect(patch.openings![0].id).toBe('o2');
+    expect(patch.openings![0].widthMm).toBeLessThanOrEqual(560);
+  });
+
+  it('still re-clamps from the wall when the patch does not touch openings', () => {
+    const patch = clampWallPatch(withWindow, { lengthMm: 600 });
+    expect(patch.openings).toHaveLength(1);
+    expect(patch.openings![0].id).toBe('o1');
+    expect(patch.openings![0].widthMm).toBeLessThanOrEqual(560);
+  });
+});
