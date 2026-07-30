@@ -166,6 +166,7 @@ const WALL_SELECTED = '#1d4ed8';
 const WALL_EDGE = '#cbd5e1';
 const FEATURE_SELECTED = '#1d4ed8';
 const REGION_COLOR = '#2563eb';
+const PEN_FREE_STEP_MM = 40;
 const MIN_LENGTH_MM = 100;
 const MIN_HEIGHT_MM = 100;
 const MIN_THICKNESS_MM = 50;
@@ -480,6 +481,7 @@ export function WallObject({
   const transformActive = useDesignerStore((s) => s.transformHandlesActive);
   const quality = useDesignerStore((s) => s.quality);
   const penFace = useDesignerStore((s) => s.penFace);
+  const penMode = useDesignerStore((s) => s.penMode);
   const setPenFaceCursor = useDesignerStore((s) => s.setPenFaceCursor);
   const drawShape = useDesignerStore((s) => s.drawShape);
   const presentation = useDesignerStore((s) => s.presentationMode);
@@ -1232,6 +1234,7 @@ export function WallObject({
   };
 
   const penArcRef = useRef<{ active: boolean; end: { x: number; z: number } } | null>(null);
+  const penFreehandRef = useRef(false);
   const penSuppressClickRef = useRef(false);
   const [penArcPreview, setPenArcPreview] = useState<{ x: number; z: number }[] | null>(null);
   const getThree = useThree((s) => s.get);
@@ -1242,6 +1245,20 @@ export function WallObject({
 
   const handlePenDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.nativeEvent.button !== 0) return;
+    // WHY freehand is handled HERE and not in PenController: that controller reads a hit as
+    // (x, z) — a PLAN position. On a vertical wall face every point shares roughly one z, so a
+    // stroke collapsed into a line and was interpreted as a huge shape on the ground. The face
+    // needs its own surface coordinates, which penFacePoint already produces (arc walls included).
+    if (penMode === 'freehand' && !isShiftPressed()) {
+      const start = penFacePoint(e.point, e.face?.normal);
+      if (!start) return;
+      penFreehandRef.current = true;
+      penSuppressClickRef.current = true;
+      setOrbitEnabled(false);
+      (e.target as Element | null)?.setPointerCapture?.(e.pointerId);
+      onPenFaceClick?.('wall', wall.id, start.side, { x: start.x, z: start.z });
+      return;
+    }
     const session = useDesignerStore.getState().penFace;
     if (!isShiftPressed() || !session || session.hostId !== wall.id || session.points.length < 1)
       return;
@@ -1260,6 +1277,13 @@ export function WallObject({
   };
 
   const handlePenUp = (e: ThreeEvent<PointerEvent>) => {
+    if (penFreehandRef.current) {
+      penFreehandRef.current = false;
+      setOrbitEnabled(true);
+      (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
+      onPenFaceFinish?.();
+      return;
+    }
     const arc = penArcRef.current;
     penArcRef.current = null;
     setPenArcPreview(null);
@@ -1284,6 +1308,18 @@ export function WallObject({
   };
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
+    if (penFreehandRef.current) {
+      const point = isArcWall ? freshArcHitPoint(e) : e.point;
+      const local = point ? penFacePoint(point, e.face?.normal) : null;
+      if (!local) return;
+      const session = useDesignerStore.getState().penFace;
+      const last = session?.points[session.points.length - 1];
+      if (last && Math.hypot(local.x - last.x, local.z - last.z) < PEN_FREE_STEP_MM) return;
+      onPenFaceArc?.('wall', wall.id, local.side, [
+        { x: Math.round(local.x), z: Math.round(local.z) },
+      ]);
+      return;
+    }
     const arc = penArcRef.current;
     const point = isArcWall && arc?.active ? freshArcHitPoint(e) : e.point;
     const local = point ? penFacePoint(point, e.face?.normal) : null;

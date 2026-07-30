@@ -112,6 +112,7 @@ const SLAB_EDGE = '#cbd5e1';
 const REGION_COLOR = '#2563eb';
 const DEG2RAD = Math.PI / 180;
 const HALF_PI = Math.PI / 2;
+const PEN_FREE_STEP_MM = 40;
 const MIN_PLAN_MM = 100;
 const MIN_THICKNESS_MM = 50;
 const FACE_LIFT_M = 0.002;
@@ -313,6 +314,7 @@ export function SlabObject({
   const drawShape = useDesignerStore((s) => s.drawShape);
   const presentation = useDesignerStore((s) => s.presentationMode);
   const penFace = useDesignerStore((s) => s.penFace);
+  const penMode = useDesignerStore((s) => s.penMode);
   const setPenFaceCursor = useDesignerStore((s) => s.setPenFaceCursor);
   const sceneRef = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
@@ -770,6 +772,7 @@ export function SlabObject({
   };
 
   const penArcRef = useRef<{ active: boolean; end: { x: number; z: number } } | null>(null);
+  const penFreehandRef = useRef(false);
   const penSuppressClickRef = useRef(false);
   const [penArcPreview, setPenArcPreview] = useState<{ x: number; z: number }[] | null>(null);
   const getThree = useThree((s) => s.get);
@@ -780,6 +783,22 @@ export function SlabObject({
 
   const handlePenDown = (e: ThreeEvent<PointerEvent>) => {
     if (e.nativeEvent.button !== 0) return;
+    // WHY here and not in PenController: see WallObject — that controller reads a hit as a PLAN
+    // (x, z) position, which is wrong for anything but the ground. penFacePoint gives the slab's
+    // own surface coordinates.
+    if (penMode === 'freehand' && !isShiftPressed()) {
+      const start = penFacePoint(e.point);
+      if (!start) return;
+      penFreehandRef.current = true;
+      penSuppressClickRef.current = true;
+      setOrbitEnabled(false);
+      (e.target as Element | null)?.setPointerCapture?.(e.pointerId);
+      onPenFaceClick?.('slab', slab.id, start.side === 1 ? 'front' : 'back', {
+        x: start.x,
+        z: start.z,
+      });
+      return;
+    }
     const session = useDesignerStore.getState().penFace;
     if (!isShiftPressed() || !session || session.hostId !== slab.id || session.points.length < 1)
       return;
@@ -798,6 +817,13 @@ export function SlabObject({
   };
 
   const handlePenUp = (e: ThreeEvent<PointerEvent>) => {
+    if (penFreehandRef.current) {
+      penFreehandRef.current = false;
+      setOrbitEnabled(true);
+      (e.target as Element | null)?.releasePointerCapture?.(e.pointerId);
+      onPenFaceFinish?.();
+      return;
+    }
     const arc = penArcRef.current;
     penArcRef.current = null;
     setPenArcPreview(null);
@@ -823,6 +849,17 @@ export function SlabObject({
   };
 
   const handlePenMove = (e: ThreeEvent<PointerEvent>) => {
+    if (penFreehandRef.current) {
+      const local = penFacePoint(e.point);
+      if (!local) return;
+      const session = useDesignerStore.getState().penFace;
+      const last = session?.points[session.points.length - 1];
+      if (last && Math.hypot(local.x - last.x, local.z - last.z) < PEN_FREE_STEP_MM) return;
+      onPenFaceArc?.('slab', slab.id, local.side === 1 ? 'front' : 'back', [
+        { x: Math.round(local.x), z: Math.round(local.z) },
+      ]);
+      return;
+    }
     const arc = penArcRef.current;
     const local = penFacePoint(e.point);
     if (!local) return;
