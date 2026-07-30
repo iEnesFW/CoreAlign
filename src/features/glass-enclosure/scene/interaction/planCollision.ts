@@ -16,6 +16,7 @@ export {
   restElevationMm,
   supportTopBelowMm,
   SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
   restsOnSupportAtMm,
   isFloating,
   normalizePlanAngleDeg,
@@ -136,34 +137,42 @@ export const buildSlabFootprint = (
       x: slab.originX + dxMm + p.x * cosR - p.z * sinR,
       y: slab.originY + dyMm + p.x * sinR + p.z * cosR,
     }));
-    return buildPolygonFootprint(
+    return {
+      ...buildPolygonFootprint(
+        slab.id,
+        outline,
+        slab.elevationMm,
+        slab.elevationMm + slab.thicknessMm,
+        Math.min(slab.lengthMm, slab.depthMm) / 2,
+      ),
+      walkable: slab.kind === 'floor',
+    };
+  }
+  return {
+    ...buildPlanFootprint(
       slab.id,
-      outline,
+      slab.originX + dxMm - (Math.sin(rad) * slab.depthMm) / 2,
+      slab.originY + dyMm + (Math.cos(rad) * slab.depthMm) / 2,
+      slab.lengthMm,
+      rotationDeg,
+      slab.depthMm / 2,
       slab.elevationMm,
       slab.elevationMm + slab.thicknessMm,
-      Math.min(slab.lengthMm, slab.depthMm) / 2,
-    );
-  }
-  return buildPlanFootprint(
-    slab.id,
-    slab.originX + dxMm - (Math.sin(rad) * slab.depthMm) / 2,
-    slab.originY + dyMm + (Math.cos(rad) * slab.depthMm) / 2,
-    slab.lengthMm,
-    rotationDeg,
-    slab.depthMm / 2,
-    slab.elevationMm,
-    slab.elevationMm + slab.thicknessMm,
-  );
+    ),
+    walkable: slab.kind === 'floor',
+  };
 };
 
 export const buildSurfaceFootprint = (
   surface: SceneSurfaceState,
   dxMm = 0,
   dyMm = 0,
-): PlanFootprint =>
-  buildPolygonFootprint(
+): PlanFootprint => ({
+  ...buildPolygonFootprint(
     surface.id,
     surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
     surface.elevationMm,
     surface.elevationMm + surface.thicknessMm,
-  );
+  ),
+  walkable: surface.kind === 'floor',
+});

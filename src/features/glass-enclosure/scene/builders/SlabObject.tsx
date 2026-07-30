@@ -32,6 +32,8 @@ import {
   restElevationMm,
   supportTopBelowMm,
   restsOnSupportAtMm,
+  SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
 import { buildBarrelRoofGeometry } from './barrelRoofGeometry';
@@ -471,6 +473,11 @@ export function SlabObject({
       buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
       supportFootprints,
       baseElevMm,
+      0,
+      SUPPORT_TOLERANCE_MM,
+      // WHY a floor does not step up onto another floor: floors are the terrain itself and belong
+      // at their authored elevation — two overlapping ground plates must not ratchet upward.
+      slab.kind === 'floor' ? 0 : WALKABLE_STEP_UP_MM,
     );
   const restingAtStart = restsOnSupportAtMm(
     buildSlabFootprint(slab, 0, 0, slab.rotationDeg),

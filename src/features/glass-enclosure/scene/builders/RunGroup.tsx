@@ -32,6 +32,8 @@ import {
   restElevationMm,
   supportTopBelowMm,
   restsOnSupportAtMm,
+  SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { parsePanelPolygonPoints } from '../../model/panelPolygon';
@@ -282,6 +284,9 @@ export function RunGroup({
       buildRunFootprint(run, dxMm, dyMm, run.rotationDeg),
       stackSupports,
       baseElevMm,
+      0,
+      SUPPORT_TOLERANCE_MM,
+      WALKABLE_STEP_UP_MM,
     );
   const restingAtStart = restsOnSupportAtMm(
     buildRunFootprint(run, 0, 0, run.rotationDeg),

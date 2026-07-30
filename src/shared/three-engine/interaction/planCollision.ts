@@ -10,6 +10,9 @@ export interface PlanFootprint {
   zMinMm: number;
   zMaxMm: number;
   polygon?: Vec[];
+  // WHY: a floor is TERRAIN, not an obstacle — a body dragged onto a raised floor must step UP onto
+  // it instead of locking against its edge. Everything else is something you stand beside.
+  walkable?: boolean;
 }
 
 const DEG2RAD = Math.PI / 180;
@@ -303,6 +306,10 @@ export const restElevationMm = (
 // stays lateral (the eager "any overlap" trigger was the annoyance).
 export const SUPPORT_TOLERANCE_MM = 5;
 
+// How far above its base a body may auto-climb onto a WALKABLE support while being dragged. A slab
+// floor / podium is a step; a storey-high mezzanine is not — that still needs Alt.
+export const WALKABLE_STEP_UP_MM = 600;
+
 /**
  * The top of the highest thing this body can actually rest ON — the one resolver gravity uses.
  *
@@ -317,6 +324,10 @@ export const SUPPORT_TOLERANCE_MM = 5;
  *
  * Deliberate Alt-stacking is NOT this: there the user is explicitly asking to climb onto something
  * taller, which is what {@link restElevationMm} does.
+ *
+ * `stepUpMm` opts a caller into the ONE exception: a WALKABLE support (a floor) that low above the
+ * base is a step, so a body dragged onto it climbs instead of being pinned at its edge. Gravity
+ * leaves it 0 — settling must never raise a body.
  */
 export const supportTopBelowMm = (
   moved: PlanFootprint,
@@ -324,11 +335,13 @@ export const supportTopBelowMm = (
   baseMm: number,
   groundMm = 0,
   toleranceMm = SUPPORT_TOLERANCE_MM,
+  stepUpMm = 0,
 ): number => {
   let top = groundMm;
   for (const s of supports) {
     if (s.ownerId === moved.ownerId) continue;
-    if (s.zMaxMm > baseMm + toleranceMm) continue;
+    const reachMm = s.walkable ? Math.max(toleranceMm, stepUpMm) : toleranceMm;
+    if (s.zMaxMm > baseMm + reachMm) continue;
     if (s.zMaxMm <= top) continue;
     if (!footprintsOverlapXY(moved, s)) continue;
     top = s.zMaxMm;

@@ -62,6 +62,7 @@ import {
   supportTopBelowMm,
   restsOnSupportAtMm,
   SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
 } from '../interaction/planCollision';
 import { useDesignerStore } from '../../model/designerStore';
 import { featureSideSignZ } from '../../model/project.types';
@@ -775,6 +776,9 @@ export function WallObject({
       buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg),
       stackSupports,
       baseWallElevMm,
+      0,
+      SUPPORT_TOLERANCE_MM,
+      WALKABLE_STEP_UP_MM,
     );
   // WHY memoized: this rebuilds the wall's plan footprint (for a curved wall, a trig-generated
   // band polygon) and overlap-tests it against every support. Unmemoized it ran on EVERY render of

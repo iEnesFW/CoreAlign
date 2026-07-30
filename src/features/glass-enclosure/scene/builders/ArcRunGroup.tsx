@@ -34,6 +34,8 @@ import {
   restElevationMm,
   supportTopBelowMm,
   restsOnSupportAtMm,
+  SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
 } from '../interaction/planCollision';
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import type { RunStretchPatch } from './RunGroup';
@@ -250,7 +252,14 @@ export function ArcRunGroup({
   // The chord midpoint is NOT on a curved run — probe the band apex or curved glass mounted on a
   // parapet reads "nothing beneath me" and drops to the floor on the next nudge.
   const centerRestAt = (dx: number, dy: number) =>
-    supportTopBelowMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, baseElevMm);
+    supportTopBelowMm(
+      buildRunFootprint(run, dx, dy, run.rotationDeg),
+      stackSupports,
+      baseElevMm,
+      0,
+      SUPPORT_TOLERANCE_MM,
+      WALKABLE_STEP_UP_MM,
+    );
   const restingAtStart = restsOnSupportAtMm(
     buildRunFootprint(run, 0, 0, run.rotationDeg),
     stackSupports,

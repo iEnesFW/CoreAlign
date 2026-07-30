@@ -55,6 +55,7 @@ export {
   restElevationMm,
   supportTopBelowMm,
   SUPPORT_TOLERANCE_MM,
+  WALKABLE_STEP_UP_MM,
   restsOnSupportAtMm,
   isFloating,
   normalizePlanAngleDeg,

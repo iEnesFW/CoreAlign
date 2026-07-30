@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { restElevationMm, restsOnSupportAtMm, supportTopBelowMm } from '@/shared/three-engine';
+import {
+  restElevationMm,
+  restsOnSupportAtMm,
+  supportTopBelowMm,
+  WALKABLE_STEP_UP_MM,
+} from '@/shared/three-engine';
 import { buildSlabFootprint, buildWallFootprint } from './planCollision';
 import type { PlanFootprint } from './planCollision';
 import type { SceneSlabState, SceneWallState } from '../../model/project.types';
@@ -193,5 +198,61 @@ describe('placement probe: the top of what is UNDER the ghost', () => {
     const high = wallAt('high', 0, 0, 3200);
     const ghost = buildSlabFootprint(slab('ghost', 0, 0, 2000, 2000, 0), 0, 0, 0);
     expect(topUnder(ghost, [low, high])).toBe(3200);
+  });
+});
+
+describe('step-up onto a WALKABLE floor — the drag climb probe', () => {
+  // A 100 mm platform: a floor slab authored at elevation 0 tops out at its thickness.
+  const platform = buildSlabFootprint(slab('platform', 0, 0, 4000, 3000, 0), 0, 0, 0);
+  const standingWall = (dxMm: number) =>
+    buildWallFootprint(
+      {
+        id: 'w',
+        originX: -3500 + dxMm,
+        originY: 1500,
+        rotationDeg: 0,
+        lengthMm: 2000,
+        heightMm: 2400,
+        thicknessMm: 200,
+        geomZ: 0,
+        openings: [],
+        features: [],
+      } as unknown as SceneWallState,
+      0,
+      0,
+      0,
+    );
+
+  it('a wall dragged onto the platform climbs onto it', () => {
+    // RED before the fix: supportTopBelowMm could never exceed base + tolerance, so the climb
+    // branch in useObjectGestures was structurally dead and the wall was pinned at the edge.
+    const over = standingWall(3600);
+    expect(supportTopBelowMm(over, [platform], 0, 0, 5, WALKABLE_STEP_UP_MM)).toBe(100);
+  });
+
+  it('gravity (no step-up allowance) still refuses to see the platform', () => {
+    const over = standingWall(3600);
+    expect(supportTopBelowMm(over, [platform], 0)).toBe(0);
+  });
+
+  it('a wall clear of the platform stays on the ground', () => {
+    expect(supportTopBelowMm(standingWall(0), [platform], 0, 0, 5, WALKABLE_STEP_UP_MM)).toBe(0);
+  });
+
+  it('does NOT climb a non-walkable body of the same height', () => {
+    const curb = buildSlabFootprint(
+      { ...slab('curb', 0, 0, 4000, 3000, 0), kind: 'roof' } as SceneSlabState,
+      0,
+      0,
+      0,
+    );
+    expect(supportTopBelowMm(standingWall(3600), [curb], 0, 0, 5, WALKABLE_STEP_UP_MM)).toBe(0);
+  });
+
+  it('does NOT climb a storey-high walkable deck — that still needs Alt', () => {
+    const mezzanine = buildSlabFootprint(slab('mezz', 0, 0, 4000, 3000, 3000), 0, 0, 0);
+    expect(supportTopBelowMm(standingWall(3600), [mezzanine], 0, 0, 5, WALKABLE_STEP_UP_MM)).toBe(
+      0,
+    );
   });
 });
