@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertOctagon, ArrowRight, Check, Hammer, PackageCheck } from 'lucide-react';
+import { AlertOctagon, ArrowRight, Check, Hammer, History, PackageCheck } from 'lucide-react';
 import {
   useRecordDefectMutation,
   useUpdateWorkOrderStatusMutation,
   useWorkOrdersQuery,
 } from '../hooks/useGlassProjectQueries';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
+import { RevisionsPanel } from '@/features/glass-enclosure/designer/panels';
 
 interface WorkOrderManagerProps {
   projectId: string;
@@ -47,6 +48,7 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
   const updateStatus = useUpdateWorkOrderStatusMutation();
   const recordDefect = useRecordDefectMutation();
   const [defectingId, setDefectingId] = useState<string | null>(null);
+  const [revisionsId, setRevisionsId] = useState<string | null>(null);
   const [defectNotes, setDefectNotes] = useState('');
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' }),
@@ -150,7 +152,21 @@ export function WorkOrderManager({ projectId }: WorkOrderManagerProps) {
                   {t('GlassEnclosure.WorkOrder.Defect')}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setRevisionsId(wo.id === revisionsId ? null : wo.id)}
+                aria-expanded={revisionsId === wo.id}
+                className="inline-flex items-center gap-1 rounded border border-slate-300 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/40"
+              >
+                <History size={10} />
+                {t('GlassEnclosure.WorkOrder.Revision.Title')}
+              </button>
             </div>
+            {revisionsId === wo.id && (
+              <div className="mt-2">
+                <RevisionsPanel workOrderId={wo.id} />
+              </div>
+            )}
             {defectingId === wo.id && (
               <div className="mt-2 space-y-1.5">
                 <textarea
