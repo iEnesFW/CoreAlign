@@ -124,6 +124,35 @@ describe('Q corner handle resize', () => {
     expect(resized.crossMm).toBeGreaterThanOrEqual(50);
   });
 
+  it('keeps the opposite corner pinned even when the minimum size clamps the drag', () => {
+    // Drop corner 0 almost exactly onto corner 2 — the clamp has to grow the body AWAY from the
+    // anchor, not rebuild it around the dragged point, or the whole body slides across the plan.
+    const before = boxCornersMm(box());
+    const anchor = before[2];
+    const resized = resizeBoxFromCorner(box(), 0, anchor.x - 5, anchor.y - 5, 50, 0, 0);
+    const after = boxCornersMm(resized);
+
+    expect(after[2].x).toBeCloseTo(anchor.x, 6);
+    expect(after[2].y).toBeCloseTo(anchor.y, 6);
+    expect(resized.lengthMm).toBe(50);
+    expect(resized.crossMm).toBe(50);
+  });
+
+  it('keeps the opposite corner pinned when the drag crosses it entirely', () => {
+    const before = boxCornersMm(box());
+    const anchor = before[2];
+    // Well past the anchor in both axes: the body flips to the other side but the anchor stays.
+    const resized = resizeBoxFromCorner(box(), 0, anchor.x + 900, anchor.y + 700, 50, 0, 0);
+    const after = boxCornersMm(resized);
+
+    const pinned = after.some(
+      (c) => Math.abs(c.x - anchor.x) < 1e-6 && Math.abs(c.y - anchor.y) < 1e-6,
+    );
+    expect(pinned).toBe(true);
+    expect(resized.lengthMm).toBe(900);
+    expect(resized.crossMm).toBe(700);
+  });
+
   it('keeps the rotation of a rotated body', () => {
     const rotated = { ...box(), rotationDeg: 37 };
     const resized = resizeBoxFromCorner(rotated, 1, 1500, 900, 50, 0, 0);

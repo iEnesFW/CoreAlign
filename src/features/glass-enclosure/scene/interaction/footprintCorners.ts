@@ -80,13 +80,18 @@ export const resizeBoxFromCorner = (
     uP = opp[0] + Math.sign(uP - opp[0] || 1) * stuckU;
     vP = opp[1] + Math.sign(vP - opp[1] || 1) * stuckV;
   }
-  const uMin = Math.min(opp[0], uP);
-  const uMax = Math.max(opp[0], uP);
-  const vMin = Math.min(opp[1], vP);
-  const vMax = Math.max(opp[1], vP);
-  const lengthMm = Math.max(minMm, Math.round(uMax - uMin));
-  const crossMm = Math.max(minMm, Math.round(vMax - vMin));
-  const vCenter = (vMin + vMax) / 2;
+  // WHY the span is measured FROM the anchor and only then clamped: taking min/max of the raw
+  // corners and clamping the resulting size afterwards moved the pinned corner. Drag a corner to
+  // within less than minMm of its opposite and the box was rebuilt from the DRAGGED corner at the
+  // clamped size, so the anchor ended up inside the body and the whole thing slid across the plan.
+  // Keeping the direction and growing away from the anchor pins it in every case.
+  const uDir = Math.sign(uP - opp[0]) || 1;
+  const vDir = Math.sign(vP - opp[1]) || 1;
+  const lengthMm = Math.max(minMm, Math.round(Math.abs(uP - opp[0])));
+  const crossMm = Math.max(minMm, Math.round(Math.abs(vP - opp[1])));
+  const uMin = uDir > 0 ? opp[0] : opp[0] - lengthMm;
+  const vMin = vDir > 0 ? opp[1] : opp[1] - crossMm;
+  const vCenter = vMin + crossMm / 2;
   return {
     originX: Math.round(box.originX + uMin * alongX + vCenter * acrossX),
     originY: Math.round(box.originY + uMin * alongY + vCenter * acrossY),
