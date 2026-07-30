@@ -242,8 +242,8 @@ export function ToolPalette() {
   const withShortcut = (text: string, shortcut: string) => `${text} (${shortcut})`;
 
   return (
-    <div className="pointer-events-none absolute left-3 top-3 z-20 flex flex-col items-start gap-1.5">
-      <div className="pointer-events-auto flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
+    <div className="pointer-events-none flex flex-col items-start gap-1.5">
+      <div className="pointer-events-auto flex max-w-[18rem] flex-wrap items-center gap-0.5 rounded-lg border border-slate-200 bg-white/95 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
         {TOOLS.map(({ tool, labelKey, defaultLabel, shortcut, Icon }) => (
           <PaletteButton
             key={tool}

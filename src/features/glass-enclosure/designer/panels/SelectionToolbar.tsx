@@ -150,8 +150,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
 
   if (multiCount > 0) {
     return (
-      <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex justify-end">
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur lg:max-w-[calc(100%-34rem)] dark:border-slate-700 dark:bg-slate-900/90">
+      <div className="pointer-events-none flex min-w-[12rem] flex-1 justify-end">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
           <span className="px-2 text-xs font-medium text-slate-600 dark:text-slate-300">
             {t('GlassEnclosure.Designer.MultiSelect.Count', {
               defaultValue: '{{count}} öğe seçili',
@@ -680,8 +680,8 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   if (!actions) return null;
 
   return (
-    <div className="pointer-events-none absolute left-3 right-3 top-3 z-10 flex justify-end">
-      <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur lg:max-w-[calc(100%-34rem)] dark:border-slate-700 dark:bg-slate-900/90">
+    <div className="pointer-events-none flex min-w-[12rem] flex-1 justify-end">
+      <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-end gap-1 rounded-lg border border-slate-200 bg-white/90 p-1 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/90">
         {actions}
       </div>
     </div>

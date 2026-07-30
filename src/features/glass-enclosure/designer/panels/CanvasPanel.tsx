@@ -205,9 +205,17 @@ export const CanvasPanel = ({
                 : 'flex-1 bg-slate-100 dark:bg-slate-900',
             )}
           >
-            <SelectionToolbar glassTypes={glassTypes} />
+            {/* WHY one band instead of two independent overlays: both used to be absolutely
+                positioned at top-3 and sized with a guess about how much room the other needed
+                (34rem). On the real designer the canvas column is ~600 px, so the selection bar
+                collapsed to a 44 px sliver, and at 1280 px it landed ON TOP of the palette. As
+                flex children they share the row honestly and the selection bar wraps BELOW the
+                palette when there is genuinely no room beside it. */}
+            <div className="pointer-events-none absolute inset-x-3 top-3 z-20 flex flex-wrap items-start justify-between gap-1.5">
+              <ToolPalette />
+              <SelectionToolbar glassTypes={glassTypes} />
+            </div>
             <TransformToolbar />
-            <ToolPalette />
             <CanvasErrorBoundary
               fallbackLabel={t('GlassEnclosure.Designer.CanvasError', {
                 defaultValue:
