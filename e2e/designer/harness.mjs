@@ -18,7 +18,9 @@
 import { chromium } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 
-export const FIXTURE_URL = 'http://localhost:5273/dev/glass-fixture';
+export const APP_ORIGIN = 'http://localhost:5273';
+export const FIXTURE_URL = `${APP_ORIGIN}/dev/glass-fixture`;
+export const PROJECTS_URL = `${APP_ORIGIN}/dashboard/glass-enclosure/projects`;
 
 // Headless Chromium falls back to a stub GL that silently produces blank frames. ANGLE over
 // SwiftShader is a real software rasteriser, which is what makes a screenshot meaningful here.
@@ -38,11 +40,25 @@ const PAGE_FNS = {
   },
 };
 
+/**
+ * Which surface to drive.
+ *
+ * 'fixture' is fast and login-free, but its render loop is DEAD: the fixture's ready-flag remount
+ * makes R3F tear down a root keyed by the shared <canvas>, which deletes the LIVE root from the
+ * global loop registry. Measured: frames 188 -> 188 over a second, and setFrameloop/invalidate/
+ * resize cannot revive it. Anything that depends on a fresh frame (screenshots, world matrices,
+ * therefore raycasting after a mutation) is stale there unless forceFrame() is called.
+ *
+ * 'project' drives the REAL designer page (auto-login via the fixture route, then the first glass
+ * project). Measured: frames 300 -> 360 in 1.5 s, context healthy — the product surface actually
+ * animates, so findings measured here reflect what a user sees.
+ */
 export async function openDesigner({
   width = 1600,
   height = 1000,
   timeout = 90_000,
   appearance = 'plain',
+  target = 'fixture',
 } = {}) {
   const browser = await chromium.launch({ args: GL_ARGS });
   const context = await browser.newContext({ viewport: { width, height } });
@@ -88,14 +104,37 @@ export async function openDesigner({
   });
   page.on('pageerror', (e) => consoleErrors.push('PAGEERROR ' + String(e).slice(0, 240)));
 
+  // The fixture route is always the entry point: it is the only page that logs itself in with the
+  // demo account, and that session is what makes the real designer reachable.
   await page.goto(FIXTURE_URL, { waitUntil: 'domcontentloaded' });
-
-  // The store hook appears as soon as the designer mounts; the R3F hook only once the 3D viewport
-  // has been measured and the Canvas created. Waiting for BOTH is what distinguishes "the page
-  // loaded" from "the scene exists".
   await page.waitForFunction(() => typeof window.__CAD_STORE__ === 'function', undefined, {
     timeout,
   });
+
+  if (target === 'project') {
+    // WHY this gate and not a token check: the access token lives only in memory and the refresh
+    // token is an httpOnly cookie, so neither is visible to page script. The fixture's own
+    // data-ready flag flips once the catalogue queries succeed, which is proof the auto-login
+    // worked — and that is exactly the session the real designer needs.
+    await page.waitForSelector('[data-testid="fixture-scene-key"][data-ready="true"]', { timeout });
+    await page.goto(PROJECTS_URL, { waitUntil: 'domcontentloaded' });
+    const href = await page
+      .waitForFunction(
+        () => {
+          const links = [...document.querySelectorAll('a[href*="glass-enclosure/projects/"]')]
+            .map((a) => a.getAttribute('href'))
+            .filter((h) => h && !h.endsWith('/new'));
+          return links[0] ?? false;
+        },
+        undefined,
+        { timeout },
+      )
+      .then((h) => h.jsonValue());
+    await page.goto(APP_ORIGIN + href, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => typeof window.__CAD_STORE__ === 'function', undefined, {
+      timeout,
+    });
+  }
   // WHY three conditions in ONE predicate, held stable: the hook appears while the subtree is
   // still SUSPENDED — React hides suspended content with an inline `display: none !important`, so
   // the canvas has a live GL context and a sized drawing buffer while its CSS box is 0x0
@@ -132,6 +171,56 @@ export async function openDesigner({
     { timeout, polling: 120 },
   );
 
+  // WHY: the designer auto-frames its content shortly AFTER the canvas starts painting, so a test
+  // that starts aiming the moment the first frame lands can sample a viewport the geometry has not
+  // entered yet — measured as "found an interactive pixel: none" on a project that framed fine a
+  // second later. Wait for the bodies to actually be inside the frustum before handing over.
+  await page
+    .waitForFunction(
+      () => {
+        const three = window.__CAD_R3F__?.();
+        if (!three) return false;
+        const root = three.scene.getObjectByName('designer-root');
+        if (!root) return false;
+        let has = false;
+        root.traverse((o) => {
+          if (o.isMesh && o.visible) has = true;
+        });
+        if (!has) return true; // nothing to frame; not a failure
+        const V = three.camera.position.constructor;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        let inFront = false;
+        root.traverse((o) => {
+          if (!o.isMesh || !o.visible || !o.geometry) return;
+          o.geometry.computeBoundingBox();
+          const bb = o.geometry.boundingBox;
+          if (!bb) return;
+          o.updateWorldMatrix(true, false);
+          for (let i = 0; i < 8; i += 1) {
+            const p = new V(
+              i & 1 ? bb.max.x : bb.min.x,
+              i & 2 ? bb.max.y : bb.min.y,
+              i & 4 ? bb.max.z : bb.min.z,
+            )
+              .applyMatrix4(o.matrixWorld)
+              .project(three.camera);
+            if (p.z <= 1) inFront = true;
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y);
+            maxY = Math.max(maxY, p.y);
+          }
+        });
+        return inFront && maxX > -1 && minX < 1 && maxY > -1 && minY < 1;
+      },
+      undefined,
+      { timeout: 20_000, polling: 200 },
+    )
+    .catch(() => undefined);
+
   // WHY: the same deferred StrictMode teardown that force-loses the context also runs
   // state.events.disconnect() first, unhooking R3F's DOM pointer listeners from the shared canvas.
   // Measured: events.connected === false, hovered stayed 0 on every mousemove, and clicks selected
@@ -149,6 +238,31 @@ export async function openDesigner({
 
     /** The authoritative designer store (same actions the UI calls). */
     store: (fn, arg) => page.evaluate(fn, arg),
+
+    /**
+     * Does the renderer draw on its own? On the fixture the answer is no (see openDesigner), which
+     * silently makes every screenshot and every post-mutation raycast stale. Call this before
+     * trusting anything visual, or use forceFrame() after each mutation.
+     */
+    frameLoopAlive: async (windowMs = 900) => {
+      const before = await page.evaluate(() => window.__CAD_R3F__().gl.info.render.frame);
+      await page.waitForTimeout(windowMs);
+      const after = await page.evaluate(() => window.__CAD_R3F__().gl.info.render.frame);
+      return { alive: after > before, before, after };
+    },
+
+    /**
+     * Render one frame synchronously. advance() also runs useFrame callbacks (gizmos, controls
+     * damping, label billboards), so it reproduces a real frame far better than gl.render().
+     */
+    forceFrame: async (settleMs = 90) => {
+      await page.evaluate(() => {
+        const t = window.__CAD_R3F__();
+        if (typeof t.advance === 'function') t.advance(performance.now());
+        else t.gl.render(t.scene, t.camera);
+      });
+      await page.waitForTimeout(settleMs);
+    },
 
     /** Canvas rect + drawing-buffer size, so callers can sanity-check the surface is real. */
     surface: () =>
@@ -380,18 +494,31 @@ export async function openDesigner({
  * capability the tests lean on is asserted against the live app, so a broken environment reports
  * itself instead of quietly producing blank screenshots and no-op drags.
  */
-export async function selfTest({ shotPath = null } = {}) {
+export async function selfTest({ shotPath = null, target = 'fixture' } = {}) {
   const failures = [];
   const check = (label, pass, detail) => {
     console.log(`${pass ? 'PASS' : 'FAIL'}  ${label}${detail ? '  ' + detail : ''}`);
     if (!pass) failures.push(label);
   };
 
-  const d = await openDesigner();
+  console.log(`--- target: ${target} ---`);
+  const d = await openDesigner({ target });
 
   const surface = await d.surface();
-  check('canvas laid out', surface.css.w > 1000 && surface.css.h > 500, JSON.stringify(surface.css));
+  check('canvas laid out', surface.css.w > 300 && surface.css.h > 300, JSON.stringify(surface.css));
 
+  // Reported, never asserted for the fixture: its loop is dead by construction. On the real
+  // designer it must be alive, otherwise the product itself is frozen.
+  const loop = await d.frameLoopAlive();
+  if (target === 'project') {
+    check('render loop is alive', loop.alive, `frames ${loop.before} -> ${loop.after}`);
+  } else {
+    console.log(
+      `INFO  render loop ${loop.alive ? 'alive' : 'DEAD (fixture: expected — use forceFrame())'}  frames ${loop.before} -> ${loop.after}`,
+    );
+  }
+
+  await d.forceFrame();
   const proof = await d.renderProof();
   check('frame rasterised', proof.distinctColours > 20, `colours=${proof.distinctColours}`);
 
@@ -405,15 +532,15 @@ export async function selfTest({ shotPath = null } = {}) {
   const bodies = await d.bodies();
   check('designer-root exposes bodies', bodies.length > 0, `count=${bodies.length}`);
 
-  const target = await d.findBodyPixel();
-  check('found an interactive pixel', !!target, target ? `px=(${Math.round(target.x)},${Math.round(target.y)})` : 'none');
+  const aim = await d.findBodyPixel();
+  check('found an interactive pixel', !!aim, aim ? `px=(${Math.round(aim.x)},${Math.round(aim.y)})` : 'none');
 
-  if (target) {
-    const hit = await d.pickAt(target.x, target.y);
-    check('project -> pick round-trip', !!hit && hit.uuid === target.uuid, `hit=${hit ? hit.name : 'none'}`);
+  if (aim) {
+    const hit = await d.pickAt(aim.x, aim.y);
+    check('project -> pick round-trip', !!hit && hit.uuid === aim.uuid, `hit=${hit ? hit.name : 'none'}`);
 
-    const back = await d.project(hit ? hit.point : target.point);
-    const drift = hit ? Math.hypot(back.x - target.x, back.y - target.y) : Infinity;
+    const back = await d.project(hit ? hit.point : aim.point);
+    const drift = hit ? Math.hypot(back.x - aim.x, back.y - aim.y) : Infinity;
     check('pixel -> world -> pixel is stable', drift < 1.5, `drift=${drift.toFixed(3)}px`);
 
     const before = await d.store(() => {
@@ -423,20 +550,45 @@ export async function selfTest({ shotPath = null } = {}) {
     check('scene has a run to drive', !!before);
 
     if (before) {
-      await d.page.mouse.click(target.x, target.y);
+      await d.page.mouse.click(aim.x, aim.y);
+      // WHY the wait: "selected" only unlocks dragging after React re-renders the body with the new
+      // selection, so a drag issued immediately after the click is still handled by OrbitControls
+      // and merely orbits the camera. Measured: same drag failed at 0 ms and moved the body at
+      // ~900 ms. (A user doing press-and-drag in one motion hits the same gate — orbit, by design.)
+      await d.page.waitForTimeout(800);
       const selection = await d.store(() => window.__CAD_STORE__().selection);
       check('click selects a body', !!selection && selection.kind !== null, JSON.stringify(selection).slice(0, 90));
 
-      await d.drag({ x: target.x, y: target.y }, { x: target.x + 220, y: target.y + 60 });
+      // Drag back toward the origin rather than a fixed direction: a body already far out in plan
+      // can be pinned by the scene's coordinate clamp, and a push outward then reads as "did not
+      // move" even though dragging works perfectly well.
+      const dx = before.x > 0 ? -140 : 140;
+      await d.drag({ x: aim.x, y: aim.y }, { x: aim.x + dx, y: aim.y + 40 }, 40);
+      // The commit lands a beat after pointerup (collision resolve, settle, persist queue); reading
+      // immediately reported "did not move" for a drag that had in fact moved.
+      await d.page.waitForTimeout(1500);
       const after = await d.page.evaluate((id) => {
         const run = window.__CAD_STORE__().scene.runs.find((r) => r.id === id);
         return run ? { x: run.originX, y: run.originY } : null;
       }, before.id);
-      check(
-        'real mouse drag moves the body',
-        !!after && (Math.abs(after.x - before.x) > 1 || Math.abs(after.y - before.y) > 1),
-        `(${Math.round(before.x)},${Math.round(before.y)}) -> (${Math.round(after?.x ?? 0)},${Math.round(after?.y ?? 0)})`,
-      );
+      const moved = !!after && (Math.abs(after.x - before.x) > 1 || Math.abs(after.y - before.y) > 1);
+      const where = `(${Math.round(before.x)},${Math.round(before.y)}) -> (${Math.round(after?.x ?? 0)},${Math.round(after?.y ?? 0)})`;
+      if (target === 'project') {
+        // Reported, not asserted: a real project's body can be legitimately pinned — a neighbour it
+        // would collide with, the plan clamp at the edge of the coordinate range, a locked body.
+        // A standalone measurement proved dragging itself works here (2415,255 -> 4795,465), so a
+        // stationary body is not by itself evidence of a defect.
+        console.log(`INFO  drag on real project ${moved ? 'moved the body' : 'left it in place'}  ${where}`);
+      } else {
+        check('real mouse drag moves the body', moved, where);
+      }
+      // Leave a real project as we found it: the self-test drives the user's own data, and an
+      // un-undone probe drag silently relocates their glass (measured — an earlier run moved this
+      // project's run to 2415,255 and it persisted).
+      if (moved) {
+        await d.store(() => window.__CAD_STORE__().undo());
+        await d.page.waitForTimeout(600);
+      }
     }
   }
 
@@ -453,7 +605,12 @@ const isMain = process.argv[1] && process.argv[1].endsWith('harness.mjs');
 if (isMain) {
   const shotIdx = process.argv.indexOf('--shot');
   const shotPath = shotIdx > -1 ? process.argv[shotIdx + 1] : null;
-  const failures = await selfTest({ shotPath });
-  process.exit(failures.length ? 1 : 0);
+  const targetIdx = process.argv.indexOf('--target');
+  const targets = targetIdx > -1 ? [process.argv[targetIdx + 1]] : ['fixture', 'project'];
+  let total = 0;
+  for (const t of targets) {
+    total += (await selfTest({ shotPath: targets.length === 1 ? shotPath : null, target: t })).length;
+  }
+  process.exit(total ? 1 : 0);
 }
 void PAGE_FNS;

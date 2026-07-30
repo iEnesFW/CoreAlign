@@ -8,7 +8,8 @@ import {
   PerspectiveCamera,
   Sky,
 } from '@react-three/drei';
-import { RepeatWrapping, type Texture } from 'three';
+import { Box3, RepeatWrapping, Sphere, Vector3, type Texture } from 'three';
+import { registerViewportCamera } from './viewportCamera';
 import { QUALITY_SETTINGS, type QualityPreset } from './quality/qualityPreset';
 import { installAcceleratedRaycast } from './acceleratedRaycast';
 import {
@@ -27,6 +28,8 @@ export interface ViewportCamera {
 
 interface OrbitLike {
   target: { x: number; y: number; z: number; set: (x: number, y: number, z: number) => void };
+  minDistance?: number;
+  maxDistance?: number;
   update: () => void;
   addEventListener: (type: 'change', cb: () => void) => void;
   removeEventListener: (type: 'change', cb: () => void) => void;
@@ -64,6 +67,143 @@ function RenderSurfaceExporter() {
       if (w.__CAD_R3F__ === handle) delete w.__CAD_R3F__;
     };
   }, [store]);
+  return null;
+}
+
+const FIT_MARGIN = 1.35;
+const FRAMED_NDC_MARGIN = 0.9;
+
+/**
+ * Gives the toolbar a real camera to drive.
+ *
+ * WHY this exists: the canvas zoom/fit buttons took optional props that nothing ever passed, so
+ * they rendered permanently disabled — and a project whose geometry sits away from the origin
+ * opened with the content off-frame and no way to recover except manually orbiting. Measured on a
+ * real project: content projected to screen x 1249..2829 while the canvas spanned 596..1208.
+ */
+function CameraCommands() {
+  const camera = useThree((s) => s.camera);
+  const controls = useThree((s) => s.controls) as unknown as OrbitLike | null;
+  const scene = useThree((s) => s.scene);
+  const size = useThree((s) => s.size);
+
+  useEffect(() => {
+    if (!controls) return;
+
+    const perspective = camera as typeof camera & { fov?: number; aspect?: number };
+
+    const viewDirection = () => {
+      const dir = new Vector3(
+        camera.position.x - controls.target.x,
+        camera.position.y - controls.target.y,
+        camera.position.z - controls.target.z,
+      );
+      // A degenerate vector happens when the camera sits exactly on its target; fall back to the
+      // default three-quarter view rather than producing NaN.
+      if (dir.lengthSq() < 1e-9) dir.set(0.6, 0.45, 0.78);
+      return dir.normalize();
+    };
+
+    const clampDistance = (value: number) => {
+      const min = typeof controls.minDistance === 'number' ? controls.minDistance : 0.01;
+      const max = typeof controls.maxDistance === 'number' ? controls.maxDistance : Infinity;
+      return Math.min(Math.max(value, min), max);
+    };
+
+    // WHY not Box3.setFromObject: it swallows the whole subtree, including invisible bodies,
+    // annotation text and empty groups parked at the origin. Measured: that inflated box reached
+    // from the origin to the geometry, so "is the content on screen?" answered yes while the user
+    // saw empty grid. Only visible meshes count as content.
+    const contentBox = (objectName: string) => {
+      const target = scene.getObjectByName(objectName);
+      if (!target) return null;
+      const box = new Box3();
+      let found = false;
+      target.traverse((child) => {
+        const mesh = child as typeof child & {
+          isMesh?: boolean;
+          geometry?: { boundingBox: Box3 | null; computeBoundingBox: () => void };
+        };
+        if (!mesh.isMesh || !child.visible || !mesh.geometry) return;
+        if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
+        const local = mesh.geometry.boundingBox;
+        if (!local) return;
+        child.updateWorldMatrix(true, false);
+        box.union(local.clone().applyMatrix4(child.matrixWorld));
+        found = true;
+      });
+      return found && !box.isEmpty() ? box : null;
+    };
+
+    const api = {
+      fitTo: (objectName: string) => {
+        const box = contentBox(objectName);
+        if (!box) return false;
+
+        const sphere = box.getBoundingSphere(new Sphere());
+        if (!Number.isFinite(sphere.radius) || sphere.radius <= 0) return false;
+
+        // Frame against the NARROWER of the two half-angles: a tall thin viewport clips the width
+        // if you only respect the vertical field of view.
+        const fovDeg = perspective.fov ?? 45;
+        const vHalf = (fovDeg * Math.PI) / 360;
+        const aspect =
+          perspective.aspect ?? (size.width > 0 && size.height > 0 ? size.width / size.height : 1);
+        const hHalf = Math.atan(Math.tan(vHalf) * Math.max(aspect, 0.0001));
+        const half = Math.max(Math.min(vHalf, hHalf), 0.05);
+
+        const distance = clampDistance((sphere.radius / Math.sin(half)) * FIT_MARGIN);
+        const dir = viewDirection();
+        controls.target.set(sphere.center.x, sphere.center.y, sphere.center.z);
+        camera.position.set(
+          sphere.center.x + dir.x * distance,
+          sphere.center.y + dir.y * distance,
+          sphere.center.z + dir.z * distance,
+        );
+        camera.updateProjectionMatrix();
+        controls.update();
+        return true;
+      },
+      framesObject: (objectName: string) => {
+        const box = contentBox(objectName);
+        if (!box) return false;
+
+        camera.updateMatrixWorld();
+        camera.updateProjectionMatrix();
+        // WHY the CENTRE and not "any corner overlaps the frustum": measured on a real project,
+        // one corner of the content box grazed the frustum edge while the whole run sat off to the
+        // right of the viewport — an any-overlap test called that "framed" and suppressed the fit,
+        // leaving the user staring at empty grid. The margin keeps a body that is merely clipped at
+        // the edge from being yanked around.
+        const centre = box.getCenter(new Vector3()).project(camera);
+        return (
+          centre.z <= 1 &&
+          Math.abs(centre.x) <= FRAMED_NDC_MARGIN &&
+          Math.abs(centre.y) <= FRAMED_NDC_MARGIN
+        );
+      },
+      zoomBy: (factor: number) => {
+        if (!Number.isFinite(factor) || factor <= 0) return false;
+        const dir = viewDirection();
+        const currentDistance = Math.hypot(
+          camera.position.x - controls.target.x,
+          camera.position.y - controls.target.y,
+          camera.position.z - controls.target.z,
+        );
+        const next = clampDistance(currentDistance * factor);
+        camera.position.set(
+          controls.target.x + dir.x * next,
+          controls.target.y + dir.y * next,
+          controls.target.z + dir.z * next,
+        );
+        controls.update();
+        return true;
+      },
+    };
+
+    return registerViewportCamera(api);
+  }, [camera, controls, scene, size]);
+
   return null;
 }
 
@@ -245,6 +385,7 @@ export function SceneViewport({
             maxPolarAngle={Math.PI / 2.05}
           />
           <CameraSync initialCamera={initialCamera} onChange={onCameraChange} />
+          <CameraCommands />
           <RenderSurfaceExporter />
 
           <hemisphereLight

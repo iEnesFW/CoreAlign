@@ -3,6 +3,8 @@ import { bodyEndLocalMm, originForChordCentreMm } from '../geometry/curvature';
 import { useTranslation } from 'react-i18next';
 import {
   SceneViewport,
+  viewportCamera,
+  DESIGNER_ROOT_NAME,
   SnapGuideOverlay,
   isCtrlPressed,
   isShiftPressed,
@@ -304,6 +306,9 @@ const stickyMm = (value: number, targets: number[]) => {
   return value;
 };
 
+const AUTO_FRAME_INTERVAL_MS = 300;
+const AUTO_FRAME_ATTEMPTS = 12;
+
 export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerCanvasProps) {
   const { t } = useTranslation();
   const scene = useDesignerStore((s) => s.scene);
@@ -321,6 +326,47 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setPasteArmed = useDesignerStore((s) => s.setPasteArmed);
   const project = useDesignerStore((s) => s.project);
   const projectId = useDesignerStore((s) => s.projectId);
+  const autoFramedKeyRef = useRef<string | null>(null);
+  const bodyCount =
+    scene.runs.length +
+    (scene.walls?.length ?? 0) +
+    (scene.slabs?.length ?? 0) +
+    (scene.surfaces?.length ?? 0);
+
+  // WHY: the default camera sits at a fixed three-quarter view around the origin, but a project's
+  // geometry can live anywhere in plan. Measured on a real project (one 3 m run): the content
+  // projected to screen x 1249..2829 while the canvas spanned 596..1208 — the designer opened
+  // looking at empty grid, which reads as "the screen is still a template". A project that carries
+  // its own saved camera keeps it; only the un-framed case is corrected, once per project.
+  useEffect(() => {
+    if (bodyCount === 0) return;
+    const key = projectId ?? 'unsaved';
+    if (autoFramedKeyRef.current === key) return;
+    // The bodies mount well after the store settles (geometry building, suspense), and the camera
+    // API only registers once OrbitControls exists — a single delayed attempt measured an empty
+    // group, silently failed, and never retried. Poll until the scene is really there.
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      // A saved camera is honoured whenever it still shows the work. It cannot simply be trusted:
+      // CameraSync persists the pose on every orbit, so a project that was opened once and never
+      // touched carries the DEFAULT pose as its "saved" camera — measured on a real project, that
+      // pose framed nothing at all. Correct only the case where the user would see empty grid.
+      //
+      // The window stays open for the whole load instead of stopping at the first success: the
+      // project's saved pose arrives asynchronously and CameraSync applies it AFTER the bodies
+      // mount, so a single early fit was silently overwritten and the content went back off-frame.
+      if (!viewportCamera.framesObject(DESIGNER_ROOT_NAME)) {
+        viewportCamera.fitTo(DESIGNER_ROOT_NAME);
+      }
+      if (attempts >= AUTO_FRAME_ATTEMPTS) {
+        autoFramedKeyRef.current = key;
+        window.clearInterval(timer);
+      }
+    }, AUTO_FRAME_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [bodyCount, projectId]);
+
   const resizePanelEdge = useDesignerStore((s) => s.resizePanelEdge);
   const updateRun = useDesignerStore((s) => s.updateRun);
   const applyRunPatches = useDesignerStore((s) => s.applyRunPatches);
@@ -2011,7 +2057,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         onCameraChange={setCamera}
         onPointerMissed={clearSelection}
       >
-        <group ref={registerExportRoot} name="designer-root">
+        <group ref={registerExportRoot} name={DESIGNER_ROOT_NAME}>
           {layerVisibility.runs && renderGeometry()}
           {layerVisibility.runs && scene.connections.length > 0 && (
             <ConnectionPosts

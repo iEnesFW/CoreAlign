@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Grid3X3, Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { DESIGNER_ROOT_NAME, viewportCamera, ZOOM_STEP } from '@/shared/three-engine';
 import { useDesignerUxMode } from '@/shared/lib/persona';
 import { DesignerCanvas } from '@/features/glass-enclosure/scene/DesignerCanvas';
 import { CanvasErrorBoundary } from '@/features/glass-enclosure/scene/CanvasErrorBoundary';
@@ -86,6 +87,16 @@ export const CanvasPanel = ({
 
   const iconSize = isSimple ? 18 : 14;
 
+  // WHY defaults: these three props were optional and NOTHING ever passed them, so the buttons
+  // rendered permanently disabled. A project whose geometry sits away from the origin then opens
+  // with the content off-frame and the user has no way back except manually orbiting. The camera
+  // itself is the right owner of the behaviour, so fall back to it and keep the props as overrides.
+  const is3d = view === '3d';
+  const zoomIn = onZoomIn ?? (is3d ? () => viewportCamera.zoomBy(1 / ZOOM_STEP) : undefined);
+  const zoomOut = onZoomOut ?? (is3d ? () => viewportCamera.zoomBy(ZOOM_STEP) : undefined);
+  const fitToScreen =
+    onFitToScreen ?? (is3d ? () => viewportCamera.fitTo(DESIGNER_ROOT_NAME) : undefined);
+
   return (
     <section
       className={cn('flex h-full flex-col bg-slate-100 dark:bg-slate-950', className)}
@@ -100,8 +111,8 @@ export const CanvasPanel = ({
       >
         <button
           type="button"
-          onClick={onZoomIn}
-          disabled={!onZoomIn}
+          onClick={zoomIn}
+          disabled={!zoomIn}
           className={btnClass}
           aria-label={t('GlassEnclosure.Designer.Shell.ZoomIn', { defaultValue: 'Zoom in' })}
         >
@@ -112,8 +123,8 @@ export const CanvasPanel = ({
         </button>
         <button
           type="button"
-          onClick={onZoomOut}
-          disabled={!onZoomOut}
+          onClick={zoomOut}
+          disabled={!zoomOut}
           className={btnClass}
           aria-label={t('GlassEnclosure.Designer.Shell.ZoomOut', { defaultValue: 'Zoom out' })}
         >
@@ -124,8 +135,8 @@ export const CanvasPanel = ({
         </button>
         <button
           type="button"
-          onClick={onFitToScreen}
-          disabled={!onFitToScreen}
+          onClick={fitToScreen}
+          disabled={!fitToScreen}
           className={btnClass}
           aria-label={t('GlassEnclosure.Designer.Shell.FitToScreen', {
             defaultValue: 'Fit to screen',

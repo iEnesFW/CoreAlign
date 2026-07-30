@@ -1,4 +1,11 @@
 export { SceneViewport, type ViewportAppearance } from './SceneViewport';
+export {
+  viewportCamera,
+  isViewportCameraReady,
+  DESIGNER_ROOT_NAME,
+  ZOOM_STEP,
+  type ViewportCameraApi,
+} from './viewportCamera';
 export { ensureBoundsTree } from './acceleratedRaycast';
 export { Bar } from './primitives/Bar';
 export { useSurfaceMaterial, type SurfaceMaterialParams } from './materials/useSurfaceMaterial';
