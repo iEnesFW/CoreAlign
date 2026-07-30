@@ -1,0 +1,157 @@
+import { developedLengthMm } from './arcGeometry';
+import type {
+  ScenePanelState,
+  SceneRunState,
+  SceneSlabState,
+  SceneSurfaceState,
+  SceneWallOpening,
+  SceneWallState,
+} from './project.types';
+
+/**
+ * The ONE place body dimensions are floored and locked bodies are protected.
+ *
+ * WHY a single layer instead of a check per editor: the same property had up to four different
+ * floors reachable from the same screen (wall thickness: inspector 50, transform toolbar 10, drag
+ * gizmo 50, raw store write unbounded), and several properties had none at all — a panel height of
+ * 99999 stretched the glass to 100 m, a slab could be committed at -500 mm length, and a body
+ * marked "locked" was still editable from every panel because only the 3D builders honoured the
+ * flag. Editors come and go; the store is the single writer every one of them funnels through, so
+ * the invariant belongs here. The floors are the ones already proven in the drag gizmos and
+ * inspectors, not new numbers.
+ */
+export const BODY_FLOOR_MM = {
+  wallLength: 100,
+  wallHeight: 100,
+  wallThickness: 50,
+  slabPlan: 100,
+  slabThickness: 50,
+  surfaceThickness: 20,
+  runLength: 100,
+  runHeight: 100,
+  panelWidth: 100,
+  panelHeight: 100,
+} as const;
+
+const OPENING_MIN_MM = 100;
+const OPENING_EDGE_MM = 20;
+
+const floorMm = (value: number, floor: number) => Math.max(floor, Math.round(value));
+
+/**
+ * Fit an opening inside the wall that carries it. Exported because the same rule has to run both
+ * when the opening is edited and when the WALL changes shape underneath it.
+ */
+export const clampWallOpening = (
+  wall: SceneWallState,
+  opening: SceneWallOpening,
+): SceneWallOpening => {
+  const faceLen = developedLengthMm(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg);
+  const topLimit = Math.max(1, Math.min(wall.heightMm, wall.heightEndMm ?? wall.heightMm));
+  const widthCap = Math.max(OPENING_MIN_MM, faceLen - 2 * OPENING_EDGE_MM);
+  const widthMm = Math.max(OPENING_MIN_MM, Math.min(opening.widthMm, widthCap));
+  const halfW = widthMm / 2;
+  const offsetMm = Math.min(Math.max(opening.offsetMm, halfW), Math.max(halfW, faceLen - halfW));
+  const heightMm = Math.max(OPENING_MIN_MM, Math.min(opening.heightMm, topLimit));
+  const sillMm = Math.min(Math.max(0, opening.sillMm), Math.max(0, topLimit - heightMm));
+  return {
+    ...opening,
+    offsetMm: Math.round(offsetMm),
+    widthMm: Math.round(widthMm),
+    sillMm: Math.round(sillMm),
+    heightMm: Math.round(heightMm),
+  };
+};
+
+/**
+ * Is this write allowed to touch a locked body?
+ *
+ * A locked body still has to be UNLOCKABLE, so a patch that only flips `locked` always passes.
+ * Anything else is refused, which is what "locked" has meant in the 3D scene all along.
+ */
+export const blockedByLock = (
+  body: { locked?: boolean | null } | undefined,
+  patch: Record<string, unknown>,
+): boolean => {
+  if (!body?.locked) return false;
+  return Object.keys(patch).some((key) => key !== 'locked');
+};
+
+const WALL_SHAPE_KEYS = [
+  'lengthMm',
+  'heightMm',
+  'heightEndMm',
+  'geomArcRadiusMm',
+  'geomArcSweepDeg',
+] as const;
+
+export const clampWallPatch = (
+  wall: SceneWallState,
+  patch: Partial<SceneWallState>,
+): Partial<SceneWallState> => {
+  const next: Partial<SceneWallState> = { ...patch };
+  if (typeof next.lengthMm === 'number')
+    next.lengthMm = floorMm(next.lengthMm, BODY_FLOOR_MM.wallLength);
+  if (typeof next.heightMm === 'number')
+    next.heightMm = floorMm(next.heightMm, BODY_FLOOR_MM.wallHeight);
+  if (typeof next.heightEndMm === 'number')
+    next.heightEndMm = floorMm(next.heightEndMm, BODY_FLOOR_MM.wallHeight);
+  if (typeof next.thicknessMm === 'number')
+    next.thicknessMm = floorMm(next.thicknessMm, BODY_FLOOR_MM.wallThickness);
+
+  // WHY re-clamp the openings here: shortening a wall left its openings at the old span, so a
+  // 600 mm wall kept a 2000 mm window and rendered as an empty frame. The opening rule already
+  // existed but only ran when the OPENING was edited, never when the wall changed under it.
+  const shapeChanged = WALL_SHAPE_KEYS.some((key) => next[key] !== undefined);
+  if (shapeChanged && (wall.openings?.length ?? 0) > 0) {
+    const reshaped: SceneWallState = { ...wall, ...next };
+    next.openings = (wall.openings ?? []).map((opening) => clampWallOpening(reshaped, opening));
+  }
+  return next;
+};
+
+export const clampSlabPatch = (patch: Partial<SceneSlabState>): Partial<SceneSlabState> => {
+  const next: Partial<SceneSlabState> = { ...patch };
+  if (typeof next.lengthMm === 'number')
+    next.lengthMm = floorMm(next.lengthMm, BODY_FLOOR_MM.slabPlan);
+  if (typeof next.depthMm === 'number')
+    next.depthMm = floorMm(next.depthMm, BODY_FLOOR_MM.slabPlan);
+  if (typeof next.thicknessMm === 'number')
+    next.thicknessMm = floorMm(next.thicknessMm, BODY_FLOOR_MM.slabThickness);
+  return next;
+};
+
+export const clampSurfacePatch = (
+  patch: Partial<SceneSurfaceState>,
+): Partial<SceneSurfaceState> => {
+  const next: Partial<SceneSurfaceState> = { ...patch };
+  if (typeof next.thicknessMm === 'number')
+    next.thicknessMm = floorMm(next.thicknessMm, BODY_FLOOR_MM.surfaceThickness);
+  return next;
+};
+
+export const clampRunPatch = (patch: Partial<SceneRunState>): Partial<SceneRunState> => {
+  const next: Partial<SceneRunState> = { ...patch };
+  if (typeof next.lengthMm === 'number')
+    next.lengthMm = floorMm(next.lengthMm, BODY_FLOOR_MM.runLength);
+  if (typeof next.heightMm === 'number')
+    next.heightMm = floorMm(next.heightMm, BODY_FLOOR_MM.runHeight);
+  return next;
+};
+
+export const clampPanelPatch = (
+  run: SceneRunState,
+  patch: Partial<ScenePanelState>,
+): Partial<ScenePanelState> => {
+  const next: Partial<ScenePanelState> = { ...patch };
+  if (typeof next.widthMm === 'number')
+    next.widthMm = floorMm(next.widthMm, BODY_FLOOR_MM.panelWidth);
+  // WHY capped at the run height: a panel height override is a SHORTER pane inside the run (a
+  // transom or a stepped top), never a taller one. Unbounded, 99999 stretched the glass 100 m into
+  // the sky and a negative value produced an inside-out pane.
+  if (typeof next.heightMm === 'number') {
+    const cap = Math.max(BODY_FLOOR_MM.panelHeight, Math.round(run.heightMm));
+    next.heightMm = Math.min(cap, floorMm(next.heightMm, BODY_FLOOR_MM.panelHeight));
+  }
+  return next;
+};

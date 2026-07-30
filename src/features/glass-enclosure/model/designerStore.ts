@@ -20,6 +20,15 @@ import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
+import {
+  blockedByLock,
+  clampPanelPatch,
+  clampRunPatch,
+  clampSlabPatch,
+  clampSurfacePatch,
+  clampWallOpening,
+  clampWallPatch,
+} from './sceneGuards';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
 import { computeFloorFollow } from './floorFollow';
 import { settleScene } from './settleScene';
@@ -289,30 +298,11 @@ interface DesignerState {
 const SCHEMA_VERSION = 1;
 const HISTORY_LIMIT = 100;
 const MIN_SPLIT_SEGMENT_MM = 100;
-const OPENING_MIN_MM = 100;
-const OPENING_EDGE_MM = 20;
 
 // WHY: opening edits (inspector fields) were previously stored verbatim — a negative/oversized
 // offset/width/sill/height made the opening fall outside the wall face and silently vanish from the
 // 3D body (clampedOpeningRectM returns null) while lingering in the model. Clamp every opening
 // mutation to the wall face so an entered value is honoured (bounded), never dropped without a trace.
-const clampWallOpening = (wall: SceneWallState, opening: SceneWallOpening): SceneWallOpening => {
-  const faceLen = developedLengthMm(wall.lengthMm, wall.geomArcRadiusMm, wall.geomArcSweepDeg);
-  const topLimit = Math.max(1, Math.min(wall.heightMm, wall.heightEndMm ?? wall.heightMm));
-  const widthCap = Math.max(OPENING_MIN_MM, faceLen - 2 * OPENING_EDGE_MM);
-  const widthMm = Math.max(OPENING_MIN_MM, Math.min(opening.widthMm, widthCap));
-  const halfW = widthMm / 2;
-  const offsetMm = Math.min(Math.max(opening.offsetMm, halfW), Math.max(halfW, faceLen - halfW));
-  const heightMm = Math.max(OPENING_MIN_MM, Math.min(opening.heightMm, topLimit));
-  const sillMm = Math.min(Math.max(0, opening.sillMm), Math.max(0, topLimit - heightMm));
-  return {
-    ...opening,
-    offsetMm: Math.round(offsetMm),
-    widthMm: Math.round(widthMm),
-    sillMm: Math.round(sillMm),
-    heightMm: Math.round(heightMm),
-  };
-};
 
 const emptyScene = (): SceneState => ({
   runs: [],
@@ -813,10 +803,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   updateWall: (wallId, patch) => {
     const current = get();
+    const target = (current.scene.walls ?? []).find((wall) => wall.id === wallId);
+    if (!target || blockedByLock(target, patch)) return;
+    const guarded = clampWallPatch(target, patch);
     const next: SceneState = {
       ...current.scene,
       walls: (current.scene.walls ?? []).map((wall) =>
-        wall.id === wallId ? { ...wall, ...patch } : wall,
+        wall.id === wallId ? { ...wall, ...guarded } : wall,
       ),
     };
     set(pushHistory(current, next));
@@ -1036,10 +1029,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set(pushHistory(current, next));
   },
 
-  updateSlab: (slabId, patch) => {
+  updateSlab: (slabId, rawPatch) => {
     const current = get();
     const slabs = current.scene.slabs ?? [];
     const target = slabs.find((s) => s.id === slabId);
+    if (!target || blockedByLock(target, rawPatch)) return;
+    const patch = clampSlabPatch(rawPatch);
     // A FLOOR moved vertically carries everything resting on it (and what those carry) by the same ΔZ.
     const follow =
       target &&
@@ -1100,10 +1095,13 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   updateSurface: (surfaceId, patch) => {
     const current = get();
+    const target = (current.scene.surfaces ?? []).find((surface) => surface.id === surfaceId);
+    if (!target || blockedByLock(target, patch)) return;
+    const guarded = clampSurfacePatch(patch);
     const next: SceneState = {
       ...current.scene,
       surfaces: (current.scene.surfaces ?? []).map((surface) =>
-        surface.id === surfaceId ? { ...surface, ...patch } : surface,
+        surface.id === surfaceId ? { ...surface, ...guarded } : surface,
       ),
     };
     set(pushHistory(current, next));
@@ -1257,8 +1255,11 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set(pushHistory(current, next));
   },
 
-  updateRun: (runId, patch) => {
+  updateRun: (runId, rawPatch) => {
     const current = get();
+    const runTarget = current.scene.runs.find((run) => run.id === runId);
+    if (!runTarget || blockedByLock(runTarget, rawPatch)) return;
+    const patch = clampRunPatch(rawPatch);
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {
@@ -1352,8 +1353,11 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set(pushHistory(current, next));
   },
 
-  updatePanel: (runId, panelId, patch) => {
+  updatePanel: (runId, panelId, rawPatch) => {
     const current = get();
+    const panelRun = current.scene.runs.find((run) => run.id === runId);
+    if (!panelRun || blockedByLock(panelRun, rawPatch)) return;
+    const patch = clampPanelPatch(panelRun, rawPatch);
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {
