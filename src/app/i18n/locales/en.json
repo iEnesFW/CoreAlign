@@ -3773,7 +3773,8 @@
         "AdvancedNesting": "Advanced 2D Nesting",
         "OpenAdvanced": "Open advanced 2D nesting",
         "AdvancedSubtitle": "Optimize sheet layout to minimize waste"
-      }
+      },
+      "BarWaste": "↳ {{waste}} mm waste ({{offcut}} mm reusable offcut)"
     },
     "Quote": {
       "Title": "Quote Summary",

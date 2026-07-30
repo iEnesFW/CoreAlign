@@ -1,3 +1,4 @@
+import { developedLengthMm } from './arcGeometry';
 import type {
   ColorOptionDto,
   GlassEnclosureSettingsDto,
@@ -124,15 +125,20 @@ export function calculateCost(input: CostCalculatorInput): CostBreakdown {
     const system = systemById.get(run.profileSystemId);
     const profileItems = findProfileItemsForSystem(system);
     const { weightKgPerMeter, pricePerKg } = meanProfileMetadata(profileItems);
-    const lengthMeters = run.lengthMm / 1000;
+    // WHY developed and not lengthMm: on an ARC run lengthMm is the CHORD, but the top/bottom
+    // rails are BENT — they run radius·sweep. Quoting the chord under-bills every curved run
+    // (an R2000/90° run is short by ~11 %) while the panel widths already carry the developed
+    // span, so the same run was priced with two different lengths.
+    const developedMm = developedLengthMm(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg);
+    const railMeters = developedMm / 1000;
     const heightMeters = run.heightMm / 1000;
     const panelCount = Math.max(1, run.panels.length);
     const color = run.colorId ? colorById.get(run.colorId) : undefined;
     const priceModifier = 1 + safeNumber(color?.priceModifierPercent) / 100;
 
     const profileLines: { role: string; meters: number }[] = [
-      { role: 'Top', meters: lengthMeters },
-      { role: 'Bottom', meters: lengthMeters },
+      { role: 'Top', meters: railMeters },
+      { role: 'Bottom', meters: railMeters },
       { role: 'SideJamb-A', meters: heightMeters },
       { role: 'SideJamb-B', meters: heightMeters },
       { role: 'Sash', meters: 2 * heightMeters * panelCount },
@@ -188,7 +194,7 @@ export function calculateCost(input: CostCalculatorInput): CostBreakdown {
         if (!hardware) continue;
         const variables = {
           panel_count: panelCount,
-          run_length_mm: run.lengthMm,
+          run_length_mm: Math.round(developedMm),
           run_height_mm: run.heightMm,
           opening_count_folding: run.panels.filter((p) => p.openingType === 'Folding').length,
           opening_count_sliding: run.panels.filter(

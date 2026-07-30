@@ -1336,6 +1336,17 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const run = scene.runs.find((r) => r.id === runId);
     const blocker = scene.runs.find((r) => r.id === blockerId);
     if (!run || !blocker) return false;
+    // WHY refuse on an arc: computeNeighbourShrink locates the neighbour's end at
+    // origin + lengthMm·dir(rotationDeg), but on an arc body rotationDeg is the ROLLED start
+    // tangent — that point is metres off the real band. Worse, the resulting patch writes a bare
+    // lengthMm, i.e. a new CHORD with a stale radius+sweep, which is exactly the split-brain the
+    // single arc writer exists to prevent. Push-resize simply does not apply to a curved run.
+    if (
+      isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg) ||
+      isRealArc(blocker.geomArcRadiusMm, blocker.geomArcSweepDeg)
+    ) {
+      return false;
+    }
     const toBody = (r: SceneRunState): StretchBody => ({
       id: r.id,
       originX: r.originX,

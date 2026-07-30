@@ -149,6 +149,16 @@ function CornerHandle({
     constraint: { mode: 'ground' },
     enabled: true,
     onMove: (delta) => {
+      // WHY: useDrag3D signals an UNCOMMITTED end (Escape / lost capture) by calling onMove with a
+      // zero delta. useObjectGestures and the draw handlers treat that as "cancel"; this one read
+      // it as an ordinary move, so a cancelled resize left the preview box and the mm readout
+      // stuck on screen until the next drag.
+      if (delta.x === 0 && delta.z === 0) {
+        onPreview(null);
+        setDragReadout(null);
+        anchorRef.current?.position.set(handleX / MM, topYM, handleY / MM);
+        return;
+      }
       const resized = wholeMm(
         resizeBoxFromCorner(
           box,

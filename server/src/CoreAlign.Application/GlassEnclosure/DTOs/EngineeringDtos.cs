@@ -69,7 +69,8 @@ public record CuttingPattern1DDto(
     int BarIndex,
     int StockBarLengthMm,
     IReadOnlyList<CuttingCut1DDto> Cuts,
-    int WasteMm);
+    int WasteMm,
+    int OffcutMm);
 
 public record CuttingResult1DDto(
     int StockBarLengthMm,

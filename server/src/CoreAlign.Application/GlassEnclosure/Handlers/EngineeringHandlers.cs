@@ -448,7 +448,8 @@ public class GenerateCuttingPlanCommandHandler : IRequestHandler<GenerateCutting
             p.BarIndex, p.StockBarLengthMm,
             // WHY: a spliced rail is joined on site, so the shop floor must see the piece breakdown.
             p.Cuts.Select(c => new CuttingCut1DDto(c.Label, c.LengthMm, c.OffsetMm, c.PieceIndex, c.PieceCount)).ToList(),
-            p.WasteMm)).ToList());
+            p.WasteMm,
+            p.OffcutMm)).ToList());
 
     private static CuttingResult2DDto MapToDto(CuttingResult2D r) => new(
         r.SheetWidthMm, r.SheetHeightMm, r.KerfMm, r.GuillotineOnly,

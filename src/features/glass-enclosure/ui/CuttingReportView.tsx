@@ -123,7 +123,12 @@ const BarVisualizer = ({ pattern }: { pattern: CuttingPattern1DDto }) => {
         <span className="font-mono">
           Bar #{pattern.barIndex} · {total} mm
         </span>
-        <span className="text-warning-600 dark:text-warning-400">↳ {pattern.wasteMm} mm fire</span>
+        <span className="text-warning-600 dark:text-warning-400">
+          {t('GlassEnclosure.Cutting.BarWaste', {
+            waste: pattern.wasteMm,
+            offcut: pattern.offcutMm,
+          })}
+        </span>
       </div>
       <div className="relative h-7 w-full overflow-hidden rounded bg-slate-100 dark:bg-slate-900">
         {(pattern.cuts ?? []).map((cut) => {

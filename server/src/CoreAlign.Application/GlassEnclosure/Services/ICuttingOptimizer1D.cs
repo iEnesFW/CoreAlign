@@ -8,7 +8,13 @@ namespace CoreAlign.Application.GlassEnclosure.Services;
 /// </param>
 public record CuttingRequest1D(string Label, int LengthMm, int Quantity, int StockBarLengthMm = 0);
 
-public record CuttingPattern1D(int BarIndex, int StockBarLengthMm, IReadOnlyList<CuttingCut1D> Cuts, int WasteMm);
+/// <param name="WasteMm">
+/// Everything on this bar that is NOT a finished cut: the saw kerf between the cuts PLUS the tail.
+/// This used to carry only the tail, so the per-bar figures never summed to the header total and
+/// the report accused itself of losing material it had already accounted for.
+/// </param>
+/// <param name="OffcutMm">The reusable tail on its own — kerf is gone for good, this is not.</param>
+public record CuttingPattern1D(int BarIndex, int StockBarLengthMm, IReadOnlyList<CuttingCut1D> Cuts, int WasteMm, int OffcutMm = 0);
 
 /// <param name="PieceCount">
 /// How many bar-length pieces this cut was spliced into. 1 for everything that fits a single bar.
@@ -89,6 +95,7 @@ public class FirstFitDecreasingOptimizer1D : ICuttingOptimizer1D
             index + 1,
             bar.StockBarLengthMm,
             bar.Cuts.Select(p => new CuttingCut1D(p.Label, p.LengthMm, p.OffsetMm, p.PieceIndex, p.PieceCount)).ToList(),
+            bar.StockBarLengthMm - bar.Cuts.Sum(c => c.LengthMm),
             bar.RemainingMm)).ToList();
 
         var totalCuts = patterns.Sum(p => p.Cuts.Count);

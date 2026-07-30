@@ -109,7 +109,13 @@ export const developedLengthMm = (
   sweepDeg?: number | null,
 ): number =>
   isRealArc(radiusMm, sweepDeg)
-    ? Math.round(resolveArc(radiusMm ?? 0, sweepDeg ?? 1).arcLengthMm)
+    ? // WHY the chord-derived radius: the stored column is rounded to whole mm (and legacy rows
+      // drifted), so reading it raw returned a developed length nobody draws. curvature's
+      // bodyDevelopedLengthMm already resolves it from the chord, and the two feed the SAME
+      // things — panel distribution targets, opening clamps, surface (u,v). They must agree.
+      Math.round(
+        resolveArc(radiusFromChordSweep(fallbackMm, radiusMm, sweepDeg), sweepDeg ?? 1).arcLengthMm,
+      )
     : fallbackMm;
 
 export interface ArcEndLocal {

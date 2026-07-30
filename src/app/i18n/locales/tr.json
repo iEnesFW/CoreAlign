@@ -3773,7 +3773,8 @@
         "AdvancedNesting": "Gelişmiş 2D Nesting",
         "OpenAdvanced": "Gelişmiş 2D nesting'i aç",
         "AdvancedSubtitle": "Fireyi en aza indirmek için levha yerleşimini optimize edin"
-      }
+      },
+      "BarWaste": "↳ {{waste}} mm fire (kullanılabilir kalan {{offcut}} mm)"
     },
     "Quote": {
       "Title": "Teklif Özeti",

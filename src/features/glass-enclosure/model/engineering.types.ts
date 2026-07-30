@@ -75,6 +75,7 @@ export interface CuttingPattern1DDto {
   stockBarLengthMm: number;
   cuts: CuttingCut1DDto[];
   wasteMm: number;
+  offcutMm: number;
 }
 
 export interface CuttingResult1DDto {

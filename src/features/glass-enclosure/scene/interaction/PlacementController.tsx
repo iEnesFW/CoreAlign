@@ -8,6 +8,7 @@ import {
   SUPPORT_TOLERANCE_MM,
 } from '@/shared/three-engine';
 import { applyPlanMoveSnap } from './planSnap';
+import { bodyEndLocalMm } from '../../geometry/curvature';
 import {
   RUN_PLAN_THICKNESS_MM,
   buildPlanFootprint,
@@ -85,9 +86,17 @@ const nearestRunHeightMm = (runs: SceneRunState[], xMm: number, yMm: number): nu
   let bestHeight: number | null = null;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const run of runs) {
+    // WHY bodyEndLocalMm: on an ARC run rotationDeg is the ROLLED start tangent, so
+    // origin + length/2 · dir(rotationDeg) is a phantom point that sits ~0.3·R off the real band.
+    // The plan canvas already measures the same midpoint this way (planBodyCenterMm).
     const rad = run.rotationDeg * DEG2RAD;
-    const cx = run.originX + (run.lengthMm / 2) * Math.cos(rad);
-    const cy = run.originY + (run.lengthMm / 2) * Math.sin(rad);
+    const end = bodyEndLocalMm(run);
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const midX = end.xMm / 2;
+    const midY = end.yMm / 2;
+    const cx = run.originX + midX * cos - midY * sin;
+    const cy = run.originY + midX * sin + midY * cos;
     const dist = Math.hypot(cx - xMm, cy - yMm);
     if (dist < bestDist) {
       bestDist = dist;

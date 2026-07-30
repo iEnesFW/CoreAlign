@@ -179,4 +179,35 @@ public class CuttingOptimizer1DTests
         result.TotalWasteMm.Should().Be(3500);
         result.UtilizationPercent.Should().BeApproximately(50m, 0.01m);
     }
+
+    /// <summary>
+    /// The header counted kerf as waste while each bar reported only its tail, so the per-bar
+    /// figures never summed to the total and the report looked like it had lost material it had
+    /// already accounted for. Waste is now "everything that is not a finished cut", with the
+    /// reusable tail carried separately.
+    /// </summary>
+    [Fact]
+    public void Per_bar_waste_sums_to_the_header_total_once_kerf_is_included()
+    {
+        var requests = new[] { new CuttingRequest1D("A", 1000, 5) };
+
+        var result = _sut.Plan(requests, stockBarLengthMm: 6000, kerfMm: 10);
+
+        result.Patterns.Sum(p => p.WasteMm).Should().Be((int)result.TotalWasteMm);
+    }
+
+    [Fact]
+    public void The_reusable_tail_is_reported_apart_from_the_kerf()
+    {
+        // Four 1000 mm cuts on a 6000 mm bar with a 10 mm kerf: 3 kerfs = 30 mm burnt,
+        // 6000 − 4000 − 30 = 1970 mm of tail left over.
+        var requests = new[] { new CuttingRequest1D("A", 1000, 4) };
+
+        var result = _sut.Plan(requests, stockBarLengthMm: 6000, kerfMm: 10);
+
+        var bar = result.Patterns.Should().ContainSingle().Which;
+        bar.WasteMm.Should().Be(2000);
+        bar.OffcutMm.Should().Be(1970);
+        (bar.WasteMm - bar.OffcutMm).Should().Be(30);
+    }
 }
