@@ -9,6 +9,7 @@ import {
   Home,
   LassoSelect,
   Layers,
+  Frame,
   LayoutTemplate,
   Minus,
   MousePointer2,
@@ -192,6 +193,8 @@ export function ToolPalette() {
   const setPenMode = useDesignerStore((s) => s.setPenMode);
   const stackOnDrop = useDesignerStore((s) => s.stackOnDrop);
   const toggleStackOnDrop = useDesignerStore((s) => s.toggleStackOnDrop);
+  const transformHandlesActive = useDesignerStore((s) => s.transformHandlesActive);
+  const toggleTransformHandles = useDesignerStore((s) => s.toggleTransformHandles);
   const setActiveTool = useDesignerStore((s) => s.setActiveTool);
   const setPlacement = useDesignerStore((s) => s.setPlacement);
   const setPaintColor = useDesignerStore((s) => s.setPaintColor);
@@ -260,6 +263,19 @@ export function ToolPalette() {
           onClick={() => void autofill()}
         >
           <Wand2 size={15} />
+        </PaletteButton>
+        {/* WHY a button for something that already has a shortcut: corner handles were reachable
+            ONLY by pressing q, with nothing anywhere in the UI naming them, so resize / arc / L
+            were invisible unless you already knew they existed. */}
+        <PaletteButton
+          title={withShortcut(
+            label('TransformHandles', 'Köşe tutamakları — büyüt, yay yap, L yap'),
+            'Q',
+          )}
+          active={transformHandlesActive}
+          onClick={toggleTransformHandles}
+        >
+          <Frame size={15} />
         </PaletteButton>
         <PaletteButton
           title={label(

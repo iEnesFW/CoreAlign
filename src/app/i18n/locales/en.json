@@ -3154,6 +3154,7 @@
         "Paint": "Paint",
         "Erase": "Erase",
         "Autofill": "Fill openings with glass",
+        "TransformHandles": "Corner handles — resize, curve, make an L",
         "StackOnDrop": "Stack on drop — rests the dragged object on top of whatever it overlaps (Alt does it too)",
         "AddRun": "Add run",
         "AddWall": "Add wall",

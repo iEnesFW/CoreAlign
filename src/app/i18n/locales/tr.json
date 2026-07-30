@@ -3154,6 +3154,7 @@
         "Paint": "Boya",
         "Erase": "Sil",
         "Autofill": "Boşlukları camla doldur",
+        "TransformHandles": "Köşe tutamakları — büyüt, yay yap, L yap",
         "StackOnDrop": "Üst üste bırak — sürüklediğin objeyi üzerine geldiğinin üstüne koyar (Alt ile de olur)",
         "AddRun": "Hat ekle",
         "AddWall": "Duvar ekle",
