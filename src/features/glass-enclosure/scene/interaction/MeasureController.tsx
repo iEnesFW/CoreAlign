@@ -59,14 +59,18 @@ export function MeasureController({ snapTargets }: MeasureControllerProps) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setPoints([]);
-        setCursor(null);
-      }
+      if (e.key !== 'Escape') return;
+      // Claim the press, exactly like the pen and the canvas do: several window listeners answer
+      // Escape, and without a claim ONE press cleared the measurement AND dropped the tool back to
+      // 'select' — so the user could not fix a misplaced point without re-arming the tool.
+      if (e.defaultPrevented || points.length === 0) return;
+      e.preventDefault();
+      setPoints([]);
+      setCursor(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [points.length]);
 
   // Pick a real 3D point off whatever scene surface the ray hits (wall top, panel,
   // roof, floor at its true elevation); fall back to the ground plane (y=0, plan-corner

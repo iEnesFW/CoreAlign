@@ -203,7 +203,7 @@ export function PlacementController({
   const posRef = useRef<PlanPoint | null>(null);
   const elevationRef = useRef<number | null>(null);
   const blockedRef = useRef(false);
-  const downRef = useRef({ x: 0, y: 0 });
+  const downRef = useRef({ x: 0, y: 0, button: 0 });
   const rotationRef = useRef(0);
 
   const isLine = placement === 'wall' || placement === 'run';
@@ -226,17 +226,26 @@ export function PlacementController({
     return nearest === null ? WALL_FALLBACK_HEIGHT_MM : nearest + WALL_HEIGHT_MARGIN_MM;
   };
 
-  const probes: PlanPoint[] = isLine
-    ? [
-        { x: -LINE_LENGTH_MM / 2, y: 0 },
-        { x: LINE_LENGTH_MM / 2, y: 0 },
-      ]
-    : [
-        { x: -SLAB_LENGTH_MM / 2, y: -SLAB_DEPTH_MM / 2 },
-        { x: SLAB_LENGTH_MM / 2, y: -SLAB_DEPTH_MM / 2 },
-        { x: SLAB_LENGTH_MM / 2, y: SLAB_DEPTH_MM / 2 },
-        { x: -SLAB_LENGTH_MM / 2, y: SLAB_DEPTH_MM / 2 },
-      ];
+  /**
+   * The ghost's two ENDS in plan, rotated to its current heading.
+   *
+   * WHY a function and not an array built at render: the wheel turns the ghost through
+   * `rotationRef` WITHOUT re-rendering, so a captured array keeps the original heading — the snap
+   * then measured the UNROTATED ends and pulled the body toward a corner it was not near. The
+   * footprint (`ghostFootprintAt`) already rotates, so the two disagreed.
+   *
+   * Only the line path uses probes; a slab returns before the snap (it follows the cursor).
+   */
+  const lineProbes = (): PlanPoint[] => {
+    const rad = rotationRef.current * DEG2RAD;
+    const half = LINE_LENGTH_MM / 2;
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    return [
+      { x: -half * cos, y: -half * sin },
+      { x: half * cos, y: half * sin },
+    ];
+  };
 
   const lineStart = (xMm: number, yMm: number) => {
     const rad = rotationRef.current * DEG2RAD;
@@ -408,7 +417,7 @@ export function PlacementController({
       applyAt(x, y, [], hit?.elevationMm);
       return;
     }
-    const stuck = applyPlanMoveSnap(probes, gridX, gridY, snapTargets);
+    const stuck = applyPlanMoveSnap(lineProbes(), gridX, gridY, snapTargets);
     applyAt(stuck.dxMm, stuck.dyMm, stuck.guides);
   };
 
@@ -478,9 +487,12 @@ export function PlacementController({
     const el = gl.domElement;
     const onMove = (e: PointerEvent) => followPointerRef.current(e.clientX, e.clientY);
     const onDown = (e: PointerEvent) => {
-      downRef.current = { x: e.clientX, y: e.clientY };
+      downRef.current = { x: e.clientX, y: e.clientY, button: e.button };
     };
     const onUp = (e: PointerEvent) => {
+      // Placement is a LEFT click. Without this, panning the camera with the right button (or a
+      // middle-button nudge) dropped a wall wherever the pointer happened to rest.
+      if (e.button !== 0 || downRef.current.button !== 0) return;
       const dx = e.clientX - downRef.current.x;
       const dy = e.clientY - downRef.current.y;
       // Distinguish a placement click from an orbit drag (which moves the pointer further).
@@ -498,12 +510,15 @@ export function PlacementController({
     el.addEventListener('pointermove', onMove);
     el.addEventListener('pointerdown', onDown);
     el.addEventListener('pointerup', onUp);
-    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    // WHY the CANVAS and not window: on window this swallowed EVERY wheel event while a line
+    // placement was armed, so the inspector and layer panels could not be scrolled at all — the
+    // ghost just spun instead. Capture phase on the canvas still beats OrbitControls' own handler.
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
     return () => {
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);
-      window.removeEventListener('wheel', onWheel, true);
+      el.removeEventListener('wheel', onWheel, true);
     };
   }, [placement, isLine, gl]);
 

@@ -2199,7 +2199,10 @@ export function WallObject({
               next.rotationDeg,
             );
             if (penetratesAny(resized, editObstacles)) return;
-            updateWall(wall.id, {
+            // Dragging a corner pins the OPPOSITE one, so three of the four corners move the
+            // origin — the same pose change the arc branch above already routes through
+            // commitWallPatch. A raw updateWall here left the attached glass at the old origin.
+            commitWallPatch(wall, {
               originX: next.originX,
               originY: next.originY,
               lengthMm: next.lengthMm,
