@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { queueToast } from '@/shared/api/toastQueue';
-import { distributePanelWidths, useDesignerStore } from '../model/designerStore';
+import { useDesignerStore } from '../model/designerStore';
+import { withClampedRunLength } from '../model/runPanelSpan';
+import { isRealArc } from '../model/arcGeometry';
+import { commitArcOrWarn } from '../geometry/arcCommitFeedback';
+import { blockedByLock, clampRunPatch, clampSlabPatch, clampWallPatch } from '../model/sceneGuards';
 import {
   alignTargetCenter,
   alignTargetEndpoints,
@@ -31,10 +35,13 @@ type PatchOp =
   | { kind: 'wall'; id: string; patch: Partial<SceneWallState> }
   | { kind: 'slab'; id: string; patch: Partial<SceneSlabState> };
 
+// WHY the store's writer and not a local distribute: panel widths follow the DEVELOPED length
+// (radius·sweep on an arc), never the chord. Splitting over the chord here wrote arc panels short
+// and persistRun pushed those widths to the server.
 const patchedRun = (run: SceneRunState, patch: Partial<SceneRunState>): SceneRunState => {
-  const merged = { ...run, ...patch };
+  const merged = { ...run, ...clampRunPatch(patch) };
   if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
-    return { ...merged, panels: distributePanelWidths(merged.panels, merged.lengthMm) };
+    return withClampedRunLength(merged, merged.lengthMm);
   }
   return merged;
 };
@@ -46,16 +53,19 @@ const applyOps = (scene: SceneState, ops: PatchOp[]): SceneState => {
   return {
     ...scene,
     runs: scene.runs.map((run) => {
-      const patch = runOps.get(run.id);
-      return patch ? patchedRun(run, patch as Partial<SceneRunState>) : run;
+      const patch = runOps.get(run.id) as Partial<SceneRunState> | undefined;
+      if (!patch || blockedByLock(run, patch)) return run;
+      return patchedRun(run, patch);
     }),
     walls: (scene.walls ?? []).map((wall) => {
-      const patch = wallOps.get(wall.id);
-      return patch ? { ...wall, ...(patch as Partial<SceneWallState>) } : wall;
+      const patch = wallOps.get(wall.id) as Partial<SceneWallState> | undefined;
+      if (!patch || blockedByLock(wall, patch)) return wall;
+      return { ...wall, ...clampWallPatch(wall, patch) };
     }),
     slabs: (scene.slabs ?? []).map((slab) => {
-      const patch = slabOps.get(slab.id);
-      return patch ? { ...slab, ...(patch as Partial<SceneSlabState>) } : slab;
+      const patch = slabOps.get(slab.id) as Partial<SceneSlabState> | undefined;
+      if (!patch || blockedByLock(slab, patch)) return slab;
+      return { ...slab, ...clampSlabPatch(patch) };
     }),
   };
 };
@@ -284,6 +294,25 @@ export const useMultiAlignActions = () => {
     notifySkipped(skipped);
   };
 
+  // A new length on an ARC body is a CHORD resize: radius and the rolled rotation must be
+  // re-derived by the single arc writer, or the body keeps a radius that contradicts its chord.
+  const lengthPatch = <T extends SceneRunState | SceneWallState>(
+    body: T,
+    chordMm: number,
+  ): Partial<T> | null => {
+    if (!isRealArc(body.geomArcRadiusMm, body.geomArcSweepDeg)) {
+      return { lengthMm: chordMm } as Partial<T>;
+    }
+    const arc = commitArcOrWarn(body, { kind: 'chordResize', chordMm }, t);
+    if (!arc) return null;
+    return {
+      lengthMm: arc.lengthMm ?? chordMm,
+      rotationDeg: arc.rotationDeg,
+      geomArcRadiusMm: arc.geomArcRadiusMm,
+      geomArcSweepDeg: arc.geomArcSweepDeg,
+    } as Partial<T>;
+  };
+
   const equalizeLengths = () => {
     const targets = collectTargets().filter((target) => target.kind !== 'slab');
     if (targets.length < 2) {
@@ -299,21 +328,33 @@ export const useMultiAlignActions = () => {
       const id = alignTargetId(target);
       const obstacles = footprints.filter((f) => f.ownerId !== id);
       if (target.kind === 'run') {
-        const candidate: SceneRunState = { ...target.run, lengthMm: anchorLength };
+        const patch = lengthPatch(target.run, anchorLength);
+        if (!patch) {
+          skipped += 1;
+          continue;
+        }
+        // Check the geometry that will ACTUALLY be committed — a stale-radius pre-check passes a
+        // move the real arc would not fit.
+        const candidate: SceneRunState = { ...target.run, ...patch };
         if (penetratesAny(buildRunFootprint(candidate, 0, 0, candidate.rotationDeg), obstacles)) {
           skipped += 1;
           continue;
         }
-        ops.push({ kind: 'run', id, patch: { lengthMm: anchorLength } });
+        ops.push({ kind: 'run', id, patch });
         continue;
       }
       if (target.kind !== 'wall') continue;
-      const candidate: SceneWallState = { ...target.wall, lengthMm: anchorLength };
+      const wallPatch = lengthPatch(target.wall, anchorLength);
+      if (!wallPatch) {
+        skipped += 1;
+        continue;
+      }
+      const candidate: SceneWallState = { ...target.wall, ...wallPatch };
       if (penetratesAny(buildWallFootprint(candidate, 0, 0, candidate.rotationDeg), obstacles)) {
         skipped += 1;
         continue;
       }
-      ops.push({ kind: 'wall', id, patch: { lengthMm: anchorLength } });
+      ops.push({ kind: 'wall', id, patch: wallPatch });
     }
     commitOps(ops);
     notifySkipped(skipped);

@@ -20,6 +20,8 @@ import type { GlassOpeningType } from './glassEnclosure.types';
 import type { CornerFillMode } from './multiAutofill';
 import { MIN_PANEL_MM, cascadePanelWidths } from './panelResize';
 import { chordFromRadiusSweep, developedLengthMm, isRealArc } from './arcGeometry';
+import { distributePanelWidths, runPanelTargetMm, withClampedRunLength } from './runPanelSpan';
+export { distributePanelWidths } from './runPanelSpan';
 import {
   blockedByLock,
   clampPanelPatch,
@@ -496,57 +498,6 @@ const stripPanelShape = (panel: ScenePanelState): ScenePanelState => ({
   shapeKind: null,
   shapePointsJson: null,
 });
-
-export const distributePanelWidths = (
-  panels: ScenePanelState[],
-  lengthMm: number,
-): ScenePanelState[] => {
-  const count = panels.length;
-  if (count === 0) return panels;
-  if (lengthMm <= count * MIN_PANEL_MM) {
-    return panels.map((panel) =>
-      panel.widthMm === MIN_PANEL_MM ? panel : { ...panel, widthMm: MIN_PANEL_MM },
-    );
-  }
-  const rawTotal = panels.reduce((sum, panel) => sum + panel.widthMm, 0);
-  const widths = panels.map((panel, index) => {
-    if (index === count - 1) return 0;
-    const share = rawTotal > 0 ? panel.widthMm / rawTotal : 1 / count;
-    return Math.max(MIN_PANEL_MM, Math.round(share * lengthMm));
-  });
-  widths[count - 1] = lengthMm - widths.reduce((a, b) => a + b, 0);
-  while (widths[count - 1] < MIN_PANEL_MM) {
-    let widest = 0;
-    for (let i = 1; i < count - 1; i += 1) if (widths[i] > widths[widest]) widest = i;
-    const take = Math.min(MIN_PANEL_MM - widths[count - 1], widths[widest] - MIN_PANEL_MM);
-    if (take <= 0) break;
-    widths[widest] -= take;
-    widths[count - 1] += take;
-  }
-  return panels.map((panel, index) => ({ ...panel, widthMm: widths[index] }));
-};
-
-// Σ panel widths = the DEVELOPED length (physical glass) — for an arc run that's radius·sweep,
-// for a straight run the length itself. The run passed here must already carry the arc fields
-// the widths should follow (i.e. call AFTER merging a patch).
-const runPanelTargetMm = (run: SceneRunState): number =>
-  Math.max(
-    developedLengthMm(run.lengthMm, run.geomArcRadiusMm, run.geomArcSweepDeg),
-    run.panels.length * MIN_PANEL_MM,
-  );
-
-const withClampedRunLength = (run: SceneRunState, lengthMm: number): SceneRunState => {
-  // Panels bound the DEVELOPED length, not the chord: on an arc run a legitimate panel count can
-  // exceed chord/MIN (the glass lives on radius·sweep), so clamping the CHORD against the panel
-  // count would corrupt chord = 2r·sin(sweep/2) on every commit. Straight runs keep the old rule
-  // (there chord IS the panel span).
-  const floorMm = isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)
-    ? MIN_PANEL_MM
-    : run.panels.length * MIN_PANEL_MM;
-  const clamped = Math.max(floorMm, Math.round(lengthMm));
-  const next = { ...run, lengthMm: clamped };
-  return { ...next, panels: distributePanelWidths(next.panels, runPanelTargetMm(next)) };
-};
 
 const normalizePanelWidths = (panels: ScenePanelState[], lengthMm: number): ScenePanelState[] => {
   const sum = panels.reduce((acc, panel) => acc + panel.widthMm, 0);
