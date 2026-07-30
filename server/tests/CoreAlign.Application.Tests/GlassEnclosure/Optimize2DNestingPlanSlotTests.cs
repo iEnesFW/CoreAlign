@@ -153,8 +153,54 @@ public class Optimize2DNestingPlanSlotTests
             CurrentUser());
     }
 
+    [Fact]
+    public async Task Panels_of_different_glass_are_never_nested_on_the_same_sheet()
+    {
+        // Two panels, identical size, different glass. Keyed by size alone they merged into one
+        // request and shared a jumbo — a cut plan that cannot be executed.
+        var thick = new GlassType("CLR8", "Clear 8", 8, GlassStructure.Tempered, 130m, 20m, 1200m, 8m, 1.0m, 34m)
+        {
+            TenantId = _tenantId,
+        };
+        _glassTypes[thick.Id] = thick;
+
+        var run = new GlassProjectRun(_project.Id, 1, "R2", 3000, 2100, Guid.NewGuid()) { TenantId = _tenantId };
+        run.AddPanel(new GlassProjectPanel(run.Id, 0, 1000, GlassOpeningType.Fixed, thick.Id) { TenantId = _tenantId });
+        _project.AddRun(run);
+
+        var report = await OptimizeHandler().Handle(NestingCommand(), default);
+
+        report.Sheets.Should().HaveCount(2);
+        report.Sheets.Select(s => s.GlassLabel).Should().BeEquivalentTo(new[] { "CLR6 · 6 mm", "CLR8 · 8 mm" });
+        report.Sheets.Select(s => s.SheetIndex).Should().BeEquivalentTo(new[] { 1, 2 });
+        report.SheetsUsed.Should().Be(2);
+        report.Sheets.Sum(s => s.Panels.Count).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Same_glass_panels_still_share_one_sheet()
+    {
+        var run = new GlassProjectRun(_project.Id, 1, "R2", 3000, 2100, Guid.NewGuid()) { TenantId = _tenantId };
+        var sameGlassId = _glassTypes.Keys.First();
+        run.AddPanel(new GlassProjectPanel(run.Id, 0, 1000, GlassOpeningType.Fixed, sameGlassId) { TenantId = _tenantId });
+        _project.AddRun(run);
+
+        var report = await OptimizeHandler().Handle(NestingCommand(), default);
+
+        report.Sheets.Should().ContainSingle();
+        report.Sheets[0].Panels.Should().HaveCount(2);
+    }
+
+    private IGlassTypeRepository GlassRepo()
+    {
+        var repo = Substitute.For<IGlassTypeRepository>();
+        repo.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
+            .Returns((IReadOnlyDictionary<Guid, GlassType>)_glassTypes);
+        return repo;
+    }
+
     private Optimize2DNestingCommandHandler OptimizeHandler() =>
-        new(ProjectRepo(), SettingsRepo(), new MaxRectsGlass2DOptimizer(), _plans, CurrentUser());
+        new(ProjectRepo(), SettingsRepo(), new MaxRectsGlass2DOptimizer(), _plans, GlassRepo(), CurrentUser());
 
     private GetCuttingReportQueryHandler ReportHandler() => new(_plans);
 }

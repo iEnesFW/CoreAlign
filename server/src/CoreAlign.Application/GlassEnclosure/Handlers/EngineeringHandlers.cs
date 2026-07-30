@@ -600,6 +600,7 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
     private readonly IGlassEnclosureSettingsRepository _settingsRepo;
     private readonly IGlass2DNestingOptimizer _optimizer;
     private readonly IGlassProjectCuttingPlanRepository _planRepo;
+    private readonly IGlassTypeRepository _glassRepo;
     private readonly ICurrentUserAccessor _currentUser;
 
     public Optimize2DNestingCommandHandler(
@@ -607,12 +608,14 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
         IGlassEnclosureSettingsRepository settingsRepo,
         IGlass2DNestingOptimizer optimizer,
         IGlassProjectCuttingPlanRepository planRepo,
+        IGlassTypeRepository glassRepo,
         ICurrentUserAccessor currentUser)
     {
         _projectRepo = projectRepo;
         _settingsRepo = settingsRepo;
         _optimizer = optimizer;
         _planRepo = planRepo;
+        _glassRepo = glassRepo;
         _currentUser = currentUser;
     }
 
@@ -622,16 +625,9 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
             ?? throw new GlassProjectNotFoundException();
         var settings = await _settingsRepo.GetOrCreateForCurrentTenantAsync(cancellationToken);
 
-        var panels = BuildPanelRequests(project, request.AllowRotation);
-        var sheets = new List<GlassSheet>
-        {
-            new(
-                Guid.NewGuid(),
-                settings.DefaultJumboGlassWidthMm,
-                settings.DefaultJumboGlassHeightMm,
-                settings.GlassKerfMm,
-                5m),
-        };
+        var glassIds = project.Runs.SelectMany(r => r.Panels).Select(p => p.GlassTypeId).Distinct().ToList();
+        var glassMap = await _glassRepo.GetByIdsAsync(glassIds, cancellationToken);
+        var glassGroups = BuildPanelRequests(project, glassMap, request.AllowRotation);
 
         var options = new NestingOptions(
             Algorithm: string.IsNullOrWhiteSpace(request.Algorithm) ? "MaxRects" : request.Algorithm,
@@ -640,12 +636,32 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
             AcceptableUtilization: request.AcceptableUtilization <= 0m ? 0.85m : request.AcceptableUtilization,
             GuillotineOnly: request.GuillotineOnly || settings.GuillotineRequired);
 
-        var nestingResult = await _optimizer.OptimizeAsync(panels, sheets, options, cancellationToken);
+        // WHY one optimizer run PER GLASS: a jumbo sheet is one physical pane of one glass, so 6 mm
+        // and 8 mm panels can never share it. Keying the groups by size alone merged them and the
+        // single shared sheet pool then nested them together — a cut plan that cannot be executed.
+        var groupResults = new List<(string GlassLabel, Glass2DNestingResult Result)>();
+        foreach (var group in glassGroups)
+        {
+            var sheets = new List<GlassSheet>
+            {
+                new(
+                    Guid.NewGuid(),
+                    settings.DefaultJumboGlassWidthMm,
+                    settings.DefaultJumboGlassHeightMm,
+                    settings.GlassKerfMm,
+                    5m),
+            };
+            var groupResult = await _optimizer.OptimizeAsync(group.Panels, sheets, options, cancellationToken);
+            groupResults.Add((group.GlassLabel, groupResult));
+        }
+
+        var merged = MergeGlassGroups(groupResults, options);
+        var nestingResult = merged.Result;
 
         var userId = _currentUser.UserId ?? Guid.Empty;
         var generatedAt = DateTime.UtcNow;
 
-        var dto = MapToReport(project.Id, generatedAt, nestingResult);
+        var dto = MapToReport(project.Id, generatedAt, nestingResult, merged.SheetGlassLabels);
 
         var plan = new GlassProjectCuttingPlan(
             project.Id,
@@ -660,9 +676,14 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
         return dto;
     }
 
-    private static List<GlassPanelRequest> BuildPanelRequests(GlassProject project, bool allowRotation)
+    private sealed record NestingGlassGroup(Guid GlassTypeId, string GlassLabel, List<GlassPanelRequest> Panels);
+
+    private static List<NestingGlassGroup> BuildPanelRequests(
+        GlassProject project,
+        IReadOnlyDictionary<Guid, GlassType> glassMap,
+        bool allowRotation)
     {
-        var groups = new Dictionary<string, (Guid Id, string Label, decimal WidthMm, decimal BlankHeightMm, PanelCutShape? Shape, decimal NominalHeightMm, int Count)>();
+        var groups = new Dictionary<string, (Guid GlassTypeId, Guid Id, string Label, decimal WidthMm, decimal BlankHeightMm, PanelCutShape? Shape, decimal NominalHeightMm, int Count)>();
         foreach (var run in project.Runs)
         {
             foreach (var panel in run.Panels)
@@ -670,14 +691,17 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
                 var nominalHeight = (decimal)(panel.HeightMm ?? run.HeightMm);
                 var shape = PanelCutShapeMapper.FromPanel(panel);
                 var blankHeight = PanelCutGeometry.BoundingHeightMm(nominalHeight, shape);
-                var key = $"{panel.WidthMm}|{nominalHeight}|{PanelCutGeometry.Signature(shape)}";
+                // The glass type LEADS the key: identical sizes in different glass are different
+                // parts and must never be merged into one nesting request.
+                var key = $"{panel.GlassTypeId}|{panel.WidthMm}|{nominalHeight}|{PanelCutGeometry.Signature(shape)}";
                 if (groups.TryGetValue(key, out var existing))
                 {
-                    groups[key] = (existing.Id, existing.Label, existing.WidthMm, existing.BlankHeightMm, existing.Shape, existing.NominalHeightMm, existing.Count + 1);
+                    groups[key] = existing with { Count = existing.Count + 1 };
                 }
                 else
                 {
                     groups[key] = (
+                        panel.GlassTypeId,
                         panel.Id,
                         $"{panel.WidthMm}×{(int)Math.Ceiling(blankHeight)}",
                         panel.WidthMm,
@@ -688,20 +712,77 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
                 }
             }
         }
+
         return groups.Values
-            .Select(g => new GlassPanelRequest(
-                g.Id,
-                g.Label,
-                g.WidthMm,
-                g.BlankHeightMm,
-                g.Count,
-                allowRotation,
-                g.Shape,
-                g.NominalHeightMm))
+            .GroupBy(g => g.GlassTypeId)
+            .Select(byGlass => new NestingGlassGroup(
+                byGlass.Key,
+                GlassGroupLabel(byGlass.Key, glassMap),
+                byGlass
+                    .Select(g => new GlassPanelRequest(
+                        g.Id,
+                        g.Label,
+                        g.WidthMm,
+                        g.BlankHeightMm,
+                        g.Count,
+                        allowRotation,
+                        g.Shape,
+                        g.NominalHeightMm))
+                    .ToList()))
+            .OrderBy(g => g.GlassLabel, StringComparer.Ordinal)
             .ToList();
     }
 
-    private static Glass2DNestingReportDto MapToReport(Guid projectId, DateTime generatedAt, Glass2DNestingResult result) =>
+    private static string GlassGroupLabel(Guid glassTypeId, IReadOnlyDictionary<Guid, GlassType> glassMap) =>
+        glassMap.TryGetValue(glassTypeId, out var glass)
+            ? $"{glass.Code} · {glass.ThicknessMm} mm"
+            : glassTypeId.ToString();
+
+    private sealed record MergedNesting(Glass2DNestingResult Result, IReadOnlyList<string> SheetGlassLabels);
+
+    // Each glass nested on its own sheet pool, then presented as one plan: sheets are re-indexed
+    // end to end, each keeps the label of the glass it is cut from, and the totals are re-derived
+    // so utilization still describes the whole job.
+    private static MergedNesting MergeGlassGroups(
+        IReadOnlyList<(string GlassLabel, Glass2DNestingResult Result)> results,
+        NestingOptions options)
+    {
+        var sheets = new List<PlacedSheet>();
+        var sheetGlassLabels = new List<string>();
+        var unplaced = new List<UnplacedPanel>();
+        foreach (var (glassLabel, result) in results)
+        {
+            foreach (var sheet in result.Sheets)
+            {
+                sheets.Add(sheet with { SheetIndex = sheets.Count + 1 });
+                sheetGlassLabels.Add(glassLabel);
+            }
+            unplaced.AddRange(result.UnplacedPanels);
+        }
+
+        var totalUsed = sheets.Sum(s => s.UsedAreaMm2);
+        var totalWaste = sheets.Sum(s => s.WasteAreaMm2);
+        var capacity = totalUsed + totalWaste;
+        var utilization = capacity == 0m ? 0m : decimal.Round(totalUsed * 100m / capacity, 3);
+
+        return new MergedNesting(
+            new Glass2DNestingResult(
+                options.Algorithm,
+                options.Heuristic,
+                sheets,
+                totalUsed,
+                totalWaste,
+                utilization,
+                sheets.Count,
+                unplaced),
+            sheetGlassLabels);
+    }
+
+    private static Glass2DNestingReportDto MapToReport(
+        Guid projectId,
+        DateTime generatedAt,
+        Glass2DNestingResult result,
+        IReadOnlyList<string> sheetGlassLabels) =>
         new(
             projectId,
             generatedAt,
@@ -711,7 +792,7 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
             result.TotalUsedAreaMm2,
             result.TotalWasteAreaMm2,
             result.TotalUtilizationPercent,
-            result.Sheets.Select(s => new Glass2DPlacedSheetDto(
+            result.Sheets.Select((s, i) => new Glass2DPlacedSheetDto(
                 s.SheetId,
                 s.SheetIndex,
                 s.SheetWidthMm,
@@ -721,7 +802,8 @@ public class Optimize2DNestingCommandHandler : IRequestHandler<Optimize2DNesting
                     PanelCutShapeMapper.ToDto(p.Shape, p.NominalHeightMm, p.WidthMm, p.HeightMm, p.Rotated))).ToList(),
                 s.UsedAreaMm2,
                 s.WasteAreaMm2,
-                s.UtilizationPercent)).ToList(),
+                s.UtilizationPercent,
+                i < sheetGlassLabels.Count ? sheetGlassLabels[i] : string.Empty)).ToList(),
             result.UnplacedPanels.Select(u => new Glass2DUnplacedPanelDto(
                 u.PanelId, u.Label, u.WidthMm, u.HeightMm, u.Reason)).ToList());
 }

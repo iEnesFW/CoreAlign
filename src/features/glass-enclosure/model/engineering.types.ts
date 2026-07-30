@@ -204,6 +204,7 @@ export interface Glass2DPlacedSheetDto {
   usedAreaMm2: number;
   wasteAreaMm2: number;
   utilizationPercent: number;
+  glassLabel: string;
 }
 
 export interface Glass2DUnplacedPanelDto {

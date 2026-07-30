@@ -135,6 +135,7 @@ const SheetCard = ({ sheet }: { sheet: Glass2DPlacedSheetDto }) => {
       <div className="mb-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
         <span className="font-mono">
           #{sheet.sheetIndex} · {sheet.sheetWidthMm}×{sheet.sheetHeightMm} mm
+          {sheet.glassLabel ? ` · ${sheet.glassLabel}` : ''}
         </span>
         <span className="flex items-center gap-2">
           <span className="font-mono text-success-600 dark:text-success-400">

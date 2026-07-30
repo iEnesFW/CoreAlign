@@ -159,7 +159,8 @@ public record Glass2DPlacedSheetDto(
     IReadOnlyList<Glass2DPlacedPanelDto> Panels,
     decimal UsedAreaMm2,
     decimal WasteAreaMm2,
-    decimal UtilizationPercent);
+    decimal UtilizationPercent,
+    string GlassLabel = "");
 
 public record Glass2DUnplacedPanelDto(
     Guid PanelId,
