@@ -2,6 +2,7 @@ import { buildPlanFootprint, buildPolygonFootprint } from '@/shared/three-engine
 import { isRealArc } from '../../model/arcGeometry';
 import { arcBandOutlineMm } from '../../model/bandOutline';
 import { curvedSlabPlanOutlineMm } from '../builders/curvedSlabGeometry';
+import { bowedPolygonOutline, edgeArcOutline, hasEdgeArc } from '../../model/edgeArcOutline';
 import type { PlanFootprint } from '@/shared/three-engine';
 import type {
   SceneRunState,
@@ -116,6 +117,18 @@ export const buildRunFootprint = (
   );
 };
 
+/**
+ * How far a slab's real body rises above its flat top: the ridge of a barrel or pitched roof.
+ *
+ * WHY the footprint has to know: the mesh extrudes that profile from y=0 up to rise+thickness, but
+ * the footprint claimed `elevation .. elevation + thickness`, so a body dropped or Alt-stacked onto
+ * an 800 mm ridge buried itself 800 mm inside it and nothing reported a collision. The box is
+ * CONSERVATIVE (the ridge is only that high mid-span) — that is the safe direction: it lifts a body
+ * slightly too much near the eaves instead of letting it pass through the roof.
+ */
+export const slabRiseMm = (slab: SceneSlabState): number =>
+  Math.max(0, slab.arcRiseMm ?? 0, slab.pitchRiseMm ?? 0);
+
 export const buildSlabFootprint = (
   slab: SceneSlabState,
   dxMm: number,
@@ -123,6 +136,7 @@ export const buildSlabFootprint = (
   rotationDeg: number,
 ): PlanFootprint => {
   const rad = rotationDeg * DEG2RAD;
+  const topMm = slab.elevationMm + slabRiseMm(slab) + slab.thicknessMm;
   // A plan-curved slab's body bows OUTSIDE the flat rect (apex by the sagitta, back edge fanning
   // past the ends) — collide/snap/stack against the real band, not a phantom rectangle. Sampled
   // from the SAME plan columns the mesh is built from.
@@ -144,11 +158,34 @@ export const buildSlabFootprint = (
         slab.id,
         outline,
         slab.elevationMm,
-        slab.elevationMm + slab.thicknessMm,
+        topMm,
         Math.min(slab.lengthMm, slab.depthMm) / 2,
       ),
       walkable: slab.kind === 'floor',
     };
+  }
+  // A single-edge arc bows one rect edge OUTSIDE the plan rectangle, and the mesh is built from
+  // exactly this outline (SlabObject's hasEdgeArc branch) — collide against the real silhouette.
+  // An INWARD bow matters just as much: a rectangle would over-claim and veto legitimate moves.
+  if (hasEdgeArc(slab.geomEdgeArc)) {
+    const cosR = Math.cos(rad);
+    const sinR = Math.sin(rad);
+    const bowed = edgeArcOutline(slab.lengthMm, slab.depthMm, slab.geomEdgeArc ?? {});
+    if (bowed.length >= 3) {
+      return {
+        ...buildPolygonFootprint(
+          slab.id,
+          bowed.map((p) => ({
+            x: slab.originX + dxMm + p.x * cosR - p.y * sinR,
+            y: slab.originY + dyMm + p.x * sinR + p.y * cosR,
+          })),
+          slab.elevationMm,
+          topMm,
+          Math.min(slab.lengthMm, slab.depthMm) / 2,
+        ),
+        walkable: slab.kind === 'floor',
+      };
+    }
   }
   return {
     ...buildPlanFootprint(
@@ -159,7 +196,7 @@ export const buildSlabFootprint = (
       rotationDeg,
       slab.depthMm / 2,
       slab.elevationMm,
-      slab.elevationMm + slab.thicknessMm,
+      topMm,
     ),
     walkable: slab.kind === 'floor',
   };
@@ -172,7 +209,13 @@ export const buildSurfaceFootprint = (
 ): PlanFootprint => ({
   ...buildPolygonFootprint(
     surface.id,
-    surface.points.map((p) => ({ x: p.x + dxMm, y: p.y + dyMm })),
+    // The mesh (and the DXF) is built from the BOWED outline — a raw-vertex footprint let a body
+    // bowed 600 mm outward pass straight through that slice, and an inward bow claim space it
+    // does not occupy. bowedPolygonOutline returns the raw points when there are no arcs.
+    bowedPolygonOutline(surface.points, surface.edgeArcs ?? null).map((p) => ({
+      x: p.x + dxMm,
+      y: p.y + dyMm,
+    })),
     surface.elevationMm,
     surface.elevationMm + surface.thicknessMm,
   ),

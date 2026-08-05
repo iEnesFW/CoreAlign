@@ -1577,8 +1577,13 @@ export function WallObject({
 
   const stickyDelta = (base: number, deltaMm: number) => stickyDimensionMm(base + deltaMm) - base;
   const heightLevels = collectHeightLevels(fullScene, wall.id);
-  const levelDelta = (base: number, deltaMm: number) =>
-    snapToLevels(base + deltaMm, heightLevels) - base;
+  // WHY absolute: the level list is absolute Z, but the top handle edits a RELATIVE height. Snapping
+  // heightMm straight against it meant a 2600 wall on a 400 podium matched a slab sitting at 2600
+  // and its real top jumped to 3000. Snap where the top actually IS, then convert back.
+  const topLevelDelta = (deltaMm: number) => {
+    const absoluteTop = baseWallElevMm + wall.heightMm;
+    return snapToLevels(absoluteTop + deltaMm, heightLevels) - absoluteTop;
+  };
 
   const resetBody = () => {
     bodyRef.current?.scale.set(1, 1, 1);
@@ -1702,7 +1707,7 @@ export function WallObject({
 
   const commitTop = (deltaMm: number) => {
     const heightEnd = wall.heightEndMm ?? null;
-    const target = levelDelta(wall.heightMm, deltaMm);
+    const target = topLevelDelta(deltaMm);
     const clamped = clampPlanStretch(
       (d) =>
         buildWallFootprint(
@@ -1787,7 +1792,7 @@ export function WallObject({
   const lengthLabel = (d: number) =>
     labelMm(Math.max(MIN_LENGTH_MM, wall.lengthMm + stickyDelta(wall.lengthMm, d)));
   const heightLabel = (d: number) =>
-    labelMm(Math.max(MIN_HEIGHT_MM, wall.heightMm + levelDelta(wall.heightMm, d)));
+    labelMm(Math.max(MIN_HEIGHT_MM, wall.heightMm + topLevelDelta(d)));
   const thicknessLabel = (d: number) =>
     labelMm(Math.max(MIN_THICKNESS_MM, wall.thicknessMm + stickyDelta(wall.thicknessMm, d)));
   const featureDepthLabel = (feature: SceneWallFeature) => (d: number) => {
@@ -1927,7 +1932,7 @@ export function WallObject({
       hitHeightM: Math.max(thicknessM, FACE_HIT_SIZE_M),
       axis: [0, 1, 0],
       label: heightLabel,
-      onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
+      onPreview: (d) => previewTop(topLevelDelta(d)),
       onCommit: commitTop,
     },
     arcThicknessFace(1),
@@ -1973,7 +1978,7 @@ export function WallObject({
             hitHeightM: Math.max(thicknessM, FACE_HIT_SIZE_M),
             axis: [0, 1, 0],
             label: heightLabel,
-            onPreview: (d) => previewTop(levelDelta(wall.heightMm, d)),
+            onPreview: (d) => previewTop(topLevelDelta(d)),
             onCommit: commitTop,
           },
           {

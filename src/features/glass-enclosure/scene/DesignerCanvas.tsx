@@ -42,6 +42,7 @@ import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
 import { applyWallStack } from '../model/stackCoMove';
+import { isGravityExempt } from '../model/settleScene';
 import { dropLockedIds, lockedBodyIds } from '../model/sceneGuards';
 import { notifyLockedBlocked } from '../model/lockFeedback';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -57,6 +58,7 @@ import {
   buildSlabFootprint,
   buildSurfaceFootprint,
   buildWallFootprint,
+  footprintsPenetrate,
   isFloating,
   normalizePlanAngleDeg,
   penetratesAny,
@@ -515,8 +517,15 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       ...(scene.walls ?? []).map((wall) => buildWallFootprint(wall, 0, 0, wall.rotationDeg)),
       ...scene.runs.map((run) => buildRunFootprint(run, 0, 0, run.rotationDeg)),
       ...(scene.slabs ?? []).map((slab) => buildSlabFootprint(slab, 0, 0, slab.rotationDeg)),
+      // WHY only ROOF surfaces: a drawn surface was in NO obstacle list, so a pen-drawn canopy was
+      // transparent to everything and everything was transparent to it. A FLOOR surface must stay
+      // out — it spans grade with a z-range that touches every wall standing on it, so adding it
+      // would veto ordinary wall placement (slab floors escape this only by living at -150).
+      ...(scene.surfaces ?? [])
+        .filter((surface) => surface.kind === 'roof')
+        .map((surface) => buildSurfaceFootprint(surface)),
     ],
-    [scene.walls, scene.runs, scene.slabs],
+    [scene.walls, scene.runs, scene.slabs, scene.surfaces],
   );
   const planObstacles = solidFootprints;
   // WHY a separate list: a ROOF rests on the structure it SPANS. Floors must be excluded — a roof
@@ -542,9 +551,15 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const placementObstacles = planObstacles;
   const runObstacles = planObstacles;
   const wallObstacles = planObstacles;
+  // WHY the roof exemption: gravity deliberately leaves roofs alone (settleScene's isGravityExempt
+  // — a canopy legitimately spans open air) and placement BRIDGES a roof onto the nearest structure
+  // within reach even when it overlaps no wall in plan. Without the same exemption here the badge
+  // flagged a correctly-bridged canopy as unsupported, and users chased the warning by dragging the
+  // roof DOWN to a wrong level. One predicate so the two rules cannot drift apart again.
   const floatingCount = useMemo(() => {
     let count = 0;
     for (const slab of scene.slabs ?? []) {
+      if (isGravityExempt(slab.kind)) continue;
       if (
         isFloating(
           buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
@@ -555,11 +570,28 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         count += 1;
     }
     for (const surface of scene.surfaces ?? []) {
+      if (isGravityExempt(surface.kind)) continue;
       if (isFloating(buildSurfaceFootprint(surface), supportFootprints, FLOATING_GAP_MM))
         count += 1;
     }
     return count;
   }, [scene.slabs, scene.surfaces, supportFootprints]);
+
+  // Scene-wide interpenetration. Every editing path is guarded, but nothing ever LOOKED at the
+  // scene as a whole: a project saved overlapping elsewhere, or one driven into overlap through the
+  // stretch/rotate paths (which skip the clamp when the body already overlaps), opened silently and
+  // went to manufacturing as a physically impossible assembly. n is small (tens of bodies), and
+  // footprintsPenetrate already early-outs on disjoint z-ranges.
+  const penetrationCount = useMemo(() => {
+    const all = supportFootprints;
+    let count = 0;
+    for (let i = 0; i < all.length; i += 1) {
+      for (let j = i + 1; j < all.length; j += 1) {
+        if (footprintsPenetrate(all[i], all[j])) count += 1;
+      }
+    }
+    return count;
+  }, [supportFootprints]);
 
   const catalogViolations = useMemo(
     () =>
@@ -2173,13 +2205,21 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         </div>
       )}
       <DragReadoutOverlay />
-      {(floatingCount > 0 || catalogViolations > 0) && (
+      {(floatingCount > 0 || penetrationCount > 0 || catalogViolations > 0) && (
         <div className="pointer-events-none absolute bottom-3 left-3 z-20 flex flex-col gap-1.5">
           {floatingCount > 0 && (
             <div className="rounded-md bg-warning-500/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg">
               {t('GlassEnclosure.Designer.FloatingWarning', {
                 defaultValue: '⚠ {{count}} nesne desteksiz (boşlukta)',
                 count: floatingCount,
+              })}
+            </div>
+          )}
+          {penetrationCount > 0 && (
+            <div className="rounded-md bg-danger-600/95 px-2.5 py-1 text-xs font-medium text-white shadow-lg">
+              {t('GlassEnclosure.Designer.PenetrationWarning', {
+                defaultValue: '⚠ {{count}} nesne çifti iç içe geçmiş',
+                count: penetrationCount,
               })}
             </div>
           )}

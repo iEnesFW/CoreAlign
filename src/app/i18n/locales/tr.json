@@ -3318,7 +3318,8 @@
         "Slabs": "Döşemeler",
         "Surfaces": "Yüzeyler"
       },
-      "LockedBlocked": "Bu nesne kilitli — düzenlemek için önce kilidi açın."
+      "LockedBlocked": "Bu nesne kilitli — düzenlemek için önce kilidi açın.",
+      "PenetrationWarning": "⚠ {{count}} nesne çifti iç içe geçmiş"
     },
     "Field": {
       "Active": "Aktif",

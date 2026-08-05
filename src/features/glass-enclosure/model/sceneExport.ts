@@ -4,7 +4,7 @@ import type { Object3D } from 'three';
 import { isRealArc } from './arcGeometry';
 import { arcBandOutlineMm } from './bandOutline';
 import { curvedSlabPlanOutlineMm } from '../scene/builders/curvedSlabGeometry';
-import { bowedPolygonOutline } from './edgeArcOutline';
+import { bowedPolygonOutline, edgeArcOutline, hasEdgeArc } from './edgeArcOutline';
 import type { SceneSlabState, SceneState } from './project.types';
 
 const RUN_THICKNESS_MM = 50;
@@ -74,6 +74,19 @@ const slabRect = (slab: SceneSlabState): Pt[] => {
       x: slab.originX + p.x * cosR - p.z * sinR,
       y: slab.originY + p.x * sinR + p.z * cosR,
     }));
+  }
+  // Same rule for a single-edge arc: the mesh and the footprint bow that edge, so exporting a
+  // plain rectangle shipped a silhouette that does not match the body on screen.
+  if (hasEdgeArc(slab.geomEdgeArc)) {
+    const cosE = Math.cos(slab.rotationDeg * DEG2RAD);
+    const sinE = Math.sin(slab.rotationDeg * DEG2RAD);
+    const bowed = edgeArcOutline(slab.lengthMm, slab.depthMm, slab.geomEdgeArc ?? {});
+    if (bowed.length >= 3) {
+      return bowed.map((p) => ({
+        x: slab.originX + p.x * cosE - p.y * sinE,
+        y: slab.originY + p.x * sinE + p.y * cosE,
+      }));
+    }
   }
   const rad = slab.rotationDeg * DEG2RAD;
   const dx = Math.cos(rad);

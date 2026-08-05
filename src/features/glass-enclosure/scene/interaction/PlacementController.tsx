@@ -3,6 +3,7 @@ import { Box3, Plane, Raycaster, Vector2, Vector3 } from 'three';
 import { useThree } from '@react-three/fiber';
 import {
   clearSnapGuides,
+  DESIGNER_ROOT_NAME,
   setSnapGuides,
   supportTopBelowMm,
   SUPPORT_TOLERANCE_MM,
@@ -372,7 +373,11 @@ export function PlacementController({
   // where you POINT — not on the cursor's ground projection, which parallaxes away in a
   // perspective view ("mouse treated as ground"). Uses the raycaster already set from the pointer.
   const pickStructureXZ = (): { x: number; y: number; elevationMm: number } | null => {
-    for (const hit of raycaster.intersectObjects(scene.children, true)) {
+    // Only the designer geometry can be a placement target, so raycast that subtree instead of the
+    // whole graph — the ground disc, the grid, the helpers and the lights were all being walked and
+    // sorted on every pointer event before being discarded by the filters below.
+    const root = scene.getObjectByName(DESIGNER_ROOT_NAME);
+    for (const hit of raycaster.intersectObjects(root ? root.children : scene.children, true)) {
       if (hit.point.y * MM <= STRUCTURE_MIN_Y_MM) continue;
       // Skip floating dimension labels (troika <Text> carries a string `text` prop) so a
       // label hovering above a structure can't hijack the placement XZ.
@@ -494,7 +499,24 @@ export function PlacementController({
   useEffect(() => {
     if (!placement) return;
     const el = gl.domElement;
-    const onMove = (e: PointerEvent) => followPointerRef.current(e.clientX, e.clientY);
+    // WHY coalesce to one call per frame: followPointer is not cheap — in roof mode it recursively
+    // raycasts the WHOLE scene graph and, when the ray misses, resolves the bridged support height
+    // several times over. A pointer stream fires far faster than the display refreshes, so every
+    // extra call is work whose result is thrown away before it can be seen. useDrag3D already
+    // rAF-throttles for exactly this reason (scheduleMove); this is the same guard.
+    let pending: { x: number; y: number } | null = null;
+    let frame = 0;
+    const flush = () => {
+      frame = 0;
+      if (!pending) return;
+      const { x, y } = pending;
+      pending = null;
+      followPointerRef.current(x, y);
+    };
+    const onMove = (e: PointerEvent) => {
+      pending = { x: e.clientX, y: e.clientY };
+      if (frame === 0) frame = requestAnimationFrame(flush);
+    };
     const onDown = (e: PointerEvent) => {
       downRef.current = { x: e.clientX, y: e.clientY, button: e.button };
     };
@@ -524,6 +546,7 @@ export function PlacementController({
     // ghost just spun instead. Capture phase on the canvas still beats OrbitControls' own handler.
     el.addEventListener('wheel', onWheel, { passive: false, capture: true });
     return () => {
+      if (frame !== 0) cancelAnimationFrame(frame);
       el.removeEventListener('pointermove', onMove);
       el.removeEventListener('pointerdown', onDown);
       el.removeEventListener('pointerup', onUp);

@@ -5,6 +5,7 @@ import type {
   EdgeArcMap,
   SceneSlabState,
   SceneSurfaceState,
+  SceneWallFeature,
   SceneWallState,
 } from './project.types';
 
@@ -39,6 +40,31 @@ const swapEdgeArc = (arc?: EdgeArcMap | null): EdgeArcMap | null => {
   return { front: arc.front, back: arc.back, left: arc.right, right: arc.left };
 };
 
+/**
+ * A horizontal mirror is x -> L-x, and what that means for a FEATURE depends on the face it is on.
+ *
+ * front/back/top/bottom run their u axis along the body LENGTH, so their offset flips and their
+ * outline mirrors in u — the original behaviour, and it is right.
+ *
+ * left/right do NOT: wallFaceFrame gives the two end faces uAxis = Y (height), uMax = H. The old
+ * code was subtracting a HEIGHT from a LENGTH. On a 4000x2600 wall a niche 1000 mm up jumped to
+ * 3000 — outside that face's 2600 u range, where the CSG cutter misses the body entirely and the
+ * feature is listed but invisible. Worse, when offset >= L-H it stayed IN range and silently moved
+ * to the wrong height, so nothing looked broken. Negating the outline x was wrong on the same axis.
+ * Since left (x=0, -X) and right (x=L, +X) share uAxis=Y and vAxis=Z, a point keeps its (u,v)
+ * between the two frames: mirroring an end-face feature is purely the SIDE swap.
+ */
+const mirrorFeature = <T extends SceneWallFeature>(feature: T, faceLengthMm: number): T => {
+  if (feature.side === 'left' || feature.side === 'right') {
+    return { ...feature, side: feature.side === 'left' ? 'right' : 'left' };
+  }
+  return {
+    ...feature,
+    offsetMm: faceLengthMm - feature.offsetMm,
+    points: feature.points ? feature.points.map((p) => ({ x: -p.x, z: p.z })) : feature.points,
+  };
+};
+
 export const mirrorWallPatch = (wall: SceneWallState): Partial<SceneWallState> => {
   const faceLengthMm = bodyDevelopedLengthMm(wall);
   const arcPatch = arcCommitKeepingEnds(wall, { kind: 'flip' }).patch ?? {};
@@ -56,11 +82,7 @@ export const mirrorWallPatch = (wall: SceneWallState): Partial<SceneWallState> =
       ...o,
       offsetMm: faceLengthMm - o.offsetMm,
     })),
-    features: (wall.features ?? []).map((f) => ({
-      ...f,
-      offsetMm: faceLengthMm - f.offsetMm,
-      points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
-    })),
+    features: (wall.features ?? []).map((f) => mirrorFeature(f, faceLengthMm)),
   };
 };
 
@@ -73,11 +95,7 @@ export const mirrorSlabPatch = (slab: SceneSlabState): Partial<SceneSlabState> =
     ...arcPatch,
     cornerRadiiMm: swapRadii(slab.cornerRadiiMm),
     geomEdgeArc: swapEdgeArc(slab.geomEdgeArc),
-    features: (slab.features ?? []).map((f) => ({
-      ...f,
-      offsetMm: faceLengthMm - f.offsetMm,
-      points: f.points ? f.points.map((p) => ({ x: -p.x, z: p.z })) : f.points,
-    })),
+    features: (slab.features ?? []).map((f) => mirrorFeature(f, faceLengthMm)),
   };
 };
 

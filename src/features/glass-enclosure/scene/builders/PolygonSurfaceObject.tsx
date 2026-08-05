@@ -20,6 +20,7 @@ import {
   buildSurfaceFootprint,
   liftToClearMm,
   restElevationMm,
+  stackableSupports,
 } from '../interaction/planCollision';
 import { polygonSelfIntersects } from '../../model/polygonValidation';
 import { bowedPolygonOutline } from '../../model/edgeArcOutline';
@@ -162,7 +163,14 @@ export function PolygonSurfaceObject({
   // drag keeps its current elevation and just slides in plan. restElevationMm skips
   // this surface's own footprint by ownerId, so it never rests on itself.
   const restElevationAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(buildSurfaceFootprint(surface, dxMm, dyMm), supportFootprints, 0);
+    restElevationMm(
+      buildSurfaceFootprint(surface, dxMm, dyMm),
+      // Cargo standing ON this surface is not something to climb (stackableSupports); and the
+      // fallback is the body's OWN base, never the ground — SlabObject's rule. With 0 here, an
+      // Alt-nudge of a roof surface spanning open air committed elevation 0 and it fell to grade.
+      stackableSupports(supportFootprints, surface.elevationMm + surface.thicknessMm),
+      surface.elevationMm,
+    );
   // A plain drag keeps the elevation, but keeping it blindly let the plate slide straight THROUGH
   // a wall — a surface has no lateral collision at all. Rise onto whatever it would intersect.
   const clearedElevationAt = (dxMm: number, dyMm: number) =>

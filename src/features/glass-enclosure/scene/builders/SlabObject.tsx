@@ -37,6 +37,7 @@ import {
   liftToClearMm,
   penetratesAny,
   restElevationMm,
+  slabRiseMm,
   stackableSupports,
   restsOnSupportAtMm,
 } from '../interaction/planCollision';
@@ -511,7 +512,9 @@ export function SlabObject({
       buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
       supportFootprints,
       baseElevMm,
-      slab.thicknessMm,
+      // The barrel/pitched ridge is part of the body's height — reporting only the deck thickness
+      // let a wall poking into the vault go unnoticed by the clearance pass.
+      slab.thicknessMm + slabRiseMm(slab),
     );
   const restingAtStart = restsOnSupportAtMm(
     buildSlabFootprint(slab, 0, 0, slab.rotationDeg),

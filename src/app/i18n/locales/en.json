@@ -3318,7 +3318,8 @@
         "Slabs": "Slabs",
         "Surfaces": "Surfaces"
       },
-      "LockedBlocked": "This object is locked — unlock it before editing."
+      "LockedBlocked": "This object is locked — unlock it before editing.",
+      "PenetrationWarning": "⚠ {{count}} object pairs are interpenetrating"
     },
     "Field": {
       "Active": "Active",

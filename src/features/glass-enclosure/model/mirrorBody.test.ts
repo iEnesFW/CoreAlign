@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { mirrorSlabPatch, mirrorSurfacePatch, mirrorWallPatch } from './mirrorBody';
 import { bodyDevelopedLengthMm, chordDirectionDeg } from '../geometry/curvature';
-import type { SceneSlabState, SceneSurfaceState, SceneWallState } from './project.types';
+import type {
+  SceneSlabState,
+  SceneSurfaceState,
+  SceneWallFeature,
+  SceneWallState,
+} from './project.types';
 
 const wall = (over: Partial<SceneWallState> = {}): SceneWallState =>
   ({
@@ -180,5 +185,76 @@ describe('mirrorSurfacePatch', () => {
 
   it('is a no-op on a surface with no points', () => {
     expect(mirrorSurfacePatch(surface({ points: [] }))).toEqual({});
+  });
+});
+
+describe('mirroring an END-FACE feature', () => {
+  const sideFeature = (over: Partial<SceneWallFeature> = {}): SceneWallFeature => ({
+    id: 'f',
+    shape: 'rect',
+    mode: 'hole',
+    side: 'right',
+    offsetMm: 1000,
+    centerZMm: 100,
+    widthMm: 300,
+    heightMm: 300,
+    depthMm: 200,
+    ...over,
+  });
+
+  const wall4x26 = (features: SceneWallFeature[]): SceneWallState =>
+    ({
+      id: 'w',
+      originX: 0,
+      originY: 0,
+      rotationDeg: 0,
+      lengthMm: 4000,
+      heightMm: 2600,
+      thicknessMm: 200,
+      openings: [],
+      features,
+    }) as unknown as SceneWallState;
+
+  it('swaps the face and leaves the coordinates alone', () => {
+    // offsetMm on left/right is a HEIGHT, not a length — 4000-1000 would have thrown it to 3000,
+    // outside the face's 2600 range, and the CSG cutter would have missed the body entirely.
+    const patch = mirrorWallPatch(wall4x26([sideFeature()]));
+    const mirrored = patch.features?.[0];
+    expect(mirrored?.side).toBe('left');
+    expect(mirrored?.offsetMm).toBe(1000);
+    expect(mirrored?.centerZMm).toBe(100);
+  });
+
+  it('does not flip an end-face outline on the wrong axis', () => {
+    const patch = mirrorWallPatch(
+      wall4x26([
+        sideFeature({
+          shape: 'free',
+          points: [
+            { x: 0, z: 0 },
+            { x: 120, z: 0 },
+            { x: 0, z: 90 },
+          ],
+        }),
+      ]),
+    );
+    expect(patch.features?.[0].points).toEqual([
+      { x: 0, z: 0 },
+      { x: 120, z: 0 },
+      { x: 0, z: 90 },
+    ]);
+  });
+
+  it('still mirrors a FRONT-face feature the old way', () => {
+    const patch = mirrorWallPatch(wall4x26([sideFeature({ side: 1, offsetMm: 1200 })]));
+    expect(patch.features?.[0].side).toBe(1);
+    expect(patch.features?.[0].offsetMm).toBe(2800);
+  });
+
+  it('mirroring twice returns an end-face feature to itself', () => {
+    const once = mirrorWallPatch(wall4x26([sideFeature()]));
+    const twice = mirrorWallPatch(wall4x26(once.features ?? []));
+    expect(twice.features?.[0].side).toBe('right');
+    expect(twice.features?.[0].offsetMm).toBe(1000);
   });
 });
