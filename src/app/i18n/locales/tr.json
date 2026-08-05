@@ -2954,7 +2954,11 @@
           "6": "Altıgen"
         },
         "PolygonHint": "Tıkla: nokta ekle · Sürükle: taşı · Çift tık: sil",
-        "ShapeSinglePanelOnly": "Şekil yalnızca tek panelli hatlarda verilebilir."
+        "ShapeSinglePanelOnly": "Şekil yalnızca tek panelli hatlarda verilebilir.",
+        "OutlineSelfIntersecting": "Çizim kendini kesiyor — cam bu şekilde kesilemez, önceki şekil korundu.",
+        "OutlineTooFewPoints": "Şekil için en az üç farklı köşe gerekir — önceki şekil korundu.",
+        "OutlineDegenerate": "Şekil kesilemeyecek kadar ince — önceki şekil korundu.",
+        "OutlineUnreadable": "Şekil verisi okunamadı — önceki şekil korundu."
       },
       "PanelAdded": "Panel eklendi",
       "PanelCount": "{{count}} panel",

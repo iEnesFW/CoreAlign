@@ -1,4 +1,6 @@
 import { developedLengthMm } from './arcGeometry';
+import { normalizePanelOutlineJson } from './panelShapeOutline';
+import { notifyPanelOutlineRejected } from './panelOutlineFeedback';
 import type {
   ScenePanelState,
   SceneRunState,
@@ -210,6 +212,7 @@ export const clampRunPatch = (
 export const clampPanelPatch = (
   run: SceneRunState,
   patch: Partial<ScenePanelState>,
+  panel?: ScenePanelState,
 ): Partial<ScenePanelState> => {
   const next: Partial<ScenePanelState> = { ...patch };
   if (typeof next.widthMm === 'number')
@@ -220,6 +223,22 @@ export const clampPanelPatch = (
   if (typeof next.heightMm === 'number') {
     const cap = Math.max(BODY_FLOOR_MM.panelHeight, Math.round(run.heightMm));
     next.heightMm = Math.min(cap, floorMm(next.heightMm, BODY_FLOOR_MM.panelHeight));
+  }
+
+  // A SHAPED pane's outline is the silhouette the BOM prices, the cut list orders and the nester
+  // places — so it passes the same gate no matter which editor produced it. A rejected outline
+  // leaves the stored shape untouched rather than writing a pane that cannot be cut.
+  if (next.shapePointsJson !== undefined && next.shapePointsJson !== null) {
+    const widthMm = next.widthMm ?? panel?.widthMm ?? run.lengthMm;
+    const heightMm = next.heightMm ?? panel?.heightMm ?? run.heightMm;
+    const outline = normalizePanelOutlineJson(next.shapePointsJson, widthMm, heightMm);
+    if (outline.json === null) {
+      notifyPanelOutlineRejected(outline.rejection);
+      delete next.shapePointsJson;
+      delete next.shapeKind;
+    } else {
+      next.shapePointsJson = outline.json;
+    }
   }
   return next;
 };

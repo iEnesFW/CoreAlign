@@ -1421,7 +1421,11 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const panelRun = current.scene.runs.find((run) => run.id === runId);
     if (!panelRun) return;
     if (blockedByLock(panelRun, rawPatch)) return notifyLockedBlocked();
-    const patch = clampPanelPatch(panelRun, rawPatch);
+    const patch = clampPanelPatch(
+      panelRun,
+      rawPatch,
+      panelRun.panels.find((p) => p.id === panelId),
+    );
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {

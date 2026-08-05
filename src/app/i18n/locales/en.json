@@ -2954,7 +2954,11 @@
           "6": "Hexagon"
         },
         "PolygonHint": "Click: add point · Drag: move · Double-click: delete",
-        "ShapeSinglePanelOnly": "Shapes are only available on single-panel runs."
+        "ShapeSinglePanelOnly": "Shapes are only available on single-panel runs.",
+        "OutlineSelfIntersecting": "The outline crosses itself — glass cannot be cut to that shape, the previous one was kept.",
+        "OutlineTooFewPoints": "A shape needs at least three distinct corners — the previous one was kept.",
+        "OutlineDegenerate": "The shape is too thin to cut — the previous one was kept.",
+        "OutlineUnreadable": "The shape data could not be read — the previous one was kept."
       },
       "PanelAdded": "Panel added",
       "PanelCount": "{{count}} panels",
