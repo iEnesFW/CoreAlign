@@ -9,15 +9,16 @@ import {
   useWallEntityActions,
 } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { snapAngleDeg } from '@/features/glass-enclosure/model/angleSnap';
-import { queueToast } from '@/shared/api/toastQueue';
-import type { PlanFootprint } from '@/shared/three-engine';
 import {
   buildRunFootprint,
   buildSlabFootprint,
   buildWallFootprint,
   footprintsPenetrate,
-  penetratesAny,
 } from '@/features/glass-enclosure/scene/interaction/planCollision';
+import {
+  solidObstaclesExcept,
+  transformAllowed,
+} from '@/features/glass-enclosure/scene/interaction/editCollisionGuard';
 import {
   findAttachedRunIds,
   findAttachedWallIds,
@@ -36,39 +37,6 @@ import {
   glassClampHeightMm,
   glassClampWidthMm,
 } from '@/features/glass-enclosure/model/hardwarePlacement';
-
-const solidObstaclesExcept = (excludeIds: Set<string>): PlanFootprint[] => {
-  const s = useDesignerStore.getState().scene;
-  return [
-    ...(s.walls ?? [])
-      .filter((w) => !excludeIds.has(w.id))
-      .map((w) => buildWallFootprint(w, 0, 0, w.rotationDeg)),
-    ...s.runs
-      .filter((r) => !excludeIds.has(r.id))
-      .map((r) => buildRunFootprint(r, 0, 0, r.rotationDeg)),
-    ...(s.slabs ?? [])
-      .filter((sl) => !excludeIds.has(sl.id))
-      .map((sl) => buildSlabFootprint(sl, 0, 0, sl.rotationDeg)),
-  ];
-};
-
-const transformAllowed = (
-  currentFp: PlanFootprint,
-  candidateFp: PlanFootprint,
-  obstacles: PlanFootprint[],
-  blockedMessage: string,
-): boolean => {
-  const fresh = obstacles.filter(
-    (o) => o.ownerId !== currentFp.ownerId && !footprintsPenetrate(currentFp, o),
-  );
-  if (!penetratesAny(candidateFp, fresh)) return true;
-  queueToast({
-    dedupeKey: 'glass-collision-blocked',
-    variant: 'warning',
-    description: blockedMessage,
-  });
-  return false;
-};
 
 interface NumericFieldProps {
   label: string;

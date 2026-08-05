@@ -28,6 +28,7 @@ import {
   mirrorWallPatch,
 } from '@/features/glass-enclosure/model/mirrorBody';
 import { dropLockedIds, lockedBodyIds } from '@/features/glass-enclosure/model/sceneGuards';
+import { transformAllowed } from '@/features/glass-enclosure/scene/interaction/editCollisionGuard';
 import { notifyLockedBlocked } from '@/features/glass-enclosure/model/lockFeedback';
 import { cn } from '@/shared/lib/cn';
 import { queueToast } from '@/shared/api/toastQueue';
@@ -339,6 +340,25 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
       .map((su) => buildSurfaceFootprint(su));
   };
 
+  // WHY the mirror needs the SAME gate the array button next to it already applies: a flip is a
+  // real move. arcCommitKeepingEnds re-rolls a curved body onto the OTHER side of its chord (it
+  // sweeps by the sagitta) and a polygon surface whose vertex centroid is off its bbox centre
+  // translates — so the body lands inside a neighbour with no warning. The alreadyColliding escape
+  // is mandatory: without it a body that already overlaps could never be mirrored again.
+  const mirrorAllowed = (
+    currentFp: PlanFootprint,
+    candidateFp: PlanFootprint,
+    obstacles: PlanFootprint[],
+  ): boolean =>
+    transformAllowed(
+      currentFp,
+      candidateFp,
+      obstacles,
+      t('GlassEnclosure.Designer.CollisionBlocked', {
+        defaultValue: 'Bu değer başka bir nesneyle çakışıyor — uygulanmadı.',
+      }),
+    );
+
   const acceptArraySlots = (
     obstacles: PlanFootprint[],
     footprintAt: (k: number) => PlanFootprint,
@@ -462,7 +482,21 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(wallObj?.locked), () =>
             updateWall(selection.wallId as string, { locked: !wallObj?.locked }),
           )}
-          {wallObj && mirrorButton(() => commitWallPatch(wallObj, mirrorWallPatch(wallObj)))}
+          {wallObj &&
+            mirrorButton(() => {
+              const patch = mirrorWallPatch(wallObj);
+              const candidate = { ...wallObj, ...patch };
+              if (
+                !mirrorAllowed(
+                  buildWallFootprint(wallObj, 0, 0, wallObj.rotationDeg),
+                  buildWallFootprint(candidate, 0, 0, candidate.rotationDeg),
+                  solidObstaclesExcluding(wallObj.id),
+                )
+              ) {
+                return;
+              }
+              commitWallPatch(wallObj, patch);
+            })}
           {wallObj &&
             arrayButton(() => {
               // WHY the chord and not rotationDeg: on an arc body rotationDeg is the start
@@ -575,7 +609,21 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           {lockToggle(Boolean(slab?.locked), () =>
             updateSlab(selection.slabId as string, { locked: !slab?.locked }),
           )}
-          {slab && mirrorButton(() => updateSlab(slab.id, mirrorSlabPatch(slab)))}
+          {slab &&
+            mirrorButton(() => {
+              const patch = mirrorSlabPatch(slab);
+              const candidate = { ...slab, ...patch };
+              if (
+                !mirrorAllowed(
+                  buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
+                  buildSlabFootprint(candidate, 0, 0, candidate.rotationDeg),
+                  solidObstaclesExcluding(slab.id),
+                )
+              ) {
+                return;
+              }
+              updateSlab(slab.id, patch);
+            })}
           {slab &&
             arrayButton(() => {
               const chord = bodyChordVectorMm(slab);
@@ -633,7 +681,27 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
           )}
           {surfaceObj &&
             surfaceObj.points.length > 0 &&
-            mirrorButton(() => updateSurface(surfaceObj.id, mirrorSurfacePatch(surfaceObj)))}
+            mirrorButton(() => {
+              const patch = mirrorSurfacePatch(surfaceObj);
+              const candidate = { ...surfaceObj, ...patch };
+              if (
+                !mirrorAllowed(
+                  buildSurfaceFootprint(surfaceObj),
+                  buildSurfaceFootprint(candidate),
+                  // A ROOF surface is a real body; a floor surface spans grade and would veto
+                  // everything standing on it, so only roofs join the solid set here.
+                  surfaceObj.kind === 'roof'
+                    ? [
+                        ...solidObstaclesExcluding(surfaceObj.id),
+                        ...surfaceObstaclesExcluding(surfaceObj.id),
+                      ]
+                    : surfaceObstaclesExcluding(surfaceObj.id),
+                )
+              ) {
+                return;
+              }
+              updateSurface(surfaceObj.id, patch);
+            })}
           {surfaceObj &&
             surfaceObj.points.length > 0 &&
             arrayButton(() => {

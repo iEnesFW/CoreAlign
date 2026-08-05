@@ -31,6 +31,7 @@ import {
   RUN_PLAN_THICKNESS_MM,
   buildRunFootprint,
   penetratesAny,
+  clampPlanStretch,
   restElevationMm,
   stackableSupports,
   supportTopBelowMm,
@@ -41,6 +42,12 @@ import {
 import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import type { RunStretchPatch } from './RunGroup';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
+import {
+  captureMultiBodies,
+  EMPTY_MULTI_BODIES,
+  multiBodyFootprints,
+} from '../interaction/multiMoveFootprints';
+import type { MultiMoveBodies } from '../interaction/multiMoveFootprints';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
 import { EMPTY_SNAP_TARGETS, filterSnapTargets } from '../interaction/planSnap';
 import { useDesignerStore } from '../../model/designerStore';
@@ -100,6 +107,8 @@ const EMPTY_OBSTACLES: PlanFootprint[] = [];
 const MULLION_FACE_MM = 40;
 const DEFAULT_HEX_COLOR = '#cfd5d9';
 const MIN_RUN_LENGTH_MM = 100;
+// The arc run's own floor, kept as it was (the straight run uses 100).
+const MIN_ARC_RUN_HEIGHT_MM = 300;
 
 export function ArcRunGroup({
   run,
@@ -191,6 +200,7 @@ export function ArcRunGroup({
   const sceneState = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
+  const multiBodiesRef = useRef<MultiMoveBodies>(EMPTY_MULTI_BODIES);
   const vertexEditActive =
     transformActive &&
     selectionKind === 'run' &&
@@ -285,7 +295,11 @@ export function ArcRunGroup({
       { x: run.originX, y: run.originY },
       { x: endWorldX, y: endWorldY },
     ],
-    footprintAt: (dx, dy, rotationDeg) => buildRunFootprint(run, dx, dy, rotationDeg),
+    footprintAt: (dx, dy, rotationDeg) => {
+      const own = buildRunFootprint(run, dx, dy, rotationDeg);
+      if (rotationDeg !== run.rotationDeg) return own;
+      return [own, ...multiBodyFootprints(multiBodiesRef.current, dx, dy)];
+    },
     altLiftYMAt: canStack ? (dx, dy) => restElevAt(dx, dy) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dx, dy) => centerRestAt(dx, dy) / 1000 : undefined,
     restingAtStart,
@@ -303,6 +317,12 @@ export function ArcRunGroup({
       multiSiblingsRef.current = isMultiMember
         ? captureMultiSnapshots(sceneState, multiSelection, { kind: 'run', id: run.id })
         : [];
+      // Exclusion and motion must be symmetric: gestureObstacles drops the co-movers, so the clamp
+      // only sees them if they are added to the MOVING set too (WallObject's rule, shared here).
+      multiBodiesRef.current = captureMultiBodies(sceneState, multiSelection, {
+        kind: 'run',
+        id: run.id,
+      });
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
@@ -396,7 +416,15 @@ export function ArcRunGroup({
     });
   };
   const commitArcHeight = (deltaMm: number) => {
-    const next = Math.max(300, Math.round(run.heightMm + stickyDelta(run.heightMm, deltaMm)));
+    // Same rule as the straight run and the wall's top handle: height is the footprint's z-range,
+    // so it has to be clamped or the curved glass grows straight into whatever is overhead.
+    const target = stickyDelta(run.heightMm, deltaMm);
+    const clamped = clampPlanStretch(
+      (d) => buildRunFootprint({ ...run, heightMm: run.heightMm + d }, 0, 0, run.rotationDeg),
+      gestureObstacles,
+      target,
+    );
+    const next = Math.max(MIN_ARC_RUN_HEIGHT_MM, Math.round(run.heightMm + clamped));
     if (next === run.heightMm) {
       resetBody();
       return;

@@ -6,6 +6,9 @@ import { queueToast } from '@/shared/api/toastQueue';
 import { arcFromCornerResize, isRealArc, minArcRadiusMm } from '../model/arcGeometry';
 import { SHADOW_GAP_MM } from '../model/mountDepth';
 import { RunArcSection } from './RunArcSection';
+import { findAttachedWallIds } from '../model/wallAttachment';
+import { buildRunFootprint } from '../scene/interaction/planCollision';
+import { solidObstaclesExcept, transformAllowed } from '../scene/interaction/editCollisionGuard';
 import type {
   ColorOptionDto,
   GlassTypeDto,
@@ -41,7 +44,40 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
 
   if (!run || !draft) return null;
 
+  // Geometry fields move the body; anything else (labels, colours, hardware flags) cannot collide.
+  const GEOMETRY_KEYS = [
+    'lengthMm',
+    'heightMm',
+    'originX',
+    'originY',
+    'rotationDeg',
+    'geomZ',
+    'geomArcRadiusMm',
+    'geomArcSweepDeg',
+  ] as const;
+
   const commit = (patch: Partial<typeof run>) => {
+    // WHY the guard is here too: the transform toolbar already gated these SAME six fields, but the
+    // inspector wrote them raw — so typing a neighbouring wall's X into the inspector drove the
+    // glass into it with no rejection, while the toolbar next to it refused the identical edit.
+    // The host wall is excluded: mounted glass legitimately sits inside its wall.
+    if (GEOMETRY_KEYS.some((key) => patch[key] !== undefined)) {
+      const candidate = { ...run, ...patch };
+      const attached = findAttachedWallIds(run, useDesignerStore.getState().scene.walls ?? []);
+      if (
+        !transformAllowed(
+          buildRunFootprint(run, 0, 0, run.rotationDeg),
+          buildRunFootprint(candidate, 0, 0, candidate.rotationDeg),
+          solidObstaclesExcept(new Set([run.id, ...attached])),
+          t('GlassEnclosure.Designer.CollisionBlocked', {
+            defaultValue: 'Bu değer başka bir nesneyle çakışıyor — uygulanmadı.',
+          }),
+        )
+      ) {
+        setDraft(run);
+        return;
+      }
+    }
     const before = new Map(run.panels.map((p) => [p.id, { w: p.widthMm, h: p.heightMm }]));
     updateRun(run.id, patch);
     // Persist the STORE's post-commit state, not the raw patch — the store clamps lengthMm

@@ -16,6 +16,12 @@ import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
+import {
+  captureMultiBodies,
+  EMPTY_MULTI_BODIES,
+  multiBodyFootprints,
+} from '../interaction/multiMoveFootprints';
+import type { MultiMoveBodies } from '../interaction/multiMoveFootprints';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
 import {
   EMPTY_SNAP_TARGETS,
@@ -306,6 +312,7 @@ export function RunGroup({
   );
 
   const isMultiMember = multiSelectionHas(multiSelection, 'run', run.id);
+  const multiBodiesRef = useRef<MultiMoveBodies>(EMPTY_MULTI_BODIES);
   const canStack = Boolean(onStackRun) && !isMultiMember;
 
   const adapter: PlanGestureAdapter = {
@@ -316,7 +323,11 @@ export function RunGroup({
     centerXMm,
     centerYMm,
     moveProbes,
-    footprintAt: (dxMm, dyMm, rotationDeg) => buildRunFootprint(run, dxMm, dyMm, rotationDeg),
+    footprintAt: (dxMm, dyMm, rotationDeg) => {
+      const own = buildRunFootprint(run, dxMm, dyMm, rotationDeg);
+      if (rotationDeg !== run.rotationDeg) return own;
+      return [own, ...multiBodyFootprints(multiBodiesRef.current, dxMm, dyMm)];
+    },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
     restingAtStart,
@@ -334,6 +345,12 @@ export function RunGroup({
       multiSiblingsRef.current = isMultiMember
         ? captureMultiSnapshots(sceneState, multiSelection, { kind: 'run', id: run.id })
         : [];
+      // Exclusion and motion must be symmetric: gestureObstacles drops the co-movers, so the clamp
+      // only sees them if they are added to the MOVING set too (WallObject's rule, shared here).
+      multiBodiesRef.current = captureMultiBodies(sceneState, multiSelection, {
+        kind: 'run',
+        id: run.id,
+      });
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
@@ -410,10 +427,16 @@ export function RunGroup({
   };
 
   const commitHeight = (deltaMm: number) => {
-    const next = Math.max(
-      MIN_RUN_HEIGHT_MM,
-      Math.round(run.heightMm + stickyDelta(run.heightMm, deltaMm)),
+    // Height IS the footprint's z-range, so growing it can drive the glass into a roof overhead.
+    // The wall's top handle already clamps (WallObject.commitTop); this one wrote the raw value, so
+    // the same gesture on the same roof behaved differently depending on which body you grabbed.
+    const target = stickyDelta(run.heightMm, deltaMm);
+    const clamped = clampPlanStretch(
+      (d) => buildRunFootprint({ ...run, heightMm: run.heightMm + d }, 0, 0, run.rotationDeg),
+      gestureObstacles,
+      target,
     );
+    const next = Math.max(MIN_RUN_HEIGHT_MM, Math.round(run.heightMm + clamped));
     if (next === run.heightMm) {
       resetBody();
       return;

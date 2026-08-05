@@ -45,6 +45,12 @@ import { WallOpeningFrames } from './WallOpeningFrames';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
+import {
+  captureMultiBodies,
+  EMPTY_MULTI_BODIES,
+  multiBodyFootprints,
+} from '../interaction/multiMoveFootprints';
+import type { MultiMoveBodies } from '../interaction/multiMoveFootprints';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
 import { arcMetricsFromBulge, chordBulgeMm, tessellateArc } from '../interaction/penArc';
 import {
@@ -55,7 +61,6 @@ import {
 import { EMPTY_SNAP_TARGETS, filterSnapTargets, lineProbePoints } from '../interaction/planSnap';
 import {
   buildRunFootprint,
-  buildSlabFootprint,
   buildWallFootprint,
   clampPlanStretch,
   footprintsPenetrate,
@@ -116,8 +121,6 @@ import type { PlanMoveDelta, PlanPoint, PlanSnapTargets } from '../interaction/p
 import type { PlanFootprint } from '../interaction/planCollision';
 import type { ComposedFeature, FeatureOutlineSpec } from '../../model/wallFeatureGeometry';
 import type {
-  SceneRunState,
-  SceneSlabState,
   SceneWallFeature,
   SceneWallFeaturePoint,
   SceneWallOpening,
@@ -789,11 +792,7 @@ export function WallObject({
   // obstacle list because they travel with this wall — but footprintAt never added them to the
   // MOVING set, so the clamp never saw them. That asymmetry let a selected glass run be dragged
   // straight into an unselected wall with no rejection. Exclusion and motion must be symmetric.
-  const multiBodiesRef = useRef<{
-    walls: SceneWallState[];
-    runs: SceneRunState[];
-    slabs: SceneSlabState[];
-  }>({ walls: [], runs: [], slabs: [] });
+  const multiBodiesRef = useRef<MultiMoveBodies>(EMPTY_MULTI_BODIES);
   const canStack = Boolean(onStackWall) && !isMultiMember;
   const restElevAt = (dxMm: number, dyMm: number) =>
     restElevationMm(
@@ -841,14 +840,11 @@ export function WallObject({
     footprintAt: (dxMm, dyMm, rotationDeg) => {
       const own = buildWallFootprint(wall, dxMm, dyMm, rotationDeg);
       if (rotationDeg !== wall.rotationDeg) return own;
-      const moving = multiBodiesRef.current;
       return [
         own,
         ...coMove.groupWalls.map((w) => buildWallFootprint(w, dxMm, dyMm, w.rotationDeg)),
         ...coMove.runs.map((r) => buildRunFootprint(r, dxMm, dyMm, r.rotationDeg)),
-        ...moving.walls.map((w) => buildWallFootprint(w, dxMm, dyMm, w.rotationDeg)),
-        ...moving.runs.map((r) => buildRunFootprint(r, dxMm, dyMm, r.rotationDeg)),
-        ...moving.slabs.map((b) => buildSlabFootprint(b, dxMm, dyMm, b.rotationDeg)),
+        ...multiBodyFootprints(multiBodiesRef.current, dxMm, dyMm),
       ];
     },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevAt(dxMm, dyMm) / 1000 : undefined,
@@ -867,17 +863,12 @@ export function WallObject({
     onGestureStart: () => {
       const multi = useDesignerStore.getState().multiSelection;
       const gestureScene = useDesignerStore.getState().scene;
-      multiBodiesRef.current = multiSelectionHas(multi, 'wall', wall.id)
-        ? {
-            walls: (gestureScene.walls ?? []).filter(
-              (w) => w.id !== wall.id && multi.wallIds.includes(w.id),
-            ),
-            runs: gestureScene.runs.filter(
-              (r) => multi.runIds.includes(r.id) && !coMove.runs.some((cr) => cr.id === r.id),
-            ),
-            slabs: (gestureScene.slabs ?? []).filter((b) => multi.slabIds.includes(b.id)),
-          }
-        : { walls: [], runs: [], slabs: [] };
+      multiBodiesRef.current = captureMultiBodies(
+        gestureScene,
+        multi,
+        { kind: 'wall', id: wall.id },
+        new Set(coMove.runs.map((r) => r.id)),
+      );
       const multiSiblings = multiSelectionHas(multi, 'wall', wall.id)
         ? captureMultiSnapshots(useDesignerStore.getState().scene, multi, {
             kind: 'wall',

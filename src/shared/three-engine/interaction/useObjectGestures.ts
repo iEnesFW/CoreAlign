@@ -134,12 +134,18 @@ export function useObjectGestures({
     const centerRestSnapped =
       adapter.centerLiftYMAt?.(snapped.dxMm, snapped.dyMm) ?? adapter.baseYM;
     const climbing = centerRestSnapped > adapter.baseYM + AUTO_STACK_MIN_RISE_M;
-    const stacking = explicitStack || climbing || freeMove;
+    // WHY climbing is NOT in `stacking`: it only means the body is stepping onto a low WALKABLE
+    // support (a floor plate, a podium). Skipping the whole slide for that turned off wall-vs-wall
+    // collision for the rest of the drag, so a second wall could be pushed straight THROUGH the wall
+    // already standing on the podium and committed there. Instead the podium itself is dropped from
+    // the obstacle set — it must not pin the body at its edge — while everything solid stays live.
+    const stacking = explicitStack || freeMove;
+    const slideObstacles = climbing ? obstacles.filter((o) => !o.walkable) : obstacles;
     const slid = stacking
       ? snapped
       : slidePlanMove(
           (dx, dy) => adapter.footprintAt(dx, dy, adapter.rotationDeg),
-          obstacles,
+          slideObstacles,
           snapped.dxMm,
           snapped.dyMm,
         );

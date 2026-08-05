@@ -21,6 +21,12 @@ import { FootprintCornerHandles } from '../interaction/FootprintCornerHandles';
 import { setBodyPreview } from '../interaction/bodyPreview';
 import { registerSceneRef } from '../interaction/sceneRefs';
 import { captureMultiSnapshots, multiSelectionHas } from '../interaction/multiMove';
+import {
+  captureMultiBodies,
+  EMPTY_MULTI_BODIES,
+  multiBodyFootprints,
+} from '../interaction/multiMoveFootprints';
+import type { MultiMoveBodies } from '../interaction/multiMoveFootprints';
 import { collectHeightLevels, snapToLevels } from '../interaction/levelSnap';
 import { arcMetricsFromBulge, chordBulgeMm, tessellateArc } from '../interaction/penArc';
 import { previewSnapshotsMove } from '../interaction/attachedRunPreview';
@@ -469,6 +475,7 @@ export function SlabObject({
   ];
 
   const isMultiMember = multiSelectionHas(multiSelection, 'slab', slab.id);
+  const multiBodiesRef = useRef<MultiMoveBodies>(EMPTY_MULTI_BODIES);
   const canStack = !isMultiMember;
   const supportFootprints = supports ?? EMPTY_OBSTACLES;
   // Explicit stack rests on whatever is overlapped; precise auto-stack on what's under the centre;
@@ -533,7 +540,11 @@ export function SlabObject({
     centerXMm,
     centerYMm,
     moveProbes,
-    footprintAt: (dxMm, dyMm, rotationDeg) => buildSlabFootprint(slab, dxMm, dyMm, rotationDeg),
+    footprintAt: (dxMm, dyMm, rotationDeg) => {
+      const own = buildSlabFootprint(slab, dxMm, dyMm, rotationDeg);
+      if (rotationDeg !== slab.rotationDeg) return own;
+      return [own, ...multiBodyFootprints(multiBodiesRef.current, dxMm, dyMm)];
+    },
     altLiftYMAt: canStack ? (dxMm, dyMm) => restElevationAt(dxMm, dyMm) / 1000 : undefined,
     centerLiftYMAt: canStack ? (dxMm, dyMm) => centerRestAt(dxMm, dyMm) / 1000 : undefined,
     restingAtStart,
@@ -554,6 +565,12 @@ export function SlabObject({
       multiSiblingsRef.current = isMultiMember
         ? captureMultiSnapshots(sceneRef, multiSelection, { kind: 'slab', id: slab.id })
         : [];
+      // Exclusion and motion must be symmetric: gestureObstacles drops the co-movers, so the clamp
+      // only sees them if they are added to the MOVING set too (WallObject's rule, shared here).
+      multiBodiesRef.current = captureMultiBodies(sceneRef, multiSelection, {
+        kind: 'slab',
+        id: slab.id,
+      });
     },
     onMovePreview: (delta) =>
       previewSnapshotsMove(multiSiblingsRef.current, delta.dxMm, delta.dyMm),
