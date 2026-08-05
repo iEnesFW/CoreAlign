@@ -32,14 +32,51 @@ export function TechnicalSummaryReport({ summary }: TechnicalSummaryReportProps)
                 value={`${summary.windLoad.appliedPressurePa.toFixed(0)} Pa`}
               />
               <Metric
-                label={t('GlassEnclosure.Engineering.HeightFactor')}
-                value={summary.windLoad.heightFactor.toFixed(2)}
+                label={t('GlassEnclosure.Engineering.BasicWindSpeed')}
+                value={`${summary.windLoad.basicWindSpeedMs.toFixed(1)} m/s`}
               />
+              <Metric
+                label={t('GlassEnclosure.Engineering.TerrainCategory')}
+                value={t(
+                  `GlassEnclosure.Engineering.Terrain.${summary.windLoad.terrainCategory}` as const,
+                  { defaultValue: summary.windLoad.terrainCategory },
+                )}
+              />
+              <Metric
+                label={t('GlassEnclosure.Engineering.PeakVelocityPressure')}
+                value={`${summary.windLoad.peakVelocityPressurePa.toFixed(0)} Pa`}
+              />
+              {/* WHY spell the chain out: an engineer signing the glazing spec has to be able to
+                  retrace q_p back to the wind map value, and a number with no derivation behind it
+                  cannot be signed off. */}
+              <p className="mt-1 text-[10px] leading-tight text-slate-500 dark:text-slate-400">
+                {t('GlassEnclosure.Engineering.WindChain', {
+                  z: summary.windLoad.referenceHeightM.toFixed(1),
+                  cr: summary.windLoad.roughnessFactor.toFixed(3),
+                  vm: summary.windLoad.meanWindSpeedMs.toFixed(1),
+                  iv: summary.windLoad.turbulenceIntensity.toFixed(3),
+                  cpe: summary.windLoad.externalPressureCoefficient.toFixed(1),
+                  cpi: summary.windLoad.internalPressureCoefficient.toFixed(1),
+                  ref: summary.windLoad.standardReference,
+                })}
+              </p>
               <div className="mt-2 space-y-1">
                 {summary.windLoad.panels.map((p) => (
-                  <div key={p.panelId} className="flex items-center justify-between text-xs">
+                  <div key={p.panelId} className="flex items-center justify-between gap-2 text-xs">
                     <span className="font-mono text-slate-600 dark:text-slate-400">
-                      {p.currentThicknessMm}mm → {p.requiredMinThicknessMm}mm
+                      {p.shortSpanMm.toFixed(0)}mm · {p.currentThicknessMm}mm →{' '}
+                      {p.requiredMinThicknessMm}mm
+                    </span>
+                    <span
+                      className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400"
+                      title={t('GlassEnclosure.Engineering.PanelCheckDetail', {
+                        stress: p.maxBendingStressMPa.toFixed(1),
+                        strength: p.designStrengthMPa.toFixed(1),
+                        deflection: p.maxDeflectionMm.toFixed(1),
+                        limit: p.deflectionLimitMm.toFixed(1),
+                      })}
+                    >
+                      {(Math.max(p.stressUtilisation, p.deflectionUtilisation) * 100).toFixed(0)}%
                     </span>
                     {p.isSufficient ? (
                       <span className="text-success-600 dark:text-success-400">

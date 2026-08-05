@@ -3423,7 +3423,19 @@
       "WindZoneMissing": "Wind zone not assigned. Set it in the project header.",
       "NoSummary": "Save the project to see the engineering summary.",
       "HeatLoss": "Estimated winter heat loss",
-      "KwhPerYear": "{{value}} kWh / year"
+      "KwhPerYear": "{{value}} kWh / year",
+      "BasicWindSpeed": "Basic wind speed (v_b,0)",
+      "TerrainCategory": "Terrain category",
+      "PeakVelocityPressure": "Peak velocity pressure (q_p)",
+      "WindChain": "z={{z}} m · c_r={{cr}} · v_m={{vm}} m/s · I_v={{iv}} · c_pe={{cpe}} / c_pi={{cpi}} · {{ref}}",
+      "PanelCheckDetail": "Stress {{stress}} / {{strength}} MPa · deflection {{deflection}} / {{limit}} mm",
+      "Terrain": {
+        "Sea": "0 — Sea / open coast",
+        "OpenFlat": "I — Open flat country",
+        "Country": "II — Country (reference)",
+        "Suburban": "III — Suburban / forest",
+        "Urban": "IV — City centre"
+      }
     },
     "Share": {
       "Title": "Glass Enclosure Quote",

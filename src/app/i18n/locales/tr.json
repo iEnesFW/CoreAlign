@@ -3423,7 +3423,19 @@
       "WindZoneMissing": "Rüzgar bölgesi atanmamış. Proje başlığından belirleyin.",
       "NoSummary": "Mühendislik özetini görmek için projeyi kaydedin.",
       "HeatLoss": "Kış ısı kaybı (tahmini)",
-      "KwhPerYear": "{{value}} kWh / yıl"
+      "KwhPerYear": "{{value}} kWh / yıl",
+      "BasicWindSpeed": "Temel rüzgâr hızı (v_b,0)",
+      "TerrainCategory": "Arazi kategorisi",
+      "PeakVelocityPressure": "Tepe hız basıncı (q_p)",
+      "WindChain": "z={{z}} m · c_r={{cr}} · v_m={{vm}} m/s · I_v={{iv}} · c_pe={{cpe}} / c_pi={{cpi}} · {{ref}}",
+      "PanelCheckDetail": "Gerilme {{stress}} / {{strength}} MPa · sehim {{deflection}} / {{limit}} mm",
+      "Terrain": {
+        "Sea": "0 — Deniz / açık kıyı",
+        "OpenFlat": "I — Açık düzlük",
+        "Country": "II — Kırsal (referans)",
+        "Suburban": "III — Banliyö / ormanlık",
+        "Urban": "IV — Kent merkezi"
+      }
     },
     "Share": {
       "Title": "Cam Balkon Teklifi",

@@ -41,6 +41,21 @@ public class GlassProject : TenantEntity, IHasConcurrencyToken, ISoftDeletable
     public int? FloorNumber { get; private set; }
     public decimal? BuildingHeightM { get; private set; }
     public Guid? WindZoneId { get; private set; }
+
+    /// <summary>
+    /// TS EN 1991-1-4 Table 4.1 terrain roughness band (0-4). It drives the roughness factor and
+    /// the turbulence intensity, so the same wind map value produces a materially different
+    /// pressure on an exposed coastal site than in a city centre. Defaults to II (open country),
+    /// which is the Eurocode reference terrain.
+    /// </summary>
+    public int WindTerrainCategory { get; private set; } = 2;
+
+    /// <summary>Sets the terrain band, clamped to the five categories the standard defines.</summary>
+    public void SetWindTerrainCategory(int category)
+    {
+        WindTerrainCategory = Math.Clamp(category, 0, 4);
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
     public Guid? ClimateZoneId { get; private set; }
     public string? FireSafetyClass { get; private set; }
     public bool ScaffoldingRequired { get; private set; }

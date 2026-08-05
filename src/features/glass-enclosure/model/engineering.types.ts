@@ -158,6 +158,15 @@ export interface WindLoadPanelDto {
   currentThicknessMm: number;
   requiredMinThicknessMm: number;
   isSufficient: boolean;
+  shortSpanMm: number;
+  aspectRatio: number;
+  maxBendingStressMPa: number;
+  designStrengthMPa: number;
+  stressUtilisation: number;
+  maxDeflectionMm: number;
+  deflectionLimitMm: number;
+  deflectionUtilisation: number;
+  governingLimit: string;
 }
 
 export interface WindLoadDto {
@@ -165,6 +174,17 @@ export interface WindLoadDto {
   heightFactor: number;
   appliedPressurePa: number;
   panels: WindLoadPanelDto[];
+  basicWindSpeedMs: number;
+  designWindSpeedMs: number;
+  referenceHeightM: number;
+  roughnessFactor: number;
+  meanWindSpeedMs: number;
+  turbulenceIntensity: number;
+  peakVelocityPressurePa: number;
+  externalPressureCoefficient: number;
+  internalPressureCoefficient: number;
+  terrainCategory: string;
+  standardReference: string;
 }
 
 export interface ThermalAcousticDto {

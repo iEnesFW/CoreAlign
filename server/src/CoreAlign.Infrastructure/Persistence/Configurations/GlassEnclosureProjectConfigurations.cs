@@ -21,6 +21,7 @@ public class GlassProjectConfiguration : IEntityTypeConfiguration<GlassProject>
         builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(20);
         builder.Property(p => p.FireSafetyClass).HasMaxLength(50);
         builder.Property(p => p.BuildingHeightM).HasColumnType("numeric(10,2)");
+        builder.Property(p => p.WindTerrainCategory).HasDefaultValue(2);
         builder.Property(p => p.TotalAreaM2).HasColumnType("numeric(12,3)");
         builder.Property(p => p.Subtotal).HasColumnType("numeric(18,4)");
         builder.Property(p => p.DiscountTotal).HasColumnType("numeric(18,4)");

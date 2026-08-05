@@ -13,6 +13,7 @@ public class WindZoneConfiguration : IEntityTypeConfiguration<WindZone>
         builder.Property(z => z.RegionLabelTr).HasMaxLength(200).IsRequired();
         builder.Property(z => z.RegionLabelEn).HasMaxLength(200).IsRequired();
         builder.Property(z => z.BaseWindPressurePa).HasColumnType("numeric(10,2)");
+        builder.Property(z => z.BasicWindSpeedMs).HasColumnType("numeric(6,2)");
         builder.Property(z => z.HeightFactorMultiplier).HasColumnType("numeric(8,4)");
         builder.Property(z => z.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(z => z.UpdatedAtUtc).HasColumnType("timestamp with time zone");

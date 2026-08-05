@@ -188,13 +188,36 @@ public record WindLoadPanelDto(
     decimal AppliedPressurePa,
     int CurrentThicknessMm,
     int RequiredMinThicknessMm,
-    bool IsSufficient);
+    bool IsSufficient,
+    decimal ShortSpanMm,
+    decimal AspectRatio,
+    decimal MaxBendingStressMPa,
+    decimal DesignStrengthMPa,
+    decimal StressUtilisation,
+    decimal MaxDeflectionMm,
+    decimal DeflectionLimitMm,
+    decimal DeflectionUtilisation,
+    string GoverningLimit);
 
+/// <param name="BasicWindSpeedMs">v_b,0 from the wind map.</param>
+/// <param name="PeakVelocityPressurePa">q_p(z), after terrain roughness and turbulence.</param>
+/// <param name="AppliedPressurePa">Governing NET pressure on the glass: q_p x (c_pe - c_pi).</param>
 public record WindLoadDto(
     decimal BasePressurePa,
     decimal HeightFactor,
     decimal AppliedPressurePa,
-    IReadOnlyList<WindLoadPanelDto> Panels);
+    IReadOnlyList<WindLoadPanelDto> Panels,
+    decimal BasicWindSpeedMs,
+    decimal DesignWindSpeedMs,
+    decimal ReferenceHeightM,
+    decimal RoughnessFactor,
+    decimal MeanWindSpeedMs,
+    decimal TurbulenceIntensity,
+    decimal PeakVelocityPressurePa,
+    decimal ExternalPressureCoefficient,
+    decimal InternalPressureCoefficient,
+    string TerrainCategory,
+    string StandardReference);
 
 public record ThermalAcousticDto(
     decimal TotalAreaM2,

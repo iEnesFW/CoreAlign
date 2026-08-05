@@ -3,6 +3,7 @@ using CoreAlign.Application.B2B;
 using CoreAlign.Application.GlassEnclosure.BomFreshness;
 using CoreAlign.Application.GlassEnclosure.Commands;
 using CoreAlign.Application.GlassEnclosure.Cutting;
+using CoreAlign.Application.GlassEnclosure.Engineering;
 using CoreAlign.Application.GlassEnclosure.DTOs;
 using CoreAlign.Application.GlassEnclosure.Services;
 using CoreAlign.Application.GlassEnclosure.WorkOrderRevisions;
@@ -597,7 +598,15 @@ public class GetTechnicalSummaryQueryHandler : IRequestHandler<GetTechnicalSumma
                 totalArea += areaM2;
                 totalWeight += areaM2 * glass.WeightKgPerM2;
                 panelCount += 1;
-                windInputs.Add(new WindLoadPanelInput(run.Id, panel.Id, areaM2, glass.ThicknessMm));
+                windInputs.Add(new WindLoadPanelInput(
+                    run.Id,
+                    panel.Id,
+                    areaM2,
+                    glass.ThicknessMm,
+                    panel.WidthMm,
+                    panel.HeightMm ?? run.HeightMm,
+                    glass.Structure,
+                    GlassLayerThickness.Parse(glass.GlassLayersJson)));
                 thermalInputs.Add(new ThermalAcousticPanelInput(panel.Id, areaM2, glass.UValue, glass.SoundDb));
             }
         }
@@ -608,13 +617,42 @@ public class GetTechnicalSummaryQueryHandler : IRequestHandler<GetTechnicalSumma
             var zone = await _windRepo.GetByIdAsync(project.WindZoneId.Value, cancellationToken);
             if (zone is not null)
             {
-                var wind = _windCalculator.Calculate(zone, project.BuildingHeightM ?? 0m, windInputs);
+                var wind = _windCalculator.Calculate(
+                    zone,
+                    project.BuildingHeightM ?? 0m,
+                    windInputs,
+                    (WindTerrainCategory)project.WindTerrainCategory);
                 windDto = new WindLoadDto(
                     wind.BasePressurePa,
                     wind.HeightFactor,
                     wind.AppliedPressurePa,
                     wind.Panels.Select(p => new WindLoadPanelDto(
-                        p.RunId, p.PanelId, p.AppliedPressurePa, p.CurrentThicknessMm, p.RequiredMinThicknessMm, p.IsSufficient)).ToList());
+                        p.RunId,
+                        p.PanelId,
+                        p.AppliedPressurePa,
+                        p.CurrentThicknessMm,
+                        p.RequiredMinThicknessMm,
+                        p.IsSufficient,
+                        p.ShortSpanMm,
+                        p.AspectRatio,
+                        p.MaxBendingStressMPa,
+                        p.DesignStrengthMPa,
+                        p.StressUtilisation,
+                        p.MaxDeflectionMm,
+                        p.DeflectionLimitMm,
+                        p.DeflectionUtilisation,
+                        p.GoverningLimit)).ToList(),
+                    wind.Site?.BasicWindSpeedMs ?? 0m,
+                    wind.Site?.DesignWindSpeedMs ?? 0m,
+                    wind.Site?.ReferenceHeightM ?? 0m,
+                    wind.Site?.RoughnessFactor ?? 0m,
+                    wind.Site?.MeanWindSpeedMs ?? 0m,
+                    wind.Site?.TurbulenceIntensity ?? 0m,
+                    wind.PeakVelocityPressurePa,
+                    wind.ExternalPressureCoefficient,
+                    wind.InternalPressureCoefficient,
+                    wind.Terrain.ToString(),
+                    wind.StandardReference);
             }
         }
 
