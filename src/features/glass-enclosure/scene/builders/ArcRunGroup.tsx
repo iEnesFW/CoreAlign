@@ -32,6 +32,7 @@ import {
   buildRunFootprint,
   penetratesAny,
   restElevationMm,
+  stackableSupports,
   supportTopBelowMm,
   restsOnSupportAtMm,
   SUPPORT_TOLERANCE_MM,
@@ -244,8 +245,13 @@ export function ArcRunGroup({
   // Explicit stack rests on any overlap; precise auto-stack on what's under the chord midpoint; a
   // plain drag keeps the run's current elevation (fallback = its own base, never forced down).
   const baseElevMm = run.geomZ ?? 0;
+  // Anything resting ON this run is cargo, not something to climb onto — see stackableSupports.
+  const altStackSupports = useMemo(
+    () => stackableSupports(stackSupports, baseElevMm + run.heightMm),
+    [stackSupports, baseElevMm, run.heightMm],
+  );
   const restElevAt = (dx: number, dy: number) =>
-    restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), stackSupports, baseElevMm);
+    restElevationMm(buildRunFootprint(run, dx, dy, run.rotationDeg), altStackSupports, baseElevMm);
   const centerXMm = (run.originX + endWorldX) / 2;
   const centerYMm = (run.originY + endWorldY) / 2;
   // Fallback 0 (ground): a support under the body lifts it; nothing under means gravity → floor.

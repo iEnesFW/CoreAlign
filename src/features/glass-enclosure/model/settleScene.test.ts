@@ -106,4 +106,20 @@ describe('settleScene', () => {
     });
     expect(settleScene(before).walls?.[0].geomZ).toBe(0);
   });
+
+  it('does not drop a LOCKED body — the lock has to hold against gravity too', () => {
+    const before = scene({ walls: [wall('w1', 1500, { locked: true })] });
+    expect(settleScene(before)).toBe(before);
+  });
+
+  it('a locked body still HOLDS UP whatever stands on it', () => {
+    const before = scene({
+      walls: [wall('parapet', 5000)],
+      slabs: [slab('deck', 'floor', 2600, { locked: true })],
+    });
+    const after = settleScene(before);
+    // The locked deck stays at 2600 (top 2800) and the free wall lands on it.
+    expect(after.slabs?.[0].elevationMm).toBe(2600);
+    expect(after.walls?.[0].geomZ).toBe(2800);
+  });
 });

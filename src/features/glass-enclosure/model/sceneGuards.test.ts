@@ -73,9 +73,54 @@ describe('dimension floors', () => {
   });
 
   it('refuses a zero-height run', () => {
-    const patch = clampRunPatch({ heightMm: 0, lengthMm: 10 });
+    const patch = clampRunPatch(run(), { heightMm: 0, lengthMm: 10 });
     expect(patch.heightMm).toBe(BODY_FLOOR_MM.runHeight);
     expect(patch.lengthMm).toBe(BODY_FLOOR_MM.runLength);
+  });
+
+  // Shortening a run used to leave a taller panel override behind, and the server reads
+  // `panel.HeightMm ?? run.HeightMm` for the net area, the cut list AND the nesting blank — so a
+  // 2200 mm pane was ordered and cut for a 1200 mm run. Same rule as the wall/opening re-fit.
+  it('re-fits a taller panel override when the run is shortened', () => {
+    const tall = run({
+      heightMm: 2400,
+      panels: [
+        { id: 'p1', widthMm: 900, heightMm: 2200 },
+        { id: 'p2', widthMm: 900, heightMm: 1000 },
+        { id: 'p3', widthMm: 900 },
+      ],
+    } as Partial<SceneRunState>);
+
+    const patch = clampRunPatch(tall, { heightMm: 1200 });
+
+    expect(patch.panels?.[0].heightMm).toBe(1200);
+    // A shorter override and an absent one are both left alone.
+    expect(patch.panels?.[1].heightMm).toBe(1000);
+    expect(patch.panels?.[2].heightMm).toBeUndefined();
+  });
+
+  it('leaves the panels alone when the patch does not change the run height', () => {
+    const tall = run({
+      heightMm: 2400,
+      panels: [{ id: 'p1', widthMm: 900, heightMm: 2200 }],
+    } as Partial<SceneRunState>);
+    expect(clampRunPatch(tall, { originX: 500 }).panels).toBeUndefined();
+  });
+
+  it("re-fits the PATCH's own panel list, not the stored one", () => {
+    const tall = run({
+      heightMm: 2400,
+      panels: [{ id: 'p1', widthMm: 900, heightMm: 2200 }],
+    } as Partial<SceneRunState>);
+
+    const patch = clampRunPatch(tall, {
+      heightMm: 1200,
+      panels: [{ id: 'p9', widthMm: 400, heightMm: 2000 }] as SceneRunState['panels'],
+    });
+
+    expect(patch.panels).toHaveLength(1);
+    expect(patch.panels?.[0].id).toBe('p9');
+    expect(patch.panels?.[0].heightMm).toBe(1200);
   });
 
   it('caps a panel height override at the run height instead of stretching the glass', () => {

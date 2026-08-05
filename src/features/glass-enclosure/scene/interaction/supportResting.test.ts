@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   restElevationMm,
   restsOnSupportAtMm,
+  stackableSupports,
   supportTopBelowMm,
   WALKABLE_STEP_UP_MM,
 } from '@/shared/three-engine';
-import { buildSlabFootprint, buildWallFootprint } from './planCollision';
+import { buildRunFootprint, buildSlabFootprint, buildWallFootprint } from './planCollision';
 import type { PlanFootprint } from './planCollision';
-import type { SceneSlabState, SceneWallState } from '../../model/project.types';
+import type { SceneRunState, SceneSlabState, SceneWallState } from '../../model/project.types';
 
 const slab = (
   id: string,
@@ -254,5 +255,89 @@ describe('step-up onto a WALKABLE floor — the drag climb probe', () => {
     expect(supportTopBelowMm(standingWall(3600), [mezzanine], 0, 0, 5, WALKABLE_STEP_UP_MM)).toBe(
       0,
     );
+  });
+});
+
+describe('stackableSupports — Alt climbs onto ground, never onto its own cargo', () => {
+  const wallFp = (id: string, geomZ: number, heightMm = 2600) =>
+    buildWallFootprint(
+      {
+        id,
+        originX: 0,
+        originY: 0,
+        rotationDeg: 0,
+        lengthMm: 3000,
+        heightMm,
+        thicknessMm: 200,
+        geomZ,
+        openings: [],
+        features: [],
+      } as unknown as SceneWallState,
+      0,
+      0,
+      0,
+    );
+
+  it('a floor does NOT climb the wall standing on it (it used to teleport to its top)', () => {
+    // Floor authored at -150 so its top is flush with grade; a 2.6 m wall stands on that top.
+    const floor = slab('floor', -1000, -1000, 6000, 6000, -150);
+    const floorTop = floor.elevationMm + floor.thicknessMm;
+    const floorFp = buildSlabFootprint(floor, 0, 0, 0);
+    const rider = wallFp('w', floorTop);
+
+    // Unfiltered — the defect: the floor resolves the top of its own wall.
+    expect(restElevationMm(floorFp, [rider], floor.elevationMm)).toBe(floorTop + 2600);
+    // Filtered — the floor keeps its own base.
+    expect(restElevationMm(floorFp, stackableSupports([rider], floorTop), floor.elevationMm)).toBe(
+      floor.elevationMm,
+    );
+  });
+
+  // The wall/glass ratchet is NOT a cargo-on-top case — glass mounted at geomZ 100 inside a 2600
+  // wall starts BELOW the wall's top, so the height filter legitimately keeps it. What fixes it is
+  // excluding the bodies that travel WITH the wall, which is what WallObject's stackSupports does.
+  it('a wall does NOT climb the glass mounted in it once co-movers are excluded', () => {
+    const wall = wallFp('w', 0);
+    const glass = buildRunFootprint(
+      {
+        id: 'r',
+        originX: 0,
+        originY: 0,
+        rotationDeg: 0,
+        lengthMm: 2800,
+        heightMm: 2400,
+        geomZ: 100,
+        panels: [],
+      } as unknown as SceneRunState,
+      0,
+      0,
+      0,
+    );
+
+    // The defect: applyWallStack lifts the glass by the same delta, so this doubles every Alt-drag.
+    expect(restElevationMm(wall, [glass], 0)).toBe(2500);
+
+    const coMovingIds = new Set(['w', 'r']);
+    const supports = [glass].filter((o) => !coMovingIds.has(o.ownerId));
+    expect(restElevationMm(wall, supports, 0)).toBe(0);
+  });
+
+  it('still climbs a TALLER neighbour standing beside it — Alt must keep working', () => {
+    const roof = slab('roof', 0, 0, 3000, 3000, 2600);
+    const roofFp = buildSlabFootprint(roof, 0, 0, 0);
+    const tallWall = wallFp('tall', 0, 5000);
+    const roofTop = roof.elevationMm + roof.thicknessMm;
+
+    expect(restElevationMm(roofFp, stackableSupports([tallWall], roofTop), roof.elevationMm)).toBe(
+      5000,
+    );
+  });
+
+  it('keeps a support whose underside is only just below our top', () => {
+    const beam = wallFp('beam', 2500);
+    // Own top 2600; the beam starts at 2500, i.e. 100 below — still ground we can climb.
+    expect(stackableSupports([beam], 2600)).toHaveLength(1);
+    // Own top 2500; the beam starts exactly at it — cargo.
+    expect(stackableSupports([beam], 2500)).toHaveLength(0);
   });
 });

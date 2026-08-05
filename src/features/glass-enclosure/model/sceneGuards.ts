@@ -141,12 +141,33 @@ export const clampSurfacePatch = (
   return next;
 };
 
-export const clampRunPatch = (patch: Partial<SceneRunState>): Partial<SceneRunState> => {
+export const clampRunPatch = (
+  run: SceneRunState,
+  patch: Partial<SceneRunState>,
+): Partial<SceneRunState> => {
   const next: Partial<SceneRunState> = { ...patch };
   if (typeof next.lengthMm === 'number')
     next.lengthMm = floorMm(next.lengthMm, BODY_FLOOR_MM.runLength);
   if (typeof next.heightMm === 'number')
     next.heightMm = floorMm(next.heightMm, BODY_FLOOR_MM.runHeight);
+
+  // WHY re-fit the panel overrides here (the wall/opening rule, one body over): clampPanelPatch caps
+  // an override at the run height when the PANEL is edited, but nothing re-ran when the RUN shrank
+  // under it. A 2200 mm override left on a run cut down to 1200 mm is not a rendering glitch — the
+  // server reads `panel.HeightMm ?? run.HeightMm` for the net area, the cut list and the nesting
+  // blank, so a 2200 mm pane gets ORDERED and cut for a 1200 mm run.
+  // The patch's own list wins over the stored one, exactly as clampWallPatch does for openings.
+  if (typeof next.heightMm === 'number') {
+    const cap = next.heightMm;
+    const source = next.panels ?? run.panels ?? [];
+    if (source.some((panel) => typeof panel.heightMm === 'number' && panel.heightMm > cap)) {
+      next.panels = source.map((panel) =>
+        typeof panel.heightMm === 'number' && panel.heightMm > cap
+          ? { ...panel, heightMm: cap }
+          : panel,
+      );
+    }
+  }
   return next;
 };
 

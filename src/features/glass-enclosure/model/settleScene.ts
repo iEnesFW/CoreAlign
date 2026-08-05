@@ -18,12 +18,15 @@ import type { SceneState } from './project.types';
  * Roofs are deliberately exempt — a canopy or pergola legitimately floats over an open span.
  */
 
-const isExemptSlab = (kind: string) => kind === 'roof';
+export const isGravityExempt = (kind: string) => kind === 'roof';
 
 interface Settleable {
   id: string;
   baseMm: number;
   footprint: PlanFootprint;
+  // A body that does not fall (a roof, or one the user locked) is still a SUPPORT — it stays in the
+  // list so nothing drops through it, it is only skipped when we decide what to move.
+  falls: boolean;
   apply: (topMm: number) => void;
 }
 
@@ -42,6 +45,7 @@ export const settleScene = (scene: SceneState): SceneState => {
       id: wall.id,
       baseMm,
       footprint: buildWallFootprint(wall, 0, 0, wall.rotationDeg),
+      falls: !wall.locked,
       apply: (topMm) => {
         next.walls[wall.id] = topMm;
       },
@@ -53,28 +57,29 @@ export const settleScene = (scene: SceneState): SceneState => {
       id: run.id,
       baseMm,
       footprint: buildRunFootprint(run, 0, 0, run.rotationDeg),
+      falls: !run.locked,
       apply: (topMm) => {
         next.runs[run.id] = topMm;
       },
     });
   }
   for (const slab of scene.slabs ?? []) {
-    if (isExemptSlab(slab.kind)) continue;
     items.push({
       id: slab.id,
       baseMm: slab.elevationMm,
       footprint: buildSlabFootprint(slab, 0, 0, slab.rotationDeg),
+      falls: !isGravityExempt(slab.kind) && !slab.locked,
       apply: (topMm) => {
         next.slabs[slab.id] = topMm;
       },
     });
   }
   for (const surface of scene.surfaces ?? []) {
-    if (isExemptSlab(surface.kind)) continue;
     items.push({
       id: surface.id,
       baseMm: surface.elevationMm,
       footprint: buildSurfaceFootprint(surface, 0, 0),
+      falls: !isGravityExempt(surface.kind) && !surface.locked,
       apply: (topMm) => {
         next.surfaces[surface.id] = topMm;
       },
@@ -99,12 +104,10 @@ export const settleScene = (scene: SceneState): SceneState => {
           zMinMm: o.footprint.zMinMm + shift,
           zMaxMm: o.footprint.zMaxMm + shift,
         };
-      })
-      // A roof does not hold anything up, and neither does a body we have not settled yet if it
-      // sits above us — supportTopBelowMm filters that, this just keeps the list honest.
-      .concat(roofFootprints(scene));
+      });
 
   for (const item of items) {
+    if (!item.falls) continue;
     const top = supportTopBelowMm(item.footprint, supportsFor(item), item.baseMm);
     settledTop.set(item.id, top);
     // WHY only DOWNWARD: gravity makes things fall, it never lifts. A floor slab is authored at
@@ -139,14 +142,3 @@ export const settleScene = (scene: SceneState): SceneState => {
     ),
   };
 };
-
-// Roofs are exempt from settling but still HOLD THINGS UP — something placed on a canopy must not
-// fall through it.
-const roofFootprints = (scene: SceneState): PlanFootprint[] => [
-  ...(scene.slabs ?? [])
-    .filter((s) => isExemptSlab(s.kind))
-    .map((s) => buildSlabFootprint(s, 0, 0, s.rotationDeg)),
-  ...(scene.surfaces ?? [])
-    .filter((s) => isExemptSlab(s.kind))
-    .map((s) => buildSurfaceFootprint(s, 0, 0)),
-];

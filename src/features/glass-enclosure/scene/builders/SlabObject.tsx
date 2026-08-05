@@ -31,6 +31,7 @@ import {
   liftToClearMm,
   penetratesAny,
   restElevationMm,
+  stackableSupports,
   restsOnSupportAtMm,
 } from '../interaction/planCollision';
 import { filletedShapeMm, outlineToPath, outlineToShape } from './surfaceFeatureShapes';
@@ -470,10 +471,18 @@ export function SlabObject({
   // Explicit stack rests on whatever is overlapped; precise auto-stack on what's under the centre;
   // a plain drag keeps the slab's current elevation (fallback = its own base, never forced down).
   const baseElevMm = slab.elevationMm;
+  // WHY the supports are filtered: a floor slab overlaps in plan EVERY wall standing on it, and
+  // restElevationMm has no "is it above me" guard, so an Alt-drag (or the "stack on drop" toggle)
+  // resolved the top of its own wall — 2.6 m up — and the plate teleported out from under the
+  // scene. Cargo is not ground; a roof can still climb onto a taller wall beside it.
+  const stackSupports = useMemo(
+    () => stackableSupports(supportFootprints, slab.elevationMm + slab.thicknessMm),
+    [supportFootprints, slab.elevationMm, slab.thicknessMm],
+  );
   const restElevationAt = (dxMm: number, dyMm: number) =>
     restElevationMm(
       buildSlabFootprint(slab, dxMm, dyMm, slab.rotationDeg),
-      supportFootprints,
+      stackSupports,
       baseElevMm,
     );
   const centerXMm = slab.originX + (slab.lengthMm / 2) * dirX - (slab.depthMm / 2) * dirY;

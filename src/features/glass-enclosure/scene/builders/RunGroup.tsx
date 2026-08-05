@@ -30,6 +30,7 @@ import {
   firstPenetratingOwner,
   penetratesAny,
   restElevationMm,
+  stackableSupports,
   supportTopBelowMm,
   restsOnSupportAtMm,
   SUPPORT_TOLERANCE_MM,
@@ -274,8 +275,17 @@ export function RunGroup({
     [supports, run.id],
   );
   const baseElevMm = run.geomZ ?? 0;
+  // Anything resting ON this run is cargo, not something to climb onto — see stackableSupports.
+  const altStackSupports = useMemo(
+    () => stackableSupports(stackSupports, baseElevMm + run.heightMm),
+    [stackSupports, baseElevMm, run.heightMm],
+  );
   const restElevAt = (dxMm: number, dyMm: number) =>
-    restElevationMm(buildRunFootprint(run, dxMm, dyMm, run.rotationDeg), stackSupports, baseElevMm);
+    restElevationMm(
+      buildRunFootprint(run, dxMm, dyMm, run.rotationDeg),
+      altStackSupports,
+      baseElevMm,
+    );
   const centerXMm = run.originX + (run.lengthMm / 2) * dirX;
   const centerYMm = run.originY + (run.lengthMm / 2) * dirY;
   // Fallback 0 (ground): a support under the centre lifts it; nothing under means gravity → floor.

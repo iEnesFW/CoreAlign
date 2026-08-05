@@ -306,6 +306,21 @@ export const restElevationMm = (
 // stays lateral (the eager "any overlap" trigger was the annoyance).
 export const SUPPORT_TOLERANCE_MM = 5;
 
+/**
+ * Drop the bodies that are RIDING on this one before asking {@link restElevationMm} what to climb.
+ *
+ * WHY: that function has no "is it above me" guard on purpose — Alt means "climb onto that". But a
+ * floor slab overlaps in plan every wall standing on it, and a wall overlaps the glass mounted in
+ * it, so without this filter the body resolved its OWN load as the thing to stand on: a floor
+ * teleported to the top of its own wall, and a wall carrying glass doubled its elevation on every
+ * Alt-drag. Anything whose underside starts at or above our top surface is cargo, not ground.
+ */
+export const stackableSupports = (
+  supports: PlanFootprint[],
+  ownTopMm: number,
+  toleranceMm = SUPPORT_TOLERANCE_MM,
+): PlanFootprint[] => supports.filter((s) => s.zMinMm < ownTopMm - toleranceMm);
+
 // How far above its base a body may auto-climb onto a WALKABLE support while being dragged. A slab
 // floor / podium is a step; a storey-high mezzanine is not — that still needs Alt.
 export const WALKABLE_STEP_UP_MM = 600;

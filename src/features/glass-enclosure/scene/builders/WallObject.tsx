@@ -23,6 +23,7 @@ import {
 } from './curvedExtrude';
 import { buildBentWallGeometry } from './bentWallGeometry';
 import { edgeColorFor } from './edgeColor';
+import { wallGeometrySignature } from './wallGeometryKey';
 import type { ThreeEvent } from '@react-three/fiber';
 import type { BufferGeometry, Group, Mesh, Texture } from 'three';
 import {
@@ -60,6 +61,7 @@ import {
   footprintsPenetrate,
   penetratesAny,
   restElevationMm,
+  stackableSupports,
   supportTopBelowMm,
   restsOnSupportAtMm,
   SUPPORT_TOLERANCE_MM,
@@ -462,6 +464,39 @@ const buildWallGeometries = (
   return { body, featureItems, openingFrames };
 };
 
+type BuiltWallGeometry = ReturnType<typeof buildWallGeometries>;
+
+// WHY this cache exists: the memo below cannot depend on `wall.features` / `wall.openings` — those
+// are collections whose identity is reproduced by every `structuredClone` of the scene (undo, redo,
+// the autofill commit), which replayed the whole curved-band CSG chain. Keying on the structural
+// signature instead makes the memo stable, and this per-wall entry is what keeps the RETURNED value
+// referentially stable so the mesh and the dispose effect below do not churn.
+//
+// One entry per live wall id — no sharing between walls, so the component can still own disposal.
+const wallGeometryCache = new Map<string, { signature: string; built: BuiltWallGeometry }>();
+
+const acquireWallGeometry = (
+  wallId: string,
+  signature: string,
+  input: WallGeometryInput,
+): BuiltWallGeometry => {
+  const cached = wallGeometryCache.get(wallId);
+  if (cached && cached.signature === signature) return cached.built;
+  const built = buildWallGeometries(input, true);
+  // A CSG-carved wall is the heaviest raycast target in the scene (each hole multiplies its
+  // triangle count) and R3F raycasts on every pointer event — build the BVH once per rebuild
+  // instead of walking every triangle on every hover.
+  ensureBoundsTree(built.body);
+  wallGeometryCache.set(wallId, { signature, built });
+  return built;
+};
+
+const releaseWallGeometry = (wallId: string, built: BuiltWallGeometry) => {
+  if (wallGeometryCache.get(wallId)?.built === built) wallGeometryCache.delete(wallId);
+  built.body.dispose();
+  for (const item of built.featureItems) item.geometry?.dispose();
+};
+
 const clampValue = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export function WallObject({
@@ -573,56 +608,28 @@ export function WallObject({
   // creates a recess/hole/protrusion lives in the Stretch tool, and suppressing the cut there
   // hid the result on every face until the user happened to leave the tool. Depth commits on
   // release, so the CSG/extrude rebuilds once per edit, not per frame.
-  const geometryInput = useMemo<WallGeometryInput>(
-    () => ({
-      bendAngleDeg: wall.bendAngleDeg,
-      bendAtMm: wall.bendAtMm,
-      cornerNotchMm: wall.cornerNotchMm,
-      cornerRadiiMm: wall.cornerRadiiMm,
-      edgeNotchMm: wall.edgeNotchMm,
-      features: wall.features,
-      geomArcRadiusMm: wall.geomArcRadiusMm,
-      geomArcSweepDeg: wall.geomArcSweepDeg,
-      geomEdgeArc: wall.geomEdgeArc,
-      heightEndMm: wall.heightEndMm,
-      heightMm: wall.heightMm,
-      lengthMm: wall.lengthMm,
-      openings: wall.openings,
-      thicknessMm: wall.thicknessMm,
-    }),
-    [
-      wall.bendAngleDeg,
-      wall.bendAtMm,
-      wall.cornerNotchMm,
-      wall.cornerRadiiMm,
-      wall.edgeNotchMm,
-      wall.features,
-      wall.geomArcRadiusMm,
-      wall.geomArcSweepDeg,
-      wall.geomEdgeArc,
-      wall.heightEndMm,
-      wall.heightMm,
-      wall.lengthMm,
-      wall.openings,
-      wall.thicknessMm,
-    ],
+  const built = useMemo(
+    () =>
+      acquireWallGeometry(wall.id, wallGeometrySignature(wall), {
+        bendAngleDeg: wall.bendAngleDeg,
+        bendAtMm: wall.bendAtMm,
+        cornerNotchMm: wall.cornerNotchMm,
+        cornerRadiiMm: wall.cornerRadiiMm,
+        edgeNotchMm: wall.edgeNotchMm,
+        features: wall.features,
+        geomArcRadiusMm: wall.geomArcRadiusMm,
+        geomArcSweepDeg: wall.geomArcSweepDeg,
+        geomEdgeArc: wall.geomEdgeArc,
+        heightEndMm: wall.heightEndMm,
+        heightMm: wall.heightMm,
+        lengthMm: wall.lengthMm,
+        openings: wall.openings,
+        thicknessMm: wall.thicknessMm,
+      }),
+    [wall],
   );
-  const {
-    body: geometry,
-    featureItems,
-    openingFrames,
-  } = useMemo(() => buildWallGeometries(geometryInput, true), [geometryInput]);
-  // A CSG-carved wall is the heaviest raycast target in the scene (each hole multiplies its
-  // triangle count) and R3F raycasts on every pointer event — build the BVH once per rebuild
-  // instead of walking every triangle on every hover.
-  ensureBoundsTree(geometry);
-  useEffect(
-    () => () => {
-      geometry.dispose();
-      for (const item of featureItems) item.geometry?.dispose();
-    },
-    [geometry, featureItems],
-  );
+  const { body: geometry, featureItems, openingFrames } = built;
+  useEffect(() => () => releaseWallGeometry(wall.id, built), [wall.id, built]);
 
   const lengthM = wall.lengthMm / 1000;
   const heightStartM = wall.heightMm / 1000;
@@ -758,9 +765,24 @@ export function WallObject({
   // Alt instead rests the wall on top of whatever it overlaps — group siblings and
   // attached glass ride the same ΔZ; ground (0) fallback prevents self-ratchet.
   const baseWallElevMm = wall.geomZ ?? 0;
-  const stackSupports = useMemo(
-    () => (supports ?? EMPTY_OBSTACLES).filter((o) => o.ownerId !== wall.id),
-    [supports, wall.id],
+  // WHY the co-movers are excluded and not just this wall: `restElevationMm` deliberately carries no
+  // "is it above me" guard, and a run mounted in this wall overlaps its band in plan. So the wall
+  // resolved its own glass (zMax ~2590) as the thing to climb onto, and since applyWallStack lifts
+  // the glass by the SAME delta, every Alt-drag doubled the elevation. Group siblings do it too
+  // wherever the mitre genuinely overlaps. ArcRunGroup already excludes its host walls this way.
+  const stackSupports = useMemo(() => {
+    const movingIds = new Set<string>([
+      wall.id,
+      ...coMove.groupWalls.map((w) => w.id),
+      ...coMove.runs.map((r) => r.id),
+    ]);
+    return (supports ?? EMPTY_OBSTACLES).filter((o) => !movingIds.has(o.ownerId));
+  }, [supports, wall.id, coMove]);
+  // Anything resting ON this wall (an unattached roof slab, a run that failed the attachment test)
+  // is cargo, not something to climb — see stackableSupports.
+  const altStackSupports = useMemo(
+    () => stackableSupports(stackSupports, baseWallElevMm + wall.heightMm),
+    [stackSupports, baseWallElevMm, wall.heightMm],
   );
   const isMultiMember = multiSelectionHas(multiSelection, 'wall', wall.id);
   // WHY snapshot the co-moving BODIES: gestureObstacles removes multi-selection members from the
@@ -776,7 +798,7 @@ export function WallObject({
   const restElevAt = (dxMm: number, dyMm: number) =>
     restElevationMm(
       buildWallFootprint(wall, dxMm, dyMm, wall.rotationDeg),
-      stackSupports,
+      altStackSupports,
       baseWallElevMm,
     );
   // Fallback 0 (ground): a support under the body lifts it; nothing under means gravity → floor.

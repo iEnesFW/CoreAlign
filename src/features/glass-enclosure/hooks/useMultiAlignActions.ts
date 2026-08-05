@@ -39,7 +39,7 @@ type PatchOp =
 // (radius·sweep on an arc), never the chord. Splitting over the chord here wrote arc panels short
 // and persistRun pushed those widths to the server.
 const patchedRun = (run: SceneRunState, patch: Partial<SceneRunState>): SceneRunState => {
-  const merged = { ...run, ...clampRunPatch(patch) };
+  const merged = { ...run, ...clampRunPatch(run, patch) };
   if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
     return withClampedRunLength(merged, merged.lengthMm);
   }

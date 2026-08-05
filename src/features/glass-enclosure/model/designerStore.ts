@@ -754,7 +754,12 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   applyScenePatch: (updater) => {
     const current = get();
-    const next = updater(cloneScene(current.scene));
+    // WHY the live scene and not a clone: structuredClone mints a fresh identity for EVERY nested
+    // collection, so `wall.features` / `wall.openings` changed reference on every patch and
+    // WallObject's geometry memo missed for every wall — replaying the curved-band CSG (hundreds of
+    // ms per hole, seconds at a wide sweep) on each move/rotate/stack commit. Every updater here is
+    // immutable (spread + map + filter); the history entry below is still deep-cloned.
+    const next = updater(current.scene);
     set(pushHistory(current, next));
   },
   setClipboard: (clipboard) => set({ clipboard, pasteArmed: false }),
@@ -1282,7 +1287,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const runTarget = current.scene.runs.find((run) => run.id === runId);
     if (!runTarget) return;
     if (blockedByLock(runTarget, rawPatch)) return notifyLockedBlocked();
-    const patch = clampRunPatch(rawPatch);
+    const patch = clampRunPatch(runTarget, rawPatch);
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {
@@ -1311,8 +1316,9 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const next: SceneState = {
       ...current.scene,
       runs: current.scene.runs.map((run) => {
-        const patch = map.get(run.id);
-        if (!patch) return run;
+        const raw = map.get(run.id);
+        if (!raw) return run;
+        const patch = clampRunPatch(run, raw);
         const merged = { ...run, ...patch };
         if (patch.lengthMm !== undefined && patch.lengthMm !== run.lengthMm) {
           return withClampedRunLength(merged, merged.lengthMm);

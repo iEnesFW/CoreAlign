@@ -14,6 +14,7 @@ export {
   buildPlanFootprint,
   buildPolygonFootprint,
   restElevationMm,
+  stackableSupports,
   supportTopBelowMm,
   liftToClearMm,
   SUPPORT_TOLERANCE_MM,

@@ -42,20 +42,19 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   if (!run || !draft) return null;
 
   const commit = (patch: Partial<typeof run>) => {
-    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+    const before = new Map(run.panels.map((p) => [p.id, { w: p.widthMm, h: p.heightMm }]));
     updateRun(run.id, patch);
     // Persist the STORE's post-commit state, not the raw patch — the store clamps lengthMm
     // (withClampedRunLength), so persisting the raw value diverged local vs server.
     const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
     void persistRun(fresh ?? { ...run, ...patch });
-    // A length/arc edit rescales the panel widths (withClampedRunLength). Persist the changed
-    // panels so the server stays consistent — otherwise a later reload re-normalizes them and an
-    // arc panel's glass jumps (e.g. when toggling its hardware checkboxes afterwards).
-    if (patch.lengthMm !== undefined || patch.geomArcRadiusMm !== undefined) {
-      fresh?.panels.forEach((p) => {
-        if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(run.id, p);
-      });
-    }
+    // A length/arc edit rescales the panel widths (withClampedRunLength) and a height reduction
+    // re-fits taller panel overrides (clampRunPatch). Persist whatever the store actually changed —
+    // otherwise the server keeps the old pane and the cut list is built from it.
+    fresh?.panels.forEach((p) => {
+      const prev = before.get(p.id);
+      if (prev?.w !== p.widthMm || prev?.h !== p.heightMm) void persistPanel(run.id, p);
+    });
   };
 
   // Editing the Length of an ARC run changes the CHORD: keep the curl angle (sweep) and re-derive

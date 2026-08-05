@@ -151,12 +151,15 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
     ) {
       return;
     }
-    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+    // Widths are redistributed by an arc/length change; a HEIGHT reduction re-fits taller panel
+    // overrides (clampRunPatch). Both have to reach the server or the cut list keeps the old pane.
+    const before = new Map(run.panels.map((p) => [p.id, { w: p.widthMm, h: p.heightMm }]));
     updateRun(run.id, effective);
     const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
     void persistRun(freshRun ?? candidate);
     for (const p of freshRun?.panels ?? []) {
-      if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(run.id, p);
+      const prev = before.get(p.id);
+      if (prev?.w !== p.widthMm || prev?.h !== p.heightMm) void persistPanel(run.id, p);
     }
   };
 
