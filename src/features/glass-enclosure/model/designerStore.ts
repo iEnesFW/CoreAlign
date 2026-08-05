@@ -31,10 +31,11 @@ import {
   clampSurfacePatch,
   clampWallOpening,
   clampWallPatch,
+  lockedBodyIds,
 } from './sceneGuards';
 import { notifyLockedBlocked } from './lockFeedback';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
-import { computeFloorFollow } from './floorFollow';
+import { computeFloorFollow, followRiderPose } from './floorFollow';
 import { settleScene } from './settleScene';
 import type { QualityPreset } from '@/shared/three-engine';
 
@@ -225,7 +226,8 @@ interface DesignerState {
   updateSlabFeature: (slabId: string, featureId: string, patch: Partial<SceneWallFeature>) => void;
   removeSlabFeature: (slabId: string, featureId: string) => void;
   addSlab: (slab: SceneSlabState) => void;
-  updateSlab: (slabId: string, patch: Partial<SceneSlabState>) => void;
+  /** Returns the ids of RUNS the floor-follow moved — the caller must persist them. */
+  updateSlab: (slabId: string, patch: Partial<SceneSlabState>) => string[];
   removeSlab: (slabId: string) => void;
   addSurface: (surface: SceneSurfaceState) => void;
   updateSurface: (surfaceId: string, patch: Partial<SceneSurfaceState>) => void;
@@ -1041,30 +1043,47 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     const current = get();
     const slabs = current.scene.slabs ?? [];
     const target = slabs.find((s) => s.id === slabId);
-    if (!target) return;
-    if (blockedByLock(target, rawPatch)) return notifyLockedBlocked();
+    if (!target) return [];
+    if (blockedByLock(target, rawPatch)) {
+      notifyLockedBlocked();
+      return [];
+    }
     const patch = clampSlabPatch(rawPatch);
-    // A FLOOR moved vertically carries everything resting on it (and what those carry) by the same ΔZ.
+    // A FLOOR that moves carries everything resting on it (and what those carry) — vertically AND
+    // laterally. Restricting this to elevation/thickness left the walls and glass standing where
+    // they were when the plate slid sideways or turned under them.
+    const posePatched =
+      patch.elevationMm !== undefined ||
+      patch.thicknessMm !== undefined ||
+      patch.originX !== undefined ||
+      patch.originY !== undefined ||
+      patch.rotationDeg !== undefined;
     const follow =
-      target &&
-      target.kind === 'floor' &&
-      (patch.elevationMm !== undefined || patch.thicknessMm !== undefined)
-        ? computeFloorFollow(
-            current.scene,
-            slabId,
-            patch.elevationMm ?? target.elevationMm,
-            patch.thicknessMm ?? target.thicknessMm,
-          )
+      target.kind === 'floor' && posePatched
+        ? computeFloorFollow(current.scene, slabId, {
+            elevationMm: patch.elevationMm ?? target.elevationMm,
+            thicknessMm: patch.thicknessMm ?? target.thicknessMm,
+            originX: patch.originX ?? target.originX,
+            originY: patch.originY ?? target.originY,
+            rotationDeg: patch.rotationDeg ?? target.rotationDeg,
+          })
         : null;
-    const wallSet = follow ? new Set(follow.wallIds) : null;
-    const runSet = follow ? new Set(follow.runIds) : null;
-    const roofSet = follow ? new Set(follow.roofSlabIds) : null;
+    // A locked rider stays put even when the ground under it moves.
+    const locked = follow ? lockedBodyIds(current.scene) : null;
+    const allowed = (id: string) => !locked?.has(id);
+    const wallSet = follow ? new Set(follow.wallIds.filter(allowed)) : null;
+    const runSet = follow ? new Set(follow.runIds.filter(allowed)) : null;
+    const roofSet = follow ? new Set(follow.roofSlabIds.filter(allowed)) : null;
     const next: SceneState = {
       ...current.scene,
       slabs: slabs.map((slab) => {
         if (slab.id === slabId) return { ...slab, ...patch };
         if (roofSet?.has(slab.id) && follow) {
-          return { ...slab, elevationMm: slab.elevationMm + follow.deltaZMm };
+          return {
+            ...slab,
+            ...followRiderPose(slab, follow),
+            elevationMm: slab.elevationMm + follow.deltaZMm,
+          };
         }
         return slab;
       }),
@@ -1072,16 +1091,29 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         ? {
             walls: (current.scene.walls ?? []).map((wall) =>
               wallSet?.has(wall.id)
-                ? { ...wall, geomZ: (wall.geomZ ?? 0) + follow.deltaZMm }
+                ? {
+                    ...wall,
+                    ...followRiderPose(wall, follow),
+                    geomZ: (wall.geomZ ?? 0) + follow.deltaZMm,
+                  }
                 : wall,
             ),
             runs: current.scene.runs.map((run) =>
-              runSet?.has(run.id) ? { ...run, geomZ: (run.geomZ ?? 0) + follow.deltaZMm } : run,
+              runSet?.has(run.id)
+                ? {
+                    ...run,
+                    ...followRiderPose(run, follow),
+                    geomZ: (run.geomZ ?? 0) + follow.deltaZMm,
+                  }
+                : run,
             ),
           }
         : {}),
     };
     set(pushHistory(current, next));
+    // Runs are SERVER entities: without persisting the ones we just moved, the next refetch snaps
+    // the glass back to where the floor used to be. The caller owns the mutation, so hand it the ids.
+    return runSet ? [...runSet] : [];
   },
 
   removeSlab: (slabId) => {

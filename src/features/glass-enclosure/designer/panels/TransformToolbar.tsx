@@ -5,6 +5,7 @@ import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore
 import {
   usePanelEntityActions,
   useRunEntityActions,
+  useSlabEntityActions,
   useWallEntityActions,
 } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { snapAngleDeg } from '@/features/glass-enclosure/model/angleSnap';
@@ -344,7 +345,8 @@ const WallFields = ({ wall }: { wall: SceneWallState }) => {
 
 const SlabFields = ({ slab }: { slab: SceneSlabState }) => {
   const { t } = useTranslation();
-  const updateSlab = useDesignerStore((s) => s.updateSlab);
+  // Floor moves carry their riders; commitSlabPatch persists the runs that rode along.
+  const { commitSlabPatch: updateSlab } = useSlabEntityActions();
 
   const commit = (patch: Partial<SceneSlabState>) => {
     // WHY: on a PLAN-ARC slab the bent axis' dimension IS the chord. Writing it with the stale

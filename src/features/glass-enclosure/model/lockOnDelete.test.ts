@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { blockedByLock, blockedByLockOnDelete } from './sceneGuards';
+import { blockedByLock, blockedByLockOnDelete, dropLockedIds, lockedBodyIds } from './sceneGuards';
 
 /**
  * `blockedByLock` inspects a PATCH. A delete carries none, so every remove* action wrote straight
@@ -25,5 +25,41 @@ describe('blockedByLockOnDelete', () => {
 
   it('unlocking stays possible (the lock must not be a one-way door)', () => {
     expect(blockedByLock({ locked: true }, { locked: false })).toBe(false);
+  });
+});
+
+/**
+ * The single setters all gate on the two helpers above, but the BULK paths write through
+ * `applyScenePatch`, which sees no guard: a group move, a wall move carrying its bonded glass, an
+ * Alt-stack, a rotate, a multi-delete and the grouping button all moved a locked body anyway. Those
+ * paths now filter their id sets through these two helpers.
+ */
+describe('bulk-path lock filtering', () => {
+  const scene = {
+    walls: [{ id: 'w-free' }, { id: 'w-locked', locked: true }],
+    runs: [{ id: 'r-locked', locked: true }, { id: 'r-free' }],
+    slabs: [{ id: 's-free', locked: false }],
+    surfaces: [{ id: 'sf-locked', locked: true }],
+  };
+
+  it('collects every locked id across all four body kinds', () => {
+    expect(lockedBodyIds(scene)).toEqual(new Set(['w-locked', 'r-locked', 'sf-locked']));
+  });
+
+  it('tolerates a scene with missing collections', () => {
+    expect(lockedBodyIds({ runs: [] })).toEqual(new Set());
+  });
+
+  it('drops the locked members and reports that it did', () => {
+    const locked = lockedBodyIds(scene);
+    const result = dropLockedIds(['w-free', 'w-locked', 'r-locked'], locked);
+    expect(result.ids).toEqual(new Set(['w-free']));
+    expect(result.blocked).toBe(true);
+  });
+
+  it('reports nothing blocked when the set is clean — no spurious toast', () => {
+    const result = dropLockedIds(['w-free', 'r-free'], lockedBodyIds(scene));
+    expect(result.ids).toEqual(new Set(['w-free', 'r-free']));
+    expect(result.blocked).toBe(false);
   });
 });

@@ -6,7 +6,8 @@ import { developedLengthMm } from '../model/arcGeometry';
 import { combinePanelHardware } from '../model/panelHardware';
 import { createPanelFromTemplate } from '../model/panelDefaults';
 import { moveWallWithAttachments, resolveAttachedRunIds } from '../model/wallAttachment';
-import { blockedByLock, clampWallPatch } from '../model/sceneGuards';
+import { blockedByLock, clampWallPatch, dropLockedIds, lockedBodyIds } from '../model/sceneGuards';
+import { notifyLockedBlocked } from '../model/lockFeedback';
 import { enqueuePersist } from '../model/persistQueue';
 import {
   useAddPanelMutation,
@@ -22,6 +23,7 @@ import type {
   SceneHardwareItem,
   ScenePanelState,
   SceneRunState,
+  SceneSlabState,
   SceneWallState,
   SetRunPanelsInput,
   UpdatePanelInput,
@@ -312,6 +314,29 @@ export const usePanelEntityActions = () => {
   };
 };
 
+/**
+ * Move a FLOOR through the store and persist whatever glass rode along with it.
+ *
+ * WHY this wrapper exists: runs are SERVER entities, so a floor-follow that shifts a run's pose in
+ * the store alone is undone by the next refetch — the glass snaps back to where the floor used to
+ * be. `updateSlab` hands back the ids it moved; every caller that can change a floor's POSE (the
+ * drag, the transform toolbar, the inspector, the stretch gizmos, the keyboard nudge) goes through
+ * here so none of them can forget, exactly like commitWallPatch does for a wall's attached glass.
+ */
+export const useSlabEntityActions = () => {
+  const { persistRun } = useRunEntityActions();
+
+  const commitSlabPatch = (slabId: string, patch: Partial<SceneSlabState>) => {
+    const movedRunIds = useDesignerStore.getState().updateSlab(slabId, patch);
+    for (const runId of movedRunIds) {
+      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+      if (fresh) void persistRun(fresh);
+    }
+  };
+
+  return { commitSlabPatch };
+};
+
 export const useWallEntityActions = () => {
   const { persistRun } = useRunEntityActions();
 
@@ -322,7 +347,7 @@ export const useWallEntityActions = () => {
     // which is a raw scene swap — it never sees `blockedByLock` or `clampWallPatch`. So a LOCKED
     // wall could still be moved and rotated from the inspector and the transform toolbar, and the
     // shape floors / opening re-fit were skipped on exactly the edits that reshape the wall.
-    if (blockedByLock(wall, rawPatch)) return;
+    if (blockedByLock(wall, rawPatch)) return notifyLockedBlocked();
     const patch = clampWallPatch(wall, rawPatch);
     const after = { ...wall, ...patch };
     const poseChanged =
@@ -333,7 +358,12 @@ export const useWallEntityActions = () => {
       store.updateWall(wall.id, patch);
       return;
     }
-    const attachedIds = new Set(resolveAttachedRunIds(wall, store.scene.runs));
+    // The wall's own lock is checked above, but a LOCKED run bonded to it rode along regardless —
+    // an inspector/toolbar pose edit is the same co-move as the drag path, so it needs the same gate.
+    const lockedIds = lockedBodyIds(store.scene);
+    const attached = dropLockedIds(resolveAttachedRunIds(wall, store.scene.runs), lockedIds);
+    if (attached.blocked) notifyLockedBlocked();
+    const attachedIds = attached.ids;
     const movedById = new Map(
       moveWallWithAttachments(
         wall,
@@ -357,5 +387,6 @@ export const useWallEntityActions = () => {
 
 export const useDesignerEntityActions = () => ({
   ...useRunEntityActions(),
+  ...useSlabEntityActions(),
   ...usePanelEntityActions(),
 });

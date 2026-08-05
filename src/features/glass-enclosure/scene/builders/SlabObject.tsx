@@ -55,6 +55,7 @@ import type { WallFeatureSide } from './wallFaces';
 import type { AttachedRunSnapshot } from '../interaction/attachedRunPreview';
 import type { PlanMoveDelta } from '../interaction/planSnap';
 import { useDesignerStore } from '../../model/designerStore';
+import { useSlabEntityActions } from '../../hooks/useDesignerEntityActions';
 import {
   FEATURE_EDGE_MARGIN_MM,
   FREE_SAMPLE_STEP_MM,
@@ -321,7 +322,9 @@ export function SlabObject({
   const setPenFaceCursor = useDesignerStore((s) => s.setPenFaceCursor);
   const sceneRef = useDesignerStore((s) => s.scene);
   const multiSelection = useDesignerStore((s) => s.multiSelection);
-  const updateSlab = useDesignerStore((s) => s.updateSlab);
+  // Floor moves carry the walls/glass/roofs resting on them; commitSlabPatch persists the runs
+  // that rode along (server entities — otherwise the next refetch snaps the glass back).
+  const { commitSlabPatch: updateSlab } = useSlabEntityActions();
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
   const addSlabFeature = useDesignerStore((s) => s.addSlabFeature);

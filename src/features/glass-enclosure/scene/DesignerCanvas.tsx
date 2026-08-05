@@ -42,8 +42,11 @@ import { runViolatesCatalog } from '../model/catalogValidation';
 import { polygonSelfIntersects } from '../model/polygonValidation';
 import { registerExportRoot } from '../model/sceneExport';
 import { applyWallStack } from '../model/stackCoMove';
+import { dropLockedIds, lockedBodyIds } from '../model/sceneGuards';
+import { notifyLockedBlocked } from '../model/lockFeedback';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
+import { useSlabEntityActions } from '../hooks/useDesignerEntityActions';
 import { useViewerAppearance } from '../model/viewerAppearance';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { useAddRunMutation } from '../hooks/useGlassProjectQueries';
@@ -373,7 +376,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const updateRun = useDesignerStore((s) => s.updateRun);
   const applyRunPatches = useDesignerStore((s) => s.applyRunPatches);
   const updateWall = useDesignerStore((s) => s.updateWall);
-  const updateSlab = useDesignerStore((s) => s.updateSlab);
+  // Floor moves carry the walls/glass/roofs resting on them; commitSlabPatch persists the runs
+  // that rode along (server entities — otherwise the next refetch snaps the glass back).
+  const { commitSlabPatch: updateSlab } = useSlabEntityActions();
   const setCamera = useDesignerStore((s) => s.setCamera);
   const removeWall = useDesignerStore((s) => s.removeWall);
   const removeSlab = useDesignerStore((s) => s.removeSlab);
@@ -1222,11 +1227,19 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     extraRunIds: string[] = [],
     extraWallIds: string[] = [],
   ) => {
-    const ms = useDesignerStore.getState().multiSelection;
-    const runSet = new Set([...ms.runIds, ...extraRunIds]);
-    const wallSet = new Set([...ms.wallIds, ...extraWallIds]);
-    const slabSet = new Set(ms.slabIds);
-    useDesignerStore.getState().applyScenePatch((s) => ({
+    const state = useDesignerStore.getState();
+    const ms = state.multiSelection;
+    // The lock is enforced per body in the single setters, but this path writes straight through
+    // applyScenePatch — without the filter a locked pane rode along in any multi-selection.
+    const locked = lockedBodyIds(state.scene);
+    const runs = dropLockedIds([...ms.runIds, ...extraRunIds], locked);
+    const walls = dropLockedIds([...ms.wallIds, ...extraWallIds], locked);
+    const slabs = dropLockedIds(ms.slabIds, locked);
+    if (runs.blocked || walls.blocked || slabs.blocked) notifyLockedBlocked();
+    const runSet = runs.ids;
+    const wallSet = walls.ids;
+    const slabSet = slabs.ids;
+    state.applyScenePatch((s) => ({
       ...s,
       runs: s.runs.map((r) =>
         runSet.has(r.id)
@@ -1419,8 +1432,12 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       commitGroupMove(delta.dxMm, delta.dyMm, attachedRunIds, groupWallIds);
       return;
     }
-    const movingWallIds = new Set([wallId, ...groupWallIds]);
-    const movingRunIds = new Set(attachedRunIds);
+    const locked = lockedBodyIds(state.scene);
+    const movingWalls = dropLockedIds([wallId, ...groupWallIds], locked);
+    const movingRuns = dropLockedIds(attachedRunIds, locked);
+    if (movingWalls.blocked || movingRuns.blocked) notifyLockedBlocked();
+    const movingWallIds = movingWalls.ids;
+    const movingRunIds = movingRuns.ids;
     state.applyScenePatch((sceneState) => ({
       ...sceneState,
       walls: (sceneState.walls ?? []).map((w) =>
@@ -1442,7 +1459,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
           : r,
       ),
     }));
-    for (const runId of attachedRunIds) persistFreshRun(runId);
+    for (const runId of movingRunIds) persistFreshRun(runId);
   };
 
   // Wall stack-on-top: move it and write the resting elevation so it can sit on top of another
@@ -1454,17 +1471,22 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     attachedRunIds: string[],
     groupWallIds: string[],
   ) => {
-    useDesignerStore.getState().applyScenePatch((s) =>
+    const stackState = useDesignerStore.getState();
+    const stackLocked = lockedBodyIds(stackState.scene);
+    const stackWalls = dropLockedIds(groupWallIds, stackLocked);
+    const stackRuns = dropLockedIds(attachedRunIds, stackLocked);
+    if (stackWalls.blocked || stackRuns.blocked) notifyLockedBlocked();
+    stackState.applyScenePatch((s) =>
       applyWallStack(s, {
         wallId,
         dxMm: delta.dxMm,
         dyMm: delta.dyMm,
         targetZMm: geomZMm,
-        groupWallIds,
-        attachedRunIds,
+        groupWallIds: [...stackWalls.ids],
+        attachedRunIds: [...stackRuns.ids],
       }),
     );
-    for (const runId of attachedRunIds) persistFreshRun(runId);
+    for (const runId of stackRuns.ids) persistFreshRun(runId);
   };
 
   const onCommitWallRotate = (
@@ -1493,10 +1515,21 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     // rotation exactly like commitGroupMove preserves them for translation.
     const ms = state.multiSelection;
     const isMulti = multiSelectionHas(ms, 'wall', wallId);
-    const groupIds = new Set([...groupWallIds, ...(isMulti ? ms.wallIds : [])]);
+    const rotateLocked = lockedBodyIds(state.scene);
+    const rotateWalls = dropLockedIds(
+      [...groupWallIds, ...(isMulti ? ms.wallIds : [])],
+      rotateLocked,
+    );
+    const rotateRuns = dropLockedIds(
+      [...attachedRunIds, ...(isMulti ? ms.runIds : [])],
+      rotateLocked,
+    );
+    const rotateSlabs = dropLockedIds(isMulti ? ms.slabIds : [], rotateLocked);
+    if (rotateWalls.blocked || rotateRuns.blocked || rotateSlabs.blocked) notifyLockedBlocked();
+    const groupIds = rotateWalls.ids;
     groupIds.delete(wallId);
-    const movingRunIds = new Set([...attachedRunIds, ...(isMulti ? ms.runIds : [])]);
-    const movingSlabIds = new Set(isMulti ? ms.slabIds : []);
+    const movingRunIds = rotateRuns.ids;
+    const movingSlabIds = rotateSlabs.ids;
     state.applyScenePatch((sceneState) => ({
       ...sceneState,
       walls: (sceneState.walls ?? []).map((w) => {

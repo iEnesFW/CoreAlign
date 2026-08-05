@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeFloorFollow } from './floorFollow';
+import { computeFloorFollow, followRiderPose } from './floorFollow';
 import type { SceneRunState, SceneSlabState, SceneState, SceneWallState } from './project.types';
 
 const wall = (over: Partial<SceneWallState> = {}): SceneWallState => ({
@@ -64,6 +64,16 @@ const scene = (parts: Partial<SceneState>): SceneState => ({
 // A 4x4m floor whose TOP sits at Z=0 (elevation -150 + thickness 150).
 const floor = () => slab({ id: 'floor', kind: 'floor', elevationMm: -150, thicknessMm: 150 });
 
+// The pose the floor is being moved TO; every field defaults to the untouched floor.
+const pose = (over: Partial<Parameters<typeof computeFloorFollow>[2]> = {}) => ({
+  elevationMm: -150,
+  thicknessMm: 150,
+  originX: 0,
+  originY: 0,
+  rotationDeg: 0,
+  ...over,
+});
+
 describe('computeFloorFollow', () => {
   it('carries the wall on the floor, its bonded glass, a free run on the floor, and the roof — by ΔZ', () => {
     const s = scene({
@@ -84,7 +94,7 @@ describe('computeFloorFollow', () => {
     });
 
     // Raise the floor top from 0 to 500 (elevation -150 → 350).
-    const follow = computeFloorFollow(s, 'floor', 350, 150);
+    const follow = computeFloorFollow(s, 'floor', pose({ elevationMm: 350 }));
     expect(follow).not.toBeNull();
     expect(follow!.deltaZMm).toBe(500);
     expect(follow!.wallIds).toEqual(['W']);
@@ -98,7 +108,7 @@ describe('computeFloorFollow', () => {
       runs: [run({ id: 'Gb2', hostWallId: 'W2', geomZ: 3000, originY: 20000 })],
       slabs: [floor()],
     });
-    const follow = computeFloorFollow(s, 'floor', 350, 150);
+    const follow = computeFloorFollow(s, 'floor', pose({ elevationMm: 350 }));
     expect(follow!.wallIds).toEqual([]);
     expect(follow!.runIds).toEqual([]);
   });
@@ -109,13 +119,83 @@ describe('computeFloorFollow', () => {
       runs: [run({ id: 'Gboth', hostWallId: 'W', geomZ: 0, originX: 2000, originY: 60 })],
       slabs: [floor()],
     });
-    const follow = computeFloorFollow(s, 'floor', 350, 150);
+    const follow = computeFloorFollow(s, 'floor', pose({ elevationMm: 350 }));
     expect(follow!.runIds.filter((id) => id === 'Gboth')).toHaveLength(1);
   });
 
   it('returns null when the top does not move or the slab is not a floor', () => {
     const s = scene({ slabs: [floor(), slab({ id: 'roof', kind: 'roof', elevationMm: 2600 })] });
-    expect(computeFloorFollow(s, 'floor', -150, 150)).toBeNull(); // top stays at 0
-    expect(computeFloorFollow(s, 'roof', 3000, 150)).toBeNull(); // not a floor
+    expect(computeFloorFollow(s, 'floor', pose())).toBeNull(); // top stays at 0
+    expect(computeFloorFollow(s, 'roof', pose({ elevationMm: 3000 }))).toBeNull(); // not a floor
+  });
+
+  // The lateral half. This was the user-reported break: slide the floor sideways and the wall, its
+  // glass and the roof stayed put — the plate moved out from under the scene, then gravity dropped
+  // them and they were left buried when the floor came back.
+  it('carries the riders SIDEWAYS when the floor slides', () => {
+    const s = scene({
+      walls: [wall({ id: 'W', geomZ: 0, originX: 100, originY: 200 })],
+      runs: [run({ id: 'G', geomZ: 0, originX: 300, originY: 60 })],
+      slabs: [floor()],
+    });
+
+    const follow = computeFloorFollow(s, 'floor', pose({ originX: 2000, originY: -500 }));
+
+    expect(follow).not.toBeNull();
+    expect(follow!.deltaZMm).toBe(0);
+    expect(follow!.deltaXMm).toBe(2000);
+    expect(follow!.deltaYMm).toBe(-500);
+    expect(follow!.wallIds).toEqual(['W']);
+    expect(follow!.runIds).toEqual(['G']);
+
+    const movedWall = followRiderPose(s.walls![0], follow!);
+    expect(movedWall.originX).toBe(2100);
+    expect(movedWall.originY).toBe(-300);
+    expect(movedWall.rotationDeg).toBe(0);
+  });
+
+  it('orbits the riders about the floor centre when it is ROTATED', () => {
+    // The 4x4 m floor is centred at (2000, 2000); a wall sitting at the centre must stay there and
+    // simply turn with it.
+    const s = scene({
+      walls: [wall({ id: 'W', geomZ: 0, originX: 2000, originY: 2000, rotationDeg: 0 })],
+      slabs: [floor()],
+    });
+
+    const follow = computeFloorFollow(s, 'floor', pose({ originX: 4000, rotationDeg: 90 }));
+
+    expect(follow).not.toBeNull();
+    expect(follow!.sweepDeg).toBe(90);
+    expect(follow!.deltaXMm).toBe(0);
+    expect(follow!.deltaYMm).toBe(0);
+
+    const moved = followRiderPose(s.walls![0], follow!);
+    expect(moved.originX).toBeCloseTo(2000, 6);
+    expect(moved.originY).toBeCloseTo(2000, 6);
+    expect(moved.rotationDeg).toBe(90);
+  });
+
+  it('a rider off the pivot swings around it', () => {
+    const s = scene({
+      walls: [wall({ id: 'W', geomZ: 0, originX: 3000, originY: 2000 })],
+      slabs: [floor()],
+    });
+    const follow = computeFloorFollow(s, 'floor', pose({ originX: 4000, rotationDeg: 90 }))!;
+    const moved = followRiderPose(s.walls![0], follow);
+    // 1000 mm to the +X of the centre becomes 1000 mm to the +Y of it.
+    expect(moved.originX).toBeCloseTo(2000, 6);
+    expect(moved.originY).toBeCloseTo(3000, 6);
+  });
+
+  it('a pure slide leaves rotations alone and a pure rotation leaves the slide at zero', () => {
+    const s = scene({ walls: [wall({ id: 'W', geomZ: 0 })], slabs: [floor()] });
+    const slid = computeFloorFollow(s, 'floor', pose({ originX: 750 }))!;
+    expect(slid.sweepDeg).toBe(0);
+    expect(followRiderPose(s.walls![0], slid).rotationDeg).toBe(0);
+  });
+
+  it('still returns null when nothing about the pose changed', () => {
+    const s = scene({ walls: [wall({ id: 'W', geomZ: 0 })], slabs: [floor()] });
+    expect(computeFloorFollow(s, 'floor', pose())).toBeNull();
   });
 });

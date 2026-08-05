@@ -83,6 +83,42 @@ export const blockedByLock = (
 export const blockedByLockOnDelete = (body: { locked?: boolean | null } | undefined): boolean =>
   Boolean(body?.locked);
 
+/**
+ * Every id in the scene that carries the lock, for the BULK paths.
+ *
+ * WHY: the single-body setters all gate on `blockedByLock`, but the group move, the wall move with
+ * its attached glass, the Alt-stack, the rotate, the multi-delete and the grouping button all write
+ * through `applyScenePatch`, which sees no guard at all. So the lock only ever held against a
+ * DIRECT edit: put a locked pane in a multi-selection, or drag the unlocked wall its glass is bonded
+ * to, and it moved anyway. These paths filter their id sets through this and report the rejection.
+ */
+export const lockedBodyIds = (scene: {
+  walls?: { id: string; locked?: boolean | null }[] | null;
+  runs?: { id: string; locked?: boolean | null }[] | null;
+  slabs?: { id: string; locked?: boolean | null }[] | null;
+  surfaces?: { id: string; locked?: boolean | null }[] | null;
+}): Set<string> => {
+  const out = new Set<string>();
+  for (const group of [scene.walls, scene.runs, scene.slabs, scene.surfaces]) {
+    for (const body of group ?? []) if (body.locked) out.add(body.id);
+  }
+  return out;
+};
+
+/** Remove the locked members from a moving/deleting set; `blocked` drives the toast. */
+export const dropLockedIds = (
+  ids: Iterable<string>,
+  locked: Set<string>,
+): { ids: Set<string>; blocked: boolean } => {
+  const out = new Set<string>();
+  let blocked = false;
+  for (const id of ids) {
+    if (locked.has(id)) blocked = true;
+    else out.add(id);
+  }
+  return { ids: out, blocked };
+};
+
 const WALL_SHAPE_KEYS = [
   'lengthMm',
   'heightMm',

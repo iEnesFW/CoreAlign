@@ -27,6 +27,8 @@ import {
   mirrorSurfacePatch,
   mirrorWallPatch,
 } from '@/features/glass-enclosure/model/mirrorBody';
+import { dropLockedIds, lockedBodyIds } from '@/features/glass-enclosure/model/sceneGuards';
+import { notifyLockedBlocked } from '@/features/glass-enclosure/model/lockFeedback';
 import { cn } from '@/shared/lib/cn';
 import { queueToast } from '@/shared/api/toastQueue';
 import type { PlanFootprint } from '@/shared/three-engine';
@@ -47,6 +49,7 @@ import {
   useWallEntityActions,
 } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
+import { useSlabEntityActions } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiAlignActions } from '@/features/glass-enclosure/hooks/useMultiAlignActions';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
 import type { GlassTypeDto } from '@/features/glass-enclosure/model/glassEnclosure.types';
@@ -78,7 +81,9 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const addSlab = useDesignerStore((s) => s.addSlab);
   const addSurface = useDesignerStore((s) => s.addSurface);
   const updateWall = useDesignerStore((s) => s.updateWall);
-  const updateSlab = useDesignerStore((s) => s.updateSlab);
+  // Floor moves carry the walls/glass/roofs resting on them; commitSlabPatch persists the runs
+  // that rode along (server entities — otherwise the next refetch snaps the glass back).
+  const { commitSlabPatch: updateSlab } = useSlabEntityActions();
   const updateSurface = useDesignerStore((s) => s.updateSurface);
   const setSelection = useDesignerStore((s) => s.setSelection);
   const { createPanel, deletePanel, deleteRun, persistPanelHardware } = useDesignerEntityActions();
@@ -93,7 +98,11 @@ export function SelectionToolbar({ glassTypes }: SelectionToolbarProps) {
   const { deleteMultiSelection } = useMultiSelectionDelete();
 
   const groupWalls = (groupId: string | null) => {
-    const ids = new Set(multiSelection.wallIds);
+    // WHY the lock matters for a mere group id: membership widens the co-move set of every later
+    // drag, stack and rotate, so grouping a locked wall would move it through the back door.
+    const locked = lockedBodyIds(useDesignerStore.getState().scene);
+    const { ids, blocked } = dropLockedIds(multiSelection.wallIds, locked);
+    if (blocked) notifyLockedBlocked();
     if (ids.size === 0) return;
     applyScenePatch((s) => ({
       ...s,

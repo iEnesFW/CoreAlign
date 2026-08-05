@@ -402,10 +402,15 @@ export function GlassProjectDesignerPage() {
           .map((s) => buildSlabFootprint(s, 0, 0, s.rotationDeg));
         const d = clamp((dx, dy) => buildSlabFootprint(slab, dx, dy, slab.rotationDeg), obstacles);
         if (!d) return;
-        state.updateSlab(sel.slabId, {
+        // A floor nudge carries its riders; the runs among them are server entities.
+        const movedRunIds = state.updateSlab(sel.slabId, {
           originX: slab.originX + d.dxMm,
           originY: slab.originY + d.dyMm,
         });
+        for (const runId of movedRunIds) {
+          const moved = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+          if (moved) void persistRun(moved);
+        }
       } else if (sel.kind === 'surface' && sel.surfaceId) {
         const surface = surfaces.find((s) => s.id === sel.surfaceId);
         if (!surface) return;

@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { hasEdgeArc } from '../model/edgeArcOutline';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
+import { useSlabEntityActions } from '../hooks/useDesignerEntityActions';
 import {
   buildRunFootprint,
   buildSlabFootprint,
@@ -25,7 +26,9 @@ export function SlabInspector() {
   const slabs = useDesignerStore((s) => s.scene.slabs ?? []);
   const walls = useDesignerStore((s) => s.scene.walls ?? []);
   const runs = useDesignerStore((s) => s.scene.runs);
-  const updateSlab = useDesignerStore((s) => s.updateSlab);
+  // Floor moves carry the walls/glass/roofs resting on them; commitSlabPatch persists the runs
+  // that rode along (server entities — otherwise the next refetch snaps the glass back).
+  const { commitSlabPatch: updateSlab } = useSlabEntityActions();
   const removeSlab = useDesignerStore((s) => s.removeSlab);
   const removeSlabFeature = useDesignerStore((s) => s.removeSlabFeature);
   const setSelection = useDesignerStore((s) => s.setSelection);
