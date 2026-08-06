@@ -4,6 +4,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { routePreloaders } from '@/app/router/routePrefetch';
 import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
 import { Logo } from '@/shared/ui/Logo/Logo';
+import { useCompanyProfileQuery } from '@/features/settings/hooks/useSettingsQueries';
 import { cn } from '@/shared/lib/cn';
 import {
   LayoutDashboard,
@@ -434,6 +435,9 @@ const SidebarComponent: React.FC<SidebarProps> = ({
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['Accounting']);
   const [collapsedSections, setCollapsedSections] = useState<string[]>([]);
   const isAdmin = useIsTenantAdmin();
+  const companyProfile = useCompanyProfileQuery();
+  const tenantLogoUrl = companyProfile.data?.data?.logoUrl ?? null;
+  const tenantName = companyProfile.data?.data?.name ?? undefined;
 
   const groups = useMemo<NavGroup[]>(
     () => toGroups(isAdmin ? [...baseNavigation, ...adminNavigation] : baseNavigation),
@@ -628,7 +632,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
               labelHidden(isCollapsed),
             )}
           >
-            <Logo size={20} />
+            <Logo size={20} src={tenantLogoUrl} alt={tenantName} />
           </div>
 
           <div
@@ -637,7 +641,7 @@ const SidebarComponent: React.FC<SidebarProps> = ({
               isCollapsed ? 'opacity-100' : 'pointer-events-none opacity-0',
             )}
           >
-            <Logo size={26} showText={false} />
+            <Logo size={26} showText={false} src={tenantLogoUrl} alt={tenantName} />
           </div>
 
           <button

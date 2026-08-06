@@ -2697,6 +2697,10 @@
       "status": "All systems operational"
     }
   },
+  "Footer": {
+    "rights": "All rights reserved.",
+    "tagline": "Multi-tenant ERP platform"
+  },
   "GlassEnclosure": {
     "Designer": {
       "AddPanel": "Add panel",
@@ -6817,7 +6821,12 @@
       "ValidUntil": "Valid Until"
     },
     "tabs": {
-      "glPostingMap": "GL Mapping"
+      "glPostingMap": "GL Mapping",
+      "company": "Company info",
+      "branding": "Brand & logo",
+      "masterData": "Master data",
+      "numberFormat": "Number format",
+      "email": "Email"
     },
     "NumberFormatSaved": "Number format saved.",
     "NumberFormatTitle": "Number Format",
@@ -7022,7 +7031,9 @@
     "tooLarge": "File exceeds {{max}} KB.",
     "uploaded": "Logo updated.",
     "uploading": "Uploading…",
-    "logoAlt": "Tenant logo"
+    "logoAlt": "Tenant logo",
+    "uploadButton": "Upload logo",
+    "uploadFailed": "Logo upload failed."
   },
   "VendorBills": {
     "threeWayMatch": {
@@ -8326,7 +8337,26 @@
     "TimeZone": "Time Zone",
     "FiscalYearStartMonth": "Fiscal Year Start (Month)",
     "Saving": "Saving…",
-    "Save": "Save"
+    "Save": "Save",
+    "Month": {
+      "1": "January",
+      "2": "February",
+      "3": "March",
+      "4": "April",
+      "5": "May",
+      "6": "June",
+      "7": "July",
+      "8": "August",
+      "9": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "FoundedOn": "Founded on",
+    "TaxNumberHint": "10-digit tax number",
+    "TaxNumberInvalid": "Tax number checksum failed — check the digits.",
+    "NationalIdHint": "11-digit national ID",
+    "NationalIdInvalid": "National ID checksum failed."
   },
   "TrialBalance": {
     "year": "Year",

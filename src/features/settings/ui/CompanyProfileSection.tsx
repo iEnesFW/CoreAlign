@@ -2,8 +2,25 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { AddressRegionFields } from '@/shared/ui/form/AddressRegionFields';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
+import {
+  isValidNationalId,
+  isValidTaxNumber,
+  maskMersisNumber,
+  maskNationalId,
+  maskPhone,
+  maskTaxNumber,
+} from '@/shared/lib/inputMask';
+import { FISCAL_MONTHS, LOCALE_OPTIONS, TIME_ZONE_OPTIONS } from '../model/companyOptions';
 import { useCompanyProfileQuery, useUpdateCompanyProfile } from '../hooks/useSettingsQueries';
 import type { UpdateCompanyProfileRequest } from '../model/settings.types';
+
+const fieldCls =
+  'mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800';
+const invalidFieldCls =
+  'mt-1 w-full rounded border border-amber-400 bg-white px-2 py-1.5 text-sm dark:border-amber-500 dark:bg-slate-800';
+const labelCls = 'block text-xs font-medium text-slate-700 dark:text-slate-300';
 
 const TextField = ({
   label,
@@ -13,6 +30,9 @@ const TextField = ({
   maxLength,
   required,
   placeholder,
+  mask,
+  hint,
+  invalid,
 }: {
   label: string;
   value: string;
@@ -21,18 +41,57 @@ const TextField = ({
   maxLength?: number;
   required?: boolean;
   placeholder?: string;
+  mask?: (raw: string) => string;
+  hint?: string;
+  invalid?: boolean;
 }) => (
   <div>
-    <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">{label}</label>
+    <label className={labelCls}>{label}</label>
     <input
       type={type}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(e) => onChange(mask ? mask(e.target.value) : e.target.value)}
       maxLength={maxLength}
       required={required}
       placeholder={placeholder}
-      className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
+      aria-invalid={invalid || undefined}
+      className={invalid ? invalidFieldCls : fieldCls}
     />
+    {hint && (
+      <p
+        className={
+          invalid
+            ? 'mt-0.5 text-[11px] text-amber-600 dark:text-amber-400'
+            : 'mt-0.5 text-[11px] text-slate-400'
+        }
+      >
+        {hint}
+      </p>
+    )}
+  </div>
+);
+
+const SelectField = ({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}) => (
+  <div>
+    <label className={labelCls}>{label}</label>
+    <select className={fieldCls} value={value} onChange={(e) => onChange(e.target.value)}>
+      {!options.some((o) => o.value === value) && value && <option value={value}>{value}</option>}
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   </div>
 );
 
@@ -99,6 +158,11 @@ const CompanyProfileForm = ({
     secondaryColor: initial.secondaryColor ?? '',
   });
 
+  const taxNumberInvalid =
+    (form.taxNumber ?? '').length > 0 && !isValidTaxNumber(form.taxNumber ?? '');
+  const nationalIdInvalid =
+    (form.nationalId ?? '').length > 0 && !isValidNationalId(form.nationalId ?? '');
+
   const set = <K extends keyof UpdateCompanyProfileRequest>(
     key: K,
     value: UpdateCompanyProfileRequest[K],
@@ -150,7 +214,14 @@ const CompanyProfileForm = ({
             label={t('CompanyProfile.TaxNumber', { defaultValue: 'Vergi No (VKN)' })}
             value={form.taxNumber ?? ''}
             onChange={(v) => set('taxNumber', v)}
-            maxLength={50}
+            mask={maskTaxNumber}
+            maxLength={10}
+            invalid={taxNumberInvalid}
+            hint={
+              taxNumberInvalid
+                ? t('CompanyProfile.TaxNumberInvalid')
+                : t('CompanyProfile.TaxNumberHint')
+            }
           />
           <TextField
             label={t('CompanyProfile.TaxOffice', { defaultValue: 'Vergi Dairesi' })}
@@ -162,13 +233,21 @@ const CompanyProfileForm = ({
             label={t('CompanyProfile.NationalId', { defaultValue: 'TC Kimlik No' })}
             value={form.nationalId ?? ''}
             onChange={(v) => set('nationalId', v)}
-            maxLength={32}
+            mask={maskNationalId}
+            maxLength={11}
+            invalid={nationalIdInvalid}
+            hint={
+              nationalIdInvalid
+                ? t('CompanyProfile.NationalIdInvalid')
+                : t('CompanyProfile.NationalIdHint')
+            }
           />
           <TextField
             label={t('CompanyProfile.MersisNumber', { defaultValue: 'MERSIS No' })}
             value={form.mersisNumber ?? ''}
             onChange={(v) => set('mersisNumber', v)}
-            maxLength={32}
+            mask={maskMersisNumber}
+            maxLength={16}
           />
           <TextField
             label={t('CompanyProfile.TradeRegistryNumber', { defaultValue: 'Ticaret Sicil No' })}
@@ -181,6 +260,12 @@ const CompanyProfileForm = ({
             value={form.sector ?? ''}
             onChange={(v) => set('sector', v)}
             maxLength={100}
+          />
+          <TextField
+            label={t('CompanyProfile.FoundedOn')}
+            value={(form.foundedOn ?? '').slice(0, 10)}
+            onChange={(v) => set('foundedOn', v || null)}
+            type="date"
           />
         </div>
       </section>
@@ -206,29 +291,27 @@ const CompanyProfileForm = ({
               maxLength={200}
             />
           </div>
-          <TextField
-            label={t('CompanyProfile.City', { defaultValue: 'İl/Şehir' })}
-            value={form.city ?? ''}
-            onChange={(v) => set('city', v)}
-            maxLength={100}
-          />
-          <TextField
-            label={t('CompanyProfile.StateProvince', { defaultValue: 'İlçe/Eyalet' })}
-            value={form.stateProvince ?? ''}
-            onChange={(v) => set('stateProvince', v)}
-            maxLength={100}
-          />
+          <div className="grid grid-cols-1 gap-3 sm:col-span-3 sm:grid-cols-3">
+            <AddressRegionFields
+              country={form.country ?? ''}
+              state={form.stateProvince ?? ''}
+              city={form.city ?? ''}
+              onCountryChange={(v) => set('country', v)}
+              onStateChange={(v) => set('stateProvince', v)}
+              onCityChange={(v) => set('city', v)}
+              labels={{
+                country: t('CompanyProfile.Country', { defaultValue: 'Ülke' }),
+                province: t('CompanyProfile.StateProvince', { defaultValue: 'İlçe/Eyalet' }),
+                district: t('CompanyProfile.City', { defaultValue: 'İl/Şehir' }),
+              }}
+              selectClassName={fieldCls}
+            />
+          </div>
           <TextField
             label={t('CompanyProfile.PostalCode', { defaultValue: 'Posta Kodu' })}
             value={form.postalCode ?? ''}
             onChange={(v) => set('postalCode', v)}
             maxLength={20}
-          />
-          <TextField
-            label={t('CompanyProfile.Country', { defaultValue: 'Ülke' })}
-            value={form.country ?? ''}
-            onChange={(v) => set('country', v)}
-            maxLength={100}
           />
         </div>
       </section>
@@ -242,12 +325,14 @@ const CompanyProfileForm = ({
             label={t('CompanyProfile.Phone', { defaultValue: 'Telefon' })}
             value={form.phone ?? ''}
             onChange={(v) => set('phone', v)}
+            mask={maskPhone}
             maxLength={30}
           />
           <TextField
             label={t('CompanyProfile.Fax', { defaultValue: 'Faks' })}
             value={form.fax ?? ''}
             onChange={(v) => set('fax', v)}
+            mask={maskPhone}
             maxLength={30}
           />
           <TextField
@@ -273,45 +358,47 @@ const CompanyProfileForm = ({
           })}
         </h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <TextField
-            label={t('CompanyProfile.DefaultCurrency', { defaultValue: 'Varsayılan Para Birimi' })}
-            value={form.defaultCurrency}
-            onChange={(v) => set('defaultCurrency', v.toUpperCase())}
-            maxLength={3}
-            required
-          />
-          <TextField
-            label={t('CompanyProfile.ReportingCurrency', { defaultValue: 'Raporlama Para Birimi' })}
-            value={form.reportingCurrency ?? ''}
-            onChange={(v) => set('reportingCurrency', v.toUpperCase())}
-            maxLength={3}
-            placeholder={t('CompanyProfile.OptionalPlaceholder', { defaultValue: '(opsiyonel)' })}
-          />
-          <TextField
+          <div>
+            <label className={labelCls}>
+              {t('CompanyProfile.DefaultCurrency', { defaultValue: 'Varsayılan Para Birimi' })}
+            </label>
+            <CurrencySelect
+              value={form.defaultCurrency}
+              onChange={(v) => set('defaultCurrency', v)}
+              className={fieldCls}
+            />
+          </div>
+          <div>
+            <label className={labelCls}>
+              {t('CompanyProfile.ReportingCurrency', { defaultValue: 'Raporlama Para Birimi' })}
+            </label>
+            <CurrencySelect
+              value={form.reportingCurrency ?? ''}
+              onChange={(v) => set('reportingCurrency', v)}
+              className={fieldCls}
+            />
+          </div>
+          <SelectField
             label={t('CompanyProfile.LocaleCode', { defaultValue: 'Yerel Kod' })}
             value={form.localeCode}
             onChange={(v) => set('localeCode', v)}
-            maxLength={10}
+            options={LOCALE_OPTIONS}
           />
-          <TextField
+          <SelectField
             label={t('CompanyProfile.TimeZone', { defaultValue: 'Saat Dilimi' })}
             value={form.timeZoneId}
             onChange={(v) => set('timeZoneId', v)}
-            maxLength={64}
+            options={TIME_ZONE_OPTIONS}
           />
-          <div>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-300">
-              {t('CompanyProfile.FiscalYearStartMonth', { defaultValue: 'Mali Yıl Başı (Ay)' })}
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={12}
-              value={form.fiscalYearStartMonth}
-              onChange={(e) => set('fiscalYearStartMonth', parseInt(e.target.value, 10) || 1)}
-              className="mt-1 w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-800"
-            />
-          </div>
+          <SelectField
+            label={t('CompanyProfile.FiscalYearStartMonth', { defaultValue: 'Mali Yıl Başı (Ay)' })}
+            value={String(form.fiscalYearStartMonth)}
+            onChange={(v) => set('fiscalYearStartMonth', Number(v))}
+            options={FISCAL_MONTHS.map((m) => ({
+              value: String(m.value),
+              label: t(m.labelKey),
+            }))}
+          />
         </div>
       </section>
 

@@ -1,32 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/shared/lib/store/authStore';
-import { useAiHelperStore } from '../model/aiHelperStore';
+import { useAiHelperStore } from '@/shared/lib/store/aiHelperStore';
 import { getAiHelperStatus } from '../api/getAiHelperStatus';
-import { AiHelperLauncher } from './AiHelperLauncher';
 import { AiHelperPanel } from './AiHelperPanel';
 
 const HIDDEN_PATH_FRAGMENTS = ['/print'];
 
 export const AiHelperWidget = () => {
   const isOpen = useAiHelperStore((state) => state.isOpen);
+  const isAvailable = useAiHelperStore((state) => state.isAvailable);
+  const setAvailable = useAiHelperStore((state) => state.setAvailable);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { pathname } = useLocation();
-  const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setAvailable(false);
+      return;
+    }
     let active = true;
     void getAiHelperStatus().then((value) => {
       if (active) {
-        setEnabled(value);
+        setAvailable(value);
       }
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [isAuthenticated, setAvailable]);
 
-  if (!isAuthenticated || !enabled) {
+  if (!isAuthenticated || !isAvailable || !isOpen) {
     return null;
   }
 
@@ -34,10 +38,5 @@ export const AiHelperWidget = () => {
     return null;
   }
 
-  return (
-    <>
-      {isOpen && <AiHelperPanel />}
-      <AiHelperLauncher />
-    </>
-  );
+  return <AiHelperPanel />;
 };

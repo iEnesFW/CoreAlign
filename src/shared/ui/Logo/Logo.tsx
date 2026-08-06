@@ -5,21 +5,27 @@ interface LogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
+  src?: string | null;
+  alt?: string;
 }
 
-export const Logo = ({ className, size = 32, showText = true }: LogoProps) => {
+// WHY the src override: the uploaded tenant logo must replace the CoreAlign mark in the dashboard
+// chrome only — the public landing and the auth screens stay CoreAlign-branded.
+export const Logo = ({ className, size = 32, showText = true, src, alt }: LogoProps) => {
+  const tenantMark = src && src.trim().length > 0 ? src : null;
   return (
     <span className={cn('inline-flex items-center gap-2.5', className)}>
       <img
-        src={markUrl}
+        src={tenantMark ?? markUrl}
         width={size}
         height={size}
-        alt={showText ? '' : 'CoreAlign'}
+        alt={showText ? '' : (alt ?? 'CoreAlign')}
         aria-hidden={showText ? true : undefined}
         draggable={false}
-        className="shrink-0 select-none"
+        className={cn('shrink-0 select-none', tenantMark && 'object-contain')}
+        style={tenantMark ? { maxHeight: size, width: 'auto' } : undefined}
       />
-      {showText && (
+      {showText && !tenantMark && (
         <span
           className="font-bold leading-none tracking-tight"
           style={{ fontSize: Math.round(size * 0.64) }}

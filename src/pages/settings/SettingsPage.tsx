@@ -14,6 +14,7 @@ import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { ListPageTemplate } from '@/shared/ui/PageTemplate/PageTemplate';
 import { CompanyProfileSection } from '@/features/settings/ui/CompanyProfileSection';
 import { BrandingSection } from '@/features/settings/ui/BrandingSection';
+import { TenantBrandingSection } from './components/TenantBrandingSection';
 import { EmailTemplatesSection } from '@/features/settings/ui/EmailTemplatesSection';
 import { MasterDataSection } from '@/features/settings/ui/MasterDataSection';
 import { NumberFormatSection } from '@/features/settings/ui/NumberFormatSection';
@@ -114,7 +115,12 @@ export const SettingsPage = () => {
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-5">
         {tab === 'company' && <CompanyProfileSection />}
-        {tab === 'branding' && <BrandingSection />}
+        {tab === 'branding' && (
+          <div className="space-y-6">
+            <TenantBrandingSection />
+            <BrandingSection />
+          </div>
+        )}
         {tab === 'masterData' && <MasterDataSection />}
         {tab === 'numberFormat' && <NumberFormatSection />}
         {tab === 'glPostingMap' && isTenantAdmin && <GLPostingMapSection />}

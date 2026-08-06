@@ -2697,6 +2697,10 @@
       "status": "Tüm sistemler çalışıyor"
     }
   },
+  "Footer": {
+    "rights": "Tüm hakları saklıdır.",
+    "tagline": "Çok kiracılı ERP platformu"
+  },
   "GlassEnclosure": {
     "Designer": {
       "AddPanel": "Panel ekle",
@@ -6817,7 +6821,12 @@
       "ValidUntil": "Geçerlilik Bitişi"
     },
     "tabs": {
-      "glPostingMap": "GL Eşleştirme"
+      "glPostingMap": "GL Eşleştirme",
+      "company": "Firma bilgileri",
+      "branding": "Marka & logo",
+      "masterData": "Ana veri",
+      "numberFormat": "Numara formatı",
+      "email": "E-posta"
     },
     "NumberFormatSaved": "Sayı biçimi kaydedildi.",
     "NumberFormatTitle": "Sayı Biçimi",
@@ -7022,7 +7031,9 @@
     "tooLarge": "Dosya {{max}} KB sınırını aşıyor.",
     "uploaded": "Logo güncellendi.",
     "uploading": "Yükleniyor…",
-    "logoAlt": "Kiracı logosu"
+    "logoAlt": "Kiracı logosu",
+    "uploadButton": "Logo yükle",
+    "uploadFailed": "Logo yüklenemedi."
   },
   "VendorBills": {
     "threeWayMatch": {
@@ -8326,7 +8337,26 @@
     "TimeZone": "Saat Dilimi",
     "FiscalYearStartMonth": "Mali Yıl Başı (Ay)",
     "Saving": "Kaydediliyor…",
-    "Save": "Kaydet"
+    "Save": "Kaydet",
+    "Month": {
+      "1": "Ocak",
+      "2": "Şubat",
+      "3": "Mart",
+      "4": "Nisan",
+      "5": "Mayıs",
+      "6": "Haziran",
+      "7": "Temmuz",
+      "8": "Ağustos",
+      "9": "Eylül",
+      "10": "Ekim",
+      "11": "Kasım",
+      "12": "Aralık"
+    },
+    "FoundedOn": "Kuruluş Tarihi",
+    "TaxNumberHint": "10 haneli VKN",
+    "TaxNumberInvalid": "VKN doğrulaması geçmedi — hane sayısını ve rakamları kontrol edin.",
+    "NationalIdHint": "11 haneli TC kimlik no",
+    "NationalIdInvalid": "TC kimlik no doğrulaması geçmedi."
   },
   "TrialBalance": {
     "year": "Yıl",

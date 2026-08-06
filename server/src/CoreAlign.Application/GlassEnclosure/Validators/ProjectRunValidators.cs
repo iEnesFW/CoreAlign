@@ -15,6 +15,9 @@ public class AddRunCommandValidator : AbstractValidator<AddRunCommand>
             .GreaterThanOrEqualTo(100).When(x => x.Data.GeomArcRadiusMm.HasValue);
         RuleFor(x => x.Data.GeomArcSweepDeg)
             .InclusiveBetween(-360m, 360m).When(x => x.Data.GeomArcSweepDeg.HasValue);
+        RuleFor(x => x.Data)
+            .Must(d => RunArcValidation.IsConsistent(d.LengthMm, d.GeomArcRadiusMm, d.GeomArcSweepDeg))
+            .WithMessage("Validation.RunArcTripleInconsistent");
     }
 }
 
@@ -28,6 +31,29 @@ public class UpdateRunCommandValidator : AbstractValidator<UpdateRunCommand>
             .GreaterThanOrEqualTo(100).When(x => x.Data.GeomArcRadiusMm.HasValue);
         RuleFor(x => x.Data.GeomArcSweepDeg)
             .InclusiveBetween(-360m, 360m).When(x => x.Data.GeomArcSweepDeg.HasValue);
+        RuleFor(x => x.Data)
+            .Must(d => RunArcValidation.IsConsistent(d.LengthMm, d.GeomArcRadiusMm, d.GeomArcSweepDeg))
+            .WithMessage("Validation.RunArcTripleInconsistent");
+    }
+}
+
+internal static class RunArcValidation
+{
+    // WHY: the client stores lengthMm as the CHORD and derives it from radius+sweep on every commit
+    // (chord = 2r·sin(|sweep|/2)); a triple that violates that identity is unconstructible geometry
+    // the whole read side (developed length, panel spans, BOM) would silently mis-measure. Tolerance
+    // scales with the radius because the client quantises sweep to 0.1° (chord error ≈ r·0.00087)
+    // and rounds the chord to whole millimetres. Radius-without-sweep stays accepted: legacy
+    // "half-arc" rows exist and every client gate already treats them as straight.
+    internal static bool IsConsistent(decimal lengthMm, decimal? radiusMm, decimal? sweepDeg)
+    {
+        if (!radiusMm.HasValue || !sweepDeg.HasValue) return true;
+        var r = (double)radiusMm.Value;
+        var sweep = Math.Abs((double)sweepDeg.Value);
+        if (r < 100 || sweep < 0.5) return true;
+        var chord = 2.0 * r * Math.Sin(Math.PI * sweep / 360.0);
+        var tolerance = Math.Max(5.0, r * 0.002);
+        return Math.Abs((double)lengthMm - chord) <= tolerance;
     }
 }
 

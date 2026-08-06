@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Bot, Send, ThumbsDown, ThumbsUp, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/Button/Button';
-import { useAiHelperStore } from '../model/aiHelperStore';
+import { useAiHelperStore } from '@/shared/lib/store/aiHelperStore';
 import { askAiHelperStream } from '../api/askAiHelperStream';
 import { derivePageEntity } from '../lib/derivePageEntity';
 import { postAiHelperFeedback } from '../api/postAiHelperFeedback';
