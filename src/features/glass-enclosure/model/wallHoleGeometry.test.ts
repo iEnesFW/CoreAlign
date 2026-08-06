@@ -278,3 +278,105 @@ describe('fill plan idempotency', () => {
     expect(second.skipped.map((s) => s.reason)).toEqual(['alreadyFilled']);
   });
 });
+
+/**
+ * The pane autofill creates is sized from the hole's OUTLINE BOUNDS, so the silhouette points must
+ * be expressed against those same bounds. They used to be shifted by the feature's NOMINAL box
+ * centre instead — an inscribed pentagon is narrower than its box AND its bounds centre sits above
+ * the nominal centre, so the glass floated off the pane and its top vertex landed OUTSIDE the pane
+ * box (the gate then clamped it into a distorted shape).
+ */
+describe('a shaped hole silhouette fills its pane box exactly', () => {
+  const shapeBox = (w: SceneWallState) => {
+    const resolved = resolveWallHoles(w);
+    expect(resolved.holes).toHaveLength(1);
+    const hole = resolved.holes[0];
+    expect(hole.shape?.shapeKind).toBe('polygon');
+    const pts = JSON.parse(hole.shape?.shapePointsJson ?? '[]') as { x: number; y: number }[];
+    const paneW = hole.uWidthMm;
+    const paneH = hole.zHeightMm;
+    return { pts, paneW, paneH };
+  };
+
+  it('PENTAGON: every vertex inside the pane, top/bottom/sides all touched', () => {
+    const { pts, paneW, paneH } = shapeBox(
+      wall({ features: [feature({ shape: 'polygon', sides: 5 })] }),
+    );
+    for (const p of pts) {
+      expect(Math.abs(p.x)).toBeLessThanOrEqual(paneW / 2 + 1);
+      expect(p.y).toBeGreaterThanOrEqual(-1);
+      expect(p.y).toBeLessThanOrEqual(paneH + 1);
+    }
+    // The silhouette genuinely spans the pane it was billed for — no floating margin.
+    expect(Math.max(...pts.map((p) => p.y))).toBeGreaterThanOrEqual(paneH - 1);
+    expect(Math.min(...pts.map((p) => p.y))).toBeLessThanOrEqual(1);
+    expect(Math.max(...pts.map((p) => p.x))).toBeGreaterThanOrEqual(paneW / 2 - 1);
+    expect(Math.min(...pts.map((p) => p.x))).toBeLessThanOrEqual(-paneW / 2 + 1);
+  });
+
+  it('TRIANGLE: symmetric shape stays exact (regression guard for the old path)', () => {
+    const { pts, paneW, paneH } = shapeBox(wall({ features: [feature({ shape: 'triangle' })] }));
+    expect(pts).toHaveLength(3);
+    expect(Math.max(...pts.map((p) => p.y))).toBe(Math.round(paneH));
+    expect(Math.min(...pts.map((p) => p.y))).toBe(0);
+    expect(Math.abs(Math.max(...pts.map((p) => p.x)) - paneW / 2)).toBeLessThanOrEqual(1);
+  });
+
+  it('FREE: an outline that is off-centre in its stored box still lands in the pane', () => {
+    // Free-feature points are relative to (offsetMm, centerZMm); this stroke leans right and up,
+    // so its bounds centre differs from the nominal one — exactly the misalignment case.
+    const { pts, paneW, paneH } = shapeBox(
+      wall({
+        features: [
+          feature({
+            shape: 'free',
+            widthMm: 1000,
+            heightMm: 1000,
+            points: [
+              { x: -100, z: -200 },
+              { x: 500, z: -200 },
+              { x: 500, z: 400 },
+            ],
+          }),
+        ],
+      }),
+    );
+    expect(paneW).toBe(600);
+    expect(paneH).toBe(600);
+    for (const p of pts) {
+      expect(Math.abs(p.x)).toBeLessThanOrEqual(paneW / 2 + 1);
+      expect(p.y).toBeGreaterThanOrEqual(-1);
+      expect(p.y).toBeLessThanOrEqual(paneH + 1);
+    }
+  });
+});
+
+describe('fill edges carry the hole that produced them', () => {
+  it('a feature hole is targetable by id', () => {
+    const w = wall({
+      features: [
+        feature({
+          shape: 'free',
+          points: [
+            { x: -400, z: -400 },
+            { x: 400, z: -400 },
+            { x: 400, z: 400 },
+            { x: -400, z: 400 },
+          ],
+        }),
+      ],
+    });
+    const plan = computeWallFillPlan([w]);
+    expect(plan.edges).toHaveLength(1);
+    expect(plan.edges[0].sourceHoleKind).toBe('feature');
+    expect(plan.edges[0].sourceHoleId).toBe('f1');
+  });
+
+  it('an opening hole is targetable too', () => {
+    const w = wall({ openings: [opening()] });
+    const plan = computeWallFillPlan([w]);
+    expect(plan.edges).toHaveLength(1);
+    expect(plan.edges[0].sourceHoleKind).toBe('opening');
+    expect(plan.edges[0].sourceHoleId).toBe('o1');
+  });
+});

@@ -22,6 +22,10 @@ export interface OpenEdge {
   arcGlassBent?: boolean;
   shapeKind?: PanelShapeKind | null;
   shapePointsJson?: string | null;
+  // Which hole produced this edge — lets the pen's "draw glass" gesture glaze EXACTLY the hole it
+  // just carved instead of every unfilled hole on the wall.
+  sourceHoleKind?: 'opening' | 'feature';
+  sourceHoleId?: string;
 }
 
 const ENDPOINT_TOLERANCE_MM = 150;
@@ -204,6 +208,8 @@ export const computeWallFillPlan = (
           arcGlassBent: true,
           shapeKind: hole.shape?.shapeKind ?? null,
           shapePointsJson: hole.shape?.shapePointsJson ?? null,
+          sourceHoleKind: hole.source,
+          sourceHoleId: hole.id,
         });
         continue;
       }
@@ -233,6 +239,8 @@ export const computeWallFillPlan = (
         geomZ,
         shapeKind: hole.shape?.shapeKind ?? null,
         shapePointsJson: hole.shape?.shapePointsJson ?? null,
+        sourceHoleKind: hole.source,
+        sourceHoleId: hole.id,
       });
     }
   }

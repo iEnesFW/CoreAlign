@@ -1,5 +1,7 @@
 import { MIN_PANEL_MM } from './panelResize';
 import { developedLengthMm, isRealArc } from './arcGeometry';
+import { refitPanelShape } from './panelShapeOutline';
+import { notifyPanelOutlineRejected } from './panelOutlineFeedback';
 import type { ScenePanelState, SceneRunState } from './project.types';
 
 /**
@@ -14,13 +16,22 @@ import type { ScenePanelState, SceneRunState } from './project.types';
 export const distributePanelWidths = (
   panels: ScenePanelState[],
   lengthMm: number,
+  runHeightMm?: number,
 ): ScenePanelState[] => {
   const count = panels.length;
   if (count === 0) return panels;
+  // WHY the refit rides along: a redistribution changes a pane's BOX, and a shaped pane's stored
+  // outline must be re-clamped into it or the server-side box validator refuses the persist.
+  const apply = (panel: ScenePanelState, widthMm: number): ScenePanelState => {
+    const moved = panel.widthMm === widthMm ? panel : { ...panel, widthMm };
+    if (runHeightMm === undefined) return moved;
+    const refit = refitPanelShape(moved, widthMm, moved.heightMm ?? runHeightMm);
+    if (!refit) return moved;
+    if (refit.rejection) notifyPanelOutlineRejected(refit.rejection);
+    return { ...moved, shapeKind: refit.shapeKind, shapePointsJson: refit.shapePointsJson };
+  };
   if (lengthMm <= count * MIN_PANEL_MM) {
-    return panels.map((panel) =>
-      panel.widthMm === MIN_PANEL_MM ? panel : { ...panel, widthMm: MIN_PANEL_MM },
-    );
+    return panels.map((panel) => apply(panel, MIN_PANEL_MM));
   }
   const rawTotal = panels.reduce((sum, panel) => sum + panel.widthMm, 0);
   const widths = panels.map((panel, index) => {
@@ -37,7 +48,7 @@ export const distributePanelWidths = (
     widths[widest] -= take;
     widths[count - 1] += take;
   }
-  return panels.map((panel, index) => ({ ...panel, widthMm: widths[index] }));
+  return panels.map((panel, index) => apply(panel, widths[index]));
 };
 
 // Σ panel widths = the DEVELOPED length (physical glass) — for an arc run that's radius·sweep,
@@ -59,5 +70,8 @@ export const withClampedRunLength = (run: SceneRunState, lengthMm: number): Scen
     : run.panels.length * MIN_PANEL_MM;
   const clamped = Math.max(floorMm, Math.round(lengthMm));
   const next = { ...run, lengthMm: clamped };
-  return { ...next, panels: distributePanelWidths(next.panels, runPanelTargetMm(next)) };
+  return {
+    ...next,
+    panels: distributePanelWidths(next.panels, runPanelTargetMm(next), next.heightMm),
+  };
 };

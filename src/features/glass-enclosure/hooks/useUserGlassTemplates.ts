@@ -15,14 +15,12 @@ import {
   templatePayloadJson,
   type UserGlassTemplate,
 } from '../model/glassTemplates';
-import { useTemplateInsert } from './useTemplateInsert';
 
 const PAGE_KEY = 'glass-designer';
 const QUERY_KEY = ['glass-project-templates'] as const;
 
 export const useUserGlassTemplates = () => {
   const queryClient = useQueryClient();
-  const { insertGlassTemplate } = useTemplateInsert();
 
   const listQuery = useQuery({
     queryKey: QUERY_KEY,
@@ -99,13 +97,15 @@ export const useUserGlassTemplates = () => {
     await queryClient.invalidateQueries({ queryKey: QUERY_KEY });
   };
 
+  // Arm for click-to-place instead of dropping at a computed corner — the canvas shows the plan
+  // ghost and inserts where the user clicks (same interaction as the built-in templates).
   const insertUserTemplate = async (id: string): Promise<void> => {
     const [resp] = await safeRequest(glassProjectTemplatesApi.getById(id));
     const payloadJson = resp?.data?.payloadJson;
     if (!payloadJson) return;
     const parsed = parseTemplatePayload(payloadJson);
     if (!parsed) return;
-    void insertGlassTemplate(parsed);
+    useDesignerStore.getState().setPendingTemplate(parsed);
   };
 
   return { templates, saveCurrentAsTemplate, deleteTemplate, insertUserTemplate };

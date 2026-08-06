@@ -2974,12 +2974,15 @@
         "TooSmall": "Çizilen şekil çok küçük veya geçersiz.",
         "DoesNotFit": "Şekil yüzeye sığmıyor — kenarlardan biraz içeride çizin.",
         "ArcNoFeature": "Şekilli (kavisli/eğimli) yüzeye henüz açıklık/şekil çizilemiyor.",
-        "GlassPanelDeferred": "Cam paneli çizimi yakında — henüz şekilli serbest cam nesnesi desteklenmiyor.",
         "DivideWallOnly": "Bölme yalnızca cam bağlı bir duvara çizilebilir.",
         "DivideNoRun": "Bu duvara bağlı bir cam hattı bulunamadı.",
         "DivideInvalid": "Bu konumda bölme yapılamıyor (paneller çok dar kalır).",
         "Divided": "Cam hattı çizim çizgisinden bölündü.",
-        "DivideShaped": "Şekilli / boşluk-dolgu cam bölünemez — yalnız düz dikdörtgen hatlar bölünebilir."
+        "DivideShaped": "Şekilli / boşluk-dolgu cam bölünemez — yalnız düz dikdörtgen hatlar bölünebilir.",
+        "GlassPanelFrontOnly": "Cam paneli yalnızca bir duvarın ön/arka yüzüne çizilebilir.",
+        "GlassPanelTooSmall": "Cam paneli için şekil en az 300×300 mm olmalı.",
+        "GlassPanelCreated": "Şekilli cam paneli oluşturuldu — kesim listesi çizimi birebir izler.",
+        "GlassPanelNotFillable": "Çizilen şekil camlanamadı — delik duvara kesilememiş olabilir."
       },
       "Placement": {
         "Blocked": "Burada başka bir gövde var — yerleştirmek için boş bir nokta seçin."
@@ -3152,7 +3155,8 @@
         "NamePlaceholder": "Şablon adı",
         "Saved": "Şablon kaydedildi.",
         "SaveEmpty": "Boş çizim veya boş isim şablon olarak kaydedilemez.",
-        "Delete": "Şablonu sil"
+        "Delete": "Şablonu sil",
+        "PlaceHint": "Şablonu yerleştirmek için sahnede bir noktaya tıklayın — Esc iptal eder."
       },
       "Tool": {
         "Select": "Seç",

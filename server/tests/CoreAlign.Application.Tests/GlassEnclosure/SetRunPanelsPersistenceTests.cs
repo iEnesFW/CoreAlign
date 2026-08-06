@@ -157,4 +157,68 @@ public class SetRunPanelsPersistenceTests
             conn.Dispose();
         }
     }
+
+    [Fact]
+    public async Task Resizing_a_kept_shaped_panel_clears_a_silhouette_that_no_longer_fits()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, conn) = NewDb(tenantId);
+        try
+        {
+            var s = Seed(db, tenantId);
+            var tracked = await db.Set<GlassProjectPanel>().SingleAsync(p => p.Id == s.PanelId);
+            tracked.UpdateShape(null, null, null, null, null, null, null, null,
+                "polygon", """[{"x":-500,"y":0},{"x":500,"y":0},{"x":500,"y":2000},{"x":-500,"y":2000}]""");
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+
+            await Handler(db).Handle(new SetRunPanelsCommand(s.ProjectId, s.RunId, new SetRunPanelsDto(new List<PanelSpecDto>
+            {
+                new(s.PanelId, 400, GlassOpeningType.Fixed, s.GlassTypeId),
+            })), default);
+            await db.SaveChangesAsync();
+
+            var panels = await Panels(db, s.RunId);
+            panels.Should().ContainSingle();
+            panels[0].WidthMm.Should().Be(400);
+            panels[0].ShapeKind.Should().BeNull();
+            panels[0].ShapePointsJson.Should().BeNull();
+        }
+        finally
+        {
+            await db.DisposeAsync();
+            conn.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task An_unchanged_width_never_touches_a_kept_panels_shape()
+    {
+        var tenantId = Guid.NewGuid();
+        var (db, conn) = NewDb(tenantId);
+        try
+        {
+            var s = Seed(db, tenantId);
+            var outline = """[{"x":-500,"y":0},{"x":500,"y":0},{"x":500,"y":2000},{"x":-500,"y":2000}]""";
+            var tracked = await db.Set<GlassProjectPanel>().SingleAsync(p => p.Id == s.PanelId);
+            tracked.UpdateShape(null, null, null, null, null, null, null, null, "polygon", outline);
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+
+            await Handler(db).Handle(new SetRunPanelsCommand(s.ProjectId, s.RunId, new SetRunPanelsDto(new List<PanelSpecDto>
+            {
+                new(s.PanelId, 1000, GlassOpeningType.Fixed, s.GlassTypeId),
+            })), default);
+            await db.SaveChangesAsync();
+
+            var panels = await Panels(db, s.RunId);
+            panels[0].ShapeKind.Should().Be("polygon");
+            panels[0].ShapePointsJson.Should().Be(outline);
+        }
+        finally
+        {
+            await db.DisposeAsync();
+            conn.Dispose();
+        }
+    }
 }

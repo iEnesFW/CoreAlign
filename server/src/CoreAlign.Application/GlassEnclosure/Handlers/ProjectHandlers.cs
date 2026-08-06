@@ -2,6 +2,7 @@ using CoreAlign.Application.B2B;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.GlassEnclosure.BomFreshness;
 using CoreAlign.Application.GlassEnclosure.Commands;
+using CoreAlign.Application.GlassEnclosure.Cutting;
 using CoreAlign.Application.GlassEnclosure.DTOs;
 using CoreAlign.Application.GlassEnclosure.Mapping;
 using CoreAlign.Application.GlassEnclosure.Presets;
@@ -459,8 +460,21 @@ public class SetRunPanelsCommandHandler : IRequestHandler<SetRunPanelsCommand, G
             var widthMm = Math.Max(1, spec.WidthMm);
             if (spec.Id != Guid.Empty && existing.TryGetValue(spec.Id, out var panel))
             {
+                var previousWidthMm = panel.WidthMm;
                 panel.Update(widthMm, spec.OpeningType, spec.GlassTypeId,
                     panel.HasHandle, panel.HasLock, panel.HasBrushSeal, panel.Notes);
+                // WHY: PanelSpecDto carries no shape fields, so a kept pane resized here would keep
+                // a silhouette wider than its new box — the exact defect the shape gate exists for
+                // (the outline is what the BOM prices and the cut list orders). A shape that no
+                // longer fits falls back to a plain rectangle instead of persisting uncuttable glass.
+                if (widthMm != previousWidthMm
+                    && panel.ShapeKind == "polygon"
+                    && !PanelShapeGeometry.CheckPolygonJson(panel.ShapePointsJson, widthMm, panel.HeightMm).IsValid)
+                {
+                    panel.UpdateShape(panel.HeightMm, panel.TopShape, panel.TopRightHeightMm,
+                        panel.ArchRiseMm, panel.CornerRadiusTlMm, panel.CornerRadiusTrMm,
+                        panel.CornerRadiusBrMm, panel.CornerRadiusBlMm);
+                }
                 panel.Reindex(i);
                 keptIds.Add(spec.Id);
             }

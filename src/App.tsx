@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { useAuthStore } from '@/shared/lib/store/authStore';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/shared/query/queryClient';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
@@ -139,6 +140,15 @@ const RecaptchaWrapper = () => (
   </GoogleReCaptchaProvider>
 );
 
+// A signed-in user landing on the ROOT is heading for their work, not the marketing page — the
+// profile is hydrated from localStorage, so this is correct on a hard refresh too (the first API
+// call still re-validates the session). Only the two roots redirect; the marketing subpages stay
+// reachable on purpose.
+const RootLanding = () => {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />;
+};
+
 function App() {
   return (
     <ErrorBoundary>
@@ -160,12 +170,12 @@ function App() {
                           <Route path="/dev/glass-fixture" element={<GlassFixturePlayground />} />
                         )}
                         <Route element={<RecaptchaWrapper />}>
-                          <Route path="/" element={<LandingPage />} />
+                          <Route path="/" element={<RootLanding />} />
                           <Route path="/about" element={<LandingPage />} />
                           <Route path="/solutions" element={<LandingPage />} />
                           <Route path="/articles" element={<LandingPage />} />
                           <Route path="/contact" element={<LandingPage />} />
-                          <Route path="/en" element={<LandingPage />} />
+                          <Route path="/en" element={<RootLanding />} />
                           <Route path="/en/about" element={<LandingPage />} />
                           <Route path="/en/solutions" element={<LandingPage />} />
                           <Route path="/en/articles" element={<LandingPage />} />

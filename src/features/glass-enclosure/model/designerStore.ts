@@ -36,6 +36,7 @@ import {
 import { notifyLockedBlocked } from './lockFeedback';
 import { computeBendLegs, wallSplitCrossesOpening } from './bendConversion';
 import { computeFloorFollow, followRiderPose } from './floorFollow';
+import type { GlassTemplate } from './templates';
 import { settleScene } from './settleScene';
 import type { QualityPreset } from '@/shared/three-engine';
 
@@ -167,6 +168,10 @@ interface DesignerState {
   pasteArmed: boolean;
   activeTool: DesignerTool;
   placement: PlacementKind | null;
+  // A template armed for click-to-place: the canvas shows its plan-box ghost (the paste ghost) and
+  // the next scene click inserts it there. Templates used to drop at a computed corner with no
+  // preview at all — the user could not see where the composition would land, or choose.
+  pendingTemplate: Omit<GlassTemplate, 'key'> | null;
   placementShape: PlacementShape;
   paintColor: PaintColor | null;
   paintMaterial: string | null;
@@ -185,6 +190,7 @@ interface DesignerState {
   toggleStackOnDrop: () => void;
   setStackOnDrop: (active: boolean) => void;
   setPlacement: (placement: PlacementKind | null) => void;
+  setPendingTemplate: (template: Omit<GlassTemplate, 'key'> | null) => void;
   setPlacementShape: (shape: PlacementShape) => void;
   setPaintColor: (color: PaintColor | null) => void;
   setPaintMaterial: (materialKey: string | null) => void;
@@ -247,7 +253,11 @@ interface DesignerState {
 
   beginTransaction: () => void;
   commitTransaction: () => void;
-  commitAutofillTransaction: (before: SceneState, freshProject: GlassProjectDto) => void;
+  commitAutofillTransaction: (
+    before: SceneState,
+    freshProject: GlassProjectDto,
+    baselineIndex?: number,
+  ) => void;
 
   addRun: (
     run: Omit<SceneRunState, 'orderIndex' | 'panels'> & { panels?: ScenePanelState[] },
@@ -483,6 +493,7 @@ const projectToScene = (project: GlassProjectDto, prev?: SceneState): SceneState
             hardware: prevHardware.get(panel.id) ?? [],
           })),
           panelTargetMm,
+          run.heightMm,
         ),
       };
     }),
@@ -518,9 +529,13 @@ const stripPanelShape = (panel: ScenePanelState): ScenePanelState => ({
   shapePointsJson: null,
 });
 
-const normalizePanelWidths = (panels: ScenePanelState[], lengthMm: number): ScenePanelState[] => {
+const normalizePanelWidths = (
+  panels: ScenePanelState[],
+  lengthMm: number,
+  runHeightMm?: number,
+): ScenePanelState[] => {
   const sum = panels.reduce((acc, panel) => acc + panel.widthMm, 0);
-  return sum === lengthMm ? panels : distributePanelWidths(panels, lengthMm);
+  return sum === lengthMm ? panels : distributePanelWidths(panels, lengthMm, runHeightMm);
 };
 
 // Pin ONE panel's edited width and redistribute the rest over the remaining developed length —
@@ -660,6 +675,7 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   pasteArmed: false,
   activeTool: 'select',
   placement: null,
+  pendingTemplate: null,
   placementShape: 'flat',
   paintColor: null,
   paintMaterial: null,
@@ -692,7 +708,17 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   toggleStackOnDrop: () => set((s) => ({ stackOnDrop: !s.stackOnDrop })),
   setStackOnDrop: (stackOnDrop) => set({ stackOnDrop }),
   setPlacement: (placement) =>
-    set(placement === null ? { placement } : { placement, activeTool: 'select' }),
+    set(
+      placement === null
+        ? { placement }
+        : { placement, activeTool: 'select', pendingTemplate: null },
+    ),
+  setPendingTemplate: (pendingTemplate) =>
+    set(
+      pendingTemplate === null
+        ? { pendingTemplate }
+        : { pendingTemplate, placement: null, pasteArmed: false, activeTool: 'select' },
+    ),
   setPlacementShape: (placementShape) => set({ placementShape }),
   setPaintColor: (paintColor) => set({ paintColor, paintMaterial: null }),
   setPaintMaterial: (paintMaterial) => set({ paintMaterial, paintColor: null }),
@@ -1275,14 +1301,19 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
   // nothing lands in the undo history and Ctrl+Z/Y do nothing. Record the operation as a single
   // [before, after] history pair: undo reverts to `before` and the existing scene→server reconciler
   // (syncSceneToServer) removes the created runs; redo replays `after` and re-creates them.
-  commitAutofillTransaction: (before, freshProject) => {
+  commitAutofillTransaction: (before, freshProject, baselineIndex) => {
     const current = get();
     // WHY: carry blob-only state (walls/slabs/hardware) from the CURRENT live scene, not the stale
     // `before` snapshot — otherwise a wall/slab the user edited while the autofill getById was in
     // flight is silently dropped when this commit overwrites the scene.
     const after = projectToScene(freshProject, current.scene);
-    const trimmed =
-      current.historyIndex >= 0 ? current.history.slice(0, current.historyIndex + 1) : [];
+    // WHY baselineIndex: a caller whose gesture ALSO pushed store history (the pen's glassPanel
+    // carve pushes the hole before the glaze lands) hands in the index where the gesture started,
+    // and the entries pushed since fold INTO this one transaction. Without it, the run-only
+    // typedSceneEqual dedup saw the post-carve entry as "the baseline" (runs are equal — the hole
+    // lives on a wall) and one Ctrl+Z stranded the user on hole-without-glass.
+    const upTo = Math.min(baselineIndex ?? current.historyIndex, current.historyIndex);
+    const trimmed = upTo >= 0 ? current.history.slice(0, upTo + 1) : [];
     const withBaseline =
       trimmed.length > 0 && typedSceneEqual(trimmed[trimmed.length - 1], before)
         ? trimmed
@@ -1403,7 +1434,11 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
           const withPanels = { ...run, panels };
           return {
             ...withPanels,
-            panels: distributePanelWidths(panels, runPanelTargetMm(withPanels)),
+            panels: distributePanelWidths(
+              panels,
+              runPanelTargetMm(withPanels),
+              withPanels.heightMm,
+            ),
           };
         }
         return {
@@ -1488,7 +1523,14 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
         if (isRealArc(run.geomArcRadiusMm, run.geomArcSweepDeg)) {
           const withPanels = { ...run, panels };
           return panels.length > 0
-            ? { ...withPanels, panels: distributePanelWidths(panels, runPanelTargetMm(withPanels)) }
+            ? {
+                ...withPanels,
+                panels: distributePanelWidths(
+                  panels,
+                  runPanelTargetMm(withPanels),
+                  withPanels.heightMm,
+                ),
+              }
             : withPanels;
         }
         const lengthMm =

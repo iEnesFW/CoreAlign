@@ -47,6 +47,10 @@ import { dropLockedIds, lockedBodyIds } from '../model/sceneGuards';
 import { notifyLockedBlocked } from '../model/lockFeedback';
 import { queueToast } from '@/shared/api/toastQueue';
 import { useDesignerStore } from '../model/designerStore';
+import { MIN_EDGE_MM } from '../model/wallAutofill';
+import { useWallAutofill } from '../hooks/useWallAutofill';
+import { templatePlanBounds } from '../model/templates';
+import { useTemplateInsert } from '../hooks/useTemplateInsert';
 import { useSlabEntityActions } from '../hooks/useDesignerEntityActions';
 import { useViewerAppearance } from '../model/viewerAppearance';
 import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
@@ -396,6 +400,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const setRunPanels = useDesignerStore((s) => s.setRunPanels);
   const activeTool = useDesignerStore((s) => s.activeTool);
   const placement = useDesignerStore((s) => s.placement);
+  const pendingTemplate = useDesignerStore((s) => s.pendingTemplate);
+  const setPendingTemplate = useDesignerStore((s) => s.setPendingTemplate);
   const placementShape = useDesignerStore((s) => s.placementShape);
   const paintColor = useDesignerStore((s) => s.paintColor);
   const paintMaterial = useDesignerStore((s) => s.paintMaterial);
@@ -408,6 +414,8 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const { createPanelFrom, persistPanel, persistRunPanels, persistPanelHardware, deletePanel } =
     usePanelEntityActions();
   const { persistRun, deleteRun } = useRunEntityActions();
+  const { fillWallHole } = useWallAutofill();
+  const { insertGlassTemplate } = useTemplateInsert();
   const addRunMutation = useAddRunMutation();
 
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
@@ -599,7 +607,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     [scene.runs, systemMap, glassMap],
   );
 
-  const interactionsEnabled = !pasteArmed && !placement;
+  const interactionsEnabled = !pasteArmed && !placement && !pendingTemplate;
 
   const clearSingleSelection = () =>
     setSelection({
@@ -847,16 +855,31 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
       return;
     }
+    // "Cam paneli": carve the drawn silhouette as a THROUGH hole and glaze exactly that hole with
+    // a single shape-matched pane — one gesture, one pane, one run bonded to this wall.
     if (penIntent === 'glassPanel') {
-      queueToast({
-        dedupeKey: 'glass-pen-glasspanel',
-        variant: 'info',
-        description: t('GlassEnclosure.Designer.Pen.GlassPanelDeferred', {
-          defaultValue:
-            'Cam paneli çizimi yakında — henüz şekilli serbest cam nesnesi desteklenmiyor.',
-        }),
-      });
-      return;
+      if (session.hostKind !== 'wall' || (session.side !== 'front' && session.side !== 'back')) {
+        // Glass fills a hole through the wall face; a slab or an end face has no glazing plane.
+        queueToast({
+          dedupeKey: 'glass-pen-glasspanel-face',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.GlassPanelFrontOnly', {
+            defaultValue: 'Cam paneli yalnızca bir duvarın ön/arka yüzüne çizilebilir.',
+          }),
+        });
+        return;
+      }
+      if (widthMm < MIN_EDGE_MM || heightMm < MIN_EDGE_MM) {
+        // The fill refuses anything under 300 mm — say it BEFORE carving, not after.
+        queueToast({
+          dedupeKey: 'glass-pen-glasspanel-small',
+          variant: 'warning',
+          description: t('GlassEnclosure.Designer.Pen.GlassPanelTooSmall', {
+            defaultValue: 'Cam paneli için şekil en az 300×300 mm olmalı.',
+          }),
+        });
+        return;
+      }
     }
     if (penIntent === 'divide') {
       if (session.hostKind !== 'wall') {
@@ -962,7 +985,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     const feature = {
       id: crypto.randomUUID(),
       shape: 'free' as const,
-      mode: penHostIsCurved ? ('hole' as const) : ('recess' as const),
+      // Glass sits IN a hole, so the glass gesture always cuts through; the plain opening gesture
+      // keeps the flat wall's non-cutting outline default (the user then picks hole/recess/protrude).
+      mode: penIntent === 'glassPanel' || penHostIsCurved ? ('hole' as const) : ('recess' as const),
       side: featureSide,
       offsetMm,
       centerZMm,
@@ -1017,6 +1042,13 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         });
         return;
       }
+      // Snapshot BEFORE the hole is carved: the glaze records its history against this, so one
+      // Ctrl+Z removes both the hole and its glass — one gesture, one undo step. The history index
+      // rides along so the transaction can fold the carve's own history entry into itself
+      // (measured: without it, undo #1 stranded the scene on hole-without-glass).
+      const beforeGesture =
+        penIntent === 'glassPanel' ? structuredClone(useDesignerStore.getState().scene) : null;
+      const baselineIndex = useDesignerStore.getState().historyIndex;
       addWallFeature(wall.id, feature);
       setSelection({
         kind: 'wallFeature',
@@ -1028,6 +1060,20 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
         slabId: null,
         featureId: feature.id,
       });
+      if (penIntent === 'glassPanel' && beforeGesture) {
+        void fillWallHole(wall.id, feature.id, beforeGesture, baselineIndex).then((count) => {
+          if (count > 0) {
+            queueToast({
+              dedupeKey: 'glass-pen-glasspanel-done',
+              variant: 'success',
+              description: t('GlassEnclosure.Designer.Pen.GlassPanelCreated', {
+                defaultValue:
+                  'Şekilli cam paneli oluşturuldu — kesim listesi çizimi birebir izler.',
+              }),
+            });
+          }
+        });
+      }
     } else {
       const slab = (scene.slabs ?? []).find((s) => s.id === session.hostId);
       if (!slab) return;
@@ -1780,6 +1826,55 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
     );
   };
 
+  // The armed template's plan box, drawn with the SAME ghost the paste flow uses — one ghost
+  // style everywhere is the whole point (the old corner-drop had no preview and no say).
+  const templateGhost = useMemo(() => {
+    if (!pendingTemplate) return null;
+    const b = templatePlanBounds(pendingTemplate);
+    const lengthMm = Math.max(1, b.maxXMm - b.minXMm);
+    const depthMm = Math.max(1, b.maxYMm - b.minYMm);
+    return {
+      bounds: b,
+      spec: {
+        lengthMm,
+        halfWidthMm: depthMm / 2,
+        zMinMm: 0,
+        zMaxMm: Math.max(100, b.zMaxMm),
+        rotationDeg: 0,
+      } satisfies PasteGhostSpec,
+    };
+  }, [pendingTemplate]);
+
+  const handleTemplatePlace = (centerXMm: number, centerYMm: number) => {
+    if (!pendingTemplate || !templateGhost) return;
+    const b = templateGhost.bounds;
+    const anchor = {
+      x: Math.round(centerXMm - (b.minXMm + b.maxXMm) / 2),
+      y: Math.round(centerYMm - (b.minYMm + b.maxYMm) / 2),
+    };
+    const template = pendingTemplate;
+    setPendingTemplate(null);
+    void insertGlassTemplate(template, anchor);
+  };
+
+  // Escape disarms the template ghost — one rung, claimed, so it cannot also unwind the page's
+  // selection ladder in the same press.
+  // WHY registered at MOUNT (armed-state read inside the handler): window listeners fire in
+  // REGISTRATION order, and the page's Escape ladder registers at page mount — a listener added
+  // only when the template arms would run AFTER it and always find the event already claimed
+  // (measured: Escape never disarmed the ghost).
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const store = useDesignerStore.getState();
+      if (!store.pendingTemplate) return;
+      e.preventDefault();
+      store.setPendingTemplate(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   const pasteSpec = useMemo<PasteGhostSpec | null>(() => {
     if (!pasteArmed || !clipboard) return null;
     if (clipboard.kind === 'run') {
@@ -2189,10 +2284,18 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
             onPlace={handlePasteAt}
           />
         )}
-        {!placement && !pasteSpec && activeTool === 'multiselect' && (
+        {!placement && !pasteSpec && pendingTemplate && templateGhost && (
+          <PasteController
+            spec={templateGhost.spec}
+            snapTargets={snapTargets}
+            obstacles={planObstacles}
+            onPlace={handleTemplatePlace}
+          />
+        )}
+        {!placement && !pasteSpec && !pendingTemplate && activeTool === 'multiselect' && (
           <MarqueeController onSelect={handleMarquee} />
         )}
-        {!placement && !pasteSpec && activeTool === 'measure' && (
+        {!placement && !pasteSpec && !pendingTemplate && activeTool === 'measure' && (
           <MeasureController snapTargets={snapTargets} />
         )}
       </SceneViewport>

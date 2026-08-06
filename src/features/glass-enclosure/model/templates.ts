@@ -176,3 +176,72 @@ export const buildGlassTemplate = (
     }
   }
 };
+
+export interface TemplatePlanBounds {
+  minXMm: number;
+  maxXMm: number;
+  minYMm: number;
+  maxYMm: number;
+  zMaxMm: number;
+}
+
+// The template's overall plan box — what the placement ghost shows and what the click centres.
+// Rotated bodies contribute all four corners (the composition drafts use 0/90°, but nothing here
+// assumes that); an arc run is boxed by its chord band, which the compositions keep shallow.
+export const templatePlanBounds = (template: Omit<GlassTemplate, 'key'>): TemplatePlanBounds => {
+  let minX = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+  let zMax = 0;
+  const band = (
+    originX: number,
+    originY: number,
+    rotationDeg: number,
+    lengthMm: number,
+    halfWidthMm: number,
+  ) => {
+    const rad = (rotationDeg * Math.PI) / 180;
+    const dx = Math.cos(rad);
+    const dy = Math.sin(rad);
+    const px = -dy * halfWidthMm;
+    const py = dx * halfWidthMm;
+    for (const [ex, ey] of [
+      [originX + px, originY + py],
+      [originX - px, originY - py],
+      [originX + lengthMm * dx + px, originY + lengthMm * dy + py],
+      [originX + lengthMm * dx - px, originY + lengthMm * dy - py],
+    ]) {
+      minX = Math.min(minX, ex);
+      maxX = Math.max(maxX, ex);
+      minY = Math.min(minY, ey);
+      maxY = Math.max(maxY, ey);
+    }
+  };
+  for (const w of template.walls) {
+    band(w.originX, w.originY, w.rotationDeg, w.lengthMm, w.thicknessMm / 2);
+    zMax = Math.max(zMax, (w.geomZ ?? 0) + Math.max(w.heightMm, w.heightEndMm ?? w.heightMm));
+  }
+  for (const s of template.slabs) {
+    const rad = (s.rotationDeg * Math.PI) / 180;
+    // The slab origin is its length-edge start; the body extends depthMm along the left normal —
+    // box it via a band whose centreline runs through the slab middle.
+    band(
+      s.originX - Math.sin(rad) * (s.depthMm / 2),
+      s.originY + Math.cos(rad) * (s.depthMm / 2),
+      s.rotationDeg,
+      s.lengthMm,
+      s.depthMm / 2,
+    );
+    zMax = Math.max(
+      zMax,
+      s.elevationMm + s.thicknessMm + Math.max(s.arcRiseMm ?? 0, s.pitchRiseMm ?? 0),
+    );
+  }
+  for (const r of template.runs) {
+    band(r.originX, r.originY, r.rotationDeg, r.lengthMm, 25);
+    zMax = Math.max(zMax, r.heightMm);
+  }
+  if (!Number.isFinite(minX)) return { minXMm: 0, maxXMm: 0, minYMm: 0, maxYMm: 0, zMaxMm: 0 };
+  return { minXMm: minX, maxXMm: maxX, minYMm: minY, maxYMm: maxY, zMaxMm: zMax };
+};

@@ -2974,12 +2974,15 @@
         "TooSmall": "The drawn shape is too small or invalid.",
         "DoesNotFit": "The shape does not fit the surface — draw a little inside the edges.",
         "ArcNoFeature": "Openings/shapes can't be drawn on a shaped (curved/pitched) surface yet.",
-        "GlassPanelDeferred": "Glass-panel drawing is coming soon — a free shaped-glass object isn't supported yet.",
         "DivideWallOnly": "Split can only be drawn on a wall that has attached glass.",
         "DivideNoRun": "No glass run is attached to this wall.",
         "DivideInvalid": "Can't split here (the panels would be too narrow).",
         "Divided": "The glass run was split at the drawn line.",
-        "DivideShaped": "A shaped / hole-fill pane can't be split — only straight rectangular runs."
+        "DivideShaped": "A shaped / hole-fill pane can't be split — only straight rectangular runs.",
+        "GlassPanelFrontOnly": "A glass panel can only be drawn on the front/back face of a wall.",
+        "GlassPanelTooSmall": "A glass panel needs a shape of at least 300×300 mm.",
+        "GlassPanelCreated": "Shaped glass panel created — the cut list follows the drawing exactly.",
+        "GlassPanelNotFillable": "The drawn shape could not be glazed — the hole may not have been carved into the wall."
       },
       "Placement": {
         "Blocked": "Something already occupies this spot — pick a clear point to place it."
@@ -3152,7 +3155,8 @@
         "NamePlaceholder": "Template name",
         "Saved": "Template saved.",
         "SaveEmpty": "An empty drawing or blank name can't be saved as a template.",
-        "Delete": "Delete template"
+        "Delete": "Delete template",
+        "PlaceHint": "Click a spot in the scene to place the template — Esc cancels."
       },
       "Tool": {
         "Select": "Select",

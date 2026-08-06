@@ -41,9 +41,9 @@ import {
   type WallDrawShape,
 } from '@/features/glass-enclosure/model/designerStore';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
-import { useTemplateInsert } from '@/features/glass-enclosure/hooks/useTemplateInsert';
 import { useUserGlassTemplates } from '@/features/glass-enclosure/hooks/useUserGlassTemplates';
 import { useColorOptionsQuery } from '@/features/glass-enclosure/hooks/useGlassEnclosureQueries';
+import { buildGlassTemplate } from '@/features/glass-enclosure/model/templates';
 import type { GlassTemplateKey } from '@/features/glass-enclosure/model/templates';
 
 interface ToolDef {
@@ -203,7 +203,19 @@ export function ToolPalette() {
   const placementShape = useDesignerStore((s) => s.placementShape);
   const setPlacementShape = useDesignerStore((s) => s.setPlacementShape);
   const { autofill } = useWallAutofill();
-  const { insertTemplate } = useTemplateInsert();
+  const setPendingTemplate = useDesignerStore((s) => s.setPendingTemplate);
+  // Arm the template for click-to-place: the canvas shows its plan-box ghost and the click decides
+  // where it lands (it used to drop at a computed corner with no preview at all).
+  const armTemplate = (key: GlassTemplateKey) => {
+    setPendingTemplate(buildGlassTemplate(key));
+    queueToast({
+      dedupeKey: 'glass-template-armed',
+      variant: 'info',
+      description: t('GlassEnclosure.Designer.Templates.PlaceHint', {
+        defaultValue: 'Şablonu yerleştirmek için sahnede bir noktaya tıklayın — Esc iptal eder.',
+      }),
+    });
+  };
   const {
     templates: userTemplates,
     saveCurrentAsTemplate,
@@ -317,7 +329,7 @@ export function ToolPalette() {
               className="rounded px-2 py-1 text-left text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
               onClick={() => {
                 setTemplatesOpen(false);
-                void insertTemplate(template.key);
+                armTemplate(template.key);
               }}
             >
               {t(`GlassEnclosure.Designer.Templates.${template.labelKey}`, {

@@ -62,3 +62,42 @@ describe('withClampedRunLength — panels follow the developed length', () => {
     expect(sum(next)).toBeGreaterThan(250);
   });
 });
+
+describe('redistribution re-fits a shaped pane into its new box', () => {
+  const fullBox = (halfW: number, h: number) =>
+    JSON.stringify([
+      { x: -halfW, y: 0 },
+      { x: halfW, y: 0 },
+      { x: halfW, y: h },
+      { x: -halfW, y: h },
+    ]);
+
+  it('shrinking a single shaped pane clamps its outline — the persist stays box-valid', () => {
+    // A shaped pane only exists on a single-panel run (multi-panel strips shapes), and its
+    // outline spans the old box; without the refit, the new width persists against the old
+    // silhouette and the server-side box validator refuses the whole panel update.
+    const shaped = {
+      ...panel('p1', 3000),
+      shapeKind: 'polygon',
+      shapePointsJson: fullBox(1500, 2400),
+    } as ScenePanelState;
+    const next = withClampedRunLength(run({ panels: [shaped] }), 2000);
+    const points = JSON.parse(next.panels[0].shapePointsJson ?? '[]') as {
+      x: number;
+      y: number;
+    }[];
+    expect(next.panels[0].widthMm).toBe(2000);
+    expect(points.length).toBeGreaterThanOrEqual(3);
+    for (const p of points) expect(Math.abs(p.x)).toBeLessThanOrEqual(1000);
+  });
+
+  it('a growing box leaves the stored outline untouched (no churn)', () => {
+    const shaped = {
+      ...panel('p1', 3000),
+      shapeKind: 'polygon',
+      shapePointsJson: fullBox(1500, 2400),
+    } as ScenePanelState;
+    const next = withClampedRunLength(run({ panels: [shaped] }), 4000);
+    expect(next.panels[0].shapePointsJson).toBe(shaped.shapePointsJson);
+  });
+});

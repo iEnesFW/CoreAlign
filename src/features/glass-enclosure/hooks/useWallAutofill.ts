@@ -6,6 +6,8 @@ import { glassProjectsApi } from '../api/glassProjectsApi';
 import { recordPendingHostWall, useDesignerStore } from '../model/designerStore';
 import { enqueuePersist } from '../model/persistQueue';
 import { computeWallFillPlan, panelCountForWidth } from '../model/wallAutofill';
+import { normalizePanelOutlineJson } from '../model/panelShapeOutline';
+import { notifyPanelOutlineRejected } from '../model/panelOutlineFeedback';
 import { computeMultiWallGapRuns, describeTwoWallGapFailure } from '../model/multiAutofill';
 import { developedLengthMm } from '../model/arcGeometry';
 import {
@@ -199,6 +201,28 @@ export const useWallAutofill = () => {
         const isShapePanel = i === 0 && Boolean(edge.shapeKind);
         const glassTypeId = fillGlassTypeId ?? panel.glassTypeId;
         if (!isShapePanel && glassTypeId === panel.glassTypeId) continue;
+        // This write goes straight to the server and never passes the store's clampPanelPatch, so
+        // the silhouette is normalised HERE against the pane the server actually created (clamped
+        // into its box, dedupe, self-intersection refused, winding fixed). A refused outline falls
+        // back to the plain rectangular pane instead of shipping an uncuttable shape to the BOM.
+        let shapeKind = isShapePanel ? edge.shapeKind : (panel.shapeKind ?? null);
+        let shapePointsJson = isShapePanel
+          ? (edge.shapePointsJson ?? null)
+          : (panel.shapePointsJson ?? null);
+        if (isShapePanel && shapeKind === 'polygon' && shapePointsJson) {
+          const outline = normalizePanelOutlineJson(
+            shapePointsJson,
+            panel.widthMm,
+            panel.heightMm ?? runData.heightMm,
+          );
+          if (outline.json === null) {
+            notifyPanelOutlineRejected(outline.rejection);
+            shapeKind = null;
+            shapePointsJson = null;
+          } else {
+            shapePointsJson = outline.json;
+          }
+        }
         await safeRequestWithNotify(
           enqueuePersist(() =>
             updatePanelMutation.mutateAsync({
@@ -213,10 +237,8 @@ export const useWallAutofill = () => {
                 hasLock: panel.hasLock,
                 hasBrushSeal: panel.hasBrushSeal,
                 heightMm: panel.heightMm ?? null,
-                shapeKind: isShapePanel ? edge.shapeKind : (panel.shapeKind ?? null),
-                shapePointsJson: isShapePanel
-                  ? (edge.shapePointsJson ?? null)
-                  : (panel.shapePointsJson ?? null),
+                shapeKind,
+                shapePointsJson,
               },
             }),
           ),
@@ -293,28 +315,27 @@ export const useWallAutofill = () => {
   // never sees. After the runs land, read the fresh project and record the whole fill as one
   // [before, after] history step so Ctrl+Z removes it (via the scene→server reconciler) and Ctrl+Y
   // re-adds it.
-  const recordAutofillHistory = async (projectId: string, before: SceneState) => {
+  const recordAutofillHistory = async (
+    projectId: string,
+    before: SceneState,
+    baselineIndex?: number,
+  ) => {
     const [resp] = await safeRequest(glassProjectsApi.getById(projectId));
     if (resp?.data) {
-      useDesignerStore.getState().commitAutofillTransaction(before, resp.data);
+      useDesignerStore.getState().commitAutofillTransaction(before, resp.data, baselineIndex);
     }
   };
 
-  const autofill = async () => {
+  // The profile system, its panel-width cap and the enclosure's glass — resolved identically for
+  // the bulk autofill and the pen's single-hole glaze, so the two can never pick different glass.
+  const resolveFillContext = () => {
     const state = useDesignerStore.getState();
     const projectId = state.projectId;
-    const walls = state.scene.walls ?? [];
     const catalog = profileSystemsQuery.data?.data ?? [];
-    // Prefer the profile an existing run already uses (so the fill matches neighbouring glass and its
-    // max-panel-width cap), not blindly catalog[0]; fall back to the first catalog entry.
     const existingProfileId = state.scene.runs.find((r) => r.profileSystemId)?.profileSystemId;
     const profileSystem = catalog.find((p) => p.id === existingProfileId) ?? catalog[0];
-    const profileSystemId = profileSystem?.id;
-    const maxPanelWidthMm = profileSystem?.maxPanelWidthMm;
-    if (!projectId || walls.length === 0) return 0;
-    if (!profileSystemId) {
-      // WHY: an empty catalog used to make autofill silently return 0 (indistinguishable from
-      // "no gaps") — tell the user the real reason instead.
+    if (!projectId) return null;
+    if (!profileSystem?.id) {
       queueToast({
         dedupeKey: 'glass-autofill-no-profile',
         variant: 'warning',
@@ -323,16 +344,80 @@ export const useWallAutofill = () => {
             'Profil sistemi kataloğu boş — camla doldurmadan önce bir profil sistemi tanımlayın.',
         }),
       });
-      return 0;
+      return null;
     }
-    const before = structuredClone(state.scene);
-    // WHY(B4): glaze the fill with the enclosure's existing glass (first run's first pane) so a hole
-    // in a 10mm laminated enclosure isn't filled with the backend's default; null → server default.
     const fillGlassTypeId =
       state.scene.runs
         .flatMap((r) => r.panels)
         .map((p) => p.glassTypeId)
         .find(Boolean) ?? null;
+    return {
+      projectId,
+      profileSystemId: profileSystem.id,
+      maxPanelWidthMm: profileSystem.maxPanelWidthMm,
+      fillGlassTypeId,
+    };
+  };
+
+  /**
+   * Glaze EXACTLY one hole — the pen's "Cam paneli" gesture. The bulk autofill glazes every
+   * unfilled hole on the wall, which would silently create glass the user never asked for when the
+   * wall already carries other open holes.
+   *
+   * `before` is the pre-gesture scene snapshot: passing the pre-FEATURE state makes a single Ctrl+Z
+   * remove both the carved hole and its glass, which is how one gesture should undo.
+   */
+  const fillWallHole = async (
+    wallId: string,
+    holeId: string,
+    before: SceneState,
+    baselineIndex?: number,
+  ): Promise<number> => {
+    const context = resolveFillContext();
+    if (!context) return 0;
+    const state = useDesignerStore.getState();
+    const wall = (state.scene.walls ?? []).find((w) => w.id === wallId);
+    if (!wall) return 0;
+    const plan = computeWallFillPlan([wall], state.scene.runs);
+    const edge = plan.edges.find((e) => e.sourceHoleId === holeId);
+    if (!edge) {
+      const skip = plan.skipped.find((s) => s.id === holeId);
+      const message = skip ? holeSkipMessage([skip], t) : null;
+      queueToast({
+        dedupeKey: 'glass-pen-glass-not-fillable',
+        variant: 'warning',
+        description:
+          message ??
+          t('GlassEnclosure.Designer.Pen.GlassPanelNotFillable', {
+            defaultValue: 'Çizilen şekil camlanamadı — delik duvara kesilememiş olabilir.',
+          }),
+      });
+      return 0;
+    }
+    const created = await createRuns(
+      context.projectId,
+      context.profileSystemId,
+      context.maxPanelWidthMm,
+      [edge],
+      context.fillGlassTypeId,
+    );
+    const store = useDesignerStore.getState();
+    for (const c of created) {
+      recordPendingHostWall(c.id, wall.id);
+      store.updateRun(c.id, { hostWallId: wall.id });
+    }
+    if (created.length > 0) await recordAutofillHistory(context.projectId, before, baselineIndex);
+    return created.length;
+  };
+
+  const autofill = async () => {
+    const state = useDesignerStore.getState();
+    const walls = state.scene.walls ?? [];
+    if (walls.length === 0) return 0;
+    const context = resolveFillContext();
+    if (!context) return 0;
+    const { projectId, profileSystemId, maxPanelWidthMm, fillGlassTypeId } = context;
+    const before = structuredClone(state.scene);
 
     const multiWallIds = state.multiSelection.wallIds;
     if (multiWallIds.length >= 2) {
@@ -437,5 +522,5 @@ export const useWallAutofill = () => {
     return created.length;
   };
 
-  return { autofill };
+  return { autofill, fillWallHole };
 };

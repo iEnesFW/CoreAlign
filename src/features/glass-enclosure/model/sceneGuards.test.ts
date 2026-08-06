@@ -226,3 +226,63 @@ describe('a patch that REPLACES the openings wins over the re-clamp', () => {
     expect(patch.openings![0].widthMm).toBeLessThanOrEqual(560);
   });
 });
+
+describe('a stored shape follows the box that shrinks under it', () => {
+  const boxJson = (halfW: number, h: number) =>
+    JSON.stringify([
+      { x: -halfW, y: 0 },
+      { x: halfW, y: 0 },
+      { x: halfW, y: h },
+      { x: -halfW, y: h },
+    ]);
+  const shapedPanel = (over: Record<string, unknown> = {}) =>
+    ({
+      id: 'p1',
+      panelIndex: 0,
+      widthMm: 1000,
+      shapeKind: 'polygon',
+      shapePointsJson: boxJson(500, 2200),
+      ...over,
+    }) as unknown as SceneRunState['panels'][number];
+
+  it('a width-only panel patch re-clamps the outline into the new box', () => {
+    // Without this, the persist ships the NEW width with the OLD silhouette and the server-side
+    // box validator refuses the whole panel update (client/server split-brain).
+    const p = shapedPanel();
+    const patch = clampPanelPatch(run({ panels: [p] }), { widthMm: 400 }, p);
+    expect(patch.shapePointsJson).toBeDefined();
+    const points = JSON.parse(patch.shapePointsJson ?? '[]') as { x: number }[];
+    for (const pt of points) expect(Math.abs(pt.x)).toBeLessThanOrEqual(200);
+  });
+
+  it('a growing box leaves the patch shape-free — nothing to re-fit', () => {
+    const p = shapedPanel();
+    const patch = clampPanelPatch(run({ panels: [p] }), { widthMm: 2000 }, p);
+    expect('shapePointsJson' in patch).toBe(false);
+  });
+
+  it('a shape that collapses under the clamp falls back to a rectangle', () => {
+    // An outline living entirely at the right edge collapses to a line when the box narrows —
+    // the pane drops its shape (rect over-estimates area: the safe direction) instead of
+    // persisting uncuttable glass.
+    const sliver = shapedPanel({
+      shapePointsJson: JSON.stringify([
+        { x: 400, y: 0 },
+        { x: 500, y: 0 },
+        { x: 500, y: 2200 },
+        { x: 400, y: 2200 },
+      ]),
+    });
+    const patch = clampPanelPatch(run({ panels: [sliver] }), { widthMm: 400 }, sliver);
+    expect(patch.shapeKind).toBeNull();
+    expect(patch.shapePointsJson).toBeNull();
+  });
+
+  it('a run height shrink re-fits the outline of a pane that INHERITS the height', () => {
+    const p = shapedPanel();
+    const patch = clampRunPatch(run({ panels: [p] }), { heightMm: 1200 });
+    expect(patch.panels).toBeDefined();
+    const points = JSON.parse(patch.panels![0].shapePointsJson ?? '[]') as { y: number }[];
+    for (const pt of points) expect(pt.y).toBeLessThanOrEqual(1200);
+  });
+});

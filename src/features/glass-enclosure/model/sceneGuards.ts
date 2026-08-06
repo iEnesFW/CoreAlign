@@ -1,5 +1,5 @@
 import { developedLengthMm } from './arcGeometry';
-import { normalizePanelOutlineJson } from './panelShapeOutline';
+import { normalizePanelOutlineJson, refitPanelShape } from './panelShapeOutline';
 import { notifyPanelOutlineRejected } from './panelOutlineFeedback';
 import type {
   ScenePanelState,
@@ -205,6 +205,20 @@ export const clampRunPatch = (
           : panel,
       );
     }
+    // A height change also changes the box a shaped pane's outline must fit — panes WITHOUT an
+    // override inherit the run height, so the override cap above does not cover them.
+    if (cap !== run.heightMm) {
+      const base = next.panels ?? source;
+      let changed = false;
+      const refitted = base.map((panel) => {
+        const refit = refitPanelShape(panel, panel.widthMm, panel.heightMm ?? cap);
+        if (!refit) return panel;
+        changed = true;
+        if (refit.rejection) notifyPanelOutlineRejected(refit.rejection);
+        return { ...panel, shapeKind: refit.shapeKind, shapePointsJson: refit.shapePointsJson };
+      });
+      if (changed) next.panels = refitted;
+    }
   }
   return next;
 };
@@ -238,6 +252,23 @@ export const clampPanelPatch = (
       delete next.shapeKind;
     } else {
       next.shapePointsJson = outline.json;
+    }
+  } else if (
+    panel &&
+    next.shapePointsJson === undefined &&
+    (typeof next.widthMm === 'number' || typeof next.heightMm === 'number')
+  ) {
+    // A dimension-only patch changes the box under a stored shape — re-clamp the outline into it,
+    // or the persist of the new width/height is refused server-side against the stale silhouette.
+    const refit = refitPanelShape(
+      panel,
+      next.widthMm ?? panel.widthMm,
+      next.heightMm ?? panel.heightMm ?? run.heightMm,
+    );
+    if (refit) {
+      if (refit.rejection) notifyPanelOutlineRejected(refit.rejection);
+      next.shapeKind = refit.shapeKind;
+      next.shapePointsJson = refit.shapePointsJson;
     }
   }
   return next;

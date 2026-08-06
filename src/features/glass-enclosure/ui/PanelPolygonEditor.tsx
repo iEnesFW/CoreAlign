@@ -6,6 +6,8 @@ import {
   presetPolygonPoints,
   serializePanelPolygonPoints,
 } from '../model/panelPolygon';
+import { normalizePanelOutline } from '../model/panelShapeOutline';
+import { notifyPanelOutlineRejected } from '../model/panelOutlineFeedback';
 
 interface PanelPolygonEditorProps {
   widthMm: number;
@@ -29,10 +31,42 @@ export function PanelPolygonEditor({
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragIndex = useRef<number | null>(null);
+  // The last outline the gate ACCEPTED. Previews write straight into the scene (history-free) for
+  // live feedback, so when a commit is refused the scene is left holding the previewed shape — this
+  // is what we restore it to, otherwise a refused bowtie LOOKS committed.
+  const lastValidJson = useRef<string | null>(null);
 
   const w = Math.max(1, widthMm);
   const h = Math.max(1, heightMm);
   const points = parsePanelPolygonPoints(pointsJson) ?? presetPolygonPoints(4, w, h);
+
+  // Capture the pre-interaction shape as the restore target — inside the handlers, never during
+  // render (writing refs mid-render breaks with the React compiler).
+  const rememberBaseline = () => {
+    if (lastValidJson.current !== null) return;
+    const result = normalizePanelOutline(points, w, h);
+    // WHY the raw fallback: a legacy pane saved before the gate existed can hold an invalid
+    // outline — with no baseline at all, a refused drag would leave the preview stuck at the
+    // dragged position; restoring the pre-gesture outline verbatim at least rewinds the gesture.
+    lastValidJson.current = result.points
+      ? serializePanelPolygonPoints(result.points)
+      : serializePanelPolygonPoints(points);
+  };
+
+  // Every commit passes the shaped-pane gate HERE, where the interaction can self-heal: a refused
+  // outline says why, and the scene (already showing the preview) snaps back to the last good
+  // shape. The store's clampPanelPatch stays as the universal backstop for other producers.
+  const commitOutline = (next: PanelPoint[]) => {
+    const result = normalizePanelOutline(next, w, h);
+    if (!result.points) {
+      notifyPanelOutlineRejected(result.rejection);
+      if (lastValidJson.current) onPreview(lastValidJson.current);
+      return;
+    }
+    const json = serializePanelPolygonPoints(result.points);
+    lastValidJson.current = json;
+    onCommit(json);
+  };
 
   // SVG is y-down; the panel frame is bottom-centred, y-up.
   const toSvgX = (x: number) => x + w / 2;
@@ -56,11 +90,13 @@ export function PanelPolygonEditor({
 
   const addVertex = (e: React.PointerEvent<SVGSVGElement>) => {
     if (dragIndex.current !== null) return;
-    onCommit(serializePanelPolygonPoints([...points, toPanel(e.clientX, e.clientY)]));
+    rememberBaseline();
+    commitOutline([...points, toPanel(e.clientX, e.clientY)]);
   };
 
   const startDrag = (index: number) => (e: React.PointerEvent<SVGCircleElement>) => {
     e.stopPropagation();
+    rememberBaseline();
     dragIndex.current = index;
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -76,14 +112,15 @@ export function PanelPolygonEditor({
   const endDrag = (e: React.PointerEvent<SVGSVGElement>) => {
     if (dragIndex.current === null) return;
     dragIndex.current = null;
-    onCommit(serializePanelPolygonPoints(points));
+    commitOutline(points);
     e.stopPropagation();
   };
 
   const removeVertex = (index: number) => (e: React.MouseEvent) => {
     e.stopPropagation();
     if (points.length <= 3) return;
-    onCommit(serializePanelPolygonPoints(points.filter((_, i) => i !== index)));
+    rememberBaseline();
+    commitOutline(points.filter((_, i) => i !== index));
   };
 
   const vertexR = Math.max(20, Math.min(w, h) / 30);

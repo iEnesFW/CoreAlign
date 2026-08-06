@@ -28,9 +28,14 @@ export const useTemplateInsert = () => {
   const profileSystemsQuery = useProfileSystemsQuery();
   const colorsQuery = useColorOptionsQuery();
 
-  const insertGlassTemplate = async (template: Omit<GlassTemplate, 'key'>) => {
+  const insertGlassTemplate = async (
+    template: Omit<GlassTemplate, 'key'>,
+    anchorOverride?: { x: number; y: number },
+  ) => {
     const state = useDesignerStore.getState();
-    const anchor = dropAnchor(state.scene);
+    // The ghost flow hands in the clicked anchor; the legacy corner drop stays as the fallback for
+    // programmatic callers.
+    const anchor = anchorOverride ?? dropAnchor(state.scene);
 
     // Walls + slabs live in the scene blob — ONE applyScenePatch = one undo step.
     if (template.walls.length > 0 || template.slabs.length > 0) {

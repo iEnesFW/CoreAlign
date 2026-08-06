@@ -1,4 +1,5 @@
 using CoreAlign.Application.GlassEnclosure.Commands;
+using CoreAlign.Application.GlassEnclosure.Cutting;
 using CoreAlign.Application.GlassEnclosure.DTOs;
 using FluentValidation;
 
@@ -27,6 +28,41 @@ public class UpdateRunCommandValidator : AbstractValidator<UpdateRunCommand>
             .GreaterThanOrEqualTo(100).When(x => x.Data.GeomArcRadiusMm.HasValue);
         RuleFor(x => x.Data.GeomArcSweepDeg)
             .InclusiveBetween(-360m, 360m).When(x => x.Data.GeomArcSweepDeg.HasValue);
+    }
+}
+
+public class AddPanelCommandValidator : AbstractValidator<AddPanelCommand>
+{
+    public AddPanelCommandValidator()
+    {
+        RuleFor(x => x.Data.ShapePointsJson)
+            .Must((cmd, json) => PanelShapeValidation.IsValid(cmd.Data.ShapeKind, json, cmd.Data.WidthMm, cmd.Data.HeightMm))
+            .WithMessage("Validation.PanelShapeOutlineInvalid");
+    }
+}
+
+public class UpdatePanelCommandValidator : AbstractValidator<UpdatePanelCommand>
+{
+    public UpdatePanelCommandValidator()
+    {
+        RuleFor(x => x.Data.ShapePointsJson)
+            .Must((cmd, json) => PanelShapeValidation.IsValid(cmd.Data.ShapeKind, json, cmd.Data.WidthMm, cmd.Data.HeightMm))
+            .WithMessage("Validation.PanelShapeOutlineInvalid");
+    }
+}
+
+/// <summary>
+/// The designer normalises a shaped pane's outline before it ships, but the API is callable by
+/// anything — and a self-intersecting outline silently under-reports the silhouette area that the
+/// BOM prices and the cut list orders (its shoelace lobes cancel). Reject it at the boundary.
+/// </summary>
+internal static class PanelShapeValidation
+{
+    public static bool IsValid(string? shapeKind, string? json, int widthMm, int? heightMm)
+    {
+        if (shapeKind != "polygon") return true;
+        if (string.IsNullOrWhiteSpace(json)) return true;
+        return PanelShapeGeometry.CheckPolygonJson(json, widthMm, heightMm).IsValid;
     }
 }
 

@@ -105,3 +105,33 @@ export const normalizePanelOutlineJson = (
     rejection: result.rejection,
   };
 };
+
+export interface PanelShapeRefit {
+  shapeKind: 'polygon' | null;
+  shapePointsJson: string | null;
+  rejection: PanelOutlineRejection | null;
+}
+
+/**
+ * Re-fit a stored polygon outline after the pane's BOX changed size — the half of the gate that a
+ * patch-triggered check cannot cover. A width or height edit (inspector field, run-length
+ * redistribution, run-height shrink) arrives WITHOUT an outline in the patch, so the stored
+ * silhouette silently keeps the old box; the server-side validator then refuses the persist
+ * (OutOfBounds) and the client and server split-brain. Clamping into the new box here keeps both
+ * sides consistent; if the clamped shape collapses, the pane falls back to a plain rectangle —
+ * over-estimating area is the safe direction for the BOM and always cuttable.
+ *
+ * Returns null when there is nothing to change (not a polygon pane, or the outline already fits).
+ */
+export const refitPanelShape = (
+  panel: { shapeKind?: string | null; shapePointsJson?: string | null },
+  widthMm: number,
+  heightMm: number,
+): PanelShapeRefit | null => {
+  if (panel.shapeKind !== 'polygon' || !panel.shapePointsJson) return null;
+  const outline = normalizePanelOutlineJson(panel.shapePointsJson, widthMm, heightMm);
+  if (outline.json === null)
+    return { shapeKind: null, shapePointsJson: null, rejection: outline.rejection };
+  if (outline.json === panel.shapePointsJson) return null;
+  return { shapeKind: 'polygon', shapePointsJson: outline.json, rejection: null };
+};

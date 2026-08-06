@@ -5,6 +5,7 @@ import {
   featureBoundsMm,
   featureFitsWall,
   featureOutlineMm,
+  outlineBoundsMm,
 } from './wallFeatureGeometry';
 import type {
   PanelShapeKind,
@@ -111,12 +112,18 @@ export const featurePanelShape = (
     sides: feature.sides,
     points: feature.points,
   });
-  // Feature outline is absolute (around offset/centerZ); a panel polygon is local, bottom-centred,
-  // y-up — shift x to centre, z (+up) to [0, height].
-  const hh = feature.heightMm / 2;
+  // Feature outline is absolute (wall-face u,z); a panel polygon is local, bottom-centred, y-up.
+  // WHY the shift is BOUNDS-relative and not offset/centerZ-relative: the pane autofill creates is
+  // sized from the hole's OUTLINE BOUNDS, but the points used to be shifted by the feature's
+  // NOMINAL box centre. Those two agree for symmetric shapes only — an inscribed pentagon is
+  // narrower than its box AND its bounds centre sits above the nominal centre, so the glass
+  // silhouette floated off the pane and its top vertex landed OUTSIDE the pane box. Same after a
+  // 'free' feature's stored width/height was edited (the outline does not scale with them).
+  const bounds = outlineBoundsMm(outline);
+  const centreXMm = (bounds.minX + bounds.maxX) / 2;
   const pts = outline.map((p) => ({
-    x: Math.round(p.x - feature.offsetMm),
-    y: Math.round(p.z - feature.centerZMm + hh),
+    x: Math.round(p.x - centreXMm),
+    y: Math.round(p.z - bounds.minZ),
   }));
   return { shapeKind: 'polygon', shapePointsJson: serializePanelPolygonPoints(pts) };
 };
