@@ -1,3 +1,4 @@
+using CoreAlign.Application.EInvoice;
 using CoreAlign.Application.Products.Commands;
 using FluentValidation;
 
@@ -22,7 +23,8 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
 
         RuleFor(x => x.Unit)
             .NotEmpty().WithMessage("Validation.Required")
-            .MaximumLength(20).WithMessage("Validation.TooLong");
+            .MaximumLength(20).WithMessage("Validation.TooLong")
+            .Must(unit => GibUnitCodeMap.TryResolve(unit, out _)).WithMessage("Validation.UnitNotRecognized");
 
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).WithMessage("Validation.NonNegative");
@@ -57,7 +59,8 @@ public class UpdateProductCommandValidator : AbstractValidator<UpdateProductComm
 
         RuleFor(x => x.Unit)
             .NotEmpty().WithMessage("Validation.Required")
-            .MaximumLength(20).WithMessage("Validation.TooLong");
+            .MaximumLength(20).WithMessage("Validation.TooLong")
+            .Must(unit => GibUnitCodeMap.TryResolve(unit, out _)).WithMessage("Validation.UnitNotRecognized");
         RuleFor(x => x.Price)
             .GreaterThanOrEqualTo(0).WithMessage("Validation.NonNegative");
 

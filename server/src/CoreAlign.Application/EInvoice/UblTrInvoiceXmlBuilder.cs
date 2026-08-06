@@ -119,7 +119,7 @@ public static class UblTrInvoiceXmlBuilder
         new(CacNs + "DespatchLine",
             new XElement(CbcNs + "ID", lineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "DeliveredQuantity",
-                new XAttribute("unitCode", "C62"), FormatAmount(line.Quantity)),
+                new XAttribute("unitCode", GibUnitCodeMap.DefaultCode), FormatAmount(line.Quantity)),
             new XElement(CacNs + "Item",
                 new XElement(CbcNs + "Name", line.ProductName),
                 new XElement(CbcNs + "SellersItemIdentification",
@@ -332,7 +332,7 @@ public static class UblTrInvoiceXmlBuilder
         var element = new XElement(CacNs + "InvoiceLine",
             new XElement(CbcNs + "ID", line.LineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "InvoicedQuantity",
-                new XAttribute("unitCode", line.UomCode ?? "C62"), FormatAmount(line.Quantity)),
+                new XAttribute("unitCode", GibUnitCodeMap.Resolve(line.UomCode)), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
                 new XAttribute("currencyID", currency), FormatAmount(line.LineNetAmount)));
 
@@ -360,7 +360,7 @@ public static class UblTrInvoiceXmlBuilder
         new(CacNs + "CreditNoteLine",
             new XElement(CbcNs + "ID", line.LineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "CreditedQuantity",
-                new XAttribute("unitCode", line.UomCode ?? "C62"), FormatAmount(line.Quantity)),
+                new XAttribute("unitCode", GibUnitCodeMap.Resolve(line.UomCode)), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
                 new XAttribute("currencyID", currency), FormatAmount(line.LineNetAmount)),
             BuildLineTaxTotal(line, currency, exemptionCode: null, exemptionReason: null),

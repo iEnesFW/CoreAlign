@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useCreateJob } from '@/features/manufacturing/hooks/useManufacturingQueries';
 import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
 import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
+import { UnitOfMeasureSelect } from '@/shared/ui/form/UnitOfMeasureSelect';
 import { useRoutingsQuery } from '@/features/manufacturing/hooks/useManufacturingQueries';
 import { Textarea } from '@/shared/ui/Textarea/Textarea';
 
@@ -26,7 +27,7 @@ export const JobFormModal = ({ onClose }: Props) => {
   const [formData, setFormData] = useState({
     productId: '',
     plannedQuantity: 1,
-    unitOfMeasure: 'PCS',
+    unitOfMeasure: 'ADET',
     warehouseId: '',
     routingId: '',
     notes: '',
@@ -93,12 +94,15 @@ export const JobFormModal = ({ onClose }: Props) => {
                 step="0.01"
                 required
               />
-              <Input
-                label={t('ProductionJobs.fields.uom')}
-                value={formData.unitOfMeasure}
-                onChange={(e) => setFormData({ ...formData, unitOfMeasure: e.target.value })}
-                required
-              />
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">
+                  {t('ProductionJobs.fields.uom')}
+                </label>
+                <UnitOfMeasureSelect
+                  value={formData.unitOfMeasure}
+                  onChange={(code) => setFormData({ ...formData, unitOfMeasure: code })}
+                />
+              </div>
             </div>
 
             <Select

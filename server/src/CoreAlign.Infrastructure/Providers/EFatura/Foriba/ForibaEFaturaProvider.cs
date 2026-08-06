@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
+using CoreAlign.Application.EInvoice;
 using CoreAlign.Application.Providers;
 using CoreAlign.Application.Providers.EFatura;
 using CoreAlign.Domain.Enums;
@@ -320,7 +321,7 @@ public sealed class ForibaEFaturaProvider : IEFaturaProvider
             yield return new XElement(CacNs + "InvoiceLine",
                 new XElement(CbcNs + "ID", index.ToString(CultureInfo.InvariantCulture)),
                 new XElement(CbcNs + "InvoicedQuantity",
-                    new XAttribute("unitCode", "C62"),
+                    new XAttribute("unitCode", GibUnitCodeMap.DefaultCode),
                     line.Quantity.ToString("F3", CultureInfo.InvariantCulture)),
                 new XElement(CbcNs + "LineExtensionAmount",
                     new XAttribute("currencyID", doc.Currency),

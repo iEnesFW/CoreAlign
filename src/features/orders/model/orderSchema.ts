@@ -33,12 +33,19 @@ export const areaUnitDivisor = (unitCode?: string | null): number | null => {
     case 'm2':
     case 'sqm':
     case 'metrekare':
+    case 'mtk':
       return 1_000_000;
     case 'dm2':
+    case 'desimetrekare':
+    case 'dmk':
       return 10_000;
     case 'cm2':
+    case 'santimetrekare':
+    case 'cmk':
       return 100;
     case 'mm2':
+    case 'milimetrekare':
+    case 'mmk':
       return 1;
     default:
       return null;

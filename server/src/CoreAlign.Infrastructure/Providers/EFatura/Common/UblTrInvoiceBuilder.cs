@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
+using CoreAlign.Application.EInvoice;
 using CoreAlign.Application.Providers.EFatura;
 
 namespace CoreAlign.Infrastructure.Providers.EFatura.Common;
@@ -183,7 +184,7 @@ public static class UblTrInvoiceBuilder
         new(CacNs + "InvoiceLine",
             new XElement(CbcNs + "ID", lineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "InvoicedQuantity",
-                new XAttribute("unitCode", "C62"), FormatAmount(line.Quantity)),
+                new XAttribute("unitCode", GibUnitCodeMap.DefaultCode), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
                 new XAttribute("currencyID", currency), FormatAmount(LineNet(line))),
             BuildLineTaxTotal(line, currency),
@@ -197,7 +198,7 @@ public static class UblTrInvoiceBuilder
         new(CacNs + "CreditNoteLine",
             new XElement(CbcNs + "ID", lineNumber.ToString(CultureInfo.InvariantCulture)),
             new XElement(CbcNs + "CreditedQuantity",
-                new XAttribute("unitCode", "C62"), FormatAmount(line.Quantity)),
+                new XAttribute("unitCode", GibUnitCodeMap.DefaultCode), FormatAmount(line.Quantity)),
             new XElement(CbcNs + "LineExtensionAmount",
                 new XAttribute("currencyID", currency), FormatAmount(LineNet(line))),
             BuildLineTaxTotal(line, currency),

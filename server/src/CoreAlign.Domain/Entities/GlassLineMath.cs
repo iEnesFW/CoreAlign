@@ -13,10 +13,10 @@ public static class GlassLineMath
         var code = unitCode?.Trim().ToLowerInvariant().Replace("²", "2");
         return code switch
         {
-            "m2" or "sqm" or "metrekare" => 1_000_000m,
-            "dm2" => 10_000m,
-            "cm2" => 100m,
-            "mm2" => 1m,
+            "m2" or "sqm" or "metrekare" or "mtk" => 1_000_000m,
+            "dm2" or "desimetrekare" or "dmk" => 10_000m,
+            "cm2" or "santimetrekare" or "cmk" => 100m,
+            "mm2" or "milimetrekare" or "mmk" => 1m,
             _ => null,
         };
     }

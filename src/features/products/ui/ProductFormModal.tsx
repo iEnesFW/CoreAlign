@@ -22,6 +22,7 @@ import {
   useTaxRatesQuery,
   useUomsQuery,
 } from '@/shared/master-data/hooks/useMasterData';
+import { UnitOfMeasureSelect } from '@/shared/ui/form/UnitOfMeasureSelect';
 import { useDecimalPlaces } from '@/features/settings/hooks/useSettingsQueries';
 import { productSchema, type ProductFormValues } from '../model/productSchema';
 import type {
@@ -120,7 +121,7 @@ const emptyValues: ProductFormValues = {
   brandId: '',
   categoryId: '',
   status: 'Active',
-  unit: 'pcs',
+  unit: 'ADET',
   baseUomId: '',
   salesUomId: '',
   purchaseUomId: '',
@@ -502,12 +503,26 @@ export const ProductFormModal = ({ open, product, onClose }: Props) => {
             <section className={sectionCls}>
               <h3 className={sectionTitleCls}>{t('products.sections.uom')}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-                <Input
-                  label={t('products.fields.unit')}
-                  placeholder={t('products.fields.unitPlaceholder')}
-                  error={translateError(errors.unit?.message)}
-                  {...register('unit')}
-                />
+                <div>
+                  <label className={labelCls}>{t('products.fields.unit')}</label>
+                  <Controller
+                    control={control}
+                    name="unit"
+                    render={({ field }) => (
+                      <UnitOfMeasureSelect
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                        className={fieldCls}
+                        placeholder={t('products.fields.unitPlaceholder')}
+                      />
+                    )}
+                  />
+                  {errors.unit?.message && (
+                    <p className="mt-1 text-xs text-danger-600 dark:text-danger-400">
+                      {translateError(errors.unit.message)}
+                    </p>
+                  )}
+                </div>
                 <div>
                   <LabelWithAdd
                     label={t('products.fields.baseUom')}

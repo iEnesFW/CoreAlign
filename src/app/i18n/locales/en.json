@@ -341,7 +341,8 @@
     "CurrencyFormat": "Use uppercase ISO code (e.g., USD).",
     "Positive": "Must be positive.",
     "AtLeastOneLine": "Add at least one line.",
-    "PasswordMustDiffer": "New password must be different from the current one."
+    "PasswordMustDiffer": "New password must be different from the current one.",
+    "UnitNotRecognized": "Unit not recognised — pick a stock unit from the list (it must be valid on an e-invoice)."
   },
   "profile": {
     "title": "My Profile",
