@@ -11,6 +11,14 @@ public sealed class SmtpEmailOptions
     public string Password { get; set; } = string.Empty;
     public string FromAddress { get; set; } = string.Empty;
     public string FromName { get; set; } = string.Empty;
+    public string? AuthMode { get; set; }
+    public string? OAuthProvider { get; set; }
+    public string? OAuthTenantId { get; set; }
+    public string? OAuthClientId { get; set; }
+    public string? OAuthClientSecret { get; set; }
+    public string? OAuthRefreshToken { get; set; }
+    public string? OAuthTokenEndpoint { get; set; }
+    public string? OAuthScope { get; set; }
 }
 
 public sealed class SendGridOptions

@@ -18,6 +18,7 @@ public sealed class TenantAwareSmtpEmailProvider : IEmailProvider
     private readonly ITenantContext _tenantContext;
     private readonly ITenantProviderConfigResolver _resolver;
     private readonly IProviderCredentialProtector _protector;
+    private readonly ISmtpAccessTokenProvider _tokenProvider;
     private readonly SmtpEmailOptions _globalOptions;
     private readonly ILogger<TenantAwareSmtpEmailProvider> _logger;
 
@@ -25,12 +26,14 @@ public sealed class TenantAwareSmtpEmailProvider : IEmailProvider
         ITenantContext tenantContext,
         ITenantProviderConfigResolver resolver,
         IProviderCredentialProtector protector,
+        ISmtpAccessTokenProvider tokenProvider,
         IOptions<SmtpEmailOptions> globalOptions,
         ILogger<TenantAwareSmtpEmailProvider> logger)
     {
         _tenantContext = tenantContext;
         _resolver = resolver;
         _protector = protector;
+        _tokenProvider = tokenProvider;
         _globalOptions = globalOptions.Value;
         _logger = logger;
     }
@@ -64,10 +67,7 @@ public sealed class TenantAwareSmtpEmailProvider : IEmailProvider
             using var client = new SmtpClient();
             var socketOptions = credentials.UseSsl ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None;
             await client.ConnectAsync(credentials.Host, credentials.Port, socketOptions, ct).ConfigureAwait(false);
-            if (!string.IsNullOrWhiteSpace(credentials.Username))
-            {
-                await client.AuthenticateAsync(credentials.Username, credentials.Password ?? string.Empty, ct).ConfigureAwait(false);
-            }
+            await SmtpAuthenticator.AuthenticateAsync(client, credentials, _tokenProvider, ct).ConfigureAwait(false);
             await client.SendAsync(mime, ct).ConfigureAwait(false);
             await client.DisconnectAsync(true, ct).ConfigureAwait(false);
             return NotificationSendResult.Ok(mime.MessageId);
@@ -93,10 +93,7 @@ public sealed class TenantAwareSmtpEmailProvider : IEmailProvider
             using var client = new SmtpClient();
             var socketOptions = credentials.UseSsl ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None;
             await client.ConnectAsync(credentials.Host, credentials.Port, socketOptions, cancellationToken).ConfigureAwait(false);
-            if (!string.IsNullOrWhiteSpace(credentials.Username))
-            {
-                await client.AuthenticateAsync(credentials.Username, credentials.Password ?? string.Empty, cancellationToken).ConfigureAwait(false);
-            }
+            await SmtpAuthenticator.AuthenticateAsync(client, credentials, _tokenProvider, cancellationToken).ConfigureAwait(false);
             await client.DisconnectAsync(true, cancellationToken).ConfigureAwait(false);
             return ProviderHealthCheckResult.Healthy(Name, stopwatch.Elapsed, $"{credentials.Host}:{credentials.Port}");
         }
@@ -127,7 +124,15 @@ public sealed class TenantAwareSmtpEmailProvider : IEmailProvider
                 _globalOptions.Username,
                 _globalOptions.Password,
                 _globalOptions.FromAddress,
-                _globalOptions.FromName);
+                _globalOptions.FromName,
+                _globalOptions.AuthMode,
+                _globalOptions.OAuthProvider,
+                _globalOptions.OAuthTenantId,
+                _globalOptions.OAuthClientId,
+                _globalOptions.OAuthClientSecret,
+                _globalOptions.OAuthRefreshToken,
+                _globalOptions.OAuthTokenEndpoint,
+                _globalOptions.OAuthScope);
         }
 
         return null;

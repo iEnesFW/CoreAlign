@@ -51,4 +51,12 @@ public class EmailSmtpOptions
     public bool UseSsl { get; set; } = true;
     public string? FromAddress { get; set; }
     public string? FromName { get; set; }
+    public string? AuthMode { get; set; }
+    public string? OAuthProvider { get; set; }
+    public string? OAuthTenantId { get; set; }
+    public string? OAuthClientId { get; set; }
+    public string? OAuthClientSecret { get; set; }
+    public string? OAuthRefreshToken { get; set; }
+    public string? OAuthTokenEndpoint { get; set; }
+    public string? OAuthScope { get; set; }
 }

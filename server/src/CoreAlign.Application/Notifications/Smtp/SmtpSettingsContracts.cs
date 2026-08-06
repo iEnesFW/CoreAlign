@@ -13,7 +13,15 @@ public sealed record TenantSmtpSettingsDto(
     string? FromName,
     bool HasPassword,
     string? LastHealthStatus,
-    DateTime? LastHealthCheckUtc);
+    DateTime? LastHealthCheckUtc,
+    string AuthMode = SmtpAuthModes.Password,
+    string? OAuthProvider = null,
+    string? OAuthTenantId = null,
+    string? OAuthClientId = null,
+    string? OAuthTokenEndpoint = null,
+    string? OAuthScope = null,
+    bool HasOAuthClientSecret = false,
+    bool HasOAuthRefreshToken = false);
 
 public sealed record UpsertTenantSmtpSettingsCommand(
     string Host,
@@ -23,7 +31,15 @@ public sealed record UpsertTenantSmtpSettingsCommand(
     string? Password,
     string? FromAddress,
     string? FromName,
-    bool IsEnabled) : IRequest<TenantSmtpSettingsDto>;
+    bool IsEnabled,
+    string? AuthMode = null,
+    string? OAuthProvider = null,
+    string? OAuthTenantId = null,
+    string? OAuthClientId = null,
+    string? OAuthClientSecret = null,
+    string? OAuthRefreshToken = null,
+    string? OAuthTokenEndpoint = null,
+    string? OAuthScope = null) : IRequest<TenantSmtpSettingsDto>;
 
 public sealed record GetTenantSmtpSettingsQuery : IRequest<TenantSmtpSettingsDto>;
 

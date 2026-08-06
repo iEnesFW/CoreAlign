@@ -1,5 +1,7 @@
 using CoreAlign.Application.Common.Email;
+using CoreAlign.Application.Notifications.Smtp;
 using CoreAlign.Domain.Exceptions;
+using CoreAlign.Infrastructure.Notifications.Email;
 using CoreAlign.Infrastructure.Options;
 using MailKit.Net.Smtp;
 using MailKit.Security;
@@ -12,11 +14,16 @@ namespace CoreAlign.Infrastructure.Services;
 public sealed class SmtpEmailSender : IEmailSender
 {
     private readonly IOptions<EmailOptions> _options;
+    private readonly ISmtpAccessTokenProvider _tokenProvider;
     private readonly ILogger<SmtpEmailSender> _logger;
 
-    public SmtpEmailSender(IOptions<EmailOptions> options, ILogger<SmtpEmailSender> logger)
+    public SmtpEmailSender(
+        IOptions<EmailOptions> options,
+        ISmtpAccessTokenProvider tokenProvider,
+        ILogger<SmtpEmailSender> logger)
     {
         _options = options;
+        _tokenProvider = tokenProvider;
         _logger = logger;
     }
 
@@ -62,10 +69,7 @@ public sealed class SmtpEmailSender : IEmailSender
         {
             var socketOptions = smtp.UseSsl ? SecureSocketOptions.StartTlsWhenAvailable : SecureSocketOptions.None;
             await client.ConnectAsync(smtp.Host, smtp.Port, socketOptions, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(smtp.Username))
-            {
-                await client.AuthenticateAsync(smtp.Username, smtp.Password ?? string.Empty, cancellationToken);
-            }
+            await SmtpAuthenticator.AuthenticateAsync(client, ToCredentials(smtp), _tokenProvider, cancellationToken);
             await client.SendAsync(mime, cancellationToken);
             await client.DisconnectAsync(true, cancellationToken);
             _logger.LogInformation(
@@ -83,4 +87,21 @@ public sealed class SmtpEmailSender : IEmailSender
             throw new EmailSendFailedException(message.To, ex.Message);
         }
     }
+
+    private static SmtpCredentials ToCredentials(EmailSmtpOptions smtp) => new(
+        smtp.Host ?? string.Empty,
+        smtp.Port,
+        smtp.UseSsl,
+        smtp.Username,
+        smtp.Password,
+        smtp.FromAddress,
+        smtp.FromName,
+        smtp.AuthMode,
+        smtp.OAuthProvider,
+        smtp.OAuthTenantId,
+        smtp.OAuthClientId,
+        smtp.OAuthClientSecret,
+        smtp.OAuthRefreshToken,
+        smtp.OAuthTokenEndpoint,
+        smtp.OAuthScope);
 }

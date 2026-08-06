@@ -1,5 +1,6 @@
 using System.Net;
 using CoreAlign.Application.Notifications.Providers;
+using CoreAlign.Application.Notifications.Smtp;
 using CoreAlign.Application.Providers;
 using CoreAlign.Domain.Interfaces;
 using CoreAlign.Infrastructure.Notifications.Email;
@@ -26,8 +27,14 @@ public class EmailProviderTests
         tenantContext.CurrentTenantId.Returns((Guid?)null);
         var resolver = Substitute.For<ITenantProviderConfigResolver>();
         var protector = Substitute.For<IProviderCredentialProtector>();
+        var tokenProvider = Substitute.For<ISmtpAccessTokenProvider>();
         return new TenantAwareSmtpEmailProvider(
-            tenantContext, resolver, protector, Options.Create(options), NullLogger<TenantAwareSmtpEmailProvider>.Instance);
+            tenantContext,
+            resolver,
+            protector,
+            tokenProvider,
+            Options.Create(options),
+            NullLogger<TenantAwareSmtpEmailProvider>.Instance);
     }
 
     [Fact]

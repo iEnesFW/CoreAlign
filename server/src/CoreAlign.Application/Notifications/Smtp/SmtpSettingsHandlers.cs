@@ -35,7 +35,15 @@ internal static class SmtpSettingsMapper
             credentials?.FromName,
             !string.IsNullOrEmpty(credentials?.Password),
             config.LastHealthStatus.ToString(),
-            config.LastHealthCheckUtc);
+            config.LastHealthCheckUtc,
+            credentials?.UsesOAuth == true ? SmtpAuthModes.OAuth2 : SmtpAuthModes.Password,
+            credentials?.OAuthProvider,
+            credentials?.OAuthTenantId,
+            credentials?.OAuthClientId,
+            credentials?.OAuthTokenEndpoint,
+            credentials?.OAuthScope,
+            !string.IsNullOrEmpty(credentials?.OAuthClientSecret),
+            !string.IsNullOrEmpty(credentials?.OAuthRefreshToken));
     }
 }
 
@@ -90,15 +98,23 @@ public sealed class UpsertTenantSmtpSettingsHandler : IRequestHandler<UpsertTena
         var tenantId = _tenantContext.RequireTenantId();
 
         var password = NullIfEmpty(request.Password);
-        if (password is null)
+        var clientSecret = NullIfEmpty(request.OAuthClientSecret);
+        var refreshToken = NullIfEmpty(request.OAuthRefreshToken);
+        if (password is null || clientSecret is null || refreshToken is null)
         {
             var existing = await _repository.GetByTenantAndCategoryAsync(tenantId, SmtpProvider.Category, SmtpProvider.Name, cancellationToken);
             if (existing?.EncryptedCredentialsJson is not null)
             {
                 var prior = _protector.UnprotectAs<SmtpCredentials>(tenantId, SmtpProvider.Category, existing.EncryptedCredentialsJson);
-                password = prior?.Password;
+                password ??= prior?.Password;
+                clientSecret ??= prior?.OAuthClientSecret;
+                refreshToken ??= prior?.OAuthRefreshToken;
             }
         }
+
+        var authMode = string.Equals(request.AuthMode, SmtpAuthModes.OAuth2, StringComparison.OrdinalIgnoreCase)
+            ? SmtpAuthModes.OAuth2
+            : SmtpAuthModes.Password;
 
         var credentials = new SmtpCredentials(
             request.Host.Trim(),
@@ -107,7 +123,20 @@ public sealed class UpsertTenantSmtpSettingsHandler : IRequestHandler<UpsertTena
             NullIfEmpty(request.Username),
             password,
             NullIfEmpty(request.FromAddress),
-            NullIfEmpty(request.FromName));
+            NullIfEmpty(request.FromName),
+            authMode,
+            NullIfEmpty(request.OAuthProvider),
+            NullIfEmpty(request.OAuthTenantId),
+            NullIfEmpty(request.OAuthClientId),
+            clientSecret,
+            refreshToken,
+            NullIfEmpty(request.OAuthTokenEndpoint),
+            NullIfEmpty(request.OAuthScope));
+
+        if (authMode == SmtpAuthModes.OAuth2)
+        {
+            SmtpOAuthResolver.Resolve(credentials);
+        }
 
         var json = JsonSerializer.Serialize(credentials);
 

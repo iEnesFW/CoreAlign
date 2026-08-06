@@ -14,7 +14,37 @@ public sealed class UpsertTenantSmtpSettingsCommandValidator : AbstractValidator
             .EmailAddress()
             .MaximumLength(254)
             .When(x => !string.IsNullOrWhiteSpace(x.FromAddress));
+
+        RuleFor(x => x.AuthMode)
+            .Must(SmtpAuthModes.IsKnown)
+            .WithMessage("Authentication mode must be 'Password' or 'OAuth2'.");
+
+        When(IsOAuth, () =>
+        {
+            RuleFor(x => x.OAuthProvider)
+                .NotEmpty()
+                .Must(SmtpOAuthProviders.IsKnown)
+                .WithMessage("OAuth provider must be 'Google', 'Microsoft' or 'Custom'.");
+
+            RuleFor(x => x.OAuthClientId).NotEmpty().MaximumLength(255);
+            RuleFor(x => x.OAuthTenantId).MaximumLength(128);
+            RuleFor(x => x.OAuthScope).MaximumLength(500);
+            RuleFor(x => x.OAuthTokenEndpoint).MaximumLength(500);
+
+            RuleFor(x => x.Username)
+                .NotEmpty()
+                .WithMessage("A mailbox address is required for XOAUTH2 authentication.")
+                .When(x => string.IsNullOrWhiteSpace(x.FromAddress));
+
+            RuleFor(x => x.OAuthTokenEndpoint)
+                .NotEmpty()
+                .WithMessage("A token endpoint is required for a custom OAuth provider.")
+                .When(x => string.Equals(x.OAuthProvider, SmtpOAuthProviders.Custom, StringComparison.OrdinalIgnoreCase));
+        });
     }
+
+    private static bool IsOAuth(UpsertTenantSmtpSettingsCommand command) =>
+        string.Equals(command.AuthMode, SmtpAuthModes.OAuth2, StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class SendTestEmailCommandValidator : AbstractValidator<SendTestEmailCommand>

@@ -1,3 +1,7 @@
+export type SmtpAuthMode = 'Password' | 'OAuth2';
+
+export type SmtpOAuthProvider = 'Google' | 'Microsoft' | 'Custom';
+
 export interface SmtpSettings {
   isConfigured: boolean;
   isEnabled: boolean;
@@ -10,6 +14,14 @@ export interface SmtpSettings {
   hasPassword: boolean;
   lastHealthStatus: string | null;
   lastHealthCheckUtc: string | null;
+  authMode: SmtpAuthMode;
+  oAuthProvider: SmtpOAuthProvider | null;
+  oAuthTenantId: string | null;
+  oAuthClientId: string | null;
+  oAuthTokenEndpoint: string | null;
+  oAuthScope: string | null;
+  hasOAuthClientSecret: boolean;
+  hasOAuthRefreshToken: boolean;
 }
 
 export interface UpsertSmtpInput {
@@ -21,6 +33,14 @@ export interface UpsertSmtpInput {
   fromAddress?: string | null;
   fromName?: string | null;
   isEnabled: boolean;
+  authMode?: SmtpAuthMode | null;
+  oAuthProvider?: SmtpOAuthProvider | null;
+  oAuthTenantId?: string | null;
+  oAuthClientId?: string | null;
+  oAuthClientSecret?: string | null;
+  oAuthRefreshToken?: string | null;
+  oAuthTokenEndpoint?: string | null;
+  oAuthScope?: string | null;
 }
 
 export interface SmtpTestResult {

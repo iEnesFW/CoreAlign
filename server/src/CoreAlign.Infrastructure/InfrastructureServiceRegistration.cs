@@ -685,6 +685,11 @@ public static class InfrastructureServiceRegistration
         services.Configure<CoreAlign.Infrastructure.Options.MetaWhatsAppOptions>(configuration.GetSection(CoreAlign.Infrastructure.Options.MetaWhatsAppOptions.SectionName));
 
         services.AddHttpClient();
+        services.AddHttpClient(
+            CoreAlign.Infrastructure.Notifications.Email.SmtpAccessTokenProvider.HttpClientName,
+            c => c.Timeout = TimeSpan.FromSeconds(20));
+        services.AddSingleton<CoreAlign.Application.Notifications.Smtp.ISmtpAccessTokenProvider,
+            CoreAlign.Infrastructure.Notifications.Email.SmtpAccessTokenProvider>();
 
         services.AddScoped<CoreAlign.Application.Notifications.Providers.IEmailProvider,
             CoreAlign.Infrastructure.Notifications.Email.TenantAwareSmtpEmailProvider>();
