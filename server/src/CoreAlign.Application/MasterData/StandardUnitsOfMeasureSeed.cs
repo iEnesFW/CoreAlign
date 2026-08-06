@@ -1,6 +1,6 @@
 namespace CoreAlign.Application.MasterData;
 
-internal static class StandardUnitsOfMeasureSeed
+public static class StandardUnitsOfMeasureSeed
 {
     public sealed record Entry(
         string Code,

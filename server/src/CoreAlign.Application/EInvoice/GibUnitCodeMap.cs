@@ -18,6 +18,14 @@ public static class GibUnitCodeMap
         ["PIECE"] = "C62",
         ["C62"] = "C62",
 
+        // WHY these three resolve to "piece": the glass BOM emits one-off service lines with a
+        // quantity of exactly 1 and a colloquial unit ("Waste allowance / 1 lot", "Transport /
+        // 1 trip"). Rec 20 has no "lot"/"trip"; billing them as 1 piece is accurate for a lump-sum
+        // line and is a code every integrator accepts, whereas passing the word through is refused.
+        ["LOT"] = "C62",
+        ["TRIP"] = "C62",
+        ["SEFER"] = "C62",
+
         ["KILOGRAM"] = "KGM",
         ["KG"] = "KGM",
         ["KGM"] = "KGM",
@@ -40,6 +48,7 @@ public static class GibUnitCodeMap
         ["MT"] = "MTR",
         ["M"] = "MTR",
         ["MTR"] = "MTR",
+        ["METER"] = "MTR",
         ["SANTIMETRE"] = "CMT",
         ["CM"] = "CMT",
         ["CMT"] = "CMT",
@@ -86,6 +95,9 @@ public static class GibUnitCodeMap
         ["HEKTAR"] = "HAR",
         ["HA"] = "HAR",
         ["HAR"] = "HAR",
+        ["DEKAR"] = "DAA",
+        ["DAA"] = "DAA",
+        ["DA"] = "DAA",
 
         ["METREKUP"] = "MTQ",
         ["M3"] = "MTQ",
@@ -133,6 +145,19 @@ public static class GibUnitCodeMap
         ["SEC"] = "SEC",
         ["GUN"] = "DAY",
         ["DAY"] = "DAY",
+        ["HOUR"] = "HUR",
+        ["SECOND"] = "SEC",
+        ["MINUTE"] = "MIN",
+        ["AY"] = "MON",
+        ["MO"] = "MON",
+        ["MONTH"] = "MON",
+        ["MON"] = "MON",
+        ["HAFTA"] = "WEE",
+        ["WEEK"] = "WEE",
+        ["WEE"] = "WEE",
+        ["YIL"] = "ANN",
+        ["YEAR"] = "ANN",
+        ["ANN"] = "ANN",
     };
 
     public static bool TryResolve(string? unitOfMeasure, out string gibUnitCode)
