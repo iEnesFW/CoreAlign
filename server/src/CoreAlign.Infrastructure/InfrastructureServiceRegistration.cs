@@ -435,6 +435,9 @@ public static class InfrastructureServiceRegistration
             c.BaseAddress = new Uri("https://www.tcmb.gov.tr/");
             c.Timeout = TimeSpan.FromSeconds(20);
         });
+        services.AddScoped<CoreAlign.Application.Treasury.Fx.ICurrencyCatalog,
+            CoreAlign.Infrastructure.Repositories.CurrencyCatalogRepository>();
+        services.AddScoped<CoreAlign.Application.Treasury.Fx.CurrencyCatalogSync>();
         services.AddScoped<CoreAlign.Application.Treasury.Fx.TcmbFxIngestJob>();
         services.AddScoped<CoreAlign.Application.Treasury.Fx.PostFxRevaluationJob>();
         services.AddScoped<CoreAlign.Application.Treasury.Fx.IFxOpenBalanceReader,

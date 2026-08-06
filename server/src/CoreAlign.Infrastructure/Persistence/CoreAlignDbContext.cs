@@ -52,6 +52,15 @@ public class CoreAlignDbContext : DbContext
         {
             return;
         }
+        // WHY IGlobalReadable is exempt (same reason ApplyTenantForeignKeys skips it): those rows use
+        // tenant_id = Guid.Empty as "global reference data", not "tenant not known yet". Stamping one
+        // inside an HTTP request turns shared data into a private row — the TCMB FX ingest wrote the
+        // day's global rates as one tenant's overrides when it was triggered from an authenticated
+        // endpoint, after which the next run could not find them and collided on the unique key.
+        if (entity is IGlobalReadable)
+        {
+            return;
+        }
         var tenantId = _tenantContext.CurrentTenantId;
         if (tenantId.HasValue)
         {
@@ -356,7 +365,11 @@ public class CoreAlignDbContext : DbContext
         {
             if (entry.State == EntityState.Added)
             {
-                if (entry.Entity.TenantId == Guid.Empty && tenantId.HasValue)
+                // Same IGlobalReadable exemption as StampTenantOnTracked — this is the second
+                // stamping site and skipping only the first one leaves the hole wide open.
+                if (entry.Entity.TenantId == Guid.Empty
+                    && tenantId.HasValue
+                    && entry.Entity is not IGlobalReadable)
                 {
                     entry.Entity.TenantId = tenantId.Value;
                 }

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import { useTranslation } from 'react-i18next';
 import { FileText, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -178,16 +179,11 @@ export const CreateQuoteModal = ({ open, onClose, onCreated }: Props) => {
             </select>
           </Field>
           <Field label={t('quotes.fields.currency')}>
-            <select
+            <CurrencySelect
               value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
+              onChange={setCurrency}
               className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            >
-              <option value="TRY">TRY</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </select>
+            />
           </Field>
           <Field label={t('quotes.fields.quoteDate')}>
             <input

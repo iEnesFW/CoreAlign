@@ -1,4 +1,5 @@
 using CoreAlign.Application.Treasury.Fx;
+using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Entities.Treasury;
 using CoreAlign.Domain.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,6 +11,12 @@ public class TcmbFxIngestJobTests
     private readonly ITcmbFxClient _client = Substitute.For<ITcmbFxClient>();
     private readonly IExchangeRateRepository _repo = Substitute.For<IExchangeRateRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
+    private readonly ICurrencyCatalog _catalog = Substitute.For<ICurrencyCatalog>();
+
+    public TcmbFxIngestJobTests() =>
+        _catalog.ListAllAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<Currency>());
+
+    private CurrencyCatalogSync CatalogSync() => new(_catalog);
 
     [Fact]
     public async Task Inserts_new_rate_when_none_exists_for_currency_and_date()
@@ -19,7 +26,7 @@ public class TcmbFxIngestJobTests
             .Returns(new[] { new TcmbRate("USD", 32.18m, today) });
         _repo.GetAsync("USD", Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns((ExchangeRate?)null);
 
-        var sut = new TcmbFxIngestJob(_client, _repo, _uow, NullLogger<TcmbFxIngestJob>.Instance);
+        var sut = new TcmbFxIngestJob(_client, _repo, _uow, CatalogSync(), NullLogger<TcmbFxIngestJob>.Instance);
         var count = await sut.RunAsync();
 
         count.Should().Be(1);
@@ -38,7 +45,7 @@ public class TcmbFxIngestJobTests
             .Returns(new[] { new TcmbRate("USD", 32.5m, today) });
         _repo.GetAsync("USD", Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns(existing);
 
-        var sut = new TcmbFxIngestJob(_client, _repo, _uow, NullLogger<TcmbFxIngestJob>.Instance);
+        var sut = new TcmbFxIngestJob(_client, _repo, _uow, CatalogSync(), NullLogger<TcmbFxIngestJob>.Instance);
         var count = await sut.RunAsync();
 
         count.Should().Be(1);
@@ -51,7 +58,7 @@ public class TcmbFxIngestJobTests
     {
         _client.FetchTodayAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<TcmbRate>());
 
-        var sut = new TcmbFxIngestJob(_client, _repo, _uow, NullLogger<TcmbFxIngestJob>.Instance);
+        var sut = new TcmbFxIngestJob(_client, _repo, _uow, CatalogSync(), NullLogger<TcmbFxIngestJob>.Instance);
         var count = await sut.RunAsync();
 
         count.Should().Be(0);
@@ -69,7 +76,7 @@ public class TcmbFxIngestJobTests
             .Returns(new[] { new TcmbRate("USD", 32.18m, today), new TcmbRate("USD", 33.00m, today) });
         _repo.GetAsync("USD", Arg.Any<DateTime>(), Arg.Any<CancellationToken>()).Returns((ExchangeRate?)null);
 
-        var sut = new TcmbFxIngestJob(_client, _repo, _uow, NullLogger<TcmbFxIngestJob>.Instance);
+        var sut = new TcmbFxIngestJob(_client, _repo, _uow, CatalogSync(), NullLogger<TcmbFxIngestJob>.Instance);
         var count = await sut.RunAsync();
 
         count.Should().Be(1);

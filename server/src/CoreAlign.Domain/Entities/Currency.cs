@@ -15,9 +15,28 @@ public class Currency
 
     public Currency(string code, string name, string? symbol = null, bool isActive = true)
     {
-        Code = code;
-        Name = name;
-        Symbol = symbol;
+        Code = Normalize(code);
+        Name = string.IsNullOrWhiteSpace(name) ? Code : name.Trim();
+        Symbol = string.IsNullOrWhiteSpace(symbol) ? null : symbol.Trim();
         IsActive = isActive;
     }
+
+    public void Rename(string name, string? symbol)
+    {
+        if (!string.IsNullOrWhiteSpace(name)) Name = name.Trim();
+        Symbol = string.IsNullOrWhiteSpace(symbol) ? null : symbol.Trim();
+    }
+
+    public void SetActive(bool isActive) => IsActive = isActive;
+
+    // WHY the feed never re-activates: a currency an admin deliberately switched off must stay off
+    // even though the daily bulletin keeps publishing a rate for it, otherwise the nightly job
+    // silently undoes the admin's decision every morning.
+    public void AdoptFeedName(string name, string? symbol)
+    {
+        if (!string.Equals(Name, Code, StringComparison.Ordinal)) return;
+        Rename(name, symbol);
+    }
+
+    public static string Normalize(string code) => (code ?? string.Empty).Trim().ToUpperInvariant();
 }

@@ -10,13 +10,20 @@ public sealed class TcmbFxIngestJob
     private readonly ITcmbFxClient _client;
     private readonly IExchangeRateRepository _repo;
     private readonly IUnitOfWork _uow;
+    private readonly CurrencyCatalogSync _catalogSync;
     private readonly ILogger<TcmbFxIngestJob> _logger;
 
-    public TcmbFxIngestJob(ITcmbFxClient client, IExchangeRateRepository repo, IUnitOfWork uow, ILogger<TcmbFxIngestJob> logger)
+    public TcmbFxIngestJob(
+        ITcmbFxClient client,
+        IExchangeRateRepository repo,
+        IUnitOfWork uow,
+        CurrencyCatalogSync catalogSync,
+        ILogger<TcmbFxIngestJob> logger)
     {
         _client = client;
         _repo = repo;
         _uow = uow;
+        _catalogSync = catalogSync;
         _logger = logger;
     }
 
@@ -68,9 +75,18 @@ public sealed class TcmbFxIngestJob
             upserted++;
         }
 
+        // The pickable currency list derives from this feed, so a code that just got a rate must
+        // also exist in the catalogue — inside the same transaction as the rates that justify it.
+        var addedCurrencies = await _catalogSync
+            .EnsureAsync(deduped.Select(r => r.Currency), cancellationToken)
+            .ConfigureAwait(false);
+
         await _uow.SaveChangesAsync(cancellationToken);
         await tx.CommitAsync(cancellationToken);
-        _logger.LogInformation("TCMB FX feed upserted {Count} rates.", upserted);
+        _logger.LogInformation(
+            "TCMB FX feed upserted {Count} rates and introduced {Added} currencies.",
+            upserted,
+            addedCurrencies);
         return upserted;
     }
 }

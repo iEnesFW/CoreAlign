@@ -43,6 +43,20 @@ public sealed class PlatformTenantRepository : IPlatformTenantRepository
         _context.Tenants.AnyAsync(t => t.Slug == slug && t.Id != excludingId, ct);
 }
 
+public sealed class CurrencyCatalogRepository : ICurrencyCatalog
+{
+    private readonly CoreAlignDbContext _context;
+    public CurrencyCatalogRepository(CoreAlignDbContext context) => _context = context;
+
+    public async Task<IReadOnlyList<Currency>> ListAllAsync(CancellationToken cancellationToken = default) =>
+        await _context.Currencies.OrderBy(c => c.Code).ToListAsync(cancellationToken);
+
+    public async Task AddAsync(Currency currency, CancellationToken cancellationToken = default) =>
+        await _context.Currencies.AddAsync(currency, cancellationToken);
+
+    public void Update(Currency currency) => _context.Currencies.Update(currency);
+}
+
 public sealed class ExchangeRateRepository : IExchangeRateRepository
 {
     private readonly CoreAlignDbContext _context;

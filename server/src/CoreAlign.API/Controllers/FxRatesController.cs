@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using CoreAlign.Application.Fx;
+using CoreAlign.Application.Treasury.Fx;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -59,8 +60,19 @@ public class FxRatesController : ControllerBase
         return StatusCode(StatusCodes.Status410Gone, new
         {
             error = "deprecated",
-            message = "POST /api/v1/fx-rates/sync is retired. Phase 40 TcmbFxIngestJob (Hangfire) owns the canonical TCMB pipeline.",
+            message = "POST /api/v1/fx-rates/sync is retired. Use POST /api/v1/fx-rates/poll (the Phase 40 TcmbFxIngestJob pipeline).",
         });
+    }
+
+    // TriggerTcmbFxPollCommand had a handler but no route, so the only way to refresh rates
+    // out-of-band was the Hangfire dashboard. The pickable currency catalogue now derives from this
+    // feed, which makes an operator-triggerable refresh part of the contract rather than a nicety.
+    [HttpPost("poll")]
+    [Authorize(Policy = FxRatesPolicies.AdminFxSync)]
+    public async Task<IActionResult> Poll(CancellationToken ct)
+    {
+        var upserted = await _mediator.Send(new TriggerTcmbFxPollCommand(), ct);
+        return Ok(new FxPollResponse(upserted));
     }
 
     [HttpGet("preferences")]
@@ -94,3 +106,5 @@ public static class FxRatesPolicies
 {
     public const string AdminFxSync = "Admin.FxSync";
 }
+
+public sealed record FxPollResponse(int UpsertedRateCount);

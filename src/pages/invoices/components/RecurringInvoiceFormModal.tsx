@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import { useTranslation } from 'react-i18next';
 import { Plus, Repeat, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -319,16 +320,7 @@ export const RecurringInvoiceFormModal = ({ open, onClose, template, onSaved }: 
             </Field>
           )}
           <Field label={t('RecurringInvoices.fields.currency', { defaultValue: 'Para birimi' })}>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className={fieldCls}
-            >
-              <option value="TRY">TRY</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-            </select>
+            <CurrencySelect value={currency} onChange={setCurrency} className={fieldCls} />
           </Field>
           <Field label={t('RecurringInvoices.fields.startDate', { defaultValue: 'Başlangıç' })}>
             <input
