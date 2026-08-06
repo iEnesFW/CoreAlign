@@ -53,7 +53,11 @@ import { templatePlanBounds } from '../model/templates';
 import { useTemplateInsert } from '../hooks/useTemplateInsert';
 import { useSlabEntityActions } from '../hooks/useDesignerEntityActions';
 import { useViewerAppearance } from '../model/viewerAppearance';
-import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
+import {
+  snapshotPanelDims,
+  usePanelEntityActions,
+  useRunEntityActions,
+} from '../hooks/useDesignerEntityActions';
 import { useAddRunMutation } from '../hooks/useGlassProjectQueries';
 import { enqueuePersist } from '../model/persistQueue';
 import { safeRequestWithNotify } from '@/shared/lib/safeRequest';
@@ -413,7 +417,7 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
   const { appearance } = useViewerAppearance();
   const { createPanelFrom, persistPanel, persistRunPanels, persistPanelHardware, deletePanel } =
     usePanelEntityActions();
-  const { persistRun, deleteRun } = useRunEntityActions();
+  const { persistRun, persistRunAndChangedPanels, deleteRun } = useRunEntityActions();
   const { fillWallHole } = useWallAutofill();
   const { insertGlassTemplate } = useTemplateInsert();
   const addRunMutation = useAddRunMutation();
@@ -1409,18 +1413,9 @@ export function DesignerCanvas({ profileSystems, glassTypes, colors }: DesignerC
       });
       return;
     }
-    const beforeWidths = new Map(
-      (scene.runs.find((r) => r.id === runId)?.panels ?? []).map((p) => [p.id, p.widthMm]),
-    );
+    const before = snapshotPanelDims(scene.runs.find((r) => r.id === runId));
     updateRun(runId, patch);
-    persistFreshRun(runId);
-    // A length/arc change rescales the panel widths (withClampedRunLength). Persist the changed
-    // panels so the server stays consistent with the run; otherwise the next reload re-normalizes
-    // them and an arc panel's glass jumps (surfaced by toggling its hardware checkboxes).
-    const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
-    fresh?.panels.forEach((p) => {
-      if (beforeWidths.get(p.id) !== p.widthMm) void persistPanel(runId, p);
-    });
+    void persistRunAndChangedPanels(runId, before);
   };
 
   const onPushStretchRun = (

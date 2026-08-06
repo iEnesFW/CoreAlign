@@ -72,6 +72,40 @@ const toPanelInput = (panel: Omit<ScenePanelState, 'panelIndex'>): UpdatePanelIn
   shapePointsJson: panel.shapePointsJson ?? null,
 });
 
+/**
+ * A run's persisted panel dimensions, captured BEFORE a geometry edit.
+ *
+ * WHY this exists: `UpdateRunCommandHandler` writes the run's geometry and NOTHING else — it never
+ * redistributes panel widths. The store does redistribute (withClampedRunLength / clampRunPatch) and
+ * `projectToScene` re-normalizes on every refetch, so the screen looks right while the server keeps
+ * the old widths and the BOM / cut list measures the wrong glass. Five call sites each rolled their
+ * own before/after diff (one compared widths only, one had none at all); this is the single writer.
+ */
+export interface PanelDimSnapshot {
+  widthMm: number;
+  heightMm: number | null;
+  shapePointsJson: string | null;
+}
+
+export const snapshotPanelDims = (
+  run: { panels: ScenePanelState[] } | undefined,
+): Map<string, PanelDimSnapshot> =>
+  new Map(
+    (run?.panels ?? []).map((p) => [
+      p.id,
+      {
+        widthMm: p.widthMm,
+        heightMm: p.heightMm ?? null,
+        shapePointsJson: p.shapePointsJson ?? null,
+      },
+    ]),
+  );
+
+export const panelDimsChanged = (before: PanelDimSnapshot, panel: ScenePanelState): boolean =>
+  before.widthMm !== panel.widthMm ||
+  before.heightMm !== (panel.heightMm ?? null) ||
+  before.shapePointsJson !== (panel.shapePointsJson ?? null);
+
 export const useRunEntityActions = () => {
   const { t } = useTranslation();
   const projectId = useDesignerStore((s) => s.projectId);
@@ -192,7 +226,37 @@ export const useRunEntityActions = () => {
     }
   };
 
-  return { persistRun, deleteRun, rebalance };
+  /**
+   * Persist a run's geometry AND every panel the store re-fitted as a result.
+   * Pass the snapshot taken with `snapshotPanelDims` BEFORE the store mutation.
+   */
+  const persistRunAndChangedPanels = async (
+    runId: string,
+    before: Map<string, PanelDimSnapshot>,
+  ) => {
+    if (!projectId) return;
+    const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
+    if (!fresh) return;
+    await persistRun(fresh);
+    for (const panel of fresh.panels) {
+      const prev = before.get(panel.id);
+      // A panel the snapshot does not know is a NEW row; those go through createPanel /
+      // setRunPanels, and an update against an id the server has not seen yet would 404.
+      if (!prev || !panelDimsChanged(prev, panel)) continue;
+      await safeRequestWithNotify(
+        enqueuePersist(() =>
+          updatePanelMutation.mutateAsync({
+            id: projectId,
+            runId,
+            panelId: panel.id,
+            input: toPanelInput(panel),
+          }),
+        ),
+      );
+    }
+  };
+
+  return { persistRun, persistRunAndChangedPanels, deleteRun, rebalance };
 };
 
 export const usePanelEntityActions = () => {

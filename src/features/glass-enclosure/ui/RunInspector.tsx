@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '../model/designerStore';
-import { usePanelEntityActions, useRunEntityActions } from '../hooks/useDesignerEntityActions';
+import { snapshotPanelDims, useRunEntityActions } from '../hooks/useDesignerEntityActions';
 import { queueToast } from '@/shared/api/toastQueue';
 import { arcFromCornerResize, isRealArc, minArcRadiusMm } from '../model/arcGeometry';
 import { SHADOW_GAP_MM } from '../model/mountDepth';
@@ -29,8 +29,7 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
   const runs = useDesignerStore((s) => s.scene.runs);
   const updateRun = useDesignerStore((s) => s.updateRun);
   const setRunFrame = useDesignerStore((s) => s.setRunFrame);
-  const { persistRun, deleteRun, rebalance } = useRunEntityActions();
-  const { persistPanel } = usePanelEntityActions();
+  const { persistRunAndChangedPanels, deleteRun, rebalance } = useRunEntityActions();
 
   const run = useMemo(() => runs.find((r) => r.id === selection.runId), [runs, selection.runId]);
   const [draft, setDraft] = useState<typeof run>(run);
@@ -78,19 +77,11 @@ export function RunInspector({ profileSystems, colors, glassTypes, sections }: R
         return;
       }
     }
-    const before = new Map(run.panels.map((p) => [p.id, { w: p.widthMm, h: p.heightMm }]));
-    updateRun(run.id, patch);
     // Persist the STORE's post-commit state, not the raw patch — the store clamps lengthMm
-    // (withClampedRunLength), so persisting the raw value diverged local vs server.
-    const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
-    void persistRun(fresh ?? { ...run, ...patch });
-    // A length/arc edit rescales the panel widths (withClampedRunLength) and a height reduction
-    // re-fits taller panel overrides (clampRunPatch). Persist whatever the store actually changed —
-    // otherwise the server keeps the old pane and the cut list is built from it.
-    fresh?.panels.forEach((p) => {
-      const prev = before.get(p.id);
-      if (prev?.w !== p.widthMm || prev?.h !== p.heightMm) void persistPanel(run.id, p);
-    });
+    // (withClampedRunLength) and re-fits panels, so persisting the raw value diverged local vs server.
+    const before = snapshotPanelDims(run);
+    updateRun(run.id, patch);
+    void persistRunAndChangedPanels(run.id, before);
   };
 
   // Editing the Length of an ARC run changes the CHORD: keep the curl angle (sweep) and re-derive

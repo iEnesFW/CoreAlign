@@ -55,7 +55,10 @@ import { logger } from '@/shared/lib/logger';
 import { snapAngleDeg } from '@/features/glass-enclosure/model/angleSnap';
 import { useSceneSync } from '@/features/glass-enclosure/hooks/useSceneSync';
 import { useSceneAutosave } from '@/features/glass-enclosure/hooks/useSceneAutosave';
-import { useDesignerEntityActions } from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
+import {
+  snapshotPanelDims,
+  useDesignerEntityActions,
+} from '@/features/glass-enclosure/hooks/useDesignerEntityActions';
 import { useMultiSelectionDelete } from '@/features/glass-enclosure/hooks/useMultiSelectionDelete';
 import { useWallAutofill } from '@/features/glass-enclosure/hooks/useWallAutofill';
 import { enqueuePersist } from '@/features/glass-enclosure/model/persistQueue';
@@ -266,7 +269,8 @@ export function GlassProjectDesignerPage() {
     }
   }, [handleCopy, handleArmPaste]);
 
-  const { deleteRun, deletePanel, persistRun, persistPanel } = useDesignerEntityActions();
+  const { deleteRun, deletePanel, persistRun, persistRunAndChangedPanels } =
+    useDesignerEntityActions();
   const { deleteMultiSelection } = useMultiSelectionDelete();
 
   const handleDeleteSelection = useCallback(() => {
@@ -693,16 +697,11 @@ export function GlassProjectDesignerPage() {
           rotationDeg: rotationFromChordAngleDeg(shape, geometry.rotationDeg),
         };
       }
-      const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+      const before = snapshotPanelDims(run);
       useDesignerStore.getState().updateRun(runId, patch);
-      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === runId);
-      if (!fresh) return;
-      await persistRun(fresh);
-      for (const p of fresh.panels) {
-        if (beforeWidths.get(p.id) !== p.widthMm) await persistPanel(runId, p);
-      }
+      await persistRunAndChangedPanels(runId, before);
     },
-    [id, persistRun, persistPanel, t],
+    [id, persistRunAndChangedPanels, t],
   );
 
   const handleAddConnectionCandidate = useCallback(

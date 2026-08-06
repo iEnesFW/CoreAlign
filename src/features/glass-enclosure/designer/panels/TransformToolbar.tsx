@@ -3,7 +3,7 @@ import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDesignerStore } from '@/features/glass-enclosure/model/designerStore';
 import {
-  usePanelEntityActions,
+  snapshotPanelDims,
   useRunEntityActions,
   useSlabEntityActions,
   useWallEntityActions,
@@ -87,8 +87,7 @@ const NumericField = ({ label, unit, value, onCommit }: NumericFieldProps) => {
 const RunFields = ({ run }: { run: SceneRunState }) => {
   const { t } = useTranslation();
   const updateRun = useDesignerStore((s) => s.updateRun);
-  const { persistRun } = useRunEntityActions();
-  const { persistPanel } = usePanelEntityActions();
+  const { persistRunAndChangedPanels } = useRunEntityActions();
 
   const commit = (patch: Partial<SceneRunState>) => {
     // WHY: on an ARC run a typed length is a keep-sweep chord resize — persisting the new chord
@@ -122,14 +121,9 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
     }
     // Widths are redistributed by an arc/length change; a HEIGHT reduction re-fits taller panel
     // overrides (clampRunPatch). Both have to reach the server or the cut list keeps the old pane.
-    const before = new Map(run.panels.map((p) => [p.id, { w: p.widthMm, h: p.heightMm }]));
+    const before = snapshotPanelDims(run);
     updateRun(run.id, effective);
-    const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
-    void persistRun(freshRun ?? candidate);
-    for (const p of freshRun?.panels ?? []) {
-      const prev = before.get(p.id);
-      if (prev?.w !== p.widthMm || prev?.h !== p.heightMm) void persistPanel(run.id, p);
-    }
+    void persistRunAndChangedPanels(run.id, before);
   };
 
   return (
@@ -177,27 +171,16 @@ const RunFields = ({ run }: { run: SceneRunState }) => {
 const PanelFields = ({ run, panel }: { run: SceneRunState; panel: ScenePanelState }) => {
   const { t } = useTranslation();
   const updatePanel = useDesignerStore((s) => s.updatePanel);
-  const { persistPanel } = usePanelEntityActions();
-  const { persistRun } = useRunEntityActions();
+  const { persistRunAndChangedPanels } = useRunEntityActions();
 
   const commitWidth = (value: number) => {
     // Persist the STORE's post-commit state: on an ARC run the width is pinned/clamped and the
     // sibling widths are REDISTRIBUTED (pinPanelWidth) — persisting the raw value would leave the
     // server with stale siblings (Σ ≠ the developed length).
     const widthMm = Math.max(100, Math.round(value));
-    const beforeWidths = new Map(run.panels.map((p) => [p.id, p.widthMm]));
+    const before = snapshotPanelDims(run);
     updatePanel(run.id, panel.id, { widthMm });
-    const freshRun = useDesignerStore.getState().scene.runs.find((r) => r.id === run.id);
-    const freshPanel = freshRun?.panels.find((p) => p.id === panel.id);
-    void persistPanel(run.id, freshPanel ?? { ...panel, widthMm });
-    if (freshRun) {
-      freshRun.panels.forEach((p) => {
-        if (p.id !== panel.id && beforeWidths.get(p.id) !== p.widthMm) {
-          void persistPanel(run.id, p);
-        }
-      });
-      void persistRun(freshRun);
-    }
+    void persistRunAndChangedPanels(run.id, before);
   };
 
   return (

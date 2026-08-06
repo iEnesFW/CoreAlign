@@ -18,7 +18,7 @@ import {
   buildWallFootprint,
   penetratesAny,
 } from '../scene/interaction/planCollision';
-import { useRunEntityActions } from './useDesignerEntityActions';
+import { snapshotPanelDims, useRunEntityActions } from './useDesignerEntityActions';
 import type { AlignTarget } from '../model/multiAlign';
 import type { PlanFootprint } from '../scene/interaction/planCollision';
 import type {
@@ -96,7 +96,7 @@ const moveOp = (target: AlignTarget, dxMm: number, dyMm: number): PatchOp => {
 
 export const useMultiAlignActions = () => {
   const { t } = useTranslation();
-  const { persistRun } = useRunEntityActions();
+  const { persistRunAndChangedPanels } = useRunEntityActions();
 
   const collectTargets = (): AlignTarget[] => {
     const state = useDesignerStore.getState();
@@ -128,11 +128,19 @@ export const useMultiAlignActions = () => {
   const commitOps = (ops: PatchOp[]) => {
     if (ops.length === 0) return;
     const state = useDesignerStore.getState();
+    // "Equalize lengths" rewrites lengthMm, which makes the store redistribute the run's panel
+    // widths. Persisting only the run left the server on the OLD widths and the cut list short.
+    const before = new Map(
+      ops
+        .filter((op) => op.kind === 'run')
+        .map(
+          (op) => [op.id, snapshotPanelDims(state.scene.runs.find((r) => r.id === op.id))] as const,
+        ),
+    );
     state.applyScenePatch((scene) => applyOps(scene, ops));
     for (const op of ops) {
       if (op.kind !== 'run') continue;
-      const fresh = useDesignerStore.getState().scene.runs.find((r) => r.id === op.id);
-      if (fresh) void persistRun(fresh);
+      void persistRunAndChangedPanels(op.id, before.get(op.id) ?? new Map());
     }
   };
 
