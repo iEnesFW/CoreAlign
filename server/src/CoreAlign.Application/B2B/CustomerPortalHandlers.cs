@@ -90,7 +90,7 @@ public class GetCustomerPortalDashboardHandler : IRequestHandler<GetCustomerPort
         var linkedDealers = await _dealers.ListByCustomerAsync(customerId, cancellationToken);
         var totalActiveDealers = linkedDealers.Count(d => d.Status == DealerAccountStatus.Active);
 
-        var (recentOrderRows, _) = await _orders.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken);
+        var (recentOrderRows, _) = await _orders.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken: cancellationToken);
         var recentOrders = recentOrderRows.Select(OrderMapper.ToSummaryDto).ToList();
 
         var (recentInvoiceRows, _) = await _invoices.SearchAsync(null, customerId, 1, RecentLimit, cancellationToken: cancellationToken);
@@ -140,7 +140,7 @@ public class GetCustomerPortalOrdersHandler : IRequestHandler<GetCustomerPortalO
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
 
-        var (items, total) = await _orders.SearchAsync(null, customerId, page, pageSize, cancellationToken);
+        var (items, total) = await _orders.SearchAsync(null, customerId, page, pageSize, cancellationToken: cancellationToken);
 
         IEnumerable<OrderSearchRow> filtered = items;
         if (!string.IsNullOrWhiteSpace(request.Status)

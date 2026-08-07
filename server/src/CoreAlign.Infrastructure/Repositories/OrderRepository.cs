@@ -82,9 +82,22 @@ public class OrderRepository : IOrderRepository
         Guid? customerId,
         int page,
         int pageSize,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Orders.AsNoTracking().AsQueryable();
+
+        if (fiscalFromUtc.HasValue)
+        {
+            var from = DateTime.SpecifyKind(fiscalFromUtc.Value, DateTimeKind.Utc);
+            query = query.Where(o => o.OrderDate >= from);
+        }
+        if (fiscalToExclusiveUtc.HasValue)
+        {
+            var to = DateTime.SpecifyKind(fiscalToExclusiveUtc.Value, DateTimeKind.Utc);
+            query = query.Where(o => o.OrderDate < to);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {

@@ -17,10 +17,10 @@ export const useInvoicesQuery = (params: InvoiceListParams, options?: { enabled?
     enabled: options?.enabled ?? true,
   });
 
-export const useInvoiceAggregatesQuery = (search?: string) =>
+export const useInvoiceAggregatesQuery = (search?: string, fiscalYear?: number) =>
   useQuery({
-    queryKey: invoiceKeys.aggregates(search),
-    queryFn: () => invoicesApi.aggregates(search),
+    queryKey: invoiceKeys.aggregates(search, fiscalYear),
+    queryFn: () => invoicesApi.aggregates(search, undefined, fiscalYear),
     placeholderData: (previous) => previous,
   });
 

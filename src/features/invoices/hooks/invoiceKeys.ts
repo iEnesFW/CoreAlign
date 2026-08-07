@@ -7,5 +7,6 @@ export const invoiceKeys = {
   details: () => [...invoiceKeys.all, 'detail'] as const,
   detail: (id: string | null) => [...invoiceKeys.details(), id] as const,
   byOrder: (orderId: string | null) => [...invoiceKeys.all, 'by-order', orderId] as const,
-  aggregates: (search?: string) => [...invoiceKeys.all, 'aggregates', search ?? ''] as const,
+  aggregates: (search?: string, fiscalYear?: number) =>
+    [...invoiceKeys.all, 'aggregates', search ?? '', fiscalYear ?? ''] as const,
 };

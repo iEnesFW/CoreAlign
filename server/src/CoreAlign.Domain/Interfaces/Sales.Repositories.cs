@@ -143,6 +143,8 @@ public interface IOrderRepository
         Guid? customerId,
         int page,
         int pageSize,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<OrderSearchRow> Items, int Total)> SearchByDealerAsync(
         Guid dealerAccountId,
@@ -238,6 +240,8 @@ public interface IInvoiceRepository
         string? statusBucket = null,
         bool dueSoonOnly = false,
         DateTime? nowUtc = null,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Invoice>> GetOpenForCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MonthlyInvoiceTotal>> GetMonthlyRevenueByCustomerAsync(
@@ -265,6 +269,8 @@ public interface IInvoiceRepository
         string? search,
         Guid? customerId,
         DateTime nowUtc,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Invoice>> GetCreditNotesForInvoiceAsync(
         Guid invoiceId,

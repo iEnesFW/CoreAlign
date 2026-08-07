@@ -52,6 +52,27 @@ public class InvoiceRepository : IInvoiceRepository
         return query.AnyAsync(cancellationToken);
     }
 
+    // WHY IssueDate and not PostingDate: this is the LIST window, and the grid sorts by IssueDate.
+    // Filtering on a different column than the one shown would let a row sit outside the year the
+    // user selected while still displaying a date inside it. GL reports window on PostingDate.
+    private static IQueryable<Invoice> ApplyFiscalRange(
+        IQueryable<Invoice> query,
+        DateTime? fromUtc,
+        DateTime? toExclusiveUtc)
+    {
+        if (fromUtc.HasValue)
+        {
+            var from = DateTime.SpecifyKind(fromUtc.Value, DateTimeKind.Utc);
+            query = query.Where(i => i.IssueDate >= from);
+        }
+        if (toExclusiveUtc.HasValue)
+        {
+            var to = DateTime.SpecifyKind(toExclusiveUtc.Value, DateTimeKind.Utc);
+            query = query.Where(i => i.IssueDate < to);
+        }
+        return query;
+    }
+
     public async Task<(IReadOnlyList<InvoiceSearchRow> Items, int Total)> SearchAsync(
         string? search,
         Guid? customerId,
@@ -60,6 +81,8 @@ public class InvoiceRepository : IInvoiceRepository
         string? statusBucket = null,
         bool dueSoonOnly = false,
         DateTime? nowUtc = null,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default)
     {
         // No .Include(Customer): the customer name lives on the snapshot field
@@ -68,11 +91,14 @@ public class InvoiceRepository : IInvoiceRepository
         // columns InvoiceSearchRow needs — JSONB snapshots/breakdown and long
         // notes never leave the server.
         var now = DateTime.SpecifyKind(nowUtc ?? DateTime.UtcNow, DateTimeKind.Utc);
-        var query = ApplyBucketFilter(
-            ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId),
-            statusBucket,
-            dueSoonOnly,
-            now);
+        var query = ApplyFiscalRange(
+            ApplyBucketFilter(
+                ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId),
+                statusBucket,
+                dueSoonOnly,
+                now),
+            fiscalFromUtc,
+            fiscalToExclusiveUtc);
 
         var total = await query.CountAsync(cancellationToken);
 
@@ -175,11 +201,18 @@ public class InvoiceRepository : IInvoiceRepository
         string? search,
         Guid? customerId,
         DateTime nowUtc,
+        DateTime? fiscalFromUtc = null,
+        DateTime? fiscalToExclusiveUtc = null,
         CancellationToken cancellationToken = default)
     {
         var now = DateTime.SpecifyKind(nowUtc, DateTimeKind.Utc);
         var soon = now.AddDays(7);
-        var query = ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId);
+        // The aggregate must see EXACTLY the rows the list sees, fiscal window included, or the
+        // KPI tiles would claim a tenant-wide total while the grid below shows one year.
+        var query = ApplyFiscalRange(
+            ApplyListFilter(_context.Invoices.AsNoTracking(), search, customerId),
+            fiscalFromUtc,
+            fiscalToExclusiveUtc);
 
         // Per-status counts + running sums in one GROUP BY (mirrors GetInvoiceStatusBreakdownAsync).
         // AmountDue == Total - AmountPaid (list rows are unclamped, so the sum matches the page KPI exactly).

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { FiscalYearSelect } from './FiscalYearSelect';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
@@ -167,6 +168,8 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleSidebar }) => {
         >
           {todayLabel}
         </span>
+
+        <FiscalYearSelect />
 
         <div className="mr-1 hidden lg:inline-flex">
           <FxRateBadge currencyCode="USD" />

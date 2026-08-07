@@ -54,7 +54,7 @@ public class GetCustomerOverviewQueryHandler : IRequestHandler<GetCustomerOvervi
         var balanceTask = RunScopedAsync<ICustomerLedgerRepository, decimal>(
             (r, t) => r.GetCurrentBalanceAsync(customerId, t), ct);
         var ordersTask = RunScopedAsync<IOrderRepository, IReadOnlyList<OrderSearchRow>>(
-            async (r, t) => (await r.SearchAsync(null, customerId, 1, 5, t)).Items, ct);
+            async (r, t) => (await r.SearchAsync(null, customerId, 1, 5, cancellationToken: t)).Items, ct);
         var invoicesTask = RunScopedAsync<IInvoiceRepository, IReadOnlyList<InvoiceSearchRow>>(
             async (r, t) => (await r.SearchAsync(null, customerId, 1, 5, cancellationToken: t)).Items, ct);
         var paymentsTask = RunScopedAsync<IPaymentRepository, IReadOnlyList<Domain.Entities.Payment>>(

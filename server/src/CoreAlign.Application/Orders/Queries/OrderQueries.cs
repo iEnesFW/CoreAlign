@@ -8,7 +8,8 @@ public record GetOrdersQuery(
     int Page = 1,
     int PageSize = 20,
     string? Search = null,
-    Guid? CustomerId = null
+    Guid? CustomerId = null,
+    int? FiscalYear = null
 ) : IRequest<PagedResult<OrderSummaryDto>>;
 
 public record GetOrderByIdQuery(Guid Id) : IRequest<OrderDto>;

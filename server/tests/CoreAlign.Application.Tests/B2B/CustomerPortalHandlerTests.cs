@@ -48,7 +48,7 @@ public class CustomerPortalHandlerTests
         var myRow = new OrderSearchRow(
             Guid.NewGuid(), "ORD-1", callerCustomerId, "Acme Holding",
             DateTime.UtcNow, OrderStatus.Submitted, "TRY", 100m);
-        _orders.SearchAsync(null, callerCustomerId, Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+        _orders.SearchAsync(null, callerCustomerId, Arg.Any<int>(), Arg.Any<int>(), cancellationToken: Arg.Any<CancellationToken>())
             .Returns((new[] { myRow }, 1));
 
         var handler = new GetCustomerPortalOrdersHandler(_scope, _orders);
@@ -64,14 +64,12 @@ public class CustomerPortalHandlerTests
             Arg.Any<string?>(),
             callerCustomerId,
             Arg.Any<int>(),
-            Arg.Any<int>(),
-            Arg.Any<CancellationToken>());
+            Arg.Any<int>(), cancellationToken: Arg.Any<CancellationToken>());
         await _orders.DidNotReceive().SearchAsync(
             Arg.Any<string?>(),
             otherCustomerId,
             Arg.Any<int>(),
-            Arg.Any<int>(),
-            Arg.Any<CancellationToken>());
+            Arg.Any<int>(), cancellationToken: Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -127,9 +125,9 @@ public class CustomerPortalHandlerTests
         _dealers.ListByCustomerAsync(customerId, Arg.Any<CancellationToken>())
             .Returns(new[] { activeDealer, suspendedDealer });
 
-        _orders.SearchAsync(null, customerId, 1, 5, Arg.Any<CancellationToken>())
+        _orders.SearchAsync(null, customerId, 1, 5, cancellationToken: Arg.Any<CancellationToken>())
             .Returns((Array.Empty<OrderSearchRow>(), 0));
-        _invoices.SearchAsync(null, customerId, 1, 5, null, false, null, Arg.Any<CancellationToken>())
+        _invoices.SearchAsync(null, customerId, 1, 5, null, false, null, cancellationToken: Arg.Any<CancellationToken>())
             .Returns((Array.Empty<InvoiceSearchRow>(), 0));
 
         var customer = new Customer("Acme Holding") { Id = customerId, TenantId = TenantId };

@@ -10,10 +10,11 @@ public record GetInvoicesQuery(
     string? Search = null,
     Guid? CustomerId = null,
     string? StatusBucket = null,
-    bool DueSoonOnly = false)
+    bool DueSoonOnly = false,
+    int? FiscalYear = null)
     : IRequest<PagedResult<InvoiceSummaryDto>>;
 
-public record GetInvoiceAggregatesQuery(string? Search = null, Guid? CustomerId = null)
+public record GetInvoiceAggregatesQuery(string? Search = null, Guid? CustomerId = null, int? FiscalYear = null)
     : IRequest<InvoiceAggregatesDto>;
 
 public record GetInvoiceByIdQuery(Guid Id) : IRequest<InvoiceDto>;

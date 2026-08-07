@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useActiveFiscalYear } from '@/shared/lib/store/fiscalYearStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -117,13 +118,15 @@ export const OrdersPage = () => {
     }
   }, [focusFromUrl, searchParams, setSearchParams]);
 
+  const fiscalYear = useActiveFiscalYear() ?? undefined;
   const queryParams = useMemo(
     () => ({
       page,
       pageSize,
       search: debouncedSearch.trim() || undefined,
+      fiscalYear,
     }),
-    [page, pageSize, debouncedSearch],
+    [page, pageSize, debouncedSearch, fiscalYear],
   );
 
   const ordersQuery = useOrdersQuery(queryParams);

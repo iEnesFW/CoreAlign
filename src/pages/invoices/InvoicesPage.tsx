@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useActiveFiscalYear } from '@/shared/lib/store/fiscalYearStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -86,6 +87,7 @@ export const InvoicesPage = () => {
   }, [focusFromUrl, searchParams, setSearchParams]);
 
   const searchParam = debouncedSearch.trim() || undefined;
+  const fiscalYear = useActiveFiscalYear() ?? undefined;
   const params = useMemo(
     () => ({
       page,
@@ -93,14 +95,15 @@ export const InvoicesPage = () => {
       search: searchParam,
       statusBucket: statusBucket === 'all' ? undefined : statusBucket,
       dueSoonOnly: hasDueSoonOnly || undefined,
+      fiscalYear,
     }),
-    [page, pageSize, searchParam, statusBucket, hasDueSoonOnly],
+    [page, pageSize, searchParam, statusBucket, hasDueSoonOnly, fiscalYear],
   );
 
   const invoicesQuery = useInvoicesQuery(params);
   // Header KPIs + bucket counts aggregate the whole tenant result set (matching the
   // search), server-side — so they never depend on which page/bucket is visible.
-  const aggregatesQuery = useInvoiceAggregatesQuery(searchParam);
+  const aggregatesQuery = useInvoiceAggregatesQuery(searchParam, fiscalYear);
   const markPaidMutation = useMarkInvoicePaid();
   const cancelMutation = useCancelInvoice();
   const confirm = useConfirm();

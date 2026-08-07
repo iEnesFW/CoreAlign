@@ -8604,5 +8604,9 @@
     "step_skipped": "Operation skipped",
     "ready_to_complete_title": "All Steps Completed",
     "ready_to_complete_desc": "All required operations are done. The job is ready to be marked as complete and stock to be received."
+  },
+  "FiscalYear": {
+    "label": "Fiscal year",
+    "title": "Working year — lists and totals are filtered to this year"
   }
 }

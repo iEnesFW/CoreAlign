@@ -150,6 +150,7 @@ export interface InvoiceListParams {
   customerId?: string;
   statusBucket?: string;
   dueSoonOnly?: boolean;
+  fiscalYear?: number;
 }
 
 export interface InvoiceAggregates {

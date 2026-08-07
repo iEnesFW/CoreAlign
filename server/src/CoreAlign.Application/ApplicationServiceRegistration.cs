@@ -1,4 +1,5 @@
 using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Common;
 using CoreAlign.Application.Catalog.Linker;
 using CoreAlign.Application.Common.Behaviors;
 using CoreAlign.Application.Common.Outbox;
@@ -33,6 +34,8 @@ public static class ApplicationServiceRegistration
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
+        services.AddScoped<IFiscalYearResolver, FiscalYearResolver>();
+
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ConcurrencyTokenBehavior<,>));

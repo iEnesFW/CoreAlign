@@ -30,10 +30,11 @@ public class InvoicesController : ControllerBase
         [FromQuery] Guid? customerId = null,
         [FromQuery] string? statusBucket = null,
         [FromQuery] bool dueSoonOnly = false,
+        [FromQuery] int? fiscalYear = null,
         CancellationToken cancellationToken = default)
     {
         var result = await _mediator.Send(
-            new GetInvoicesQuery(page, pageSize, search, customerId, statusBucket, dueSoonOnly),
+            new GetInvoicesQuery(page, pageSize, search, customerId, statusBucket, dueSoonOnly, fiscalYear),
             cancellationToken);
         return result.ToOk();
     }
@@ -42,9 +43,10 @@ public class InvoicesController : ControllerBase
     public async Task<IActionResult> GetInvoiceAggregatesAsync(
         [FromQuery] string? search = null,
         [FromQuery] Guid? customerId = null,
+        [FromQuery] int? fiscalYear = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetInvoiceAggregatesQuery(search, customerId), cancellationToken);
+        var result = await _mediator.Send(new GetInvoiceAggregatesQuery(search, customerId, fiscalYear), cancellationToken);
         return result.ToOk();
     }
 

@@ -8604,5 +8604,9 @@
     "step_skipped": "Operasyon atlandı",
     "ready_to_complete_title": "Tüm Adımlar Tamamlandı",
     "ready_to_complete_desc": "Tüm zorunlu operasyonlar bitti. İş tamamlandı olarak işaretlenebilir ve stok girişi yapılabilir."
+  },
+  "FiscalYear": {
+    "label": "Mali yıl",
+    "title": "Çalışma yılı — listeler ve özetler bu yıla göre süzülür"
   }
 }

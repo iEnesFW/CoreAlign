@@ -33,9 +33,10 @@ public class OrdersController : ControllerBase
         [FromQuery] int pageSize = 20,
         [FromQuery] string? search = null,
         [FromQuery] Guid? customerId = null,
+        [FromQuery] int? fiscalYear = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _mediator.Send(new GetOrdersQuery(page, pageSize, search, customerId), cancellationToken);
+        var result = await _mediator.Send(new GetOrdersQuery(page, pageSize, search, customerId, fiscalYear), cancellationToken);
         return result.ToOk();
     }
 

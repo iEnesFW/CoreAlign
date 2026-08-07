@@ -213,6 +213,7 @@ export interface OrderListParams {
   pageSize: number;
   search?: string;
   customerId?: string;
+  fiscalYear?: number;
 }
 
 export type ShipmentStatus =
