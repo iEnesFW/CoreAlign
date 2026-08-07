@@ -126,6 +126,7 @@ export interface CreateSubscriptionOrderInput {
   items: Array<{ moduleId: string; planId: string }>;
   gatewayName?: string | null;
   billingInfo?: SubscriptionBillingInfoInput | null;
+  operationId?: string;
 }
 
 export interface PaymentGatewayDescriptor {

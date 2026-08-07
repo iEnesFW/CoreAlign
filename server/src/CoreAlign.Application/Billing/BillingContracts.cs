@@ -28,7 +28,8 @@ public record CreateSubscriptionOrderCommand(
     string? GatewayName = null,
     SubscriptionBillingInfoInput? BillingInfo = null,
     Guid CurrentUserId = default,
-    string? BuyerIpAddress = null) : IRequest<SubscriptionOrderCreationResult>, ITransactionalRequest;
+    string? BuyerIpAddress = null,
+    Guid? OperationId = null) : IRequest<SubscriptionOrderCreationResult>, ITransactionalRequest;
 
 public record ApplyMockPaymentApprovalCommand(
     Guid OrderId,

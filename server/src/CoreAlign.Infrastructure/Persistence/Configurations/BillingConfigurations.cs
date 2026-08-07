@@ -56,8 +56,18 @@ public class TenantModuleConfiguration : IEntityTypeConfiguration<TenantModule>
         builder.Property(t => t.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(t => t.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(t => t.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
+
         builder.HasIndex(t => new { t.TenantId, t.ModuleId }).IsUnique();
         builder.HasIndex(t => new { t.TenantId, t.EndUtc });
+
+        // A grant is worthless without the module it points at; Restrict blocks deleting a module
+        // that a tenant still holds (the catalogue is deactivated, never deleted).
+        builder.HasOne<Module>()
+            .WithMany()
+            .HasForeignKey(t => t.ModuleId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired();
     }
 }
 
@@ -72,6 +82,7 @@ public class SubscriptionOrderConfiguration : IEntityTypeConfiguration<Subscript
         builder.Property(o => o.Currency).HasMaxLength(3).IsRequired();
         builder.Property(o => o.GatewayName).HasMaxLength(32);
         builder.Property(o => o.GatewayIntentId).HasMaxLength(128);
+        builder.Property(o => o.GatewayRedirectUrl).HasMaxLength(1000);
         builder.Property(o => o.PaymentReference).HasMaxLength(128);
         builder.Property(o => o.PaymentTransactionId).HasMaxLength(128);
         builder.Property(o => o.Notes).HasMaxLength(1000);
@@ -90,11 +101,22 @@ public class SubscriptionOrderConfiguration : IEntityTypeConfiguration<Subscript
         builder.Property(o => o.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(o => o.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
+        builder.Property(o => o.ConcurrencyToken).IsConcurrencyToken().HasDefaultValue(0L);
+
         builder.HasIndex(o => new { o.TenantId, o.OrderNumber }).IsUnique();
         builder.HasIndex(o => new { o.TenantId, o.Status, o.CreatedAtUtc });
+
+        // Unique, not just indexed: the intent id is how a gateway callback finds its order, so two
+        // orders sharing one intent would let a single payment be applied twice.
         builder.HasIndex(o => new { o.GatewayName, o.GatewayIntentId })
+            .IsUnique()
             .HasFilter("gateway_intent_id IS NOT NULL")
             .HasDatabaseName("ix_subscription_orders_gateway_intent");
+
+        builder.HasIndex(o => new { o.TenantId, o.OperationId })
+            .IsUnique()
+            .HasFilter("operation_id IS NOT NULL")
+            .HasDatabaseName("ux_subscription_orders_tenant_operation");
 
         builder.HasMany(o => o.Items)
             .WithOne(i => i.Order)

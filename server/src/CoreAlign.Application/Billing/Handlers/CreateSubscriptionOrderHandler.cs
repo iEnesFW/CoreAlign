@@ -52,6 +52,23 @@ public class CreateSubscriptionOrderHandler : IRequestHandler<CreateSubscription
         if (request.Items.Count == 0) throw new ArgumentException("At least one item is required.", nameof(request));
 
         var tenantId = _tenant.RequireTenantId();
+
+        // Durable replay guard: a double submit (or a network retry) must not burn a second order
+        // number, create a second gateway intent, or charge the buyer twice. The DB backs it with a
+        // partial unique index on (tenant_id, operation_id).
+        if (request.OperationId is { } operationId && operationId != Guid.Empty)
+        {
+            var replay = await _orders.GetByOperationIdAsync(operationId, cancellationToken);
+            if (replay is not null)
+            {
+                return new SubscriptionOrderCreationResult(
+                    BillingMapper.ToDto(replay),
+                    replay.GatewayName ?? string.Empty,
+                    replay.GatewayIntentId,
+                    replay.GatewayRedirectUrl);
+            }
+        }
+
         var gatewayName = ResolveGatewayName(request.GatewayName);
         var gateway = _gateways.Find(gatewayName)
             ?? throw new PaymentGatewayNotConfiguredException(gatewayName);
@@ -91,7 +108,7 @@ public class CreateSubscriptionOrderHandler : IRequestHandler<CreateSubscription
         await _uow.SaveChangesAsync(cancellationToken);
         var orderNumber = await _sequences.ConsumeAsync(DocumentSequenceType.SubscriptionOrderNumber, DateTime.UtcNow, cancellationToken);
 
-        var order = new SubscriptionOrder(orderNumber, request.CurrentUserId, firstCurrency);
+        var order = new SubscriptionOrder(orderNumber, request.CurrentUserId, firstCurrency, null, request.OperationId);
         foreach (var input in request.Items)
         {
             var module = modules[input.ModuleId];
@@ -145,7 +162,7 @@ public class CreateSubscriptionOrderHandler : IRequestHandler<CreateSubscription
             billingInfo,
             lineItems);
         var intent = await gateway.CreateIntentAsync(intentRequest, cancellationToken);
-        order.AttachIntent(gateway.Name, intent.IntentId);
+        order.AttachIntent(gateway.Name, intent.IntentId, intent.RedirectUrl);
 
         await _attempts.AddAsync(new PaymentAttempt(
             order.Id,

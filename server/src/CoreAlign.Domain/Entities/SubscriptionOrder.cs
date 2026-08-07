@@ -10,15 +10,21 @@ namespace CoreAlign.Domain.Entities;
 /// provisioned). Items hold a price snapshot so the order survives catalog
 /// changes.
 /// </summary>
-public class SubscriptionOrder : TenantEntity
+public class SubscriptionOrder : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public string OrderNumber { get; private set; } = string.Empty;
+    /// <summary>Client-supplied replay key; a retry of the same checkout returns the first order.</summary>
+    public Guid? OperationId { get; private set; }
     public SubscriptionOrderStatus Status { get; private set; }
     public decimal TotalAmount { get; private set; }
     public string Currency { get; private set; } = "TRY";
     public Guid CreatedByUserId { get; private set; }
     public string? GatewayName { get; private set; }
     public string? GatewayIntentId { get; private set; }
+    public string? GatewayRedirectUrl { get; private set; }
     public string? PaymentReference { get; private set; }
     public string? PaymentTransactionId { get; private set; }
     public DateTime? PaidAtUtc { get; private set; }
@@ -41,13 +47,14 @@ public class SubscriptionOrder : TenantEntity
 
     protected SubscriptionOrder() { }
 
-    public SubscriptionOrder(string orderNumber, Guid createdByUserId, string currency, string? notes = null)
+    public SubscriptionOrder(string orderNumber, Guid createdByUserId, string currency, string? notes = null, Guid? operationId = null)
     {
         if (string.IsNullOrWhiteSpace(orderNumber)) throw new ArgumentException("OrderNumber is required.", nameof(orderNumber));
         if (createdByUserId == Guid.Empty) throw new ArgumentException("CreatedByUserId is required.", nameof(createdByUserId));
         if (string.IsNullOrWhiteSpace(currency) || currency.Length > 3) throw new ArgumentException("Currency must be a 1-3 char code.", nameof(currency));
 
         OrderNumber = orderNumber.Trim();
+        OperationId = operationId == Guid.Empty ? null : operationId;
         CreatedByUserId = createdByUserId;
         Currency = currency.Trim().ToUpperInvariant();
         Notes = notes?.Trim();
@@ -69,11 +76,14 @@ public class SubscriptionOrder : TenantEntity
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
-    public void AttachIntent(string gatewayName, string? intentId)
+    // WHY the redirect URL is stored: a replayed checkout must hand back the SAME hosted-payment
+    // page. Re-creating the intent to recover it would charge the buyer twice.
+    public void AttachIntent(string gatewayName, string? intentId, string? redirectUrl = null)
     {
         if (string.IsNullOrWhiteSpace(gatewayName)) throw new ArgumentException("GatewayName is required.", nameof(gatewayName));
         GatewayName = gatewayName.Trim();
         GatewayIntentId = string.IsNullOrWhiteSpace(intentId) ? null : intentId.Trim();
+        GatewayRedirectUrl = Normalize(redirectUrl, 1000);
         UpdatedAtUtc = DateTime.UtcNow;
     }
 

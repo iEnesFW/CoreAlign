@@ -115,6 +115,12 @@ public class SubscriptionOrderRepository : ISubscriptionOrderRepository
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.GatewayName == gatewayName && o.GatewayIntentId == intentId, cancellationToken);
 
+    // Tenant-scoped on purpose (no IgnoreQueryFilters): a replay only ever belongs to the caller.
+    public Task<SubscriptionOrder?> GetByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default) =>
+        _context.SubscriptionOrders
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.OperationId == operationId, cancellationToken);
+
     public async Task<(IReadOnlyList<SubscriptionOrder> Items, int Total)> ListAsync(
         SubscriptionOrderStatus? status,
         int page,

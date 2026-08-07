@@ -117,4 +117,60 @@ public class CreateSubscriptionOrderHandlerTests
         var act = async () => await _sut.Handle(command, default);
         await act.Should().ThrowAsync<Domain.Exceptions.ModuleNotFoundException>();
     }
+
+    /// <summary>
+    /// A retried checkout must replay the first order: no second order number burned, no second
+    /// gateway intent (which is a second chance to charge the buyer), and the caller gets the same
+    /// hosted-payment URL back so the flow continues where it left off.
+    /// </summary>
+    [Fact]
+    public async Task Retrying_the_same_operation_id_replays_the_first_order()
+    {
+        var operationId = Guid.NewGuid();
+        var existing = new SubscriptionOrder("SUB-2026-00001", Guid.NewGuid(), "TRY", null, operationId)
+        {
+            TenantId = _tenantId,
+        };
+        existing.AttachIntent("mock", "intent-1", "/dashboard/billing/mock-approve?orderId=1");
+        _orders.GetByOperationIdAsync(operationId, Arg.Any<CancellationToken>()).Returns(existing);
+
+        var command = new CreateSubscriptionOrderCommand(
+            new[] { new OrderItemInput(Guid.NewGuid(), Guid.NewGuid()) },
+            GatewayName: "mock",
+            CurrentUserId: Guid.NewGuid(),
+            OperationId: operationId);
+
+        var result = await _sut.Handle(command, default);
+
+        result.Order.OrderNumber.Should().Be("SUB-2026-00001");
+        result.RedirectUrl.Should().Be("/dashboard/billing/mock-approve?orderId=1");
+        result.IntentId.Should().Be("intent-1");
+        await _sequences.DidNotReceive().ConsumeAsync(
+            Arg.Any<DocumentSequenceType>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+        await _gateway.DidNotReceive().CreateIntentAsync(Arg.Any<PaymentIntentRequest>(), Arg.Any<CancellationToken>());
+        await _orders.DidNotReceive().AddAsync(Arg.Any<SubscriptionOrder>(), Arg.Any<CancellationToken>());
+        await _uow.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_checkout_without_an_operation_id_never_looks_for_a_replay()
+    {
+        var moduleId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var module = new Module("Sales", "Sales", null, null, null, 0, isActive: true, isCore: false);
+        typeof(Module).GetProperty(nameof(Module.Id))!.SetValue(module, moduleId);
+        var plan = new ModulePricePlan(moduleId, "Yearly", "Yıllık", 365, 999m, "TRY", true, 1);
+        typeof(ModulePricePlan).GetProperty(nameof(ModulePricePlan.Id))!.SetValue(plan, planId);
+        _modules.ListByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>()).Returns(new[] { module });
+        _plans.ListByIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>(), Arg.Any<CancellationToken>()).Returns(new[] { plan });
+
+        await _sut.Handle(
+            new CreateSubscriptionOrderCommand(
+                new[] { new OrderItemInput(moduleId, planId) },
+                GatewayName: "mock",
+                CurrentUserId: Guid.NewGuid()),
+            default);
+
+        await _orders.DidNotReceive().GetByOperationIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+    }
 }

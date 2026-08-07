@@ -37,6 +37,7 @@ public interface ISubscriptionOrderRepository
     Task<SubscriptionOrder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SubscriptionOrder?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
     Task<SubscriptionOrder?> GetByGatewayIntentAsync(string gatewayName, string intentId, CancellationToken cancellationToken = default);
+    Task<SubscriptionOrder?> GetByOperationIdAsync(Guid operationId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<SubscriptionOrder> Items, int Total)> ListAsync(SubscriptionOrderStatus? status, int page, int pageSize, CancellationToken cancellationToken = default);
     Task AddAsync(SubscriptionOrder order, CancellationToken cancellationToken = default);
     void Update(SubscriptionOrder order);

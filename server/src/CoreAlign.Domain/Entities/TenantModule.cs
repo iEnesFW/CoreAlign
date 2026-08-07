@@ -9,8 +9,11 @@ namespace CoreAlign.Domain.Entities;
 /// EndUtc. <see cref="Extend"/> stretches the window forward from the later of
 /// "now" or the existing end-date, so renewing early doesn't burn paid time.
 /// </summary>
-public class TenantModule : TenantEntity
+public class TenantModule : TenantEntity, IHasConcurrencyToken
 {
+    public long ConcurrencyToken { get; private set; }
+    void IHasConcurrencyToken.BumpConcurrencyToken() => ConcurrencyToken++;
+
     public Guid ModuleId { get; private set; }
     public DateTime StartUtc { get; private set; }
     public DateTime? EndUtc { get; private set; }

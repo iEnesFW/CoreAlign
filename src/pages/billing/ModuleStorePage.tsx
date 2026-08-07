@@ -25,6 +25,7 @@ import { ModuleStoreGrid } from '@/features/billing/ui/ModuleStoreGrid';
 import { OrderSummaryPanel } from '@/features/billing/ui/OrderSummaryPanel';
 import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import { toastApiError } from '@/shared/lib/mutationToast';
+import { newOperationId } from '@/shared/lib/operationId';
 import { Button } from '@/shared/ui/Button/Button';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
@@ -96,6 +97,9 @@ export const ModuleStorePage = () => {
         items: lines.map((l) => ({ moduleId: l.moduleId, planId: l.planId })),
         gatewayName: effectiveGateway,
         billingInfo,
+        // A fresh id per click: a retry of THIS submit replays the same order instead of
+        // burning a second order number and opening a second payment intent.
+        operationId: newOperationId(),
       },
       {
         onSuccess: (response) => {
