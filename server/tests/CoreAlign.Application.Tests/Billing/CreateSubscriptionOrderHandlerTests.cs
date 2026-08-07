@@ -89,7 +89,11 @@ public class CreateSubscriptionOrderHandlerTests
         await _attempts.Received(1).AddAsync(
             Arg.Is<PaymentAttempt>(a => a.Status == PaymentAttemptStatus.Initiated && a.IntentId == "intent-1"),
             Arg.Any<CancellationToken>());
-        await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+        // Two saves by design: the document-sequence row must be committed BEFORE ConsumeAsync
+        // queries for it, otherwise the first purchase on a tenant whose sequence was never seeded
+        // throws (ConsumeAsync reads the DB, not the change tracker). The second save persists the
+        // order. Asserting exactly one save here is what let that defect ship.
+        await _uow.Received(2).SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

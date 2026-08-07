@@ -17,7 +17,12 @@ public class TenantModule : TenantEntity
     public TenantModuleSource Source { get; private set; }
     public string? Notes { get; private set; }
 
-    public bool IsCurrentlyActive => EndUtc == null || EndUtc > DateTime.UtcNow;
+    // WHY StartUtc is part of the test: a grant scheduled to begin later must not be active today,
+    // otherwise a future-dated comp/trial entitlement silently unlocks the module immediately.
+    public bool IsCurrentlyActive => IsActiveAt(DateTime.UtcNow);
+
+    public bool IsActiveAt(DateTime instant) =>
+        StartUtc <= instant && (EndUtc == null || EndUtc > instant);
 
     protected TenantModule() { }
 

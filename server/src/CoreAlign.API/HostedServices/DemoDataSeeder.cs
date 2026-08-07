@@ -104,9 +104,8 @@ public class DemoDataSeeder : BackgroundService
         var sp = scope.ServiceProvider;
         var users = sp.GetRequiredService<IUserRepository>();
 
-        // Catalog seeding is idempotent and runs every startup so a fresh module
-        // surfaces in dev without wiping the database.
-        await SeedModuleCatalogAsync(sp, ct);
+        // The catalog is system reference data and is owned by ModuleCatalogSeeder (always-run);
+        // calling it here too would give it two writers.
         await GlassEnclosureSeeder.SeedGlobalAsync(sp, ct);
         await ProjectTemplateSeeder.SeedSystemTemplatesAsync(sp, ct);
         await PayrollParametersSeed.SeedGlobalAsync(sp, ct);
@@ -434,66 +433,6 @@ public class DemoDataSeeder : BackgroundService
                 _logger.LogWarning(ex, "Demo sales flow {Index} failed.", i);
             }
         }
-    }
-
-    private static readonly (string Code, string Name, string? Category, string? IconKey, int SortOrder, bool IsCore)[] ModuleCatalog =
-    {
-        ("Dashboard", "Dashboard", "Insights", "layout-dashboard", 0, true),
-        ("Billing", "Billing & Subscriptions", "Administration", "credit-card", 1, true),
-        ("Customers", "Customers", "Sales", "users", 10, false),
-        ("Sales", "Sales", "Sales", "shopping-cart", 11, false),
-        ("Vendors", "Vendors", "Operations", "truck", 20, false),
-        ("Purchasing", "Purchasing", "Operations", "package", 21, false),
-        ("Products", "Products", "Catalog", "box", 30, false),
-        ("Inventory", "Inventory", "Operations", "warehouse", 31, false),
-        ("Accounting", "Accounting", "Finance", "calculator", 40, false),
-        ("Reports", "Reports", "Insights", "bar-chart", 50, false),
-        ("GlassEnclosure", "Cam Mekan", "Manufacturing", "square-stack", 60, false),
-        ("Settings", "Settings", "Administration", "settings", 90, false),
-    };
-
-    private static readonly (string Code, string DisplayLabel, int DurationDays, decimal Price)[] DefaultPlans =
-    {
-        ("Monthly", "Aylık", 30, 99m),
-        ("Yearly", "Yıllık", 365, 999m),
-    };
-
-    private async Task SeedModuleCatalogAsync(IServiceProvider sp, CancellationToken ct)
-    {
-        var modules = sp.GetRequiredService<IModuleRepository>();
-        var plans = sp.GetRequiredService<IModulePricePlanRepository>();
-        var uow = sp.GetRequiredService<IUnitOfWork>();
-        var anyChange = false;
-
-        foreach (var spec in ModuleCatalog)
-        {
-            var existing = await modules.GetByCodeAsync(spec.Code, ct);
-            if (existing is null)
-            {
-                var module = new Domain.Entities.Module(spec.Code, spec.Name, description: null, spec.Category, spec.IconKey, spec.SortOrder, isActive: true, isCore: spec.IsCore);
-                await modules.AddAsync(module, ct);
-                anyChange = true;
-            }
-        }
-        if (anyChange) await uow.SaveChangesAsync(ct);
-
-        // Re-load with ids assigned, then seed price plans (core modules need none).
-        var allModules = await modules.ListAsync(activeOnly: false, ct);
-        foreach (var module in allModules.Where(m => !m.IsCore))
-        {
-            var existingPlans = await plans.ListByModuleAsync(module.Id, activeOnly: false, ct);
-            var existingByCode = existingPlans.ToDictionary(p => p.Code, StringComparer.OrdinalIgnoreCase);
-
-            for (var i = 0; i < DefaultPlans.Length; i++)
-            {
-                var spec = DefaultPlans[i];
-                if (existingByCode.ContainsKey(spec.Code)) continue;
-                var plan = new ModulePricePlan(module.Id, spec.Code, spec.DisplayLabel, spec.DurationDays, spec.Price, "TRY", isActive: true, sortOrder: i);
-                await plans.AddAsync(plan, ct);
-                anyChange = true;
-            }
-        }
-        if (anyChange) await uow.SaveChangesAsync(ct);
     }
 
     private async Task GrantAllModulesAsync(IServiceProvider sp, DateTime now, CancellationToken ct)

@@ -512,6 +512,26 @@ public static class InfrastructureServiceRegistration
         services.AddSingleton<CoreAlign.Application.Billing.Payments.IPaymentGatewayRegistry,
             CoreAlign.Application.Billing.Payments.PaymentGatewayRegistry>();
 
+        // WHY these were missing: the registry resolves IEnumerable<IPaymentGateway>, and the
+        // IPaymentProvider registrations further down do NOT satisfy it (MS DI has no interface
+        // covariance across registrations) — so checkout resolved an empty gateway list and every
+        // purchase failed with "gateway not configured".
+        services.Configure<CoreAlign.Application.Billing.BillingOptions>(
+            configuration.GetSection(CoreAlign.Application.Billing.BillingOptions.SectionName));
+        services.Configure<CoreAlign.Infrastructure.Payments.IyzicoOptions>(
+            configuration.GetSection(CoreAlign.Infrastructure.Payments.IyzicoOptions.SectionName));
+        // Singleton, not scoped: IPaymentGatewayRegistry is a singleton that takes
+        // IEnumerable<IPaymentGateway>, and DI refuses to hand a scoped service to it.
+        // Both gateways are singleton-safe — IyzicoPaymentGateway already opens its own scope
+        // through IServiceScopeFactory rather than capturing a scoped dependency.
+        services.AddSingleton<CoreAlign.Application.Billing.Payments.IPaymentGateway,
+            CoreAlign.Infrastructure.Payments.IyzicoPaymentGateway>();
+        if (configuration.GetValue<bool>("Billing:EnableMockGateway"))
+        {
+            services.AddSingleton<CoreAlign.Application.Billing.Payments.IPaymentGateway,
+                CoreAlign.Infrastructure.Payments.MockPaymentGateway>();
+        }
+
         // Bulk import (Excel/CSV) - session ve row reader
         // BulkImportSessionStore ITenantContext (scoped) inject ediyor → Singleton olamaz.
         // BulkImportRowReader stateless (sadece Stream parse) → Singleton uygun.

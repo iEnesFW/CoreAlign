@@ -85,6 +85,10 @@ public class CreateSubscriptionOrderHandler : IRequestHandler<CreateSubscription
         }
 
         await _sequences.EnsureExistsAsync(DocumentSequenceType.SubscriptionOrderNumber, "SUB", SequencePadLength, DateTime.UtcNow.Year, cancellationToken);
+        // WHY the save between: EnsureExists only ADDS a tracked row, ConsumeAsync queries the DB.
+        // Without this the first purchase on a tenant whose sequence was never seeded throws
+        // (the sequence is seeded only by DemoDataSeeder, which is off in production).
+        await _uow.SaveChangesAsync(cancellationToken);
         var orderNumber = await _sequences.ConsumeAsync(DocumentSequenceType.SubscriptionOrderNumber, DateTime.UtcNow, cancellationToken);
 
         var order = new SubscriptionOrder(orderNumber, request.CurrentUserId, firstCurrency);

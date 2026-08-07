@@ -123,6 +123,8 @@ public class CoreAlignWebApiFactory : WebApplicationFactory<Program>, IAsyncLife
         ["Frontend:AutoLaunch"] = "false",
         ["Email:Provider"] = "LogOnly",
         ["EInvoice:Provider"] = "Stub",
+        ["Billing:EnableMockGateway"] = "true",
+        ["Billing:DefaultGatewayName"] = "mock",
         ["EInvoice:BaseUrl"] = "https://stub.local",
         ["EInvoice:Username"] = "stub",
         ["EInvoice:Password"] = "stub",

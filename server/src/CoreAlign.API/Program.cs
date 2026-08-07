@@ -365,7 +365,16 @@ builder.Services.AddHostedService<CoreAlign.API.HostedServices.PartitionMaintena
 // IsSeedingEnabled Production + flag kombinasyonunda exception firlatir, boylece yanlislikla deploy
 // edilen demo seed konfigurasyonu app'i hemen kapatir (silent run yerine fail-fast).
 CoreAlign.API.HostedServices.DemoDataSeeder.IsSeedingEnabled(builder.Configuration, builder.Environment);
+
+// A mock gateway grants paid modules for free. Refuse to boot rather than let that reach production.
+if (builder.Environment.IsProduction() && builder.Configuration.GetValue<bool>("Billing:EnableMockGateway"))
+{
+    throw new InvalidOperationException(
+        "Billing:EnableMockGateway is true in Production. The mock gateway approves payments without "
+        + "charging anything; unset it before deploying.");
+}
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.ModuleCatalogSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.PayrollSystemDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.GibCodeSystemDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.FeedbackNotificationTemplateSeeder>();

@@ -42,7 +42,7 @@ public sealed class ActiveModulesService : IActiveModulesService
         var now = DateTime.UtcNow;
         var codes = await _context.TenantModules
             .AsNoTracking()
-            .Where(t => t.EndUtc == null || t.EndUtc > now)
+            .Where(t => t.StartUtc <= now && (t.EndUtc == null || t.EndUtc > now))
             .Join(
                 _context.Modules.AsNoTracking().Where(m => m.IsActive),
                 tm => tm.ModuleId,
