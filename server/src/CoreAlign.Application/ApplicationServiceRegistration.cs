@@ -104,6 +104,20 @@ public static class ApplicationServiceRegistration
         // handlers (PaymentWebhookEventHandler, EFaturaWebhookEventHandler,
         // BomRecomputedOutboxHandler) stay in Infrastructure where they were
         // wired against the inbox repository.
+        // WHY these were missing: an unregistered handler is not a compile error — the processor
+        // simply cannot resolve the message type, dead-letters it and moves on. GLPosting alone had
+        // 58 dead-lettered journal entries in the dev database before this was found, i.e. the whole
+        // outbox route into accounting was silently disconnected. OutboxHandlerRegistrationTests now
+        // fails the build if any IOutboxMessageHandler in the assembly is left unregistered.
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Common.Outbox.GLPostingOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Billing.SubscriptionActivatedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.EInvoice.InvoiceIssuedEInvoiceOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Auth.Handlers.SecurityAlertOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.Collaboration.CommentPostedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.B2B.PortalComments.OrderCommentPostedOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.B2B.DealerOrderFlow.DealerOrderSubmittedForApprovalOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.B2B.DealerOrderFlow.DealerOrderApprovedByCustomerOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CoreAlign.Application.B2B.DealerOrderFlow.DealerOrderRejectedByCustomerOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, PaymentInitiatedOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, PaymentSucceededOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, PaymentFailedOutboxHandler>();
