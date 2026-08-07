@@ -19,23 +19,10 @@ import {
   useActiveModulesQuery,
   useSubscriptionOrdersQuery,
 } from '@/features/billing/hooks/useBilling';
-import type { TenantModuleDto } from '@/features/billing/model/billing.types';
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-const EXPIRING_WINDOW_DAYS = 14;
-
-const daysUntil = (endUtc: string | null | undefined): number | null => {
-  if (!endUtc) return null;
-  const end = new Date(endUtc).getTime();
-  if (Number.isNaN(end)) return null;
-  return Math.ceil((end - Date.now()) / MS_PER_DAY);
-};
-
-const sortByEnd = (a: TenantModuleDto, b: TenantModuleDto) => {
-  const ae = a.endUtc ? new Date(a.endUtc).getTime() : Number.POSITIVE_INFINITY;
-  const be = b.endUtc ? new Date(b.endUtc).getTime() : Number.POSITIVE_INFINITY;
-  return ae - be;
-};
+import {
+  expiringSoon as resolveExpiringSoon,
+  REMINDER_WINDOW_DAYS,
+} from '@/features/billing/model/expiryWarning';
 
 export const BillingHomePage = () => {
   const { t } = useTranslation();
@@ -49,14 +36,7 @@ export const BillingHomePage = () => {
 
   const activeCount = modules.filter((m) => m.isCurrentlyActive).length;
   const expiringSoon = useMemo(
-    () =>
-      modules
-        .filter((m) => {
-          if (!m.isCurrentlyActive) return false;
-          const days = daysUntil(m.endUtc);
-          return days !== null && days >= 0 && days <= EXPIRING_WINDOW_DAYS;
-        })
-        .sort(sortByEnd),
+    () => resolveExpiringSoon(modules, new Date(), REMINDER_WINDOW_DAYS),
     [modules],
   );
 
@@ -70,7 +50,7 @@ export const BillingHomePage = () => {
         tone="indigo"
         actions={
           <Link
-            to="/dashboard/billing/modules"
+            to="/dashboard/billing/store"
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
           >
             <Package size={13} />
@@ -98,7 +78,7 @@ export const BillingHomePage = () => {
         />
         <SummaryCard
           icon={<AlarmClock size={16} />}
-          label={t('billing.home.expiringSoon', { days: EXPIRING_WINDOW_DAYS })}
+          label={t('billing.home.expiringSoon', { days: REMINDER_WINDOW_DAYS })}
           tone="amber"
           loading={activeQuery.isPending}
           value={String(expiringSoon.length)}
@@ -133,7 +113,7 @@ export const BillingHomePage = () => {
               {t('billing.home.expiringSoonTitle')}
             </h3>
             <Link
-              to="/dashboard/billing/modules"
+              to="/dashboard/billing/store"
               className="text-[11px] font-medium text-primary-600 hover:underline dark:text-primary-300"
             >
               {t('billing.home.renew')} <ArrowRight size={10} className="inline" />
@@ -147,26 +127,19 @@ export const BillingHomePage = () => {
             </p>
           ) : (
             <ul className="space-y-1.5">
-              {expiringSoon.map((m) => {
-                const days = daysUntil(m.endUtc);
-                return (
-                  <li
-                    key={m.id}
-                    className="flex items-center justify-between gap-2 rounded-md border border-warning-100 bg-warning-50/60 px-2 py-1.5 text-xs dark:border-warning-500/30 dark:bg-warning-500/10"
-                  >
-                    <span className="font-medium text-warning-900 dark:text-warning-200">
-                      {m.name}
-                    </span>
-                    <span className="text-[11px] text-warning-700 dark:text-warning-200/80">
-                      {days !== null
-                        ? t('billing.modules.daysLeft', { count: days })
-                        : t('billing.modules.activeUntil', {
-                            date: m.endUtc ? formatDate(m.endUtc, locale) : '—',
-                          })}
-                    </span>
-                  </li>
-                );
-              })}
+              {expiringSoon.map((m) => (
+                <li
+                  key={m.moduleId}
+                  className="flex items-center justify-between gap-2 rounded-md border border-warning-100 bg-warning-50/60 px-2 py-1.5 text-xs dark:border-warning-500/30 dark:bg-warning-500/10"
+                >
+                  <span className="font-medium text-warning-900 dark:text-warning-200">
+                    {m.name}
+                  </span>
+                  <span className="text-[11px] text-warning-700 dark:text-warning-200/80">
+                    {t('billing.modules.daysLeft', { count: m.daysLeft })}
+                  </span>
+                </li>
+              ))}
             </ul>
           )}
         </div>

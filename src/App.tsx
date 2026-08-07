@@ -17,6 +17,7 @@ import { ProtectedRoute } from '@/features/auth/ui/ProtectedRoute';
 import { CustomerProtectedRoute } from '@/features/auth/ui/CustomerProtectedRoute';
 import { AuthBootstrap } from '@/features/auth/ui/AuthBootstrap';
 import { OnboardingTourHost } from '@/features/onboarding/ui/OnboardingTourHost';
+import { ModuleExpiryPopupHost } from '@/features/billing/ui/ModuleExpiryPopupHost';
 import { AiHelperWidget } from '@/widgets/AiHelper';
 import { env } from '@/shared/lib/env';
 import {
@@ -167,6 +168,7 @@ function App() {
                   <OfflineBanner />
                   <ConflictResolutionHost />
                   <OnboardingTourHost />
+                  <ModuleExpiryPopupHost />
                   <AiHelperWidget />
                   <ConfirmDialogProvider>
                     <Suspense fallback={<RouteFallback />}>

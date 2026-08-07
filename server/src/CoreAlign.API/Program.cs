@@ -375,6 +375,7 @@ if (builder.Environment.IsProduction() && builder.Configuration.GetValue<bool>("
 }
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.DemoDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.ModuleCatalogSeeder>();
+builder.Services.AddHostedService<CoreAlign.API.HostedServices.ModuleExpiryNotificationTemplateSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.PayrollSystemDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.GibCodeSystemDataSeeder>();
 builder.Services.AddHostedService<CoreAlign.API.HostedServices.FeedbackNotificationTemplateSeeder>();

@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 import type { SubscriptionBillingInfoInput } from './billing.types';
 
-// Lifted verbatim from the retired CheckoutPanel — these are iyzico's required buyer fields.
-// NOTE: not one of them is card data. The card is entered on the gateway's own page.
+// WHY: iyzico's required buyer fields — deliberately no card data; the card is entered on the gateway's own page.
 export const billingInfoSchema = z.object({
   name: z.string().trim().min(1, 'billing.billingInfo.errors.nameRequired').max(100),
   surname: z.string().trim().min(1, 'billing.billingInfo.errors.surnameRequired').max(100),

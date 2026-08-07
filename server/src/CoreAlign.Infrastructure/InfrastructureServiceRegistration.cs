@@ -506,6 +506,10 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<CoreAlign.Application.Auth.Services.ICaptchaVerifier,
             CoreAlign.Infrastructure.Services.GoogleReCaptchaVerifier>();
 
+        services.AddScoped<CoreAlign.Application.Billing.Expiry.IModuleExpiryDataSource,
+            CoreAlign.Infrastructure.Billing.ModuleExpiryDataSource>();
+        services.AddScoped<CoreAlign.Application.Billing.Expiry.ModuleExpiryRemindersJob>();
+
         // Billing modul aktivasyonu + payment gateway registry
         services.AddScoped<CoreAlign.Application.Billing.IActiveModulesService,
             CoreAlign.Infrastructure.Services.ActiveModulesService>();

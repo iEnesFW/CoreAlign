@@ -32,11 +32,12 @@ export const usePaymentGatewaysQuery = () =>
     staleTime: FIVE_MINUTES,
   });
 
-export const useActiveModulesQuery = () =>
+export const useActiveModulesQuery = (options: { enabled?: boolean } = {}) =>
   useQuery({
     queryKey: billingKeys.activeModules(),
     queryFn: () => billingApi.listActiveModules(),
     staleTime: SIXTY_SECONDS,
+    enabled: options.enabled ?? true,
   });
 
 export const useSubscriptionOrdersQuery = (params: ListOrdersParams = {}) =>

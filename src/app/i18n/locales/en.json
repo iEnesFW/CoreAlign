@@ -5139,12 +5139,6 @@
       "recentOrdersTitle": "Latest orders",
       "viewAll": "View all"
     },
-    "activeBanner": {
-      "title_one": "{{count}} active module",
-      "title_other": "{{count}} active modules",
-      "empty": "No active modules. Pick one from the catalog below.",
-      "title": "{{count}} active modules"
-    },
     "modules": {
       "title": "Modules",
       "subtitle": "Subscribe to unlock more capabilities for your team.",
@@ -5331,6 +5325,16 @@
       "noGateway": "No payment method configured",
       "cardNotice": "Your card details are never entered into CoreAlign.",
       "cardNoticeLong": "Your card details are never entered into CoreAlign. When you proceed, you are redirected to the provider's secure payment page; your card number is processed only there — CoreAlign never sees or stores it."
+    },
+    "expiryPopup": {
+      "title": "Your module is about to expire",
+      "subtitle_one": "One of your modules expires very soon.",
+      "subtitle_other": "{{count}} of your modules expire very soon.",
+      "expiresOn": "Ends: {{date}}",
+      "daysLeft_one": "{{count}} day left",
+      "daysLeft_other": "{{count}} days left",
+      "renew": "Renew now",
+      "later": "Later"
     }
   },
   "Fx": {

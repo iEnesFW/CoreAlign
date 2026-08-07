@@ -96,5 +96,10 @@ public static class RecurringJobsRegistration
             "incoming-invoice-fetch",
             job => job.RunAsync(CancellationToken.None),
             Cron.Daily(9));
+
+        manager.AddOrUpdate<CoreAlign.Application.Billing.Expiry.ModuleExpiryRemindersJob>(
+            "module-expiry-reminders",
+            job => job.RunAsync(CancellationToken.None),
+            Cron.Daily(10));
     }
 }

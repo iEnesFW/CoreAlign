@@ -5139,12 +5139,6 @@
       "recentOrdersTitle": "En son siparişler",
       "viewAll": "Tümünü gör"
     },
-    "activeBanner": {
-      "title_one": "{{count}} aktif modül",
-      "title_other": "{{count}} aktif modül",
-      "empty": "Aktif modül yok. Aşağıdaki katalogdan seçim yapın.",
-      "title": "{{count}} aktif modül"
-    },
     "modules": {
       "title": "Modüller",
       "subtitle": "Ekibiniz için ek özelliklerin kilidini açmak üzere abone olun.",
@@ -5331,6 +5325,16 @@
       "noGateway": "Tanımlı ödeme yöntemi yok",
       "cardNotice": "Kart bilgileriniz CoreAlign'a girilmez.",
       "cardNoticeLong": "Kart bilgileriniz CoreAlign'a girilmez. \"Ödemeye geç\" dediğinizde sağlayıcının güvenli ödeme sayfasına yönlendirilirsiniz; kart numaranız yalnızca orada işlenir, CoreAlign görmez ve saklamaz."
+    },
+    "expiryPopup": {
+      "title": "Modül süreniz doluyor",
+      "subtitle_one": "Bir modülünüzün süresi çok yakında doluyor.",
+      "subtitle_other": "{{count}} modülünüzün süresi çok yakında doluyor.",
+      "expiresOn": "Bitiş: {{date}}",
+      "daysLeft_one": "{{count}} gün kaldı",
+      "daysLeft_other": "{{count}} gün kaldı",
+      "renew": "Şimdi uzat",
+      "later": "Daha sonra"
     }
   },
   "Fx": {
