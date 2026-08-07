@@ -31,6 +31,7 @@ public static class GibUnitCodeMap
         ["KGM"] = "KGM",
         ["GRAM"] = "GRM",
         ["G"] = "GRM",
+        ["GR"] = "GRM",
         ["GRM"] = "GRM",
         ["MILIGRAM"] = "MGM",
         ["MG"] = "MGM",
@@ -133,6 +134,7 @@ public static class GibUnitCodeMap
         ["CIFT"] = "PR",
         ["PR"] = "PR",
         ["DUZINE"] = "DZN",
+        ["DZ"] = "DZN",
         ["DZN"] = "DZN",
 
         ["SAAT"] = "HUR",
