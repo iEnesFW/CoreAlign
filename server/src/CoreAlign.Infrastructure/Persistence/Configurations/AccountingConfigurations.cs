@@ -65,6 +65,9 @@ public class JournalEntryConfiguration : IEntityTypeConfiguration<JournalEntry>
         builder.Property(j => j.Reference).HasMaxLength(200);
         builder.Property(j => j.Type).HasConversion<string>().HasMaxLength(16);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(16);
+        // WHY: the column has always been varchar(32); without this conversion EF binds the enum as
+        // an integer and Postgres rejects every read AND write with 42883 (varchar = integer).
+        builder.Property(j => j.SourceType).HasConversion<string>().HasMaxLength(32);
         builder.Property(j => j.TotalDebit).HasColumnType("numeric(18,4)");
         builder.Property(j => j.TotalCredit).HasColumnType("numeric(18,4)");
         builder.Property(j => j.EntryDate).HasColumnType("timestamp with time zone");

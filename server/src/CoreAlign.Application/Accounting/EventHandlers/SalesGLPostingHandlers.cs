@@ -57,29 +57,27 @@ internal static class SalesGLLines
 public class InvoiceIssuedGLHandler : INotificationHandler<InvoiceIssuedEvent>
 {
     private readonly IGLPostingOutbox _outbox;
-    private readonly IInvoiceRepository _invoices;
 
-    public InvoiceIssuedGLHandler(IGLPostingOutbox outbox, IInvoiceRepository invoices)
+    public InvoiceIssuedGLHandler(IGLPostingOutbox outbox) => _outbox = outbox;
+
+    /// <remarks>
+    /// Reads NOTHING from the database. This event fires inside the SaveChanges that inserts the
+    /// invoice, so an invoice created and issued in one command is not queryable yet: the old
+    /// re-read returned null and the handler returned without booking anything. Measured on the dev
+    /// database — 18 issued invoices carried customer-ledger rows and zero journal entries.
+    /// </remarks>
+    public Task Handle(InvoiceIssuedEvent n, CancellationToken cancellationToken)
     {
-        _outbox = outbox;
-        _invoices = invoices;
-    }
-
-    public async Task Handle(InvoiceIssuedEvent n, CancellationToken cancellationToken)
-    {
-        var invoice = await _invoices.GetByIdAsync(n.InvoiceId, cancellationToken);
-        if (invoice is null) return;
-
-        var reverse = invoice.Type == InvoiceType.CreditNote;
-        await _outbox.EnqueueAsync(new GLPostingRequest(
+        var reverse = n.Type == InvoiceType.CreditNote;
+        return _outbox.EnqueueAsync(new GLPostingRequest(
             JournalSourceType.SalesInvoice,
             n.InvoiceId,
             n.InvoiceNumber,
             n.OccurredAtUtc.Date,
             JournalEntryType.Mahsup,
             reverse ? $"İade faturası {n.InvoiceNumber}" : $"Satış faturası {n.InvoiceNumber}",
-            SalesGLLines.Build(invoice.TaxableTotal, invoice.TaxTotal, invoice.WithholdingTotal, invoice.ShippingCost, invoice.RoundingAdjustment, reverse),
-            invoice.Currency, invoice.ExchangeRate), cancellationToken);
+            SalesGLLines.Build(n.TaxableTotal, n.TaxTotal, n.WithholdingTotal, n.ShippingCost, n.RoundingAdjustment, reverse),
+            n.Currency, n.ExchangeRate), cancellationToken);
     }
 }
 

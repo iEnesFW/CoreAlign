@@ -288,7 +288,9 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         ApprovedByUserId = approvedByUserId;
         IsPostedToLedger = true;
         UpdatedAtUtc = now;
-        AddDomainEvent(new InvoiceIssuedEvent(TenantId, Id, CustomerId, OrderId, InvoiceNumber, Type, Total, Currency, now, ExchangeRate));
+        AddDomainEvent(new InvoiceIssuedEvent(
+            TenantId, Id, CustomerId, OrderId, InvoiceNumber, Type, Total, Currency, now, ExchangeRate,
+            TaxableTotal, TaxTotal, WithholdingTotal, ShippingCost, RoundingAdjustment));
     }
 
     public void MarkSent()

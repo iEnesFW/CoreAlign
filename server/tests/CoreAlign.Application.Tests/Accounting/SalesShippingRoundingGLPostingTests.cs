@@ -85,19 +85,21 @@ public class SalesShippingRoundingGLPostingTests
         return invoice;
     }
 
-    private InvoiceIssuedGLHandler IssuedHandler() => new(_outbox, _invoices);
+    private InvoiceIssuedGLHandler IssuedHandler() => new(_outbox);
     private InvoiceVoidedGLHandler VoidedHandler() => new(_outbox, _invoices);
 
+    /// <summary>
+    /// Drives the event the aggregate ACTUALLY raised, not a hand-built one, and leaves the invoice
+    /// repository unstubbed: this event is dispatched inside the SaveChanges that inserts the
+    /// invoice, so anything the handler needs has to arrive on the event itself.
+    /// </summary>
     private async Task<GLPostingRequest> CaptureIssueAsync(Invoice invoice)
     {
-        _invoices.GetByIdAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+        var issued = invoice.DomainEvents.OfType<InvoiceIssuedEvent>().Single();
         GLPostingRequest? captured = null;
         await _outbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => captured = r), Arg.Any<CancellationToken>());
 
-        await IssuedHandler().Handle(
-            new InvoiceIssuedEvent(TenantId, invoice.Id, CustomerId, null, invoice.InvoiceNumber,
-                invoice.Type, invoice.Total, invoice.Currency, DateTime.UtcNow),
-            default);
+        await IssuedHandler().Handle(issued, default);
 
         captured.Should().NotBeNull();
         return captured!;
@@ -178,5 +180,28 @@ public class SalesShippingRoundingGLPostingTests
         // And the reversal credits AR for the full billed total.
         Line(reversal, GLPostingKey.AccountsReceivable).Credit.Should().Be(invoice.Total);
         reversal.Lines.Sum(l => l.Debit).Should().Be(reversal.Lines.Sum(l => l.Credit));
+    }
+
+    /// <summary>
+    /// RED-BEFORE: the handler used to re-read the invoice through IInvoiceRepository. That event
+    /// is dispatched INSIDE the SaveChanges that inserts the invoice, so an invoice created and
+    /// issued in one command was not queryable yet — the read returned null and the handler booked
+    /// NOTHING. Measured on the dev database: 18 issued invoices with customer-ledger rows and zero
+    /// journal entries. With an empty repository the handler must still enqueue the full entry.
+    /// </summary>
+    [Fact]
+    public async Task An_invoice_issued_before_its_row_is_queryable_still_books_to_the_ledger()
+    {
+        var invoice = IssuedInvoice(taxableUnitPrice: 1000m, taxPercent: 20m, shippingCost: 50m, roundingAdjustment: 0.30m);
+        _invoices.GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>()).Returns((Invoice?)null);
+
+        var request = await CaptureIssueAsync(invoice);
+
+        request.SourceType.Should().Be(JournalSourceType.SalesInvoice);
+        Line(request, GLPostingKey.AccountsReceivable).Debit.Should().Be(invoice.Total);
+        Line(request, GLPostingKey.SalesRevenue).Credit.Should().Be(invoice.TaxableTotal);
+        Line(request, GLPostingKey.OutputVat).Credit.Should().Be(invoice.TaxTotal);
+        request.Lines.Sum(l => l.Debit).Should().Be(request.Lines.Sum(l => l.Credit));
+        await _invoices.DidNotReceive().GetByIdAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 }

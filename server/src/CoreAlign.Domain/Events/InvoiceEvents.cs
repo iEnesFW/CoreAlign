@@ -3,6 +3,9 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Domain.Events;
 
+// WHY the GL breakdown travels on the event: domain events are dispatched INSIDE SaveChanges,
+// before the invoice row exists, so a subscriber that re-reads the invoice from the database gets
+// null and silently books nothing.
 public record InvoiceIssuedEvent(
     Guid TenantId,
     Guid InvoiceId,
@@ -13,7 +16,12 @@ public record InvoiceIssuedEvent(
     decimal Amount,
     string Currency,
     DateTime OccurredAtUtc,
-    decimal ExchangeRate = 1m) : IDomainEvent;
+    decimal ExchangeRate = 1m,
+    decimal TaxableTotal = 0m,
+    decimal TaxTotal = 0m,
+    decimal WithholdingTotal = 0m,
+    decimal ShippingCost = 0m,
+    decimal RoundingAdjustment = 0m) : IDomainEvent;
 
 public record InvoicePaidEvent(
     Guid TenantId,
