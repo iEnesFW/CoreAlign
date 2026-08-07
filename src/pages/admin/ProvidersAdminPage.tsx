@@ -4,7 +4,7 @@ import { Plug } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
 import { QueryError } from '@/shared/ui/QueryError/QueryError';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import { ProvidersCategoryTabs } from '@/features/admin/providers/ui/ProvidersCategoryTabs';
 import { useProvidersListQuery } from '@/features/admin/providers/hooks/useProvidersAdmin';
 

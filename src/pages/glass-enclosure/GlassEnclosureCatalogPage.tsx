@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import type {
   GlassEnclosureSettingsDto,
   UpdateSettingsCoreInput,

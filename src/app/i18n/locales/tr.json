@@ -117,7 +117,8 @@
       "trialBalance": "Mizan",
       "vendors": "Tedarikçiler",
       "warranty": "Garanti",
-      "yearEndClose": "Yıl Sonu Kapanışı"
+      "yearEndClose": "Yıl Sonu Kapanışı",
+      "billing": "Abonelik"
     }
   },
   "inventory": {
@@ -5299,6 +5300,37 @@
       "orderTitle": "Sipariş yüklenemedi",
       "orderDescription": "Bu abonelik siparişi yüklenemedi.",
       "ordersTitle": "Siparişler yüklenemedi"
+    },
+    "store": {
+      "title": "Modül Mağazası",
+      "subtitle": "İhtiyacınız olan modülleri seçin, sepetinizi oluşturun ve tek adımda etkinleştirin.",
+      "backToOverview": "Aboneliğe dön",
+      "stepSelect": "Modül seç",
+      "stepPayment": "Ödeme bilgileri",
+      "cycle": "Faturalama dönemi",
+      "cycle_monthly": "Aylık",
+      "cycle_yearly": "Yıllık",
+      "summary": "Özet",
+      "clear": "Temizle",
+      "emptyCart": "Henüz modül seçmediniz.",
+      "total": "Toplam",
+      "taxNote": "Fiyatlara KDV dahil değildir.",
+      "continue": "Devam et",
+      "payNow": "Ödemeye geç",
+      "backToSelection": "Seçime dön",
+      "removeLine": "{{name}} modülünü çıkar",
+      "alwaysIncluded": "Her zaman dahil",
+      "activeUntil": "Aktif · {{date}}",
+      "renewalUntil": "Uzatma → {{date}}",
+      "adminOnly": "Satın alma yetkisi yalnızca firma yöneticisindedir.",
+      "mixedCurrency": "Tek siparişte farklı para birimleri olamaz. Lütfen sepeti tek para birimine indirin.",
+      "emptyCatalog": "Satın alınabilir modül bulunamadı.",
+      "emptyCatalogHint": "Modül kataloğu henüz hazırlanmamış. Lütfen daha sonra tekrar deneyin.",
+      "buyerSection": "Fatura bilgileri",
+      "paymentSection": "Ödeme yöntemi",
+      "noGateway": "Tanımlı ödeme yöntemi yok",
+      "cardNotice": "Kart bilgileriniz CoreAlign'a girilmez.",
+      "cardNoticeLong": "Kart bilgileriniz CoreAlign'a girilmez. \"Ödemeye geç\" dediğinizde sağlayıcının güvenli ödeme sayfasına yönlendirilirsiniz; kart numaranız yalnızca orada işlenir, CoreAlign görmez ve saklamaz."
     }
   },
   "Fx": {

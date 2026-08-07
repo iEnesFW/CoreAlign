@@ -75,6 +75,26 @@ export const RecurringInvoicesPage = lazyNamed(
   () => import('@/pages/invoices/RecurringInvoicesPage'),
   'RecurringInvoicesPage',
 );
+export const BillingHomePage = lazyNamed(
+  () => import('@/pages/billing/BillingHomePage'),
+  'BillingHomePage',
+);
+export const ModuleStorePage = lazyNamed(
+  () => import('@/pages/billing/ModuleStorePage'),
+  'ModuleStorePage',
+);
+export const SubscriptionOrdersPage = lazyNamed(
+  () => import('@/pages/billing/SubscriptionOrdersPage'),
+  'SubscriptionOrdersPage',
+);
+export const SubscriptionOrderDetailPage = lazyNamed(
+  () => import('@/pages/billing/OrderDetailPage'),
+  'OrderDetailPage',
+);
+export const MockApprovePage = lazyNamed(
+  () => import('@/pages/billing/MockApprovePage'),
+  'MockApprovePage',
+);
 export const IncomingInvoicesPage = lazyNamed(
   () => import('@/pages/incoming-invoices/IncomingInvoicesPage'),
   'IncomingInvoicesPage',

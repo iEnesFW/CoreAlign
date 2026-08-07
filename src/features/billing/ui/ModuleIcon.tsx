@@ -1,20 +1,33 @@
 import {
   Activity,
+  BadgeDollarSign,
   BarChart3,
-  Boxes,
   Box,
+  Boxes,
+  Calculator,
   ClipboardList,
+  Cog,
   CreditCard,
-  FileText,
   Factory,
+  FileText,
+  FolderKanban,
+  Landmark,
   LayoutDashboard,
   Package,
   ReceiptText,
-  ShoppingCart,
   Settings,
+  ShieldCheck,
+  ShoppingCart,
+  Sparkles,
+  SquareStack,
+  Store,
+  Truck,
+  UserRound,
   Users,
   Warehouse,
+  Wrench,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface Props {
   iconKey?: string | null;
@@ -22,44 +35,52 @@ interface Props {
   className?: string;
 }
 
+// The catalog stores a lucide-style key, so the map is keyed the same way. Legacy aliases
+// (the pre-2026-08 catalog used domain words like "sales") are kept so an old row still renders.
+const ICONS: Record<string, LucideIcon> = {
+  'layout-dashboard': LayoutDashboard,
+  dashboard: LayoutDashboard,
+  'credit-card': CreditCard,
+  billing: CreditCard,
+  settings: Settings,
+  users: Users,
+  customers: Users,
+  'shopping-cart': ShoppingCart,
+  sales: ShoppingCart,
+  orders: ShoppingCart,
+  'folder-kanban': FolderKanban,
+  'square-stack': SquareStack,
+  truck: Truck,
+  vendors: Truck,
+  package: Package,
+  purchasing: Package,
+  box: Box,
+  products: Box,
+  warehouse: Warehouse,
+  inventory: Boxes,
+  factory: Factory,
+  production: Factory,
+  cog: Cog,
+  'badge-dollar-sign': BadgeDollarSign,
+  'shield-check': ShieldCheck,
+  wrench: Wrench,
+  calculator: Calculator,
+  accounting: Calculator,
+  landmark: Landmark,
+  'bar-chart': BarChart3,
+  reports: BarChart3,
+  analytics: BarChart3,
+  'file-text': FileText,
+  invoices: FileText,
+  sparkles: Sparkles,
+  store: Store,
+  'user-round': UserRound,
+  activity: Activity,
+  clipboard: ClipboardList,
+  vendorbills: ReceiptText,
+};
+
 export const ModuleIcon = ({ iconKey, size, className }: Props) => {
-  const key = iconKey?.toLowerCase().trim();
-  switch (key) {
-    case 'dashboard':
-      return <LayoutDashboard size={size} className={className} />;
-    case 'sales':
-    case 'orders':
-      return <ShoppingCart size={size} className={className} />;
-    case 'customers':
-      return <Users size={size} className={className} />;
-    case 'invoices':
-      return <FileText size={size} className={className} />;
-    case 'products':
-      return <Package size={size} className={className} />;
-    case 'inventory':
-      return <Boxes size={size} className={className} />;
-    case 'warehouse':
-      return <Warehouse size={size} className={className} />;
-    case 'purchasing':
-    case 'vendors':
-      return <Box size={size} className={className} />;
-    case 'vendorbills':
-      return <ReceiptText size={size} className={className} />;
-    case 'accounting':
-    case 'billing':
-      return <CreditCard size={size} className={className} />;
-    case 'reports':
-    case 'analytics':
-      return <BarChart3 size={size} className={className} />;
-    case 'activity':
-      return <Activity size={size} className={className} />;
-    case 'production':
-      return <Factory size={size} className={className} />;
-    case 'settings':
-      return <Settings size={size} className={className} />;
-    case 'clipboard':
-      return <ClipboardList size={size} className={className} />;
-    default:
-      return <Package size={size} className={className} />;
-  }
+  const Icon = ICONS[iconKey?.toLowerCase().trim() ?? ''] ?? Package;
+  return <Icon size={size} className={className} />;
 };

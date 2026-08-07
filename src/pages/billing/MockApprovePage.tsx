@@ -10,7 +10,7 @@ import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
 import { SubscriptionStatusBadge } from '@/features/billing/ui/SubscriptionStatusBadge';
 import { useMockApprove, useSubscriptionOrderQuery } from '@/features/billing/hooks/useBilling';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import type { MockApproveAction } from '@/features/billing/model/billing.types';
 
 const TOAST_BY_ACTION: Record<MockApproveAction, string> = {

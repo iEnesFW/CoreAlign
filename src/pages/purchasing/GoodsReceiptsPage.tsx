@@ -20,7 +20,7 @@ import { Textarea } from '@/shared/ui/Textarea/Textarea';
 import { Modal } from '@/shared/ui/Modal/Modal';
 import { Badge } from '@/shared/ui/Badge/Badge';
 import type { BadgeVariant } from '@/shared/ui/Badge/Badge';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import {
   useApproveGoodsReceiptQc,

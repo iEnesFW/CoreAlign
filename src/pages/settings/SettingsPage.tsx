@@ -20,7 +20,7 @@ import { MasterDataSection } from '@/features/settings/ui/MasterDataSection';
 import { NumberFormatSection } from '@/features/settings/ui/NumberFormatSection';
 import { GLPostingMapSection } from '@/features/settings/ui/GLPostingMapSection';
 import { OnboardingSettingsSection } from '@/features/onboarding/ui/OnboardingSettingsSection';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 
 type Tab =
   | 'company'

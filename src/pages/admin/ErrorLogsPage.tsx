@@ -10,7 +10,7 @@ import { Input } from '@/shared/ui/Input/Input';
 import { EmptyState } from '@/shared/ui/EmptyState/EmptyState';
 import { QueryError } from '@/shared/ui/QueryError/QueryError';
 import { toastApiError } from '@/shared/lib/mutationToast';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import {
   useErrorLogsQuery,
   useErrorLogDetailQuery,

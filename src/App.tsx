@@ -41,7 +41,12 @@ import {
   InvoicePrintView,
   InvoicesPage,
   NewInvoicePage,
+  BillingHomePage,
+  MockApprovePage,
+  ModuleStorePage,
   RecurringInvoicesPage,
+  SubscriptionOrderDetailPage,
+  SubscriptionOrdersPage,
   IncomingInvoicesPage,
   JournalEntriesPage,
   LoginPage,
@@ -206,6 +211,14 @@ function App() {
                             <Route path="invoices" element={<InvoicesPage />} />
                             <Route path="invoices/new" element={<NewInvoicePage />} />
                             <Route path="recurring-invoices" element={<RecurringInvoicesPage />} />
+                            <Route path="billing" element={<BillingHomePage />} />
+                            <Route path="billing/store" element={<ModuleStorePage />} />
+                            <Route path="billing/orders" element={<SubscriptionOrdersPage />} />
+                            <Route
+                              path="billing/orders/:id"
+                              element={<SubscriptionOrderDetailPage />}
+                            />
+                            <Route path="billing/mock-approve" element={<MockApprovePage />} />
                             <Route path="incoming-invoices" element={<IncomingInvoicesPage />} />
                             <Route path="returns" element={<ReturnsPage />} />
                             <Route path="returns/:id" element={<ReturnDetailPage />} />

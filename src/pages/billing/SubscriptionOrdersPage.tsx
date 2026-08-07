@@ -18,7 +18,7 @@ import {
   useCancelSubscriptionOrder,
   useSubscriptionOrdersQuery,
 } from '@/features/billing/hooks/useBilling';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import type {
   SubscriptionOrderDto,
   SubscriptionOrderStatus,

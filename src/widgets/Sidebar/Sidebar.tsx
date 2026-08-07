@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, useLocation } from 'react-router-dom';
 import { routePreloaders } from '@/app/router/routePrefetch';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import { Logo } from '@/shared/ui/Logo/Logo';
 import { useCompanyProfileQuery } from '@/features/settings/hooks/useSettingsQueries';
 import { cn } from '@/shared/lib/cn';
@@ -340,6 +340,12 @@ const baseNavigation: NavItem[] = [
   },
 
   { section: 'SYSTEM' },
+  {
+    name: 'Subscription',
+    labelKey: 'Sidebar.nav.billing',
+    href: '/dashboard/billing',
+    icon: CreditCard,
+  },
   {
     name: 'Activity Log',
     labelKey: 'Sidebar.nav.activityLog',

@@ -117,7 +117,8 @@
       "trialBalance": "Trial Balance",
       "vendors": "Vendors",
       "warranty": "Warranty",
-      "yearEndClose": "Year-End Close"
+      "yearEndClose": "Year-End Close",
+      "billing": "Subscription"
     }
   },
   "inventory": {
@@ -5299,6 +5300,37 @@
       "orderTitle": "Couldn't load order",
       "orderDescription": "This subscription order could not be loaded.",
       "ordersTitle": "Couldn't load orders"
+    },
+    "store": {
+      "title": "Module Store",
+      "subtitle": "Pick the modules you need, build your cart and activate them in one step.",
+      "backToOverview": "Back to subscription",
+      "stepSelect": "Select modules",
+      "stepPayment": "Payment details",
+      "cycle": "Billing cycle",
+      "cycle_monthly": "Monthly",
+      "cycle_yearly": "Yearly",
+      "summary": "Summary",
+      "clear": "Clear",
+      "emptyCart": "No modules selected yet.",
+      "total": "Total",
+      "taxNote": "Prices exclude VAT.",
+      "continue": "Continue",
+      "payNow": "Proceed to payment",
+      "backToSelection": "Back to selection",
+      "removeLine": "Remove {{name}}",
+      "alwaysIncluded": "Always included",
+      "activeUntil": "Active · {{date}}",
+      "renewalUntil": "Extends to {{date}}",
+      "adminOnly": "Only a company administrator can purchase modules.",
+      "mixedCurrency": "A single order cannot mix currencies. Please reduce the cart to one currency.",
+      "emptyCatalog": "No purchasable modules found.",
+      "emptyCatalogHint": "The module catalog is not ready yet. Please try again later.",
+      "buyerSection": "Billing details",
+      "paymentSection": "Payment method",
+      "noGateway": "No payment method configured",
+      "cardNotice": "Your card details are never entered into CoreAlign.",
+      "cardNoticeLong": "Your card details are never entered into CoreAlign. When you proceed, you are redirected to the provider's secure payment page; your card number is processed only there — CoreAlign never sees or stores it."
     }
   },
   "Fx": {

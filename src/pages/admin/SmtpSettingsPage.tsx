@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Mail } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader/PageHeader';
-import { useIsTenantAdmin } from '@/features/billing/hooks/useIsTenantAdmin';
+import { useIsTenantAdmin } from '@/shared/lib/auth/useIsTenantAdmin';
 import { SmtpSettingsForm } from '@/features/admin/smtp/ui/SmtpSettingsForm';
 import { SmtpTestSendCard } from '@/features/admin/smtp/ui/SmtpTestSendCard';
 
