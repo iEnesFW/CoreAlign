@@ -359,5 +359,8 @@
       "description": "Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin.",
       "reload": "Yenile"
     }
+  },
+  "common": {
+    "errorGeneric": "Bir hata oluştu. Lütfen tekrar deneyin."
   }
 }

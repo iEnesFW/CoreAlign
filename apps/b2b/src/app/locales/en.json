@@ -359,5 +359,8 @@
       "description": "An unexpected error occurred. Please reload the page.",
       "reload": "Reload"
     }
+  },
+  "common": {
+    "errorGeneric": "Something went wrong. Please try again."
   }
 }

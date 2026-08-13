@@ -396,6 +396,7 @@
       "created": "Yeni taslak oluşturuldu: {{number}}"
     },
     "scrap": {
+      "button": "Fire kaydet",
       "done": "Fire kaydedildi.",
       "exceeds": "Fire miktarı kalan miktarı aşamaz ({{max}}).",
       "invalid": "Satır, depo ve geçerli bir miktar girin.",
@@ -778,6 +779,7 @@
       "totalHint": "{{count}} / {{all}}"
     },
     "revisions": {
+      "appliedCount": "{{count}} revizyon uygulandı",
       "approveButton": "Onayla",
       "cancelButton": "Talebi İptal Et",
       "decidedAt": "Karar tarihi: {{when}}",
@@ -1498,10 +1500,13 @@
     },
     "merge": {
       "cancel": "İptal",
+      "confirm": "Birleştir",
       "executing": "Birleştiriliyor...",
       "missingSelectionError": "Lütfen kaynak ve hedef müşteriyi seçin.",
+      "sameIdError": "Kaynak ve hedef müşteri aynı olamaz.",
       "searchPlaceholder": "Müşteri ara...",
       "source": "Kaynak Müşteri",
+      "subtitle": "Kaynak müşterinin tüm kayıtları hedef müşteriye taşınır.",
       "target": "Hedef Müşteri",
       "title": "Müşterileri Birleştir",
       "warning": "Kaynak müşterinin tüm kayıtları hedef müşteriye taşınacaktır. Bu işlem geri alınamaz."
@@ -1510,8 +1515,11 @@
       "downloading": "İndiriliyor...",
       "from": "Başlangıç",
       "openMenu": "Ekstre seçeneklerini aç",
+      "pdf": "PDF indir",
       "subtitle": "Tarih aralığını seçip cari ekstresini indirin.",
-      "to": "Bitiş"
+      "title": "Hesap ekstresi",
+      "to": "Bitiş",
+      "xlsx": "Excel indir"
     },
     "tagsEditor": {
       "add": "Etiket Ekle",
@@ -1523,9 +1531,10 @@
     "bulkPartial": "{{deleted}} silindi, {{failed}} başarısız.",
     "bulkSelected": "{{count}} seçili",
     "duplicateWarning": {
+      "hint": "Vergi no, TCKN veya e-posta eşleşiyor. Yine de kaydedebilirsiniz — yalnızca uyarı.",
+      "title": "Benzer kayıtlar bulundu",
       "title_one": "Aynı kimlik bilgisiyle {{count}} kayıt zaten var",
-      "title_other": "Aynı kimlik bilgisiyle {{count}} kayıt zaten var",
-      "hint": "Vergi no, TCKN veya e-posta eşleşiyor. Yine de kaydedebilirsiniz — yalnızca uyarı."
+      "title_other": "Aynı kimlik bilgisiyle {{count}} kayıt zaten var"
     }
   },
   "errorState": {
@@ -1539,52 +1548,53 @@
     "viewAll": "Tüm aktiviteyi gör"
   },
   "common": {
+    "activate": "Aktifleştir",
+    "active": "Aktif",
+    "add_new": "Yeni Ekle",
+    "all": "Tümü",
+    "back": "Geri",
+    "cancel": "İptal",
+    "clear": "Temizle",
+    "close": "Kapat",
+    "confirm": "Onayla",
+    "confirmDelete": "Sil",
+    "created": "Oluşturuldu.",
+    "deactivate": "Pasifleştir",
+    "delete": "Sil",
+    "deleted": "Silindi.",
+    "details": "Detaylar",
+    "edit": "Düzenle",
+    "error": "Hata",
+    "export": "Dışa Aktar",
+    "exportCsv": "CSV'ye Aktar",
+    "exportExcel": "Excel'e Aktar",
+    "fillRequired": "Lütfen tüm zorunlu alanları doldurun.",
+    "filter": "Filtrele",
+    "inactive": "Pasif",
+    "info": "Bilgi",
+    "loading": "Yükleniyor...",
+    "new": "Yeni",
+    "next": "Sonraki",
+    "noData": "Veri yok.",
+    "noResults": "Sonuç bulunamadı.",
+    "pagination": "Sayfa {{page}} / {{totalPages}}",
+    "prev": "Önceki",
+    "retry": "Yeniden dene",
+    "save": "Kaydet",
+    "saving": "Gönderiliyor…",
+    "search": "Ara",
+    "success": "Başarılı",
+    "unknown": "Bilinmiyor",
     "unsaved": {
       "title": "Kaydedilmemiş değişiklikler",
       "message": "Kaydedilmemiş değişiklikleriniz var. Çıkmak istediğinize emin misiniz?",
       "discard": "Değişiklikleri at",
       "keep": "Düzenlemeye devam et"
     },
-    "active": "Aktif",
-    "inactive": "Pasif",
-    "add_new": "Yeni Ekle",
-    "edit": "Düzenle",
-    "delete": "Sil",
-    "search": "Ara",
-    "filter": "Filtrele",
-    "save": "Kaydet",
-    "cancel": "İptal",
-    "loading": "Yükleniyor...",
-    "success": "Başarılı",
-    "error": "Hata",
-    "retry": "Yeniden dene",
-    "warning": "Uyarı",
-    "info": "Bilgi",
-    "pagination": "Sayfa {{page}} / {{totalPages}}",
-    "prev": "Önceki",
-    "next": "Sonraki",
-    "confirm": "Onayla",
-    "confirmDelete": "Sil",
-    "view": "Görüntüle",
-    "back": "Geri",
-    "details": "Detaylar",
-    "activate": "Aktifleştir",
-    "close": "Kapat",
-    "created": "Oluşturuldu.",
-    "deactivate": "Pasifleştir",
-    "deleted": "Silindi.",
-    "export": "Dışa Aktar",
-    "exportCsv": "CSV'ye Aktar",
-    "exportExcel": "Excel'e Aktar",
-    "clear": "Temizle",
-    "new": "Yeni",
-    "saving": "Gönderiliyor…",
-    "unknown": "Bilinmiyor",
     "updated": "Güncellendi.",
-    "all": "Tümü",
-    "fillRequired": "Lütfen tüm zorunlu alanları doldurun.",
-    "noResults": "Sonuç bulunamadı.",
-    "user": "Kullanıcı"
+    "user": "Kullanıcı",
+    "view": "Görüntüle",
+    "warning": "Uyarı"
   },
   "activity": {
     "title": "Aktivite Günlüğü",
@@ -1665,6 +1675,7 @@
       "save": "Kaydet",
       "savedEmpty": "Henüz kayıtlı rapor yok",
       "savedTitle": "Kayıtlı Raporlar",
+      "subtitle": "Kendi rapor tanımınızı oluşturun ve çalıştırın.",
       "title": "Özel Rapor Oluşturucu",
       "value": "Değer"
     },
@@ -1678,10 +1689,13 @@
       "fromDate": "Başlangıç Tarihi",
       "onlyBelowReorder": "Yalnızca yeniden sipariş seviyesinin altındakiler",
       "openLibrary": "Rapor Kitaplığı",
+      "pdf": "PDF",
       "productId": "Ürün ID",
+      "subtitle": "Hazır raporları çalıştırın ve dışa aktarın.",
       "title": "Rapor Kitaplığı",
       "toDate": "Bitiş Tarihi",
-      "warehouseId": "Depo ID"
+      "warehouseId": "Depo ID",
+      "xlsx": "Excel"
     },
     "schedules": {
       "active": "Aktif",
@@ -1696,17 +1710,20 @@
       },
       "empty": "Henüz zamanlanmış rapor yok",
       "error": {
+        "name": "Zamanlama adı zorunludur.",
         "recipients": "En az bir alıcı e-posta adresi girin",
         "save": "Zamanlama kaydedilemedi"
       },
       "format": "Format",
       "frequency": "Sıklık",
+      "inactive": "Pasif",
       "name": "Ad",
       "new": "Yeni Zamanlama",
       "newTitle": "Zamanlama Oluştur",
       "recipients": "Alıcılar (virgülle ayırın)",
       "reportKey": "Rapor Anahtarı",
       "startAt": "Başlangıç Zamanı",
+      "subtitle": "Raporların otomatik çalışma ve gönderim planlarını yönetin.",
       "title": "Zamanlanmış Raporlar"
     }
   },
@@ -4740,32 +4757,9 @@
     }
   },
   "Common": {
-    "Yes": "Evet",
-    "No": "Hayır",
-    "Day": "Gün",
-    "Days": "Gün",
-    "Loading": "Yükleniyor…",
-    "Delete": "Sil",
-    "Disabled": "Devre dışı",
-    "Enabled": "Etkin",
-    "Create": "Oluştur",
-    "Cancel": "İptal",
-    "Save": "Kaydet",
-    "Undo": "Geri al",
-    "Redo": "Yinele",
-    "Previous": "Önceki",
-    "Next": "Sonraki",
-    "PageOf": "{{current}}/{{total}}",
-    "Refresh": "Yenile",
+    "Actions": "İşlemler",
     "All": "Tümü",
-    "Offline": {
-      "Banner": "Çevrimdışısınız. Bağlantı yeniden kurulduğunda değişiklikler senkronize edilecek.",
-      "Queued": "{{count}} değişiklik beklemede",
-      "Synced": "{{count}} değişiklik senkronize edildi",
-      "Error": "{{count}} değişiklik senkronize edilemedi",
-      "SyncNow": "Şimdi senkronize et"
-    },
-    "Duplicate": "Çoğalt",
+    "AllDetails": "Tüm detaylar",
     "AuditTab": {
       "After": "Sonrası",
       "Before": "Öncesi",
@@ -4773,43 +4767,69 @@
       "ChangesTitle": "Değişiklikler",
       "Title": "Denetim"
     },
-    "Close": "Kapat",
-    "Edit": "Düzenle",
     "Back": "Geri",
+    "Cancel": "İptal",
+    "Clear": "Temizle",
+    "Close": "Kapat",
+    "Create": "Oluştur",
+    "Day": "Gün",
+    "Days": "Gün",
+    "Delete": "Sil",
+    "Disabled": "Devre dışı",
+    "Duplicate": "Çoğalt",
+    "Edit": "Düzenle",
+    "Enabled": "Etkin",
     "Filter": {
       "All": "Tümü"
     },
+    "Filters": "Filtreler",
     "Hide": "Gizle",
     "ItemLabel": "kayıt",
-    "PaginationSummary": "{{total}} {{itemLabel}} — sayfa {{page}} / {{totalPages}}",
+    "Loading": "Yükleniyor…",
+    "Next": "Sonraki",
+    "No": "Hayır",
+    "NoData": "Veri yok",
+    "Offline": {
+      "Banner": "Çevrimdışısınız. Bağlantı yeniden kurulduğunda değişiklikler senkronize edilecek.",
+      "Queued": "{{count}} değişiklik beklemede",
+      "Synced": "{{count}} değişiklik senkronize edildi",
+      "Error": "{{count}} değişiklik senkronize edilemedi",
+      "SyncNow": "Şimdi senkronize et"
+    },
+    "PageOf": "{{current}}/{{total}}",
     "PageSize": "Sayfa boyutu",
     "PageSizeOption": "{{size}} / sayfa",
-    "SummaryCards": "Özet kartları",
-    "Saving": "Kaydediliyor…",
-    "NoData": "Veri yok",
-    "SelectAll": "Tümünü seç",
-    "Actions": "İşlemler",
-    "SelectRow": "Satırı seç",
+    "PaginationSummary": "{{total}} {{itemLabel}} — sayfa {{page}} / {{totalPages}}",
+    "Previous": "Önceki",
+    "Redo": "Yinele",
+    "Refresh": "Yenile",
     "RemoveFilter": "Filtreyi kaldır",
-    "Clear": "Temizle",
-    "Filters": "Filtreler",
-    "AllDetails": "Tüm detaylar"
+    "Save": "Kaydet",
+    "Saving": "Kaydediliyor…",
+    "SelectAll": "Tümünü seç",
+    "SelectRow": "Satırı seç",
+    "SummaryCards": "Özet kartları",
+    "Undo": "Geri al",
+    "Yes": "Evet",
+    "no": "Hayır",
+    "yes": "Evet"
   },
   "collab": {
     "comments": {
-      "tab": "Yorumlar",
-      "title": "Yorumlar",
-      "open": "Yorumları aç",
+      "count": "{{count}} yorum",
       "count_one": "{{count}} yorum",
       "count_other": "{{count}} yorum",
-      "empty": "Henüz yorum yok. Sohbeti başlatın.",
-      "placeholder": "Yorum yazın…",
-      "replyPlaceholder": "Yanıt yazın…",
-      "submit": "Gönder",
-      "reply": "Yanıtla",
-      "edited": "düzenlendi",
       "deleted": "Yorum silindi",
-      "shortcutHint": "Göndermek için Ctrl/⌘ + Enter"
+      "edited": "düzenlendi",
+      "empty": "Henüz yorum yok. Sohbeti başlatın.",
+      "open": "Yorumları aç",
+      "placeholder": "Yorum yazın…",
+      "reply": "Yanıtla",
+      "replyPlaceholder": "Yanıt yazın…",
+      "shortcutHint": "Göndermek için Ctrl/⌘ + Enter",
+      "submit": "Gönder",
+      "tab": "Yorumlar",
+      "title": "Yorumlar"
     },
     "notifications": {
       "title": "Bildirimler",
@@ -5381,14 +5401,15 @@
       "cardNoticeLong": "Kart bilgileriniz CoreAlign'a girilmez. \"Ödemeye geç\" dediğinizde sağlayıcının güvenli ödeme sayfasına yönlendirilirsiniz; kart numaranız yalnızca orada işlenir, CoreAlign görmez ve saklamaz."
     },
     "expiryPopup": {
-      "title": "Modül süreniz doluyor",
-      "subtitle_one": "Bir modülünüzün süresi çok yakında doluyor.",
-      "subtitle_other": "{{count}} modülünüzün süresi çok yakında doluyor.",
-      "expiresOn": "Bitiş: {{date}}",
       "daysLeft_one": "{{count}} gün kaldı",
       "daysLeft_other": "{{count}} gün kaldı",
+      "expiresOn": "Bitiş: {{date}}",
+      "later": "Daha sonra",
       "renew": "Şimdi uzat",
-      "later": "Daha sonra"
+      "subtitle": "{{count}} modülünüzün süresi yakında doluyor.",
+      "subtitle_one": "Bir modülünüzün süresi çok yakında doluyor.",
+      "subtitle_other": "{{count}} modülünüzün süresi çok yakında doluyor.",
+      "title": "Modül süreniz doluyor"
     }
   },
   "Fx": {
@@ -6585,7 +6606,9 @@
       "AfterJson": "Sonrası (JSON)",
       "AnyAction": "Tüm işlemler",
       "ApplyFilter": "Filtreleri uygula",
+      "BeforeJson": "Önceki değer (JSON)",
       "ChangedAt": "Değişiklik zamanı",
+      "CorrelationId": "Korelasyon kimliği",
       "DetailTitle": "Denetim kaydı detayı",
       "EntityId": "Kayıt ID",
       "EntityType": "Kayıt türü",
@@ -6599,6 +6622,7 @@
       "LastRun": "Son çalıştırma",
       "LookbackDays": "Geriye dönük gün sayısı",
       "NoResults": "Mevcut filtrelerle eşleşen denetim kaydı yok.",
+      "PageSubtitle": "Sistem genelindeki denetim kayıtlarını inceleyin ve dışa aktarın.",
       "PageTitle": "Denetim Günlüğü",
       "Recipients": "Alıcılar (virgülle ayrılmış e-postalar)",
       "Reset": "Sıfırla",
@@ -6608,7 +6632,8 @@
       "ScheduleSaved": "Dışa aktarma zamanlaması kaydedildi",
       "Sequence": "Sıra No",
       "Tab": {
-        "Log": "Günlük"
+        "Log": "Günlük",
+        "Schedule": "Zamanlama"
       },
       "ToDate": "Bitiş tarihi",
       "TotalRows": "Toplam {{count}} kayıt",
@@ -6643,6 +6668,7 @@
       "SearchPlaceholder": "Kiracı ara...",
       "StatusActive": "Aktif",
       "StatusArchived": "Arşivlendi",
+      "Subtitle": "Platformdaki tüm kiracıları görüntüleyin.",
       "Title": "Kiracılar"
     }
   },
@@ -6652,17 +6678,21 @@
       "alwaysOn": "Her zaman açık",
       "categories": {
         "analytics": {
+          "description": "Ürünü nasıl kullandığınızı anlamamıza ve iyileştirmemize yardımcı olur.",
           "title": "Analitik çerezler"
         },
         "essential": {
+          "description": "Oturum açma, güvenlik ve temel işlevler için zorunludur; kapatılamaz.",
           "title": "Zorunlu çerezler"
         },
         "marketing": {
+          "description": "Size uygun kampanya ve duyuruları gösterebilmek için kullanılır.",
           "title": "Pazarlama çerezleri"
         }
       },
       "categoriesAria": "Çerez kategorileri",
       "essentialOnly": "Yalnızca zorunlu",
+      "intro": "Temel işlevler için zorunlu çerezler kullanıyoruz. Analiz ve pazarlama çerezlerini dilerseniz açabilirsiniz.",
       "managePreferences": "Tercihleri yönet",
       "savePreferences": "Tercihleri kaydet",
       "title": "Çerez tercihleri"
@@ -6685,8 +6715,19 @@
     },
     "columns": {
       "actions": "İşlemler",
+      "customer": "Müşteri",
+      "quoteDate": "Teklif tarihi",
       "quoteNumber": "Teklif No",
+      "status": "Durum",
+      "total": "Toplam",
       "validUntil": "Geçerlilik Tarihi"
+    },
+    "confirm": {
+      "accept": "{{number}} numaralı teklif kabul edildi olarak işaretlenecek. Onaylıyor musunuz?",
+      "convert": "{{number}} numaralı teklif siparişe dönüştürülecek. Onaylıyor musunuz?",
+      "delete": "{{number}} numaralı teklif silinecek. Onaylıyor musunuz?",
+      "reject": "{{number}} numaralı teklif reddedildi olarak işaretlenecek. Onaylıyor musunuz?",
+      "send": "{{number}} numaralı teklif müşteriye gönderilecek. Onaylıyor musunuz?"
     },
     "create": {
       "addLine": "Satır Ekle",
@@ -6694,11 +6735,14 @@
       "removeLine": "Satırı kaldır",
       "selectCustomer": "Müşteri seçin",
       "selectProduct": "Ürün seçin",
+      "submit": "Teklif oluştur",
       "submitting": "Oluşturuluyor...",
+      "subtitle": "Müşteri ve kalemleri seçerek yeni bir teklif oluşturun.",
       "title": "Yeni Teklif",
       "validation": {
         "customerRequired": "Lütfen bir müşteri seçin",
-        "linePositive": "Ürün ve sıfırdan büyük miktar içeren en az bir satır ekleyin"
+        "linePositive": "Ürün ve sıfırdan büyük miktar içeren en az bir satır ekleyin",
+        "validUntilAfterDate": "Geçerlilik tarihi, teklif tarihinden önce olamaz."
       }
     },
     "detail": {
@@ -6722,6 +6766,7 @@
     "newButton": "Yeni Teklif",
     "resultCountLabel": "teklif",
     "searchPlaceholder": "Numara veya müşteri ara...",
+    "subtitle": "Tekliflerinizi oluşturun, gönderin ve siparişe dönüştürün.",
     "title": "Teklifler",
     "toast": {
       "accepted": "Teklif kabul edildi",
@@ -6734,8 +6779,12 @@
   },
   "OrderTemplates": {
     "Columns": {
+      "Actions": "İşlemler",
+      "Active": "Aktif",
+      "Frequency": "Sıklık",
       "LastRun": "Son Çalıştırma",
-      "Name": "Ad"
+      "Name": "Ad",
+      "NextRun": "Sonraki çalışma"
     },
     "Empty": "Henüz sipariş şablonu bulunmuyor.",
     "Form": {
@@ -6752,9 +6801,11 @@
       "RunNow": "Şimdi Çalıştır",
       "Saved": "Sipariş şablonu kaydedildi.",
       "Submit": "Kaydet",
-      "TitleEdit": "Sipariş Şablonunu Düzenle"
+      "TitleEdit": "Sipariş Şablonunu Düzenle",
+      "TitleNew": "Yeni sipariş şablonu"
     },
     "New": "Yeni Şablon",
+    "Subtitle": "Tekrarlayan siparişler için şablonları yönetin.",
     "Title": "Sipariş Şablonları"
   },
   "Returns": {
@@ -6854,6 +6905,7 @@
       "Code": "Kod",
       "Created": "İndirim kuralı oluşturuldu",
       "CustomerGroup": "Cari Grubu",
+      "DeleteMessage": "{{code}} kodlu indirim kuralı silinecek. Onaylıyor musunuz?",
       "DeleteTitle": "İndirim Kuralını Sil",
       "Deleted": "İndirim kuralı silindi",
       "Description": "Açıklama",
@@ -6865,11 +6917,14 @@
       "MinQuantity": "Min. Miktar",
       "Name": "Ad",
       "New": "Yeni Kural",
+      "NewTitle": "Yeni indirim kuralı",
       "Priority": "Öncelik",
       "Product": "Ürün",
       "ProductCategory": "Ürün Kategorisi",
       "Scope": "Kapsam",
       "Status": "Durum",
+      "Subtitle": "Müşteri ve ürünlere uygulanacak indirim kurallarını yönetin.",
+      "Target": "Hedef",
       "Title": "İndirim Kuralları",
       "Updated": "İndirim kuralı güncellendi",
       "ValidFrom": "Geçerlilik Başlangıcı",
@@ -6885,11 +6940,13 @@
       "RateAgainstTry": "TRY Karşılığı Kur",
       "Refresh": "Kurları Güncelle",
       "Source": "Kaynak",
+      "Subtitle": "Döviz kurlarını görüntüleyin ve güncelleyin.",
       "Title": "Döviz Kurları",
       "ValidOn": "Geçerlilik Tarihi"
     },
     "Imports": {
       "Commit": "Geçerli Satırları İçe Aktar",
+      "CommitAll": "Tümünü aktar",
       "CommittedToast": "{{count}} satır başarıyla içe aktarıldı",
       "DropFile": "Dosyayı buraya sürükleyip bırakın veya seçmek için tıklayın (.csv, .xlsx)",
       "Errors": "Hatalar",
@@ -6897,6 +6954,7 @@
       "InvalidRows": "Geçersiz Satır",
       "Row": "Satır",
       "SkipInvalid": "Geçersiz satırları atla",
+      "Subtitle": "CSV veya Excel dosyalarından toplu veri aktarın.",
       "Title": "Veri İçe Aktarma",
       "TotalRows": "Toplam Satır",
       "ValidRows": "Geçerli Satır"
@@ -6911,21 +6969,27 @@
         "Errors": {
           "DiscountRange": "İskonto 0 ile 100 arasında olmalıdır",
           "MinExceedsMax": "Min. miktar maks. miktardan büyük olamaz",
-          "PriceRequired": "Geçerli bir fiyat girin"
+          "PriceRequired": "Geçerli bir fiyat girin",
+          "ProductRequired": "Ürün seçin."
         },
         "MaxQuantity": "Maks. Miktar",
+        "MinQuantity": "Min. miktar",
+        "Price": "Fiyat",
         "Product": "Ürün",
+        "RemoveMessage": "Bu fiyat satırı silinecek. Onaylıyor musunuz?",
         "RemoveTitle": "Satırı Kaldır",
         "Removed": "Fiyat listesi satırı kaldırıldı",
         "SelectProduct": "Ürün seçin",
         "Title": "Fiyat Listesi Satırları",
         "Updated": "Fiyat listesi satırı güncellendi"
       },
+      "Subtitle": "Müşteri ve kanal bazlı fiyat listelerini yönetin.",
       "Title": "Fiyat Listeleri"
     },
     "TaxRules": {
       "Code": "Kod",
       "Created": "Vergi kuralı oluşturuldu",
+      "DeleteMessage": "{{code}} kodlu vergi kuralı silinecek. Onaylıyor musunuz?",
       "DeleteTitle": "Vergi Kuralını Sil",
       "Deleted": "Vergi kuralı silindi",
       "Description": "Açıklama",
@@ -6937,6 +7001,7 @@
       "Fallback": "Yedek Vergi Oranı",
       "Name": "Ad",
       "New": "Yeni Kural",
+      "NewTitle": "Yeni vergi kuralı",
       "Priority": "Öncelik",
       "Product": "Ürün",
       "ProductCategory": "Ürün Kategorisi",
@@ -6945,6 +7010,8 @@
       "RegionCode": "Bölge Kodu",
       "Scope": "Kapsam",
       "Status": "Durum",
+      "Subtitle": "Ürün ve müşterilere uygulanacak vergi kurallarını yönetin.",
+      "Target": "Hedef",
       "Title": "Vergi Kuralları",
       "Updated": "Vergi kuralı güncellendi",
       "ValidFrom": "Geçerlilik Başlangıcı",

@@ -42,6 +42,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: i18n keys resolve
+        run: npm run check:i18n
+
       - name: Unit tests (root vitest)
         run: npm test --if-present
 

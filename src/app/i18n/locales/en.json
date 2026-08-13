@@ -396,6 +396,7 @@
       "created": "New draft created: {{number}}"
     },
     "scrap": {
+      "button": "Record scrap",
       "done": "Scrap recorded.",
       "exceeds": "Scrap quantity cannot exceed the remaining quantity ({{max}}).",
       "invalid": "Enter a line, warehouse and a valid quantity.",
@@ -778,6 +779,7 @@
       "totalHint": "{{count}} of {{all}}"
     },
     "revisions": {
+      "appliedCount": "{{count}} revisions applied",
       "approveButton": "Approve",
       "cancelButton": "Cancel Request",
       "decidedAt": "Decided at {{when}}",
@@ -1273,52 +1275,53 @@
     "viewAll": "View all activity"
   },
   "common": {
+    "activate": "Activate",
+    "active": "Active",
+    "add_new": "Add New",
+    "all": "All",
+    "back": "Back",
+    "cancel": "Cancel",
+    "clear": "Clear",
+    "close": "Close",
+    "confirm": "Confirm",
+    "confirmDelete": "Delete",
+    "created": "Created.",
+    "deactivate": "Deactivate",
+    "delete": "Delete",
+    "deleted": "Deleted.",
+    "details": "Details",
+    "edit": "Edit",
+    "error": "Error",
+    "export": "Export",
+    "exportCsv": "Export CSV",
+    "exportExcel": "Export to Excel",
+    "fillRequired": "Please fill in all required fields.",
+    "filter": "Filter",
+    "inactive": "Inactive",
+    "info": "Information",
+    "loading": "Loading...",
+    "new": "New",
+    "next": "Next",
+    "noData": "No data.",
+    "noResults": "No results.",
+    "pagination": "Page {{page}} of {{totalPages}}",
+    "prev": "Previous",
+    "retry": "Retry",
+    "save": "Save",
+    "saving": "Submitting…",
+    "search": "Search",
+    "success": "Success",
+    "unknown": "Unknown",
     "unsaved": {
       "title": "Unsaved changes",
       "message": "You have unsaved changes. Are you sure you want to leave?",
       "discard": "Discard changes",
       "keep": "Keep editing"
     },
-    "add_new": "Add New",
-    "edit": "Edit",
-    "delete": "Delete",
-    "search": "Search",
-    "filter": "Filter",
-    "save": "Save",
-    "cancel": "Cancel",
-    "loading": "Loading...",
-    "success": "Success",
-    "error": "Error",
-    "retry": "Retry",
-    "warning": "Warning",
-    "info": "Information",
-    "active": "Active",
-    "inactive": "Inactive",
-    "pagination": "Page {{page}} of {{totalPages}}",
-    "prev": "Previous",
-    "next": "Next",
-    "confirm": "Confirm",
-    "confirmDelete": "Delete",
-    "view": "View",
-    "back": "Back",
-    "details": "Details",
-    "activate": "Activate",
-    "close": "Close",
-    "created": "Created.",
-    "deactivate": "Deactivate",
-    "deleted": "Deleted.",
-    "export": "Export",
-    "exportCsv": "Export CSV",
-    "exportExcel": "Export to Excel",
-    "clear": "Clear",
-    "new": "New",
-    "saving": "Submitting…",
-    "unknown": "Unknown",
     "updated": "Updated.",
-    "all": "All",
-    "fillRequired": "Please fill in all required fields.",
-    "noResults": "No results.",
-    "user": "User"
+    "user": "User",
+    "view": "View",
+    "warning": "Warning"
   },
   "activity": {
     "title": "Activity Log",
@@ -1575,10 +1578,13 @@
     },
     "merge": {
       "cancel": "Cancel",
+      "confirm": "Merge",
       "executing": "Merging...",
       "missingSelectionError": "Select both a source and a target customer.",
+      "sameIdError": "The source and target customer cannot be the same.",
       "searchPlaceholder": "Search customers...",
       "source": "Source Customer",
+      "subtitle": "Every record of the source customer moves to the target customer.",
       "target": "Target Customer",
       "title": "Merge Customers",
       "warning": "All records of the source customer will be moved to the target customer. This action cannot be undone."
@@ -1587,8 +1593,11 @@
       "downloading": "Downloading...",
       "from": "From",
       "openMenu": "Open statement options",
+      "pdf": "Download PDF",
       "subtitle": "Choose a date range and download the statement.",
-      "to": "To"
+      "title": "Statement",
+      "to": "To",
+      "xlsx": "Download Excel"
     },
     "tagsEditor": {
       "add": "Add Tag",
@@ -1600,9 +1609,10 @@
     "bulkPartial": "{{deleted}} deleted, {{failed}} failed.",
     "bulkSelected": "{{count}} selected",
     "duplicateWarning": {
+      "hint": "Tax number, national id or e-mail matches. You can still save — this is only a warning.",
+      "title": "Possible duplicate records",
       "title_one": "{{count}} record already uses this identity",
-      "title_other": "{{count}} records already use this identity",
-      "hint": "Tax number, national id or e-mail matches. You can still save — this is only a warning."
+      "title_other": "{{count}} records already use this identity"
     }
   },
   "reports": {
@@ -1665,6 +1675,7 @@
       "save": "Save",
       "savedEmpty": "No saved reports yet",
       "savedTitle": "Saved Reports",
+      "subtitle": "Build and run your own report definition.",
       "title": "Custom Report Builder",
       "value": "Value"
     },
@@ -1678,10 +1689,13 @@
       "fromDate": "From Date",
       "onlyBelowReorder": "Only items below reorder level",
       "openLibrary": "Report Library",
+      "pdf": "PDF",
       "productId": "Product ID",
+      "subtitle": "Run and export the built-in reports.",
       "title": "Report Library",
       "toDate": "To Date",
-      "warehouseId": "Warehouse ID"
+      "warehouseId": "Warehouse ID",
+      "xlsx": "Excel"
     },
     "schedules": {
       "active": "Active",
@@ -1696,17 +1710,20 @@
       },
       "empty": "No scheduled reports yet",
       "error": {
+        "name": "A schedule name is required.",
         "recipients": "Enter at least one recipient email address",
         "save": "Failed to save the schedule"
       },
       "format": "Format",
       "frequency": "Frequency",
+      "inactive": "Inactive",
       "name": "Name",
       "new": "New Schedule",
       "newTitle": "Create Schedule",
       "recipients": "Recipients (comma separated)",
       "reportKey": "Report Key",
       "startAt": "Start At",
+      "subtitle": "Manage when reports run automatically and who receives them.",
       "title": "Scheduled Reports"
     }
   },
@@ -4740,32 +4757,9 @@
     }
   },
   "Common": {
-    "Yes": "Yes",
-    "No": "No",
-    "Day": "Day",
-    "Days": "Days",
-    "Loading": "Loading…",
-    "Delete": "Delete",
-    "Disabled": "Disabled",
-    "Enabled": "Enabled",
-    "Create": "Create",
-    "Cancel": "Cancel",
-    "Save": "Save",
-    "Undo": "Undo",
-    "Redo": "Redo",
-    "Previous": "Previous",
-    "Next": "Next",
-    "PageOf": "{{current}}/{{total}}",
-    "Refresh": "Refresh",
+    "Actions": "Actions",
     "All": "All",
-    "Offline": {
-      "Banner": "You are offline. Changes will sync once the connection is restored.",
-      "Queued": "{{count}} changes pending",
-      "Synced": "{{count}} changes synced",
-      "Error": "{{count}} changes failed to sync",
-      "SyncNow": "Sync now"
-    },
-    "Duplicate": "Duplicate",
+    "AllDetails": "All details",
     "AuditTab": {
       "After": "After",
       "Before": "Before",
@@ -4773,43 +4767,69 @@
       "ChangesTitle": "Changes",
       "Title": "Audit"
     },
-    "Close": "Close",
-    "Edit": "Edit",
     "Back": "Back",
+    "Cancel": "Cancel",
+    "Clear": "Clear",
+    "Close": "Close",
+    "Create": "Create",
+    "Day": "Day",
+    "Days": "Days",
+    "Delete": "Delete",
+    "Disabled": "Disabled",
+    "Duplicate": "Duplicate",
+    "Edit": "Edit",
+    "Enabled": "Enabled",
     "Filter": {
       "All": "All"
     },
+    "Filters": "Filters",
     "Hide": "Hide",
     "ItemLabel": "records",
-    "PaginationSummary": "{{total}} {{itemLabel}} — page {{page}} / {{totalPages}}",
+    "Loading": "Loading…",
+    "Next": "Next",
+    "No": "No",
+    "NoData": "No data",
+    "Offline": {
+      "Banner": "You are offline. Changes will sync once the connection is restored.",
+      "Queued": "{{count}} changes pending",
+      "Synced": "{{count}} changes synced",
+      "Error": "{{count}} changes failed to sync",
+      "SyncNow": "Sync now"
+    },
+    "PageOf": "{{current}}/{{total}}",
     "PageSize": "Page size",
     "PageSizeOption": "{{size}} / page",
-    "SummaryCards": "Summary cards",
-    "Saving": "Saving…",
-    "NoData": "No data",
-    "SelectAll": "Select all",
-    "Actions": "Actions",
-    "SelectRow": "Select row",
+    "PaginationSummary": "{{total}} {{itemLabel}} — page {{page}} / {{totalPages}}",
+    "Previous": "Previous",
+    "Redo": "Redo",
+    "Refresh": "Refresh",
     "RemoveFilter": "Remove filter",
-    "Clear": "Clear",
-    "Filters": "Filters",
-    "AllDetails": "All details"
+    "Save": "Save",
+    "Saving": "Saving…",
+    "SelectAll": "Select all",
+    "SelectRow": "Select row",
+    "SummaryCards": "Summary cards",
+    "Undo": "Undo",
+    "Yes": "Yes",
+    "no": "No",
+    "yes": "Yes"
   },
   "collab": {
     "comments": {
-      "tab": "Comments",
-      "title": "Comments",
-      "open": "Open comments",
+      "count": "{{count}} comments",
       "count_one": "{{count}} comment",
       "count_other": "{{count}} comments",
-      "empty": "No comments yet. Start the conversation.",
-      "placeholder": "Write a comment…",
-      "replyPlaceholder": "Write a reply…",
-      "submit": "Post",
-      "reply": "Reply",
-      "edited": "edited",
       "deleted": "Comment deleted",
-      "shortcutHint": "Ctrl/⌘ + Enter to send"
+      "edited": "edited",
+      "empty": "No comments yet. Start the conversation.",
+      "open": "Open comments",
+      "placeholder": "Write a comment…",
+      "reply": "Reply",
+      "replyPlaceholder": "Write a reply…",
+      "shortcutHint": "Ctrl/⌘ + Enter to send",
+      "submit": "Post",
+      "tab": "Comments",
+      "title": "Comments"
     },
     "notifications": {
       "title": "Notifications",
@@ -5381,14 +5401,15 @@
       "cardNoticeLong": "Your card details are never entered into CoreAlign. When you proceed, you are redirected to the provider's secure payment page; your card number is processed only there — CoreAlign never sees or stores it."
     },
     "expiryPopup": {
-      "title": "Your module is about to expire",
-      "subtitle_one": "One of your modules expires very soon.",
-      "subtitle_other": "{{count}} of your modules expire very soon.",
-      "expiresOn": "Ends: {{date}}",
       "daysLeft_one": "{{count}} day left",
       "daysLeft_other": "{{count}} days left",
+      "expiresOn": "Ends: {{date}}",
+      "later": "Later",
       "renew": "Renew now",
-      "later": "Later"
+      "subtitle": "{{count}} of your modules expire soon.",
+      "subtitle_one": "One of your modules expires very soon.",
+      "subtitle_other": "{{count}} of your modules expire very soon.",
+      "title": "Your module is about to expire"
     }
   },
   "Fx": {
@@ -6585,7 +6606,9 @@
       "AfterJson": "After (JSON)",
       "AnyAction": "Any action",
       "ApplyFilter": "Apply filters",
+      "BeforeJson": "Before (JSON)",
       "ChangedAt": "Changed at",
+      "CorrelationId": "Correlation ID",
       "DetailTitle": "Audit entry details",
       "EntityId": "Entity ID",
       "EntityType": "Entity type",
@@ -6599,6 +6622,7 @@
       "LastRun": "Last run",
       "LookbackDays": "Lookback (days)",
       "NoResults": "No audit entries match the current filters.",
+      "PageSubtitle": "Review and export system-wide audit records.",
       "PageTitle": "Audit Log",
       "Recipients": "Recipients (comma separated emails)",
       "Reset": "Reset",
@@ -6608,7 +6632,8 @@
       "ScheduleSaved": "Export schedule saved",
       "Sequence": "Sequence",
       "Tab": {
-        "Log": "Log"
+        "Log": "Log",
+        "Schedule": "Schedule"
       },
       "ToDate": "To date",
       "TotalRows": "{{count}} rows total",
@@ -6643,6 +6668,7 @@
       "SearchPlaceholder": "Search tenants...",
       "StatusActive": "Active",
       "StatusArchived": "Archived",
+      "Subtitle": "View every tenant on the platform.",
       "Title": "Tenants"
     }
   },
@@ -6652,17 +6678,21 @@
       "alwaysOn": "Always on",
       "categories": {
         "analytics": {
+          "description": "Helps us understand how the product is used so we can improve it.",
           "title": "Analytics cookies"
         },
         "essential": {
+          "description": "Required for sign-in, security and core functionality; cannot be turned off.",
           "title": "Essential cookies"
         },
         "marketing": {
+          "description": "Used to show you relevant campaigns and announcements.",
           "title": "Marketing cookies"
         }
       },
       "categoriesAria": "Cookie categories",
       "essentialOnly": "Essential only",
+      "intro": "We use essential cookies for core functionality. You can additionally allow analytics and marketing cookies.",
       "managePreferences": "Manage preferences",
       "savePreferences": "Save preferences",
       "title": "Cookie preferences"
@@ -6685,8 +6715,19 @@
     },
     "columns": {
       "actions": "Actions",
+      "customer": "Customer",
+      "quoteDate": "Quote date",
       "quoteNumber": "Quote No",
+      "status": "Status",
+      "total": "Total",
       "validUntil": "Valid Until"
+    },
+    "confirm": {
+      "accept": "Quote {{number}} will be marked as accepted. Continue?",
+      "convert": "Quote {{number}} will be converted into an order. Continue?",
+      "delete": "Quote {{number}} will be deleted. Continue?",
+      "reject": "Quote {{number}} will be marked as rejected. Continue?",
+      "send": "Quote {{number}} will be sent to the customer. Continue?"
     },
     "create": {
       "addLine": "Add Line",
@@ -6694,11 +6735,14 @@
       "removeLine": "Remove line",
       "selectCustomer": "Select a customer",
       "selectProduct": "Select a product",
+      "submit": "Create quote",
       "submitting": "Creating...",
+      "subtitle": "Create a new quote by choosing a customer and its lines.",
       "title": "New Quote",
       "validation": {
         "customerRequired": "Please select a customer",
-        "linePositive": "Add at least one line with a product and a quantity greater than zero"
+        "linePositive": "Add at least one line with a product and a quantity greater than zero",
+        "validUntilAfterDate": "The valid-until date cannot be earlier than the quote date."
       }
     },
     "detail": {
@@ -6722,6 +6766,7 @@
     "newButton": "New Quote",
     "resultCountLabel": "quotes",
     "searchPlaceholder": "Search by number or customer...",
+    "subtitle": "Create, send and convert your quotes.",
     "title": "Quotes",
     "toast": {
       "accepted": "Quote accepted",
@@ -6734,8 +6779,12 @@
   },
   "OrderTemplates": {
     "Columns": {
+      "Actions": "Actions",
+      "Active": "Active",
+      "Frequency": "Frequency",
       "LastRun": "Last Run",
-      "Name": "Name"
+      "Name": "Name",
+      "NextRun": "Next run"
     },
     "Empty": "No order templates yet.",
     "Form": {
@@ -6752,9 +6801,11 @@
       "RunNow": "Run Now",
       "Saved": "Order template saved.",
       "Submit": "Save",
-      "TitleEdit": "Edit Order Template"
+      "TitleEdit": "Edit Order Template",
+      "TitleNew": "New order template"
     },
     "New": "New Template",
+    "Subtitle": "Manage the templates behind recurring orders.",
     "Title": "Order Templates"
   },
   "Returns": {
@@ -6854,6 +6905,7 @@
       "Code": "Code",
       "Created": "Discount rule created",
       "CustomerGroup": "Customer Group",
+      "DeleteMessage": "Discount rule {{code}} will be deleted. Continue?",
       "DeleteTitle": "Delete Discount Rule",
       "Deleted": "Discount rule deleted",
       "Description": "Description",
@@ -6865,11 +6917,14 @@
       "MinQuantity": "Min. Quantity",
       "Name": "Name",
       "New": "New Rule",
+      "NewTitle": "New discount rule",
       "Priority": "Priority",
       "Product": "Product",
       "ProductCategory": "Product Category",
       "Scope": "Scope",
       "Status": "Status",
+      "Subtitle": "Manage the discount rules applied to customers and products.",
+      "Target": "Target",
       "Title": "Discount Rules",
       "Updated": "Discount rule updated",
       "ValidFrom": "Valid From",
@@ -6885,11 +6940,13 @@
       "RateAgainstTry": "Rate Against TRY",
       "Refresh": "Refresh Rates",
       "Source": "Source",
+      "Subtitle": "View and update exchange rates.",
       "Title": "Exchange Rates",
       "ValidOn": "Valid On"
     },
     "Imports": {
       "Commit": "Import Valid Rows",
+      "CommitAll": "Import all",
       "CommittedToast": "{{count}} rows imported successfully",
       "DropFile": "Drag and drop a file here, or click to browse (.csv, .xlsx)",
       "Errors": "Errors",
@@ -6897,6 +6954,7 @@
       "InvalidRows": "Invalid Rows",
       "Row": "Row",
       "SkipInvalid": "Skip invalid rows",
+      "Subtitle": "Bulk-import data from CSV or Excel files.",
       "Title": "Data Imports",
       "TotalRows": "Total Rows",
       "ValidRows": "Valid Rows"
@@ -6911,21 +6969,27 @@
         "Errors": {
           "DiscountRange": "Discount must be between 0 and 100",
           "MinExceedsMax": "Min. quantity cannot exceed max. quantity",
-          "PriceRequired": "Enter a valid price"
+          "PriceRequired": "Enter a valid price",
+          "ProductRequired": "Select a product."
         },
         "MaxQuantity": "Max. Quantity",
+        "MinQuantity": "Min. quantity",
+        "Price": "Price",
         "Product": "Product",
+        "RemoveMessage": "This price line will be deleted. Continue?",
         "RemoveTitle": "Remove Line",
         "Removed": "Price list line removed",
         "SelectProduct": "Select a product",
         "Title": "Price List Lines",
         "Updated": "Price list line updated"
       },
+      "Subtitle": "Manage price lists by customer and channel.",
       "Title": "Price Lists"
     },
     "TaxRules": {
       "Code": "Code",
       "Created": "Tax rule created",
+      "DeleteMessage": "Tax rule {{code}} will be deleted. Continue?",
       "DeleteTitle": "Delete Tax Rule",
       "Deleted": "Tax rule deleted",
       "Description": "Description",
@@ -6937,6 +7001,7 @@
       "Fallback": "Fallback Tax Rate",
       "Name": "Name",
       "New": "New Rule",
+      "NewTitle": "New tax rule",
       "Priority": "Priority",
       "Product": "Product",
       "ProductCategory": "Product Category",
@@ -6945,6 +7010,8 @@
       "RegionCode": "Region Code",
       "Scope": "Scope",
       "Status": "Status",
+      "Subtitle": "Manage the tax rules applied to products and customers.",
+      "Target": "Target",
       "Title": "Tax Rules",
       "Updated": "Tax rule updated",
       "ValidFrom": "Valid From",
