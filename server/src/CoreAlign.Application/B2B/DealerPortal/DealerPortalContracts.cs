@@ -58,3 +58,35 @@ public record ListDealerCatalogProductsQuery(
     Guid? CustomerId = null,
     int Page = 1,
     int PageSize = 20) : IRequest<PagedResult<ProductDto>>;
+
+public record DealerOrderPricingPreviewLineDto
+{
+    public Guid ProductId { get; init; }
+    public string ProductSku { get; init; } = string.Empty;
+    public string ProductName { get; init; } = string.Empty;
+    public decimal Quantity { get; init; }
+    public decimal UnitPrice { get; init; }
+    public decimal ReferenceListPrice { get; init; }
+    public decimal DiscountPercent { get; init; }
+    public decimal TaxRatePercent { get; init; }
+    public decimal LineSubtotal { get; init; }
+    public decimal LineNetAmount { get; init; }
+    public decimal TaxAmount { get; init; }
+    public decimal LineTotal { get; init; }
+    public decimal? MinOrderQuantity { get; init; }
+}
+
+public record DealerOrderPricingPreviewDto
+{
+    public string Currency { get; init; } = string.Empty;
+    public IReadOnlyList<DealerOrderPricingPreviewLineDto> Lines { get; init; } =
+        Array.Empty<DealerOrderPricingPreviewLineDto>();
+    public decimal Subtotal { get; init; }
+    public decimal TaxTotal { get; init; }
+    public decimal Total { get; init; }
+}
+
+public record PreviewDealerOrderPricingQuery(
+    Guid CustomerId,
+    IReadOnlyList<DealerOrderLineInput> Lines,
+    string? Currency = null) : IRequest<DealerOrderPricingPreviewDto>;

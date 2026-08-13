@@ -24,6 +24,35 @@ export interface NewOrderLine {
   lineNotes?: string;
 }
 
+export interface DealerOrderPricingPreviewLine {
+  productId: string;
+  productSku: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  referenceListPrice: number;
+  discountPercent: number;
+  taxRatePercent: number;
+  lineSubtotal: number;
+  lineNetAmount: number;
+  taxAmount: number;
+  lineTotal: number;
+  minOrderQuantity: number | null;
+}
+
+export interface DealerOrderPricingPreview {
+  currency: string;
+  lines: DealerOrderPricingPreviewLine[];
+  subtotal: number;
+  taxTotal: number;
+  total: number;
+}
+
+export interface PreviewDealerOrderPricingInput {
+  customerId: string;
+  lines: NewOrderLine[];
+  currency?: string;
+}
 export interface CreateDealerOrderInput {
   customerId: string;
   lines: NewOrderLine[];
@@ -70,6 +99,15 @@ export const dealerApi = {
   },
   createOrder: async (input: CreateDealerOrderInput): Promise<OrderDetail> => {
     const { data } = await apiClient.post<OrderDetail>(`${BASE}/orders`, input);
+    return data;
+  },
+  previewOrderPricing: async (
+    input: PreviewDealerOrderPricingInput,
+  ): Promise<DealerOrderPricingPreview> => {
+    const { data } = await apiClient.post<DealerOrderPricingPreview>(
+      `${BASE}/orders/price-preview`,
+      input,
+    );
     return data;
   },
   cancelOrder: async (id: string, reason: string | undefined): Promise<OrderDetail> => {

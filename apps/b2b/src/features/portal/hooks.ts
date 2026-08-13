@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
-import { dealerApi, type ChangeDealerPasswordInput, type UpdateDealerProfileInput } from './api';
+import {
+  dealerApi,
+  type ChangeDealerPasswordInput,
+  type DealerOrderPricingPreview,
+  type PreviewDealerOrderPricingInput,
+  type UpdateDealerProfileInput,
+} from './api';
 import type {
   CommissionEntry,
   CommissionStatus,
@@ -68,6 +74,8 @@ export const dealerKeys = {
   commissionSummary: ['dealer', 'commissions', 'summary'] as const,
   profile: ['dealer', 'profile'] as const,
   customerCredit: (customerId: string) => ['dealer', 'customers', customerId, 'credit'] as const,
+  orderPricePreview: (fingerprint: string) =>
+    ['dealer', 'orders', 'price-preview', fingerprint] as const,
 };
 
 export const useDealerDashboard = (
@@ -239,4 +247,13 @@ export const useDealerCustomerCredit = (
     enabled: !!customerId,
     staleTime: 15_000,
     ...options,
+  });
+
+export const useDealerOrderPricePreview = (input: PreviewDealerOrderPricingInput | null) =>
+  useQuery<DealerOrderPricingPreview>({
+    queryKey: dealerKeys.orderPricePreview(JSON.stringify(input)),
+    queryFn: () => dealerApi.previewOrderPricing(input!),
+    enabled: input !== null,
+    staleTime: 15_000,
+    retry: false,
   });

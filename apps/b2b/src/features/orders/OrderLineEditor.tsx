@@ -19,14 +19,29 @@ export interface DraftOrderLine {
 interface OrderLineEditorProps {
   line: DraftOrderLine;
   index: number;
+  pricedUnitPrice?: number | null;
   onChange: (next: DraftOrderLine) => void;
   onRemove: () => void;
 }
 
-export const OrderLineEditor = ({ line, index, onChange, onRemove }: OrderLineEditorProps) => {
+export const OrderLineEditor = ({
+  line,
+  index,
+  pricedUnitPrice,
+  onChange,
+  onRemove,
+}: OrderLineEditorProps) => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
-  const lineTotal = (line.quantity || 0) * (line.unitPrice || 0);
+  // WHY the server price wins when it differs: the catalogue quotes a single unit, the order is
+  // booked at the tier for the quantity ordered, and the dealer must see the one they will pay.
+  const effectiveUnitPrice =
+    pricedUnitPrice !== null && pricedUnitPrice !== undefined ? pricedUnitPrice : line.unitPrice;
+  const catalogPriceSuperseded =
+    pricedUnitPrice !== null &&
+    pricedUnitPrice !== undefined &&
+    Math.abs(pricedUnitPrice - line.unitPrice) > 0.0001;
+  const lineTotal = (line.quantity || 0) * (effectiveUnitPrice || 0);
 
   return (
     <tr className="border-b border-slate-100 last:border-b-0 dark:border-slate-800">
@@ -62,16 +77,25 @@ export const OrderLineEditor = ({ line, index, onChange, onRemove }: OrderLineEd
         </div>
       </td>
       <td className="px-3 py-3">
-        <Input
-          type="number"
-          inputMode="decimal"
-          step="0.01"
-          min="0"
-          readOnly
-          title={t('b2b.newOrder.priceLockedTooltip')}
-          value={line.unitPrice}
-          className="h-9 max-w-[8rem] cursor-not-allowed bg-slate-50 text-right dark:bg-slate-800"
-        />
+        <div className="flex flex-col items-end gap-1">
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            min="0"
+            readOnly
+            title={t('b2b.newOrder.priceLockedTooltip')}
+            value={effectiveUnitPrice}
+            className="h-9 max-w-[8rem] cursor-not-allowed bg-slate-50 text-right dark:bg-slate-800"
+          />
+          {catalogPriceSuperseded ? (
+            <span className="text-[11px] text-emerald-700 dark:text-emerald-400">
+              {t('b2b.newOrder.tierPriceApplied', {
+                catalog: formatCurrency(line.unitPrice, locale, line.currency || 'TRY'),
+              })}
+            </span>
+          ) : null}
+        </div>
       </td>
       <td className="px-3 py-3 text-right text-sm font-semibold text-slate-900 dark:text-slate-100">
         {formatCurrency(lineTotal, locale, line.currency || 'TRY')}

@@ -9,8 +9,17 @@ import { Card, CardBody, CardHeader } from '@/shared/ui/Card';
 import { Spinner } from '@/shared/ui/Spinner';
 import { formatCurrency } from '@/shared/lib/format';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
-import { dealerApi, type NewOrderLine } from '@/features/portal/api';
-import { useDealerCustomerCredit, useDealerCustomers } from '@/features/portal/hooks';
+import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
+import {
+  dealerApi,
+  type NewOrderLine,
+  type PreviewDealerOrderPricingInput,
+} from '@/features/portal/api';
+import {
+  useDealerCustomerCredit,
+  useDealerCustomers,
+  useDealerOrderPricePreview,
+} from '@/features/portal/hooks';
 import { ProductPicker } from './ProductPicker';
 import { OrderLineEditor, type DraftOrderLine } from './OrderLineEditor';
 
@@ -29,12 +38,41 @@ export const NewOrderForm = () => {
   const currency = selectedCustomer?.currency || 'TRY';
   const creditQuery = useDealerCustomerCredit(customerId || null);
 
-  const subtotal = useMemo(
+  const estimatedSubtotal = useMemo(
     () => lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0),
     [lines],
   );
 
-  const hardCreditBlock = creditQuery.data?.isHardLimitReached ?? false;
+  // WHY the basket is priced on the server: the catalogue prices every product at quantity 1, but
+  // the order is booked at the quantity actually ordered, so a tiered product would be confirmed at
+  // one price and invoiced at another.
+  const previewInput = useMemo<PreviewDealerOrderPricingInput | null>(() => {
+    if (!customerId || lines.length === 0) return null;
+    return {
+      customerId,
+      currency,
+      lines: lines.map<NewOrderLine>((l) => ({ productId: l.productId, quantity: l.quantity })),
+    };
+  }, [customerId, currency, lines]);
+
+  const debouncedPreviewInput = useDebouncedValue(previewInput, 400);
+  const previewQuery = useDealerOrderPricePreview(debouncedPreviewInput);
+  const preview = previewQuery.data ?? null;
+  const previewStale = previewInput !== null && debouncedPreviewInput !== previewInput;
+
+  const pricedByProduct = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const line of preview?.lines ?? []) map.set(line.productId, line.unitPrice);
+    return map;
+  }, [preview]);
+
+  const subtotal = preview?.subtotal ?? estimatedSubtotal;
+  const projectedOutstanding = (creditQuery.data?.outstanding ?? 0) + (preview?.total ?? 0);
+  const creditLimit = creditQuery.data?.limit ?? 0;
+  const basketExceedsCredit =
+    creditLimit > 0 && preview !== null && projectedOutstanding > creditLimit;
+
+  const hardCreditBlock = (creditQuery.data?.isHardLimitReached ?? false) || basketExceedsCredit;
   const minQtyViolated = lines.some(
     (l) => !!l.minOrderQuantity && l.minOrderQuantity > 0 && l.quantity < l.minOrderQuantity,
   );
@@ -43,10 +81,12 @@ export const NewOrderForm = () => {
     mutationFn: () =>
       dealerApi.createOrder({
         customerId,
+        // WHY no unitPrice: the server resolves it from the price list for the ordered quantity
+        // and ignores whatever the client sends, so sending a stale catalogue price only invites
+        // the impression that the dealer set it.
         lines: lines.map<NewOrderLine>((l) => ({
           productId: l.productId,
           quantity: l.quantity,
-          unitPrice: l.unitPrice,
           lineNotes: l.lineNotes || undefined,
         })),
         notes: notes || undefined,
@@ -120,6 +160,8 @@ export const NewOrderForm = () => {
               currency={creditQuery.data.currency}
               isSoftLimitReached={creditQuery.data.isSoftLimitReached}
               isHardLimitReached={creditQuery.data.isHardLimitReached}
+              basketTotal={preview?.total ?? null}
+              basketExceedsCredit={basketExceedsCredit}
             />
           ) : null}
         </CardBody>
@@ -166,6 +208,7 @@ export const NewOrderForm = () => {
                       key={`${line.productId}-${idx}`}
                       line={line}
                       index={idx}
+                      pricedUnitPrice={pricedByProduct.get(line.productId) ?? null}
                       onChange={(next) =>
                         setLines((prev) => prev.map((l, i) => (i === idx ? next : l)))
                       }
@@ -179,9 +222,44 @@ export const NewOrderForm = () => {
                       {t('b2b.orders.subtotal')}
                     </td>
                     <td className="px-3 py-2 text-right text-base font-bold text-slate-900 dark:text-slate-100">
-                      {formatCurrency(subtotal, locale, currency)}
+                      {formatCurrency(subtotal, locale, preview?.currency ?? currency)}
                     </td>
                     <td />
+                  </tr>
+                  {preview ? (
+                    <>
+                      <tr>
+                        <td colSpan={4} className="px-3 py-1 text-right text-xs text-slate-500">
+                          {t('b2b.newOrder.taxTotal')}
+                        </td>
+                        <td className="px-3 py-1 text-right text-sm text-slate-700 dark:text-slate-300">
+                          {formatCurrency(preview.taxTotal, locale, preview.currency)}
+                        </td>
+                        <td />
+                      </tr>
+                      <tr>
+                        <td colSpan={4} className="px-3 py-2 text-right text-xs text-slate-500">
+                          {t('b2b.newOrder.grandTotal')}
+                        </td>
+                        <td className="px-3 py-2 text-right text-base font-bold text-slate-900 dark:text-slate-100">
+                          {formatCurrency(preview.total, locale, preview.currency)}
+                        </td>
+                        <td />
+                      </tr>
+                    </>
+                  ) : null}
+                  <tr>
+                    <td colSpan={6} className="px-3 pb-2 text-right text-[11px]">
+                      {previewQuery.isError ? (
+                        <span className="text-amber-700 dark:text-amber-400">
+                          {t('b2b.newOrder.pricingUnavailable')}
+                        </span>
+                      ) : previewQuery.isFetching || previewStale ? (
+                        <span className="text-slate-500">{t('b2b.newOrder.pricingLoading')}</span>
+                      ) : preview ? (
+                        <span className="text-slate-500">{t('b2b.newOrder.pricingConfirmed')}</span>
+                      ) : null}
+                    </td>
                   </tr>
                 </tfoot>
               </table>
@@ -240,6 +318,8 @@ interface DealerCreditPanelProps {
   currency: string;
   isSoftLimitReached: boolean;
   isHardLimitReached: boolean;
+  basketTotal: number | null;
+  basketExceedsCredit: boolean;
 }
 
 const DealerCreditPanel = ({
@@ -249,10 +329,16 @@ const DealerCreditPanel = ({
   usagePercent,
   currency,
   isSoftLimitReached,
-  isHardLimitReached,
+  isHardLimitReached: hardLimitFromSnapshot,
+  basketTotal,
+  basketExceedsCredit,
 }: DealerCreditPanelProps) => {
   const { t } = useTranslation();
   const locale = useFormatLocale();
+  // WHY the basket is folded in: the snapshot only knows what is already outstanding, so a dealer
+  // with room for one more crate saw a green panel while building an order ten times that size and
+  // only learned at submit, when the server added the basket and refused.
+  const isHardLimitReached = hardLimitFromSnapshot || basketExceedsCredit;
   const tone = isHardLimitReached
     ? 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-200 dark:bg-rose-900/40 dark:border-rose-700'
     : isSoftLimitReached
@@ -296,7 +382,17 @@ const DealerCreditPanel = ({
           {t('b2b.credit.usage', { percent: usagePercent.toFixed(0) })}
         </span>
       </div>
-      {isHardLimitReached ? (
+      {basketTotal !== null ? (
+        <p className="mt-1 text-[11px]">
+          {t('b2b.credit.projected', {
+            basket: formatCurrency(basketTotal, locale, currency),
+            projected: formatCurrency(outstanding + basketTotal, locale, currency),
+          })}
+        </p>
+      ) : null}
+      {basketExceedsCredit ? (
+        <p className="mt-1 text-[11px] font-semibold">{t('b2b.credit.basketBlocked')}</p>
+      ) : isHardLimitReached ? (
         <p className="mt-1 text-[11px]">{t('b2b.credit.blocked')}</p>
       ) : isSoftLimitReached ? (
         <p className="mt-1 text-[11px]">{t('b2b.credit.warning')}</p>

@@ -123,6 +123,17 @@ public class DealerPortalController : ControllerBase
         => (await _mediator.Send(command, ct)).ToCreated();
 
     /// <summary>
+    /// Prices a basket exactly the way <see cref="CreateDealerOrderCommand"/> prices it, so the
+    /// dealer sees the quantity-tier price the order will be booked at rather than the catalogue
+    /// single-unit price. Read-only: no order, no document number, no reservation.
+    /// </summary>
+    [HttpPost("orders/price-preview")]
+    public async Task<IActionResult> PreviewOrderPricing(
+        [FromBody] PreviewDealerOrderPricingQuery query,
+        CancellationToken ct)
+        => (await _mediator.Send(query, ct)).ToOk();
+
+    /// <summary>
     /// Dealer may cancel their own order ONLY while it is still pending customer
     /// approval. Once approved or rejected, the cancel flow belongs to tenant staff.
     /// </summary>
