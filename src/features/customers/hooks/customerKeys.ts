@@ -1,8 +1,10 @@
-import type { CustomerListParams } from '../model/customer.types';
+import type { CustomerDuplicateCheckParams, CustomerListParams } from '../model/customer.types';
 
 export const customerKeys = {
   all: ['customers'] as const,
   lists: () => [...customerKeys.all, 'list'] as const,
+  duplicateCheck: (params: CustomerDuplicateCheckParams) =>
+    [...customerKeys.all, 'duplicate-check', params] as const,
   list: (params: CustomerListParams) => [...customerKeys.lists(), params] as const,
   details: () => [...customerKeys.all, 'detail'] as const,
   detail: (id: string | null) => [...customerKeys.details(), id] as const,

@@ -6,6 +6,7 @@ import type {
   CreateCustomerInput,
   CustomerAddressInput,
   CustomerContactInput,
+  CustomerDuplicateCheckParams,
   CustomerListParams,
   UpdateCustomerAddressInput,
   UpdateCustomerContactInput,
@@ -19,6 +20,20 @@ export const useCustomersQuery = (params: CustomerListParams, options?: { enable
     placeholderData: (previous) => previous,
     enabled: options?.enabled ?? true,
   });
+
+/**
+ * Advisory: warns that another record already carries this identity. Never blocks a save, so it is
+ * deliberately kept out of the zod schema and out of the submit path.
+ */
+export const useCustomerDuplicateCheck = (params: CustomerDuplicateCheckParams) => {
+  const hasIdentity = Boolean(params.taxNumber || params.nationalId || params.email);
+  return useQuery({
+    queryKey: customerKeys.duplicateCheck(params),
+    queryFn: () => customersApi.duplicateCheck(params),
+    enabled: hasIdentity,
+    staleTime: 30 * 1000,
+  });
+};
 
 export const useCustomerQuery = (id: string | null) =>
   useQuery({

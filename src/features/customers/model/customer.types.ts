@@ -269,3 +269,15 @@ export interface CustomerContactInput {
 export interface UpdateCustomerContactInput extends CustomerContactInput {
   id: string;
 }
+
+export interface CustomerDuplicateCheckParams {
+  taxNumber?: string;
+  nationalId?: string;
+  email?: string;
+  excludeId?: string;
+}
+
+export interface CustomerDuplicateMatch {
+  id: string;
+  name: string;
+}

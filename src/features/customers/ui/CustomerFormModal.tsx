@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { PhoneField } from '@/shared/ui/PhoneField/PhoneField';
 import { ModalTabs } from '@/shared/ui/ModalTabs/ModalTabs';
 import { useModalClose } from '@/shared/hooks/useModalClose';
 import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
+import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
 import { getErroredTabs, firstErroredTab } from '@/shared/lib/formTabs';
 import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
 import { MasterDataQuickModal } from '@/shared/master-data/ui/MasterDataQuickModal';
@@ -21,7 +22,11 @@ import {
 } from '@/shared/master-data/hooks/useMasterData';
 import { customerSchema, type CustomerFormValues } from '../model/customerSchema';
 import type { Customer } from '../model/customer.types';
-import { useCreateCustomer, useUpdateCustomer } from '../hooks/useCustomerQueries';
+import {
+  useCreateCustomer,
+  useCustomerDuplicateCheck,
+  useUpdateCustomer,
+} from '../hooks/useCustomerQueries';
 
 type CustomerQuickAdd = 'paymentTerm' | 'priceList' | 'customerGroup';
 type CustomerTab = 'general' | 'commercial' | 'notes';
@@ -124,6 +129,18 @@ export const CustomerFormModal = ({ open, customer, onClose, onCreated }: Props)
   const requestClose = useModalClose(isDirty, onClose, open);
   const backdrop = useBackdropClick(requestClose);
   const erroredTabs = getErroredTabs(errors, CUSTOMER_FIELD_TAB);
+
+  // WHY joined into a string: useWatch returns a NEW array every render, and a fresh reference
+  // would reset the debounce timer forever (and re-render on every tick).
+  const identityKey = useWatch({ control, name: ['taxNumber', 'nationalId', 'email'] }).join('|');
+  const debouncedIdentity = useDebouncedValue(identityKey, 400).split('|');
+  const duplicates = useCustomerDuplicateCheck({
+    taxNumber: debouncedIdentity[0]?.trim() || undefined,
+    nationalId: debouncedIdentity[1]?.trim() || undefined,
+    email: debouncedIdentity[2]?.trim() || undefined,
+    excludeId: customer?.id,
+  });
+  const duplicateMatches = duplicates.data?.data ?? [];
 
   useEffect(() => {
     if (!open) return;
@@ -406,6 +423,26 @@ export const CustomerFormModal = ({ open, customer, onClose, onCreated }: Props)
                 })}
                 {...register('website')}
               />
+              {duplicateMatches.length > 0 && (
+                <div className="rounded-xl border border-warning-200 bg-warning-50/70 px-4 py-3 dark:border-warning-500/30 dark:bg-warning-500/10">
+                  <p className="text-xs font-semibold text-warning-900 dark:text-warning-200">
+                    {t('customers.duplicateWarning.title', { count: duplicateMatches.length })}
+                  </p>
+                  <p className="mt-1 text-[11px] text-warning-800/80 dark:text-warning-200/70">
+                    {t('customers.duplicateWarning.hint')}
+                  </p>
+                  <ul className="mt-2 space-y-1">
+                    {duplicateMatches.map((match) => (
+                      <li
+                        key={match.id}
+                        className="text-xs font-medium text-warning-900 dark:text-warning-100"
+                      >
+                        {match.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </section>
           </div>
 

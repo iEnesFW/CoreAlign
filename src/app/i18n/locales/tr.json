@@ -1478,7 +1478,12 @@
     },
     "bulkConfirmDelete": "{{count}} müşteri silinsin mi?",
     "bulkPartial": "{{deleted}} silindi, {{failed}} başarısız.",
-    "bulkSelected": "{{count}} seçili"
+    "bulkSelected": "{{count}} seçili",
+    "duplicateWarning": {
+      "title_one": "Aynı kimlik bilgisiyle {{count}} kayıt zaten var",
+      "title_other": "Aynı kimlik bilgisiyle {{count}} kayıt zaten var",
+      "hint": "Vergi no, TCKN veya e-posta eşleşiyor. Yine de kaydedebilirsiniz — yalnızca uyarı."
+    }
   },
   "errorState": {
     "title": "Bir şeyler ters gitti",

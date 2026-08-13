@@ -207,4 +207,34 @@ public class CustomerRepository : ICustomerRepository
             .ToList();
         return DuplicateGroupAssembler.Build(nidGroups, nidMembers);
     }
+
+    // Advisory point lookup for the entry form: it warns, it never blocks, so a legitimate second
+    // record under the same identity is still possible — the operator decides.
+    public async Task<IReadOnlyList<DuplicateMemberRow>> FindByIdentityAsync(
+        string? taxNumber,
+        string? nationalId,
+        string? email,
+        Guid? excludeId,
+        CancellationToken cancellationToken = default)
+    {
+        var tax = Blank(taxNumber);
+        var national = Blank(nationalId);
+        var mail = Blank(email)?.ToLowerInvariant();
+        if (tax is null && national is null && mail is null) return Array.Empty<DuplicateMemberRow>();
+
+        var rows = await _context.Customers
+            .AsNoTracking()
+            .Where(c => (tax != null && c.TaxNumber == tax)
+                || (national != null && c.NationalId == national)
+                || (mail != null && c.Email != null && EF.Functions.ILike(c.Email, mail)))
+            .Where(c => excludeId == null || c.Id != excludeId)
+            .OrderBy(c => c.Name)
+            .Take(10)
+            .Select(c => new DuplicateMemberRow(c.Id, c.Name))
+            .ToListAsync(cancellationToken);
+
+        return rows;
+    }
+
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

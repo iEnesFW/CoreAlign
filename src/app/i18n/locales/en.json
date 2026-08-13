@@ -1555,7 +1555,12 @@
     },
     "bulkConfirmDelete": "Delete {{count}} customers?",
     "bulkPartial": "{{deleted}} deleted, {{failed}} failed.",
-    "bulkSelected": "{{count}} selected"
+    "bulkSelected": "{{count}} selected",
+    "duplicateWarning": {
+      "title_one": "{{count}} record already uses this identity",
+      "title_other": "{{count}} records already use this identity",
+      "hint": "Tax number, national id or e-mail matches. You can still save — this is only a warning."
+    }
   },
   "reports": {
     "title": "Reports",

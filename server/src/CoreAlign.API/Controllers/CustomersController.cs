@@ -69,6 +69,20 @@ public class CustomersController : ControllerBase
         return result.ToOk();
     }
 
+    // Literal segment, declared before "{id:guid}" so the route constraint never has to arbitrate.
+    [HttpGet("duplicate-check")]
+    public async Task<IActionResult> FindDuplicatesAsync(
+        [FromQuery] string? taxNumber,
+        [FromQuery] string? nationalId,
+        [FromQuery] string? email,
+        [FromQuery] Guid? excludeId,
+        CancellationToken cancellationToken = default)
+    {
+        var matches = await _mediator.Send(
+            new FindCustomerDuplicatesQuery(taxNumber, nationalId, email, excludeId), cancellationToken);
+        return matches.ToOk();
+    }
+
     [HttpGet("export")]
     public async Task<IActionResult> ExportCustomersAsync(
         [FromQuery] BIExportFormat format = BIExportFormat.Xlsx,

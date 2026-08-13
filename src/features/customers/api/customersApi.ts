@@ -10,6 +10,8 @@ import type {
   CustomerAnalytics,
   CustomerContact,
   CustomerContactInput,
+  CustomerDuplicateCheckParams,
+  CustomerDuplicateMatch,
   CustomerListParams,
   CustomerNote,
   CustomerOverview,
@@ -42,6 +44,11 @@ export const customersApi = {
         },
         responseType: 'blob',
       })
+      .then((r) => r.data),
+
+  duplicateCheck: (params: CustomerDuplicateCheckParams) =>
+    apiClient
+      .get<ApiResponse<CustomerDuplicateMatch[]>>(`${BASE}/duplicate-check`, { params })
       .then((r) => r.data),
 
   getById: (id: string) => cachedGet<ApiResponse<Customer>>(apiClient, `${BASE}/${id}`),
