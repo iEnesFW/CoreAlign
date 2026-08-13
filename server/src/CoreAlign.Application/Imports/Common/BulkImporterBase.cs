@@ -25,7 +25,7 @@ public abstract class BulkImporterBase<TRow> : IBulkImportService<TRow>
         {
             var rowNumber = i + 2;
             var mapped = MapRaw(raw[i]);
-            var errors = ValidateRow(mapped, rowNumber);
+            var errors = await ValidateRowAsync(mapped, rowNumber, cancellationToken);
             rows.Add(new BulkImportRowPreview<TRow>
             {
                 RowNumber = rowNumber,
@@ -131,6 +131,11 @@ public abstract class BulkImporterBase<TRow> : IBulkImportService<TRow>
     }
 
     protected abstract TRow MapRaw(IReadOnlyDictionary<string, string> raw);
-    protected abstract IReadOnlyList<BulkImportRowError> ValidateRow(TRow row, int rowNumber);
+    // WHY async: the currency rule asks the catalogue, and FluentValidation throws if an async
+    // rule is reached through the synchronous Validate entry point.
+    protected abstract Task<IReadOnlyList<BulkImportRowError>> ValidateRowAsync(
+        TRow row,
+        int rowNumber,
+        CancellationToken cancellationToken);
     protected abstract Task<bool> CommitRowAsync(TRow row, CancellationToken cancellationToken);
 }

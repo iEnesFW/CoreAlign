@@ -1,11 +1,12 @@
 using CoreAlign.Application.Accounting.Commands;
+using CoreAlign.Application.Treasury.Fx;
 using FluentValidation;
 
 namespace CoreAlign.Application.Accounting.Validators;
 
 public class CreateGLAccountCommandValidator : AbstractValidator<CreateGLAccountCommand>
 {
-    public CreateGLAccountCommandValidator()
+    public CreateGLAccountCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Code)
             .NotEmpty().WithMessage("Validation.Required")
@@ -25,13 +26,14 @@ public class CreateGLAccountCommandValidator : AbstractValidator<CreateGLAccount
 
         RuleFor(x => x.Currency)
             .NotEmpty().WithMessage("Validation.Required")
-            .Length(3).WithMessage("Validation.CurrencyMustBeIso");
+            .Length(3).WithMessage("Validation.CurrencyMustBeIso")
+            .MustBeAKnownCurrency(currencyGuard);
     }
 }
 
 public class UpdateGLAccountCommandValidator : AbstractValidator<UpdateGLAccountCommand>
 {
-    public UpdateGLAccountCommandValidator()
+    public UpdateGLAccountCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Id).NotEmpty();
         RuleFor(x => x.Name)
@@ -40,7 +42,8 @@ public class UpdateGLAccountCommandValidator : AbstractValidator<UpdateGLAccount
         RuleFor(x => x.Description).MaximumLength(1000).When(x => !string.IsNullOrEmpty(x.Description));
         RuleFor(x => x.Currency)
             .NotEmpty().WithMessage("Validation.Required")
-            .Length(3).WithMessage("Validation.CurrencyMustBeIso");
+            .Length(3).WithMessage("Validation.CurrencyMustBeIso")
+            .MustBeAKnownCurrency(currencyGuard);
     }
 }
 

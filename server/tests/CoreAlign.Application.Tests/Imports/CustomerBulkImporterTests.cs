@@ -11,7 +11,8 @@ namespace CoreAlign.Application.Tests.Imports;
 public class CustomerBulkImporterTests
 {
     private readonly InMemorySessionStore _sessions = new();
-    private readonly IValidator<CreateCustomerCommand> _validator = new CreateCustomerCommandValidator();
+    private readonly IValidator<CreateCustomerCommand> _validator =
+        new CreateCustomerCommandValidator(TestCurrencyGuard.Accepting("TRY", "USD", "EUR"));
     private readonly IMediator _mediator = Substitute.For<IMediator>();
 
     [Fact]
@@ -126,6 +127,34 @@ public class CustomerBulkImporterTests
         commit.AttemptedCount.Should().Be(3);
         commit.Errors.Should().ContainSingle(e => e.Message.Contains("duplicate code"));
     }
+
+    [Fact]
+    public async Task A_currency_outside_the_catalogue_marks_the_row_invalid()
+    {
+        var rows = new List<IReadOnlyDictionary<string, string>>
+        {
+            NewRow("CUST-0001", "TRY"),
+            NewRow("CUST-0002", "XXX"),
+        };
+        var importer = new CustomerBulkImporter(new FakeReader(rows), _sessions, _validator, _mediator);
+
+        var preview = await importer.PreviewAsync(new MemoryStream(), BulkImportFileFormat.Csv);
+
+        preview.InvalidRowCount.Should().Be(1);
+        preview.Rows.Single(r => !r.IsValid).Errors
+            .Should().Contain(e => e.Message == "Validation.CurrencyNotInCatalog");
+    }
+
+    private static Dictionary<string, string> NewRow(string code, string currency) =>
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Code"] = code,
+            ["Name"] = code,
+            ["Type"] = "Business",
+            ["DefaultCurrency"] = currency,
+            ["CreditLimit"] = "0",
+            ["DefaultDiscountPercent"] = "0",
+        };
 
     private static IReadOnlyList<IReadOnlyDictionary<string, string>> BuildCsv(int rowCount, IReadOnlyCollection<int> invalidRowIndices)
     {

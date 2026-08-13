@@ -47,10 +47,13 @@ public class ProductBulkImporter : BulkImporterBase<ProductImportRow>
         IsStockTracked = ParsingHelpers.ParseBool(raw.GetValueOrDefault("IsStockTracked"), fallback: true)
     };
 
-    protected override IReadOnlyList<BulkImportRowError> ValidateRow(ProductImportRow row, int rowNumber)
+    protected override async Task<IReadOnlyList<BulkImportRowError>> ValidateRowAsync(
+        ProductImportRow row,
+        int rowNumber,
+        CancellationToken cancellationToken)
     {
         var command = BuildCommand(row);
-        var validation = _validator.Validate(command);
+        var validation = await _validator.ValidateAsync(command, cancellationToken);
         if (validation.IsValid) return Array.Empty<BulkImportRowError>();
         return validation.Errors
             .Select(e => new BulkImportRowError

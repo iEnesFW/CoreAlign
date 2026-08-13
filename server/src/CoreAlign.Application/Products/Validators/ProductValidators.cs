@@ -1,4 +1,5 @@
 using CoreAlign.Application.EInvoice;
+using CoreAlign.Application.Treasury.Fx;
 using CoreAlign.Application.Products.Commands;
 using FluentValidation;
 
@@ -6,7 +7,7 @@ namespace CoreAlign.Application.Products.Validators;
 
 public class CreateProductCommandValidator : AbstractValidator<CreateProductCommand>
 {
-    public CreateProductCommandValidator()
+    public CreateProductCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Sku)
             .NotEmpty().WithMessage("Validation.Required")
@@ -34,13 +35,14 @@ public class CreateProductCommandValidator : AbstractValidator<CreateProductComm
         RuleFor(x => x.Currency)
             .NotEmpty().WithMessage("Validation.Required")
             .Length(3).WithMessage("Validation.CurrencyLength")
-            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat");
+            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat")
+            .MustBeAKnownCurrency(currencyGuard);
     }
 }
 
 public class UpdateProductCommandValidator : AbstractValidator<UpdateProductCommand>
 {
-    public UpdateProductCommandValidator()
+    public UpdateProductCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Id).NotEmpty();
 
@@ -67,6 +69,7 @@ public class UpdateProductCommandValidator : AbstractValidator<UpdateProductComm
         RuleFor(x => x.Currency)
             .NotEmpty().WithMessage("Validation.Required")
             .Length(3).WithMessage("Validation.CurrencyLength")
-            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat");
+            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat")
+            .MustBeAKnownCurrency(currencyGuard);
     }
 }

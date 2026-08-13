@@ -49,10 +49,13 @@ public class CustomerBulkImporter : BulkImporterBase<CustomerImportRow>
         Notes = raw.GetValueOrDefault("Notes")
     };
 
-    protected override IReadOnlyList<BulkImportRowError> ValidateRow(CustomerImportRow row, int rowNumber)
+    protected override async Task<IReadOnlyList<BulkImportRowError>> ValidateRowAsync(
+        CustomerImportRow row,
+        int rowNumber,
+        CancellationToken cancellationToken)
     {
         var command = BuildCommand(row);
-        var validation = _validator.Validate(command);
+        var validation = await _validator.ValidateAsync(command, cancellationToken);
         if (validation.IsValid) return Array.Empty<BulkImportRowError>();
         return validation.Errors
             .Select(e => new BulkImportRowError

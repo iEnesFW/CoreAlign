@@ -1,11 +1,12 @@
 using CoreAlign.Application.Customers.Commands;
+using CoreAlign.Application.Treasury.Fx;
 using FluentValidation;
 
 namespace CoreAlign.Application.Customers.Validators;
 
 public class CreateCustomerCommandValidator : AbstractValidator<CreateCustomerCommand>
 {
-    public CreateCustomerCommandValidator()
+    public CreateCustomerCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Name)
             .NotEmpty().WithMessage("Validation.Required")
@@ -29,7 +30,8 @@ public class CreateCustomerCommandValidator : AbstractValidator<CreateCustomerCo
 
         RuleFor(x => x.DefaultCurrency)
             .NotEmpty().WithMessage("Validation.Required")
-            .Length(3).WithMessage("Validation.CurrencyLength");
+            .Length(3).WithMessage("Validation.CurrencyLength")
+            .MustBeAKnownCurrency(currencyGuard);
 
         RuleFor(x => x.CreditLimit).GreaterThanOrEqualTo(0).WithMessage("Validation.NonNegative");
         RuleFor(x => x.DefaultDiscountPercent)
@@ -40,7 +42,7 @@ public class CreateCustomerCommandValidator : AbstractValidator<CreateCustomerCo
 
 public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCommand>
 {
-    public UpdateCustomerCommandValidator()
+    public UpdateCustomerCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.Id).NotEmpty();
 
@@ -65,7 +67,8 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
 
         RuleFor(x => x.DefaultCurrency)
             .NotEmpty().WithMessage("Validation.Required")
-            .Length(3).WithMessage("Validation.CurrencyLength");
+            .Length(3).WithMessage("Validation.CurrencyLength")
+            .MustBeAKnownCurrency(currencyGuard);
 
         RuleFor(x => x.CreditLimit).GreaterThanOrEqualTo(0).WithMessage("Validation.NonNegative");
         RuleFor(x => x.DefaultDiscountPercent)
