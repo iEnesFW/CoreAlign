@@ -44,13 +44,24 @@ public class CreateShipmentHandler : IRequestHandler<CreateShipmentCommand, Ship
             throw new InvalidShipmentStateException("Shipment must include at least one line.");
         }
 
+        // WHY open shipments are subtracted too: QuantityShipped only moves on dispatch, so without
+        // this an undispatched shipment leaves the whole quantity claimable a second time and the
+        // duplicate is only rejected later, after the warehouse has already picked and packed it.
+        var claimedByOpenShipments = order.Shipments
+            .Where(s => s.Status is ShipmentStatus.Draft or ShipmentStatus.Picked or ShipmentStatus.Packed)
+            .SelectMany(s => s.Lines)
+            .GroupBy(l => l.OrderLineId)
+            .ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+
         foreach (var input in c.Lines)
         {
             var line = order.Lines.FirstOrDefault(l => l.Id == input.OrderLineId)
                 ?? throw new InvalidShipmentStateException($"Order line {input.OrderLineId} not found.");
-            if (input.Quantity > line.QuantityRemainingToShip)
+            var claimed = claimedByOpenShipments.GetValueOrDefault(line.Id);
+            var available = Math.Max(0m, line.QuantityRemainingToShip - claimed);
+            if (input.Quantity > available)
             {
-                throw new ShipmentLineQuantityExceededException(line.ProductSku, line.QuantityRemainingToShip, input.Quantity);
+                throw new ShipmentLineQuantityExceededException(line.ProductSku, available, input.Quantity);
             }
         }
 

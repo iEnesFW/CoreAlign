@@ -101,4 +101,68 @@ public class ShipmentHandlerTests
         Func<Task> act = () => sut.Handle(new DeliverShipmentCommand(s.Id, null, null), default);
         await act.Should().ThrowAsync<InvalidShipmentStateException>();
     }
+
+    [Fact]
+    public async Task An_undispatched_shipment_still_reserves_the_quantity_it_claimed()
+    {
+        var order = new Order("ORD-1", Guid.NewGuid(), DateTime.UtcNow, "TRY") { Id = Guid.NewGuid() };
+        var line = new OrderLine(Guid.NewGuid(), "SKU-A", "Widget", 10m, 100m);
+        order.ReplaceLines(new[] { line });
+        order.ChangeStatus(OrderStatus.Confirmed);
+
+        // Already packed but NOT dispatched, so QuantityShipped is still 0.
+        var open = new Shipment("SHP-1", order.Id, order.CustomerId, Guid.NewGuid(), shippingAddressSnapshot: null)
+        {
+            Id = Guid.NewGuid(),
+        };
+        open.AddLine(new ShipmentLine(line.Id, line.ProductId, "SKU-A", "Widget", 10m, 1m));
+        open.MarkPicked(null);
+        open.MarkPacked();
+        order.Shipments.Add(open);
+
+        _orders.GetWithLinesAndShipmentsAsync(order.Id, Arg.Any<CancellationToken>()).Returns(order);
+        var sut = new CreateShipmentHandler(_orders, _shipments, _sequences, _uow);
+
+        Func<Task> act = () => sut.Handle(
+            new CreateShipmentCommand(order.Id, Guid.NewGuid(), new List<ShipmentLineInput>
+            {
+                new(line.Id, 10m),
+            }),
+            default);
+
+        await act.Should().ThrowAsync<ShipmentLineQuantityExceededException>();
+        await _shipments.DidNotReceive().AddAsync(Arg.Any<Shipment>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task A_cancelled_shipment_releases_the_quantity_it_had_claimed()
+    {
+        var order = new Order("ORD-2", Guid.NewGuid(), DateTime.UtcNow, "TRY") { Id = Guid.NewGuid() };
+        var line = new OrderLine(Guid.NewGuid(), "SKU-A", "Widget", 10m, 100m);
+        order.ReplaceLines(new[] { line });
+        order.ChangeStatus(OrderStatus.Confirmed);
+
+        var cancelled = new Shipment("SHP-2", order.Id, order.CustomerId, Guid.NewGuid(), shippingAddressSnapshot: null)
+        {
+            Id = Guid.NewGuid(),
+        };
+        cancelled.AddLine(new ShipmentLine(line.Id, line.ProductId, "SKU-A", "Widget", 10m, 1m));
+        cancelled.Cancel("test");
+        order.Shipments.Add(cancelled);
+
+        _orders.GetWithLinesAndShipmentsAsync(order.Id, Arg.Any<CancellationToken>()).Returns(order);
+        _sequences.ConsumeAsync(DocumentSequenceType.ShipmentNumber, Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns("SHP-3");
+        var sut = new CreateShipmentHandler(_orders, _shipments, _sequences, _uow);
+
+        var dto = await sut.Handle(
+            new CreateShipmentCommand(order.Id, Guid.NewGuid(), new List<ShipmentLineInput>
+            {
+                new(line.Id, 10m),
+            }),
+            default);
+
+        dto.Should().NotBeNull();
+        await _shipments.Received(1).AddAsync(Arg.Any<Shipment>(), Arg.Any<CancellationToken>());
+    }
 }
