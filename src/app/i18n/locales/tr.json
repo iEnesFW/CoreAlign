@@ -1014,13 +1014,21 @@
       "creating": "Oluşturuluyor...",
       "currency": "Para Birimi",
       "customer": "Müşteri",
+      "draft": {
+        "found": "Kaydedilmiş bir taslak bulundu.",
+        "restore": "Geri yükle",
+        "discard": "Yoksay",
+        "savedAt": "Taslak kaydedildi {{time}}"
+      },
       "dueDays": "Vade (Gün)",
       "duePreview": "Net {{days}} → Vade: {{date}}",
       "exemptionCode": "KDV İstisnası",
       "exemptionCodePlaceholder": "İstisna yok",
       "exemptionReason": "İstisna Açıklaması",
+      "headerDiscount": "Genel İskonto (%)",
       "internalNotes": "Dahili Notlar",
       "issueDate": "Fatura Tarihi",
+      "lineDiscountPercent": "İsk%",
       "lineName": "Kalem adı",
       "lineQuantity": "Miktar",
       "lineSku": "Stok Kodu",
@@ -1028,15 +1036,36 @@
       "lineUnitPrice": "Birim Fiyat",
       "publicNotes": "Genel Notlar",
       "removeLine": "Satırı kaldır",
-      "selectCustomer": "Müşteri seçin",
-      "subtitle": "Siparişe bağlı olmayan bir fatura oluşturun.",
-      "title": "Bağımsız Fatura Oluştur",
-      "validation": {
-        "customerRequired": "Lütfen bir müşteri seçin.",
-        "lineNamePositive": "En az bir satıra stok kodu, ad ve sıfırdan büyük miktar girin."
+      "sections": {
+        "general": "Müşteri ve Genel Bilgiler",
+        "exemption": "KDV İstisnası",
+        "notes": "Notlar",
+        "commercial": "Ticari Koşullar",
+        "summary": "Finansal Özet"
       },
+      "selectCustomer": "Müşteri seçin",
+      "shippingCost": "Kargo Bedeli",
+      "subtitle": "Siparişe bağlı olmayan bir fatura oluşturun.",
+      "summary": {
+        "subtotal": "Ara Toplam",
+        "lineTotal": "Toplam",
+        "lineDiscount": "Satır İskontoları",
+        "headerDiscount": "Genel İskonto",
+        "headerDiscountWithRate": "Genel İskonto (%{{pct}})",
+        "tax": "KDV",
+        "taxWithRate": "KDV (%{{pct}})",
+        "withholding": "Tevkifat",
+        "shipping": "Kargo",
+        "grandTotal": "Genel Toplam",
+        "estimate": "Tahmini — kesin tutarlar kaydedildikten sonra hesaplanır"
+      },
+      "tabs": {
+        "info": "Genel Bilgiler",
+        "lines": "Kalemler"
+      },
+      "title": "Bağımsız Fatura Oluştur",
       "withholdingCode": "Tevkifat",
-      "withholdingTotal": "Tevkifat"
+      "withholdingNone": "Tevkifat yok"
     }
   },
   "products": {

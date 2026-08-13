@@ -188,7 +188,9 @@ export const OrderFormModal = ({
   const draft = useDraftAutosave<OrderFormValues>(ORDER_DRAFT_KEY, allValues, {
     enabled: open && !isEdit && isDirty,
   });
-  const [seenOpen, setSeenOpen] = useState(open);
+  // WHY seeded false and not `open`: the page route mounts with open already true, so seeding
+  // from the prop makes this branch unreachable there and the saved draft is never offered back.
+  const [seenOpen, setSeenOpen] = useState(false);
   if (open !== seenOpen) {
     setSeenOpen(open);
     setManualNumber(false);

@@ -243,18 +243,36 @@ public class DocumentSequenceRepository : IDocumentSequenceRepository
     {
         await AcquireLockAsync(type, cancellationToken);
 
-        var sequence = await _context.DocumentSequences.FirstOrDefaultAsync(d => d.Type == type, cancellationToken)
-            ?? throw new InvalidOperationException($"Document sequence '{type}' is not seeded for current tenant.");
+        var sequence = await _context.DocumentSequences.FirstOrDefaultAsync(d => d.Type == type, cancellationToken);
+        if (sequence is not null)
+        {
+            return sequence.ConsumeNext(nowUtc);
+        }
 
+        // WHY consume before Add and never Update: EF treats an Added row's UPDATE as a lost row and
+        // throws a concurrency error, so a first-use sequence must be numbered in memory and inserted once.
+        sequence = new DocumentSequence(
+            type,
+            DocumentSequenceDefaults.PrefixFor(type),
+            nowUtc.Year,
+            1,
+            DocumentSequenceDefaults.PadLength);
         var rendered = sequence.ConsumeNext(nowUtc);
+        await _context.DocumentSequences.AddAsync(sequence, cancellationToken);
         return rendered;
     }
 
     public async Task<string> PeekAsync(DocumentSequenceType type, DateTime nowUtc, CancellationToken cancellationToken = default)
     {
-        var sequence = await _context.DocumentSequences.AsNoTracking().FirstOrDefaultAsync(d => d.Type == type, cancellationToken)
-            ?? throw new InvalidOperationException($"Document sequence '{type}' is not seeded for current tenant.");
-        return sequence.Peek(nowUtc);
+        var sequence = await _context.DocumentSequences.AsNoTracking().FirstOrDefaultAsync(d => d.Type == type, cancellationToken);
+        return sequence is not null
+            ? sequence.Peek(nowUtc)
+            : new DocumentSequence(
+                type,
+                DocumentSequenceDefaults.PrefixFor(type),
+                nowUtc.Year,
+                1,
+                DocumentSequenceDefaults.PadLength).Peek(nowUtc);
     }
 
     public async Task EnsureExistsAsync(DocumentSequenceType type, string prefix, int padLength, int year, CancellationToken cancellationToken = default)

@@ -26,40 +26,6 @@ public record ConfigureDocumentSequenceCommand(
     string? Format,
     long? NextNumber) : IRequest<DocumentSequenceDto>, ITransactionalRequest;
 
-internal static class DocumentSequenceDefaults
-{
-    public static readonly IReadOnlyDictionary<DocumentSequenceType, string> Prefixes =
-        new Dictionary<DocumentSequenceType, string>
-        {
-            [DocumentSequenceType.CustomerCode] = "CUS",
-            [DocumentSequenceType.ProductSku] = "PRD",
-            [DocumentSequenceType.OrderNumber] = "ORD",
-            [DocumentSequenceType.InvoiceNumber] = "INV",
-            [DocumentSequenceType.CreditNoteNumber] = "CN",
-            [DocumentSequenceType.DebitNoteNumber] = "DN",
-            [DocumentSequenceType.PaymentNumber] = "PAY",
-            [DocumentSequenceType.ShipmentNumber] = "SHP",
-            [DocumentSequenceType.JournalNumber] = "JRN",
-            [DocumentSequenceType.SubscriptionOrderNumber] = "SUB",
-            [DocumentSequenceType.QuoteNumber] = "QUO",
-            [DocumentSequenceType.ReturnRequestNumber] = "RTN",
-            [DocumentSequenceType.PurchaseOrderNumber] = "PO",
-            [DocumentSequenceType.VendorPaymentNumber] = "VP",
-            [DocumentSequenceType.GlassProjectCode] = "GP",
-            [DocumentSequenceType.StockCountNumber] = "STC",
-            [DocumentSequenceType.PurchaseRequisitionNumber] = "PR",
-            [DocumentSequenceType.MrpPlanRunNumber] = "MRP",
-            [DocumentSequenceType.GoodsReceiptNumber] = "GRN",
-            [DocumentSequenceType.EmployeeNumber] = "PER",
-            [DocumentSequenceType.PayrollRunNumber] = "BORD",
-            [DocumentSequenceType.PayslipNumber] = "UCRET",
-            [DocumentSequenceType.ProductionJobNumber] = "JOB",
-        };
-
-    public static string PrefixFor(DocumentSequenceType type) =>
-        Prefixes.TryGetValue(type, out var p) ? p : type.ToString();
-}
-
 public class ListDocumentSequencesHandler : IRequestHandler<ListDocumentSequencesQuery, IReadOnlyList<DocumentSequenceDto>>
 {
     private readonly IDocumentSequenceRepository _repo;
@@ -78,7 +44,12 @@ public class ListDocumentSequencesHandler : IRequestHandler<ListDocumentSequence
                     return new DocumentSequenceDto(type, seq.Prefix, seq.PadLength, seq.Format,
                         seq.CurrentYear, seq.NextNumber, seq.Peek(now), true);
                 }
-                var preview = new DocumentSequence(type, DocumentSequenceDefaults.PrefixFor(type), now.Year, 1, 5);
+                var preview = new DocumentSequence(
+                    type,
+                    DocumentSequenceDefaults.PrefixFor(type),
+                    now.Year,
+                    1,
+                    DocumentSequenceDefaults.PadLength);
                 return new DocumentSequenceDto(type, preview.Prefix, preview.PadLength, preview.Format,
                     preview.CurrentYear, preview.NextNumber, preview.Peek(now), false);
             })

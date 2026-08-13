@@ -1014,13 +1014,21 @@
       "creating": "Creating...",
       "currency": "Currency",
       "customer": "Customer",
+      "draft": {
+        "found": "A saved draft was found.",
+        "restore": "Restore",
+        "discard": "Discard",
+        "savedAt": "Draft saved at {{time}}"
+      },
       "dueDays": "Due Days",
       "duePreview": "Net {{days}} → Due: {{date}}",
       "exemptionCode": "VAT Exemption",
       "exemptionCodePlaceholder": "No exemption",
       "exemptionReason": "Exemption Reason",
+      "headerDiscount": "Header discount (%)",
       "internalNotes": "Internal Notes",
       "issueDate": "Issue Date",
+      "lineDiscountPercent": "Disc%",
       "lineName": "Item name",
       "lineQuantity": "Quantity",
       "lineSku": "SKU",
@@ -1028,15 +1036,36 @@
       "lineUnitPrice": "Unit Price",
       "publicNotes": "Public Notes",
       "removeLine": "Remove line",
-      "selectCustomer": "Select a customer",
-      "subtitle": "Create an invoice that isn't linked to an order.",
-      "title": "Create Standalone Invoice",
-      "validation": {
-        "customerRequired": "Please select a customer.",
-        "lineNamePositive": "Add at least one line with SKU, name and a positive quantity."
+      "sections": {
+        "general": "Customer & General Information",
+        "exemption": "VAT Exemption",
+        "notes": "Notes",
+        "commercial": "Commercial Terms",
+        "summary": "Financial Summary"
       },
+      "selectCustomer": "Select a customer",
+      "shippingCost": "Shipping cost",
+      "subtitle": "Create an invoice that isn't linked to an order.",
+      "summary": {
+        "subtotal": "Subtotal",
+        "lineTotal": "Total",
+        "lineDiscount": "Line discounts",
+        "headerDiscount": "Header discount",
+        "headerDiscountWithRate": "Header discount ({{pct}}%)",
+        "tax": "VAT",
+        "taxWithRate": "VAT ({{pct}}%)",
+        "withholding": "Withholding",
+        "shipping": "Shipping",
+        "grandTotal": "Grand total",
+        "estimate": "Estimated — calculated based on current inputs"
+      },
+      "tabs": {
+        "info": "General",
+        "lines": "Lines"
+      },
+      "title": "Create Standalone Invoice",
       "withholdingCode": "Withholding",
-      "withholdingTotal": "Withholding"
+      "withholdingNone": "No withholding"
     }
   },
   "products": {
