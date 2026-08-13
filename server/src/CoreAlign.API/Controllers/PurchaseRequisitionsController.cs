@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Mrp;
 using CoreAlign.Domain.Enums;
@@ -9,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/purchase-requisitions")]
 public class PurchaseRequisitionsController : ControllerBase

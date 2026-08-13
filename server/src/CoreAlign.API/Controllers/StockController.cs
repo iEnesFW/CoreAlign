@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Inventory.Commands;
@@ -11,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/stock")]
 public class StockController : ControllerBase

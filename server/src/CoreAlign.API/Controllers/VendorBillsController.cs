@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Common;
 using CoreAlign.Application.Purchasing;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/vendor-bills")]
 public class VendorBillsController : ControllerBase
@@ -77,7 +78,7 @@ public class VendorBillsController : ControllerBase
 }
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/vendor-payments")]
 public class VendorPaymentsController : ControllerBase

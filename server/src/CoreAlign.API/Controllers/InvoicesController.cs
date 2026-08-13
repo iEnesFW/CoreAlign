@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Invoices.Commands;
 using CoreAlign.Application.Invoices.Queries;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 public class InvoicesController : ControllerBase
@@ -58,6 +59,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("from-order/{orderId:guid}")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> GenerateFromOrderAsync(
         Guid orderId,
         [FromBody] GenerateInvoiceRequest? request,
@@ -69,6 +71,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("standalone")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> CreateStandaloneAsync(
         [FromBody] CreateStandaloneInvoiceCommand command,
         CancellationToken cancellationToken)
@@ -78,6 +81,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/credit-notes")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> IssueCreditNoteAsync(
         Guid id,
         [FromBody] IssueCreditNoteRequest request,
@@ -94,6 +98,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/mark-paid")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> MarkPaidAsync(Guid id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new MarkInvoiceAsPaidCommand(id), cancellationToken);
@@ -101,6 +106,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/payments")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> RecordPaymentAsync(
         Guid id,
         [FromBody] RecordInvoicePaymentRequest request,
@@ -118,6 +124,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> CancelAsync(Guid id, CancellationToken cancellationToken)
     {
         var result = await _mediator.Send(new CancelInvoiceCommand(id), cancellationToken);
@@ -125,7 +132,7 @@ public class InvoicesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/write-off")]
-    [Authorize(Roles = "TenantAdmin")]
+    [Authorize(Roles = PersonaPolicies.TenantAdminRole)]
     public async Task<IActionResult> WriteOffAsync(
         Guid id,
         [FromBody] WriteOffInvoiceRequest? request,

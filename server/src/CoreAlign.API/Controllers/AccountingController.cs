@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Asp.Versioning;
+using CoreAlign.API.Authorization;
 using CoreAlign.API.Common;
 using CoreAlign.Application.Accounting.Commands;
 using CoreAlign.Application.Accounting.Queries;
@@ -10,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CoreAlign.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/accounting")]
 public class AccountingController : ControllerBase
@@ -200,7 +201,7 @@ public class AccountingController : ControllerBase
 }
 
 [ApiController]
-[Authorize]
+[Authorize(Policy = PersonaPolicies.Tenant)]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/pricing")]
 public class PricingController : ControllerBase
