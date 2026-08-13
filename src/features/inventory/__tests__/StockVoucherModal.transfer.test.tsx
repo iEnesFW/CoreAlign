@@ -39,6 +39,7 @@ vi.mock('@/shared/master-data/hooks/useMasterData', () => ({
   }),
 }));
 
+import { ConfirmDialogProvider } from '@/shared/ui/ConfirmDialog/ConfirmDialog';
 import { StockVoucherModal } from '../ui/StockVoucherModal';
 
 const i18n = createInstance();
@@ -54,7 +55,9 @@ i18n.use(initReactI18next).init({
 const renderModal = (onClose = vi.fn()) =>
   render(
     <I18nextProvider i18n={i18n}>
-      <StockVoucherModal type="transfer" onClose={onClose} />
+      <ConfirmDialogProvider>
+        <StockVoucherModal type="transfer" onClose={onClose} />
+      </ConfirmDialogProvider>
     </I18nextProvider>,
   );
 

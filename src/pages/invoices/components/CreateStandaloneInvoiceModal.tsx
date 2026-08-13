@@ -382,7 +382,11 @@ export const CreateStandaloneInvoiceModal = ({
             <div className={`${sectionBodyCls} grid grid-cols-1 gap-5 sm:grid-cols-2`}>
               <div className="col-span-1 sm:col-span-2">
                 <label className={labelCls}>{t('invoices.standalone.customer')}</label>
-                <select className={fieldCls} {...register('customerId')}>
+                <select
+                  className={fieldCls}
+                  aria-label={t('invoices.standalone.customer')}
+                  {...register('customerId')}
+                >
                   <option value="">{t('invoices.standalone.selectCustomer')}</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -428,6 +432,7 @@ export const CreateStandaloneInvoiceModal = ({
                   min="0"
                   max="365"
                   step="1"
+                  aria-label={t('invoices.standalone.dueDays')}
                   {...register('dueDays', { valueAsNumber: true })}
                 />
                 {errors.dueDays?.message ? (
@@ -471,7 +476,11 @@ export const CreateStandaloneInvoiceModal = ({
             <div className={`${sectionBodyCls} grid grid-cols-1 gap-5`}>
               <div>
                 <label className={labelCls}>{t('invoices.standalone.exemptionCode')}</label>
-                <select className={fieldCls} {...register('vatExemptionCodeId')}>
+                <select
+                  className={fieldCls}
+                  aria-label={t('invoices.standalone.exemptionCode')}
+                  {...register('vatExemptionCodeId')}
+                >
                   <option value="">{t('invoices.standalone.exemptionCodePlaceholder')}</option>
                   {vatExemptionCodes.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -483,7 +492,11 @@ export const CreateStandaloneInvoiceModal = ({
               {watchedExemptionCodeId && (
                 <div>
                   <label className={labelCls}>{t('invoices.standalone.exemptionReason')}</label>
-                  <input className={fieldCls} {...register('vatExemptionReason')} />
+                  <input
+                    className={fieldCls}
+                    aria-label={t('invoices.standalone.exemptionReason')}
+                    {...register('vatExemptionReason')}
+                  />
                 </div>
               )}
             </div>
@@ -496,11 +509,21 @@ export const CreateStandaloneInvoiceModal = ({
             <div className={`${sectionBodyCls} grid grid-cols-1 gap-5 sm:grid-cols-2`}>
               <div>
                 <label className={labelCls}>{t('invoices.standalone.publicNotes')}</label>
-                <textarea rows={2} className={fieldCls} {...register('publicNotes')} />
+                <textarea
+                  rows={2}
+                  className={fieldCls}
+                  aria-label={t('invoices.standalone.publicNotes')}
+                  {...register('publicNotes')}
+                />
               </div>
               <div>
                 <label className={labelCls}>{t('invoices.standalone.internalNotes')}</label>
-                <textarea rows={2} className={fieldCls} {...register('internalNotes')} />
+                <textarea
+                  rows={2}
+                  className={fieldCls}
+                  aria-label={t('invoices.standalone.internalNotes')}
+                  {...register('internalNotes')}
+                />
               </div>
             </div>
           </div>
@@ -578,6 +601,7 @@ export const CreateStandaloneInvoiceModal = ({
                 min="0"
                 max="100"
                 placeholder="0.00"
+                aria-label={t('invoices.standalone.headerDiscount')}
                 {...register('headerDiscountPercent')}
               />
             </div>
@@ -589,6 +613,7 @@ export const CreateStandaloneInvoiceModal = ({
                 step="0.01"
                 min="0"
                 placeholder="0.00"
+                aria-label={t('invoices.standalone.shippingCost')}
                 {...register('shippingCost')}
               />
             </div>

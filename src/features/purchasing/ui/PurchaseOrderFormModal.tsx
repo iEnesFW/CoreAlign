@@ -380,6 +380,7 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
                 <select
                   className={fieldCls}
                   value={allValues.vendorId ?? ''}
+                  aria-label={t('po.form.vendor')}
                   onChange={(e) => handleVendorSelect(e.target.value)}
                 >
                   <option value="">{t('po.form.selectVendor')}</option>
@@ -439,7 +440,11 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
 
               <div>
                 <label className={labelCls}>{t('po.form.warehouse')}</label>
-                <select className={fieldCls} {...register('warehouseId')}>
+                <select
+                  className={fieldCls}
+                  aria-label={t('po.form.warehouse')}
+                  {...register('warehouseId')}
+                >
                   <option value="">{t('po.form.selectWarehouse')}</option>
                   {warehouses.map((w) => (
                     <option key={w.id} value={w.id}>
@@ -472,6 +477,7 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
                   type="number"
                   step="0.0001"
                   min="0"
+                  aria-label={t('po.form.exchangeRate')}
                   {...register('exchangeRate')}
                 />
                 {fxSnapshot && (
@@ -492,7 +498,13 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
             </div>
             <div className={sectionBodyCls}>
               <label className={labelCls}>{t('po.form.notes')}</label>
-              <textarea rows={4} className={fieldCls} maxLength={2000} {...register('notes')} />
+              <textarea
+                rows={4}
+                className={fieldCls}
+                maxLength={2000}
+                aria-label={t('po.form.notes')}
+                {...register('notes')}
+              />
             </div>
           </div>
         </div>
