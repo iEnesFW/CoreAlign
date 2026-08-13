@@ -367,52 +367,18 @@ public class CreateDealerOrderHandler : IRequestHandler<CreateDealerOrderCommand
             paymentTermsNetDays: paymentTerm?.NetDays,
             dueDate: paymentTerm?.ResolveDueDate(DateTime.UtcNow));
 
-        var lineNumber = 1;
-        var resolvedLines = new List<OrderLine>(request.Lines.Count);
-        foreach (var input in request.Lines)
-        {
-            var product = products[input.ProductId];
+        var resolutions = await DealerOrderPricingResolver.ResolveAsync(
+            _pricing,
+            products,
+            customer.Id,
+            order.Currency,
+            request.Lines,
+            DateTime.UtcNow,
+            cancellationToken);
 
-            var minQuantity = await _pricing.ResolveMinQuantityAsync(product.Id, customer.Id, cancellationToken);
-            if (minQuantity.HasValue && input.Quantity < minQuantity.Value)
-            {
-                throw new MinOrderQuantityNotMetException(product.Id, lineNumber, input.Quantity, minQuantity.Value);
-            }
-
-            var resolution = await _pricing.ResolveAsync(
-                new PriceResolutionRequest(product.Id, customer.Id, input.Quantity, DateTime.UtcNow, currency),
-                cancellationToken);
-
-            if (!string.Equals(resolution.Currency, order.Currency, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new CurrencyMismatchException(product.Id, order.Currency, resolution.Currency);
-            }
-
-            var unitPrice = resolution.UnitPrice;
-            var line = new OrderLine(product.Id, product.Sku, product.Name, input.Quantity, unitPrice);
-            line.SetLineNumber(lineNumber++);
-            line.ApplyPricing(
-                input.Quantity,
-                resolution.ReferenceListPrice ?? product.ListPrice,
-                unitPrice,
-                resolution.DiscountPercent,
-                lineDiscountAmount: 0m,
-                isManualPriceOverride: false,
-                resolution.TaxRatePercent,
-                resolution.TaxRateId,
-                resolution.IsTaxInclusive,
-                withholdingRatePercent: 0m,
-                product.AverageCost,
-                uomId: product.SalesUomId ?? product.BaseUomId,
-                uomCode: product.Unit,
-                uomConversionFactor: 1m,
-                warehouseId: null,
-                lineNotes: input.LineNotes,
-                null,
-                false,
-                product.Description);
-            resolvedLines.Add(line);
-        }
+        var resolvedLines = resolutions
+            .Select((resolved, index) => resolved.ToOrderLine(request.Lines[index].LineNotes))
+            .ToList();
 
         order.ReplaceLines(resolvedLines);
         order.MarkOrigin(OrderOriginPersona.Dealer, customerUserId: null, dealerAccountId: dealerAccountId, dealerUserId: dealerUserId);
