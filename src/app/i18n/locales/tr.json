@@ -6309,28 +6309,47 @@
   },
   "po": {
     "form": {
-      "vendorRequired": "Lütfen bir tedarikçi seçin.",
-      "linesRequired": "En az bir geçerli kalem ekleyin.",
-      "updated": "Satın alma siparişi güncellendi.",
+      "addLine": "Kalem ekle",
       "created": "Satın alma siparişi oluşturuldu.",
-      "editTitle": "Satın Alma Siparişi",
-      "newTitle": "Yeni Satın Alma Siparişi",
-      "vendor": "Tedarikçi",
-      "selectVendor": "Seçiniz…",
-      "warehouse": "Mal Kabul Deposu",
-      "selectWarehouse": "Seçiniz…",
       "currency": "Para Birimi",
-      "orderDate": "Sipariş Tarihi",
+      "draft": {
+        "found": "Kaydedilmiş bir taslak bulundu.",
+        "restore": "Geri yükle",
+        "discard": "Yoksay",
+        "savedAt": "Taslak kaydedildi {{time}}"
+      },
+      "editTitle": "Satın Alma Siparişi",
+      "exchangeRate": "Kur",
       "expectedDate": "Beklenen Teslimat",
+      "fxAutoRate": "{{source}} kuru ({{date}}) otomatik uygulandı",
+      "lineNotes": "Satır açıklaması",
+      "linesRequired": "En az bir geçerli kalem ekleyin.",
+      "newTitle": "Yeni Satın Alma Siparişi",
+      "notes": "Notlar",
+      "orderDate": "Sipariş Tarihi",
       "product": "Ürün",
       "qty": "Miktar",
-      "unitCost": "Birim Maliyet",
-      "tax": "KDV %",
-      "addLine": "Kalem ekle",
+      "sections": {
+        "general": "Tedarikçi ve Genel Bilgiler",
+        "notes": "Açıklama",
+        "summary": "Finansal Özet"
+      },
+      "selectVendor": "Seçiniz…",
+      "selectWarehouse": "Seçiniz…",
       "subtotal": "Ara Toplam",
+      "tabs": {
+        "info": "Genel Bilgiler",
+        "lines": "Kalemler"
+      },
+      "tax": "KDV %",
       "taxTotal": "KDV",
+      "taxTotalWithRate": "KDV (%{{pct}})",
       "total": "Genel Toplam",
-      "notes": "Notlar"
+      "unitCost": "Birim Maliyet",
+      "updated": "Satın alma siparişi güncellendi.",
+      "vendor": "Tedarikçi",
+      "vendorRequired": "Lütfen bir tedarikçi seçin.",
+      "warehouse": "Mal Kabul Deposu"
     },
     "receive": {
       "nothing": "Teslim alınacak bir miktar girin.",

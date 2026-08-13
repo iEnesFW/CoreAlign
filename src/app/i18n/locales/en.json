@@ -6309,28 +6309,47 @@
   },
   "po": {
     "form": {
-      "vendorRequired": "Please select a vendor.",
-      "linesRequired": "Add at least one valid line.",
-      "updated": "Purchase order updated.",
+      "addLine": "Add line",
       "created": "Purchase order created.",
-      "editTitle": "Purchase Order",
-      "newTitle": "New Purchase Order",
-      "vendor": "Vendor",
-      "selectVendor": "Select…",
-      "warehouse": "Receiving warehouse",
-      "selectWarehouse": "Select…",
       "currency": "Currency",
-      "orderDate": "Order date",
+      "draft": {
+        "found": "A saved draft was found.",
+        "restore": "Restore",
+        "discard": "Discard",
+        "savedAt": "Draft saved at {{time}}"
+      },
+      "editTitle": "Purchase Order",
+      "exchangeRate": "Exchange rate",
       "expectedDate": "Expected delivery",
+      "fxAutoRate": "{{source}} rate ({{date}}) applied automatically",
+      "lineNotes": "Line note",
+      "linesRequired": "Add at least one valid line.",
+      "newTitle": "New Purchase Order",
+      "notes": "Notes",
+      "orderDate": "Order date",
       "product": "Product",
       "qty": "Qty",
-      "unitCost": "Unit cost",
-      "tax": "Tax %",
-      "addLine": "Add line",
+      "sections": {
+        "general": "Vendor & General Information",
+        "notes": "Notes",
+        "summary": "Financial Summary"
+      },
+      "selectVendor": "Select…",
+      "selectWarehouse": "Select…",
       "subtotal": "Subtotal",
+      "tabs": {
+        "info": "General",
+        "lines": "Lines"
+      },
+      "tax": "Tax %",
       "taxTotal": "Tax",
+      "taxTotalWithRate": "VAT ({{pct}}%)",
       "total": "Total",
-      "notes": "Notes"
+      "unitCost": "Unit cost",
+      "updated": "Purchase order updated.",
+      "vendor": "Vendor",
+      "vendorRequired": "Please select a vendor.",
+      "warehouse": "Receiving warehouse"
     },
     "receive": {
       "nothing": "Enter a quantity to receive.",

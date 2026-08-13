@@ -1,45 +1,92 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { Modal } from '@/shared/ui/Modal/Modal';
+import { Plus } from 'lucide-react';
 import { Button } from '@/shared/ui/Button/Button';
-import { Input } from '@/shared/ui/Input/Input';
-import { Select } from '@/shared/ui/Select/Select';
-import { Textarea } from '@/shared/ui/Textarea/Textarea';
-import { fieldBaseClasses } from '@/shared/lib/fieldClasses';
-import { toastApiError } from '@/shared/lib/mutationToast';
+import { CurrencySelect } from '@/shared/ui/form/CurrencySelect';
+import { LocalizedDateInput } from '@/shared/ui/form/LocalizedDateInput';
+import { useBackdropClick } from '@/shared/hooks/useBackdropClick';
+import { useDraftAutosave } from '@/shared/hooks/useDraftAutosave';
+import { useModalClose } from '@/shared/hooks/useModalClose';
+import { computeDocumentTotals } from '@/shared/lib/documentTotals';
 import { formatCurrency } from '@/shared/lib/format';
+import { toastApiError } from '@/shared/lib/mutationToast';
 import { useFormatLocale } from '@/shared/lib/useFormatLocale';
-import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
-import { ProductPicker } from '@/shared/ui/ProductPicker';
-import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
+import { useResolveFxRateQuery } from '@/shared/fx/hooks/useFxRates';
+import { DocumentFormLayout } from '@/shared/ui/document-form/DocumentFormLayout';
+import { DocumentLineTable } from '@/shared/ui/document-form/DocumentLineTable';
+import { FormWizardSteps } from '@/shared/ui/document-form/FormWizardSteps';
+import {
+  documentFieldCls as fieldCls,
+  documentLabelCls as labelCls,
+  documentSectionBodyCls as sectionBodyCls,
+  documentSectionHeaderCls as sectionHeaderCls,
+  documentSectionTitleCls as sectionTitleCls,
+  documentSectionWrapperCls as sectionWrapperCls,
+} from '@/shared/ui/document-form/documentFormClasses';
 import { useWarehousesQuery } from '@/shared/master-data/hooks/useMasterData';
+import { useProductsQuery } from '@/features/products/hooks/useProductQueries';
+import { useVendorsQuery } from '@/features/vendors/hooks/useVendorQueries';
 import { useCreatePurchaseOrder, useUpdatePurchaseOrder } from '../hooks/usePurchaseOrders';
-import type { PurchaseOrder } from '../model/purchaseOrder.types';
+import { purchaseOrderSchema, type PurchaseOrderFormValues } from '../model/purchaseOrderSchema';
+import type { PurchaseOrder, PurchaseOrderLineInput } from '../model/purchaseOrder.types';
+import { PurchaseOrderLineEditor } from './PurchaseOrderLineEditor';
 
 interface Props {
   order: PurchaseOrder | null;
   onClose: () => void;
 }
 
-interface LineState {
-  key: string;
-  productId: string;
-  quantity: string;
-  unitCost: string;
-  taxRatePercent: string;
-}
+const LINE_HEADER_GRID_CLS =
+  'lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)_3.75rem_minmax(5.5rem,0.9fr)]';
 
-const newLine = (): LineState => ({
-  key: crypto.randomUUID(),
-  productId: '',
-  quantity: '1',
-  unitCost: '',
-  taxRatePercent: '',
-});
+const PO_DRAFT_KEY = 'corealign:draft:purchase-order-create';
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const numOrUndefined = (value?: string): number | undefined =>
+  value && Number(value) ? Number(value) : undefined;
+
+const emptyLine = () => ({
+  productId: '',
+  quantity: 1,
+  unitCost: 0,
+  taxRatePercent: '',
+  lineNotes: '',
+});
+
+const emptyValues = (): PurchaseOrderFormValues => ({
+  vendorId: '',
+  orderDate: todayIso(),
+  expectedDate: '',
+  currency: 'TRY',
+  exchangeRate: '',
+  warehouseId: '',
+  notes: '',
+  lines: [emptyLine()],
+});
+
+const fromOrder = (order: PurchaseOrder): PurchaseOrderFormValues => ({
+  vendorId: order.vendorId,
+  orderDate: order.orderDate.slice(0, 10),
+  expectedDate: order.expectedDate?.slice(0, 10) ?? '',
+  currency: order.currency,
+  exchangeRate: order.exchangeRate ? String(order.exchangeRate) : '',
+  warehouseId: order.warehouseId ?? '',
+  notes: order.notes ?? '',
+  lines:
+    order.lines.length > 0
+      ? order.lines.map((l) => ({
+          productId: l.productId,
+          quantity: l.quantity,
+          unitCost: l.unitCost,
+          taxRatePercent: l.taxRatePercent ? String(l.taxRatePercent) : '',
+          lineNotes: l.lineNotes ?? '',
+        }))
+      : [emptyLine()],
+});
 
 export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
   const { t } = useTranslation();
@@ -56,276 +103,493 @@ export const PurchaseOrderFormModal = ({ order, onClose }: Props) => {
   const vendors = vendorsQuery.data?.data?.items ?? [];
   const warehouses = warehousesQuery.data?.data ?? [];
 
-  const [vendorId, setVendorId] = useState(order?.vendorId ?? '');
-  const [currency, setCurrency] = useState(order?.currency ?? 'TRY');
-  const [orderDate, setOrderDate] = useState(order?.orderDate?.slice(0, 10) ?? todayIso());
-  const [expectedDate, setExpectedDate] = useState(order?.expectedDate?.slice(0, 10) ?? '');
-  const [warehouseId, setWarehouseId] = useState(order?.warehouseId ?? '');
-  const [notes, setNotes] = useState(order?.notes ?? '');
-  const [lines, setLines] = useState<LineState[]>(
-    order && order.lines.length > 0
-      ? order.lines.map((l) => ({
-          key: l.id,
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    trigger,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm<PurchaseOrderFormValues>({
+    resolver: zodResolver(purchaseOrderSchema),
+    defaultValues: order ? fromOrder(order) : emptyValues(),
+    mode: 'onTouched',
+  });
+
+  const requestClose = useModalClose(isDirty, onClose, true);
+  const backdrop = useBackdropClick(requestClose);
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
+
+  const allValues = useWatch({ control }) as PurchaseOrderFormValues;
+  const draft = useDraftAutosave<PurchaseOrderFormValues>(PO_DRAFT_KEY, allValues, {
+    enabled: !isEdit && isDirty,
+  });
+
+  const [step, setStep] = useState<1 | 2>(1);
+  const [draftToRestore, setDraftToRestore] = useState<PurchaseOrderFormValues | null>(null);
+  const [mounted, setMounted] = useState(false);
+  if (!mounted) {
+    setMounted(true);
+    setDraftToRestore(isEdit ? null : draft.peekDraft());
+  }
+
+  const appliedFxRef = useRef<string | null>(null);
+  useEffect(() => {
+    reset(order ? fromOrder(order) : emptyValues());
+    // WHY the guard is cleared here: a reset blanks the rate field, and under StrictMode's
+    // double mount the reset runs a second time while the apply-once ref still remembers the
+    // first pass — the field would stay empty and a foreign PO would book at rate 1.
+    appliedFxRef.current = null;
+  }, [order, reset]);
+
+  const handleStepClick = async (targetStep: 1 | 2) => {
+    if (targetStep === 2 && step === 1) {
+      const isValid = await trigger(['vendorId', 'orderDate', 'currency']);
+      if (!isValid) return;
+    }
+    setStep(targetStep);
+  };
+
+  const watchedLines = useWatch({ control, name: 'lines' });
+  const watchedCurrency = useWatch({ control, name: 'currency' });
+  const watchedOrderDate = useWatch({ control, name: 'orderDate' });
+  const currency = (watchedCurrency || 'TRY').toUpperCase();
+
+  // WHY the rate is resolved here and not left at 1: the goods-receipt and vendor-bill GL legs
+  // convert the document amount with po.ExchangeRate, so a foreign PO saved without a rate books
+  // its foreign amount as if it were base currency.
+  const fxRateQuery = useResolveFxRateQuery(
+    !isEdit && currency && currency !== 'TRY' ? currency : undefined,
+    watchedOrderDate || undefined,
+  );
+  const fxSnapshot =
+    !isEdit && fxRateQuery.data?.currencyCode === currency ? fxRateQuery.data : null;
+  useEffect(() => {
+    if (isEdit) return;
+    if (currency === 'TRY') {
+      if (appliedFxRef.current !== 'TRY') {
+        appliedFxRef.current = 'TRY';
+        setValue('exchangeRate', '1');
+      }
+      return;
+    }
+    if (!fxSnapshot) return;
+    const key = `${fxSnapshot.currencyCode}:${fxSnapshot.effectiveDate}`;
+    if (appliedFxRef.current === key) return;
+    appliedFxRef.current = key;
+    setValue('exchangeRate', String(fxSnapshot.sellingRate), { shouldDirty: true });
+  }, [isEdit, currency, fxSnapshot, setValue]);
+
+  const summary = useMemo(
+    () =>
+      computeDocumentTotals({
+        lines: (watchedLines ?? []).map((l) => ({
           productId: l.productId,
-          quantity: String(l.quantity),
-          unitCost: String(l.unitCost),
-          taxRatePercent: l.taxRatePercent ? String(l.taxRatePercent) : '',
-        }))
-      : [newLine()],
+          quantity: l.quantity,
+          unitPrice: l.unitCost,
+          taxRatePercent: l.taxRatePercent,
+        })),
+      }),
+    [watchedLines],
   );
 
-  const updateLine = (key: string, patch: Partial<LineState>) =>
-    setLines((prev) => prev.map((l) => (l.key === key ? { ...l, ...patch } : l)));
-  const addLine = () => setLines((prev) => [...prev, newLine()]);
-  const removeLine = (key: string) =>
-    setLines((prev) => (prev.length === 1 ? prev : prev.filter((l) => l.key !== key)));
-
-  const totals = useMemo(() => {
-    let subtotal = 0;
-    let tax = 0;
-    for (const l of lines) {
-      const net = (Number(l.quantity) || 0) * (Number(l.unitCost) || 0);
-      subtotal += net;
-      tax += net * ((Number(l.taxRatePercent) || 0) / 100);
-    }
-    return { subtotal, tax, total: subtotal + tax };
-  }, [lines]);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vendorId) {
-      toast.error(t('po.form.vendorRequired', { defaultValue: 'Tedarikçi seçiniz.' }));
-      return;
-    }
-    const validLines = lines.filter((l) => l.productId && Number(l.quantity) > 0);
-    if (validLines.length === 0) {
-      toast.error(t('po.form.linesRequired', { defaultValue: 'En az bir geçerli satır ekleyin.' }));
-      return;
-    }
-    const payload = {
-      vendorId,
-      orderDate: new Date(orderDate).toISOString(),
-      currency: currency.toUpperCase(),
-      expectedDate: expectedDate ? new Date(expectedDate).toISOString() : null,
-      warehouseId: warehouseId || null,
-      notes: notes.trim() || null,
-      lines: validLines.map((l) => ({
-        productId: l.productId,
-        quantity: Number(l.quantity),
-        unitCost: Number(l.unitCost) || 0,
-        taxRatePercent: Number(l.taxRatePercent) || 0,
-      })),
-    };
-    try {
-      if (isEdit && order) {
-        await updateMutation.mutateAsync({ id: order.id, ...payload });
-        toast.success(t('po.form.updated', { defaultValue: 'Satınalma siparişi güncellendi.' }));
-      } else {
-        await createMutation.mutateAsync(payload);
-        toast.success(t('po.form.created', { defaultValue: 'Satınalma siparişi oluşturuldu.' }));
-      }
-      onClose();
-    } catch (err) {
-      toastApiError(err);
+  const handleVendorSelect = (vendorId: string) => {
+    setValue('vendorId', vendorId, { shouldValidate: true, shouldDirty: true });
+    if (isEdit) return;
+    const vendor = vendors.find((v) => v.id === vendorId);
+    if (vendor?.defaultCurrency) {
+      setValue('currency', vendor.defaultCurrency.toUpperCase(), { shouldDirty: true });
     }
   };
 
-  const pending = createMutation.isPending || updateMutation.isPending;
-  const numberCellClass = `${fieldBaseClasses(false)} text-right`;
+  const handleProductSelect = (index: number, productId: string) => {
+    setValue(`lines.${index}.productId`, productId, { shouldValidate: true, shouldDirty: true });
+    const product = products.find((p) => p.id === productId);
+    if (product && !isEdit) {
+      setValue(`lines.${index}.unitCost`, product.lastPurchaseCost || product.standardCost || 0, {
+        shouldDirty: true,
+      });
+    }
+  };
 
-  return (
-    <Modal
-      open={true}
-      title={
-        isEdit
-          ? `${t('po.form.editTitle', { defaultValue: 'Satınalma Siparişi' })} ${order?.poNumber}`
-          : t('po.form.newTitle', { defaultValue: 'Yeni Satınalma Siparişi' })
+  const onSubmit = handleSubmit(
+    async (values) => {
+      const lines: PurchaseOrderLineInput[] = values.lines.map((l) => ({
+        productId: l.productId,
+        quantity: l.quantity,
+        unitCost: l.unitCost,
+        taxRatePercent: numOrUndefined(l.taxRatePercent) ?? 0,
+        lineNotes: l.lineNotes || null,
+      }));
+
+      const payload = {
+        vendorId: values.vendorId,
+        orderDate: new Date(values.orderDate).toISOString(),
+        currency: values.currency.toUpperCase(),
+        expectedDate: values.expectedDate ? new Date(values.expectedDate).toISOString() : null,
+        exchangeRate: numOrUndefined(values.exchangeRate) ?? 1,
+        warehouseId: values.warehouseId || null,
+        notes: values.notes?.trim() || null,
+        lines,
+      };
+
+      try {
+        if (isEdit && order) {
+          await updateMutation.mutateAsync({ id: order.id, ...payload });
+          toast.success(t('po.form.updated'));
+        } else {
+          await createMutation.mutateAsync(payload);
+          draft.clearDraft();
+          toast.success(t('po.form.created'));
+        }
+        onClose();
+      } catch (err) {
+        toastApiError(err);
       }
-      icon={<ShoppingCart size={18} />}
-      onClose={onClose}
-      size="2xl"
-      footer={
-        <>
-          <Button variant="ghost" type="button" onClick={onClose}>
-            {t('common.cancel', { defaultValue: 'İptal' })}
-          </Button>
-          <Button type="submit" form="purchase-order-form" isLoading={pending} disabled={pending}>
-            {pending
-              ? t('common.saving', { defaultValue: 'Kaydediliyor…' })
-              : t('common.save', { defaultValue: 'Kaydet' })}
-          </Button>
-        </>
-      }
-    >
-      <form id="purchase-order-form" onSubmit={submit} className="dense-form space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Select
-            label={t('po.form.vendor', { defaultValue: 'Tedarikçi' })}
-            required
-            value={vendorId}
-            onChange={(e) => {
-              const nextVendorId = e.target.value;
-              setVendorId(nextVendorId);
-              // New POs inherit the supplier's default currency (mirrors the customer
-              // commercial-terms auto-flow); the user can still override.
-              if (!isEdit) {
-                const vendor = vendors.find((v) => v.id === nextVendorId);
-                if (vendor?.defaultCurrency) {
-                  setCurrency(vendor.defaultCurrency.toUpperCase());
-                }
-              }
-            }}
-          >
-            <option value="">{t('po.form.selectVendor', { defaultValue: 'Seçiniz…' })}</option>
-            {vendors.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            label={t('po.form.warehouse', { defaultValue: 'Teslim Deposu' })}
-            value={warehouseId}
-            onChange={(e) => setWarehouseId(e.target.value)}
-          >
-            <option value="">{t('po.form.selectWarehouse', { defaultValue: 'Seçiniz…' })}</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name} ({w.code})
-              </option>
-            ))}
-          </Select>
-          <Input
-            label={t('po.form.currency', { defaultValue: 'Para Birimi' })}
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value.toUpperCase())}
-            maxLength={3}
-            className="uppercase"
-          />
-          <Input
-            label={t('po.form.orderDate', { defaultValue: 'Sipariş Tarihi' })}
-            type="date"
-            value={orderDate}
-            onChange={(e) => setOrderDate(e.target.value)}
-          />
-          <Input
-            label={t('po.form.expectedDate', { defaultValue: 'Beklenen Teslim' })}
-            type="date"
-            value={expectedDate}
-            onChange={(e) => setExpectedDate(e.target.value)}
-          />
-        </div>
+    },
+    (formErrors) => {
+      setStep(Object.keys(formErrors).some((k) => k !== 'lines') ? 1 : 2);
+    },
+  );
 
-        <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-[10px] font-semibold uppercase text-slate-600 dark:bg-slate-800/50 dark:text-slate-300">
-              <tr>
-                <th className="px-2 py-1.5 text-left">
-                  {t('po.form.product', { defaultValue: 'Ürün' })}
-                </th>
-                <th className="w-24 px-2 py-1.5 text-right">
-                  {t('po.form.qty', { defaultValue: 'Miktar' })}
-                </th>
-                <th className="w-28 px-2 py-1.5 text-right">
-                  {t('po.form.unitCost', { defaultValue: 'Birim Maliyet' })}
-                </th>
-                <th className="w-20 px-2 py-1.5 text-right">
-                  {t('po.form.tax', { defaultValue: 'KDV %' })}
-                </th>
-                <th className="w-8 px-2 py-1.5" />
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((l) => (
-                <tr key={l.key} className="border-t border-slate-100 dark:border-slate-800">
-                  <td className="px-2 py-1.5">
-                    <ProductPicker
-                      products={products}
-                      value={l.productId}
-                      onSelect={(productId) => updateLine(l.key, { productId })}
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      step="any"
-                      value={l.quantity}
-                      onChange={(e) => updateLine(l.key, { quantity: e.target.value })}
-                      className={numberCellClass}
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      step="any"
-                      value={l.unitCost}
-                      onChange={(e) => updateLine(l.key, { unitCost: e.target.value })}
-                      className={numberCellClass}
-                    />
-                  </td>
-                  <td className="px-2 py-1.5">
-                    <input
-                      type="number"
-                      min={0}
-                      max={100}
-                      step="any"
-                      value={l.taxRatePercent}
-                      onChange={(e) => updateLine(l.key, { taxRatePercent: e.target.value })}
-                      className={numberCellClass}
-                    />
-                  </td>
-                  <td className="px-2 py-1.5 text-center">
-                    <button
-                      type="button"
-                      onClick={() => removeLine(l.key)}
-                      disabled={lines.length === 1}
-                      className="rounded p-1 text-slate-400 hover:bg-danger-50 hover:text-danger-700 disabled:opacity-30 dark:hover:bg-danger-500/10"
-                      aria-label={t('common.delete', { defaultValue: 'Sil' })}
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  const translateError = (key?: string): string | undefined =>
+    key ? t(key, { defaultValue: key }) : undefined;
 
-        <div className="flex items-center justify-between">
+  const isBusy = isSubmitting || createMutation.isPending || updateMutation.isPending;
+  const onFormKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') onSubmit();
+  };
+
+  const stepNavigation = (
+    <FormWizardSteps
+      steps={[
+        { id: 1, label: t('po.form.tabs.info') },
+        { id: 2, label: t('po.form.tabs.lines') },
+      ]}
+      current={step}
+      onSelect={(id) => void handleStepClick(id as 1 | 2)}
+      ariaLabel={t('po.form.newTitle')}
+    />
+  );
+
+  const footer = (
+    <>
+      <div className="text-sm">
+        <span className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {t('po.form.total')}
+        </span>{' '}
+        <span className="font-semibold text-slate-900 dark:text-slate-100">
+          {formatCurrency(summary.grandTotal, locale, currency)}
+        </span>
+        {!isEdit && draft.lastSavedAt && (
+          <div className="text-[10px] text-slate-400 dark:text-slate-500">
+            {t('po.form.draft.savedAt', {
+              time: new Date(draft.lastSavedAt).toLocaleTimeString(locale),
+            })}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        {step === 1 ? (
           <button
             type="button"
-            onClick={addLine}
-            className="inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            onClick={requestClose}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
           >
-            <Plus size={12} />
-            {t('po.form.addLine', { defaultValue: 'Satır ekle' })}
+            {t('common.cancel')}
           </button>
-          <div className="text-right text-sm">
-            <div className="text-slate-500 dark:text-slate-400">
-              {t('po.form.subtotal', { defaultValue: 'Ara Toplam' })}:{' '}
-              {formatCurrency(totals.subtotal, locale, currency)}
+        ) : (
+          <button
+            type="button"
+            onClick={() => setStep(1)}
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            {t('common.back')}
+          </button>
+        )}
+        {step < 2 ? (
+          <Button type="button" onClick={() => void handleStepClick(2)}>
+            {t('common.next')}
+          </Button>
+        ) : (
+          <Button type="submit" isLoading={isBusy}>
+            {t('common.save')}
+          </Button>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <DocumentFormLayout
+      presentation="modal"
+      title={isEdit ? `${t('po.form.editTitle')} ${order.poNumber}` : t('po.form.newTitle')}
+      closeAriaLabel={t('common.cancel')}
+      onRequestClose={requestClose}
+      backdropProps={backdrop}
+      stepNavigation={stepNavigation}
+      onSubmit={onSubmit}
+      onKeyDown={onFormKeyDown}
+      footer={footer}
+    >
+      {draftToRestore && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-xs dark:border-primary-500/30 dark:bg-primary-500/10">
+          <span className="text-primary-800 dark:text-primary-200">{t('po.form.draft.found')}</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                reset(draftToRestore);
+                setDraftToRestore(null);
+              }}
+              className="rounded bg-primary-600 px-2 py-1 font-medium text-white hover:bg-primary-700"
+            >
+              {t('po.form.draft.restore')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                draft.clearDraft();
+                setDraftToRestore(null);
+              }}
+              className="rounded px-2 py-1 font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              {t('po.form.draft.discard')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        className={
+          step === 1
+            ? 'grid w-full grid-cols-[repeat(auto-fit,minmax(min(100%,22rem),1fr))] items-stretch gap-4 pb-2'
+            : 'hidden'
+        }
+      >
+        <div className="contents">
+          <div className={sectionWrapperCls}>
+            <div className={sectionHeaderCls}>
+              <h3 className={sectionTitleCls}>{t('po.form.sections.general')}</h3>
             </div>
-            <div className="text-slate-500 dark:text-slate-400">
-              {t('po.form.taxTotal', { defaultValue: 'KDV' })}:{' '}
-              {formatCurrency(totals.tax, locale, currency)}
+            <div className={`${sectionBodyCls} grid grid-cols-1 gap-5 sm:grid-cols-2`}>
+              <div className="col-span-1 sm:col-span-2">
+                <label className={labelCls}>{t('po.form.vendor')}</label>
+                <select
+                  className={fieldCls}
+                  value={allValues.vendorId ?? ''}
+                  onChange={(e) => handleVendorSelect(e.target.value)}
+                >
+                  <option value="">{t('po.form.selectVendor')}</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                {errors.vendorId?.message && (
+                  <span className="mt-1 block text-[10px] text-danger-500">
+                    {translateError(errors.vendorId.message)}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className={labelCls}>{t('po.form.orderDate')}</label>
+                <Controller
+                  name="orderDate"
+                  control={control}
+                  render={({ field }) => (
+                    <LocalizedDateInput
+                      ref={field.ref}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      locale={locale}
+                      ariaLabel={t('po.form.orderDate')}
+                    />
+                  )}
+                />
+                {errors.orderDate?.message && (
+                  <span className="mt-1 block text-[10px] text-danger-500">
+                    {translateError(errors.orderDate.message)}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <label className={labelCls}>{t('po.form.expectedDate')}</label>
+                <Controller
+                  name="expectedDate"
+                  control={control}
+                  render={({ field }) => (
+                    <LocalizedDateInput
+                      ref={field.ref}
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      locale={locale}
+                      ariaLabel={t('po.form.expectedDate')}
+                    />
+                  )}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>{t('po.form.warehouse')}</label>
+                <select className={fieldCls} {...register('warehouseId')}>
+                  <option value="">{t('po.form.selectWarehouse')}</option>
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name} ({w.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>{t('po.form.currency')}</label>
+                <Controller
+                  name="currency"
+                  control={control}
+                  render={({ field }) => (
+                    <CurrencySelect value={field.value} onChange={field.onChange} />
+                  )}
+                />
+                {errors.currency?.message && (
+                  <span className="mt-1 block text-[10px] text-danger-500">
+                    {translateError(errors.currency.message)}
+                  </span>
+                )}
+              </div>
+
+              <div className="col-span-1 sm:col-span-2">
+                <label className={labelCls}>{t('po.form.exchangeRate')}</label>
+                <input
+                  className={fieldCls}
+                  type="number"
+                  step="0.0001"
+                  min="0"
+                  {...register('exchangeRate')}
+                />
+                {fxSnapshot && (
+                  <p className="mt-1 text-[10px] text-slate-500">
+                    {t('po.form.fxAutoRate', {
+                      source: fxSnapshot.source,
+                      date: new Date(fxSnapshot.effectiveDate).toLocaleDateString(locale),
+                    })}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="font-bold text-slate-900 dark:text-slate-100">
-              {t('po.form.total', { defaultValue: 'Genel Toplam' })}:{' '}
-              {formatCurrency(totals.total, locale, currency)}
+          </div>
+
+          <div className={sectionWrapperCls}>
+            <div className={sectionHeaderCls}>
+              <h3 className={sectionTitleCls}>{t('po.form.sections.notes')}</h3>
+            </div>
+            <div className={sectionBodyCls}>
+              <label className={labelCls}>{t('po.form.notes')}</label>
+              <textarea rows={4} className={fieldCls} maxLength={2000} {...register('notes')} />
             </div>
           </div>
         </div>
+      </div>
 
-        <Textarea
-          label={t('po.form.notes', { defaultValue: 'Açıklama' })}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          maxLength={2000}
-        />
-      </form>
-    </Modal>
+      <div
+        className={
+          step === 2
+            ? 'grid min-h-full grid-cols-1 items-stretch gap-4 pb-2 xl:grid-cols-[minmax(0,7fr)_minmax(17rem,2fr)]'
+            : 'hidden'
+        }
+      >
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-200">
+              {t('po.form.tabs.lines')}
+            </h2>
+            <button
+              type="button"
+              onClick={() => append(emptyLine())}
+              className="flex items-center gap-1.5 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm shadow-indigo-500/20 transition-colors hover:bg-indigo-500"
+            >
+              <Plus size={16} />
+              {t('po.form.addLine')}
+            </button>
+          </div>
+
+          <DocumentLineTable
+            headerGridCls={LINE_HEADER_GRID_CLS}
+            error={errors.lines?.message ? translateError(errors.lines.message) : undefined}
+            header={
+              <>
+                <div>{t('po.form.product')}</div>
+                <div className="grid min-w-0 grid-cols-[minmax(0,0.7fr)_minmax(0,1.2fr)_minmax(0,0.75fr)] gap-2">
+                  <div className="text-right">{t('po.form.qty')}</div>
+                  <div className="text-right">{t('po.form.unitCost')}</div>
+                  <div className="text-right">{t('po.form.tax')}</div>
+                </div>
+                <div aria-hidden="true" />
+                <div className="text-right">{t('po.form.total')}</div>
+              </>
+            }
+          >
+            {fields.map((field, index) => (
+              <PurchaseOrderLineEditor
+                key={field.id}
+                index={index}
+                register={register}
+                errors={errors.lines?.[index]}
+                line={watchedLines?.[index]}
+                products={products}
+                canRemove={fields.length > 1}
+                locale={locale}
+                currency={currency}
+                onProductSelect={handleProductSelect}
+                onRemove={remove}
+              />
+            ))}
+          </DocumentLineTable>
+        </div>
+
+        <div className="h-full min-w-0">
+          <div className={`${sectionWrapperCls} h-full overflow-hidden`}>
+            <div className={sectionHeaderCls}>
+              <h3 className={sectionTitleCls}>{t('po.form.sections.summary')}</h3>
+            </div>
+            <div className="space-y-4 p-5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">{t('po.form.subtotal')}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">
+                  {formatCurrency(summary.subtotal, locale, currency)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-400">
+                  {summary.taxPct !== null
+                    ? t('po.form.taxTotalWithRate', { pct: summary.taxPct })
+                    : t('po.form.taxTotal')}
+                </span>
+                <span className="font-medium text-slate-900 dark:text-slate-200">
+                  {formatCurrency(summary.tax, locale, currency)}
+                </span>
+              </div>
+              <div className="mt-2 border-t border-slate-200 pt-5 dark:border-[#2a3143]">
+                <div className="flex items-end justify-between">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-300">
+                    {t('po.form.total')}
+                  </span>
+                  <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    {formatCurrency(summary.grandTotal, locale, currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DocumentFormLayout>
   );
 };
