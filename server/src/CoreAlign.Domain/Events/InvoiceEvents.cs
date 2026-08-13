@@ -62,6 +62,7 @@ public record InvoiceCancelledEvent(
     string Currency,
     bool WasIssued,
     DateTime OccurredAtUtc,
+    InvoiceType Type,
     decimal ExchangeRate = 1m) : IDomainEvent;
 
 public record InvoiceWrittenOffEvent(

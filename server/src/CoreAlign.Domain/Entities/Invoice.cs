@@ -393,7 +393,7 @@ public class Invoice : TenantEntity, IHasConcurrencyToken
         Status = InvoiceStatus.Cancelled;
         CancelledAtUtc = now;
         UpdatedAtUtc = now;
-        AddDomainEvent(new InvoiceCancelledEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, wasIssued, now, ExchangeRate));
+        AddDomainEvent(new InvoiceCancelledEvent(TenantId, Id, CustomerId, InvoiceNumber, Total, Currency, wasIssued, now, Type, ExchangeRate));
     }
 
     public void MarkAsPaid(DateTime now)

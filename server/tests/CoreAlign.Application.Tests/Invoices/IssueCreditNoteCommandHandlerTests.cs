@@ -125,6 +125,82 @@ public class IssueCreditNoteCommandHandlerTests
         issuedEvent.CustomerId.Should().Be(invoice.CustomerId);
     }
 
+    [Fact]
+    public async Task Carries_the_gib_withholding_code_onto_the_credit_line()
+    {
+        var invoice = BuildWithholdingInvoice();
+        var source = invoice.Lines.ElementAt(0);
+        _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+
+        Invoice? captured = null;
+        await _invoiceRepository.AddAsync(Arg.Do<Invoice>(i => captured = i), Arg.Any<CancellationToken>());
+
+        await _sut.Handle(new IssueCreditNoteCommand(
+            invoice.Id,
+            new[] { new IssueCreditNoteLineInput(source.Id, source.Quantity) }), default);
+
+        captured.Should().NotBeNull();
+        var creditLine = captured!.Lines.Single();
+        creditLine.WithholdingNumerator.Should().Be(7);
+        creditLine.WithholdingDenominator.Should().Be(10);
+        creditLine.WithholdingCode.Should().Be("617");
+        creditLine.WithholdingAmount.Should().Be(source.WithholdingAmount);
+        captured.Total.Should().Be(invoice.Total);
+    }
+
+    [Fact]
+    public async Task Refuses_to_credit_a_credit_note()
+    {
+        var invoice = BuildIssuedInvoice();
+        var note = BuildCreditNote(invoice, invoice.Lines.ElementAt(0), 1m);
+        _invoiceRepository.GetWithLinesAsync(note.Id, Arg.Any<CancellationToken>()).Returns(note);
+
+        var act = async () => await _sut.Handle(new IssueCreditNoteCommand(
+            note.Id,
+            new[] { new IssueCreditNoteLineInput(note.Lines.First().Id, 1m) }), default);
+
+        await act.Should().ThrowAsync<CreditNoteCannotBeCreditedException>();
+        await _invoiceRepository.DidNotReceive().AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
+    }
+
+    private static Invoice BuildWithholdingInvoice()
+    {
+        var invoice = new Invoice("INV-WHT", CustomerId, "Acme", "TRY")
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            Customer = new Customer("Acme") { Id = CustomerId, TenantId = TenantId },
+        };
+        var line = new InvoiceLine(Guid.NewGuid(), "SKU-W", "Withheld service", 10m, 100m)
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+        };
+        line.ApplyPricing(
+            quantity: 10m,
+            unitPrice: 100m,
+            lineDiscountPercent: 0m,
+            lineDiscountAmount: 0m,
+            taxRatePercent: 20m,
+            taxRateId: null,
+            isTaxInclusive: false,
+            withholdingRatePercent: 0m,
+            uomId: null,
+            uomCode: null,
+            description: null,
+            revenueAccountCode: null,
+            costCenter: null,
+            project: null,
+            originOrderLineId: null,
+            withholdingTaxCodeId: Guid.NewGuid(),
+            withholdingCode: "617",
+            withholdingNumerator: 7,
+            withholdingDenominator: 10);
+        invoice.ReplaceLines(new[] { line });
+        invoice.Issue("INV-WHT");
+        return invoice;
+    }
+
     private static Invoice BuildIssuedInvoice()
     {
         var invoice = new Invoice("INV-001", CustomerId, "Acme", "TRY")

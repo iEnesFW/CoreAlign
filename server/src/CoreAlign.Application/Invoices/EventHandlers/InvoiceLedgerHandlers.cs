@@ -167,25 +167,33 @@ public class InvoiceCancelledLedgerHandler : INotificationHandler<InvoiceCancell
     {
         if (!notification.WasIssued) return;
 
+        // WHY the entry type follows the document: issuing a credit note posts a Credit, so
+        // cancelling one has to post a Debit to undo it. Posting Credit unconditionally credited
+        // the customer twice for a note whose net GL effect is zero.
+        var isCreditNote = notification.Type == InvoiceType.CreditNote;
+        var entryType = isCreditNote ? LedgerEntryType.Debit : LedgerEntryType.Credit;
+        var legacyAmount = isCreditNote ? notification.Amount : -notification.Amount;
+        var description = isCreditNote ? "Credit note cancelled (reversal)" : "Invoice cancelled (reversal)";
+
         await LedgerPostingHelpers.PostAsync(
             _ledger, notification.TenantId, notification.CustomerId,
             notification.OccurredAtUtc, notification.OccurredAtUtc.Date,
-            LedgerEntryType.Credit, notification.Amount, notification.Currency, notification.ExchangeRate,
+            entryType, notification.Amount, notification.Currency, notification.ExchangeRate,
             LedgerSourceType.InvoiceVoid, notification.InvoiceId, notification.InvoiceNumber,
-            "Invoice cancelled (reversal)",
+            description,
             cancellationToken);
 
         var legacy = new CustomerTransaction(
             notification.CustomerId,
             CustomerTransactionType.Adjustment,
-            -notification.Amount,
+            legacyAmount,
             notification.Currency)
         {
             TenantId = notification.TenantId,
             OccurredAtUtc = notification.OccurredAtUtc,
             InvoiceId = notification.InvoiceId,
             Reference = notification.InvoiceNumber,
-            Notes = "Invoice cancelled (reversal)",
+            Notes = description,
         };
         await _customerTransactionRepository.AddAsync(legacy, cancellationToken);
     }

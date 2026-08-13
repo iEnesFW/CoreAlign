@@ -81,3 +81,9 @@ public class PeriodClosedException : DomainException
     public PeriodClosedException(DateTime postingDate)
         : base($"Accounting period for {postingDate:yyyy-MM} is closed.") { }
 }
+
+public class CreditNoteCannotBeCreditedException : DomainException
+{
+    public CreditNoteCannotBeCreditedException(string creditNoteNumber)
+        : base($"{creditNoteNumber} is already a credit note; credit the original invoice instead.") { }
+}

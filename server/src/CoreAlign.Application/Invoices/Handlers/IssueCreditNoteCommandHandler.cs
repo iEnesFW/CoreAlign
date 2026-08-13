@@ -38,6 +38,15 @@ public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteComm
             throw new InvoiceStatusTransitionException(origin.Status.ToString(), "issue credit note");
         }
 
+        // WHY a credit note cannot be credited: Invoice.IssueCreditNote copies the origin Type, so
+        // the second note is another CreditNote and its issue event credits AR a second time
+        // instead of restoring it. The over-credit guard cannot see it either — it matches on
+        // OriginInvoiceId, and the second note points at the first, not at the real invoice.
+        if (origin.Type == InvoiceType.CreditNote)
+        {
+            throw new CreditNoteCannotBeCreditedException(origin.InvoiceNumber);
+        }
+
         var durableReplay = await TryReplayFromReturnRequestAsync(origin, request, cancellationToken);
         if (durableReplay is not null)
         {
@@ -162,7 +171,14 @@ public class IssueCreditNoteCommandHandler : IRequestHandler<IssueCreditNoteComm
             revenueAccountCode: source.RevenueAccountCode,
             costCenter: null,
             project: null,
-            originOrderLineId: source.Id);
+            originOrderLineId: source.Id,
+            // WHY the GİB code travels with the credit: withholding is a fraction of the line's VAT
+            // (7/10 for code 617), not a percentage of the net, so a credit line without the code
+            // computes zero withholding — it would over-credit AR and strand the 193 receivable.
+            withholdingTaxCodeId: source.WithholdingTaxCodeId,
+            withholdingCode: source.WithholdingCode,
+            withholdingNumerator: source.WithholdingNumerator,
+            withholdingDenominator: source.WithholdingDenominator);
         return line;
     }
 }
