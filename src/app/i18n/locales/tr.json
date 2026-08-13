@@ -582,7 +582,8 @@
       "Edi": "EDI",
       "Marketplace": "Pazaryeri",
       "Phone": "Telefon",
-      "InStore": "Mağaza"
+      "InStore": "Mağaza",
+      "Quote": "Tekliften"
     },
     "summary": {
       "financial": "Finansal Özet",

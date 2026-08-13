@@ -47,4 +47,19 @@ describe('orderSchema', () => {
   it('rejects non-uppercase currency', () => {
     expect(orderSchema.safeParse({ ...valid, currency: 'usd' }).success).toBe(false);
   });
+
+  it('accepts every source the backend can persist, Quote included', () => {
+    for (const source of [
+      'Manual',
+      'Web',
+      'Api',
+      'Edi',
+      'Marketplace',
+      'Phone',
+      'InStore',
+      'Quote',
+    ]) {
+      expect(orderSchema.safeParse({ ...valid, source: source as never }).success).toBe(true);
+    }
+  });
 });

@@ -29,7 +29,15 @@ export const ORDER_STATUSES: OrderStatus[] = [
 ];
 
 export type OrderType = 'Standard' | 'Blanket' | 'Return' | 'Sample' | 'Internal';
-export type OrderSource = 'Manual' | 'Web' | 'Api' | 'Edi' | 'Marketplace' | 'Phone' | 'InStore';
+export type OrderSource =
+  | 'Manual'
+  | 'Web'
+  | 'Api'
+  | 'Edi'
+  | 'Marketplace'
+  | 'Phone'
+  | 'InStore'
+  | 'Quote';
 
 export type OrderLineStatus =
   | 'Pending'

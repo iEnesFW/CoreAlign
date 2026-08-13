@@ -89,7 +89,7 @@ export const orderSchema = z.object({
     'Confirmed',
   ]),
   type: z.enum(['Standard', 'Blanket', 'Return', 'Sample', 'Internal']),
-  source: z.enum(['Manual', 'Web', 'Api', 'Edi', 'Marketplace', 'Phone', 'InStore']),
+  source: z.enum(['Manual', 'Web', 'Api', 'Edi', 'Marketplace', 'Phone', 'InStore', 'Quote']),
   currency: z
     .string()
     .length(3, { message: 'Validation.CurrencyLength' })

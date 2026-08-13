@@ -582,7 +582,8 @@
       "Edi": "EDI",
       "Marketplace": "Marketplace",
       "Phone": "Phone",
-      "InStore": "In-Store"
+      "InStore": "In-Store",
+      "Quote": "From quote"
     },
     "summary": {
       "financial": "Financial Summary",
