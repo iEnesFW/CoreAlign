@@ -489,16 +489,9 @@
       "deliveredAt": "Delivered"
     },
     "shipments": {
-      "title": "Shipments",
-      "empty": "No shipments yet.",
+      "available": "Available",
       "carrier": "Carrier",
-      "trackingNumber": "Tracking #",
-      "trackingUrl": "Tracking URL",
-      "shippingCost": "Shipping cost",
-      "receivedBy": "Received by",
       "createTitle": "Create shipment",
-      "selectLines": "Select lines and quantities to ship",
-      "remaining": "Remaining: {{value}}",
       "eDespatch": {
         "action": "Send e-Despatch",
         "ettn": "ETTN",
@@ -515,7 +508,24 @@
           "Failed": "Failed",
           "Cancelled": "Cancelled"
         }
-      }
+      },
+      "empty": "No shipments yet.",
+      "exceedsAvailable": "Exceeds the available quantity.",
+      "nothingLeft": "Nothing left to ship on this order. Quantities claimed by open shipments are already deducted.",
+      "ordered": "Ordered",
+      "product": "Product",
+      "receivedBy": "Received by",
+      "remaining": "Remaining: {{value}}",
+      "selectAtLeastOne": "Select at least one line.",
+      "selectLine": "Select line {{sku}}",
+      "selectLines": "Select lines and quantities to ship",
+      "selectedLines": "{{n}} line(s) selected",
+      "shipQuantity": "Ship quantity",
+      "shippingCost": "Shipping cost",
+      "title": "Shipments",
+      "totalQuantity": "Total quantity",
+      "trackingNumber": "Tracking #",
+      "trackingUrl": "Tracking URL"
     },
     "columns": {
       "orderNumber": "Order #",
@@ -991,12 +1001,16 @@
       "totalHint": "{{count}} of {{all}}"
     },
     "creditNote": {
+      "capsUnavailable": "The already-credited quantities could not be loaded. The lines stay closed so no wrong quantity is sent; please retry.",
+      "exceedsRemaining": "Exceeds the remaining quantity.",
       "help": "Select the lines and quantities to credit. A credit note will be issued against this invoice.",
       "invoiced": "Invoiced",
       "product": "Product",
       "quantity": "Quantity",
       "reason": "Reason",
+      "reasonPlaceholder": "Enter the reason for the credit note (optional)",
       "remaining": "Remaining",
+      "selectAtLeastOne": "Select at least one line.",
       "selectLine": "Select line {{sku}}",
       "submit": "Issue Credit Note",
       "subtitle": "Credit note against invoice {{number}}.",
@@ -1004,8 +1018,7 @@
       "title": "Issue Credit Note",
       "toastError": "Failed to issue credit note.",
       "toastSuccess": "Credit note issued.",
-      "unitPrice": "Unit Price",
-      "reasonPlaceholder": "Enter the reason for the credit note (optional)"
+      "unitPrice": "Unit Price"
     },
     "standalone": {
       "addLine": "Add Line",

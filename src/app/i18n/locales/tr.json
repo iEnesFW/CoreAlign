@@ -489,16 +489,9 @@
       "deliveredAt": "Teslim edildi"
     },
     "shipments": {
-      "title": "Sevkiyatlar",
-      "empty": "Henüz sevkiyat yok.",
+      "available": "Sevk edilebilir",
       "carrier": "Kargo firması",
-      "trackingNumber": "Takip no",
-      "trackingUrl": "Takip URL",
-      "shippingCost": "Kargo ücreti",
-      "receivedBy": "Teslim alan",
       "createTitle": "Sevkiyat oluştur",
-      "selectLines": "Sevk edilecek kalem ve miktarları seçin",
-      "remaining": "Kalan: {{value}}",
       "eDespatch": {
         "action": "e-İrsaliye Gönder",
         "ettn": "ETTN",
@@ -515,7 +508,24 @@
           "Failed": "Başarısız",
           "Cancelled": "İptal Edildi"
         }
-      }
+      },
+      "empty": "Henüz sevkiyat yok.",
+      "exceedsAvailable": "Sevk edilebilir miktarı aşıyor.",
+      "nothingLeft": "Bu siparişte sevk edilecek kalem kalmadı. Açık sevkiyatların talep ettiği miktarlar düşülmüştür.",
+      "ordered": "Sipariş",
+      "product": "Ürün",
+      "receivedBy": "Teslim alan",
+      "remaining": "Kalan: {{value}}",
+      "selectAtLeastOne": "En az bir kalem seçin.",
+      "selectLine": "{{sku}} satırını seç",
+      "selectLines": "Sevk edilecek kalem ve miktarları seçin",
+      "selectedLines": "{{n}} kalem seçildi",
+      "shipQuantity": "Sevk miktarı",
+      "shippingCost": "Kargo ücreti",
+      "title": "Sevkiyatlar",
+      "totalQuantity": "Toplam miktar",
+      "trackingNumber": "Takip no",
+      "trackingUrl": "Takip URL"
     },
     "columns": {
       "orderNumber": "Sipariş No",
@@ -991,12 +1001,16 @@
       "totalHint": "{{count}} / {{all}}"
     },
     "creditNote": {
+      "capsUnavailable": "Daha önce alacaklandırılan miktarlar okunamadı. Yanlış miktar gönderilmemesi için kalemler kapalı tutuluyor; lütfen yeniden deneyin.",
+      "exceedsRemaining": "Kalan miktarı aşıyor.",
       "help": "Alacak dekontuna dahil edilecek satırları ve miktarları seçin. Bu fatura için bir alacak dekontu oluşturulacaktır.",
       "invoiced": "Faturalanan",
       "product": "Ürün",
       "quantity": "Miktar",
       "reason": "Gerekçe",
+      "reasonPlaceholder": "İade/iptal gerekçesini girin (opsiyonel)",
       "remaining": "Kalan",
+      "selectAtLeastOne": "En az bir kalem seçin.",
       "selectLine": "{{sku}} satırını seç",
       "submit": "Alacak Dekontu Oluştur",
       "subtitle": "{{number}} numaralı faturaya karşı alacak dekontu.",
@@ -1004,8 +1018,7 @@
       "title": "Alacak Dekontu Oluştur",
       "toastError": "Alacak dekontu oluşturulamadı.",
       "toastSuccess": "Alacak dekontu oluşturuldu.",
-      "unitPrice": "Birim Fiyat",
-      "reasonPlaceholder": "İade/iptal gerekçesini girin (opsiyonel)"
+      "unitPrice": "Birim Fiyat"
     },
     "standalone": {
       "addLine": "Satır Ekle",
