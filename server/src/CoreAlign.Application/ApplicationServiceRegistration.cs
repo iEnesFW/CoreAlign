@@ -35,6 +35,8 @@ public static class ApplicationServiceRegistration
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         services.AddValidatorsFromAssembly(assembly);
         services.AddScoped<IFiscalYearResolver, FiscalYearResolver>();
+        services.AddScoped<CoreAlign.Application.Treasury.Fx.IKnownCurrencyGuard,
+            CoreAlign.Application.Treasury.Fx.KnownCurrencyGuard>();
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

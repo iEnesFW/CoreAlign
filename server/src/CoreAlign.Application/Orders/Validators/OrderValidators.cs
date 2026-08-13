@@ -1,4 +1,5 @@
 using CoreAlign.Application.Orders.Commands;
+using CoreAlign.Application.Treasury.Fx;
 using FluentValidation;
 
 namespace CoreAlign.Application.Orders.Validators;
@@ -35,7 +36,7 @@ public class OrderLineInputValidator : AbstractValidator<OrderLineInput>
 
 public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
 {
-    public CreateOrderCommandValidator()
+    public CreateOrderCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.OrderNumber)
             .MaximumLength(64).WithMessage("Validation.TooLong")
@@ -45,7 +46,8 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
         RuleFor(x => x.Currency)
             .NotEmpty().WithMessage("Validation.Required")
             .Length(3).WithMessage("Validation.CurrencyLength")
-            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat");
+            .Matches("^[A-Z]{3}$").WithMessage("Validation.CurrencyFormat")
+            .MustBeAKnownCurrency(currencyGuard);
         RuleFor(x => x.Notes)
             .MaximumLength(2000).WithMessage("Validation.TooLong")
             .When(x => !string.IsNullOrEmpty(x.Notes));

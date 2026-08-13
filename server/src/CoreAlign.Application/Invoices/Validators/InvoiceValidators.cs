@@ -1,4 +1,5 @@
 using CoreAlign.Application.Invoices.Commands;
+using CoreAlign.Application.Treasury.Fx;
 using FluentValidation;
 
 namespace CoreAlign.Application.Invoices.Validators;
@@ -43,11 +44,12 @@ public class StandaloneInvoiceLineInputValidator : AbstractValidator<StandaloneI
 
 public class CreateStandaloneInvoiceCommandValidator : AbstractValidator<CreateStandaloneInvoiceCommand>
 {
-    public CreateStandaloneInvoiceCommandValidator()
+    public CreateStandaloneInvoiceCommandValidator(IKnownCurrencyGuard currencyGuard)
     {
         RuleFor(x => x.CustomerId).NotEmpty();
         RuleFor(x => x.Currency).NotEmpty().WithMessage("Validation.Required")
-            .Length(3).WithMessage("Validation.InvalidFormat");
+            .Length(3).WithMessage("Validation.InvalidFormat")
+            .MustBeAKnownCurrency(currencyGuard);
         RuleFor(x => x.DueDays).InclusiveBetween(0, 365);
         RuleFor(x => x.Lines).NotEmpty().WithMessage("Validation.Required");
         RuleForEach(x => x.Lines).SetValidator(new StandaloneInvoiceLineInputValidator());
