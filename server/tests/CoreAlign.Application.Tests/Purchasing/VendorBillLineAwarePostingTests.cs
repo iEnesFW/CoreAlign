@@ -4,6 +4,7 @@ using CoreAlign.Application.Common.Outbox;
 using CoreAlign.Application.Purchasing;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
+using CoreAlign.Domain.Exceptions;
 using CoreAlign.Domain.Interfaces;
 
 namespace CoreAlign.Application.Tests.Purchasing;
@@ -284,10 +285,12 @@ public class VendorBillLineAwarePostingTests
         po.Lines.Single().QuantityBilled.Should().Be(0m); // bill then cancel -> back to zero
     }
 
-    // ---- (e2) partial cancel of a partially-paid line bill reverses only the OPEN
-    //          portion, prorated across the line-aware legs, and balances. ----
+    // ---- (e2) a part-paid PO-linked bill cannot be cancelled: the reversal would prorate the
+    //          GL legs to the open amount while ReverseLineBill backs out the FULL quantity, so
+    //          the unreversed share of 322 would strand and the close write-off would charge it
+    //          again. Voiding the payment first makes the reversal exact. ----
     [Fact]
-    public async Task PartialCancel_of_partially_paid_line_bill_reverses_open_portion_balanced()
+    public async Task PartPaid_line_bill_cannot_be_cancelled_until_the_payment_is_undone()
     {
         var po = Po(poUnitCost: 10m, qtyReceived: 5m, qtyOrdered: 5m);
         _orders.GetByIdAsync(PoId, Arg.Any<CancellationToken>()).Returns(po);
@@ -301,17 +304,47 @@ public class VendorBillLineAwarePostingTests
         _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
 
         await PostSut().Handle(new PostVendorBillCommand(bill.Id), default);
-        bill.RecordPayment(26m); // pay half -> PartiallyPaid, AmountDue 26
+        bill.RecordPayment(26m);
         bill.Status.Should().Be(VendorBillStatus.PartiallyPaid);
+
+        var blocked = () => CancelSut().Handle(new CancelVendorBillCommand(bill.Id), default);
+        await blocked.Should().ThrowAsync<VendorBillCancelBlockedByPaymentException>();
+        bill.Status.Should().Be(VendorBillStatus.PartiallyPaid);
+        po.Lines.Single().QuantityBilled.Should().Be(5m, "a refused cancel leaves the PO untouched");
+    }
+
+    [Fact]
+    public async Task Cancelling_after_the_payment_is_voided_reverses_in_full_and_nets_322_to_zero()
+    {
+        var po = Po(poUnitCost: 10m, qtyReceived: 5m, qtyOrdered: 5m);
+        _orders.GetByIdAsync(PoId, Arg.Any<CancellationToken>()).Returns(po);
+        _vendors.GetByIdAsync(VendorId, Arg.Any<CancellationToken>()).Returns(new Vendor("Acme") { Id = VendorId });
+        _ledger.GetLastRunningBalanceAsync(VendorId, Arg.Any<CancellationToken>()).Returns(0m);
+
+        var bill = new VendorBill(VendorId, "Acme", "INV-1", DateTime.UtcNow, "TRY", 0m, 0m, purchaseOrderId: PoId)
+        { Id = Guid.NewGuid() };
+        bill.ReplaceLines(new[] { new VendorBillLine(ProductId, "SKU-1", "Widget", 5m, 10.40m, 10m, PoLineId, 0m) });
+        _bills.GetByIdAsync(bill.Id, Arg.Any<CancellationToken>()).Returns(bill);
+
+        await PostSut().Handle(new PostVendorBillCommand(bill.Id), default);
+        bill.RecordPayment(26m);
+        bill.ReverseRecordedPayment(26m); // what voiding the vendor payment does to the bill
+        bill.Status.Should().Be(VendorBillStatus.Posted);
 
         var cancelGl = CaptureGl(() => CancelSut().Handle(new CancelVendorBillCommand(bill.Id), default).GetAwaiter().GetResult());
 
         bill.Status.Should().Be(VendorBillStatus.Cancelled);
-        // Reversal touches only the open 26, prorated (factor 0.5): CR 322 25 + CR PPV 1 == DR 320 26.
-        Leg(cancelGl, GLPostingKey.AccountsPayable).Debit.Should().Be(26m);
-        cancelGl.Lines.Sum(l => l.Debit).Should().Be(cancelGl.Lines.Sum(l => l.Credit));
+        po.Lines.Single().QuantityBilled.Should().Be(0m);
+        Leg(cancelGl, GLPostingKey.AccountsPayable).Debit.Should().Be(52m);
+        Leg(cancelGl, GLPostingKey.GoodsReceiptClearing).Credit.Should().Be(50m);
+        Leg(cancelGl, GLPostingKey.PurchasePriceVariance).Credit.Should().Be(2m);
+
+        // Replay through the real service: the reversal credits 322 by exactly the 50 the bill
+        // debited, so the receipt credit is the only thing left and the PO close write-off
+        // (received 5 - billed 0) * 10 = 50 clears it to zero.
         var entry = await PostThroughRealServiceAsync(cancelGl);
         entry.TotalDebit.Should().Be(entry.TotalCredit);
+        entry.Lines.Single(l => l.AccountCode == "322").Credit.Should().Be(50m);
     }
 
     // ---- (f) PO-less / header-only bill still posts the OLD single-322 path. ----

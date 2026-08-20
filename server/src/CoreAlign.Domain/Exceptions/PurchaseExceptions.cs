@@ -58,3 +58,9 @@ public class ReceiptReversalBelowBilledException : ConflictException
     public ReceiptReversalBelowBilledException(string productSku, decimal billed, decimal wouldLeave)
         : base($"Cannot un-receive '{productSku}': {billed} is already billed and the reversal would leave only {wouldLeave} received.") { }
 }
+
+public class VendorBillCancelBlockedByPaymentException : ConflictException
+{
+    public VendorBillCancelBlockedByPaymentException(string billNumber, decimal amountPaid)
+        : base($"Bill '{billNumber}' cannot be cancelled while {amountPaid} is applied to it. Void or unapply the payment first.") { }
+}

@@ -200,6 +200,16 @@ public class VendorBill : TenantEntity, IHasConcurrencyToken
         {
             throw new InvalidOrderStatusTransitionException(Status.ToString(), VendorBillStatus.Cancelled.ToString());
         }
+        // WHY a part-paid PO-linked bill must have its payment undone first: the cancel
+        // reversal prorates the GL legs to the OPEN amount while the PO billed quantity is
+        // reversed in FULL, so the unreversed share of GR/IR (322) and price variance strands
+        // with no billed quantity behind it — and the PO close write-off then charges 322 a
+        // second time for goods that were billed. The header-only path has no 322 leg, so its
+        // prorated reversal stays self-consistent and is left alone.
+        if (AmountPaid > 0m && PurchaseOrderId is not null && Lines.Any(l => l.PurchaseOrderLineId is not null))
+        {
+            throw new VendorBillCancelBlockedByPaymentException(BillNumber, AmountPaid);
+        }
         Status = VendorBillStatus.Cancelled;
         UpdatedAtUtc = DateTime.UtcNow;
     }
