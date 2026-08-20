@@ -14,6 +14,7 @@ export interface PurchaseOrderLine {
   productName: string;
   quantity: number;
   quantityReceived: number;
+  quantityAwaitingInspection: number;
   quantityBilled: number;
   quantityRemainingToReceive: number;
   unitCost: number;

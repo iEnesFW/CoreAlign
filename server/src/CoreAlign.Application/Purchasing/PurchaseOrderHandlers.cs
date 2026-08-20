@@ -30,7 +30,8 @@ internal static class PurchaseOrderMapper
         p.CreatedAtUtc);
 
     private static PurchaseOrderLineDto ToDto(PurchaseOrderLine l) => new(
-        l.Id, l.ProductId, l.ProductSku, l.ProductName, l.Quantity, l.QuantityReceived, l.QuantityBilled,
+        l.Id, l.ProductId, l.ProductSku, l.ProductName, l.Quantity, l.QuantityReceived,
+        l.QuantityAwaitingInspection, l.QuantityBilled,
         l.QuantityRemainingToReceive, l.UnitCost, l.TaxRatePercent, l.TaxAmount, l.LineSubtotal, l.LineTotal,
         l.UomId, l.UomCode, l.LineNotes);
 }
@@ -235,8 +236,10 @@ public class ApprovePurchaseOrderHandler : IRequestHandler<ApprovePurchaseOrderC
 // Closing or cancelling the PO writes that residual off so 322 returns to zero,
 // debiting the clearing leg and crediting purchase price variance. The residual
 // is exact at the PO line UnitCost — which is the cost the receipt credited (see
-// ReceivePurchaseOrderHandler). Per-receipt costing accuracy is deferred to the
-// GRN sprint. Idempotency key = po.Id so a double-close cannot double-post.
+// ReceivePurchaseOrderHandler). QuantityReceived excludes goods still held for
+// inspection, which never credited 322, so they are correctly not written off.
+// Per-receipt costing accuracy is deferred to the GRN sprint. Idempotency key =
+// po.Id so a double-close cannot double-post.
 internal static class GoodsReceiptClearingWriteOff
 {
     public static async Task EnqueueAsync(IGLPostingOutbox outbox, PurchaseOrder po, string reason, CancellationToken ct)
@@ -367,9 +370,10 @@ public class ReceivePurchaseOrderHandler : IRequestHandler<ReceivePurchaseOrderC
 
         foreach (var receipt in c.Lines.Where(l => l.Quantity > 0m))
         {
-            // The PO line receipt is ALWAYS recorded (PO progresses, qty can't be re-received).
-            // Only the stock + GL recognition is deferred to QC-approve for inspection holds.
-            var line = po.RecordLineReceipt(receipt.OrderLineId, receipt.Quantity);
+            // The line is ALWAYS claimed (the PO progresses, the qty can't be re-received), but an
+            // inspection hold parks it in the awaiting bucket so QuantityReceived keeps meaning
+            // "stock and GR/IR already recognised" — the write-off and three-way match rely on that.
+            var line = po.RecordLineReceipt(receipt.OrderLineId, receipt.Quantity, awaitingInspection: requiresQc);
             var grnLine = new GoodsReceiptLine(line.Id, line.ProductId, line.ProductSku, line.ProductName,
                 receipt.Quantity, line.UnitCost);
             grn.AddLine(grnLine);
@@ -474,6 +478,10 @@ public class ApproveGoodsReceiptQcHandler : IRequestHandler<ApproveGoodsReceiptQ
         grn.ApproveQc(c.DecidedByUserId, DateTime.UtcNow);
 
         var po = await _orders.GetByIdAsync(grn.PurchaseOrderId, ct) ?? throw new PurchaseOrderNotFoundException();
+        foreach (var grnLine in grn.Lines)
+        {
+            po.ApproveLineInspection(grnLine.PurchaseOrderLineId, grnLine.QuantityReceived);
+        }
         await GoodsReceiptPosting.ApplyStockAndGlAsync(grn, po, _allocation, _outbox, ct);
 
         _grns.Update(grn);
@@ -503,7 +511,8 @@ public class RejectGoodsReceiptQcHandler : IRequestHandler<RejectGoodsReceiptQcC
     {
         var grn = await _grns.GetByIdAsync(c.GrnId, ct) ?? throw new GoodsReceiptNotFoundException();
         // A QC-pending GRN never applied a receipt: no stock, no movement, no GL to back out.
-        // Reject is a status flip + un-recording the PO line receipt so the qty is not counted as received.
+        // Reject is a status flip + releasing the awaiting-inspection claim so the line becomes
+        // receivable again. It never touches QuantityReceived, so it cannot un-receive billed goods.
         grn.RejectQc(c.Reason, c.DecidedByUserId, DateTime.UtcNow);
 
         var po = await _orders.GetByIdAsync(grn.PurchaseOrderId, ct);
@@ -511,7 +520,7 @@ public class RejectGoodsReceiptQcHandler : IRequestHandler<RejectGoodsReceiptQcC
         {
             foreach (var grnLine in grn.Lines)
             {
-                po.ReverseLineReceipt(grnLine.PurchaseOrderLineId, grnLine.QuantityReceived);
+                po.RejectLineInspection(grnLine.PurchaseOrderLineId, grnLine.QuantityReceived);
             }
             _orders.Update(po);
         }

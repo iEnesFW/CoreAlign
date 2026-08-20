@@ -20,6 +20,7 @@ public record PurchaseOrderLineDto(
     string ProductName,
     decimal Quantity,
     decimal QuantityReceived,
+    decimal QuantityAwaitingInspection,
     decimal QuantityBilled,
     decimal QuantityRemainingToReceive,
     decimal UnitCost,

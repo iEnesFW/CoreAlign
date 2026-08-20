@@ -142,7 +142,7 @@ public class PurchaseOrder : TenantEntity, IHasConcurrencyToken
     }
 
     // Records a goods receipt against a line and advances the PO receive status.
-    public PurchaseOrderLine RecordLineReceipt(Guid lineId, decimal quantity)
+    public PurchaseOrderLine RecordLineReceipt(Guid lineId, decimal quantity, bool awaitingInspection = false)
     {
         if (!IsReceivable)
         {
@@ -150,12 +150,36 @@ public class PurchaseOrder : TenantEntity, IHasConcurrencyToken
         }
         var line = Lines.FirstOrDefault(l => l.Id == lineId)
             ?? throw new InvalidOrderLineException("Purchase order line not found.");
-        line.RecordReceipt(quantity);
-        Status = Lines.All(l => l.QuantityReceived >= l.Quantity)
-            ? PurchaseOrderStatus.Received
-            : PurchaseOrderStatus.PartiallyReceived;
+        if (awaitingInspection)
+        {
+            line.RecordReceiptAwaitingInspection(quantity);
+        }
+        else
+        {
+            line.RecordReceipt(quantity);
+        }
+        RecomputeReceiptStatus();
         UpdatedAtUtc = DateTime.UtcNow;
         return line;
+    }
+
+    public void ApproveLineInspection(Guid lineId, decimal quantity)
+    {
+        if (quantity <= 0m) return;
+        var line = Lines.FirstOrDefault(l => l.Id == lineId);
+        if (line is null) return;
+        line.ApproveInspection(quantity);
+        UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    public void RejectLineInspection(Guid lineId, decimal quantity)
+    {
+        if (quantity <= 0m) return;
+        var line = Lines.FirstOrDefault(l => l.Id == lineId);
+        if (line is null) return;
+        line.RejectInspection(quantity);
+        RecomputeReceiptStatus();
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
     public void ReverseLineReceipt(Guid lineId, decimal quantity)
@@ -164,13 +188,26 @@ public class PurchaseOrder : TenantEntity, IHasConcurrencyToken
         var line = Lines.FirstOrDefault(l => l.Id == lineId);
         if (line is null) return;
         line.ReverseReceipt(quantity);
-        if (Status is PurchaseOrderStatus.Received or PurchaseOrderStatus.PartiallyReceived)
-        {
-            Status = Lines.All(l => l.QuantityReceived <= 0m)
-                ? PurchaseOrderStatus.Approved
-                : PurchaseOrderStatus.PartiallyReceived;
-        }
+        RecomputeReceiptStatus();
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // WHY the status follows the claimed quantity: goods held for inspection occupy the line
+    // just as received goods do, so the order must not look re-receivable while they wait.
+    private void RecomputeReceiptStatus()
+    {
+        if (Status is not (PurchaseOrderStatus.Approved or PurchaseOrderStatus.Received or PurchaseOrderStatus.PartiallyReceived))
+        {
+            return;
+        }
+        if (Lines.All(l => l.QuantityClaimed <= 0m))
+        {
+            Status = PurchaseOrderStatus.Approved;
+            return;
+        }
+        Status = Lines.All(l => l.QuantityClaimed >= l.Quantity)
+            ? PurchaseOrderStatus.Received
+            : PurchaseOrderStatus.PartiallyReceived;
     }
 
     // Advances the billed quantity on a line when a vendor bill is posted against it.

@@ -52,3 +52,9 @@ public class DuplicatePurchaseRequisitionNumberException : ConflictException
 {
     public DuplicatePurchaseRequisitionNumberException() : base("A purchase requisition with this number already exists.") { }
 }
+
+public class ReceiptReversalBelowBilledException : ConflictException
+{
+    public ReceiptReversalBelowBilledException(string productSku, decimal billed, decimal wouldLeave)
+        : base($"Cannot un-receive '{productSku}': {billed} is already billed and the reversal would leave only {wouldLeave} received.") { }
+}

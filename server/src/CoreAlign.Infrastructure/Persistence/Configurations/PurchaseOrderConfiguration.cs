@@ -52,6 +52,7 @@ public class PurchaseOrderLineConfiguration : IEntityTypeConfiguration<PurchaseO
         builder.Property(l => l.UomCode).HasMaxLength(20);
         builder.Property(l => l.Quantity).HasColumnType("numeric(18,4)");
         builder.Property(l => l.QuantityReceived).HasColumnType("numeric(18,4)");
+        builder.Property(l => l.QuantityAwaitingInspection).HasColumnType("numeric(18,4)").HasDefaultValue(0m);
         builder.Property(l => l.QuantityBilled).HasColumnType("numeric(18,4)");
         builder.Property(l => l.UnitCost).HasColumnType("numeric(18,4)");
         builder.Property(l => l.TaxRatePercent).HasColumnType("numeric(6,3)");

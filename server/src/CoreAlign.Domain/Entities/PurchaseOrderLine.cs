@@ -16,6 +16,7 @@ public class PurchaseOrderLine : TenantEntity
 
     public decimal Quantity { get; private set; }
     public decimal QuantityReceived { get; private set; }
+    public decimal QuantityAwaitingInspection { get; private set; }
     public decimal QuantityBilled { get; private set; }
 
     public decimal UnitCost { get; private set; }
@@ -28,7 +29,14 @@ public class PurchaseOrderLine : TenantEntity
     public PurchaseOrder PurchaseOrder { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
-    public decimal QuantityRemainingToReceive => Math.Max(0m, Quantity - QuantityReceived);
+    // WHY the awaiting bucket is separate: QuantityReceived is the quantity whose stock and
+    // GR/IR credit have actually been recognised, so the write-off residual and the three-way
+    // match ceiling can trust it. Goods held for inspection occupy the line (they cannot be
+    // received twice) without claiming a credit that was never booked.
+    public decimal QuantityRemainingToReceive =>
+        Math.Max(0m, Quantity - QuantityReceived - QuantityAwaitingInspection);
+
+    public decimal QuantityClaimed => QuantityReceived + QuantityAwaitingInspection;
 
     protected PurchaseOrderLine() { }
 
@@ -66,21 +74,50 @@ public class PurchaseOrderLine : TenantEntity
 
     public void RecordReceipt(decimal qty)
     {
-        if (qty <= 0m)
-        {
-            throw new InvalidOrderLineException("Receipt quantity must be positive.");
-        }
-        if (QuantityReceived + qty > Quantity)
-        {
-            throw new InvalidOrderLineException("Receipt exceeds the line's remaining quantity.");
-        }
+        EnsureReceiptFits(qty);
         QuantityReceived += qty;
+    }
+
+    public void RecordReceiptAwaitingInspection(decimal qty)
+    {
+        EnsureReceiptFits(qty);
+        QuantityAwaitingInspection += qty;
+    }
+
+    public void ApproveInspection(decimal qty)
+    {
+        if (qty <= 0m) return;
+        var moved = Math.Min(qty, QuantityAwaitingInspection);
+        QuantityAwaitingInspection -= moved;
+        QuantityReceived += moved;
+    }
+
+    public void RejectInspection(decimal qty)
+    {
+        if (qty <= 0m) return;
+        QuantityAwaitingInspection = Math.Max(0m, QuantityAwaitingInspection - qty);
     }
 
     public void ReverseReceipt(decimal qty)
     {
         if (qty <= 0m) return;
+        if (QuantityReceived - qty < QuantityBilled)
+        {
+            throw new ReceiptReversalBelowBilledException(ProductSku, QuantityBilled, QuantityReceived - qty);
+        }
         QuantityReceived = Math.Max(0m, QuantityReceived - qty);
+    }
+
+    private void EnsureReceiptFits(decimal qty)
+    {
+        if (qty <= 0m)
+        {
+            throw new InvalidOrderLineException("Receipt quantity must be positive.");
+        }
+        if (QuantityClaimed + qty > Quantity)
+        {
+            throw new InvalidOrderLineException("Receipt exceeds the line's remaining quantity.");
+        }
     }
 
     public void RecordBill(decimal qty)

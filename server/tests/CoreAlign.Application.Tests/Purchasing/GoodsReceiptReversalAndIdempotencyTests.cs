@@ -121,7 +121,9 @@ public class GoodsReceiptReversalAndIdempotencyTests
         _writtenMovements.Should().NotContain(m => m.Type == StockMovementType.Receipt, "QC hold defers the stock receipt");
         _gl.PostedEntries.Should().BeEmpty("no inventory GL is recognized while awaiting QC");
         _stockItem.OnHand.Should().Be(0m, "held goods are not available stock");
-        po.Lines.Single().QuantityReceived.Should().Be(10m, "the PO still progresses on receive");
+        po.Lines.Single().QuantityAwaitingInspection.Should().Be(10m, "the qty is claimed so it cannot be re-received");
+        po.Lines.Single().QuantityReceived.Should().Be(0m, "nothing has credited GR/IR yet");
+        po.Lines.Single().QuantityRemainingToReceive.Should().Be(0m, "the PO still progresses on receive");
     }
 
     [Fact]
