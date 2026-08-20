@@ -1,3 +1,4 @@
+using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Products.Commands;
 using CoreAlign.Application.Products.Handlers;
 using CoreAlign.Domain.Entities;
@@ -11,6 +12,7 @@ public class ProductHandlerTests
 {
     private readonly IProductRepository _productRepository = Substitute.For<IProductRepository>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+    private readonly IInventoryCostingService _costing = Substitute.For<IInventoryCostingService>();
     private readonly CreateProductCommandHandler _createSut;
     private readonly UpdateProductCommandHandler _updateSut;
     private readonly DeleteProductCommandHandler _deleteSut;
@@ -18,7 +20,7 @@ public class ProductHandlerTests
     public ProductHandlerTests()
     {
         _createSut = new CreateProductCommandHandler(_productRepository, _unitOfWork);
-        _updateSut = new UpdateProductCommandHandler(_productRepository, _unitOfWork);
+        _updateSut = new UpdateProductCommandHandler(_productRepository, _costing, _unitOfWork);
         _deleteSut = new DeleteProductCommandHandler(_productRepository, _unitOfWork);
     }
 
@@ -95,6 +97,31 @@ public class ProductHandlerTests
         captured.ThicknessMm.Should().Be(4m);
         result.Color.Should().Be("Bronz");
         result.ThicknessMm.Should().Be(4m);
+    }
+
+    // Switching an already-stocked product to FIFO leaves it with no cost layers, so the next
+    // issue hits the exhausted-layer hard error and the product stops being sellable.
+    [Fact]
+    public async Task Switching_to_fifo_seeds_opening_cost_layers()
+    {
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "TRY", 0m) { Id = Guid.NewGuid() };
+        _productRepository.GetByIdAsync(product.Id, Arg.Any<CancellationToken>()).Returns(product);
+
+        await _updateSut.Handle(BuildUpdate(product.Id, "SKU-A") with { CostingMethod = CostingMethod.Fifo }, default);
+
+        await _costing.Received(1).SeedOpeningLayersAsync(product, Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task An_update_that_leaves_the_costing_method_alone_seeds_nothing()
+    {
+        var product = new Product("SKU-A", "Widget", "pcs", 10m, "TRY", 0m) { Id = Guid.NewGuid() };
+        _productRepository.GetByIdAsync(product.Id, Arg.Any<CancellationToken>()).Returns(product);
+
+        await _updateSut.Handle(BuildUpdate(product.Id, "SKU-A"), default);
+
+        await _costing.DidNotReceive().SeedOpeningLayersAsync(
+            Arg.Any<Product>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>());
     }
 
     private static UpdateProductCommand BuildUpdate(Guid id, string sku) =>

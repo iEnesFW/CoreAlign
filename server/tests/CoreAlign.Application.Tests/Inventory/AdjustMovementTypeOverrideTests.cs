@@ -29,7 +29,7 @@ public class AdjustMovementTypeOverrideTests
     private AllocationService BuildService() =>
         new(_stockItems, _movements, _allocations, _warehouses, _products,
             new StockOpeningBalanceBridge(_stockItems, _products, _movements),
-            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
 
     private StockItem SeedStock(decimal onHand, decimal avgCost)
     {

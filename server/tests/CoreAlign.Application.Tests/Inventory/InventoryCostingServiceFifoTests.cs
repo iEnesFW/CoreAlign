@@ -49,7 +49,7 @@ public class InventoryCostingServiceFifoTests
             Layer(unitCost: 10m, quantity: 4m, receivedAt: T2),
         };
         _layers.GetOpenByStockItemAsync(ItemId, Arg.Any<CancellationToken>()).Returns(layers);
-        var sut = new InventoryCostingService(_layers);
+        var sut = new InventoryCostingService(_layers, Substitute.For<IStockItemRepository>());
 
         // Issue 8: consume 6 @ 8 = 48 from the oldest layer, then 2 @ 10 = 20 → 68 total.
         var costing = await sut.ResolveIssueCostAsync(Item(10m, 99m), FifoProduct(), 8m, T2);
@@ -66,7 +66,7 @@ public class InventoryCostingServiceFifoTests
     {
         var layers = new List<StockCostLayer> { Layer(unitCost: 8m, quantity: 5m, receivedAt: T1) };
         _layers.GetOpenByStockItemAsync(ItemId, Arg.Any<CancellationToken>()).Returns(layers);
-        var sut = new InventoryCostingService(_layers);
+        var sut = new InventoryCostingService(_layers, Substitute.For<IStockItemRepository>());
 
         // Only 5 units of layers exist; issuing 8 must FAIL loudly, not value the 3-unit tail at
         // the item's AvgCost (99).
@@ -78,7 +78,7 @@ public class InventoryCostingServiceFifoTests
     [Fact]
     public async Task WeightedAverage_uses_avgcost_and_never_reads_layers()
     {
-        var sut = new InventoryCostingService(_layers);
+        var sut = new InventoryCostingService(_layers, Substitute.For<IStockItemRepository>());
 
         var costing = await sut.ResolveIssueCostAsync(Item(10m, 7m), AverageProduct(), 4m, T2);
 
@@ -91,7 +91,7 @@ public class InventoryCostingServiceFifoTests
     [Fact]
     public async Task RecordReceiptLayer_pushes_a_layer_for_fifo_products_only()
     {
-        var sut = new InventoryCostingService(_layers);
+        var sut = new InventoryCostingService(_layers, Substitute.For<IStockItemRepository>());
 
         await sut.RecordReceiptLayerAsync(Item(0m, 0m), FifoProduct(), 5m, 12m, T2, Guid.NewGuid());
         await _layers.Received(1).AddAsync(
@@ -101,5 +101,94 @@ public class InventoryCostingServiceFifoTests
         await sut.RecordReceiptLayerAsync(Item(0m, 0m), AverageProduct(), 5m, 12m, T2, Guid.NewGuid());
         // No second push: weighted-average products keep no layers.
         await _layers.Received(1).AddAsync(Arg.Any<StockCostLayer>(), Arg.Any<CancellationToken>());
+    }
+}
+
+// Switching an already-stocked product to FIFO leaves it with no cost layers, so the very next
+// issue hit the exhausted-layer hard error and the product silently stopped being sellable. The
+// on-hand has to enter the queue at its weighted-average cost — the only basis on record for it.
+public class FifoOpeningLayerSeedTests
+{
+    private static readonly Guid ProductId = Guid.NewGuid();
+    private static readonly Guid WarehouseA = Guid.NewGuid();
+    private static readonly Guid WarehouseB = Guid.NewGuid();
+    private static readonly DateTime Seeded = new(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Now = new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    private readonly IStockCostLayerRepository _layers = Substitute.For<IStockCostLayerRepository>();
+    private readonly IStockItemRepository _items = Substitute.For<IStockItemRepository>();
+    private readonly List<StockCostLayer> _added = new();
+    private readonly InventoryCostingService _sut;
+
+    public FifoOpeningLayerSeedTests()
+    {
+        _layers.AddAsync(Arg.Do<StockCostLayer>(l => _added.Add(l)), Arg.Any<CancellationToken>());
+        _layers.GetOpenByStockItemAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>())
+            .Returns(Array.Empty<StockCostLayer>());
+        _sut = new InventoryCostingService(_layers, _items);
+    }
+
+    private static Product FifoProduct()
+    {
+        var p = new Product("SKU-F", "Glass", "m2", 10m, "TRY") { Id = ProductId };
+        p.SetCostingMethod(CostingMethod.Fifo);
+        return p;
+    }
+
+    private static StockItem Stocked(Guid warehouseId, decimal onHand, decimal avgCost)
+    {
+        var item = new StockItem(ProductId, warehouseId) { Id = Guid.NewGuid() };
+        item.SeedOpeningBalance(onHand, avgCost, Seeded);
+        return item;
+    }
+
+    [Fact]
+    public async Task Every_stocked_warehouse_gets_an_opening_layer_at_its_average_cost()
+    {
+        _items.GetByProductAsync(ProductId, Arg.Any<CancellationToken>())
+            .Returns(new[] { Stocked(WarehouseA, 10m, 7m), Stocked(WarehouseB, 4m, 9m) });
+
+        await _sut.SeedOpeningLayersAsync(FifoProduct(), Now);
+
+        _added.Should().HaveCount(2);
+        _added.Should().Contain(l => l.WarehouseId == WarehouseA && l.OriginalQuantity == 10m && l.UnitCost == 7m);
+        _added.Should().Contain(l => l.WarehouseId == WarehouseB && l.OriginalQuantity == 4m && l.UnitCost == 9m);
+        _added.Should().OnlyContain(l => l.ReceivedAtUtc == Seeded, "seeded stock stays oldest in the queue");
+    }
+
+    [Fact]
+    public async Task An_empty_warehouse_is_skipped()
+    {
+        _items.GetByProductAsync(ProductId, Arg.Any<CancellationToken>())
+            .Returns(new[] { Stocked(WarehouseA, 0m, 7m) });
+
+        await _sut.SeedOpeningLayersAsync(FifoProduct(), Now);
+
+        _added.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task A_warehouse_that_already_has_a_layer_is_not_seeded_again()
+    {
+        var item = Stocked(WarehouseA, 10m, 7m);
+        _items.GetByProductAsync(ProductId, Arg.Any<CancellationToken>()).Returns(new[] { item });
+        _layers.GetOpenByStockItemAsync(item.Id, Arg.Any<CancellationToken>())
+            .Returns(new[] { new StockCostLayer(item.Id, ProductId, WarehouseA, null, 7m, 10m, Seeded) });
+
+        await _sut.SeedOpeningLayersAsync(FifoProduct(), Now);
+
+        _added.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task A_weighted_average_product_is_a_no_op()
+    {
+        _items.GetByProductAsync(ProductId, Arg.Any<CancellationToken>())
+            .Returns(new[] { Stocked(WarehouseA, 10m, 7m) });
+
+        await _sut.SeedOpeningLayersAsync(new Product("SKU-A", "Widget", "pcs", 10m, "TRY") { Id = ProductId }, Now);
+
+        _added.Should().BeEmpty();
+        await _items.DidNotReceive().GetByProductAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 }

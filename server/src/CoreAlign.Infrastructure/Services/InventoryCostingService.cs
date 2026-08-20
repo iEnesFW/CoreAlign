@@ -12,8 +12,13 @@ namespace CoreAlign.Infrastructure.Services;
 public class InventoryCostingService : IInventoryCostingService
 {
     private readonly IStockCostLayerRepository _layers;
+    private readonly IStockItemRepository _stockItems;
 
-    public InventoryCostingService(IStockCostLayerRepository layers) => _layers = layers;
+    public InventoryCostingService(IStockCostLayerRepository layers, IStockItemRepository stockItems)
+    {
+        _layers = layers;
+        _stockItems = stockItems;
+    }
 
     public async Task<IssueCosting> ResolveIssueCostAsync(
         StockItem item,
@@ -84,5 +89,38 @@ public class InventoryCostingService : IInventoryCostingService
             receivedAtUtc: occurredAtUtc,
             sourceMovementId: sourceMovementId);
         await _layers.AddAsync(layer, cancellationToken);
+    }
+
+    public async Task SeedOpeningLayersAsync(
+        Product product,
+        DateTime occurredAtUtc,
+        CancellationToken cancellationToken = default)
+    {
+        if (product.CostingMethod != CostingMethod.Fifo)
+        {
+            return;
+        }
+
+        var items = await _stockItems.GetByProductAsync(product.Id, cancellationToken);
+        foreach (var item in items)
+        {
+            if (item.OnHand <= 0m) continue;
+            var open = await _layers.GetOpenByStockItemAsync(item.Id, cancellationToken);
+            if (open.Count > 0) continue;
+
+            // Dated at the item's last movement so the seeded stock stays OLDEST in the queue and a
+            // receipt booked after the switch is consumed after it.
+            await _layers.AddAsync(
+                new StockCostLayer(
+                    stockItemId: item.Id,
+                    productId: item.ProductId,
+                    warehouseId: item.WarehouseId,
+                    lotId: item.LotId,
+                    unitCost: item.AvgCost,
+                    quantity: item.OnHand,
+                    receivedAtUtc: item.LastMovementAtUtc ?? occurredAtUtc,
+                    sourceMovementId: null),
+                cancellationToken);
+        }
     }
 }

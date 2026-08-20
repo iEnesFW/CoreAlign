@@ -1,3 +1,4 @@
+using CoreAlign.Application.Inventory.Services;
 using CoreAlign.Application.Products.Commands;
 using CoreAlign.Application.Products.DTOs;
 using CoreAlign.Application.Products.Mapping;
@@ -10,11 +11,16 @@ namespace CoreAlign.Application.Products.Handlers;
 public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand, ProductDto>
 {
     private readonly IProductRepository _productRepository;
+    private readonly IInventoryCostingService _costing;
     private readonly IUnitOfWork _unitOfWork;
 
-    public UpdateProductCommandHandler(IProductRepository productRepository, IUnitOfWork unitOfWork)
+    public UpdateProductCommandHandler(
+        IProductRepository productRepository,
+        IInventoryCostingService costing,
+        IUnitOfWork unitOfWork)
     {
         _productRepository = productRepository;
+        _costing = costing;
         _unitOfWork = unitOfWork;
     }
 
@@ -75,7 +81,16 @@ public class UpdateProductCommandHandler : IRequestHandler<UpdateProductCommand,
             launchDate: request.LaunchDate,
             endOfLifeDate: request.EndOfLifeDate);
 
+        // WHY the seed is here and not inside SetCostingMethod: switching an already-stocked
+        // product to Fifo leaves it with no cost layers, and the very next issue hits the
+        // exhausted-layer hard error — the product silently stops being sellable. The stock on
+        // hand enters the queue at its weighted-average cost, the only basis on record for it.
+        var costingMethodChanged = product.CostingMethod != request.CostingMethod;
         product.SetCostingMethod(request.CostingMethod);
+        if (costingMethodChanged)
+        {
+            await _costing.SeedOpeningLayersAsync(product, DateTime.UtcNow, cancellationToken);
+        }
         product.SetProcurementType(request.ProcurementType);
         if (request.RequiresInspection.HasValue)
         {

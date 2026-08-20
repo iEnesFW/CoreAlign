@@ -53,7 +53,7 @@ public class OrderConfirmedStockHandlerServiceLineTests
             _stockMovementRepository,
             _glOutbox,
             _openingBalanceBridge,
-            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+            new InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
     }
 
     [Fact]

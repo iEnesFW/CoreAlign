@@ -30,6 +30,18 @@ public interface IInventoryCostingService
         DateTime occurredAtUtc,
         Guid? sourceMovementId = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Opens a FIFO layer for stock a product already holds when its costing method is switched to
+    /// Fifo. Without it the first issue hits the exhausted-layer hard error and the product can no
+    /// longer be sold — the existing on-hand enters FIFO at its weighted-average cost, which is the
+    /// only basis on record for it. No-op unless the product is Fifo, and it never touches a
+    /// stock item that already has an open layer.
+    /// </summary>
+    Task SeedOpeningLayersAsync(
+        Product product,
+        DateTime occurredAtUtc,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>The unit cost to stamp on the issue movement and the exact total relieved. They agree

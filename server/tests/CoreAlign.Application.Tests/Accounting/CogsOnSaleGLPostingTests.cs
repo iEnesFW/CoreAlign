@@ -57,11 +57,11 @@ public class CogsOnSaleGLPostingTests
 
     private OrderConfirmedStockHandler ConfirmHandler() => new(
         _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox, _openingBalance,
-        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
 
     private OrderCancelledStockHandler CancelHandler() => new(
         _products, _components, _stockTxns, _warehouses, _stockItems, _movements, _outbox,
-        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+        new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
 
     private static Product TrackedProduct() =>
         new("SKU-A", "Widget", "pcs", 10m, "TRY", initialStock: 100m) { Id = ProductId, TenantId = TenantId };
@@ -185,7 +185,7 @@ public class CogsOnSaleGLPostingTests
         GLPostingRequest? captured = null;
         await _outbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => captured = r), Arg.Any<CancellationToken>());
 
-        var sut = new ReturnRequestReceivedStockHandler(_products, _stockItems, _movements, _stockTxns, _outbox, new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+        var sut = new ReturnRequestReceivedStockHandler(_products, _stockItems, _movements, _stockTxns, _outbox, new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
         await sut.Handle(
             new ReturnRequestReceivedEvent(TenantId, returnId, "RMA-1", OrderId, Guid.NewGuid(), WarehouseId,
                 new[] { new ReturnRequestLineSnapshot(Guid.NewGuid(), ProductId, Qty, 10m, AvgCost) },
@@ -324,7 +324,7 @@ public class ConfirmThenShipDoesNotDoubleCountCogsTests
 
         var confirmHandler = new OrderConfirmedStockHandler(
             products, components, stockTxns, warehouses, stockItems, movements, confirmOutbox, openingBalance,
-            new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>()));
+            new CoreAlign.Infrastructure.Services.InventoryCostingService(Substitute.For<CoreAlign.Domain.Interfaces.IStockCostLayerRepository>(), Substitute.For<CoreAlign.Domain.Interfaces.IStockItemRepository>()));
 
         GLPostingRequest? confirmPosting = null;
         await confirmOutbox.EnqueueAsync(Arg.Do<GLPostingRequest>(r => confirmPosting = r), Arg.Any<CancellationToken>());
