@@ -559,3 +559,32 @@ public sealed class PostPayrollRunHandlerTests
         await act.Should().ThrowAsync<InvalidOrderStatusTransitionException>();
     }
 }
+
+// Turkish statutory payroll is TRY by construction: the minimum wage, the SGK ceiling and the
+// income-tax brackets are lira amounts, and the accrual GL posting carries no exchange rate — so
+// a EUR run computed meaningless tax and booked euros into the ledger as if they were lira.
+public sealed class PayrollRunCurrencyValidatorTests
+{
+    private readonly CreatePayrollRunCommandValidator _sut = new();
+
+    [Theory]
+    [InlineData("TRY")]
+    [InlineData("try")]
+    [InlineData(" TRY ")]
+    public void Try_is_accepted(string currency)
+    {
+        _sut.Validate(new CreatePayrollRunCommand(2026, 6, Currency: currency)).IsValid.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("EUR")]
+    [InlineData("USD")]
+    [InlineData("XXX")]
+    public void Any_other_currency_is_refused(string currency)
+    {
+        var result = _sut.Validate(new CreatePayrollRunCommand(2026, 6, Currency: currency));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "Validation.PayrollCurrencyMustBeTry");
+    }
+}

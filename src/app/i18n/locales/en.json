@@ -344,7 +344,8 @@
     "AtLeastOneLine": "Add at least one line.",
     "PasswordMustDiffer": "New password must be different from the current one.",
     "UnitNotRecognized": "Unit not recognised — pick a stock unit from the list (it must be valid on an e-invoice).",
-    "CurrencyNotInCatalog": "That currency is not in the catalogue."
+    "CurrencyNotInCatalog": "That currency is not in the catalogue.",
+    "PayrollCurrencyMustBeTry": "Payroll can only be run in TRY (Turkish statutory rules)."
   },
   "profile": {
     "title": "My Profile",

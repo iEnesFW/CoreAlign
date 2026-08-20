@@ -344,7 +344,8 @@
     "AtLeastOneLine": "En az bir satır ekleyin.",
     "PasswordMustDiffer": "Yeni şifre mevcut şifreden farklı olmalıdır.",
     "UnitNotRecognized": "Birim tanınmadı — listeden bir stok birimi seçin (e-faturada geçerli olmalı).",
-    "CurrencyNotInCatalog": "Seçilen para birimi katalogda tanımlı değil."
+    "CurrencyNotInCatalog": "Seçilen para birimi katalogda tanımlı değil.",
+    "PayrollCurrencyMustBeTry": "Bordro yalnızca TRY para biriminde çalıştırılabilir (Türk yasal mevzuatı)."
   },
   "profile": {
     "title": "Profilim",

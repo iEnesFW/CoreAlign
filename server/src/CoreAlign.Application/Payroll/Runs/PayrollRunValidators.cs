@@ -1,3 +1,4 @@
+using System;
 using FluentValidation;
 
 namespace CoreAlign.Application.Payroll.Runs;
@@ -8,7 +9,14 @@ public class CreatePayrollRunCommandValidator : AbstractValidator<CreatePayrollR
     {
         RuleFor(x => x.PeriodYear).InclusiveBetween(2000, 2100);
         RuleFor(x => x.PeriodMonth).InclusiveBetween(1, 12);
-        RuleFor(x => x.Currency).NotEmpty().Length(3);
+        // Turkish statutory payroll: the minimum wage, the SGK ceiling and the income-tax
+        // brackets are all TRY amounts, and the GL posting carries no exchange rate. A run in
+        // any other currency computes meaningless tax and books foreign amounts as if they
+        // were lira, so it is refused at the boundary rather than silently misstated.
+        RuleFor(x => x.Currency)
+            .NotEmpty()
+            .Must(c => string.Equals(c?.Trim(), "TRY", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Validation.PayrollCurrencyMustBeTry");
     }
 }
 
