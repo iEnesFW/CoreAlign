@@ -131,3 +131,34 @@ StockItem (warehouse-level OnHand/Reserved/AvgCost) now participates in optimist
 ## ConcurrencyTokenBehavior force-overwrite path — DEAD CODE (no action) [2026-06-10]
 
 `IForceConcurrencyOverride` is defined but implemented by ZERO commands (only referenced inside `ConcurrencyTokenBehavior` itself). The `ResolveForceOverwriteAsync` branch (which re-invokes `next()` and would double-apply the handler's mutation) is therefore unreachable — a latent hazard, not a live bug. If a command ever adopts `IForceConcurrencyOverride`, the re-run-next() approach must be replaced with a save-level retry (the behavior cannot currently retry SaveChanges in isolation). Logged for awareness; no edit this session.
+
+## A-1 follow-up — CLOSED [2026-08-20]
+
+Account **193** ("Peşin Ödenen Vergi ve Fonlar", Asset, level 3, postable) is
+seeded by `TurkishChartOfAccountsSeed` (line 74), and
+`GLPostingDefaultsResolveAgainstSeedTests` resolves **every** `GLPostingKey`
+default against that real seed and asserts the account exists and is postable —
+so a future key without a seeded account fails the build rather than deferring
+silently in production. No action left for the seed owner.
+
+## D-3 / ERP-OUTBOX-001 — CLOSED [2026-08-20]
+
+The background drain is tenant-aware: `OutboxProcessor.DrainAsync` reads through
+`IOutboxRepository.GetDueAcrossTenantsAsync` (which does `IgnoreQueryFilters`)
+and wraps each message in `_tenantContext.PushScope(message.TenantId)` before
+dispatch — option 2 of the required fix.
+
+Two residual behaviours are **deliberate**, not gaps:
+
+- `DeferUntil(retryAfterUtc, ...)` parks the message as **Pending** with a future
+  `NextAttemptUtc`, so the timed retry (notification rate limiting) is picked up
+  by the ordinary drain.
+- `MarkDeferred(reason)` — the closed-period / unmapped-account case — has no
+  retry time on purpose: it is blocked on an operator action (reopen the period,
+  map the account). Those messages are now visible and replayable through
+  `GET /api/v1/admin/outbox` and `POST /api/v1/admin/outbox/replay`.
+
+Live check on the dev database: 63 Processed, 0 Pending/Deferred/Failed, and 13
+DeadLetter rows all of type `NotificationChannelSend` with
+"No provider configured for channel Email" — an unconfigured dev SMTP, not a
+code defect.
