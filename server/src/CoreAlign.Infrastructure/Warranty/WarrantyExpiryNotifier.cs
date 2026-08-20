@@ -71,6 +71,41 @@ public sealed class WarrantyExpiryNotifier : BackgroundService
         return nextRunUtc - nowUtc;
     }
 
+    // WHY this runs here: WarrantyContract.MarkExpired had no caller, so a contract stayed
+    // Active in every list and report long after its end date and the WarrantyExpired outbox
+    // message was never emitted. Warranty DECISIONS were unaffected — IsValidAtDate compares the
+    // dates rather than trusting the status — but the status itself was permanently wrong. The
+    // sweep is bounded: once a contract is Expired it no longer matches.
+    private async Task CloseElapsedContractsAsync(
+        CoreAlignDbContext dbContext,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var elapsed = await dbContext.WarrantyContracts
+            .IgnoreQueryFilters()
+            .Where(c => !c.IsDeleted
+                && c.Status == Domain.Enums.WarrantyContractStatus.Active
+                && c.EndDate <= now)
+            .ToListAsync(cancellationToken);
+
+        if (elapsed.Count == 0) return;
+
+        foreach (var contract in elapsed)
+        {
+            contract.MarkExpired(now);
+            var payload = new WarrantyExpiredEvent(
+                contract.TenantId, contract.Id, contract.CustomerId, contract.Number, contract.EndDate, now);
+            var message = new OutboxMessage(
+                WarrantyExpiredOutboxHandler.MessageTypeKey,
+                JsonSerializer.Serialize(payload));
+            message.TenantId = contract.TenantId;
+            await dbContext.OutboxMessages.AddAsync(message, cancellationToken);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("WarrantyExpiryNotifier closed {Count} elapsed warranty contracts.", elapsed.Count);
+    }
+
     private async Task RunOnceAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
@@ -78,6 +113,8 @@ public sealed class WarrantyExpiryNotifier : BackgroundService
 
         var now = DateTime.UtcNow;
         var threshold = now.AddDays(ExpiryWindowDays);
+
+        await CloseElapsedContractsAsync(dbContext, now, cancellationToken);
 
         var contracts = await dbContext.WarrantyContracts
             .IgnoreQueryFilters()
