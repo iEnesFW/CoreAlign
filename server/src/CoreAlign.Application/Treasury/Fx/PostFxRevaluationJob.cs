@@ -154,20 +154,18 @@ public sealed class PostFxRevaluationJob
 
     private async Task<bool> EnqueueForTenantAsync(Guid tenantId, DateTime asOfUtc, IReadOnlyList<FxRevaluationRow> revaluations, CancellationToken cancellationToken)
     {
-        // Net-delta (design B): reverse the immediately-prior FX revaluation mark
-        // and rebook the current one in the SAME balanced entry, so consecutive
-        // month-ends net to the latest position rather than accumulating. Both
-        // legs commit atomically; routing through the outbox/GLPostingService
-        // gives idempotency (one entry per tenant+asOf) and the closed-period gate
-        // for free.
+        // Net-delta: back out the CUMULATIVE revaluation booked so far and rebook the current
+        // mark in the SAME balanced entry, so the ledger always carries exactly the latest
+        // position. Reversing only the PREVIOUS ENTRY is not enough — every entry is itself a
+        // delta, so mirroring the last one re-creates the one before it (from the third run on,
+        // the cumulative drifted to mark(n) + mark(n-2)). Both legs commit atomically; routing
+        // through the outbox/GLPostingService gives idempotency (one entry per tenant+asOf) and
+        // the closed-period gate for free.
         var lines = new List<GLPostingLine>();
 
-        var prior = await _journals.GetMostRecentBySourceTypeBeforeAsync(
+        var booked = await _journals.GetPostedSourceTypeAccountNetsBeforeAsync(
             JournalSourceType.FxRevaluation, asOfUtc.Date, cancellationToken);
-        if (prior is not null)
-        {
-            lines.AddRange(BuildReversalLines(prior));
-        }
+        lines.AddRange(BuildReversalLines(booked));
 
         foreach (var row in revaluations)
         {
@@ -191,27 +189,22 @@ public sealed class PostFxRevaluationJob
         return true;
     }
 
-    // Mirror every line of the prior FX entry at its ACTUAL account: a debit becomes
-    // a credit on the same account and vice versa, valued at the originally-booked TRY
-    // amount. Each reversal leg carries the prior line's real account code as an
-    // explicit override, so it reverses what was actually booked rather than what the
-    // current role→account mapping would re-resolve to. This keeps the net-delta entry
-    // balanced and never drops a leg even when the tenant has remapped FxGain/FxLoss/
-    // AR/AP via GLPostingMapping after the prior mark was posted.
-    private static IEnumerable<GLPostingLine> BuildReversalLines(JournalEntry prior)
+    // Mirror the cumulative position of every FX revaluation account: a net debit becomes a
+    // credit on the SAME account and vice versa, valued at the amount actually booked. Each leg
+    // carries the real account code as an explicit override, so it reverses what is on the books
+    // rather than what the current role→account mapping would re-resolve to — the entry stays
+    // balanced even when the tenant remapped FxGain/FxLoss/AR/AP after an earlier mark.
+    private static IEnumerable<GLPostingLine> BuildReversalLines(IReadOnlyList<AccountNet> booked)
     {
-        var desc = $"FX reval reversal {prior.Number}";
-        foreach (var line in prior.Lines)
+        const string desc = "FX reval cumulative reversal";
+        foreach (var account in booked)
         {
-            var key = KeyForCode(line.AccountCode) ?? GLPostingKey.FxGain;
-            if (line.Debit > 0m)
-            {
-                yield return new GLPostingLine(key, 0m, line.Debit, desc, line.AccountCode);
-            }
-            else
-            {
-                yield return new GLPostingLine(key, line.Credit, 0m, desc, line.AccountCode);
-            }
+            var net = account.Debit - account.Credit;
+            if (net == 0m) continue;
+            var key = KeyForCode(account.AccountCode) ?? GLPostingKey.FxGain;
+            yield return net > 0m
+                ? new GLPostingLine(key, 0m, net, desc, account.AccountCode)
+                : new GLPostingLine(key, -net, 0m, desc, account.AccountCode);
         }
     }
 

@@ -51,6 +51,23 @@ public class JournalEntryRepository : IJournalEntryRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AccountNet>> GetPostedSourceTypeAccountNetsBeforeAsync(
+        JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default)
+    {
+        var bound = DateTime.SpecifyKind(beforePostingDate, DateTimeKind.Utc);
+        var query =
+            from line in _context.JournalLines.AsNoTracking()
+            join entry in _context.JournalEntries.AsNoTracking() on line.JournalEntryId equals entry.Id
+            where entry.SourceType == sourceType
+                && entry.Status == JournalEntryStatus.Posted
+                && entry.PostingDate < bound
+            group line by line.AccountCode into grouped
+            select new AccountNet(grouped.Key, grouped.Sum(l => l.Debit), grouped.Sum(l => l.Credit));
+        return await query.ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Guid>> GetTenantIdsWithPostedSourceTypeBeforeAsync(
         JournalSourceType sourceType,
         DateTime beforePostingDate,

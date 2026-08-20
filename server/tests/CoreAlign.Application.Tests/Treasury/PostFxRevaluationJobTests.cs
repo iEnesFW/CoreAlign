@@ -94,8 +94,8 @@ public class PostFxRevaluationJobTests
         var feb = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc);
         SetRates(feb, ("USD", 35m));
         SetBalances(feb, new OpenForeignBalance("USD", 1000m, 30m, IsReceivable: true, TenantId));
-        _journals.GetMostRecentBySourceTypeBeforeAsync(JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
-            .Returns(janEntry);
+        _journals.GetPostedSourceTypeAccountNetsBeforeAsync(JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
+            .Returns(AccountNets(new[] { janEntry }));
 
         await _sut.RunAsync(feb);
 
@@ -134,8 +134,8 @@ public class PostFxRevaluationJobTests
         _journals.GetTenantIdsWithPostedSourceTypeBeforeAsync(
                 JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
             .Returns(new List<Guid> { TenantId });
-        _journals.GetMostRecentBySourceTypeBeforeAsync(JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
-            .Returns(janEntry);
+        _journals.GetPostedSourceTypeAccountNetsBeforeAsync(JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
+            .Returns(AccountNets(new[] { janEntry }));
 
         var tenants = await _sut.RunAsync(feb);
 
@@ -166,6 +166,47 @@ public class PostFxRevaluationJobTests
         tenants.Should().Be(0);
         _enqueued.Should().BeEmpty();
     }
+
+    // Three consecutive month-ends: the cumulative ledger position must equal the CURRENT mark.
+    [Fact]
+    public async Task Three_consecutive_marks_leave_the_cumulative_position_at_the_current_mark()
+    {
+        var entries = new List<JournalEntry>();
+        var cumulativeAr = 0m;
+
+        foreach (var (asOf, rate, expectedMark) in new[]
+                 {
+                     (new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc), 32m, 2000m),
+                     (new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc), 35m, 5000m),
+                     (new DateTime(2026, 3, 31, 0, 0, 0, DateTimeKind.Utc), 33m, 3000m),
+                 })
+        {
+            _enqueued.Clear();
+            SetRates(asOf, ("USD", rate));
+            SetBalances(asOf, new OpenForeignBalance("USD", 1000m, 30m, IsReceivable: true, TenantId));
+            // Both contracts are stubbed so the assertion is valid against the previous
+            // reverse-the-last-entry implementation too: that one drifts to mark(n) + mark(n-2).
+            _journals.GetMostRecentBySourceTypeBeforeAsync(JournalSourceType.FxRevaluation, asOf.Date, Arg.Any<CancellationToken>())
+                .Returns(entries.Count == 0 ? null : entries[^1]);
+            _journals.GetPostedSourceTypeAccountNetsBeforeAsync(JournalSourceType.FxRevaluation, asOf.Date, Arg.Any<CancellationToken>())
+                .Returns(AccountNets(entries));
+
+            await _sut.RunAsync(asOf);
+
+            var req = _enqueued.Single();
+            req.Lines.Sum(l => l.Debit).Should().Be(req.Lines.Sum(l => l.Credit));
+            entries.Add(MaterializePostedEntry(req));
+            cumulativeAr += req.Lines.Where(l => l.Key == GLPostingKey.AccountsReceivable).Sum(l => l.Debit - l.Credit);
+            cumulativeAr.Should().Be(expectedMark, $"cumulative AR revaluation at {asOf:yyyy-MM-dd}");
+        }
+    }
+
+    private static List<AccountNet> AccountNets(IEnumerable<JournalEntry> entries) =>
+        entries
+            .SelectMany(e => e.Lines)
+            .GroupBy(l => l.AccountCode)
+            .Select(g => new AccountNet(g.Key, g.Sum(l => l.Debit), g.Sum(l => l.Credit)))
+            .ToList();
 
     // Replays the engine's translation of a balanced request into a posted JournalEntry
     // so the next run's reversal can mirror its lines (rate == 1, codes from defaults).

@@ -112,8 +112,13 @@ public sealed class FxRevaluationGlMappingOverrideTests : IDisposable
             .Returns(new List<ExchangeRate> { new() { Currency = "USD", RateAgainstTry = rate, ValidOnDate = asOf } });
         _balances.GetOpenForeignBalancesAsync(asOf, Arg.Any<CancellationToken>())
             .Returns(new List<OpenForeignBalance> { balance });
-        _jobJournals.GetMostRecentBySourceTypeBeforeAsync(JournalSourceType.FxRevaluation, asOf.Date, Arg.Any<CancellationToken>())
-            .Returns(prior);
+        _jobJournals.GetPostedSourceTypeAccountNetsBeforeAsync(JournalSourceType.FxRevaluation, asOf.Date, Arg.Any<CancellationToken>())
+            .Returns(prior is null
+                ? new List<AccountNet>()
+                : prior.Lines
+                    .GroupBy(l => l.AccountCode)
+                    .Select(g => new AccountNet(g.Key, g.Sum(l => l.Debit), g.Sum(l => l.Credit)))
+                    .ToList());
     }
 
     // Runs the job for one month, then posts the single enqueued request through the

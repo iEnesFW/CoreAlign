@@ -95,6 +95,13 @@ public interface IJournalEntryRepository
     // Cross-tenant on purpose: the FX revaluation job runs without an ambient tenant and has to
     // find tenants whose prior mark still needs reversing even when they no longer have any open
     // foreign balance to revalue.
+    // Per-account totals of every posted entry of this source type before the date. The FX
+    // revaluation reverses the CUMULATIVE position, not just the previous entry: each entry is
+    // itself a delta, so mirroring only the last one leaves every earlier mark on the books.
+    Task<IReadOnlyList<AccountNet>> GetPostedSourceTypeAccountNetsBeforeAsync(
+        Domain.Enums.JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Guid>> GetTenantIdsWithPostedSourceTypeBeforeAsync(
         Domain.Enums.JournalSourceType sourceType,
         DateTime beforePostingDate,
@@ -148,6 +155,8 @@ public record JournalEntrySearchRow(
     decimal TotalDebit,
     decimal TotalCredit,
     int LineCount);
+
+public record AccountNet(string AccountCode, decimal Debit, decimal Credit);
 
 public record AccountBalanceRow(
     Guid AccountId,
