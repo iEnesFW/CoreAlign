@@ -1,3 +1,4 @@
+using CoreAlign.Application.Common;
 using CoreAlign.Application.Accounting.Commands;
 using CoreAlign.Application.Accounting.Handlers;
 using CoreAlign.Application.Accounting.Queries;
@@ -50,6 +51,14 @@ public sealed class YearEndCloseTests : IDisposable
         _sequences = new DocumentSequenceRepository(_db);
     }
 
+    // Every live tenant runs a calendar fiscal year; the non-calendar path has its own test.
+    private static IFiscalYearResolver CalendarFiscalYear(int startMonth = 1)
+    {
+        var resolver = Substitute.For<IFiscalYearResolver>();
+        resolver.GetStartMonthAsync(Arg.Any<CancellationToken>()).Returns(startMonth);
+        return resolver;
+    }
+
     public void Dispose() => _db.Dispose();
 
     private Task SaveAsync() => _db.SaveChangesAsync();
@@ -64,15 +73,15 @@ public sealed class YearEndCloseTests : IDisposable
     }
 
     private CloseFiscalYearHandler Close(IAccountingPeriodRepository? periods = null) =>
-        new(_journals, _accounts, periods ?? NoPeriods(), _sequences, _tenant, Uow());
+        new(_journals, _accounts, periods ?? NoPeriods(), _sequences, _tenant, CalendarFiscalYear(), Uow());
 
     private OpenFiscalYearHandler Open() =>
-        new(_journals, _accounts, _sequences, _tenant, Uow());
+        new(_journals, _accounts, _sequences, _tenant, CalendarFiscalYear(), Uow());
 
     private ReverseFiscalYearCloseHandler ReverseClose() =>
         new(_journals, _sequences, _tenant, Uow());
 
-    private GetBalanceSheetHandler BalanceSheet() => new(_journals, _accounts, _tenant);
+    private GetBalanceSheetHandler BalanceSheet() => new(_journals, _accounts, _tenant, CalendarFiscalYear());
 
     private GLAccount Account(string code, string name, AccountType type)
     {
@@ -145,6 +154,30 @@ public sealed class YearEndCloseTests : IDisposable
         var result = await Close().Handle(new CloseFiscalYearCommand(2026, Guid.Empty), default);
 
         result.NetResult.Should().Be(1000m);
+    }
+
+    // A tenant whose books start in October must have them cut at the end of September. With a
+    // hard-coded 31 December the close swept the wrong twelve months while every list screen was
+    // already filtering by the tenant's own year, so the closing entry and the reports disagreed.
+    [Fact]
+    public async Task A_non_calendar_fiscal_year_is_cut_at_its_own_boundary()
+    {
+        await SeedAsync();
+        // Fiscal 2026 for an October start runs 2026-10-01 .. 2027-09-30.
+        await PostAsync("YEV-IN-1", new DateTime(2026, 11, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 700m, 0m), ("600", 0m, 700m));
+        await PostAsync("YEV-IN-2", new DateTime(2027, 3, 31, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 300m, 0m), ("600", 0m, 300m));
+        // Outside it: the first day of fiscal 2027.
+        await PostAsync("YEV-OUT", new DateTime(2027, 10, 1, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 5000m, 0m), ("600", 0m, 5000m));
+
+        var handler = new CloseFiscalYearHandler(
+            _journals, _accounts, NoPeriods(), _sequences, _tenant, CalendarFiscalYear(startMonth: 10), Uow());
+        var result = await handler.Handle(new CloseFiscalYearCommand(2026, Guid.Empty), default);
+
+        result.NetResult.Should().Be(1000m, "only the twelve months from October 2026 belong to fiscal 2026");
+        result.Entry.PostingDate.Should().Be(new DateTime(2027, 9, 30, 23, 59, 59, DateTimeKind.Utc));
     }
 
     private async Task PostAsync(string number, DateTime postingDate, params (string Code, decimal Debit, decimal Credit)[] lines)

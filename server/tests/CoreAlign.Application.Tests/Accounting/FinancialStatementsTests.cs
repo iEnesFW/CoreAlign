@@ -1,3 +1,4 @@
+using CoreAlign.Application.Common;
 using CoreAlign.Application.Accounting.Commands;
 using CoreAlign.Application.Accounting.Handlers;
 using CoreAlign.Application.Accounting.Queries;
@@ -61,6 +62,14 @@ public sealed class FinancialStatementsTests : IDisposable
     }
 
     private Task SaveAsync() => _db.SaveChangesAsync();
+
+    // Every live tenant runs a calendar fiscal year; the non-calendar path has its own test.
+    private static IFiscalYearResolver CalendarFiscalYear(int startMonth = 1)
+    {
+        var resolver = Substitute.For<IFiscalYearResolver>();
+        resolver.GetStartMonthAsync(Arg.Any<CancellationToken>()).Returns(startMonth);
+        return resolver;
+    }
 
     public void Dispose() => _db.Dispose();
 
@@ -158,7 +167,7 @@ public sealed class FinancialStatementsTests : IDisposable
         return customer.Id;
     }
 
-    private GetBalanceSheetHandler BalanceSheetHandler() => new(_journals, _accounts, _tenant);
+    private GetBalanceSheetHandler BalanceSheetHandler() => new(_journals, _accounts, _tenant, CalendarFiscalYear());
     private GetIncomeStatementHandler IncomeStatementHandler() => new(_journals, _accounts);
 
     private GetSubledgerReconciliationHandler ReconciliationHandler() =>
@@ -175,10 +184,10 @@ public sealed class FinancialStatementsTests : IDisposable
     }
 
     private CloseFiscalYearHandler CloseHandler() =>
-        new(_journals, _accounts, FakePeriods(), new DocumentSequenceRepository(_db), _tenant, new UnitOfWork(_db));
+        new(_journals, _accounts, FakePeriods(), new DocumentSequenceRepository(_db), _tenant, CalendarFiscalYear(), new UnitOfWork(_db));
 
     private OpenFiscalYearHandler OpenHandler() =>
-        new(_journals, _accounts, new DocumentSequenceRepository(_db), _tenant, new UnitOfWork(_db));
+        new(_journals, _accounts, new DocumentSequenceRepository(_db), _tenant, CalendarFiscalYear(), new UnitOfWork(_db));
 
     private static IAccountingPeriodRepository FakePeriods()
     {

@@ -38,14 +38,19 @@ internal static class YearEnd
     public static Guid OpenId(Guid tenantId, int openingYear) =>
         DeterministicGuid.From($"yearend-open:{tenantId}:{openingYear}");
 
-    public static DateTime CloseInstant(int year) =>
-        new(year, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+    // WHY these take the tenant's start month: a fiscal year runs twelve months from
+    // FiscalYearStartMonth, so a tenant that starts in October must have its books cut at the end
+    // of September — a hard-coded 31 December would sweep the wrong twelve months into the result
+    // while every list screen already filtered by the tenant's own year. For the calendar default
+    // (month 1) these produce exactly the previous values.
+    public static DateTime CloseInstant(int year, int startMonth) =>
+        FiscalYear.For(year, startMonth).EndExclusiveUtc.AddSeconds(-1);
 
-    public static DateTime LastInstantBefore(int year) =>
-        new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(-1);
+    public static DateTime LastInstantBefore(int year, int startMonth) =>
+        FiscalYear.For(year, startMonth).StartUtc.AddTicks(-1);
 
-    public static DateTime OpenInstant(int closedYear) =>
-        new(closedYear + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+    public static DateTime OpenInstant(int closedYear, int startMonth) =>
+        FiscalYear.For(closedYear, startMonth).EndExclusiveUtc;
 
     /// <summary>
     /// Signed natural balance of an account from its own normal side — the exact
@@ -162,6 +167,7 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
     private readonly IAccountingPeriodRepository _periods;
     private readonly IDocumentSequenceRepository _sequences;
     private readonly ITenantContext _tenant;
+    private readonly IFiscalYearResolver _fiscalYear;
     private readonly IUnitOfWork _uow;
 
     public CloseFiscalYearHandler(
@@ -170,6 +176,7 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
         IAccountingPeriodRepository periods,
         IDocumentSequenceRepository sequences,
         ITenantContext tenant,
+        IFiscalYearResolver fiscalYear,
         IUnitOfWork uow)
     {
         _journals = journals;
@@ -177,6 +184,7 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
         _periods = periods;
         _sequences = sequences;
         _tenant = tenant;
+        _fiscalYear = fiscalYear;
         _uow = uow;
     }
 
@@ -202,7 +210,8 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
             throw new YearNotReadyForCloseException(c.Year);
         }
 
-        var dec31 = YearEnd.CloseInstant(c.Year);
+        var startMonth = await _fiscalYear.GetStartMonthAsync(ct);
+        var dec31 = YearEnd.CloseInstant(c.Year, startMonth);
         var accounts = await _accounts.GetAllAsync(ct);
         var byId = accounts.ToDictionary(a => a.Id);
         var byCode = accounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First());
@@ -213,7 +222,7 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
         // belonged to would never show its own. The income statement, which is date-ranged, would
         // then disagree with the closing entry. Detected directly rather than by assuming the
         // prior year exists: a tenant in its first year has nothing before the start.
-        var openingPnl = await _journals.GetAccountBalancesAsOfAsync(YearEnd.LastInstantBefore(c.Year), ct);
+        var openingPnl = await _journals.GetAccountBalancesAsOfAsync(YearEnd.LastInstantBefore(c.Year, startMonth), ct);
         if (openingPnl.Any(row =>
                 byId.TryGetValue(row.AccountId, out var earlier)
                 && YearEnd.IsProfitAndLoss(earlier)
@@ -319,6 +328,7 @@ public class OpenFiscalYearHandler : IRequestHandler<OpenFiscalYearCommand, Year
     private readonly IGLAccountRepository _accounts;
     private readonly IDocumentSequenceRepository _sequences;
     private readonly ITenantContext _tenant;
+    private readonly IFiscalYearResolver _fiscalYear;
     private readonly IUnitOfWork _uow;
 
     public OpenFiscalYearHandler(
@@ -326,12 +336,14 @@ public class OpenFiscalYearHandler : IRequestHandler<OpenFiscalYearCommand, Year
         IGLAccountRepository accounts,
         IDocumentSequenceRepository sequences,
         ITenantContext tenant,
+        IFiscalYearResolver fiscalYear,
         IUnitOfWork uow)
     {
         _journals = journals;
         _accounts = accounts;
         _sequences = sequences;
         _tenant = tenant;
+        _fiscalYear = fiscalYear;
         _uow = uow;
     }
 
@@ -356,8 +368,9 @@ public class OpenFiscalYearHandler : IRequestHandler<OpenFiscalYearCommand, Year
             throw new FiscalYearCloseNotFoundException(c.Year);
         }
 
-        var dec31 = YearEnd.CloseInstant(c.Year);
-        var jan1 = YearEnd.OpenInstant(c.Year);
+        var startMonth = await _fiscalYear.GetStartMonthAsync(ct);
+        var dec31 = YearEnd.CloseInstant(c.Year, startMonth);
+        var jan1 = YearEnd.OpenInstant(c.Year, startMonth);
         var accounts = await _accounts.GetAllAsync(ct);
         var byId = accounts.ToDictionary(a => a.Id);
         var byCode = accounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First());

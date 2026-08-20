@@ -1,6 +1,7 @@
 using CoreAlign.Application.Accounting.DTOs;
 using CoreAlign.Application.Accounting.Queries;
 using CoreAlign.Application.Accounting.Services;
+using CoreAlign.Application.Common;
 using CoreAlign.Domain.Entities;
 using CoreAlign.Domain.Enums;
 using CoreAlign.Domain.Interfaces;
@@ -82,11 +83,18 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
     private readonly IGLAccountRepository _accounts;
     private readonly ITenantContext _tenant;
 
-    public GetBalanceSheetHandler(IJournalEntryRepository journals, IGLAccountRepository accounts, ITenantContext tenant)
+    private readonly IFiscalYearResolver _fiscalYear;
+
+    public GetBalanceSheetHandler(
+        IJournalEntryRepository journals,
+        IGLAccountRepository accounts,
+        ITenantContext tenant,
+        IFiscalYearResolver fiscalYear)
     {
         _journals = journals;
         _accounts = accounts;
         _tenant = tenant;
+        _fiscalYear = fiscalYear;
     }
 
     public async Task<BalanceSheetReportDto> Handle(GetBalanceSheetQuery q, CancellationToken ct)
@@ -101,8 +109,14 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
         // balance, so summing it together with the prior-year detail would
         // double-count. Without an opening (the first/legacy year) the cumulative
         // from-inception sum is the correct carry-forward.
-        var yearStart = new DateTime(q.AsOf.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        var openId = YearEnd.OpenId(tenantId, q.AsOf.Year);
+        // The açılış/kapanış are keyed by FISCAL year, so the as-of date has to be mapped through
+        // the tenant's start month — reading its calendar year would look up the wrong pair for a
+        // tenant whose books do not start in January, and the equity fold would silently double
+        // count or drop a year's result.
+        var startMonth = await _fiscalYear.GetStartMonthAsync(ct);
+        var fiscalYear = FiscalYear.Containing(q.AsOf, startMonth);
+        var yearStart = fiscalYear.StartUtc;
+        var openId = YearEnd.OpenId(tenantId, fiscalYear.Year);
         var openingExists = await _journals.ExistsForSourceAsync(JournalSourceType.Manual, openId, ct);
 
         var aggregates = openingExists
@@ -126,7 +140,7 @@ public class GetBalanceSheetHandler : IRequestHandler<GetBalanceSheetQuery, Bala
         // 570/580), else the from-inception cumulative (closed years' 6xx = 0). So
         // ComputeNetIncome(rows) is exactly the unclosed-P&L fold in both branches —
         // keeping Assets == Liab + Equity at ANY as-of, before and after any close.
-        var closeId = YearEnd.CloseId(tenantId, q.AsOf.Year);
+        var closeId = YearEnd.CloseId(tenantId, fiscalYear.Year);
         var closeExists = await _journals.GetActiveBySourceAsync(JournalSourceType.Manual, closeId, ct) is not null;
 
         var openYearEarnings = closeExists ? 0m : FinancialStatementMath.ComputeNetIncome(rows);
