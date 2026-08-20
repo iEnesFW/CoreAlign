@@ -230,6 +230,9 @@ public class PayslipDeductionLineConfiguration : IEntityTypeConfiguration<Paysli
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 
         builder.HasIndex(l => l.PayslipId);
+        // No FK: the deduction row can be deleted while the payslip that withheld against it must
+        // stay immutable, so the link is a soft reference (the payslip amount is the record).
+        builder.HasIndex(l => l.EmployeeDeductionId);
     }
 }
 

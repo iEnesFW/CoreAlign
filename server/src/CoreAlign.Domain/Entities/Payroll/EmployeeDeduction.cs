@@ -97,6 +97,10 @@ public class EmployeeDeduction : TenantEntity
     public void ReduceBalance(decimal amount)
     {
         if (amount <= 0m) return;
+        // A percentage deduction (union dues and the like) carries no balance to amortise.
+        // Falling through would drive it to zero and DEACTIVATE it, silently stopping a
+        // deduction that is supposed to recur for as long as the employee is on the payroll.
+        if (RemainingBalance <= 0m) return;
         RemainingBalance = Math.Max(0m, Math.Round(RemainingBalance - amount, 4));
         if (RemainingBalance <= 0m)
         {

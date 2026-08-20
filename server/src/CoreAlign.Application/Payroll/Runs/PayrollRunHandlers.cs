@@ -227,7 +227,8 @@ public class CalculatePayrollRunHandler : IRequestHandler<CalculatePayrollRunCom
         }
         foreach (var deduction in earnings.Deductions)
         {
-            payslip.AddDeductionLine(new PayslipDeductionLine(deduction.DeductionType, deduction.Amount, deduction.IsRecurring));
+            payslip.AddDeductionLine(new PayslipDeductionLine(
+                deduction.DeductionType, deduction.Amount, deduction.IsRecurring, deduction.SourceDeductionId));
         }
         return payslip;
     }
@@ -311,17 +312,20 @@ public class PostPayrollRunHandler : IRequestHandler<PostPayrollRunCommand, Payr
     private readonly IPayrollRunRepository _runs;
     private readonly IPayslipRepository _payslips;
     private readonly IEmployeeYtdTaxBaseRepository _ytd;
+    private readonly IEmployeeRepository _employees;
     private readonly IUnitOfWork _uow;
 
     public PostPayrollRunHandler(
         IPayrollRunRepository runs,
         IPayslipRepository payslips,
         IEmployeeYtdTaxBaseRepository ytd,
+        IEmployeeRepository employees,
         IUnitOfWork uow)
     {
         _runs = runs;
         _payslips = payslips;
         _ytd = ytd;
+        _employees = employees;
         _uow = uow;
     }
 
@@ -355,9 +359,39 @@ public class PostPayrollRunHandler : IRequestHandler<PostPayrollRunCommand, Payr
             _ytd.Update(ytd);
         }
 
+        await AmortiseDeductionBalancesAsync(payslips, ct);
+
         _runs.Update(run);
         await _uow.SaveChangesAsync(ct);
         return PayrollRunMapper.ToDetailDto(run);
+    }
+
+    // WHY this belongs to POST and not to calculate: the instalment is only really withheld once
+    // the run is posted, and a Calculated run can still be reopened and recalculated. Without it
+    // RemainingBalance never fell, so an advance kept being deducted from the employee's net pay
+    // every month forever — the instalment cap in PayrollPayslipFactory never bit because the
+    // balance it caps against never moved.
+    private async Task AmortiseDeductionBalancesAsync(IReadOnlyList<Payslip> payslips, CancellationToken ct)
+    {
+        var lines = payslips
+            .SelectMany(p => p.DeductionLines)
+            .Where(l => l.EmployeeDeductionId is not null && l.Amount > 0m)
+            .ToList();
+        if (lines.Count == 0) return;
+
+        var deductions = (await _employees.GetDeductionsByIdsAsync(
+                lines.Select(l => l.EmployeeDeductionId!.Value), ct))
+            .ToDictionary(d => d.Id);
+
+        foreach (var line in lines)
+        {
+            if (deductions.TryGetValue(line.EmployeeDeductionId!.Value, out var deduction))
+            {
+                // A percentage deduction (union dues and the like) carries no balance to amortise;
+                // ReduceBalance is a no-op at zero, so no special case is needed.
+                deduction.ReduceBalance(line.Amount);
+            }
+        }
     }
 
     private static decimal AdvanceMinWageDelta(Payslip payslip) =>

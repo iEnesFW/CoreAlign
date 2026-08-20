@@ -12,6 +12,10 @@ public interface IEmployeeRepository
         int pageSize,
         CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Employee>> GetActiveForPayrollAsync(DateOnly period, CancellationToken cancellationToken = default);
+    // Tracked on purpose: posting a run amortises each instalment against the balance here.
+    Task<IReadOnlyList<EmployeeDeduction>> GetDeductionsByIdsAsync(
+        IEnumerable<Guid> deductionIds,
+        CancellationToken cancellationToken = default);
     Task<bool> NumberExistsAsync(string employeeNumber, Guid? excludeId, CancellationToken cancellationToken = default);
     Task<bool> NationalIdExistsAsync(string nationalId, Guid? excludeId, CancellationToken cancellationToken = default);
     Task AddAsync(Employee employee, CancellationToken cancellationToken = default);

@@ -3,7 +3,7 @@ using CoreAlign.Domain.Enums;
 
 namespace CoreAlign.Application.Payroll.Runs;
 
-internal sealed record ResolvedDeduction(DeductionType DeductionType, decimal Amount, bool IsRecurring);
+internal sealed record ResolvedDeduction(DeductionType DeductionType, decimal Amount, bool IsRecurring, Guid SourceDeductionId);
 
 internal sealed record EmployeeEarnings(
     decimal Gross,
@@ -51,7 +51,7 @@ internal static class PayrollPayslipFactory
         {
             var amount = ResolveDeductionAmount(deduction, gross);
             if (amount <= 0m) continue;
-            deductions.Add(new ResolvedDeduction(deduction.DeductionType, amount, deduction.Percent.HasValue));
+            deductions.Add(new ResolvedDeduction(deduction.DeductionType, amount, deduction.Percent.HasValue, deduction.Id));
         }
 
         var otherDeductionsTotal = Math.Round(deductions.Sum(d => d.Amount), 4);

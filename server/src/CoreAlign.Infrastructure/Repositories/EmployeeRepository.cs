@@ -67,6 +67,20 @@ public sealed class EmployeeRepository : IEmployeeRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<EmployeeDeduction>> GetDeductionsByIdsAsync(
+        IEnumerable<Guid> deductionIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = deductionIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return Array.Empty<EmployeeDeduction>();
+        }
+        return await _context.Set<EmployeeDeduction>()
+            .Where(d => ids.Contains(d.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> NumberExistsAsync(string employeeNumber, Guid? excludeId, CancellationToken cancellationToken = default) =>
         _context.Employees.AnyAsync(
             e => e.EmployeeNumber == employeeNumber && (excludeId == null || e.Id != excludeId), cancellationToken);

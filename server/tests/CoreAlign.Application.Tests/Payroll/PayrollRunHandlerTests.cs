@@ -415,12 +415,13 @@ public sealed class PostPayrollRunHandlerTests
     private readonly IPayrollRunRepository _runs = Substitute.For<IPayrollRunRepository>();
     private readonly IPayslipRepository _payslips = Substitute.For<IPayslipRepository>();
     private readonly IEmployeeYtdTaxBaseRepository _ytd = Substitute.For<IEmployeeYtdTaxBaseRepository>();
+    private readonly IEmployeeRepository _employees = Substitute.For<IEmployeeRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly PostPayrollRunHandler _sut;
 
     public PostPayrollRunHandlerTests()
     {
-        _sut = new PostPayrollRunHandler(_runs, _payslips, _ytd, _uow);
+        _sut = new PostPayrollRunHandler(_runs, _payslips, _ytd, _employees, _uow);
     }
 
     private static PayrollRun ApprovedRun()

@@ -170,15 +170,25 @@ public class PayslipDeductionLine : TenantEntity
     public decimal Amount { get; private set; }
     public bool IsRecurring { get; private set; }
 
+    // WHY the source is recorded: posting the run has to amortise the instalment against the
+    // employee's outstanding balance, and an employee can carry two deductions of the same type.
+    // Nullable because payslips written before this existed carry no link.
+    public Guid? EmployeeDeductionId { get; private set; }
+
     public Payslip Payslip { get; private set; } = null!;
 
     protected PayslipDeductionLine() { }
 
-    public PayslipDeductionLine(DeductionType deductionType, decimal amount, bool isRecurring = false)
+    public PayslipDeductionLine(
+        DeductionType deductionType,
+        decimal amount,
+        bool isRecurring = false,
+        Guid? employeeDeductionId = null)
     {
         DeductionType = deductionType;
         Amount = Math.Round(amount, 4);
         IsRecurring = isRecurring;
+        EmployeeDeductionId = employeeDeductionId;
     }
 
     internal void AttachToPayslip(Guid payslipId) => PayslipId = payslipId;
