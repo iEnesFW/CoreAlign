@@ -1,4 +1,5 @@
 using System;
+using CoreAlign.Domain.Enums;
 using FluentValidation;
 
 namespace CoreAlign.Application.Payroll.Runs;
@@ -17,6 +18,15 @@ public class CreatePayrollRunCommandValidator : AbstractValidator<CreatePayrollR
             .NotEmpty()
             .Must(c => string.Equals(c?.Trim(), "TRY", StringComparison.OrdinalIgnoreCase))
             .WithMessage("Validation.PayrollCurrencyMustBeTry");
+
+        // Off-cycle runs do not stack the year-to-date ladder: PostPayrollRunHandler skips the
+        // advance when an employee already has this month posted, so a bonus run's income-tax
+        // base never enters the cumulative total and every later month under-withholds. The
+        // duplicate-period guard is keyed by run type, so a Regular + an OffCycle run for the
+        // same month is otherwise accepted. Refused until the ladder stacks within a month.
+        RuleFor(x => x.RunType)
+            .Equal(PayrollRunType.Regular)
+            .WithMessage("Validation.PayrollOffCycleNotSupported");
     }
 }
 

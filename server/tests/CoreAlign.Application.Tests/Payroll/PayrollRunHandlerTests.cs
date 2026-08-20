@@ -587,4 +587,24 @@ public sealed class PayrollRunCurrencyValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.ErrorMessage == "Validation.PayrollCurrencyMustBeTry");
     }
+
+    [Fact]
+    public void A_regular_run_is_accepted()
+    {
+        new CreatePayrollRunCommandValidator()
+            .Validate(new CreatePayrollRunCommand(2026, 6, PayrollRunType.Regular))
+            .IsValid.Should().BeTrue();
+    }
+
+    // An off-cycle run posts its own GL accrual but never stacks the YTD ladder, so every later
+    // month under-withholds income tax. Refused until the ladder stacks within a month.
+    [Fact]
+    public void An_off_cycle_run_is_refused_while_the_ytd_ladder_cannot_stack()
+    {
+        var result = new CreatePayrollRunCommandValidator()
+            .Validate(new CreatePayrollRunCommand(2026, 6, PayrollRunType.OffCycle));
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage == "Validation.PayrollOffCycleNotSupported");
+    }
 }

@@ -345,7 +345,8 @@
     "PasswordMustDiffer": "Yeni şifre mevcut şifreden farklı olmalıdır.",
     "UnitNotRecognized": "Birim tanınmadı — listeden bir stok birimi seçin (e-faturada geçerli olmalı).",
     "CurrencyNotInCatalog": "Seçilen para birimi katalogda tanımlı değil.",
-    "PayrollCurrencyMustBeTry": "Bordro yalnızca TRY para biriminde çalıştırılabilir (Türk yasal mevzuatı)."
+    "PayrollCurrencyMustBeTry": "Bordro yalnızca TRY para biriminde çalıştırılabilir (Türk yasal mevzuatı).",
+    "PayrollOffCycleNotSupported": "Dönem dışı (off-cycle) bordro henüz desteklenmiyor — kümülatif vergi matrahı ay içinde birikmiyor."
   },
   "profile": {
     "title": "Profilim",
