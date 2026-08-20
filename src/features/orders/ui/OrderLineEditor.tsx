@@ -157,6 +157,7 @@ export const OrderLineEditor = ({
               {t('orders.lines.quantity')}
             </label>
             <input
+              aria-label={t('orders.lines.quantity')}
               type="number"
               step="0.01"
               min="0"
@@ -181,6 +182,7 @@ export const OrderLineEditor = ({
               {t('orders.lines.unitPrice')}
             </label>
             <input
+              aria-label={t('orders.lines.unitPrice')}
               type="number"
               step="0.0001"
               disabled={disabled}
@@ -194,6 +196,7 @@ export const OrderLineEditor = ({
               {t('orders.lines.discountPercent')}
             </label>
             <input
+              aria-label={t('orders.lines.discountPercent')}
               type="number"
               step="0.01"
               min="0"
@@ -209,6 +212,7 @@ export const OrderLineEditor = ({
               {t('orders.lines.taxRate')}
             </label>
             <select
+              aria-label={t('orders.lines.taxRate')}
               disabled={disabled}
               className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-2 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 lg:text-right"
               {...register(`lines.${index}.taxRateId`)}
@@ -281,6 +285,7 @@ export const OrderLineEditor = ({
                 {t('orders.lines.warehouse')}
               </label>
               <select
+                aria-label={t('orders.lines.warehouse')}
                 disabled={disabled}
                 className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-3 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 "
                 {...register(`lines.${index}.warehouseId`)}
@@ -298,6 +303,7 @@ export const OrderLineEditor = ({
                 {t('orders.lines.withholdingCode')}
               </label>
               <select
+                aria-label={t('orders.lines.withholdingCode')}
                 disabled={disabled}
                 className="w-full bg-white dark:bg-[#0f111a] border border-slate-200 dark:border-[#2a3143] rounded-md px-3 py-1.5 text-sm text-slate-900 dark:text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all appearance-none cursor-pointer disabled:opacity-50 "
                 {...register(`lines.${index}.withholdingTaxCodeId`)}
@@ -315,6 +321,7 @@ export const OrderLineEditor = ({
                 {t('orders.lines.lineNotes')}
               </label>
               <input
+                aria-label={t('orders.lines.lineNotes')}
                 type="text"
                 placeholder={t('orders.lines.lineNotesPlaceholder')}
                 disabled={disabled}

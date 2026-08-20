@@ -619,7 +619,12 @@ export const OrderFormModal = ({
             <div className={`${sectionBodyCls} grid grid-cols-1 sm:grid-cols-2 gap-5`}>
               <div className="col-span-1 sm:col-span-2">
                 <label className={labelCls}>{t('orders.fields.customer')}</label>
-                <select disabled={!isDraft} className={fieldCls} {...register('customerId')}>
+                <select
+                  aria-label={t('orders.fields.customer')}
+                  disabled={!isDraft}
+                  className={fieldCls}
+                  {...register('customerId')}
+                >
                   <option value="">{t('orders.fields.customerPlaceholder')}</option>
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -652,6 +657,7 @@ export const OrderFormModal = ({
                 <div>
                   <label className={labelCls}>{t('orders.fields.orderNumber')}</label>
                   <input
+                    aria-label={t('orders.fields.orderNumber')}
                     className={fieldCls}
                     placeholder="ORD-2026-0001"
                     disabled={isEdit && !isDraft}
@@ -698,7 +704,12 @@ export const OrderFormModal = ({
 
               <div>
                 <label className={labelCls}>{t('orders.fields.type')}</label>
-                <select disabled={!isDraft} className={fieldCls} {...register('type')}>
+                <select
+                  aria-label={t('orders.fields.type')}
+                  disabled={!isDraft}
+                  className={fieldCls}
+                  {...register('type')}
+                >
                   {ORDER_TYPES.map((ty) => (
                     <option key={ty} value={ty}>
                       {t(`orders.type.${ty}` as never)}
@@ -715,7 +726,12 @@ export const OrderFormModal = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>{t('orders.fields.source')}</label>
-                  <select disabled={!isDraft} className={fieldCls} {...register('source')}>
+                  <select
+                    aria-label={t('orders.fields.source')}
+                    disabled={!isDraft}
+                    className={fieldCls}
+                    {...register('source')}
+                  >
                     {ORDER_SOURCES.map((s) => (
                       <option key={s} value={s}>
                         {t(`orders.source.${s}` as never)}
@@ -730,7 +746,12 @@ export const OrderFormModal = ({
                 </div>
                 <div>
                   <label className={labelCls}>{t('orders.fields.status')}</label>
-                  <select disabled={!isEdit} className={fieldCls} {...register('status')}>
+                  <select
+                    aria-label={t('orders.fields.status')}
+                    disabled={!isEdit}
+                    className={fieldCls}
+                    {...register('status')}
+                  >
                     {ORDER_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {t(`orders.status.${s}` as never)}
@@ -757,6 +778,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.billingAddress')}</label>
                 <select
+                  aria-label={t('orders.fields.billingAddress')}
                   className={fieldCls}
                   disabled={!watchedCustomerId}
                   {...register('billingAddressId')}
@@ -772,6 +794,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.shippingAddress')}</label>
                 <select
+                  aria-label={t('orders.fields.shippingAddress')}
                   className={fieldCls}
                   disabled={!watchedCustomerId}
                   {...register('shippingAddressId')}
@@ -829,6 +852,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.customerNotes')}</label>
                 <textarea
+                  aria-label={t('orders.fields.customerNotes')}
                   rows={2}
                   className={fieldCls}
                   placeholder={t('orders.fields.customerNotesPlaceholder')}
@@ -838,6 +862,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.internalNotes')}</label>
                 <textarea
+                  aria-label={t('orders.fields.internalNotes')}
                   rows={2}
                   className={fieldCls}
                   placeholder={t('orders.fields.internalNotesPlaceholder')}
@@ -849,6 +874,7 @@ export const OrderFormModal = ({
                   {t('orders.fields.notes', { defaultValue: 'Genel Notlar' })}
                 </label>
                 <textarea
+                  aria-label={t('orders.fields.notes', { defaultValue: 'Genel Notlar' })}
                   rows={2}
                   className={fieldCls}
                   placeholder={t('orders.fields.generalNotesPlaceholder')}
@@ -951,6 +977,7 @@ export const OrderFormModal = ({
               <div className="min-w-0">
                 <label className={labelCls}>{t('orders.fields.exchangeRate')}</label>
                 <input
+                  aria-label={t('orders.fields.exchangeRate')}
                   className={fieldCls}
                   type="number"
                   step="0.0001"
@@ -981,7 +1008,11 @@ export const OrderFormModal = ({
                     <Plus size={12} /> {t('common.new')}
                   </button>
                 </div>
-                <select className={fieldCls} {...register('paymentTermsId')}>
+                <select
+                  aria-label={t('orders.fields.paymentTerms')}
+                  className={fieldCls}
+                  {...register('paymentTermsId')}
+                >
                   <option value="">{t('orders.lines.none')}</option>
                   {paymentTerms.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1003,7 +1034,11 @@ export const OrderFormModal = ({
                     <Plus size={12} /> {t('common.new')}
                   </button>
                 </div>
-                <select className={fieldCls} {...register('priceListId')}>
+                <select
+                  aria-label={t('orders.fields.priceList')}
+                  className={fieldCls}
+                  {...register('priceListId')}
+                >
                   <option value="">{t('orders.lines.none')}</option>
                   {priceLists.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -1017,6 +1052,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.headerDiscount')}</label>
                 <input
+                  aria-label={t('orders.fields.headerDiscount')}
                   className={fieldCls}
                   type="number"
                   step="0.01"
@@ -1029,6 +1065,7 @@ export const OrderFormModal = ({
               <div>
                 <label className={labelCls}>{t('orders.fields.shippingCost')}</label>
                 <input
+                  aria-label={t('orders.fields.shippingCost')}
                   className={fieldCls}
                   type="number"
                   step="0.01"
@@ -1041,6 +1078,7 @@ export const OrderFormModal = ({
             <div>
               <label className={labelCls}>{t('orders.fields.channel')}</label>
               <input
+                aria-label={t('orders.fields.channel')}
                 className={fieldCls}
                 placeholder={t('orders.fields.channelPlaceholder')}
                 {...register('channel')}
