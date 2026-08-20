@@ -504,8 +504,9 @@ public sealed class PostPayrollRunHandlerTests
         _ytd.Received(1).Update(existing);
     }
 
+    // Posting an earlier month after a later one walks the tax brackets in the wrong order.
     [Fact]
-    public async Task Post_out_of_sequence_is_rejected()
+    public async Task Post_of_a_month_earlier_than_the_last_posted_one_is_rejected()
     {
         var run = ApprovedRun();
         var employeeId = Guid.NewGuid();
@@ -514,7 +515,7 @@ public sealed class PostPayrollRunHandlerTests
             .Returns(new List<Payslip> { PayslipFor(run.Id, employeeId) });
 
         var existing = new EmployeeYtdTaxBase(employeeId, 2026);
-        existing.Accumulate(120000m, 110000m, 4);
+        existing.Accumulate(120000m, 110000m, 7);
         _ytd.GetAsync(employeeId, 2026, Arg.Any<CancellationToken>()).Returns(existing);
 
         var act = () => _sut.Handle(new PostPayrollRunCommand(run.Id), default);
@@ -522,6 +523,29 @@ public sealed class PostPayrollRunHandlerTests
         await act.Should().ThrowAsync<PayrollOutOfSequencePostException>();
         existing.CumulativeIncomeTaxBase.Should().Be(120000m);
         _ytd.DidNotReceive().Update(Arg.Any<EmployeeYtdTaxBase>());
+    }
+
+    // A gap in ONE employee's history (rehired mid-year, or left out of a month's run) is
+    // legitimate. Refusing it blocked the whole company's payroll for that month.
+    [Fact]
+    public async Task A_gap_in_one_employees_history_does_not_block_the_run()
+    {
+        var run = ApprovedRun();
+        var employeeId = Guid.NewGuid();
+        _runs.GetByIdAsync(run.Id, Arg.Any<CancellationToken>()).Returns(run);
+        _payslips.GetByRunAsync(run.Id, Arg.Any<CancellationToken>())
+            .Returns(new List<Payslip> { PayslipFor(run.Id, employeeId) });
+
+        var existing = new EmployeeYtdTaxBase(employeeId, 2026);
+        existing.Accumulate(150000m, 132628.08m, 4);
+        _ytd.GetAsync(employeeId, 2026, Arg.Any<CancellationToken>()).Returns(existing);
+
+        var result = await _sut.Handle(new PostPayrollRunCommand(run.Id), default);
+
+        result.Status.Should().Be(PayrollRunStatus.Posted);
+        existing.LastPeriodMonth.Should().Be(6);
+        existing.CumulativeIncomeTaxBase.Should().Be(201000.00m);
+        _ytd.Received(1).Update(existing);
     }
 
     [Fact]

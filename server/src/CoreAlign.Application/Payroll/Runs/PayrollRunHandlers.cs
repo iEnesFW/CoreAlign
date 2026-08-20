@@ -343,7 +343,11 @@ public class PostPayrollRunHandler : IRequestHandler<PostPayrollRunCommand, Payr
                 continue;
             }
             if (ytd.LastPeriodMonth == run.PeriodMonth) continue;
-            if (run.PeriodMonth != ytd.LastPeriodMonth + 1)
+            // Forward-only, gaps allowed. Posting an EARLIER month after a later one would walk
+            // the tax brackets in the wrong order, so it is refused; but a gap in one employee's
+            // own history is legitimate (rehired mid-year, left out of a month's run) and must
+            // not block the whole company's payroll.
+            if (run.PeriodMonth < ytd.LastPeriodMonth)
             {
                 throw new PayrollOutOfSequencePostException(payslip.EmployeeId, ytd.LastPeriodMonth, run.PeriodMonth);
             }
