@@ -108,20 +108,40 @@ public sealed class PostFxRevaluationJob
         }
 
         var balances = await _openBalances.GetOpenForeignBalancesAsync(asOfUtc, cancellationToken);
-        if (balances.Count == 0)
+        var byTenant = balances
+            .Where(b => b.TenantId != Guid.Empty)
+            .GroupBy(b => b.TenantId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<OpenForeignBalance>)g.ToList());
+
+        // WHY the tenant set is a union: a tenant whose foreign exposure has been settled produces
+        // NO open balance, so iterating balances alone skipped it — and its previous unrealized
+        // mark then sat on the books forever, overstating AR/AP and the FX P&L. Those tenants
+        // still need the reversal leg, with nothing rebooked on top of it.
+        var carriedMarks = await _journals.GetTenantIdsWithPostedSourceTypeBeforeAsync(
+            JournalSourceType.FxRevaluation, asOfUtc.Date, cancellationToken);
+
+        var tenantIds = byTenant.Keys
+            .Concat(carriedMarks.Where(id => id != Guid.Empty))
+            .Distinct()
+            .ToList();
+        if (tenantIds.Count == 0)
         {
-            _logger.LogInformation("PostFxRevaluationJob: no open foreign balances at {AsOf:o}.", asOfUtc);
+            _logger.LogInformation(
+                "PostFxRevaluationJob: no open foreign balances and no carried marks at {AsOf:o}.", asOfUtc);
             return 0;
         }
 
         var totalTenants = 0;
-        foreach (var byTenant in balances.GroupBy(b => b.TenantId).Where(g => g.Key != Guid.Empty))
+        foreach (var tenantId in tenantIds)
         {
-            var revaluations = FxRevaluation.Compute(byTenant, rateMap);
+            var tenantBalances = byTenant.TryGetValue(tenantId, out var found)
+                ? found
+                : Array.Empty<OpenForeignBalance>();
+            var revaluations = FxRevaluation.Compute(tenantBalances, rateMap);
 
-            using (_tenantContext.PushScope(byTenant.Key))
+            using (_tenantContext.PushScope(tenantId))
             {
-                if (await EnqueueForTenantAsync(byTenant.Key, asOfUtc, revaluations, cancellationToken))
+                if (await EnqueueForTenantAsync(tenantId, asOfUtc, revaluations, cancellationToken))
                 {
                     totalTenants++;
                 }

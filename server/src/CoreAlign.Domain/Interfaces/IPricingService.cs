@@ -92,6 +92,13 @@ public interface IJournalEntryRepository
     /// FX revaluation job to reverse the prior mark so consecutive runs net to the
     /// current position instead of accumulating.
     /// </summary>
+    // Cross-tenant on purpose: the FX revaluation job runs without an ambient tenant and has to
+    // find tenants whose prior mark still needs reversing even when they no longer have any open
+    // foreign balance to revalue.
+    Task<IReadOnlyList<Guid>> GetTenantIdsWithPostedSourceTypeBeforeAsync(
+        Domain.Enums.JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default);
     Task<JournalEntry?> GetMostRecentBySourceTypeBeforeAsync(
         Domain.Enums.JournalSourceType sourceType,
         DateTime beforePostingDate,

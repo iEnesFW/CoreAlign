@@ -114,6 +114,59 @@ public class PostFxRevaluationJobTests
         (janNetAr + febNetAr).Should().Be(5000m, "cumulative AR reval equals the current cumulative mark");
     }
 
+    // A tenant whose foreign exposure has been settled produces no open balance, so iterating
+    // balances alone skipped it entirely and its previous unrealized mark stayed on the books
+    // forever — AR and the FX P&L permanently overstated by the last mark.
+    [Fact]
+    public async Task A_settled_exposure_still_reverses_the_carried_mark()
+    {
+        var jan = new DateTime(2026, 1, 31, 0, 0, 0, DateTimeKind.Utc);
+        SetRates(jan, ("USD", 32m));
+        SetBalances(jan, new OpenForeignBalance("USD", 1000m, 30m, IsReceivable: true, TenantId));
+        await _sut.RunAsync(jan);
+        var janEntry = MaterializePostedEntry(_enqueued.Single());
+
+        // February: the customer paid, so there is no open foreign balance left anywhere.
+        _enqueued.Clear();
+        var feb = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc);
+        SetRates(feb, ("USD", 35m));
+        SetBalances(feb);
+        _journals.GetTenantIdsWithPostedSourceTypeBeforeAsync(
+                JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
+            .Returns(new List<Guid> { TenantId });
+        _journals.GetMostRecentBySourceTypeBeforeAsync(JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
+            .Returns(janEntry);
+
+        var tenants = await _sut.RunAsync(feb);
+
+        tenants.Should().Be(1);
+        var req = _enqueued.Single();
+        req.Lines.Sum(l => l.Debit).Should().Be(req.Lines.Sum(l => l.Credit));
+
+        // Pure reversal: the January mark is backed out and nothing is rebooked, so the
+        // cumulative AR revaluation returns to zero.
+        var febNetAr = req.Lines.Where(l => l.Key == GLPostingKey.AccountsReceivable).Sum(l => l.Debit - l.Credit);
+        var janNetAr = janEntry.Lines.Where(l => l.AccountCode == FxRevaluation.ArAccountCode).Sum(l => l.Debit - l.Credit);
+        febNetAr.Should().Be(-2000m);
+        (janNetAr + febNetAr).Should().Be(0m, "a settled exposure carries no unrealized mark");
+    }
+
+    [Fact]
+    public async Task Nothing_is_enqueued_when_there_are_neither_balances_nor_carried_marks()
+    {
+        var feb = new DateTime(2026, 2, 28, 0, 0, 0, DateTimeKind.Utc);
+        SetRates(feb, ("USD", 35m));
+        SetBalances(feb);
+        _journals.GetTenantIdsWithPostedSourceTypeBeforeAsync(
+                JournalSourceType.FxRevaluation, feb.Date, Arg.Any<CancellationToken>())
+            .Returns(new List<Guid>());
+
+        var tenants = await _sut.RunAsync(feb);
+
+        tenants.Should().Be(0);
+        _enqueued.Should().BeEmpty();
+    }
+
     // Replays the engine's translation of a balanced request into a posted JournalEntry
     // so the next run's reversal can mirror its lines (rate == 1, codes from defaults).
     private static JournalEntry MaterializePostedEntry(GLPostingRequest req)

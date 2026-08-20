@@ -51,6 +51,24 @@ public class JournalEntryRepository : IJournalEntryRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Guid>> GetTenantIdsWithPostedSourceTypeBeforeAsync(
+        JournalSourceType sourceType,
+        DateTime beforePostingDate,
+        CancellationToken cancellationToken = default)
+    {
+        var bound = DateTime.SpecifyKind(beforePostingDate, DateTimeKind.Utc);
+        return await _context.JournalEntries
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(j => j.SourceType == sourceType
+                && j.Status == JournalEntryStatus.Posted
+                && j.PostingDate < bound
+                && j.TenantId != Guid.Empty)
+            .Select(j => j.TenantId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<JournalEntry?> GetMostRecentBySourceTypeBeforeAsync(
         JournalSourceType sourceType,
         DateTime beforePostingDate,
