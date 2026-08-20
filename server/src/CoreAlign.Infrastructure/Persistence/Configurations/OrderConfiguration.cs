@@ -114,6 +114,7 @@ public class OrderLineConfiguration : IEntityTypeConfiguration<OrderLine>
         builder.Property(l => l.UnitCostSnapshot).HasColumnType("numeric(18,4)");
         builder.Property(l => l.Status).HasMaxLength(20).HasConversion<string>();
         builder.Property(l => l.LineNotes).HasMaxLength(1000);
+        builder.Property(l => l.ScrapReason).HasMaxLength(500);
         builder.Property(l => l.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(l => l.UpdatedAtUtc).HasColumnType("timestamp with time zone");
 

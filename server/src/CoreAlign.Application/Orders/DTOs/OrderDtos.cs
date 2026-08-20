@@ -47,6 +47,8 @@ public class OrderLineDto
     public decimal QuantityInvoiced { get; set; }
     public decimal QuantityReturned { get; set; }
     public decimal QuantityCancelled { get; set; }
+    public decimal QuantityScrapped { get; set; }
+    public string? ScrapReason { get; set; }
     public decimal QuantityRemainingToShip { get; set; }
     public decimal QuantityRemainingToInvoice { get; set; }
     public decimal ListPriceSnapshot { get; set; }

@@ -118,6 +118,8 @@ public static class OrderMapper
         QuantityInvoiced = line.QuantityInvoiced,
         QuantityReturned = line.QuantityReturned,
         QuantityCancelled = line.QuantityCancelled,
+        QuantityScrapped = line.QuantityScrapped,
+        ScrapReason = line.ScrapReason,
         QuantityRemainingToShip = line.QuantityRemainingToShip,
         QuantityRemainingToInvoice = line.QuantityRemainingToInvoice,
         ListPriceSnapshot = line.ListPriceSnapshot,

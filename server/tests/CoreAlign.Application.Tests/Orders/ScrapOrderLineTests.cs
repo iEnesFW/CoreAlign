@@ -62,6 +62,45 @@ public class ScrapOrderLineTests
         line.QuantityRemainingToInvoice.Should().Be(7m);
     }
 
+    [Fact]
+    public async Task The_scrap_reason_is_kept_instead_of_discarded()
+    {
+        var order = BuildOrderWithOneLine(quantity: 10m);
+        var line = order.Lines.Single();
+        _orders.GetWithLinesAsync(order.Id, Arg.Any<CancellationToken>()).Returns(order);
+
+        await _sut.Handle(new ScrapOrderLineCommand(order.Id, line.Id, 3m, "broken in picking"), default);
+
+        line.ScrapReason.Should().Be("3: broken in picking");
+    }
+
+    [Fact]
+    public async Task A_second_scrap_appends_its_reason_rather_than_erasing_the_first()
+    {
+        var order = BuildOrderWithOneLine(quantity: 10m);
+        var line = order.Lines.Single();
+        _orders.GetWithLinesAsync(order.Id, Arg.Any<CancellationToken>()).Returns(order);
+
+        await _sut.Handle(new ScrapOrderLineCommand(order.Id, line.Id, 3m, "broken in picking"), default);
+        await _sut.Handle(new ScrapOrderLineCommand(order.Id, line.Id, 2m, "water damage"), default);
+
+        line.ScrapReason.Should().Be("3: broken in picking | 2: water damage");
+        line.QuantityScrapped.Should().Be(5m);
+    }
+
+    [Fact]
+    public async Task A_scrap_without_a_reason_leaves_the_earlier_reason_alone()
+    {
+        var order = BuildOrderWithOneLine(quantity: 10m);
+        var line = order.Lines.Single();
+        _orders.GetWithLinesAsync(order.Id, Arg.Any<CancellationToken>()).Returns(order);
+
+        await _sut.Handle(new ScrapOrderLineCommand(order.Id, line.Id, 3m, "broken in picking"), default);
+        await _sut.Handle(new ScrapOrderLineCommand(order.Id, line.Id, 1m, null), default);
+
+        line.ScrapReason.Should().Be("3: broken in picking");
+    }
+
     private static Order BuildOrderWithOneLine(decimal quantity)
     {
         var order = new Order("ORD-1", CustomerId, DateTime.UtcNow, "TRY", null)

@@ -24,6 +24,7 @@ public class OrderLine : TenantEntity
     public decimal QuantityReturned { get; private set; }
     public decimal QuantityCancelled { get; private set; }
     public decimal QuantityScrapped { get; private set; }
+    public string? ScrapReason { get; private set; }
 
     public decimal ListPriceSnapshot { get; private set; }
     public decimal UnitPrice { get; private set; }
@@ -277,7 +278,7 @@ public class OrderLine : TenantEntity
         }
     }
 
-    public void RecordScrap(decimal qty)
+    public void RecordScrap(decimal qty, string? reason = null)
     {
         if (qty <= 0m)
         {
@@ -290,5 +291,16 @@ public class OrderLine : TenantEntity
                 $"Scrap quantity {qty} exceeds remaining-to-ship {remaining} for line {Id}.");
         }
         QuantityScrapped += qty;
+
+        // WHY appended and not assigned: a line can be scrapped more than once and each write-off
+        // has its own reason; overwriting would erase why the earlier units were written off.
+        var trimmed = reason?.Trim();
+        if (string.IsNullOrEmpty(trimmed)) return;
+        var entry = $"{qty:0.####}: {trimmed}";
+        ScrapReason = string.IsNullOrEmpty(ScrapReason) ? entry : $"{ScrapReason} | {entry}";
+        if (ScrapReason.Length > 500)
+        {
+            ScrapReason = ScrapReason[^500..];
+        }
     }
 }

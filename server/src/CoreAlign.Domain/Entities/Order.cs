@@ -654,8 +654,7 @@ public class Order : TenantEntity, IHasConcurrencyToken
         }
         var line = Lines.FirstOrDefault(l => l.Id == lineId)
             ?? throw new InvalidOrderLineException($"Order line '{lineId}' not found.");
-        line.RecordScrap(qty);
+        line.RecordScrap(qty, reason);
         UpdatedAtUtc = DateTime.UtcNow;
-        _ = reason;
     }
 }
