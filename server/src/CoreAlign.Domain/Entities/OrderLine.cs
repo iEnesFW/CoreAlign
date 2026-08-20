@@ -263,6 +263,20 @@ public class OrderLine : TenantEntity
         }
     }
 
+    // Releases quantity an invoice had claimed, so a cancelled invoice does not lock the order
+    // out of being billed again. Status falls back to whatever the shipment progress says.
+    public void ReverseInvoice(decimal qty)
+    {
+        if (qty <= 0m) return;
+        QuantityInvoiced = Math.Max(0m, QuantityInvoiced - qty);
+        if (Status == OrderLineStatus.Invoiced && QuantityInvoiced < Quantity)
+        {
+            Status = QuantityShipped >= Quantity
+                ? OrderLineStatus.Shipped
+                : QuantityShipped > 0m ? OrderLineStatus.PartiallyShipped : OrderLineStatus.Pending;
+        }
+    }
+
     public void RecordReturn(decimal qty)
     {
         if (qty <= 0m) return;

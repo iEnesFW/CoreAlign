@@ -16,14 +16,14 @@ public class CancelInvoiceCommandHandlerTests
 
     public CancelInvoiceCommandHandlerTests()
     {
-        _sut = new CancelInvoiceCommandHandler(_invoiceRepository, _unitOfWork);
+        _sut = new CancelInvoiceCommandHandler(_invoiceRepository, Substitute.For<IOrderRepository>(), _unitOfWork);
     }
 
     [Fact]
     public async Task Cancels_issued_invoice_and_raises_event_with_was_issued_true()
     {
         var invoice = BuildIssuedInvoice();
-        _invoiceRepository.GetByIdAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+        _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
 
         await _sut.Handle(new CancelInvoiceCommand(invoice.Id), default);
 
@@ -39,7 +39,7 @@ public class CancelInvoiceCommandHandlerTests
         {
             Id = Guid.NewGuid(),
         };
-        _invoiceRepository.GetByIdAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+        _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
 
         await _sut.Handle(new CancelInvoiceCommand(invoice.Id), default);
 
@@ -54,7 +54,7 @@ public class CancelInvoiceCommandHandlerTests
         var invoice = BuildIssuedInvoice();
         invoice.ClearDomainEvents();
         invoice.MarkAsPaid(DateTime.UtcNow);
-        _invoiceRepository.GetByIdAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
+        _invoiceRepository.GetWithLinesAsync(invoice.Id, Arg.Any<CancellationToken>()).Returns(invoice);
 
         Func<Task> act = () => _sut.Handle(new CancelInvoiceCommand(invoice.Id), default);
         await act.Should().ThrowAsync<InvoiceStatusTransitionException>();

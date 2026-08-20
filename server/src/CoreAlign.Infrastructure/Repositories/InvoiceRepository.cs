@@ -40,9 +40,15 @@ public class InvoiceRepository : IInvoiceRepository
             .FirstOrDefaultAsync(i => i.OrderId == orderId, cancellationToken);
     }
 
+    // A cancelled or voided invoice no longer occupies the order: without this the order could
+    // never be re-invoiced after a correction, and its revenue stayed unbilled forever.
     public Task<bool> ExistsForOrderAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
-        return _context.Invoices.AnyAsync(i => i.OrderId == orderId, cancellationToken);
+        return _context.Invoices.AnyAsync(
+            i => i.OrderId == orderId
+                && i.Status != InvoiceStatus.Cancelled
+                && i.Status != InvoiceStatus.Void,
+            cancellationToken);
     }
 
     public Task<bool> InvoiceNumberExistsAsync(string invoiceNumber, Guid? excludeId, CancellationToken cancellationToken = default)
