@@ -101,6 +101,52 @@ public sealed class YearEndCloseTests : IDisposable
         await SaveAsync();
     }
 
+    // The sweep zeroes each P&L leaf at its from-inception balance, so closing 2027 while 2026
+    // is still open rolls 2026's result into 2027: 590 reports two years of profit and 2026 never
+    // shows its own. The date-ranged income statement would then disagree with the closing entry.
+    [Fact]
+    public async Task Closing_a_year_while_an_earlier_one_is_still_open_is_refused()
+    {
+        await SeedAsync();
+        await PostAsync("YEV-1", new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 1000m, 0m), ("600", 0m, 1000m));
+        await PostAsync("YEV-2", new DateTime(2027, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 400m, 0m), ("600", 0m, 400m));
+
+        var act = () => Close().Handle(new CloseFiscalYearCommand(2027, Guid.Empty), default);
+
+        await act.Should().ThrowAsync<EarlierFiscalYearNotClosedException>();
+    }
+
+    [Fact]
+    public async Task Closing_the_years_oldest_first_succeeds_and_each_year_reports_its_own_result()
+    {
+        await SeedAsync();
+        await PostAsync("YEV-1", new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 1000m, 0m), ("600", 0m, 1000m));
+        await PostAsync("YEV-2", new DateTime(2027, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 400m, 0m), ("600", 0m, 400m));
+
+        var first = await Close().Handle(new CloseFiscalYearCommand(2026, Guid.Empty), default);
+        var second = await Close().Handle(new CloseFiscalYearCommand(2027, Guid.Empty), default);
+
+        first.NetResult.Should().Be(1000m);
+        second.NetResult.Should().Be(400m, "2027 reports only its own result");
+    }
+
+    // A tenant in its first year has nothing before the start, so the guard must not fire.
+    [Fact]
+    public async Task A_first_year_close_is_not_blocked_by_the_guard()
+    {
+        await SeedAsync();
+        await PostAsync("YEV-1", new DateTime(2026, 6, 30, 0, 0, 0, DateTimeKind.Utc),
+            ("120", 1000m, 0m), ("600", 0m, 1000m));
+
+        var result = await Close().Handle(new CloseFiscalYearCommand(2026, Guid.Empty), default);
+
+        result.NetResult.Should().Be(1000m);
+    }
+
     private async Task PostAsync(string number, DateTime postingDate, params (string Code, decimal Debit, decimal Credit)[] lines)
     {
         var entry = new JournalEntry(number, postingDate, postingDate, JournalEntryType.Mahsup) { TenantId = _tenantId };

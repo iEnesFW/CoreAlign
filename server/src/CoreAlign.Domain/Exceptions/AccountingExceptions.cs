@@ -89,6 +89,13 @@ public class YearNotReadyForCloseException : ConflictException
         : base($"Fiscal year {year} cannot be closed while one or more of its monthly periods is still Open.") { }
 }
 
+public class EarlierFiscalYearNotClosedException : ConflictException
+{
+    public EarlierFiscalYearNotClosedException(int year)
+        : base($"Fiscal year {year} cannot be closed while an earlier year still carries an unswept profit-and-loss balance. "
+            + "Close the earlier year(s) first, oldest to newest.") { }
+}
+
 public class FiscalYearAlreadyOpenedException : ConflictException
 {
     public FiscalYearAlreadyOpenedException(int year)

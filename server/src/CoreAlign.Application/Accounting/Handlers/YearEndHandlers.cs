@@ -41,6 +41,9 @@ internal static class YearEnd
     public static DateTime CloseInstant(int year) =>
         new(year, 12, 31, 23, 59, 59, DateTimeKind.Utc);
 
+    public static DateTime LastInstantBefore(int year) =>
+        new DateTime(year, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddTicks(-1);
+
     public static DateTime OpenInstant(int closedYear) =>
         new(closedYear + 1, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
@@ -203,6 +206,21 @@ public class CloseFiscalYearHandler : IRequestHandler<CloseFiscalYearCommand, Ye
         var accounts = await _accounts.GetAllAsync(ct);
         var byId = accounts.ToDictionary(a => a.Id);
         var byCode = accounts.GroupBy(a => a.Code).ToDictionary(g => g.Key, g => g.First());
+
+        // WHY the earlier years have to be swept first: the sweep zeroes each P&L leaf at its
+        // FROM-INCEPTION balance, so closing a year while a previous one is still open rolls that
+        // year's result into this one — 590 would report two years of profit and the year it
+        // belonged to would never show its own. The income statement, which is date-ranged, would
+        // then disagree with the closing entry. Detected directly rather than by assuming the
+        // prior year exists: a tenant in its first year has nothing before the start.
+        var openingPnl = await _journals.GetAccountBalancesAsOfAsync(YearEnd.LastInstantBefore(c.Year), ct);
+        if (openingPnl.Any(row =>
+                byId.TryGetValue(row.AccountId, out var earlier)
+                && YearEnd.IsProfitAndLoss(earlier)
+                && Math.Abs(YearEnd.Natural(row, earlier)) > YearEnd.LineEpsilon))
+        {
+            throw new EarlierFiscalYearNotClosedException(c.Year);
+        }
 
         var balances = await _journals.GetAccountBalancesAsOfAsync(dec31, ct);
 
