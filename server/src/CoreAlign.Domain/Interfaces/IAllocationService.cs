@@ -90,6 +90,7 @@ public interface IAllocationService
     Task<AllocationResult> ReserveAsync(AllocationRequest request, CancellationToken cancellationToken = default);
     Task ReleaseAsync(Guid allocationId, CancellationToken cancellationToken = default);
     Task ReleaseByOrderAsync(Guid orderId, CancellationToken cancellationToken = default);
+    Task<decimal> ReleaseForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, CancellationToken cancellationToken = default);
     Task<StockMovement> ConsumeAsync(Guid allocationId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default);
     Task<OrderLineConsumption> ConsumeForOrderLineAsync(Guid orderId, Guid orderLineId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default);
     Task<StockMovement> ApplyReceiptAsync(StockReceiptRequest request, CancellationToken cancellationToken = default);

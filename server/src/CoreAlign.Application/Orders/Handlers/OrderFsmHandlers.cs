@@ -126,12 +126,18 @@ public class AllocateOrderHandler : IRequestHandler<AllocateOrderCommand, OrderD
 public class CancelOrderHandler : IRequestHandler<CancelOrderCommand, OrderDto>
 {
     private readonly IOrderRepository _orders;
+    private readonly IShipmentRepository _shipments;
     private readonly IAllocationService _allocator;
     private readonly IUnitOfWork _uow;
 
-    public CancelOrderHandler(IOrderRepository orders, IAllocationService allocator, IUnitOfWork uow)
+    public CancelOrderHandler(
+        IOrderRepository orders,
+        IShipmentRepository shipments,
+        IAllocationService allocator,
+        IUnitOfWork uow)
     {
         _orders = orders;
+        _shipments = shipments;
         _allocator = allocator;
         _uow = uow;
     }
@@ -139,6 +145,18 @@ public class CancelOrderHandler : IRequestHandler<CancelOrderCommand, OrderDto>
     public async Task<OrderDto> Handle(CancelOrderCommand c, CancellationToken ct)
     {
         var order = await _orders.GetWithLinesAsync(c.Id, ct) ?? throw new OrderNotFoundException();
+
+        // WHY an open shipment blocks the cancel: cancelling released the reservations while the
+        // packed shipment stayed dispatchable, and dispatching it then found nothing to consume —
+        // the goods left the building with stock untouched and no COGS posted. RevertOrderToDraft
+        // already refuses on the same grounds; cancel the shipment first.
+        var shipments = await _shipments.GetByOrderAsync(order.Id, ct);
+        var openShipment = shipments.FirstOrDefault(s => s.Status != ShipmentStatus.Cancelled);
+        if (openShipment is not null)
+        {
+            throw new OrderCancelBlockedException(order.OrderNumber, openShipment.ShipmentNumber);
+        }
+
         await _allocator.ReleaseByOrderAsync(order.Id, ct);
         order.Cancel(c.Reason);
         _orders.Update(order);

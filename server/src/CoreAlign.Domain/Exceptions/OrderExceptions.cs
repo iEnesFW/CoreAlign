@@ -96,3 +96,15 @@ public class DealerCustomerNotAuthorizedException : ForbiddenException
     {
     }
 }
+
+public class OrderCancelBlockedException : ConflictException
+{
+    public OrderCancelBlockedException(string orderNumber, string shipmentNumber)
+        : base($"Order {orderNumber} has shipment '{shipmentNumber}'. Cancel the shipment before cancelling the order.") { }
+}
+
+public class ShipmentOrderNotDispatchableException : ConflictException
+{
+    public ShipmentOrderNotDispatchableException(string shipmentNumber, string orderStatus)
+        : base($"Shipment {shipmentNumber} cannot be dispatched while its order is {orderStatus}.") { }
+}

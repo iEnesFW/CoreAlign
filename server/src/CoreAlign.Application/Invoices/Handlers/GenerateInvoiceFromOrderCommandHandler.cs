@@ -121,13 +121,21 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
         var lineNumber = 1;
         foreach (var line in order.Lines)
         {
-            var invLine = new InvoiceLine(line.ProductId, line.ProductSku, line.ProductName, line.Quantity, line.UnitPrice);
+            // WHY the invoiceable quantity and not the ordered one: a unit that was cancelled or
+            // scrapped can never be delivered, so billing it charges the customer for goods they
+            // will never receive — and ExistsForOrderAsync blocks any corrective second invoice.
+            var billable = line.QuantityRemainingToInvoice;
+            if (billable <= 0m) continue;
+
+            var invLine = new InvoiceLine(line.ProductId, line.ProductSku, line.ProductName, billable, line.UnitPrice);
             invLine.SetLineNumber(lineNumber++);
             invLine.ApplyPricing(
-                quantity: line.Quantity,
+                quantity: billable,
                 unitPrice: line.UnitPrice,
                 lineDiscountPercent: line.LineDiscountPercent,
-                lineDiscountAmount: line.LineDiscountAmount,
+                lineDiscountAmount: line.Quantity > 0m
+                    ? Math.Round(line.LineDiscountAmount * (billable / line.Quantity), 4)
+                    : 0m,
                 taxRatePercent: line.TaxRatePercent,
                 taxRateId: line.TaxRateId,
                 isTaxInclusive: line.IsTaxInclusive,
@@ -144,6 +152,12 @@ public class GenerateInvoiceFromOrderCommandHandler : IRequestHandler<GenerateIn
                 withholdingNumerator: line.WithholdingNumerator,
                 withholdingDenominator: line.WithholdingDenominator);
             invoice.Lines.Add(invLine);
+            line.RecordInvoice(billable);
+        }
+
+        if (invoice.Lines.Count == 0)
+        {
+            throw new NothingLeftToInvoiceException(order.OrderNumber);
         }
 
         if (_fxResolver is not null &&

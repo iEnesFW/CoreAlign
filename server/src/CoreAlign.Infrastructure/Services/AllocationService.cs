@@ -112,6 +112,59 @@ public class AllocationService : IAllocationService
         }
     }
 
+    public async Task<decimal> ReleaseForOrderLineAsync(
+        Guid orderId,
+        Guid orderLineId,
+        decimal quantity,
+        CancellationToken cancellationToken = default)
+    {
+        if (quantity <= 0m) return 0m;
+
+        var allocations = await _allocations.GetByOrderAsync(orderId, cancellationToken);
+        var pending = allocations
+            .Where(a => a.OrderLineId == orderLineId
+                && (a.Status == AllocationStatus.Active || a.Status == AllocationStatus.PartiallyConsumed))
+            .ToList();
+
+        var now = DateTime.UtcNow;
+        var remaining = quantity;
+        var released = 0m;
+        foreach (var allocation in pending)
+        {
+            if (remaining <= 0m) break;
+            var given = allocation.ReduceQuantity(remaining, now);
+            if (given <= 0m) continue;
+
+            var item = await _stockItems.GetAsync(
+                allocation.ProductId, allocation.WarehouseId, allocation.LotId, cancellationToken);
+            if (item is not null)
+            {
+                item.Release(given, now);
+                await _movements.AddAsync(new StockMovement(
+                    productId: allocation.ProductId,
+                    warehouseId: allocation.WarehouseId,
+                    type: StockMovementType.UnReservation,
+                    quantity: given,
+                    unitCost: item.AvgCost,
+                    onHandAfter: item.OnHand,
+                    avgCostAfter: item.AvgCost,
+                    occurredAtUtc: now,
+                    sourceDocumentType: StockSourceDocumentType.Order,
+                    sourceDocumentId: allocation.OrderId,
+                    sourceLineId: allocation.OrderLineId,
+                    lotId: allocation.LotId,
+                    notes: "Reservation released (line scrapped)"
+                ), cancellationToken);
+            }
+
+            _allocations.Update(allocation);
+            remaining -= given;
+            released += given;
+        }
+
+        return released;
+    }
+
     public async Task<StockMovement> ConsumeAsync(Guid allocationId, decimal quantity, Guid? postedByUserId, CancellationToken cancellationToken = default)
     {
         var allocation = await _allocations.GetByIdAsync(allocationId, cancellationToken)

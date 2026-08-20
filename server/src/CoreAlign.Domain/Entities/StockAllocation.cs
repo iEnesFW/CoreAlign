@@ -53,6 +53,23 @@ public class StockAllocation : TenantEntity
         UpdatedAtUtc = occurredAtUtc;
     }
 
+    // WHY a reduction and not a Release: scrapping 3 of a reserved 10 must give 3 back to
+    // available stock and keep the other 7 reserved for the shipment that is still coming.
+    public decimal ReduceQuantity(decimal amount, DateTime occurredAtUtc)
+    {
+        if (amount <= 0m) return 0m;
+        var reducible = Math.Min(amount, Remaining);
+        if (reducible <= 0m) return 0m;
+        Quantity -= reducible;
+        if (Quantity <= QuantityConsumed)
+        {
+            Status = QuantityConsumed > 0m ? AllocationStatus.Consumed : AllocationStatus.Released;
+            ReleasedAtUtc = QuantityConsumed > 0m ? ReleasedAtUtc : occurredAtUtc;
+        }
+        UpdatedAtUtc = occurredAtUtc;
+        return reducible;
+    }
+
     public void IncreaseQuantity(decimal extra, DateTime occurredAtUtc)
     {
         if (extra <= 0m) return;

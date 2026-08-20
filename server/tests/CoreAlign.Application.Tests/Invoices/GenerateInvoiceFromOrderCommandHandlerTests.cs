@@ -98,6 +98,36 @@ public class GenerateInvoiceFromOrderCommandHandlerTests
         _invoiceRepository.ExistsForOrderAsync(order.Id, Arg.Any<CancellationToken>()).Returns(false);
     }
 
+    [Fact]
+    public async Task Does_not_bill_units_that_were_scrapped()
+    {
+        var order = BuildOrder(OrderStatus.Shipped, quantity: 10m, unitPrice: 100m);
+        var line = order.Lines.Single();
+        order.RecordLineScrap(line.Id, 3m, "broken in picking");
+        SetupRepositories(order);
+
+        var result = await _sut.Handle(new GenerateInvoiceFromOrderCommand(order.Id), default);
+
+        result.Lines.Should().HaveCount(1);
+        result.Lines[0].Quantity.Should().Be(7m);
+        result.Total.Should().Be(700m);
+        line.QuantityInvoiced.Should().Be(7m);
+    }
+
+    [Fact]
+    public async Task Refuses_to_invoice_an_order_whose_every_line_was_scrapped()
+    {
+        var order = BuildOrder(OrderStatus.Shipped, quantity: 10m, unitPrice: 100m);
+        var line = order.Lines.Single();
+        order.RecordLineScrap(line.Id, 10m, "whole pallet dropped");
+        SetupRepositories(order);
+
+        var act = async () => await _sut.Handle(new GenerateInvoiceFromOrderCommand(order.Id), default);
+
+        await act.Should().ThrowAsync<NothingLeftToInvoiceException>();
+        await _invoiceRepository.DidNotReceive().AddAsync(Arg.Any<Invoice>(), Arg.Any<CancellationToken>());
+    }
+
     private static Order BuildOrder(OrderStatus status, decimal quantity, decimal unitPrice)
     {
         var order = new Order("ORD-1", CustomerId, DateTime.UtcNow, "USD")

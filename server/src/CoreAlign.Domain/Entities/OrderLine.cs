@@ -70,7 +70,12 @@ public class OrderLine : TenantEntity
     public Product Product { get; set; } = null!;
 
     public decimal QuantityRemainingToShip => Math.Max(0m, Quantity - QuantityShipped - QuantityCancelled - QuantityScrapped);
-    public decimal QuantityRemainingToInvoice => Math.Max(0m, Quantity - QuantityInvoiced - QuantityCancelled);
+    // WHY a single predicate: three call sites tested QuantityShipped + QuantityCancelled >= Quantity
+    // while QuantityRemainingToShip also subtracts scrap, so a line whose remainder was scrapped
+    // never counted as shipped and stranded its order in PartiallyShipped forever.
+    public bool IsFullyShipped => QuantityRemainingToShip <= 0m;
+
+    public decimal QuantityRemainingToInvoice => Math.Max(0m, Quantity - QuantityInvoiced - QuantityCancelled - QuantityScrapped);
 
     protected OrderLine() { }
 
@@ -238,7 +243,7 @@ public class OrderLine : TenantEntity
                 $"Shipment quantity {qty} exceeds remaining-to-ship {QuantityRemainingToShip} for line {Id}.");
         }
         QuantityShipped += qty;
-        if (QuantityShipped + QuantityCancelled >= Quantity)
+        if (IsFullyShipped)
         {
             Status = OrderLineStatus.Shipped;
         }

@@ -146,6 +146,14 @@ public class DispatchShipmentHandler : IRequestHandler<DispatchShipmentCommand, 
         var shipment = await _shipments.GetWithLinesAsync(c.Id, ct) ?? throw new ShipmentNotFoundException();
         var order = await _orders.GetWithLinesAndShipmentsAsync(shipment.OrderId, ct) ?? throw new OrderNotFoundException();
 
+        // WHY the order status is checked here: Shipment.Dispatch only guards the shipment FSM, so a
+        // packed shipment on a terminated order still dispatched — consuming nothing, posting no
+        // COGS, and leaving MarkFullyShipped a silent no-op while the goods physically left.
+        if (order.Status is OrderStatus.Cancelled or OrderStatus.Closed or OrderStatus.Returned)
+        {
+            throw new ShipmentOrderNotDispatchableException(shipment.ShipmentNumber, order.Status.ToString());
+        }
+
         shipment.Dispatch(c.CarrierName, c.TrackingNumber, c.TrackingUrl, c.ShippingCost);
 
         // Σ issue cost across the consumed reservations; relieved to COGS below.
@@ -174,7 +182,7 @@ public class DispatchShipmentHandler : IRequestHandler<DispatchShipmentCommand, 
                 CogsGLLines.Build(cogsCost, reverse: false)), ct);
         }
 
-        var allLinesShipped = order.Lines.All(l => l.QuantityShipped + l.QuantityCancelled >= l.Quantity);
+        var allLinesShipped = order.Lines.All(l => l.IsFullyShipped);
         order.MarkFullyShipped(shipment.Id, shipment.ShipmentNumber, isPartial: !allLinesShipped);
 
         _shipments.Update(shipment);
@@ -209,7 +217,7 @@ public class DeliverShipmentHandler : IRequestHandler<DeliverShipmentCommand, Sh
             var allShipmentsDelivered = order.Shipments
                 .Where(s => s.Status != ShipmentStatus.Cancelled)
                 .All(s => s.Status == ShipmentStatus.Delivered);
-            var allLinesShipped = order.Lines.All(l => l.QuantityShipped + l.QuantityCancelled >= l.Quantity);
+            var allLinesShipped = order.Lines.All(l => l.IsFullyShipped);
             if (allShipmentsDelivered && allLinesShipped && order.Status == OrderStatus.Shipped)
             {
                 order.ChangeStatus(OrderStatus.Delivered);

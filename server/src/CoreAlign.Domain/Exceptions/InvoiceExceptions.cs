@@ -87,3 +87,9 @@ public class CreditNoteCannotBeCreditedException : DomainException
     public CreditNoteCannotBeCreditedException(string creditNoteNumber)
         : base($"{creditNoteNumber} is already a credit note; credit the original invoice instead.") { }
 }
+
+public class NothingLeftToInvoiceException : DomainException
+{
+    public NothingLeftToInvoiceException(string orderNumber)
+        : base($"Order {orderNumber} has nothing left to invoice; every line is cancelled or scrapped.") { }
+}

@@ -21,11 +21,13 @@ public sealed class ScrapOrderLineCommandValidator : AbstractValidator<ScrapOrde
 public class ScrapOrderLineHandler : IRequestHandler<ScrapOrderLineCommand, OrderDto>
 {
     private readonly IOrderRepository _orders;
+    private readonly IAllocationService _allocator;
     private readonly IUnitOfWork _uow;
 
-    public ScrapOrderLineHandler(IOrderRepository orders, IUnitOfWork uow)
+    public ScrapOrderLineHandler(IOrderRepository orders, IAllocationService allocator, IUnitOfWork uow)
     {
         _orders = orders;
+        _allocator = allocator;
         _uow = uow;
     }
 
@@ -33,6 +35,13 @@ public class ScrapOrderLineHandler : IRequestHandler<ScrapOrderLineCommand, Orde
     {
         var order = await _orders.GetWithLinesAsync(c.OrderId, ct) ?? throw new OrderNotFoundException();
         order.RecordLineScrap(c.OrderLineId, c.Quantity, c.Notes);
+
+        // WHY the reservation is given back: a scrapped unit will never ship, so the stock it was
+        // holding must return to available. Without this the reservation outlived every release
+        // path — PartiallyShipped orders cannot be cancelled or reverted — and the quantity stayed
+        // reserved forever, on hand but unsellable.
+        await _allocator.ReleaseForOrderLineAsync(order.Id, c.OrderLineId, c.Quantity, ct);
+
         _orders.Update(order);
         await _uow.SaveChangesAsync(ct);
         return OrderMapper.ToDto(order);
