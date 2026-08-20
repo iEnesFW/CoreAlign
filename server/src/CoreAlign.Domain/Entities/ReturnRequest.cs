@@ -199,8 +199,12 @@ public class ReturnRequest : TenantEntity
             .Where(l => l.Restockable)
             .Select(l => new ReturnRequestLineSnapshot(l.Id, l.ProductId, l.QuantityReturned, l.UnitPrice, l.UnitCostSnapshot))
             .ToList();
+        // WHY the commission basis spans ALL lines: a damaged, non-restockable return is still
+        // refunded to the customer, so the dealer's commission on it has to come back too even
+        // though the goods never re-enter sellable stock.
+        var returnedLineNet = Math.Round(Lines.Sum(l => Math.Round(l.UnitPrice * l.QuantityReturned, 4)), 4);
         AddDomainEvent(new ReturnRequestReceivedEvent(
-            TenantId, Id, ReturnNumber, OrderId, CustomerId, warehouseId, snapshot, now));
+            TenantId, Id, ReturnNumber, OrderId, CustomerId, warehouseId, snapshot, returnedLineNet, now));
     }
 
     public void AttachCreditNote(Guid creditNoteId)

@@ -34,6 +34,7 @@ public record ReturnRequestReceivedEvent(
     Guid CustomerId,
     Guid WarehouseId,
     IReadOnlyList<ReturnRequestLineSnapshot> Lines,
+    decimal ReturnedLineNet,
     DateTime OccurredAtUtc) : IDomainEvent;
 
 public record ReturnRequestCancelledEvent(

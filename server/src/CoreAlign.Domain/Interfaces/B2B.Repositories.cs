@@ -99,6 +99,9 @@ public interface IDealerCommissionLedgerRepository
         Guid dealerAccountId,
         DateTime nowUtc,
         CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DealerCommissionLedgerEntry>> ListAccruedByOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default);
     Task AddAsync(DealerCommissionLedgerEntry entry, CancellationToken cancellationToken = default);
     void Update(DealerCommissionLedgerEntry entry);
 }

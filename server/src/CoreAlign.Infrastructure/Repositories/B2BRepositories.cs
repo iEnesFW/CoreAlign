@@ -254,6 +254,17 @@ public class DealerCommissionLedgerEntryRepository : IDealerCommissionLedgerRepo
             e => e.DealerAccountId == dealerAccountId && e.OrderId == orderId && e.ShipmentId == shipmentId,
             cancellationToken);
 
+    // Tracked on purpose: the return-reversal handler mutates these entries in place and the
+    // ambient SaveChanges persists them.
+    public async Task<IReadOnlyList<DealerCommissionLedgerEntry>> ListAccruedByOrderAsync(
+        Guid orderId,
+        CancellationToken cancellationToken = default) =>
+        await _context.DealerCommissionLedgerEntries
+            .Where(e => e.OrderId == orderId && e.Status == DealerCommissionStatus.Accrued)
+            .OrderBy(e => e.AccruedAtUtc)
+            .ThenBy(e => e.Id)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsForOrderAndShipmentAsync(
         Guid dealerAccountId,
         Guid orderId,

@@ -189,6 +189,7 @@ public class CogsOnSaleGLPostingTests
         await sut.Handle(
             new ReturnRequestReceivedEvent(TenantId, returnId, "RMA-1", OrderId, Guid.NewGuid(), WarehouseId,
                 new[] { new ReturnRequestLineSnapshot(Guid.NewGuid(), ProductId, Qty, 10m, AvgCost) },
+                Qty * 10m,
                 DateTime.UtcNow),
             default);
 

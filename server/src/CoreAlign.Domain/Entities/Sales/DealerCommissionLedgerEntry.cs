@@ -62,6 +62,25 @@ public class DealerCommissionLedgerEntry : TenantEntity
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
+    // Consumes part of the accrued basis when the sale comes back, returning how much was
+    // actually applied so the caller can carry the remainder to the next entry. Only Accrued
+    // entries move: a Paid commission needs a clawback through the payout process, not a
+    // silent edit of the ledger it was paid from.
+    public decimal ReduceBasis(decimal amount, string? reason)
+    {
+        if (amount <= 0m || Status != DealerCommissionStatus.Accrued) return 0m;
+        var applied = Math.Min(Math.Round(amount, 4), OrderTotal);
+        if (applied <= 0m) return 0m;
+        OrderTotal = Math.Round(OrderTotal - applied, 4);
+        CommissionAmount = Math.Round(OrderTotal * CommissionPercent / 100m, 4);
+        UpdatedAtUtc = DateTime.UtcNow;
+        if (OrderTotal <= 0m)
+        {
+            Cancel(reason);
+        }
+        return applied;
+    }
+
     public void Cancel(string? reason)
     {
         Status = DealerCommissionStatus.Cancelled;
