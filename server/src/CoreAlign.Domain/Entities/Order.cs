@@ -26,6 +26,7 @@ public static class DealerOrderApprovalStatuses
     public const string PendingCustomerApproval = "PendingCustomerApproval";
     public const string Approved = "Approved";
     public const string Rejected = "Rejected";
+    public const string Cancelled = "Cancelled";
 }
 
 public class Order : TenantEntity, IHasConcurrencyToken
@@ -242,7 +243,11 @@ public class Order : TenantEntity, IHasConcurrencyToken
         AddDomainEvent(new OrderStatusChangedEvent(TenantId, Id, OrderNumber, previous, newStatus, now));
 
         if (newStatus == OrderStatus.Submitted) SubmittedAtUtc = now;
-        if (newStatus == OrderStatus.Cancelled) CancelledAtUtc = now;
+        if (newStatus == OrderStatus.Cancelled)
+        {
+            CancelledAtUtc = now;
+            CloseDealerApproval();
+        }
         if (newStatus == OrderStatus.Closed) AddDomainEvent(new OrderClosedEvent(TenantId, Id, OrderNumber, now));
         if (newStatus == OrderStatus.Delivered)
         {
@@ -345,6 +350,7 @@ public class Order : TenantEntity, IHasConcurrencyToken
         CancelReason = reason;
         CancelledAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = CancelledAtUtc.Value;
+        CloseDealerApproval();
         AddDomainEvent(new OrderStatusChangedEvent(TenantId, Id, OrderNumber, previous, OrderStatus.Cancelled, CancelledAtUtc.Value));
 
         if (previous is OrderStatus.Confirmed or OrderStatus.Shipped)
@@ -484,6 +490,15 @@ public class Order : TenantEntity, IHasConcurrencyToken
             DealerRejectionReason = null;
         }
         UpdatedAtUtc = DateTime.UtcNow;
+    }
+
+    // WHY cancelling has to close the approval too: the customer's pending-approval queue keys
+    // ONLY on DealerApprovalStatus, so a cancelled dealer order stayed in it forever — and acting
+    // on it failed deep inside Submit() with a status error the customer could not interpret.
+    private void CloseDealerApproval()
+    {
+        if (!IsPendingDealerApproval) return;
+        DealerApprovalStatus = DealerOrderApprovalStatuses.Cancelled;
     }
 
     public void ApproveDealerSubmission(Guid approverId)

@@ -217,7 +217,9 @@ public class OrderRepository : IOrderRepository
         var pending = DealerOrderApprovalStatuses.PendingCustomerApproval;
         var query = _context.Orders
             .AsNoTracking()
-            .Where(o => o.CustomerId == customerId && o.DealerApprovalStatus == pending);
+            .Where(o => o.CustomerId == customerId
+                && o.DealerApprovalStatus == pending
+                && o.Status != OrderStatus.Cancelled);
 
         var total = await query.CountAsync(cancellationToken);
         var items = await query

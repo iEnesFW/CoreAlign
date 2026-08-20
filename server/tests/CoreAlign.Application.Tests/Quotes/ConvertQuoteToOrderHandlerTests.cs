@@ -20,6 +20,7 @@ public class ConvertQuoteToOrderHandlerTests
     private static readonly Guid TenantId = Guid.NewGuid();
     private static readonly Guid CustomerId = Guid.NewGuid();
     private static readonly Guid ProductId = Guid.NewGuid();
+    private readonly IPaymentTermRepository _paymentTerms = Substitute.For<IPaymentTermRepository>();
 
     public ConvertQuoteToOrderHandlerTests()
     {
@@ -30,7 +31,7 @@ public class ConvertQuoteToOrderHandlerTests
             .Returns(_ => Task.FromResult<IUnitOfWorkTransaction>(new NoopTransaction()));
         _products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
             .Returns(new Dictionary<Guid, Product>());
-        _sut = new ConvertQuoteToOrderCommandHandler(_quotes, _orders, _customers, _sequences, _products, _uow);
+        _sut = new ConvertQuoteToOrderCommandHandler(_quotes, _orders, _customers, _sequences, _products, _paymentTerms, _uow);
     }
 
     [Fact]
@@ -127,7 +128,8 @@ public class ConvertQuoteToOrderHandlerTests
         products.GetByIdsAsync(Arg.Any<IEnumerable<Guid>>(), Arg.Any<CancellationToken>())
             .Returns(new Dictionary<Guid, Product>());
         var handler = new ConvertQuoteToOrderCommandHandler(
-            serializingRepo, orderRepo, customerRepo, sequences, products, uow);
+            serializingRepo, orderRepo, customerRepo, sequences, products,
+            Substitute.For<IPaymentTermRepository>(), uow);
 
         var tasks = Enumerable
             .Range(0, 5)
@@ -220,6 +222,47 @@ public class ConvertQuoteToOrderHandlerTests
             _repo.ReleaseConversionLock();
             return ValueTask.CompletedTask;
         }
+    }
+
+    // Every other order-creation path resolves a due date. Quote conversion left it null, which
+    // hid converted quotes from AR ageing and from the dunning reminders — both key off DueDate.
+    [Fact]
+    public async Task Conversion_resolves_the_due_date_from_the_payment_term()
+    {
+        var termId = Guid.NewGuid();
+        var quote = BuildQuoteInStatus(QuoteStatus.Draft);
+        quote.UpdateDetails(null, null, termId, null, 1m, 0m, 0m, 0m, null, null, null, null, null);
+        quote.MarkSent();
+        quote.Accept();
+        _quotes.GetWithLinesAsync(quote.Id, Arg.Any<CancellationToken>()).Returns(quote);
+        _customers.GetByIdAsync(CustomerId, Arg.Any<CancellationToken>()).Returns(quote.Customer);
+        _paymentTerms.GetByIdAsync(termId, Arg.Any<CancellationToken>())
+            .Returns(new PaymentTerm("NET30", "Net 30", 30) { Id = termId, TenantId = TenantId });
+
+        Order? captured = null;
+        await _orders.AddAsync(Arg.Do<Order>(o => captured = o), Arg.Any<CancellationToken>());
+
+        await _sut.Handle(new ConvertQuoteToOrderCommand(quote.Id), default);
+
+        captured.Should().NotBeNull();
+        captured!.DueDate.Should().NotBeNull();
+        captured.DueDate!.Value.Date.Should().Be(captured.OrderDate.AddDays(30).Date);
+        captured.PaymentTermsNetDaysSnapshot.Should().Be(30);
+    }
+
+    [Fact]
+    public async Task Conversion_leaves_the_due_date_open_when_the_customer_has_no_payment_term()
+    {
+        var quote = BuildAcceptedQuote();
+        _quotes.GetWithLinesAsync(quote.Id, Arg.Any<CancellationToken>()).Returns(quote);
+        _customers.GetByIdAsync(CustomerId, Arg.Any<CancellationToken>()).Returns(quote.Customer);
+
+        Order? captured = null;
+        await _orders.AddAsync(Arg.Do<Order>(o => captured = o), Arg.Any<CancellationToken>());
+
+        await _sut.Handle(new ConvertQuoteToOrderCommand(quote.Id), default);
+
+        captured!.DueDate.Should().BeNull();
     }
 
     private static Quote BuildAcceptedQuote() => BuildQuoteInStatus(QuoteStatus.Accepted);

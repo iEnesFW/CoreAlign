@@ -17,6 +17,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
     private readonly ICustomerRepository _customerRepository;
     private readonly IDocumentSequenceRepository _sequenceRepository;
     private readonly IProductRepository _productRepository;
+    private readonly IPaymentTermRepository _paymentTermRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public ConvertQuoteToOrderCommandHandler(
@@ -25,6 +26,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
         ICustomerRepository customerRepository,
         IDocumentSequenceRepository sequenceRepository,
         IProductRepository productRepository,
+        IPaymentTermRepository paymentTermRepository,
         IUnitOfWork unitOfWork)
     {
         _quoteRepository = quoteRepository;
@@ -32,6 +34,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
         _customerRepository = customerRepository;
         _sequenceRepository = sequenceRepository;
         _productRepository = productRepository;
+        _paymentTermRepository = paymentTermRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -58,7 +61,18 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
         var orderNumber = await _sequenceRepository.ConsumeAsync(
             DocumentSequenceType.OrderNumber, DateTime.UtcNow, cancellationToken);
 
-        var order = new Order(orderNumber, quote.CustomerId, DateTime.UtcNow, quote.Currency, quote.Notes);
+        var orderDate = DateTime.UtcNow;
+        var order = new Order(orderNumber, quote.CustomerId, orderDate, quote.Currency, quote.Notes);
+
+        // Every other order-creation path resolves the payment term into a due date here. Leaving
+        // it null made converted quotes invisible to AR ageing and to the dunning reminders, which
+        // both key off DueDate — the customer was never chased for them.
+        var paymentTermsId = quote.PaymentTermsId ?? customer.PaymentTermsId;
+        var paymentTerm = paymentTermsId is Guid ptid
+            ? await _paymentTermRepository.GetByIdAsync(ptid, cancellationToken)
+            : null;
+        var dueDate = paymentTerm?.ResolveDueDate(orderDate)
+            ?? (quote.PaymentTermsNetDaysSnapshot is int netDays ? orderDate.AddDays(netDays) : (DateTime?)null);
 
         order.UpdateDetails(
             type: OrderType.Standard,
@@ -86,8 +100,8 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
                 quote.CustomerSnapshot,
                 quote.BillingAddressSnapshot,
                 quote.ShippingAddressSnapshot,
-                quote.PaymentTermsNetDaysSnapshot,
-                dueDate: null);
+                paymentTerm?.NetDays ?? quote.PaymentTermsNetDaysSnapshot,
+                dueDate);
         }
         else
         {
@@ -102,7 +116,7 @@ public class ConvertQuoteToOrderCommandHandler : IRequestHandler<ConvertQuoteToO
                 Email = customer.Email,
                 Phone = customer.Phone,
             };
-            order.ApplySnapshots(cs, null, null, quote.PaymentTermsNetDaysSnapshot, null);
+            order.ApplySnapshots(cs, null, null, paymentTerm?.NetDays ?? quote.PaymentTermsNetDaysSnapshot, dueDate);
         }
 
         // Snapshot each line's cost from the product's current AverageCost so profit/cost reports
