@@ -265,6 +265,13 @@ public class OrderLine : TenantEntity
 
     public void RecordReturn(decimal qty)
     {
+        if (qty <= 0m) return;
+        // Last line of defence: the goods coming back cannot exceed the goods that went out.
+        // Receiving past it would put phantom stock away and reverse COGS a second time.
+        if (QuantityReturned + qty > QuantityShipped)
+        {
+            throw new ReturnExceedsShippedException(ProductSku, QuantityShipped - QuantityReturned, qty);
+        }
         QuantityReturned += qty;
         Status = QuantityReturned >= QuantityShipped ? OrderLineStatus.Returned : OrderLineStatus.PartiallyReturned;
     }

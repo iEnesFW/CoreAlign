@@ -1,4 +1,5 @@
 using CoreAlign.Application.B2B;
+using CoreAlign.Application.Returns;
 using CoreAlign.Application.Returns.Commands;
 using CoreAlign.Application.Returns.DTOs;
 using CoreAlign.Application.Returns.Mapping;
@@ -56,6 +57,24 @@ public class CreateReturnRequestCommandHandler : IRequestHandler<CreateReturnReq
             {
                 throw new InvalidReturnRequestStateException(
                     $"Order line {lineId} does not belong to order {order.OrderNumber}.");
+            }
+        }
+
+        // WHY the open requests are subtracted here: OrderLine.QuantityReturned only advances when
+        // the goods are RECEIVED, so a second request raised while the first is still open sees the
+        // full shipped quantity as returnable. Both would then be received, putting the stock away
+        // twice and reversing COGS twice. Rejected/Cancelled requests release their claim; a
+        // Received one is already inside QuantityReturned and must not be counted again.
+        var claimed = ReturnClaims.ByOrderLine(await _returnRepository.GetByOrderAsync(order.Id, cancellationToken));
+        foreach (var (lineId, input) in inputByLine)
+        {
+            var orderLine = orderLinesById[lineId];
+            var remaining = Math.Max(
+                0m,
+                orderLine.QuantityShipped - orderLine.QuantityReturned - claimed.GetValueOrDefault(lineId));
+            if (input.Qty > remaining)
+            {
+                throw new ReturnExceedsShippedException(orderLine.ProductSku, remaining, input.Qty);
             }
         }
 

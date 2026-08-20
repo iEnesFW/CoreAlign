@@ -108,3 +108,9 @@ public class ShipmentOrderNotDispatchableException : ConflictException
     public ShipmentOrderNotDispatchableException(string shipmentNumber, string orderStatus)
         : base($"Shipment {shipmentNumber} cannot be dispatched while its order is {orderStatus}.") { }
 }
+
+public class ReturnExceedsShippedException : ConflictException
+{
+    public ReturnExceedsShippedException(string productSku, decimal remaining, decimal attempted)
+        : base($"Cannot return {attempted} of '{productSku}': only {remaining} of the shipped quantity has not been returned yet.") { }
+}
